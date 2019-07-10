@@ -28,6 +28,7 @@
         <module name="org.jboss.staxmapper"/>
         <module name="org.jboss.threads"/>
         <module name="org.jgroups" slot="@infinispan.module.slot@"/>
+        <module name="org.jgroups.aws.s3" slot="@infinispan.module.slot@"/>
         <module name="org.jgroups.azure" slot="@infinispan.module.slot@"/>
         <module name="org.jgroups.kubernetes" slot="@infinispan.module.slot@"/>
         <module name="org.wildfly.security.elytron-private" services="import"/>
