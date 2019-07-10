@@ -117,4 +117,18 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertEquals(objectMapper.readTree(response.getContent()).get("currentNumberOfEntries").asInt(), 0);
    }
 
+   @Test
+   public void testCacheSize() throws Exception {
+      for (int i = 0; i < 100; i++) {
+         putInCache("default", i, "" + i, APPLICATION_JSON_TYPE);
+      }
+
+      String URL = String.format("http://localhost:%d/rest/v2/caches/default?action=size", restServer().getPort());
+
+      ContentResponse response = client.newRequest(URL).send();
+
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).containsReturnedText("100");
+   }
+
 }
