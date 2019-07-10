@@ -64,20 +64,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-javadoc-embedded</artifactId>
-         <version>${version.infinispan}</version>
-         <classifier>javadoc</classifier>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-javadoc-remote</artifactId>
-         <version>${version.infinispan}</version>
-         <classifier>javadoc</classifier>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-all</artifactId>
          <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
