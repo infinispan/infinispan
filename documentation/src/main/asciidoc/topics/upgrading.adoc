@@ -1,5 +1,9 @@
 == Upgrading from 9.4 to 10.0
 
+=== Hot Rod 3.0
+
+Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.
+
 === Total Order transaction protocol is deprecated
 
 Total Order transaction protocol is going to be removed in a future release.

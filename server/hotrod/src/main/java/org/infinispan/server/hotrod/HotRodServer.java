@@ -541,7 +541,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return accessLogging;
    }
 
-   public Metadata.Builder buildMetadata(long lifespan, TimeUnitValue lifespanUnit, long maxIdle, TimeUnitValue maxIdleUnit) {
+   public Metadata.Builder buildMetadata2x(long lifespan, TimeUnitValue lifespanUnit, long maxIdle, TimeUnitValue maxIdleUnit) {
       EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
       if (lifespan != ServerConstants.EXPIRATION_DEFAULT && lifespanUnit != TimeUnitValue.DEFAULT) {
          if (lifespanUnit == TimeUnitValue.INFINITE) {
@@ -555,6 +555,25 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             metadata.maxIdle(ServerConstants.EXPIRATION_NONE);
          } else {
             metadata.maxIdle(toMillis(maxIdle, maxIdleUnit));
+         }
+      }
+      return metadata;
+   }
+
+   public Metadata.Builder buildMetadata(long lifespan, TimeUnitValue lifespanUnit, long maxIdle, TimeUnitValue maxIdleUnit) {
+      EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
+      if (lifespan != ServerConstants.EXPIRATION_DEFAULT && lifespanUnit != TimeUnitValue.DEFAULT) {
+         if (lifespanUnit == TimeUnitValue.INFINITE) {
+            metadata.lifespan(ServerConstants.EXPIRATION_NONE);
+         } else {
+            metadata.lifespan(lifespanUnit.toTimeUnit().toMillis(lifespan));
+         }
+      }
+      if (maxIdle != ServerConstants.EXPIRATION_DEFAULT && maxIdleUnit != TimeUnitValue.DEFAULT) {
+         if (maxIdleUnit == TimeUnitValue.INFINITE) {
+            metadata.maxIdle(ServerConstants.EXPIRATION_NONE);
+         } else {
+            metadata.maxIdle(maxIdleUnit.toTimeUnit().toMillis(maxIdle));
          }
       }
       return metadata;

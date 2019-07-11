@@ -50,6 +50,25 @@ public enum TimeUnitValue {
       }
    }
 
+   public static TimeUnitValue fromTimeUnit(TimeUnit unit) {
+      switch (unit) {
+         case MICROSECONDS:
+            return TimeUnitValue.MICROSECONDS;
+         case MILLISECONDS:
+            return TimeUnitValue.MILLISECONDS;
+         case SECONDS:
+            return TimeUnitValue.SECONDS;
+         case MINUTES:
+            return TimeUnitValue.MINUTES;
+         case HOURS:
+            return TimeUnitValue.HOURS;
+         case DAYS:
+            return TimeUnitValue.DAYS;
+         default:
+            throw new IllegalArgumentException(unit.name());
+      }
+   }
+
    public static TimeUnitValue decode(byte rightBits) {
       switch (rightBits) {
          case 0x00:
@@ -77,5 +96,15 @@ public enum TimeUnitValue {
 
    public static KeyValuePair<TimeUnitValue, TimeUnitValue> decodePair(byte timeUnitValues) {
       return new KeyValuePair<>(decode((byte) ((timeUnitValues & 0xf0) >> 4)), decode((byte) (timeUnitValues & 0x0f)));
+   }
+
+   private static byte encodeDuration(long duration, TimeUnit timeUnit) {
+      return duration == 0 ? DEFAULT.code : duration < 0 ? INFINITE.code : fromTimeUnit(timeUnit).code;
+   }
+
+   public static byte encodeTimeUnits(long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      byte encodedLifespan = encodeDuration(lifespan, lifespanTimeUnit);
+      byte encodedMaxIdle = encodeDuration(maxIdle, maxIdleTimeUnit);
+      return (byte) (encodedLifespan << 4 | encodedMaxIdle);
    }
 }

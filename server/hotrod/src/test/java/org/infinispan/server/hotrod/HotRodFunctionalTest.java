@@ -15,7 +15,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 import static org.infinispan.test.TestingUtil.generateRandomString;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -27,7 +27,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
+import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestBulkGetKeysResponse;
 import org.infinispan.server.hotrod.test.TestBulkGetResponse;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
@@ -49,15 +51,13 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testUnknownCommand(Method m) {
       OperationStatus status = client().execute(0xA0, (byte)255, cacheName, k(m), 0, 0, v(m), 0, (byte) 1, 0).status;
-      assertEquals(status, UnknownOperation,
-                   "Status should have been 'UnknownOperation' but instead was: " + status);
+      assertEquals("Status should have been 'UnknownOperation' but instead was: " + status, status, UnknownOperation);
    }
 
    public void testUnknownMagic(Method m) {
       client().assertPut(m); // Do a put to make sure decoder gets back to reading properly
       OperationStatus status = client().executeExpectBadMagic(0x66, (byte) 0x01, cacheName, k(m), 0, 0, v(m), 0).status;
-      assertEquals(status, InvalidMagicOrMsgId,
-                   "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status);
+      assertEquals("Status should have been 'InvalidMagicOrMsgId' but instead was: " + status, status, InvalidMagicOrMsgId);
    }
 
    // todo: test other error conditions such as invalid version...etc
@@ -77,7 +77,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
             resp =
             ((TestErrorResponse) client().execute(0xA0, (byte) 0x01, "boomooo", k(m), 0, 0, v(m), 0, (byte) 1, 0));
       assertTrue(resp.msg.contains("CacheNotFoundException"));
-      assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status);
+      assertEquals("Status should have been 'ParseError' but instead was: " + resp.status, resp.status, ParseError);
       client().assertPut(m);
    }
 
@@ -86,7 +86,7 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
             .execute(0xA0, (byte) 0x01, HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX, k(m), 0, 0, v(m), 0,
                      (byte) 1, 0));
       assertTrue(resp.msg.contains("CacheNotFoundException"));
-      assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status);
+      assertEquals("Status should have been 'ParseError' but instead was: " + resp.status, resp.status, ParseError);
       client().assertPut(m);
    }
 
@@ -522,5 +522,29 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       else
          assertTrue(java.util.Arrays.equals(expected, resp.previous.get()));
       return assertStatus(resp, NotExecutedWithPrevious);
+   }
+
+   public void testLifespan2x(Method m) {
+      try (HotRodClient client2x = connectClient(HotRodVersion.HOTROD_29.getVersion())) {
+         long now = System.currentTimeMillis();
+         int seconds = (int) ((now + TimeUnit.DAYS.toMillis(1)) / 1000); // current time + 1 day
+         assertStatus(client2x.put(k(m), seconds, seconds, v(m)), Success);
+         CacheEntry<byte[], byte[]> entry = advancedCache.getCacheEntry(k(m));
+         // Use rounding to accommodate for processing delays
+         assertEquals(seconds / 100, (entry.getLifespan() + now) / 100_000);
+         assertEquals(seconds / 100, (entry.getMaxIdle() + now) / 100_000);
+      }
+   }
+
+   public void testLifespan3x(Method m) {
+      try (HotRodClient client3x = connectClient(HotRodVersion.HOTROD_30.getVersion())) {
+         long now = System.currentTimeMillis();
+         int seconds = (int) ((now + TimeUnit.DAYS.toMillis(1)) / 1000); // current time + 1 day
+         assertStatus(client3x.put(k(m), seconds, seconds, v(m)), Success);
+         CacheEntry<byte[], byte[]> entry = advancedCache.getCacheEntry(k(m));
+         // Ensure we get the same value
+         assertEquals(seconds, entry.getLifespan() / 1000);
+         assertEquals(seconds, entry.getMaxIdle() / 1000);
+      }
    }
 }

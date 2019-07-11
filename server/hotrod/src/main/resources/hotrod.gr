@@ -118,11 +118,14 @@ value: array;
 
 expiration returns Metadata.Builder
    : { version < VERSION_22 }? lifespanInt maxIdleInt {
-      server.buildMetadata(
+      server.buildMetadata2x(
          defaultExpiration(lifespanInt, flags, ProtocolFlag.DefaultLifespan), TimeUnitValue.SECONDS,
          defaultExpiration(maxIdleInt, flags, ProtocolFlag.DefaultMaxIdle), TimeUnitValue.SECONDS) }
-   | timeUnits lifespanLong maxIdleLong {
+   | { version >= VERSION_30 }? timeUnits lifespanLong maxIdleLong {
       server.buildMetadata(lifespanLong, TimeUnitValue.decode(BitShift.right(timeUnits, 4)),
+                           maxIdleLong, TimeUnitValue.decode(BitShift.mask(timeUnits, 0x0F))) }
+   | timeUnits lifespanLong maxIdleLong {
+      server.buildMetadata2x(lifespanLong, TimeUnitValue.decode(BitShift.right(timeUnits, 4)),
                            maxIdleLong, TimeUnitValue.decode(BitShift.mask(timeUnits, 0x0F))) }
    ;
 lifespanInt: vInt;

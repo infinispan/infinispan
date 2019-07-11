@@ -46,13 +46,6 @@ import org.infinispan.query.dsl.Query;
  * server, which might not be needed. The flags as set by the {@link org.infinispan.client.hotrod.RemoteCache#withFlags(Flag...)}
  * operation only apply for the very next operation executed <b>by the same thread</b> on the RemoteCache.
  * <p/>
- * <b><a href="http://community.jboss.org/wiki/Eviction">Eviction and expiration</a></b>: Unlike local {@link
- * org.infinispan.Cache} cache, which allows specifying time values with any granularity (as defined by {@link
- * TimeUnit}), HotRod only supports seconds as time units. If a different time unit is used instead, HotRod will
- * transparently convert it to seconds, using {@link java.util.concurrent.TimeUnit#toSeconds(long)} method. This might
- * result in loss of precision for values specified as nanos or milliseconds. <br/> Another fundamental difference is in
- * the case of lifespan (naturally does NOT apply for max idle): If number of seconds is bigger than 30 days, this
- * number of seconds is treated as UNIX time and so, represents the number of seconds since 1/1/1970. <br/>
  *
  * <b>Note on default expiration values:</b> Due to limitations on the first
  * version of the protocol, it's not possible for clients to rely on default
