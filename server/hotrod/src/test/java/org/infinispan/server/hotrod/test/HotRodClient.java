@@ -15,6 +15,7 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeXid;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ import io.netty.util.concurrent.Future;
  * @author Tristan Tarrant
  * @since 4.1
  */
-public class HotRodClient {
+public class HotRodClient implements Closeable {
    private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
    final static AtomicLong idCounter = new AtomicLong();
 
@@ -121,6 +122,10 @@ public class HotRodClient {
       ch = initializeChannel();
    }
 
+   public HotRodClient(HotRodClient other, byte protocolVersion) {
+      this(other.host, other.port, other.defaultCacheName, other.rspTimeoutSeconds, protocolVersion, other.sslEngine);
+   }
+
    public byte protocolVersion() {
       return protocolVersion;
    }
@@ -147,6 +152,11 @@ public class HotRodClient {
       Channel ch = connectFuture.syncUninterruptibly().channel();
       assertTrue(connectFuture.isSuccess());
       return ch;
+   }
+
+   @Override
+   public void close() {
+      stop().awaitUninterruptibly();
    }
 
    public Future<?> stop() {
@@ -701,6 +711,10 @@ class Encoder extends MessageToByteEncoder<Object> {
       writeUnsignedInt(op.flags, buffer); // flags
       buffer.writeByte(op.clientIntel); // client intelligence
       writeUnsignedInt(op.topologyId, buffer); // topology id
+      if (protocolVersion >= 28) {
+         buffer.writeByte(0); // key type
+         buffer.writeByte(0); // value type
+      }
    }
 }
 

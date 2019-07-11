@@ -3109,6 +3109,10 @@ a protocol version of 30 or higher. This allows the server to tell the client th
 well as a list of supported operations. After obtaining the response from the server, the client should use the highest
 possible version understood by the server for all subsequent requests.
 
+.Expiration
+
+Expiration values larger than the number of milliseconds in 30 days are no longer treated as Unix time and are interpreted literally.
+
 .ping
 
 Request (0x17):

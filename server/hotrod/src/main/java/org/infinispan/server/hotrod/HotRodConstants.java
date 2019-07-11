@@ -7,16 +7,13 @@ package org.infinispan.server.hotrod;
  * @since 4.1
  */
 public interface HotRodConstants {
-   byte VERSION_20 = 20;
-   byte VERSION_21 = 21;
-   byte VERSION_22 = 22;
-   byte VERSION_23 = 23;
-   byte VERSION_24 = 24;
-   byte VERSION_25 = 25;
-   byte VERSION_26 = 26;
-   byte VERSION_27 = 27;
-   byte VERSION_28 = 28;
-   byte VERSION_29 = HotRodVersion.HOTROD_29.getVersion();
+   byte VERSION_20 = HotRodVersion.HOTROD_20.getVersion();
+   byte VERSION_21 = HotRodVersion.HOTROD_21.getVersion();
+   byte VERSION_22 = HotRodVersion.HOTROD_22.getVersion();
+   byte VERSION_24 = HotRodVersion.HOTROD_24.getVersion();
+   byte VERSION_26 = HotRodVersion.HOTROD_26.getVersion();
+   byte VERSION_28 = HotRodVersion.HOTROD_28.getVersion();
+   byte VERSION_30 = HotRodVersion.HOTROD_30.getVersion();
 
    //requests
    byte PUT_REQUEST = 0x01;
