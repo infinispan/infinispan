@@ -20,5 +20,7 @@
         <module name="com.fasterxml.jackson.core.jackson-core" slot="@infinispan.module.slot@"/>
         <module name="com.fasterxml.jackson.core.jackson-databind" slot="@infinispan.module.slot@"/>
         <module name="org.apache.commons.codec" slot="@infinispan.module.slot@"/>
+        <module name="org.apache.commons.logging"/>
+        <module name="org.joda.time"/>
     </dependencies>
 </module>
