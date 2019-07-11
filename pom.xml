@@ -4399,6 +4399,11 @@
                   <commitProtoLock>${commitProtoLockChanges}</commitProtoLock>
                </configuration>
             </plugin>
+            <plugin>
+               <groupId>org.infinispan.maven-plugins</groupId>
+               <artifactId>protocol-parser-generator</artifactId>
+               <version>${version.infinispan.maven-plugins}</version>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
