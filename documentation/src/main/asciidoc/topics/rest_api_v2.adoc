@@ -253,6 +253,15 @@ To delete all data from a cache, invoke a `GET` request with the `?action=clear`
 GET /v2/caches/{cacheName}?action=clear
 ----
 
+[[rest_v2_cache_size]]
+=== Getting the size of Caches
+To obtain the size of the cache across the entire cluster, invoke a `GET` request with the `?action=size` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}?action=size
+----
+
 [[rest_v2_query_cache]]
 === Querying Caches
 Invoke a `GET` request to perform and Ickle query on a given cache, as follows:
