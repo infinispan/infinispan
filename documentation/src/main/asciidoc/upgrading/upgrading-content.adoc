@@ -9,6 +9,11 @@ This flag only works when the client and the server version is 9.4.15 or higher.
 Spring Session integration uses this flag when a session id has changed.
 If you are using Spring Session with Infinispan 9.4, consider upgrading the client and the server.
 
+=== JGroups S3_PING replaced with NATIVE_S3_PING
+
+Because of changes in AWS's access policy regarding signatures, S3_PING will not work in newer regions and will stop working in older regions too.
+For this reason, you should migrate to using NATIVE_S3_PING instead.
+
 ==== Compatibility mode deprecation
 
 Compatibility mode has been deprecated and will be removed in the next {brandname} version.

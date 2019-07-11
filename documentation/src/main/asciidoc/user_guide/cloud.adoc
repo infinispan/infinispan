@@ -59,19 +59,19 @@ More on Gossip Router @ link:http://community.jboss.org/docs/DOC-10890[http://ww
 === Amazon Web Services
 When running on Amazon Web Service (AWS) platform and similar cloud based environment you can use the S3_PING protocol for discovery.
 
-==== S3_PING
+=== NATIVE_S3_PING
 You can configure your JGroups instances to use a shared storage to exchange the details of the cluster nodes.
-S3_PING allows Amazon S3 to be used as the shared storage. Be sure that you have signed up for Amazon S3 as well as EC2 to use this method.
+NATIVE_S3_PING allows Amazon S3 to be used as the shared storage. Be sure that you have signed up for Amazon S3 as well as EC2 to use this method.
 
-.Sample S3PING configuration
+.Sample NATIVE_S3_PING configuration
 [source,xml]
 ----
 <config>
     <TCP bind_port="7800" />
-    <S3_PING
-            secret_access_key="replace this with you secret access key"
-            access_key="replace this with your access key"
-            location="replace this with your S3 bucket location" />
+    <org.jgroups.aws.s3.NATIVE_S3_PING
+            region_name="replace this with your region (e.g. eu-west-1)"
+            bucket_name="replace this with your bucket name"
+            bucket_prefix="replace this with a prefix to use for entries in the bucket (optional)" />
 </config>
 
 ----
