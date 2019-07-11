@@ -14,6 +14,10 @@ similar functionality.
 
 The previously deprecated Delta and DeltaAware interfaces have been removed.
 
+=== Removed compatibility mode
+
+The previously deprecated Compatibility Mode has been removed.
+
 === Removed the implicit default cache
 
 The default cache must now be named explicitly via the link:{javadocroot}/org/infinispan/configuration/global/GlobalConfigurationBuilder.html#defaultCacheName(java.lang.String)[GlobalConfigurationBuilder#defaultCacheName()] method.
