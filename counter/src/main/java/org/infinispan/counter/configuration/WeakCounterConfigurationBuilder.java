@@ -1,6 +1,8 @@
 package org.infinispan.counter.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 /**
  * {@link org.infinispan.counter.api.WeakCounter} configuration builder.
@@ -11,7 +13,7 @@ import org.infinispan.commons.configuration.Builder;
 public class WeakCounterConfigurationBuilder extends
       AbstractCounterConfigurationBuilder<WeakCounterConfiguration, WeakCounterConfigurationBuilder> {
 
-   WeakCounterConfigurationBuilder(CounterManagerConfigurationBuilder builder) {
+   public WeakCounterConfigurationBuilder(CounterManagerConfigurationBuilder builder) {
       super(builder, WeakCounterConfiguration.attributeDefinitionSet());
    }
 
@@ -44,5 +46,15 @@ public class WeakCounterConfigurationBuilder extends
    public WeakCounterConfigurationBuilder concurrencyLevel(int level) {
       attributes.attribute(WeakCounterConfiguration.CONCURRENCY_LEVEL).set(level);
       return self();
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return WeakCounterConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 }

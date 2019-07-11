@@ -82,6 +82,23 @@ no payload and an extra request parameter:
 POST /v2/caches/{cacheName}?template={templateName}
 ----
 
+[[rest_v2_cache_configuration]]
+=== Retrieving Cache Configuration
+To retrieve a {brandname} cache configuration, invoke a `GET` request.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/configurations/{name}
+----
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. Supported formats are `application/xml` and `application/json`. The default is `application/json`. See link:#rest_accept[Accept] for more information.
+|===
 
 [[rest_v2_add_entries]]
 === Adding Entries
@@ -340,11 +357,11 @@ The following is an example of a query in the request body:
 ----
 
 [[rest_server_cluster]]
-=== Monitoring {brandname} Clusters
+== Monitoring {brandname} Clusters
 Use the REST API to monitor {brandname} clusters.
 
 [[rest_server_cluster_get]]
-==== Retrieving Cluster Information
+=== Retrieving Cluster Information
 To retrieve information about a {brandname} cluster, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
@@ -376,7 +393,7 @@ The preceding request returns information such as the following:
 * `nodeNames` is an array of all cluster members. Empty for standalone servers.
 
 [[rest_server_cluster_head]]
-==== Check availability
+=== Check availability
 To check that a {brandname} exists and is available, invoke a `HEAD` request.
 
 [source,options="nowrap",subs=attributes+]
@@ -386,30 +403,70 @@ HEAD /v2/cluster
 
 If the preceding request returns a successful response code then the {brandname} REST server is running and serving requests.
 
-[[rest_server_configuration]]
-=== Retrieving Cache Configuration
-To retrieve a {brandname} configuration, invoke a `GET` request.
+[[rest_server_counters]]
+== Counter
+Use the REST API to work with counters.
+
+[[rest_server_counters_create]]
+=== Creating a Counter
+
+To create a counter, use a `POST` request with the configuration as payload.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/configurations/{name}
+POST /v2/counters/{counterName}
 ----
 
-.Headers
-|===
-|Header |Required or Optional |Parameter
+The payload must contain a JSON configuration of the counter. Example:
 
-|`Accept`
-|OPTIONAL
-|Sets the required format to return content. Supported formats are `application/xml` and `application/json`. The default is `application/json`. See link:#rest_accept[Accept] for more information.
-|===
+[source,json]
+----
+{
+    "weak-counter":{
+        "initial-value":5,
+        "storage":"PERSISTENT",
+        "concurrency-level":1
+    }
+}
+----
 
-[[rest_server_counters]]
-=== Counter
-Use the REST API to work with counters.
+[source,json]
+----
+{
+    "strong-counter":{
+        "initial-value":3,
+        "storage":"PERSISTENT",
+        "upper-bound":{
+            "value":5
+        }
+    }
+}
+----
 
-[[rest_server_counters_post]]
-==== Adding Values to Counters
+[[rest_server_counters_delete]]
+=== Deleting a Counter
+
+To delete a counter, send a `DELETE` request with the counter name.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /v2/counters/{counterName}
+----
+
+[[rest_server_counters_config]]
+=== Retrieving Counters Configuration
+
+The get the counter configuration, use a `GET` request with the counter name.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}/config
+----
+
+The result will be a JSON representation of the counter config.
+
+[[rest_server_counters_add]]
+=== Adding Values to Counters
 To add a value to a named counter, invoke a `POST` request.
 
 [source,options="nowrap",subs=attributes+]
@@ -430,7 +487,8 @@ This method processes only `plain/text` content.
 ====
 
 [[rest_server_counters_get]]
-==== Getting Counter Values
+=== Getting a Counter Value
+
 To retrieve the value of a counter, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
@@ -438,18 +496,96 @@ To retrieve the value of a counter, invoke a `GET` request.
 GET /v2/counters/{counterName}
 ----
 
-[NOTE]
-====
-This method processes only `plain/text` content.
-====
+.Headers
+|===
+|Header |Required or Optional |Parameter
 
-[[rest_server_counters_delete]]
-==== Resetting Counters
-To reset counters to their initial values, invoke a `DELETE` request.
+|`link:#rest_accept[Accept]`
+|OPTIONAL
+|The required format to return the content. Supported formats are _application/json_ and _text/plain_. JSON is assumed if no header is provided.
+|===
+
+
+[[rest_server_counters_reset]]
+=== Reseting Counters
+
+To reset counters, use a `GET` request with the `?action=reset` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/counters/{counterName}
+GET /v2/counters/{counterName}?action=reset
 ----
+
+[[rest_server_counters_inc_weak]]
+=== Incrementing Counters
+
+To increment a Counter, use the `?action=increment` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}?action=increment
+----
+
+Request responses depend on the type of counter, as follows:
+
+* `WEAK` counters return empty responses.
+* `STRONG` counters return their values after the operation is applied.
+
+
+[[rest_server_counters_add_weak]]
+=== Adding a delta to Counters
+
+To add an arbitrary amount to a Counter, use the params `?action=add` and `delta`.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}?action=add&delta={delta}
+----
+
+Request responses depend on the type of counter, as follows:
+
+* `WEAK` counters return empty responses.
+* `STRONG` counters return their values after the operation is applied.
+
+
+[[rest_server_counters_dec_strong]]
+=== Decrementing Counters
+
+To increment a Counter, use the `?action=decrement` parameter.
+
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}?action=decrement
+----
+
+Request responses depend on the type of counter, as follows:
+
+* `WEAK` counters return empty responses.
+* `STRONG` counters return their values after the operation is applied.
+
+
+[[rest_server_counters_cmpset]]
+=== compareAndSet Strong Counters
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
+----
+
+Atomically sets the value to {update} if the current value is {expect}
+
+Returns _true_ if successful.
+
+[[rest_server_counters_cmpswp]]
+=== compareAndSwap Strong Counter
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
+----
+
+Atomically sets the value to {update} if the current value is {expect}. Returns the previous value in the
+payload if the operation is successful.
 
 //-

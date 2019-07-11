@@ -1,7 +1,7 @@
 package org.infinispan.rest;
 
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
-import org.infinispan.health.Health;
+import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.AuthenticationConfiguration;
@@ -83,15 +83,20 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       }
       super.startInternal(configuration, cacheManager);
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
-      Health health = cacheManager.getHealth();
+
+      InvocationHelper invocationHelper = new InvocationHelper(restCacheManager,
+            (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), configuration, getExecutor());
+
       String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";
       ResourceManager resourceManager = new ResourceManagerImpl(rootContext);
-      resourceManager.registerResource(new CacheResource(restCacheManager, configuration, getExecutor()));
-      resourceManager.registerResource(new CacheResourceV2(restCacheManager, configuration, mapper, getExecutor()));
+
+      resourceManager.registerResource(new CacheResource(invocationHelper));
+      resourceManager.registerResource(new CacheResourceV2(invocationHelper));
       resourceManager.registerResource(new SplashResource());
       resourceManager.registerResource(new ConfigResource(cacheManager));
-      resourceManager.registerResource(new CounterResource(EmbeddedCounterManagerFactory.asCounterManager(cacheManager)));
-      resourceManager.registerResource(new ClusterResource(health, mapper));
+      resourceManager.registerResource(new CounterResource(invocationHelper));
+      resourceManager.registerResource(new ClusterResource(cacheManager.getHealth(), mapper));
+
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }
 

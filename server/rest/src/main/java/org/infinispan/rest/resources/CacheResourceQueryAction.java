@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -21,8 +20,8 @@ import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.infinispan.query.remote.json.JsonQueryErrorResult;
 import org.infinispan.query.remote.json.JsonQueryReader;
 import org.infinispan.query.remote.json.JsonQueryRequest;
+import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
-import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
@@ -35,12 +34,10 @@ import org.infinispan.rest.framework.RestResponse;
  */
 class CacheResourceQueryAction {
 
-   private final RestCacheManager<Object> restCacheManager;
-   private final Executor executor;
+   private final InvocationHelper invocationHelper;
 
-   CacheResourceQueryAction(RestCacheManager<Object> restCacheManager, Executor executor) {
-      this.restCacheManager = restCacheManager;
-      this.executor = executor;
+   CacheResourceQueryAction(InvocationHelper invocationHelper) {
+      this.invocationHelper = invocationHelper;
    }
 
    public CompletionStage<RestResponse> search(RestRequest restRequest) {
@@ -65,7 +62,7 @@ class CacheResourceQueryAction {
       String cacheName = restRequest.variables().get("cacheName");
 
       MediaType keyContentType = restRequest.keyContentType();
-      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest.getSubject());
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest.getSubject());
       String queryString = query.getQuery();
 
       RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);
@@ -79,7 +76,7 @@ class CacheResourceQueryAction {
          } catch (IllegalArgumentException | ParsingException | IllegalStateException e) {
             return queryError("Invalid search request", e.getMessage());
          }
-      }, executor);
+      }, invocationHelper.getExecutor());
    }
 
    private JsonQueryRequest getQueryFromString(RestRequest restRequest) {

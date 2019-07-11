@@ -29,6 +29,13 @@ public interface CounterConfigurationStorage {
    void store(String name, CounterConfiguration configuration);
 
    /**
+    * Remove a counter configuration
+    *
+    * @param name the counter's name.
+    */
+   void remove(String name);
+
+   /**
     * Validates if the {@link CounterConfiguration} has a valid {@link org.infinispan.counter.api.Storage}.
     * <p>
     * It throws an exception if the implementation doesn't support one or more {@link org.infinispan.counter.api.Storage} modes.

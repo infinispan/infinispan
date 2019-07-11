@@ -78,6 +78,11 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
    }
 
    @Override
+   public void remove(String name) {
+      storage.remove(name);
+   }
+
+   @Override
    public void validatePersistence(CounterConfiguration configuration) {
       //nothing to validate
    }

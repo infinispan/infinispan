@@ -89,7 +89,7 @@ The <cors-rule> element can be configured as follows:
 [[rest_server_data_format_config]]
 === Configuration
 
-Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType].
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration link:#encoding_media_type[here].
 
 An example of storage configuration is as follows:
 
