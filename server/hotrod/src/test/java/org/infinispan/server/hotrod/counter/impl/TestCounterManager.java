@@ -79,6 +79,10 @@ public class TestCounterManager implements CounterManager {
    }
 
    @Override
+   public void undefineCounter(String name) {
+   }
+
+   @Override
    public boolean isDefined(String name) {
       CounterOp op = new CounterOp(client.protocolVersion(), COUNTER_IS_DEFINED, name);
       client.writeOp(op);

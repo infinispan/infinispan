@@ -68,6 +68,13 @@ public interface CounterManager {
    boolean defineCounter(String name, CounterConfiguration configuration);
 
    /**
+    * It removes the counter and its configuration from the cluster.
+    *
+    * @param name The counter's name to remove
+    */
+   void undefineCounter(String name);
+
+   /**
     * @param name the counter name.
     * @return {@code true} if the counter is defined or {@code false} if the counter is not defined or fails to check.
     */

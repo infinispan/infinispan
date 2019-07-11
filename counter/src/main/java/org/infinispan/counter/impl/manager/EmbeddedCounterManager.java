@@ -116,6 +116,10 @@ public class EmbeddedCounterManager implements CounterManager {
    )
    @Override
    public void remove(String counterName) {
+      removeCounter(counterName, true);
+   }
+
+   private void removeCounter(String counterName, boolean keepConfig) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
          //counter not defined (cluster-wide). do nothing :)
@@ -123,8 +127,14 @@ public class EmbeddedCounterManager implements CounterManager {
       }
       counters.compute(counterName, (name, counter) -> {
          removeCounter(name, counter, configuration);
+         if (!keepConfig) awaitCounterOperation(configurationManager.removeConfiguration(name));
          return null;
       });
+   }
+
+   @Override
+   public void undefineCounter(String counterName) {
+      removeCounter(counterName, false);
    }
 
    @Override

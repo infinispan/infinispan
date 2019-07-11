@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -26,6 +25,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
+import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -56,16 +56,12 @@ public class CacheResource implements ResourceHandler {
 
    private static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
 
-   final RestCacheManager<Object> restCacheManager;
-   final RestServerConfiguration restServerConfiguration;
    final CacheResourceQueryAction queryAction;
-   final Executor executor;
+   final InvocationHelper invocationHelper;
 
-   public CacheResource(RestCacheManager<Object> restCacheManager, RestServerConfiguration restServerConfiguration, Executor executor) {
-      this.restCacheManager = restCacheManager;
-      this.restServerConfiguration = restServerConfiguration;
-      this.queryAction = new CacheResourceQueryAction(restCacheManager, executor);
-      this.executor = executor;
+   public CacheResource(InvocationHelper invocationHelper) {
+      this.invocationHelper = invocationHelper;
+      this.queryAction = new CacheResourceQueryAction(invocationHelper);
    }
 
    @Override
@@ -87,7 +83,8 @@ public class CacheResource implements ResourceHandler {
       if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
 
       MediaType contentType = negotiateMediaType(accept, cacheName);
-      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request.getSubject());
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
+            .getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request.getSubject());
 
       Charset mediaCharset = Charset.fromMediaType(accept);
       Charset charset = mediaCharset == null ? Charset.UTF8 : mediaCharset;
@@ -98,7 +95,7 @@ public class CacheResource implements ResourceHandler {
          OutputPrinter outputPrinter = EntrySetFormatter.forMediaType(contentType);
          responseBuilder.entity(outputPrinter.print(cacheName, cache.keySet(), charset));
          return responseBuilder.build();
-      }, executor);
+      }, invocationHelper.getExecutor());
    }
 
    CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {
@@ -108,6 +105,7 @@ public class CacheResource implements ResourceHandler {
       if (key == null) throw new NoKeyException();
 
       MediaType keyContentType = request.keyContentType();
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request.getSubject());
 
       return restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
@@ -136,7 +134,7 @@ public class CacheResource implements ResourceHandler {
 
       MediaType contentType = request.contentType();
       MediaType keyContentType = request.keyContentType();
-
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request.getSubject());
       Object key = request.variables().get("cacheKey");
       if (key == null) throw new NoKeyException();
@@ -175,7 +173,7 @@ public class CacheResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       responseBuilder.status(HttpResponseStatus.OK.code());
 
-      Cache<Object, Object> cache = restCacheManager.getCache(cacheName, request.getSubject());
+      Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request.getSubject());
 
       return cache.clearAsync().thenApply(v -> responseBuilder.build());
    }
@@ -193,6 +191,7 @@ public class CacheResource implements ResourceHandler {
 
       String cacheControl = request.getCacheControlHeader();
       boolean returnBody = request.method() == GET;
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType, request.getSubject()).thenApply(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.status(HttpResponseStatus.NOT_FOUND.code());
@@ -236,6 +235,7 @@ public class CacheResource implements ResourceHandler {
                      .lastUsed(ice.getLastUsed());
 
                List<String> extended = request.parameters().get(EXTENDED_HEADER);
+               RestServerConfiguration restServerConfiguration = invocationHelper.getConfiguration();
                if (extended != null && extended.size() > 0 && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, extended.iterator().next())) {
                   responseBuilder.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key))
                         .clusterNodeName(restCacheManager.getNodeName())
@@ -290,7 +290,7 @@ public class CacheResource implements ResourceHandler {
 
    private MediaType negotiateMediaType(String accept, String cacheName) throws UnacceptableDataFormatException {
       try {
-         AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName, null);
+         AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, null);
          DataConversion valueDataConversion = cache.getValueDataConversion();
 
          Optional<MediaType> negotiated = MediaType.parseList(accept)

@@ -32,6 +32,11 @@ public class VolatileCounterConfigurationStorage implements CounterConfiguration
    }
 
    @Override
+   public void remove(String name) {
+
+   }
+
+   @Override
    public void validatePersistence(CounterConfiguration configuration) {
       if (configuration.storage() == Storage.PERSISTENT) {
          throw log.invalidPersistentStorageMode();

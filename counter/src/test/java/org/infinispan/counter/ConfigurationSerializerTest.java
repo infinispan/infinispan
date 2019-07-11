@@ -8,11 +8,18 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.JsonReader;
+import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -20,9 +27,12 @@ import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTe
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
+import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
 import org.infinispan.counter.configuration.Reliability;
 import org.infinispan.counter.configuration.StrongCounterConfiguration;
+import org.infinispan.counter.configuration.StrongCounterConfigurationBuilder;
 import org.infinispan.counter.configuration.WeakCounterConfiguration;
+import org.infinispan.counter.configuration.WeakCounterConfigurationBuilder;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -73,6 +83,35 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
          fail("Expected exception. " + holder);
       } catch (CacheConfigurationException | CounterConfigurationException e) {
          log.debug("Expected exception", e);
+      }
+   }
+
+   @Test(dataProvider = "configurationFiles")
+   public void jsonSerializationTest(Path config) throws Exception {
+      JsonWriter jsonWriter = new JsonWriter();
+      Properties properties = new Properties();
+      properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(config.toString(), Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holderBefore = registry.parse(url);
+      CounterManagerConfigurationBuilder counterManagerConfigurationBuilder = (CounterManagerConfigurationBuilder) holderBefore.getGlobalConfigurationBuilder().modules().iterator().next();
+      JsonReader jsonReader = new JsonReader();
+      CounterManagerConfiguration confBefore = counterManagerConfigurationBuilder.create();
+      List<AbstractCounterConfiguration> counters = confBefore.counters();
+      for (AbstractCounterConfiguration beforeConf : counters) {
+         String json = jsonWriter.toJSON(beforeConf);
+         if (beforeConf instanceof StrongCounterConfiguration) {
+            StrongCounterConfigurationBuilder builder = new StrongCounterConfigurationBuilder(counterManagerConfigurationBuilder);
+            jsonReader.readJson(builder, json);
+            StrongCounterConfiguration confAfter = builder.create();
+            assertSameStrongCounterConfiguration(confAfter, beforeConf);
+         }
+         if (beforeConf instanceof WeakCounterConfiguration) {
+            WeakCounterConfigurationBuilder builder = new WeakCounterConfigurationBuilder(counterManagerConfigurationBuilder);
+            jsonReader.readJson(builder, json);
+            WeakCounterConfiguration confAfter = builder.create();
+            assertSameWeakCounterConfiguration(confAfter, beforeConf);
+         }
       }
    }
 

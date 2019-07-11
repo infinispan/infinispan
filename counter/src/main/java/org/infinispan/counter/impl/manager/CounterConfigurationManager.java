@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -137,6 +138,17 @@ public class CounterConfigurationManager {
                         }
                      });
             });
+   }
+
+   /**
+    * Remove a configuration
+    *
+    * @param name the name of the counter
+    *
+    * @return true if the configuration was removed
+    */
+   CompletableFuture<Boolean> removeConfiguration(String name) {
+      return stateCache.removeAsync(stateKey(name)).thenApply(Objects::nonNull);
    }
 
    /**
