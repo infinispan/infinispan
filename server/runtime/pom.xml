@@ -18,6 +18,8 @@
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <defaultTestGroup />
       <defaultExcludedTestGroup />
+      <server.output.dir>${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
+      <server.test.lib.dir>${project.build.directory}/testlibs</server.test.lib.dir>
    </properties>
 
    <dependencies>
@@ -68,6 +70,11 @@
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-tcnative</artifactId>
+         <classifier>linux-x86_64</classifier>
+      </dependency>
       <!-- Test dependencies -->
       <dependency>
          <groupId>junit</groupId>
@@ -105,6 +112,12 @@
          <artifactId>apacheds-all</artifactId>
          <scope>test</scope>
       </dependency>
+      <!-- Database test dependencies -->
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -134,8 +147,8 @@
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               <groups combine.self="override"></groups>
-               <excludedGroups combine.self="override"></excludedGroups>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override"/>
                <testNGArtifactName>none:none</testNGArtifactName>
                <parallel>classes</parallel>
                <properties>
@@ -167,7 +180,7 @@
                   <configuration>
                      <target>
                         <property name="output.dir"
-                                  value="${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}"/>
+                                  value="${server.output.dir}"/>
                         <ant antfile="build.xml" inheritRefs="true">
                            <target name="clean"/>
                         </ant>
@@ -184,10 +197,13 @@
                      <target>
                         <property name="compile_classpath" refid="maven.compile.classpath"/>
                         <property name="output.dir"
-                                  value="${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}"/>
+                                  value="${server.output.dir}"/>
                         <property name="server.dir"
                                   value="${project.basedir}/src/main/server"/>
+                        <property name="test.lib.dir"
+                                  value="${server.test.lib.dir}"/>
                         <dependencyfilesets scopes="compile"/>
+                        <dependencyfilesets scopes="test" projectDependenciesId="maven.test.dependencies"/>
                         <ant antfile="build.xml" inheritRefs="true">
                            <target name="build"/>
                         </ant>
@@ -196,7 +212,70 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override"/>
+               <parallel>methods</parallel>
+               <threadCount>${infinispan.test.parallel.threads}</threadCount>
+               <forkCount>1</forkCount>
+               <reuseForks>true</reuseForks>
+               <disableXmlReport>true</disableXmlReport>
+               <useFile>false</useFile>
+               <systemPropertyVariables>
+                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                  <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
+                  <jgroups.join_timeout>2000</jgroups.join_timeout>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                  <build.directory>${project.build.directory}</build.directory>
+                  <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
+
+                  <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
+                  <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                  <ansi.strip>${ansi.strip}</ansi.strip>
+                  <!-- Log the correct thread name after we call Thread.setName(),
+                       see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
+                  <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
+               </systemPropertyVariables>
+               <trimStackTrace>false</trimStackTrace>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <properties>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+               </properties>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dserver.output.dir=${server.output.dir} -Djdk.attach.allowAttachSelf=true</argLine>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>container</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dserver.output.dir=${server.output.dir} -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER</argLine>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
 

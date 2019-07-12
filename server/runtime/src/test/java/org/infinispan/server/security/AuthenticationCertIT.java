@@ -11,17 +11,19 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
+import org.infinispan.server.test.category.Security;
 import org.infinispan.test.Exceptions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-
-public class AuthenticationCertTest {
+@Category(Security.class)
+public class AuthenticationCertIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/AuthenticationServerTrustTest.xml"));

@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -22,8 +23,10 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import javax.management.MBeanServerConnection;
 import javax.security.auth.x500.X500Principal;
 
 import org.infinispan.commons.util.Util;
@@ -40,15 +43,18 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  * @since 10.0
  **/
 public abstract class InfinispanServerDriver {
+   public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
    public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
 
    protected final InfinispanServerTestConfiguration configuration;
+   protected final InetAddress testHostAddress;
    private File confDir;
    private ComponentStatus status;
 
-   protected InfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
+   protected InfinispanServerDriver(InfinispanServerTestConfiguration configuration, InetAddress testHostAddress) {
       this.configuration = configuration;
+      this.testHostAddress = testHostAddress;
       this.status = ComponentStatus.INSTANTIATED;
    }
 
@@ -95,14 +101,26 @@ public abstract class InfinispanServerDriver {
       status = ComponentStatus.TERMINATED;
    }
 
+   protected static File createServerHierarchy(File baseDir) {
+      return createServerHierarchy(baseDir, null, null);
+   }
+
    protected static File createServerHierarchy(File baseDir, String name) {
+      return createServerHierarchy(baseDir, name, null);
+   }
+
+   protected static File createServerHierarchy(File baseDir, String name, BiConsumer<File, String> consumer) {
       File rootDir = name == null ? baseDir : new File(baseDir, name);
       for (String dir : Arrays.asList(
             Server.DEFAULT_SERVER_DATA,
             Server.DEFAULT_SERVER_LOG,
             Server.DEFAULT_SERVER_LIB)
       ) {
-         new File(rootDir, dir).mkdirs();
+         File d = new File(rootDir, dir);
+         d.mkdirs();
+         if (consumer != null) {
+            consumer.accept(d, dir);
+         }
       }
       return rootDir;
    }
@@ -244,4 +262,34 @@ public abstract class InfinispanServerDriver {
     * @return an unresolved InetSocketeAddress pointing to the actual running service
     */
    public abstract InetSocketAddress getServerAddress(int server, int port);
+
+   /**
+    * Pauses the server. Equivalent to kill -SIGSTOP
+    * @param server
+    */
+   public void pause(int server) {}
+
+   /**
+    * Resumes a paused server. Equivalent to kill -SIGCONT
+    * @param server
+    */
+   public abstract void resume(int server);
+
+   /**
+    * Gracefully stops a running server
+    * @param server
+    */
+   public abstract void stop(int server);
+
+   /**
+    * Forcefully stops a server. Equivalent to kill -SIGKILL
+    * @param server
+    */
+   public abstract void kill(int server);
+
+   /**
+    * Returns a {@link MBeanServerConnection} to the specified server
+    * @param server the index of the server
+    */
+   public abstract MBeanServerConnection getJmxConnection(int server);
 }

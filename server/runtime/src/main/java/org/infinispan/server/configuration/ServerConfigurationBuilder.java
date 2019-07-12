@@ -42,6 +42,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       try {
          T builder = klass.getConstructor().newInstance();
          this.connectors.add(builder);
+         this.endpoint.applyConfigurationToProtocol(builder);
          return builder;
       } catch (Exception e) {
          throw Server.log.cannotInstantiateProtocolServerConfigurationBuilder(klass, e);

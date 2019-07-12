@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.logging.LogManager;
 
@@ -51,17 +52,18 @@ public class Bootstrap {
             if (command.length() != 2) {
                stdErr.println(Messages.MSG.invalidShortArgument(command));
                exitHandler.exit(1);
+               return;
             }
          } else {
             stdErr.println(Messages.MSG.invalidArgument(command));
             exitHandler.exit(1);
+            return;
          }
          switch (command) {
             case "-h":
             case "--help":
                help(stdOut, true);
-               exitHandler.exit(0);
-               break;
+               return;
             case "-c":
                parameter = args[++i];
                // Fall through
@@ -94,17 +96,20 @@ public class Bootstrap {
             case "--version":
                help(stdOut, false);
                exitHandler.exit(0);
-               break;
+               return;
             default:
                stdErr.println(Messages.MSG.unknownArgument(args[i]));
                exitHandler.exit(1);
-               break;
+               return;
          }
       }
 
       File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
-      if (configurationFile == null)
+      if (configurationFile == null) {
          configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
+      } else if (!configurationFile.isAbsolute()) {
+         configurationFile = Paths.get(confDir.getPath(), configurationFile.getPath()).toFile();
+      }
       File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
       properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, logDir.getAbsolutePath());
 

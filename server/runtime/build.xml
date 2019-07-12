@@ -14,6 +14,9 @@
          <fileset refid="maven.project.dependencies"/>
          <fileset file="${project.build.directory}/${project.artifactId}-${project.version}.jar"/>
       </copy>
+      <copy todir="${test.lib.dir}" flatten="true">
+         <fileset refid="maven.test.dependencies"/>
+      </copy>
    </target>
 
    <target name="default">

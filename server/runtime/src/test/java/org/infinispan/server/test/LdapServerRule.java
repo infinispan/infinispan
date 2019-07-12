@@ -105,7 +105,7 @@ public class LdapServerRule implements TestRule {
       directoryService = DSAnnotationProcessor.getDirectoryService();
    }
 
-   @CreateLdapServer(transports = {@CreateTransport(protocol = "LDAP", port = LDAP_PORT)})
+   @CreateLdapServer(transports = {@CreateTransport(protocol = "LDAP", port = LDAP_PORT, address = "0.0.0.0")})
    public void createLdap() throws Exception {
 
       final SchemaManager schemaManager = directoryService.getSchemaManager();
@@ -119,11 +119,10 @@ public class LdapServerRule implements TestRule {
 
       final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
       ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
+      ldapServer.setKeystoreFile(infinispanServerRule.getServerDriver().getCertificateFile("server").getAbsolutePath());
+      ldapServer.setCertificatePassword(InfinispanServerDriver.KEY_PASSWORD);
       Transport ldaps = new TcpTransport(LDAPS_PORT);
       ldaps.enableSSL(true);
       ldapServer.addTransports(ldaps);
-
-      ldapServer.setKeystoreFile(infinispanServerRule.getServerDriver().getCertificateFile("server").getAbsolutePath());
-      ldapServer.setCertificatePassword(InfinispanServerDriver.KEY_PASSWORD);
    }
 }

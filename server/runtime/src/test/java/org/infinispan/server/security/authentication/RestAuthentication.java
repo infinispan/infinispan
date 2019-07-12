@@ -12,9 +12,11 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.security.Common;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
+import org.infinispan.server.test.category.Security;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -24,10 +26,11 @@ import org.junit.runners.Parameterized;
  **/
 
 @RunWith(Parameterized.class)
+@Category(Security.class)
 public class RestAuthentication {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = AuthenticationTests.SERVERS;
+   public static InfinispanServerRule SERVERS = AuthenticationIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);

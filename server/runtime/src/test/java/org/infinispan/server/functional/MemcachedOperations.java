@@ -17,13 +17,13 @@ import net.spy.memcached.MemcachedClient;
 public class MemcachedOperations {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredTests.SERVERS;
+   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
-   public void testOperations() {
+   public void testMemcachedOperations() {
       MemcachedClient cache = SERVER_TEST.getMemcachedClient();
       cache.set("k1", 0, "v1");
       assertEquals("v1", cache.get("k1"));

@@ -18,19 +18,11 @@
            thread_pool.keep_alive_time="60000"
    />
 
-   <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
-
-   <!-- Ergonomics, new in JGroups 2.11, are disabled by default until JGRP-1253 is resolved -->
-   <!--<TCPPING timeout="3000"-->
-   <!--initial_hosts="localhost[7800]"-->
-   <!--port_range="3"-->
-   <!--ergonomics="false"-->
-   <!--/>-->
-
-   <!--<MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"-->
-   <!--mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"-->
-   <!--mcast_port="${jgroups.mping.mcast_port:43366}"-->
-   <!--ip_ttl="2" num_initial_members="3"/>-->
+   <MPING bind_addr="${jgroups.tcp.address:127.0.0.1}"
+          mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
+          mcast_port="${jgroups.mping.mcast_port:43366}"
+          ip_ttl="${jgroups.udp.ip_ttl:2}"
+   />
 
    <MERGE3 min_interval="1000" max_interval="5000"/>
 

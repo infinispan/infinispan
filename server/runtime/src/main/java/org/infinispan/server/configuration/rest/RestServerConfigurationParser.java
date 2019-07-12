@@ -79,7 +79,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
       RestServerConfigurationBuilder builder = serverBuilder.addConnector(RestServerConfigurationBuilder.class);
-      boolean hasSocketBinding = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -115,8 +114,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
+               // TODO: check that the socket binding is different from the single-port endpoint
                serverBuilder.applySocketBinding(value, builder);
-               hasSocketBinding = true;
+               builder.startTransport(true);
                break;
             }
             default: {
@@ -143,10 +143,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
          }
 
-      }
-      if (!hasSocketBinding) {
-         // This connector will be part of the single port router
-         builder.startTransport(false);
       }
    }
 

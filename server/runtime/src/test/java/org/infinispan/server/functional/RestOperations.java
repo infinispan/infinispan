@@ -19,13 +19,13 @@ import org.junit.Test;
 public class RestOperations {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredTests.SERVERS;
+   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
-   public void testOperations() {
+   public void testRestOperations() {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
       String cache = SERVER_TEST.getMethodName();
       RestResponse response = sync(client.put(cache, "k1", "v1"));
