@@ -1,4 +1,4 @@
-package org.infinispan.server.configuration;
+package org.infinispan.server.unit.configuration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -15,6 +15,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;

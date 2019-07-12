@@ -60,6 +60,9 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
 
    private void parseMemcached(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, MemcachedServerConfigurationBuilder builder)
          throws XMLStreamException {
+      String[] required = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING);
+      serverBuilder.applySocketBinding(required[0], builder);
+      builder.startTransport(true);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -80,10 +83,9 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
                builder.name(value);
                break;
             }
-            case SOCKET_BINDING: {
-               serverBuilder.applySocketBinding(value, builder);
+            case SOCKET_BINDING:
+               // Already seen
                break;
-            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

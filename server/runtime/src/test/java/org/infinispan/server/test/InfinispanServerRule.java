@@ -61,11 +61,11 @@ public class InfinispanServerRule implements TestRule {
                TestResourceTracker.testStarted(testName);
             }
             boolean manageServer = serverDriver.getStatus() == ComponentStatus.INSTANTIATED;
-            if (manageServer) {
-               serverDriver.before(testName);
-            }
-            InfinispanServerRule.this.before(testName);
             try {
+               if (manageServer) {
+                  serverDriver.before(testName);
+               }
+               InfinispanServerRule.this.before(testName);
                base.evaluate();
             } finally {
                InfinispanServerRule.this.after(testName);

@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.endpoint;
 
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
@@ -71,5 +72,15 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
    @Override
    public SinglePortRouterBuilder singlePort() {
       return singlePortRouter;
+   }
+
+   public void applyConfigurationToProtocol(ProtocolServerConfigurationBuilder builder) {
+      if (attributes.attribute(ProtocolServerConfiguration.HOST).isModified()) {
+         builder.host(attributes.attribute(ProtocolServerConfiguration.HOST).get());
+      }
+      if (attributes.attribute(ProtocolServerConfiguration.PORT).isModified()) {
+         builder.port(attributes.attribute(ProtocolServerConfiguration.PORT).get());
+      }
+      builder.startTransport(false);
    }
 }

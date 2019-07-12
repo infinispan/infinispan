@@ -139,7 +139,7 @@ public class NetworkAddress {
       throw new CacheConfigurationException("No matching addresses found");
    }
 
-   static NetworkInterface findInterface(Predicate<NetworkInterface> matcher) {
+   private static NetworkInterface findInterface(Predicate<NetworkInterface> matcher) {
       try {
          for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
             NetworkInterface networkInterface = interfaces.nextElement();

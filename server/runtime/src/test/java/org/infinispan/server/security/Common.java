@@ -37,11 +37,13 @@ public class Common {
       SASL_MECHS = new ArrayList<>();
       SASL_MECHS.add(new Object[] { "" });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.PLAIN });
+
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.DIGEST_MD5 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.DIGEST_SHA_512 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.DIGEST_SHA_384 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.DIGEST_SHA_256 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.DIGEST_SHA });
+
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.SCRAM_SHA_512 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.SCRAM_SHA_384 });
       SASL_MECHS.add(new Object[] { SaslMechanismInformation.Names.SCRAM_SHA_256 });

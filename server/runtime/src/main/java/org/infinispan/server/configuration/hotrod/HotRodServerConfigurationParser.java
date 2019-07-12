@@ -64,7 +64,6 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
 
    private void parseHotRodConnector(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder)
          throws XMLStreamException {
-      boolean hasSocketBinding = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -83,8 +82,9 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
+               // TODO: check that the socket binding is different from the single-port endpoint
                serverBuilder.applySocketBinding(value, builder);
-               hasSocketBinding = true;
+               builder.startTransport(true);
                break;
             }
             default: {
@@ -111,10 +111,6 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
-      }
-      if (!hasSocketBinding) {
-         // This connector will be part of the single port router
-         builder.startTransport(false);
       }
    }
 

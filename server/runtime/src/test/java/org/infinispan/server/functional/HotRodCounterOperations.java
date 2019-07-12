@@ -7,8 +7,8 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.api.SyncWeakCounter;
-import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.InfinispanServerRule;
+import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,10 +17,10 @@ import org.junit.Test;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class CounterOperations {
+public class HotRodCounterOperations {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredTests.SERVERS;
+   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -28,6 +28,7 @@ public class CounterOperations {
    @Test
    public void testCounters() {
       CounterManager counterManager = SERVER_TEST.getCounterManager();
+
       counterManager.defineCounter("c1", CounterConfiguration.builder(CounterType.BOUNDED_STRONG)
             .upperBound(10)
             .initialValue(1)

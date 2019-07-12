@@ -1,12 +1,15 @@
 package org.infinispan.server.test;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import javax.management.MBeanServerConnection;
 
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
@@ -24,7 +27,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    List<CompletableFuture<Integer>> serverFutures;
 
    protected EmbeddedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
-      super(configuration);
+      super(configuration, InetAddress.getLoopbackAddress());
    }
 
    @Override
@@ -37,6 +40,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
          properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, new File(rootDir, Server.DEFAULT_SERVER_CONFIG).getAbsolutePath());
          properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
+         properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
          Server server = new Server(serverRoot, new File(configurationFile), properties);
          server.setExitHandler(new DefaultExitHandler());
          serverFutures.add(server.run());
@@ -44,24 +48,54 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
       }
       // Ensure that the cluster has formed
       List<DefaultCacheManager> cacheManagers = servers.stream().map(server -> server.getCacheManagers().values().iterator().next()).collect(Collectors.toList());
-      TestingUtil.blockUntilViewsReceived(10_000, cacheManagers.toArray(new CacheContainer[]{}));
+      TestingUtil.blockUntilViewsReceived(30_000, cacheManagers.toArray(new CacheContainer[]{}));
    }
 
    @Override
    protected void stop() {
+      RuntimeException aggregate = new RuntimeException();
       for (int i = 0; i < servers.size(); i++) {
          Server server = servers.get(i);
          server.getExitHandler().exit(0);
          try {
             serverFutures.get(i).get();
          } catch (Throwable t) {
-            throw new RuntimeException(t);
+            aggregate.addSuppressed(t);
          }
+      }
+      if (aggregate.getSuppressed().length > 0) {
+         throw aggregate;
       }
    }
 
    @Override
    public InetSocketAddress getServerAddress(int server, int port) {
-      return InetSocketAddress.createUnresolved("localhost", port + server * OFFSET_FACTOR);
+      return new InetSocketAddress("localhost", port + server * OFFSET_FACTOR);
+   }
+
+   @Override
+   public void pause(int server) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void resume(int server) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void stop(int server) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void kill(int server) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public MBeanServerConnection getJmxConnection(int server) {
+      DefaultCacheManager cacheManager = servers.get(server).getCacheManagers().values().iterator().next();
+      return cacheManager.getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup().getMBeanServer();
    }
 }

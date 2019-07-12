@@ -87,7 +87,7 @@ public interface ConfigurationChildBuilder {
    ConnectionPoolConfigurationBuilder connectionPool();
 
    /**
-    * This property defines the maximum socket connect timeout before giving up connecting to the
+    * This property defines the maximum socket connect timeout in milliseconds before giving up connecting to the
     * server.
     */
    ConfigurationBuilder connectionTimeout(int connectionTimeout);

@@ -1,7 +1,7 @@
-Infinispan ServerNG
-====================
+Infinispan Server
+===================
 
-Infinispan ServerNG is a reboot of Infinispan's server which addresses the following:
+Infinispan Server is a reboot of Infinispan's server which addresses the following:
 
 * small codebase with as little duplication of already existing functionality (e.g. configuration)
 * embeddable: the server should allow for easy testability in both single and clustered configurations

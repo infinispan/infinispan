@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.MBeanServerConnection;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.counter.api.CounterManager;
@@ -47,7 +50,7 @@ public class InfinispanServerTestMethodRule implements TestRule {
          public void evaluate() throws Throwable {
             before();
             try {
-               methodName = description.getMethodName();
+               methodName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
                base.evaluate();
             } finally {
                after();
@@ -73,17 +76,22 @@ public class InfinispanServerTestMethodRule implements TestRule {
       return getHotRodCache(new ConfigurationBuilder(), mode);
    }
 
-   public <K, V> RemoteCache<K, V> getHotRodCache(ConfigurationBuilder builder, CacheMode mode) {
-      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(builder));
-      return remoteCacheManager.administration().getOrCreateCache(methodName, "org.infinispan." + mode.name());
+   public <K, V> RemoteCache<K, V> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder, CacheMode cacheMode) {
+      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
+      return remoteCacheManager.administration().getOrCreateCache(methodName, "org.infinispan." + cacheMode.name());
+   }
+
+   public <K, V> RemoteCache<K, V> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder, BasicConfiguration cacheConfiguration) {
+      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
+      return remoteCacheManager.administration().getOrCreateCache(methodName, cacheConfiguration);
    }
 
    public RestClient getRestClient(CacheMode mode) {
       return getRestClient(new RestClientConfigurationBuilder(), mode);
    }
 
-   public RestClient getRestClient(RestClientConfigurationBuilder builder, CacheMode mode) {
-      RestClient restClient = registerResource(infinispanServerRule.newRestClient(builder));
+   public RestClient getRestClient(RestClientConfigurationBuilder clientConfigurationBuilder, CacheMode mode) {
+      RestClient restClient = registerResource(infinispanServerRule.newRestClient(clientConfigurationBuilder));
       Exceptions.unchecked(() -> restClient.createCacheFromTemplate(methodName, "org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
       return restClient;
    }
@@ -95,5 +103,9 @@ public class InfinispanServerTestMethodRule implements TestRule {
 
    public MemcachedClient getMemcachedClient() {
       return registerResource(infinispanServerRule.newMemcachedClient()).getClient();
+   }
+
+   public MBeanServerConnection getJmxConnection(int server) {
+      return infinispanServerRule.getServerDriver().getJmxConnection(server);
    }
 }

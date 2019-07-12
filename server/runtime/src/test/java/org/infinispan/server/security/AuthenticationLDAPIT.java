@@ -11,9 +11,12 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
+import org.infinispan.server.test.LdapServerRule;
+import org.infinispan.server.test.category.Security;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -23,10 +26,13 @@ import org.junit.runners.Parameterized;
  **/
 
 @RunWith(Parameterized.class)
-public class AuthenticationTLSTest {
+@Category(Security.class)
+public class AuthenticationLDAPIT {
+   @ClassRule
+   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/AuthenticationLDAPTest.xml"));
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/AuthenticationServerTLSTest.xml"));
+   public static LdapServerRule LDAP = new LdapServerRule(SERVERS);
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -38,21 +44,20 @@ public class AuthenticationTLSTest {
       return Common.SASL_MECHS;
    }
 
-   public AuthenticationTLSTest(String mechanism) {
+   public AuthenticationLDAPIT(String mechanism) {
       this.mechanism = mechanism;
    }
 
    @Test
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.security().ssl().trustStoreFileName(SERVERS.getServerDriver().getCertificateFile("ca").getAbsolutePath()).trustStorePassword("secret".toCharArray());
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
                .saslMechanism(mechanism)
                .serverName("infinispan")
                .realm("default")
-               .username("all_user")
-               .password("all");
+               .username("admin")
+               .password("strongPassword");
       }
 
       try {
