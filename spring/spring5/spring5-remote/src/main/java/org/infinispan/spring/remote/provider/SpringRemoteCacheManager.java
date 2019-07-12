@@ -47,11 +47,13 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     */
    @Override
    public SpringCache getCache(final String name) {
-      return springCaches.computeIfAbsent(name, n -> {
-         final RemoteCache<Object, Object> nativeCache = this.nativeCacheManager.getCache(name);
+      final RemoteCache<Object, Object> nativeCache = this.nativeCacheManager.getCache(name);
+      if (nativeCache == null) {
+         springCaches.remove(name);
+         return null;
+      }
 
-         return new SpringCache(nativeCache, readTimeout, writeTimeout);
-      });
+      return springCaches.computeIfAbsent(name, n -> new SpringCache(nativeCache, readTimeout, writeTimeout));
    }
 
    /**
