@@ -4,7 +4,7 @@ include::topics/attributes/community-attributes.adoc[]
 // Images directory attribute.
 :images_dir: images
 
-= Managing {brandname} {infinispanversion}
+= Managing Data with {brandname} {infinispanversion}
 :toc2:
 :icons: font
 :toclevels: 3
