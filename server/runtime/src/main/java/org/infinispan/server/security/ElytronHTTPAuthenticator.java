@@ -73,6 +73,9 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                return requestAdapter.getResponse();
             } else {
                String mechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
+               if ("BEARER".equals(mechName)) {
+                  mechName = "BEARER_TOKEN";
+               }
                HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
                mechanism.evaluateRequest(requestAdapter);
                SecurityIdentity securityIdentity = (SecurityIdentity) mechanism.getNegotiatedProperty(SECURITY_IDENTITY);

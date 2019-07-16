@@ -11,8 +11,11 @@ public enum Attribute {
    UNKNOWN(null), // must be first
 
    CACHE_CONTAINER,
-   SOCKET_BINDING,
-   IDLE_TIMEOUT(), IO_THREADS(), NAME();
+   IDLE_TIMEOUT,
+   IO_THREADS,
+   NAME,
+   SOCKET_BINDING
+   ;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

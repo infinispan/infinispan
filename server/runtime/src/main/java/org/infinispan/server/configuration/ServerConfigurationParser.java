@@ -35,6 +35,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.security.HostnameVerificationPolicy;
 import org.infinispan.server.security.KeyStoreUtils;
+import org.infinispan.server.security.KeycloakRoleDecoder;
 import org.infinispan.server.security.realm.KerberosSecurityRealm;
 import org.infinispan.server.security.realm.PropertiesSecurityRealm;
 import org.kohsuke.MetaInfServices;
@@ -297,7 +298,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                parseServerIdentitities(reader, sslContextBuilder);
                break;
             case TOKEN_REALM:
-               parseTokenRealm(reader, domainBuilder);
+               parseTokenRealm(reader, builder, domainBuilder);
                break;
             case TRUSTSTORE_REALM:
                parseTrustStoreRealm(reader, sslContextBuilder);
@@ -356,7 +357,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    }
 
-   private void parseTokenRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
+   private void parseTokenRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
       String name = "token";
       TokenSecurityRealm.Builder tokenRealmBuilder = TokenSecurityRealm.builder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -378,19 +379,19 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case JWT:
-               parseJWT(reader, tokenRealmBuilder);
+               parseJWT(reader, serverBuilder, tokenRealmBuilder);
                break;
             case OAUTH2_INTROSPECTION:
-               parseOauth2Introspection(reader, tokenRealmBuilder);
+               parseOauth2Introspection(reader, serverBuilder, tokenRealmBuilder);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
       }
-      domainBuilder.addRealm(name, tokenRealmBuilder.build()).build();
+      domainBuilder.addRealm(name, tokenRealmBuilder.build()).setRoleDecoder(new KeycloakRoleDecoder()).build();
    }
 
-   private void parseJWT(XMLExtendedStreamReader reader, TokenSecurityRealm.Builder tokenRealmBuilder) throws XMLStreamException {
+   private void parseJWT(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, TokenSecurityRealm.Builder tokenRealmBuilder) throws XMLStreamException {
       JwtValidator.Builder builder = JwtValidator.builder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -406,6 +407,15 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case PUBLIC_KEY:
                builder.publicKey(value.getBytes(StandardCharsets.UTF_8));
                break;
+            case JKU_TIMEOUT:
+               builder.setJkuTimeout(Long.parseLong(value));
+               break;
+            case CLIENT_SSL_CONTEXT:
+               builder.useSslContext(serverBuilder.getSSLContext(value));
+               break;
+            case HOST_NAME_VERIFICATION_POLICY:
+               builder.useSslHostnameVerifier(HostnameVerificationPolicy.valueOf(value).getVerifier());
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -414,27 +424,27 @@ public class ServerConfigurationParser implements ConfigurationParser {
       tokenRealmBuilder.validator(builder.build());
    }
 
-   private void parseOauth2Introspection(XMLExtendedStreamReader reader, TokenSecurityRealm.Builder tokenRealmBuilder) throws XMLStreamException {
+   private void parseOauth2Introspection(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, TokenSecurityRealm.Builder tokenRealmBuilder) throws XMLStreamException {
       OAuth2IntrospectValidator.Builder builder = OAuth2IntrospectValidator.builder();
+      String[] required = ParseUtils.requireAttributes(reader, Attribute.CLIENT_ID, Attribute.CLIENT_SECRET, Attribute.INTROSPECTION_URL);
+      try {
+         builder.clientId(required[0]).clientSecret(required[1]).tokenIntrospectionUrl(new URL(required[2]));
+      } catch (MalformedURLException e) {
+         throw new XMLStreamException(e);
+      }
+
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CLIENT_ID:
-               builder.clientId(value);
-               break;
             case CLIENT_SECRET:
-               builder.clientSecret(value);
-               break;
             case INTROSPECTION_URL:
-               try {
-                  builder.tokenIntrospectionUrl(new URL(value));
-               } catch (MalformedURLException e) {
-                  throw new XMLStreamException(e);
-               }
+               // Already seen
                break;
             case CLIENT_SSL_CONTEXT:
+               builder.useSslContext(serverBuilder.getSSLContext(value));
                break;
             case HOST_NAME_VERIFICATION_POLICY:
                builder.useSslHostnameVerifier(HostnameVerificationPolicy.valueOf(value).getVerifier());
@@ -614,8 +624,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseLocalRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
       String name = "local";
-
-
 
       ParseUtils.requireNoContent(reader);
       if (domainBuilder.getDefaultRealmName() == null) {

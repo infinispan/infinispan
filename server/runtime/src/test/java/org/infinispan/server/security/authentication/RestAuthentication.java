@@ -8,11 +8,13 @@ import java.util.Collection;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.security.Common;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.category.Security;
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,5 +68,11 @@ public class RestAuthentication {
          assertEquals(200, response.getStatus());
          assertEquals("v1", response.getBody());
       }
+   }
+
+   @AfterClass
+   public static void afterClass() {
+      // https://issues.jboss.org/browse/ELY-1843
+      ThreadLeakChecker.ignoreThreadsContaining("pool-.*");
    }
 }

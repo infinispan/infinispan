@@ -1,0 +1,12 @@
+<endpoints socket-binding="default">
+   <hotrod-connector name="hotrod">
+      <authentication security-realm="default">
+         <sasl mechanisms="OAUTHBEARER" server-name="infinispan">
+            <property name="com.sun.security.sasl.digest.realm">default</property>
+         </sasl>
+      </authentication>
+   </hotrod-connector>
+   <rest-connector name="rest">
+      <authentication security-realm="default" mechanisms="BEARER_TOKEN"/>
+   </rest-connector>
+</endpoints>

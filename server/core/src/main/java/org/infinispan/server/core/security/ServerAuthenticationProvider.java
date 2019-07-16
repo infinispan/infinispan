@@ -30,8 +30,8 @@ public interface ServerAuthenticationProvider {
     * @param mechanismProperties the mechanism properties that might need to be adjusted to support the specific
     *                            mechanism / callbackhandler combination
     * @return the callback handler or {@code null} if the mechanism is not supported
-    * @deprecated This method will no longer be invoked directly. Implement the
-    * {@link #createSaslServer(String, List, String, String, Map, ClassLoader)} method instead.
+    * @deprecated This method will no longer be invoked directly. Implement the {@link #createSaslServer(String, List,
+    * String, String, Map, ClassLoader)} method instead.
     */
    @Deprecated
    default AuthorizingCallbackHandler getCallbackHandler(String mechanismName, Map<String, String> mechanismProperties) {
@@ -42,8 +42,8 @@ public interface ServerAuthenticationProvider {
     * Create a SaslServer, to be used for a single authentication session, for the specified mechanismName. On
     * completion of the SASL authentication exchange, the SaslServer <b>MUST</b> provide a non-read-only negotiated
     * {@link javax.security.auth.Subject} when {@link SaslServer#getNegotiatedProperty(String)} is invoked with the
-    * {@link SubjectSaslServer#SUBJECT} property. The default implementation of this method wraps any matching
-    * {@link SaslServerFactory} with a {@link SubjectSaslServer} to transparently supply the resolved Subject.
+    * {@link SubjectSaslServer#SUBJECT} property. The default implementation of this method wraps any matching {@link
+    * SaslServerFactory} with a {@link SubjectSaslServer} to transparently supply the resolved Subject.
     *
     * @param mechanism  The non-null IANA-registered name of a SASL mechanism. (e.g. "GSSAPI", "CRAM-MD5").
     * @param principals Any principals which can be obtained before the authentication (e.g. TLS peer, remote network
@@ -60,11 +60,11 @@ public interface ServerAuthenticationProvider {
     *                   keys.
     * @return an instance of SaslServer (or null if it cannot be created)
     */
-      default SaslServer createSaslServer(String mechanism, List<Principal> principals, String protocol, String serverName, Map<String, String> props) throws SaslException {
+   default SaslServer createSaslServer(String mechanism, List<Principal> principals, String protocol, String serverName, Map<String, String> props) throws SaslException {
       AuthorizingCallbackHandler callbackHandler = getCallbackHandler(mechanism, props);
       if ("EXTERNAL".equals(mechanism)) {
          // Find the X500Principal among the supplied principals
-         for(Principal principal : principals) {
+         for (Principal principal : principals) {
             if (principal instanceof X500Principal) {
                ExternalSaslServerFactory factory = new ExternalSaslServerFactory((X500Principal) principal);
                SaslServer saslServer = factory.createSaslServer(mechanism, protocol, serverName, props, callbacks -> {

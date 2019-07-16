@@ -45,8 +45,40 @@
          <type>jar</type>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.wildfly.security</groupId>
+               <artifactId>*</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-remote</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-persistence-soft-index</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.wildfly.security</groupId>
+               <artifactId>*</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.jboss.threads</groupId>
@@ -67,6 +99,10 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>org.glassfish</groupId>
+         <artifactId>javax.json</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>
@@ -79,11 +115,6 @@
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -150,7 +181,7 @@
                <groups combine.self="override"/>
                <excludedGroups combine.self="override"/>
                <testNGArtifactName>none:none</testNGArtifactName>
-               <parallel>classes</parallel>
+               <parallel>methods</parallel>
                <properties>
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>

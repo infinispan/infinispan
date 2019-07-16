@@ -200,7 +200,7 @@ public class TestingUtil {
 
    public static void installNewView(Stream<Address> members, EmbeddedCacheManager... where) {
       installNewView(members, ecm -> {
-         Transport transport = ecm.getTransport();
+         Transport transport = ecm.getGlobalComponentRegistry().getComponent(Transport.class);
          while (Proxy.isProxyClass(transport.getClass())) {
             // Unwrap proxies created by the StateSequencer
             transport = extractField(extractField(transport, "h"), "wrappedInstance");
@@ -502,7 +502,7 @@ public class TestingUtil {
       for (CacheContainer cacheContainer : cacheContainers) {
          EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainer;
          if (cm.getMembers().size() != cacheContainers.length) {
-            incompleteViews.add(((JGroupsTransport) cm.getTransport()).getChannel().getView());
+            incompleteViews.add(((JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class)).getChannel().getView());
             log.warnf("Manager %s has an incomplete view: %s", cm.getAddress(), cm.getMembers());
          }
       }
@@ -1836,5 +1836,13 @@ public class TestingUtil {
       StreamAwareMarshaller marshaller = extractPersistenceMarshaller(cm);
       for (Object o : objects)
          marshaller.isMarshallable(o);
+   }
+
+   public static void copy(InputStream is, OutputStream os) throws IOException {
+      byte[] buffer = new byte[1024];
+      int length;
+      while ((length = is.read(buffer)) > 0) {
+         os.write(buffer, 0, length);
+      }
    }
 }

@@ -8,6 +8,10 @@ import org.asynchttpclient.BoundRequestBuilder;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.Realm;
+import org.asynchttpclient.Request;
+import org.asynchttpclient.RequestBuilder;
+import org.asynchttpclient.filter.FilterContext;
+import org.asynchttpclient.filter.RequestFilter;
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
@@ -35,12 +39,16 @@ public class RestClientAHC implements RestClient {
             .setSslContext(sslContext);
       AuthenticationConfiguration authentication = configuration.security().authentication();
       if (authentication.enabled()) {
-         Realm.Builder realmBuilder = new Realm.Builder(authentication.username(), new String(authentication.password()));
+         if ("Bearer".equalsIgnoreCase(authentication.mechanism())) {
+            builder.addRequestFilter(new AddHeaderRequestFilter("Authorization", "Bearer " + authentication.username()));
+         } else {
+            Realm.Builder realmBuilder = new Realm.Builder(authentication.username(), new String(authentication.password()));
 
-         realmBuilder
-               .setScheme(Realm.AuthScheme.valueOf(authentication.mechanism()))
-               .setRealmName(authentication.realm());
-         builder.setRealm(realmBuilder.build());
+            realmBuilder
+                  .setScheme(Realm.AuthScheme.valueOf(authentication.mechanism()))
+                  .setRealmName(authentication.realm());
+            builder.setRealm(realmBuilder.build());
+         }
       }
       httpClient = new DefaultAsyncHttpClient(builder.build());
       ServerConfiguration server = configuration.servers().get(0);
@@ -86,5 +94,23 @@ public class RestClientAHC implements RestClient {
 
    private CompletionStage<RestResponse> execute(BoundRequestBuilder request) {
       return request.execute().toCompletableFuture().thenApply(RestResponseAHC::new);
+   }
+
+   static class AddHeaderRequestFilter implements RequestFilter {
+      final String name;
+      final String value;
+
+      public AddHeaderRequestFilter(String name, String value) {
+         this.name = name;
+         this.value = value;
+      }
+
+      @Override
+      public <T> FilterContext<T> filter(FilterContext<T> ctx) {
+         Request request = ctx.getRequest();
+         RequestBuilder requestBuilder = new RequestBuilder(request);
+         requestBuilder.addHeader(name, value);
+         return new FilterContext.FilterContextBuilder<>(ctx).request(requestBuilder.build()).build();
+      }
    }
 }
