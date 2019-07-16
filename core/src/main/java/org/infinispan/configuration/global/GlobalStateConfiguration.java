@@ -1,10 +1,17 @@
 package org.infinispan.configuration.global;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 
@@ -15,45 +22,45 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
  * @author Tristan Tarrant
  * @since 8.1
  */
-public class GlobalStateConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable()
-         .build();
-   public static final AttributeDefinition<String> PERSISTENT_LOCATION = AttributeDefinition
-         .builder("persistentLocation", null, String.class)
-            .initializer(() -> SecurityActions.getSystemProperty("user.dir")).immutable().build();
-   public static final AttributeDefinition<String> SHARED_PERSISTENT_LOCATION = AttributeDefinition
-         .builder("sharedPersistentLocation", null, String.class)
-         .initializer(() -> SecurityActions.getSystemProperty("user.dir")).immutable().build();
-   public static final AttributeDefinition<String> TEMPORARY_LOCATION = AttributeDefinition
-         .builder("temporaryLocation", null, String.class)
-            .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir")).immutable().build();
-   public static final AttributeDefinition<ConfigurationStorage> CONFIGURATION_STORAGE = AttributeDefinition
-         .builder("configurationStorage", ConfigurationStorage.VOLATILE, ConfigurationStorage.class).autoPersist(false)
-         .immutable().build();
-   public static final AttributeDefinition<Supplier<? extends LocalConfigurationStorage>> CONFIGURATION_STORAGE_SUPPLIER = AttributeDefinition
-         .supplierBuilder("configurationStorageSupplier", LocalConfigurationStorage.class).autoPersist(false)
-         .immutable().build();
+public class GlobalStateConfiguration implements ConfigurationInfo {
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, SHARED_PERSISTENT_LOCATION, TEMPORARY_LOCATION, CONFIGURATION_STORAGE, CONFIGURATION_STORAGE_SUPPLIER);
+      return new AttributeSet(GlobalStateConfiguration.class, ENABLED);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.GLOBAL_STATE.getLocalName());
 
    private final AttributeSet attributes;
    private final Attribute<Boolean> enabled;
-   private final Attribute<String> persistentLocation;
-   private Attribute<String> sharedPersistentLocation;
-   private final Attribute<String> temporaryLocation;
-   private final Attribute<ConfigurationStorage> configurationStorage;
-   private final Attribute<Supplier<? extends LocalConfigurationStorage>> configurationStorageSupplier;
+   private final GlobalStatePathConfiguration persistenceLocationConfiguration;
+   private final GlobalStatePathConfiguration sharedPersistenceLocationConfiguration;
+   private final TemporaryGlobalStatePathConfiguration temporaryLocationConfiguration;
+   private final GlobalStorageConfiguration globalStorageConfiguration;
+   private final List<ConfigurationInfo> subElements = new ArrayList<>();
 
-   public GlobalStateConfiguration(AttributeSet attributes) {
+   public GlobalStateConfiguration(AttributeSet attributes,
+                                   GlobalStatePathConfiguration persistenceLocationConfiguration,
+                                   GlobalStatePathConfiguration sharedPersistenceLocationConfiguration,
+                                   TemporaryGlobalStatePathConfiguration temporaryLocationConfiguration,
+                                   GlobalStorageConfiguration globalStorageConfiguration) {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
-      this.persistentLocation = attributes.attribute(PERSISTENT_LOCATION);
-      this.sharedPersistentLocation = attributes.attribute(SHARED_PERSISTENT_LOCATION);
-      this.temporaryLocation = attributes.attribute(TEMPORARY_LOCATION);
-      this.configurationStorage = attributes.attribute(CONFIGURATION_STORAGE);
-      this.configurationStorageSupplier = attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER);
+      this.persistenceLocationConfiguration = persistenceLocationConfiguration;
+      this.sharedPersistenceLocationConfiguration = sharedPersistenceLocationConfiguration;
+      this.temporaryLocationConfiguration = temporaryLocationConfiguration;
+      this.globalStorageConfiguration = globalStorageConfiguration;
+      this.subElements.addAll(Arrays.asList(persistenceLocationConfiguration, sharedPersistenceLocationConfiguration, temporaryLocationConfiguration, globalStorageConfiguration));
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public boolean enabled() {
@@ -66,7 +73,12 @@ public class GlobalStateConfiguration {
     * application was started. Warning: this path must NOT be shared with other instances.
     */
    public String persistentLocation() {
-      return persistentLocation.get();
+      return persistenceLocationConfiguration.getLocation();
+   }
+
+
+   public GlobalStatePathConfiguration persistenceConfiguration() {
+      return persistenceLocationConfiguration;
    }
 
    /**
@@ -75,7 +87,11 @@ public class GlobalStateConfiguration {
     * application was started. This path may be shared among multiple instances.
     */
    public String sharedPersistentLocation() {
-      return sharedPersistentLocation.get();
+      return sharedPersistenceLocationConfiguration.getLocation();
+   }
+
+   public GlobalStatePathConfiguration sharedPersistenceConfiguration() {
+      return sharedPersistenceLocationConfiguration;
    }
 
    /**
@@ -83,18 +99,26 @@ public class GlobalStateConfiguration {
     * the java.io.tmpdir system property.
     */
    public String temporaryLocation() {
-      return temporaryLocation.get();
+      return temporaryLocationConfiguration.getLocation();
+   }
+
+   public TemporaryGlobalStatePathConfiguration temporaryLocationConfiguration() {
+      return temporaryLocationConfiguration;
    }
 
    public ConfigurationStorage configurationStorage() {
-      return configurationStorage.get();
+      return globalStorageConfiguration.configurationStorage();
+   }
+
+   public GlobalStorageConfiguration globalStorageConfiguration() {
+      return globalStorageConfiguration;
    }
 
    /**
     * Returns the {@link LocalConfigurationStorage} {@link Supplier}
     */
    public Supplier<? extends LocalConfigurationStorage> configurationStorageClass() {
-      return configurationStorageSupplier.get();
+      return globalStorageConfiguration.storageSupplier();
    }
 
    public AttributeSet attributes() {

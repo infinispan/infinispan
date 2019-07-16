@@ -50,8 +50,10 @@ import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
+import org.infinispan.configuration.global.GlobalStatePathConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.global.TemporaryGlobalStatePathConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
@@ -151,13 +153,13 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       for (DefaultThreadFactory threadFactory : threadFactories.values()) {
          writeThreadFactory(writer, threadFactory);
       }
-      writeThreadPool(writer, "async-pool", globalConfiguration.asyncThreadPool());
-      writeThreadPool(writer, "expiration-pool", globalConfiguration.expirationThreadPool());
-      writeThreadPool(writer, "listener-pool", globalConfiguration.listenerThreadPool());
-      writeThreadPool(writer, "persistence-pool", globalConfiguration.persistenceThreadPool());
-      writeThreadPool(writer, "state-transfer-pool", globalConfiguration.stateTransferThreadPool());
-      writeThreadPool(writer, "remote-command-pool", globalConfiguration.transport().remoteCommandThreadPool());
-      writeThreadPool(writer, "transport-pool", globalConfiguration.transport().transportThreadPool());
+      writeThreadPool(writer, globalConfiguration.asyncThreadPoolName(), globalConfiguration.asyncThreadPool());
+      writeThreadPool(writer, globalConfiguration.expirationThreadPoolName(), globalConfiguration.expirationThreadPool());
+      writeThreadPool(writer, globalConfiguration.listenerThreadPoolName(), globalConfiguration.listenerThreadPool());
+      writeThreadPool(writer, globalConfiguration.persistenceThreadPoolName(), globalConfiguration.persistenceThreadPool());
+      writeThreadPool(writer, globalConfiguration.stateTransferThreadPoolName(), globalConfiguration.stateTransferThreadPool());
+      writeThreadPool(writer, globalConfiguration.transport().remoteThreadPoolName(), globalConfiguration.transport().remoteCommandThreadPool());
+      writeThreadPool(writer, globalConfiguration.transport().transportThreadPoolName(), globalConfiguration.transport().transportThreadPool());
       writer.writeEndElement();
    }
 
@@ -199,21 +201,22 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          if (globalConfiguration.shutdown().hookBehavior() != ShutdownHookBehavior.DEFAULT) {
             writer.writeAttribute(Attribute.SHUTDOWN_HOOK, globalConfiguration.shutdown().hookBehavior().name());
          }
-         globalConfiguration.globalJmxStatistics().attributes().write(writer, GlobalJmxStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+         writer.writeAttribute(Attribute.STATISTICS, String.valueOf(globalConfiguration.globalJmxStatistics().enabled()));
+
          if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.ASYNC_EXECUTOR, "async-pool");
+            writer.writeAttribute(Attribute.ASYNC_EXECUTOR, globalConfiguration.asyncThreadPoolName());
          }
          if (globalConfiguration.expirationThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.EXPIRATION_EXECUTOR, "expiration-pool");
+            writer.writeAttribute(Attribute.EXPIRATION_EXECUTOR, globalConfiguration.expirationThreadPoolName());
          }
          if (globalConfiguration.listenerThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.LISTENER_EXECUTOR, "listener-pool");
+            writer.writeAttribute(Attribute.LISTENER_EXECUTOR, globalConfiguration.listenerThreadPoolName());
          }
          if (globalConfiguration.persistenceThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.PERSISTENCE_EXECUTOR, "persistence-pool");
+            writer.writeAttribute(Attribute.PERSISTENCE_EXECUTOR, globalConfiguration.persistenceThreadPoolName());
          }
          if (globalConfiguration.stateTransferThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, "state-transfer-pool");
+            writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, globalConfiguration.stateTransferThreadPoolName());
          }
          writeTransport(writer, globalConfiguration);
          writeSecurity(writer, globalConfiguration);
@@ -269,42 +272,42 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       GlobalStateConfiguration configuration = globalConfiguration.globalState();
       if (configuration.enabled()) {
          writer.writeStartElement(Element.GLOBAL_STATE);
-         if (configuration.attributes().attribute(GlobalStateConfiguration.PERSISTENT_LOCATION).isModified()) {
+
+         if (configuration.persistenceConfiguration().attributes().attribute(GlobalStatePathConfiguration.PATH).isModified()) {
             writer.writeStartElement(Element.PERSISTENT_LOCATION);
             writer.writeAttribute(Attribute.PATH, configuration.persistentLocation());
             writer.writeEndElement();
          }
-         if (configuration.attributes().attribute(GlobalStateConfiguration.SHARED_PERSISTENT_LOCATION).isModified()) {
+         if (configuration.sharedPersistenceConfiguration().attributes().attribute(GlobalStatePathConfiguration.PATH).isModified()) {
             writer.writeStartElement(Element.SHARED_PERSISTENT_LOCATION);
             writer.writeAttribute(Attribute.PATH, configuration.sharedPersistentLocation());
             writer.writeEndElement();
          }
-         if (configuration.attributes().attribute(GlobalStateConfiguration.TEMPORARY_LOCATION).isModified()) {
+         if (configuration.temporaryLocationConfiguration().attributes().attribute(TemporaryGlobalStatePathConfiguration.PATH).isModified()) {
             writer.writeStartElement(Element.TEMPORARY_LOCATION);
             writer.writeAttribute(Attribute.PATH, configuration.temporaryLocation());
             writer.writeEndElement();
          }
-         if (configuration.attributes().attribute(GlobalStateConfiguration.CONFIGURATION_STORAGE).isModified()) {
-            switch (configuration.configurationStorage()) {
-               case IMMUTABLE:
-                  writer.writeEmptyElement(Element.IMMUTABLE_CONFIGURATION_STORAGE);
-                  break;
-               case VOLATILE:
-                  writer.writeEmptyElement(Element.VOLATILE_CONFIGURATION_STORAGE);
-                  break;
-               case OVERLAY:
-                  writer.writeEmptyElement(Element.OVERLAY_CONFIGURATION_STORAGE);
-                  break;
-               case MANAGED:
-                  writer.writeEmptyElement(Element.MANAGED_CONFIGURATION_STORAGE);
-                  break;
-               case CUSTOM:
-                  writer.writeStartElement(Element.CUSTOM_CONFIGURATION_STORAGE);
-                  writer.writeAttribute(Attribute.CLASS, configuration.configurationStorageClass().get().getClass().getName());
-                  writer.writeEndElement();
-                  break;
-            }
+         switch (configuration.configurationStorage()) {
+            case IMMUTABLE:
+               writer.writeEmptyElement(Element.IMMUTABLE_CONFIGURATION_STORAGE);
+               break;
+            case VOLATILE:
+               writer.writeEmptyElement(Element.VOLATILE_CONFIGURATION_STORAGE);
+               break;
+            case OVERLAY:
+               writer.writeEmptyElement(Element.OVERLAY_CONFIGURATION_STORAGE);
+               break;
+            case MANAGED:
+               writer.writeEmptyElement(Element.MANAGED_CONFIGURATION_STORAGE);
+               break;
+            case CUSTOM:
+               writer.writeStartElement(Element.CUSTOM_CONFIGURATION_STORAGE);
+               writer.writeAttribute(Attribute.CLASS, configuration.configurationStorageClass().get().getClass().getName());
+               writer.writeEndElement();
+               break;
          }
+
          writer.writeEndElement();
       }
    }
@@ -404,10 +407,10 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             writer.writeAttribute(Attribute.STACK, properties.getProperty("stack"));
          }
          if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, "remote-command-pool");
+            writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, transport.remoteThreadPoolName());
          }
          if (transport.transportThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.EXECUTOR, "transport-pool");
+            writer.writeAttribute(Attribute.EXECUTOR, transport.transportThreadPoolName());
          }
          attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);

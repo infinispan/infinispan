@@ -1,8 +1,6 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.ALLOW_DUPLICATE_DOMAINS;
-import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.CACHE_MANAGER_NAME;
-import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.JMX_DOMAIN;
 import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.MBEAN_SERVER_LOOKUP;
 import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.PROPERTIES;
@@ -11,9 +9,9 @@ import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.jmx.MBeanServerLookup;
 
 /**
  * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.
@@ -73,9 +71,11 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * amongst other cache managers that might be running under the same JVM.
     *
     * @param cacheManagerName
+    * @Deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
     */
+   @Deprecated
    public GlobalJmxStatisticsConfigurationBuilder cacheManagerName(String cacheManagerName) {
-      attributes.attribute(CACHE_MANAGER_NAME).set(cacheManagerName);
+      getGlobalConfig().cacheContainer().name(cacheManagerName);
       return this;
    }
 
@@ -99,8 +99,12 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
       return this;
    }
 
+   /**
+    * Enables JMX statistics in the cache manager
+    * @deprecated Use {@link GlobalConfigurationBuilder#statistics(boolean)} instead
+    */
    public GlobalJmxStatisticsConfigurationBuilder enabled(boolean enabled) {
-      attributes.attribute(ENABLED).set(enabled);
+      getGlobalConfig().cacheContainer().statistics(enabled);
       return this;
    }
 
@@ -112,10 +116,10 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    @Override
    public
    GlobalJmxStatisticsConfiguration create() {
-      if (attributes.attribute(ENABLED).get() && attributes.attribute(MBEAN_SERVER_LOOKUP).isNull()) {
+      if (getGlobalConfig().cacheContainer().statistics() && attributes.attribute(MBEAN_SERVER_LOOKUP).isNull()) {
          mBeanServerLookup(new PlatformMBeanServerLookup());
       }
-      return new GlobalJmxStatisticsConfiguration(attributes.protect());
+      return new GlobalJmxStatisticsConfiguration(attributes.protect(), getGlobalConfig().cacheContainer().name(), getGlobalConfig().cacheContainer().statistics());
    }
 
    @Override

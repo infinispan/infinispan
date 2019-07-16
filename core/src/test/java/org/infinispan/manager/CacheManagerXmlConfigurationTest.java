@@ -7,12 +7,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.PrivilegedAction;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.security.Security;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -27,15 +30,27 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "manager.CacheManagerXmlConfigurationTest")
 public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm;
+   private Subject KING = TestingUtil.makeSubject("king");
 
    @AfterMethod
    public void tearDown() {
-      if (cm != null) cm.stop();
+      if (cm != null)
+         Security.doAs(KING, (PrivilegedAction<Void>) () -> {
+            cm.stop();
+            return null;
+         });
       cm =null;
    }
 
-   public void testNamedCacheXML() throws IOException {
-      cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml");
+   public void testNamedCacheXML() {
+      cm = Security.doAs(KING, (PrivilegedAction<EmbeddedCacheManager>) () -> {
+         try {
+            return TestCacheManagerFactory.fromXml("configs/named-cache-test.xml");
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+         return null;
+      });
 
       assertEquals("s1", cm.getCacheManagerConfiguration().transport().siteId());
       assertEquals("r1", cm.getCacheManagerConfiguration().transport().rackId());

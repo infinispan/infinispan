@@ -16,8 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import javax.xml.stream.XMLStreamConstants;
@@ -26,10 +26,6 @@ import javax.xml.stream.XMLStreamException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
-import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.GlobUtils;
@@ -61,8 +57,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
-import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
+import org.infinispan.configuration.global.ThreadsConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
@@ -107,10 +104,6 @@ import org.kohsuke.MetaInfServices;
 public class Parser implements ConfigurationParser {
 
    static final Log log = LogFactory.getLog(Parser.class);
-
-   private final Map<String, DefaultThreadFactory> threadFactories = new HashMap<>();
-   private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<>();
-   private final Map<String, String> threadPoolToThreadFactory = new HashMap<>();
 
    public Parser() {
    }
@@ -219,7 +212,7 @@ public class Parser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case THREAD_FACTORY: {
-               parseThreadFactory(reader);
+               parseThreadFactory(reader, holder);
                break;
             }
             case CACHED_THREAD_POOL: {
@@ -240,18 +233,10 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      // Link up thread factories with the thread pools that have referenced them
-      for (Map.Entry<String, ThreadPoolConfigurationBuilder> entry : threadPools.entrySet()) {
-         String threadFactoryName = threadPoolToThreadFactory.get(entry.getKey());
-         if (threadFactoryName != null) {
-            ThreadFactory threadFactory = threadFactories.get(threadFactoryName);
-            entry.getValue().threadFactory(threadFactory);
-         }
-      }
    }
 
    private void parseBlockingBoundedQueueThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(holder.getGlobalConfigurationBuilder());
+      ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
 
       String name = null;
       String threadFactoryName = null;
@@ -296,21 +281,13 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      ThreadPoolExecutorFactory factory = new BlockingThreadPoolExecutorFactory(
-            maxThreads, coreThreads, queueLength, keepAlive);
-      builder.threadPoolFactory(factory);
-
-      // Keep track of the thread pool to thread factory name mapping,
-      // and wait until all threads section has been processed to link the
-      // actual thread factories with the thread pools.
-      threadPoolToThreadFactory.put(name, threadFactoryName);
-      threadPools.put(name, builder);
-
+      threadsBuilder.addBoundedThreadPool(name).threadFactory(threadFactoryName).coreThreads(coreThreads)
+            .maxThreads(maxThreads).queueLength(queueLength).keepAliveTime(keepAlive);
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseScheduledThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(holder.getGlobalConfigurationBuilder());
+      ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
       String name = null;
       String threadFactoryName = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -333,20 +310,13 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      ThreadPoolExecutorFactory factory = ScheduledThreadPoolExecutorFactory.create();
-      builder.threadPoolFactory(factory);
-
-      // Keep track of the thread pool to thread factory name mapping,
-      // and wait until all threads section has been processed to link the
-      // actual thread factories with the thread pools.
-      threadPoolToThreadFactory.put(name, threadFactoryName);
-      threadPools.put(name, builder);
+      threadsBuilder.addScheduledThreadPool(name).threadFactory(threadFactoryName);
 
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseCachedThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(holder.getGlobalConfigurationBuilder());
+      ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
       String name = null;
       String threadFactoryName = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -369,19 +339,12 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      ThreadPoolExecutorFactory factory = CachedThreadPoolExecutorFactory.create();
-      builder.threadPoolFactory(factory);
-
-      // Keep track of the thread pool to thread factory name mapping,
-      // and wait until all threads section has been processed to link the
-      // actual thread factories with the thread pools.
-      threadPoolToThreadFactory.put(name, threadFactoryName);
-      threadPools.put(name, builder);
+      threadsBuilder.addCachedThreadPool(name).threadFactory(threadFactoryName);
 
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseThreadFactory(XMLExtendedStreamReader reader) throws XMLStreamException {
+   private void parseThreadFactory(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       String name = null;
       ThreadGroup threadGroup = null;
       String threadNamePattern = null;
@@ -415,9 +378,7 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      DefaultThreadFactory threadFactory = new DefaultThreadFactory(name,
-            threadGroup, priority, threadNamePattern, null, null);
-      threadFactories.put(name, threadFactory);
+      holder.getGlobalConfigurationBuilder().threads().addThreadFactory(name).groupName(threadGroup).priority(priority).threadNamePattern(threadNamePattern);
       ParseUtils.requireNoContent(reader);
    }
 
@@ -585,20 +546,21 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case ASYNC_EXECUTOR: {
-               builder.asyncThreadPool().read(createThreadPoolConfiguration(value, ASYNC_OPERATIONS_EXECUTOR));
+               builder.asyncThreadPoolName(value);
+               builder.asyncThreadPool().read(createThreadPoolConfiguration(value, ASYNC_OPERATIONS_EXECUTOR, holder));
                break;
             }
             case LISTENER_EXECUTOR: {
-               builder.listenerThreadPool().read(
-                     createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR));
+               builder.listenerThreadPoolName(value);
+               builder.listenerThreadPool().read(createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR, holder));
                break;
             }
             case EVICTION_EXECUTOR:
                log.evictionExecutorDeprecated();
                // fallthrough
             case EXPIRATION_EXECUTOR: {
-               builder.expirationThreadPool().read(
-                     createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR));
+               builder.expirationThreadPoolName(value);
+               builder.expirationThreadPool().read(createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR, holder));
                break;
             }
             case REPLICATION_QUEUE_EXECUTOR: {
@@ -610,13 +572,13 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case PERSISTENCE_EXECUTOR: {
-               builder.persistenceThreadPool().read(
-                     createThreadPoolConfiguration(value, PERSISTENCE_EXECUTOR));
+               builder.persistenceThreadPoolName(value);
+               builder.persistenceThreadPool().read(createThreadPoolConfiguration(value, PERSISTENCE_EXECUTOR, holder));
                break;
             }
             case STATE_TRANSFER_EXECUTOR: {
-               builder.stateTransferThreadPool().read(
-                     createThreadPoolConfiguration(value, STATE_TRANSFER_EXECUTOR));
+               builder.stateTransferThreadPoolName(value);
+               builder.stateTransferThreadPool().read(createThreadPoolConfiguration(value, STATE_TRANSFER_EXECUTOR, holder));
                break;
             }
             case MODULE: {
@@ -910,8 +872,8 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case EXECUTOR: {
-               transport.transportThreadPool().read(
-                     createThreadPoolConfiguration(value, ASYNC_TRANSPORT_EXECUTOR));
+               transport.transportExecutor(value);
+               transport.transportThreadPool().read(createThreadPoolConfiguration(value, ASYNC_TRANSPORT_EXECUTOR, holder));
                break;
             }
             case TOTAL_ORDER_EXECUTOR: {
@@ -923,8 +885,8 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case REMOTE_COMMAND_EXECUTOR: {
-               transport.remoteCommandThreadPool().read(
-                     createThreadPoolConfiguration(value, REMOTE_COMMAND_EXECUTOR));
+               transport.remoteExecutor(value);
+               transport.remoteCommandThreadPool().read(createThreadPoolConfiguration(value, REMOTE_COMMAND_EXECUTOR, holder));
                break;
             }
             case LOCK_TIMEOUT: {
@@ -933,9 +895,7 @@ public class Parser implements ConfigurationParser {
             }
             case NODE_NAME: {
                transport.nodeName(value);
-               for (DefaultThreadFactory threadFactory : threadFactories.values())
-                  threadFactory.setNode(value);
-
+               holder.getGlobalConfigurationBuilder().threads().nodeName(value);
                break;
             }
             case LOCKING:
@@ -985,15 +945,15 @@ public class Parser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case PERSISTENT_LOCATION: {
-               builder.persistentLocation(parseGlobalStatePath(reader));
+               parseGlobalStatePath(reader, builder::persistentLocation);
                break;
             }
             case SHARED_PERSISTENT_LOCATION: {
-               builder.sharedPersistentLocation(parseGlobalStatePath(reader));
+               parseGlobalStatePath(reader, builder::sharedPersistentLocation);
                break;
             }
             case TEMPORARY_LOCATION: {
-               builder.temporaryLocation(parseGlobalStatePath(reader));
+               parseGlobalStatePath(reader, builder::temporaryLocation);
                break;
             }
             case IMMUTABLE_CONFIGURATION_STORAGE: {
@@ -1046,7 +1006,7 @@ public class Parser implements ConfigurationParser {
       }
    }
 
-   private String parseGlobalStatePath(XMLExtendedStreamReader reader) throws XMLStreamException {
+   private void parseGlobalStatePath(XMLExtendedStreamReader reader, BiConsumer<String, String> pathItems) throws XMLStreamException {
       String path = ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName())[0];
       String relativeTo = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1066,7 +1026,7 @@ public class Parser implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
-      return ParseUtils.resolvePath(path, relativeTo);
+      pathItems.accept(path, relativeTo);
    }
 
    private Supplier<? extends LocalConfigurationStorage> parseCustomConfigurationStorage(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1075,12 +1035,14 @@ public class Parser implements ConfigurationParser {
       return Util.getInstanceSupplier(storageClass, holder.getClassLoader());
    }
 
-   private ThreadPoolConfiguration createThreadPoolConfiguration(String threadPoolName, String componentName) {
-      ThreadPoolConfigurationBuilder threadPool = threadPools.get(threadPoolName);
+   private ThreadPoolConfiguration createThreadPoolConfiguration(String threadPoolName, String componentName, ConfigurationBuilderHolder holder) {
+      ThreadsConfigurationBuilder threads = holder.getGlobalConfigurationBuilder().threads();
+      ThreadPoolBuilderAdapter threadPool = threads.getThreadPool(threadPoolName);
+
       if (threadPool == null)
          throw log.undefinedThreadPoolName(threadPoolName);
 
-      ThreadPoolConfiguration threadPoolConfiguration = threadPool.create();
+      ThreadPoolConfiguration threadPoolConfiguration = threadPool.asThreadPoolConfigurationBuilder();
       DefaultThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
       threadFactory.setComponent(shortened(componentName));
       return threadPoolConfiguration;
