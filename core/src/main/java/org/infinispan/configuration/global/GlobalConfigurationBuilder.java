@@ -19,21 +19,10 @@ import org.infinispan.commons.util.Util;
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
    private ClassLoader cl;
-   private final TransportConfigurationBuilder transport;
-   private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
-   private final SerializationConfigurationBuilder serialization;
-   private final GlobalSecurityConfigurationBuilder security;
-   private final ThreadPoolConfigurationBuilder expirationThreadPool;
-   private final ThreadPoolConfigurationBuilder listenerThreadPool;
-   private final ThreadPoolConfigurationBuilder persistenceThreadPool;
-   private final ThreadPoolConfigurationBuilder stateTransferThreadPool;
-   private final ThreadPoolConfigurationBuilder asyncThreadPool;
-   private final ShutdownConfigurationBuilder shutdown;
-   private final GlobalStateConfigurationBuilder globalState;
+   private final CacheContainerConfigurationBuilder cacheContainerConfiguration;
+
    private final Map<Class<?>, Builder<?>> modules;
    private final SiteConfigurationBuilder site;
-   private Optional<String> defaultCacheName;
-   private boolean zeroCapacityNode;
    private Features features;
 
    public GlobalConfigurationBuilder() {
@@ -42,21 +31,13 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       if (!Util.isOSGiContext()) defaultCL = Thread.currentThread().getContextClassLoader();
       if (defaultCL == null) defaultCL = GlobalConfigurationBuilder.class.getClassLoader();
       this.cl = defaultCL;
-      this.transport = new TransportConfigurationBuilder(this);
-      this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
-      this.serialization = new SerializationConfigurationBuilder(this);
-      this.security = new GlobalSecurityConfigurationBuilder(this);
-      this.shutdown = new ShutdownConfigurationBuilder(this);
-      this.globalState = new GlobalStateConfigurationBuilder(this);
+      this.cacheContainerConfiguration = new CacheContainerConfigurationBuilder(this);
       this.site = new SiteConfigurationBuilder(this);
-      this.expirationThreadPool = new ThreadPoolConfigurationBuilder(this);
-      this.listenerThreadPool = new ThreadPoolConfigurationBuilder(this);
-      this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
-      this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(this);
-      this.asyncThreadPool = new ThreadPoolConfigurationBuilder(this);
-      this.modules = new LinkedHashMap();
-      this.defaultCacheName = Optional.empty();
-      this.zeroCapacityNode = false;
+      this.modules = new LinkedHashMap<>();
+   }
+
+   CacheContainerConfigurationBuilder cacheContainer() {
+      return cacheContainerConfiguration;
    }
 
    /**
@@ -66,9 +47,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
     * @return a new global configuration
     */
    public GlobalConfigurationBuilder clusteredDefault() {
-      transport().
-         defaultTransport()
-         .clearProperties();
+      cacheContainerConfiguration.clusteredDefault();
       return this;
    }
 
@@ -78,9 +57,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
     * @return a new global configuration
     */
    public GlobalConfigurationBuilder nonClusteredDefault() {
-      transport()
-         .transport(null)
-         .clearProperties();
+      cacheContainerConfiguration.nonClusteredDefault();
       return this;
    }
 
@@ -95,53 +72,82 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @Override
    public TransportConfigurationBuilder transport() {
-      return transport;
+      return cacheContainerConfiguration.transport();
    }
 
+   public GlobalConfigurationBuilder cacheManagerName(String name) {
+      cacheContainerConfiguration.name(name);
+      return this;
+   }
 
    @Override
    public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
-      return globalJmxStatistics;
+      return cacheContainerConfiguration.globalJmxStatistics();
    }
 
    @Override
    public SerializationConfigurationBuilder serialization() {
-      return serialization;
+      return cacheContainerConfiguration.serialization();
    }
 
    @Override
    public ThreadPoolConfigurationBuilder expirationThreadPool() {
-      return expirationThreadPool;
+      return cacheContainerConfiguration.expirationThreadPool();
    }
 
    @Override
    public ThreadPoolConfigurationBuilder listenerThreadPool() {
-      return listenerThreadPool;
+      return cacheContainerConfiguration.listenerThreadPool();
    }
 
    @Override
    public ThreadPoolConfigurationBuilder persistenceThreadPool() {
-      return persistenceThreadPool;
+      return cacheContainerConfiguration.persistenceThreadPool();
    }
 
    @Override
    public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
-      return stateTransferThreadPool;
+      return cacheContainerConfiguration.stateTransferThreadPool();
    }
 
    @Override
    public ThreadPoolConfigurationBuilder asyncThreadPool() {
-      return asyncThreadPool;
+      return cacheContainerConfiguration.asyncThreadPool();
+   }
+
+   public GlobalConfigurationBuilder asyncThreadPoolName(String name) {
+      cacheContainer().asyncExecutor(name);
+      return this;
+   }
+
+   public GlobalConfigurationBuilder listenerThreadPoolName(String name) {
+      cacheContainer().listenerExecutor(name);
+      return this;
+   }
+
+   public GlobalConfigurationBuilder expirationThreadPoolName(String name) {
+      cacheContainer().expirationExecutor(name);
+      return this;
+   }
+
+   public GlobalConfigurationBuilder persistenceThreadPoolName(String name) {
+      cacheContainer().persistenceExecutor(name);
+      return this;
+   }
+
+   public GlobalConfigurationBuilder stateTransferThreadPoolName(String name) {
+      cacheContainer().stateTransferExecutor(name);
+      return this;
    }
 
    @Override
    public GlobalSecurityConfigurationBuilder security() {
-      return security;
+      return cacheContainerConfiguration.security();
    }
 
    @Override
    public ShutdownConfigurationBuilder shutdown() {
-      return shutdown;
+      return cacheContainerConfiguration.shutdown();
    }
 
    @Override
@@ -164,7 +170,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
     * @return GlobalConfigurationBuilder instance
     */
    public GlobalConfigurationBuilder zeroCapacityNode(boolean zeroCapacityNode) {
-      this.zeroCapacityNode = zeroCapacityNode;
+      cacheContainerConfiguration.zeroCapacityNode(zeroCapacityNode);
       return this;
    }
 
@@ -191,17 +197,17 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @Override
    public GlobalStateConfigurationBuilder globalState() {
-      return globalState;
+      return cacheContainerConfiguration.globalState();
    }
 
    @Override
    public GlobalConfigurationBuilder defaultCacheName(String defaultCacheName) {
-      this.defaultCacheName = Optional.of(defaultCacheName);
+      cacheContainerConfiguration.defaultCache(defaultCacheName);
       return this;
    }
 
    public Optional<String> defaultCacheName() {
-      return defaultCacheName;
+      return Optional.ofNullable(cacheContainerConfiguration.defaultCacheName());
    }
 
    @SuppressWarnings("unchecked")
@@ -209,17 +215,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       features = new Features(cl);
       List<RuntimeException> validationExceptions = new ArrayList<>();
       Arrays.asList(
-            expirationThreadPool,
-            listenerThreadPool,
-            persistenceThreadPool,
-            stateTransferThreadPool,
-            asyncThreadPool,
-            globalJmxStatistics,
-            transport,
-            security,
-            serialization,
-            shutdown,
-            globalState,
+            cacheContainerConfiguration,
             site
       ).forEach(c -> {
          try {
@@ -245,46 +241,26 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       for (Builder<?> module : modules.values())
          modulesConfig.add(module.create());
       return new GlobalConfiguration(
-            expirationThreadPool.create(),
-            listenerThreadPool.create(),
-            persistenceThreadPool.create(),
-            stateTransferThreadPool.create(),
-            asyncThreadPool.create(),
-            globalJmxStatistics.create(),
-            transport.create(),
-            security.create(),
-            serialization.create(),
-            shutdown.create(),
-            globalState.create(),
+            cacheContainerConfiguration.create(),
             modulesConfig,
             site.create(),
-            defaultCacheName,
             cl,
-            features,
-            zeroCapacityNode);
+            features);
+   }
+
+   public Features getFeatures() {
+      return features;
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
       this.cl = template.classLoader();
-      this.defaultCacheName = template.defaultCacheName();
 
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
          Builder<Object> builder = this.addModule(builtBy.value());
          builder.read(c);
       }
-
-      expirationThreadPool.read(template.expirationThreadPool());
-      listenerThreadPool.read(template.listenerThreadPool());
-      persistenceThreadPool.read(template.persistenceThreadPool());
-      stateTransferThreadPool.read(template.stateTransferThreadPool());
-      asyncThreadPool.read(template.asyncThreadPool());
-      globalJmxStatistics.read(template.globalJmxStatistics());
-      security.read(template.security());
-      serialization.read(template.serialization());
-      shutdown.read(template.shutdown());
-      globalState.read(template.globalState());
-      transport.read(template.transport());
+      cacheContainerConfiguration.read(template.cacheContainer());
       site.read(template.sites());
       return this;
    }
@@ -298,19 +274,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Override
    public String toString() {
       return "GlobalConfigurationBuilder{" +
-            "expirationThreadPool=" + expirationThreadPool +
-            ", listenerExecutorThreadPool=" + listenerThreadPool +
-            ", cl=" + cl +
-            ", transport=" + transport +
-            ", globalJmxStatistics=" + globalJmxStatistics +
-            ", serialization=" + serialization +
-            ", persistenceThreadPool=" + persistenceThreadPool +
-            ", stateTransferThreadPool=" + stateTransferThreadPool +
-            ", asyncThreadPool=" + asyncThreadPool +
-            ", security=" + security +
-            ", shutdown=" + shutdown +
-            ", globalState=" + globalState +
+            "cl=" + cl +
+            ", cacheContainerConfiguration=" + cacheContainerConfiguration +
+            ", modules=" + modules +
             ", site=" + site +
+            ", features=" + features +
             '}';
    }
 
@@ -319,56 +287,27 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
+      GlobalConfigurationBuilder builder = (GlobalConfigurationBuilder) o;
 
-      if (!expirationThreadPool.equals(that.expirationThreadPool))
+      if (cl != null ? !cl.equals(builder.cl) : builder.cl != null) return false;
+      if (cacheContainerConfiguration != null ? !cacheContainerConfiguration.equals(builder.cacheContainerConfiguration) : builder.cacheContainerConfiguration != null)
          return false;
-      if (!listenerThreadPool.equals(that.listenerThreadPool))
-         return false;
-      if (!persistenceThreadPool.equals(that.persistenceThreadPool))
-         return false;
-      if (!stateTransferThreadPool.equals(that.stateTransferThreadPool))
-         return false;
-      if (!asyncThreadPool.equals(that.asyncThreadPool))
-         return false;
-      if (cl != null ? !cl.equals(that.cl) : that.cl != null)
-         return false;
-      if (!globalJmxStatistics.equals(that.globalJmxStatistics))
-         return false;
-      if (!serialization.equals(that.serialization))
-         return false;
-      if (!shutdown.equals(that.shutdown))
-         return false;
-      if (!site.equals(that.site))
-         return false;
-      if (!security.equals(that.security))
-         return false;
-      if (!globalState.equals(that.globalState))
-         return false;
-      if (!defaultCacheName.equals(that.defaultCacheName))
-         return false;
-
-      return !transport.equals(that.transport);
+      if (modules != null ? !modules.equals(builder.modules) : builder.modules != null) return false;
+      if (site != null ? !site.equals(builder.site) : builder.site != null) return false;
+      return features != null ? features.equals(builder.features) : builder.features == null;
    }
 
    @Override
    public int hashCode() {
       int result = cl != null ? cl.hashCode() : 0;
-      result = 31 * result + (transport.hashCode());
-      result = 31 * result + (globalJmxStatistics.hashCode());
-      result = 31 * result + (serialization.hashCode());
-      result = 31 * result + (expirationThreadPool.hashCode());
-      result = 31 * result + (listenerThreadPool.hashCode());
-      result = 31 * result + (persistenceThreadPool.hashCode());
-      result = 31 * result + (stateTransferThreadPool.hashCode());
-      result = 31 * result + (asyncThreadPool.hashCode());
-      result = 31 * result + (shutdown.hashCode());
-      result = 31 * result + (site.hashCode());
-      result = 31 * result + (security.hashCode());
-      result = 31 * result + (globalState.hashCode());
-      result = 31 * result + (modules.hashCode());
-      result = 31 * result + (defaultCacheName.hashCode());
+      result = 31 * result + (cacheContainerConfiguration != null ? cacheContainerConfiguration.hashCode() : 0);
+      result = 31 * result + (modules != null ? modules.hashCode() : 0);
+      result = 31 * result + (site != null ? site.hashCode() : 0);
+      result = 31 * result + (features != null ? features.hashCode() : 0);
       return result;
    }
 
+   public ThreadsConfigurationBuilder threads() {
+      return cacheContainerConfiguration.threads();
+   }
 }

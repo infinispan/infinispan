@@ -1,51 +1,59 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.Element;
 
-public class GlobalJmxStatisticsConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<String> JMX_DOMAIN = AttributeDefinition.builder("jmxDomain", "org.infinispan").immutable().build();
-   public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mBeanServerLookup", null, MBeanServerLookup.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Boolean> ALLOW_DUPLICATE_DOMAINS = AttributeDefinition.builder("allowDuplicateDomains", true).immutable().build();
-   public static final AttributeDefinition<String> CACHE_MANAGER_NAME = AttributeDefinition.builder("cacheManagerName", "DefaultCacheManager").immutable().build();
-   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(new AttributeInitializer<TypedProperties>() {
-      @Override
-      public TypedProperties initialize() {
-         return new TypedProperties();
-      }
-   }).build();
+public class GlobalJmxStatisticsConfiguration implements ConfigurationInfo {
+   public static final AttributeDefinition<String> JMX_DOMAIN = AttributeDefinition.builder("domain", "org.infinispan").immutable().build();
+   public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanServerLookup", null, MBeanServerLookup.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<Boolean> ALLOW_DUPLICATE_DOMAINS = AttributeDefinition.builder("duplicateDomains", true).immutable().build();
+   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(TypedProperties::new).build();
 
    public static final AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalJmxStatisticsConfiguration.class, ENABLED, JMX_DOMAIN, MBEAN_SERVER_LOOKUP, ALLOW_DUPLICATE_DOMAINS, CACHE_MANAGER_NAME, PROPERTIES);
+      return new AttributeSet(GlobalJmxStatisticsConfiguration.class, JMX_DOMAIN, MBEAN_SERVER_LOOKUP, ALLOW_DUPLICATE_DOMAINS, PROPERTIES);
    }
 
-   private final Attribute<Boolean> enabled;
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.JMX.getLocalName());
+
    private final Attribute<String> jmxDomain;
    private final Attribute<MBeanServerLookup> mBeanServerLookup;
    private final Attribute<Boolean> allowDuplicateDomains;
-   private final Attribute<String> cacheManagerName;
    private final Attribute<TypedProperties> properties;
+   private final String cacheManagerName;
+   private final boolean enabled;
 
    private final AttributeSet attributes;
 
-   GlobalJmxStatisticsConfiguration(AttributeSet attributes) {
+   GlobalJmxStatisticsConfiguration(AttributeSet attributes, String cacheManagerName, boolean enabled) {
       this.attributes = attributes.checkProtection();
-      this.enabled = attributes.attribute(ENABLED);
       this.jmxDomain = attributes.attribute(JMX_DOMAIN);
       this.mBeanServerLookup = attributes.attribute(MBEAN_SERVER_LOOKUP);
       this.allowDuplicateDomains = attributes.attribute(ALLOW_DUPLICATE_DOMAINS);
-      this.cacheManagerName = attributes.attribute(CACHE_MANAGER_NAME);
       this.properties = attributes.attribute(PROPERTIES);
+      this.enabled = enabled;
+      this.cacheManagerName = cacheManagerName;
    }
 
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
+   }
+
+   /**
+    * @return true if JMX statistics are enabled.
+    * @deprecated use {@link GlobalConfigurationBuilder#statistics()}
+    */
+   @Deprecated
    public boolean enabled() {
-      return enabled.get();
+      return enabled;
    }
 
    public String domain() {
@@ -60,8 +68,13 @@ public class GlobalJmxStatisticsConfiguration {
       return allowDuplicateDomains.get();
    }
 
+   /**
+    * @return the cache manager name
+    * @deprecated use {@link GlobalConfigurationBuilder#cacheManagerName()} instead
+    */
+   @Deprecated
    public String cacheManagerName() {
-      return cacheManagerName.get();
+      return cacheManagerName;
    }
 
    public MBeanServerLookup mbeanServerLookup() {
@@ -73,33 +86,33 @@ public class GlobalJmxStatisticsConfiguration {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      GlobalJmxStatisticsConfiguration that = (GlobalJmxStatisticsConfiguration) o;
+
+      if (enabled != that.enabled) return false;
+      if (cacheManagerName != null ? !cacheManagerName.equals(that.cacheManagerName) : that.cacheManagerName != null)
+         return false;
+      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+   }
+
+   @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      int result = (enabled ? 1 : 0);
+      result = 31 * result + (cacheManagerName != null ? cacheManagerName.hashCode() : 0);
+      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
       return result;
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      GlobalJmxStatisticsConfiguration other = (GlobalJmxStatisticsConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
-   }
-
-   @Override
    public String toString() {
-      return "GlobalJmxStatisticsConfiguration [attributes=" + attributes + "]";
+      return "GlobalJmxStatisticsConfiguration{" +
+            "enabled=" + enabled +
+            ", cacheManagerName='" + cacheManagerName + '\'' +
+            ", attributes=" + attributes +
+            '}';
    }
 
 

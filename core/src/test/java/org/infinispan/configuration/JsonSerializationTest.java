@@ -1,18 +1,32 @@
 package org.infinispan.configuration;
 
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.Version;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
+import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -20,6 +34,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.configuration.parsing.URLXMLResourceResolver;
@@ -29,8 +45,17 @@ import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.PrincipalRoleMapperContext;
+import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -39,6 +64,10 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 @Test(testName = "config.JsonSerializationTest", groups = "functional")
 public class JsonSerializationTest extends AbstractInfinispanTest {
 
@@ -46,13 +75,13 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    private JsonWriter jsonWriter = new JsonWriter();
 
    @Test
-   public void testMinimalConfiguration() {
+   public void testMinimalCacheConfiguration() {
       Configuration minimal = new ConfigurationBuilder().build();
       testJsonConversion(minimal);
    }
 
    @Test
-   public void testComplexConfiguration() {
+   public void testComplexCacheConfiguration() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder
             .unsafe().unreliableReturnValues(true)
@@ -145,6 +174,264 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test
+   public void testMinimalCacheManager() throws IOException {
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+
+      String json = jsonWriter.toJSON(globalConfiguration);
+      JsonNode jsonNode = new ObjectMapper().readTree(json);
+
+      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+   }
+
+   @Test
+   public void testClusteredCacheManager() throws IOException {
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().clusteredDefault().build();
+
+      String json = jsonWriter.toJSON(globalConfiguration);
+      JsonNode jsonNode = new ObjectMapper().readTree(json);
+
+      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+
+      JsonNode jgroups = jsonNode.get("infinispan").get("jgroups");
+      assertEquals("org.infinispan.remoting.transport.jgroups.JGroupsTransport", jgroups.get("transport").asText());
+   }
+
+   @Test
+   public void testGlobalAuthorization() throws IOException {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
+      builder.security().authorization().principalRoleMapper(new DummyRoleMapper()).create();
+
+      String toJSON = jsonWriter.toJSON(builder.build());
+
+      JsonNode node = new ObjectMapper().readTree(toJSON);
+      JsonNode authz = node.get("infinispan").get("cache-container").get("security").get("authorization");
+
+      assertEquals(DummyRoleMapper.class.getName(), authz.get("custom-role-mapper").get("class").asText());
+   }
+
+   @Test
+   public void testFullConfig() throws Exception {
+      ParserRegistry parserRegistry = new ParserRegistry();
+
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/named-cache-test.xml");
+
+      GlobalConfiguration configuration = holder.getGlobalConfigurationBuilder().build();
+
+      String toJSON = jsonWriter.toJSON(configuration);
+      JsonNode node = new ObjectMapper().readTree(toJSON);
+
+      JsonNode infinispan = node.get("infinispan");
+      JsonNode threads = infinispan.get("threads");
+      JsonNode cacheContainer = infinispan.get("cache-container");
+      JsonNode globalSecurity = cacheContainer.get("security");
+
+      ArrayNode threadFactories = (ArrayNode) threads.get("thread-factory");
+      assertEquals(7, threadFactories.size());
+      Iterator<JsonNode> elements = threadFactories.elements();
+      assertThreadFactory(elements.next(), "listener-factory", "infinispan", "AsyncListenerThread", "1");
+      assertThreadFactory(elements.next(), "persistence-factory", "infinispan", "PersistenceThread", "1");
+      assertThreadFactory(elements.next(), "transport-factory", "infinispan", "AsyncTransportThread", "1");
+      assertThreadFactory(elements.next(), "async-factory", "infinispan", "AsyncOperationsThread", "1");
+      assertThreadFactory(elements.next(), "remote-factory", "infinispan", "RemoteCommandThread", "1");
+      assertThreadFactory(elements.next(), "expiration-factory", "infinispan", "ExpirationThread", "1");
+      assertThreadFactory(elements.next(), "replication-queue-factory", "infinispan", "ReplicationQueueThread", "1");
+
+      ArrayNode boundedThreadPools = (ArrayNode) threads.get("blocking-bounded-queue-thread-pool");
+      elements = boundedThreadPools.elements();
+      assertEquals(6, boundedThreadPools.size());
+      assertBoundedThreadPool(elements.next(), "listener", "listener-factory", "5", "0", "10000", "0");
+      assertBoundedThreadPool(elements.next(), "persistence", "persistence-factory", "6", "0", "10001", "0");
+      assertBoundedThreadPool(elements.next(), "state-transfer", "persistence-factory", "20", "0", "5", "60000");
+      assertBoundedThreadPool(elements.next(), "transport", "transport-factory", "25", "0", "10000", "0");
+      assertBoundedThreadPool(elements.next(), "async", "async-factory", "5", "5", "10000", "0");
+      assertBoundedThreadPool(elements.next(), "remote", "transport-factory", "30", "2", "10000", "10000");
+
+      ArrayNode scheduledThreadPools = (ArrayNode) threads.get("scheduled-thread-pool");
+      elements = scheduledThreadPools.elements();
+      assertEquals(2, scheduledThreadPools.size());
+      assertScheduledThreadPool(elements.next(), "expiration", "expiration-factory");
+      assertScheduledThreadPool(elements.next(), "replication-queue", "replication-queue-factory");
+
+      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+      assertEquals("default", cacheContainer.get("default-cache").asText());
+      assertEquals("REGISTER", cacheContainer.get("shutdown-hook").asText());
+      assertTrue(cacheContainer.get("statistics").asBoolean());
+      assertEquals("listener", cacheContainer.get("listener-executor").asText());
+      assertEquals("persistence", cacheContainer.get("persistence-executor").asText());
+      assertEquals("state-transfer", cacheContainer.get("state-transfer-executor").asText());
+      assertEquals("async", cacheContainer.get("async-executor").asText());
+
+      JsonNode authorization = globalSecurity.get("authorization");
+      assertEquals("org.infinispan.security.impl.NullAuditLogger", authorization.get("audit-logger").asText());
+      JsonNode roleMapper = authorization.get("identity-role-mapper");
+      assertNotNull(roleMapper);
+      assertEquals(0, roleMapper.size());
+      JsonNode roles = authorization.get("roles");
+      assertRole(roles, "vavasour", "READ", "WRITE");
+      assertRole(roles, "peasant", "READ");
+      assertRole(roles, "king", "ALL");
+      assertRole(roles, "vassal", "READ", "WRITE", "LISTEN");
+   }
+
+   private void assertRole(JsonNode role, String roleName, String... roles) {
+      ArrayNode roleNode = (ArrayNode) role.get(roleName);
+      Set<String> expected = Arrays.stream(roles).collect(Collectors.toSet());
+      Set<String> nodeRoles = asSet(roleNode);
+      assertEquals(expected, nodeRoles);
+   }
+
+
+   private void assertThreadFactory(JsonNode node, String name, String groupName, String pattern, String prio) {
+      assertEquals(node.get("name").asText(), name);
+      assertEquals(node.get("group-name").asText(), groupName);
+      assertEquals(node.get("thread-name-pattern").asText(), pattern);
+      assertEquals(node.get("priority").asText(), prio);
+   }
+
+   private void assertBoundedThreadPool(JsonNode node, String name, String threadFactory, String maxThreads,
+                                        String coreThreads, String queueLength, String keepAliveTime) {
+      assertEquals(node.get("name").asText(), name);
+      assertEquals(node.get("thread-factory").asText(), threadFactory);
+      assertEquals(node.get("max-threads").asText(), maxThreads);
+      assertEquals(node.get("core-threads").asText(), coreThreads);
+      assertEquals(node.get("queue-length").asText(), queueLength);
+      assertEquals(node.get("keep-alive-time").asText(), keepAliveTime);
+   }
+
+   private void assertScheduledThreadPool(JsonNode node, String name, String threadFactory) {
+      assertEquals(node.get("name").asText(), name);
+      assertEquals(node.get("thread-factory").asText(), threadFactory);
+   }
+
+   @Test
+   public void testWithDefaultCache() throws IOException {
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalJmxStatistics()
+            .cacheManagerName("my-cm").defaultCacheName("default-one").build();
+      String json = jsonWriter.toJSON(globalConfiguration);
+
+      JsonNode jsonNode = new ObjectMapper().readTree(json);
+      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
+      assertEquals("my-cm", cacheContainer.get("name").asText());
+      assertEquals("default-one", cacheContainer.get("default-cache").asText());
+   }
+
+   @Test
+   public void testWithSecurity() throws IOException {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.security().authorization().enabled(true).principalRoleMapper(new IdentityRoleMapper())
+            .role("role1").permission("ADMIN").permission("READ")
+            .role("role2").permission(AuthorizationPermission.WRITE).create();
+
+      GlobalConfiguration configuration = builder.build();
+      String actual = jsonWriter.toJSON(configuration);
+      JsonNode jsonNode = new ObjectMapper().readTree(actual);
+
+      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+
+      JsonNode roles = cacheContainer.get("security").get("authorization").get("roles");
+      assertEquals(2, roles.size());
+
+      ArrayNode role1 = (ArrayNode) roles.get("role1");
+      assertEquals(2, role1.size());
+      assertEquals(newSet("ADMIN", "READ"), asSet(role1));
+
+      ArrayNode role2 = (ArrayNode) roles.get("role2");
+      assertEquals(1, role2.size());
+      assertEquals(newSet("WRITE"), asSet(role2));
+   }
+
+
+   @Test
+   public void testGlobalState() throws IOException {
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalState().enable()
+            .persistentLocation("/tmp/location")
+            .sharedPersistentLocation("/tmp/shared")
+            .temporaryLocation("/tmp/temp")
+            .configurationStorage(ConfigurationStorage.VOLATILE).build();
+
+      String json = jsonWriter.toJSON(globalConfiguration);
+
+      JsonNode jsonNode = new ObjectMapper().readTree(json);
+
+      JsonNode cacheContainer = jsonNode.get("infinispan").get("cache-container");
+      assertEquals("DefaultCacheManager", cacheContainer.get("name").asText());
+      JsonNode globalState = cacheContainer.get("global-state");
+      assertEquals("/tmp/location", globalState.get("persistent-location").get("path").asText());
+      assertEquals("/tmp/shared", globalState.get("shared-persistent-location").get("path").asText());
+      assertEquals("/tmp/temp", globalState.get("temporary-location").get("path").asText());
+      JsonNode storageConfig = globalState.get("volatile-configuration-storage");
+      assertNotNull(storageConfig);
+      assertEquals(0, storageConfig.size());
+
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.globalState().enable()
+            .temporaryLocation("/tmp/temp")
+            .configurationStorage(ConfigurationStorage.CUSTOM)
+            .configurationStorageSupplier(TestStorage::new).create();
+
+      json = jsonWriter.toJSON(builder.build());
+      System.out.println(json);
+      jsonNode = new ObjectMapper().readTree(json);
+
+      JsonNode cfgStorage = jsonNode.get("infinispan").get("cache-container").get("global-state").get("custom-configuration-storage");
+      assertNotNull(cfgStorage);
+      assertNotNull(TestStorage.class.getName(), cfgStorage.get("class"));
+   }
+
+   @Test
+   public void testSerializationConfig() throws IOException {
+      AdvancedExternalizer<?> mapExternalizer = new MapExternalizer();
+      AdvancedExternalizer<?> opExternalizer = new TerminalOperationExternalizer();
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      globalConfigurationBuilder.serialization()
+            .marshaller(new JavaSerializationMarshaller())
+            .addAdvancedExternalizer(1, mapExternalizer)
+            .addAdvancedExternalizer(2, opExternalizer).create();
+
+      GlobalConfiguration globalConfiguration = globalConfigurationBuilder.build();
+      String json = jsonWriter.toJSON(globalConfiguration);
+
+      JsonNode node = new ObjectMapper().readTree(json);
+      JsonNode serialization = node.get("infinispan").get("cache-container").get("serialization");
+      assertEquals(JavaSerializationMarshaller.class.getName(), serialization.get("marshaller").asText());
+      JsonNode externalizerMap = serialization.get("advanced-externalizer");
+      assertEquals(MapExternalizer.class.getName(), externalizerMap.get("1").asText());
+      assertEquals(TerminalOperationExternalizer.class.getName(), externalizerMap.get("2").asText());
+   }
+
+   @Test
+   public void testJmx() throws IOException {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.globalJmxStatistics().enable().jmxDomain("x").mBeanServerLookup(new PlatformMBeanServerLookup()).allowDuplicateDomains(true).addProperty("prop1", "val1").addProperty("prop2", "val2");
+
+      GlobalConfiguration configuration = builder.build();
+
+      String toJSON = jsonWriter.toJSON(configuration);
+
+      JsonNode node = new ObjectMapper().readTree(toJSON);
+      JsonNode cacheContainer = node.get("infinispan").get("cache-container");
+      JsonNode jmx = cacheContainer.get("jmx");
+
+      assertTrue(cacheContainer.get("statistics").asBoolean());
+      assertTrue(jmx.get("duplicate-domains").asBoolean());
+      assertEquals("x", jmx.get("domain").asText());
+      assertEquals(PlatformMBeanServerLookup.class.getName(), jmx.get("mbean-server-lookup").asText());
+      assertEquals("val1", jmx.get("properties").get("prop1").asText());
+      assertEquals("val2", jmx.get("properties").get("prop2").asText());
+   }
+
+   private Set<String> asSet(ArrayNode node) {
+      return StreamSupport.stream(node.spliterator(), false).map(JsonNode::asText).collect(Collectors.toSet());
+   }
+
+   private Set<String> newSet(String... values) {
+      return Arrays.stream(values).collect(Collectors.toSet());
+   }
+
    private void testConfigurations(ConfigurationBuilderHolder builderHolder) {
       builderHolder.getNamedConfigurationBuilders().forEach((key, builder) -> {
          Configuration configuration = builder.build();
@@ -208,4 +495,41 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
          return null;
       }
    }
+
+   public static class DummyRoleMapper implements PrincipalRoleMapper {
+
+      @Override
+      public Set<String> principalToRoles(Principal principal) {
+         return null;
+      }
+
+      @Override
+      public void setContext(PrincipalRoleMapperContext context) {
+
+      }
+   }
+
+   public static class TestStorage implements LocalConfigurationStorage {
+      @Override
+      public void initialize(EmbeddedCacheManager embeddedCacheManager) {
+      }
+
+      @Override
+      public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      }
+
+      @Override
+      public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      }
+
+      @Override
+      public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      }
+
+      @Override
+      public Map<String, Configuration> loadAll() {
+         return null;
+      }
+   }
+
 }

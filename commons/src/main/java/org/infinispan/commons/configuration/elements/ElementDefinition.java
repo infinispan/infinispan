@@ -23,6 +23,10 @@ public interface ElementDefinition<C extends ConfigurationInfo> {
     */
    ElementOutput toExternalName(C configuration);
 
+   default boolean omitIfEmpty() {
+      return true;
+   }
+
    /**
     * @return true if the attributeName inside the element is not mapped to any {@link Attribute}, but
     * as a helper to identify the element when reading it back.

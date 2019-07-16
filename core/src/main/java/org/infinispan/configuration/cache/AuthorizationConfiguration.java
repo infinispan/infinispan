@@ -8,7 +8,6 @@ import java.util.Set;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
@@ -21,12 +20,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 public class AuthorizationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<Set> ROLES = AttributeDefinition.builder("roles", null, Set.class).initializer(new AttributeInitializer<Set>() {
-      @Override
-      public Set initialize() {
-         return new HashSet<String>();
-      }
-   }).build();
+   public static final AttributeDefinition<Set> ROLES = AttributeDefinition.builder("roles", null, Set.class).initializer(HashSet::new).build();
 
    static final AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AuthorizationConfiguration.class, ENABLED, ROLES);

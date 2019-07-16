@@ -1,5 +1,6 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.SerializationConfiguration.ADVANCED_EXTERNALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.CLASS_RESOLVER;
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
 import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
@@ -134,7 +135,8 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    public
    SerializationConfiguration create() {
-      return new SerializationConfiguration(attributes.protect(), advancedExternalizers);
+      if (!advancedExternalizers.isEmpty()) attributes.attribute(ADVANCED_EXTERNALIZERS).set(advancedExternalizers);
+      return new SerializationConfiguration(attributes.protect());
    }
 
    @Override

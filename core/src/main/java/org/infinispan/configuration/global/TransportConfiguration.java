@@ -2,45 +2,43 @@ package org.infinispan.configuration.global;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.remoting.transport.Transport;
 
-public class TransportConfiguration {
-   public static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder("clusterName", "ISPN")
+public class TransportConfiguration implements ConfigurationInfo {
+   public static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder("cluster", "ISPN")
          .immutable().build();
-   public static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder("machineId", null, String.class)
+   public static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder("machine", null, String.class)
          .immutable().build();
-   public static final AttributeDefinition<String> RACK_ID = AttributeDefinition.builder("rackId", null, String.class)
+   public static final AttributeDefinition<String> RACK_ID = AttributeDefinition.builder("rack", null, String.class)
          .immutable().build();
-   public static final AttributeDefinition<String> SITE_ID = AttributeDefinition.builder("siteId", null, String.class)
+   public static final AttributeDefinition<String> SITE_ID = AttributeDefinition.builder("site", null, String.class)
          .immutable().build();
    public static final AttributeDefinition<String> NODE_NAME = AttributeDefinition.builder("nodeName", null, String.class)
          .immutable().build();
    public static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
-         "distributedSyncTimeout", TimeUnit.MINUTES.toMillis(4)).build();
+         "lockTimeout", TimeUnit.MINUTES.toMillis(4)).build();
    public static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
          .immutable().build();
    public static final AttributeDefinition<Long> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
            "initialClusterTimeout", TimeUnit.MINUTES.toMillis(1)).build();
-   static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
-         .builder("transport", null, Transport.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition
-         .builder("properties", null, TypedProperties.class).initializer(new AttributeInitializer<TypedProperties>() {
-            @Override
-            public TypedProperties initialize() {
-               return new TypedProperties();
-            }
-         }).immutable().build();
+   public static final AttributeDefinition<String> STACK = AttributeDefinition.builder("stack", null, String.class).build();
+   public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", null, String.class).build();
+   public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", null, String.class).build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TransportConfiguration.class, CLUSTER_NAME, MACHINE_ID, RACK_ID, SITE_ID, NODE_NAME,
-            DISTRIBUTED_SYNC_TIMEOUT, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, TRANSPORT, PROPERTIES);
+            DISTRIBUTED_SYNC_TIMEOUT, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, STACK, TRANSPORT_EXECUTOR, REMOTE_EXECUTOR);
    }
+
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TRANSPORT.getLocalName());
 
    private final Attribute<String> clusterName;
    private final Attribute<String> machineId;
@@ -50,17 +48,22 @@ public class TransportConfiguration {
    private final Attribute<Long> distributedSyncTimeout;
    private final Attribute<Integer> initialClusterSize;
    private final Attribute<Long> initialClusterTimeout;
-   private final Attribute<Transport> transport;
-   private final Attribute<TypedProperties> properties;
    private final AttributeSet attributes;
+   private final JGroupsConfiguration jgroupsConfiguration;
    private final ThreadPoolConfiguration transportThreadPool;
    private final ThreadPoolConfiguration remoteCommandThreadPool;
+   private final TypedProperties properties;
 
-   TransportConfiguration(AttributeSet attributes, ThreadPoolConfiguration transportThreadPool,
-                          ThreadPoolConfiguration remoteCommandThreadPool) {
+   TransportConfiguration(AttributeSet attributes,
+                          JGroupsConfiguration jgroupsConfiguration,
+                          ThreadPoolConfiguration transportThreadPool,
+                          ThreadPoolConfiguration remoteCommandThreadPool,
+                          TypedProperties properties) {
       this.attributes = attributes.checkProtection();
+      this.jgroupsConfiguration = jgroupsConfiguration;
       this.transportThreadPool = transportThreadPool;
       this.remoteCommandThreadPool = remoteCommandThreadPool;
+      this.properties = properties;
       clusterName = attributes.attribute(CLUSTER_NAME);
       machineId = attributes.attribute(MACHINE_ID);
       rackId = attributes.attribute(RACK_ID);
@@ -68,9 +71,12 @@ public class TransportConfiguration {
       distributedSyncTimeout = attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT);
       initialClusterSize = attributes.attribute(INITIAL_CLUSTER_SIZE);
       initialClusterTimeout = attributes.attribute(INITIAL_CLUSTER_TIMEOUT);
-      transport = attributes.attribute(TRANSPORT);
       nodeName = attributes.attribute(NODE_NAME);
-      properties = attributes.attribute(PROPERTIES);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public String clusterName() {
@@ -102,7 +108,7 @@ public class TransportConfiguration {
    }
 
    public Transport transport() {
-      return transport.get();
+      return jgroupsConfiguration.transport();
    }
 
    public String nodeName() {
@@ -110,7 +116,7 @@ public class TransportConfiguration {
    }
 
    public TypedProperties properties() {
-      return properties.get();
+      return properties;
    }
 
    public boolean hasTopologyInfo() {
@@ -125,50 +131,19 @@ public class TransportConfiguration {
       return remoteCommandThreadPool;
    }
 
+   public String transportThreadPoolName() {
+      return attributes.attribute(TRANSPORT_EXECUTOR).get();
+   }
+
+   public String remoteThreadPoolName() {
+      return attributes.attribute(REMOTE_EXECUTOR).get();
+   }
+
+   public JGroupsConfiguration jgroups() {
+      return jgroupsConfiguration;
+   }
+
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   @Override
-   public String toString() {
-      return "TransportConfiguration [attributes=" + attributes + ", transportThreadPool=" + transportThreadPool
-            + ", remoteCommandThreadPool=" + remoteCommandThreadPool + "]";
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      result = prime * result + ((remoteCommandThreadPool == null) ? 0 : remoteCommandThreadPool.hashCode());
-      result = prime * result + ((transportThreadPool == null) ? 0 : transportThreadPool.hashCode());
-      return result;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      TransportConfiguration other = (TransportConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      if (remoteCommandThreadPool == null) {
-         if (other.remoteCommandThreadPool != null)
-            return false;
-      } else if (!remoteCommandThreadPool.equals(other.remoteCommandThreadPool))
-         return false;
-      if (transportThreadPool == null) {
-         if (other.transportThreadPool != null)
-            return false;
-      } else if (!transportThreadPool.equals(other.transportThreadPool))
-         return false;
-      return true;
    }
 }

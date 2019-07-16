@@ -1,17 +1,13 @@
 package org.infinispan.configuration.global;
 
-import static org.infinispan.configuration.global.GlobalStateConfiguration.CONFIGURATION_STORAGE;
-import static org.infinispan.configuration.global.GlobalStateConfiguration.CONFIGURATION_STORAGE_SUPPLIER;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
-import static org.infinispan.configuration.global.GlobalStateConfiguration.PERSISTENT_LOCATION;
-import static org.infinispan.configuration.global.GlobalStateConfiguration.SHARED_PERSISTENT_LOCATION;
-import static org.infinispan.configuration.global.GlobalStateConfiguration.TEMPORARY_LOCATION;
 
 import java.lang.invoke.MethodHandles;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.util.logging.Log;
@@ -23,14 +19,23 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 8.1
  */
-public class GlobalStateConfigurationBuilder extends AbstractGlobalConfigurationBuilder
-      implements Builder<GlobalStateConfiguration> {
+public class GlobalStateConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalStateConfiguration> {
+
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AttributeSet attributes;
+
+   private GlobalStatePathConfigurationBuilder persistentLocation;
+   private GlobalStatePathConfigurationBuilder sharedPersistentLocation;
+   private TemporaryGlobalStatePathConfigurationBuilder temporaryLocation;
+   private GlobalStorageConfigurationBuilder storageConfiguration;
 
    GlobalStateConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
       attributes = GlobalStateConfiguration.attributeDefinitionSet();
+      this.persistentLocation = new GlobalStatePathConfigurationBuilder(globalConfig, Element.PERSISTENT_LOCATION.getLocalName());
+      this.sharedPersistentLocation = new GlobalStatePathConfigurationBuilder(globalConfig, Element.SHARED_PERSISTENT_LOCATION.getLocalName());
+      this.temporaryLocation = new TemporaryGlobalStatePathConfigurationBuilder(globalConfig);
+      this.storageConfiguration = new GlobalStorageConfigurationBuilder(globalConfig);
    }
 
    public GlobalStateConfigurationBuilder enable() {
@@ -61,7 +66,12 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * application was started. This value should be overridden to a more appropriate location.
     */
    public GlobalStateConfigurationBuilder persistentLocation(String location) {
-      attributes.attribute(PERSISTENT_LOCATION).set(location);
+      persistentLocation.location(location, null);
+      return this;
+   }
+
+   public GlobalStateConfigurationBuilder persistentLocation(String path, String relativeTo) {
+      persistentLocation.location(path, relativeTo);
       return this;
    }
 
@@ -72,7 +82,12 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * application was started. This value should be overridden to a more appropriate location.
     */
    public GlobalStateConfigurationBuilder sharedPersistentLocation(String location) {
-      attributes.attribute(SHARED_PERSISTENT_LOCATION).set(location);
+      sharedPersistentLocation.location(location, null);
+      return this;
+   }
+
+   public GlobalStateConfigurationBuilder sharedPersistentLocation(String path, String relativeTo) {
+      sharedPersistentLocation.location(path, relativeTo);
       return this;
    }
 
@@ -81,7 +96,12 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * java.io.tmpdir system property.
     */
    public GlobalStateConfigurationBuilder temporaryLocation(String location) {
-      attributes.attribute(TEMPORARY_LOCATION).set(location);
+      temporaryLocation.location(location, null);
+      return this;
+   }
+
+   public GlobalStateConfigurationBuilder temporaryLocation(String path, String relativeTo) {
+      temporaryLocation.location(path, relativeTo);
       return this;
    }
 
@@ -90,7 +110,7 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * the actual implementation must be passed by invoking {@link #configurationStorageSupplier(Supplier)}
     */
    public GlobalStateConfigurationBuilder configurationStorage(ConfigurationStorage storage) {
-      attributes.attribute(CONFIGURATION_STORAGE).set(storage);
+      storageConfiguration.configurationStorage(storage);
       return this;
    }
 
@@ -98,29 +118,30 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     * Defines the @{@link LocalConfigurationStorage}. Defaults to @{@link org.infinispan.globalstate.impl.VolatileLocalConfigurationStorage}
     */
    public GlobalStateConfigurationBuilder configurationStorageSupplier(Supplier<? extends LocalConfigurationStorage> configurationStorageSupplier) {
-      configurationStorage(ConfigurationStorage.CUSTOM);
-      attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).set(configurationStorageSupplier);
+      storageConfiguration.supplier(configurationStorageSupplier);
       return this;
    }
 
    @Override
    public void validate() {
-      if (attributes.attribute(ENABLED).get() && attributes.attribute(PERSISTENT_LOCATION).isNull()) {
+      if (attributes.attribute(ENABLED).get() && persistentLocation.getLocation() == null) {
          log.missingGlobalStatePersistentLocation();
       }
-      if (attributes.attribute(CONFIGURATION_STORAGE).get().equals(ConfigurationStorage.CUSTOM) && attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).isNull()) {
-         throw log.customStorageStrategyNotSet();
-      }
+      storageConfiguration.validate();
    }
 
    @Override
    public GlobalStateConfiguration create() {
-      return new GlobalStateConfiguration(attributes.protect());
+      return new GlobalStateConfiguration(attributes.protect(), persistentLocation.create(), sharedPersistentLocation.create(), temporaryLocation.create(), storageConfiguration.create());
    }
 
    @Override
    public Builder<?> read(GlobalStateConfiguration template) {
       attributes.read(template.attributes());
+      persistentLocation.read(template.persistenceConfiguration());
+      sharedPersistentLocation.read(template.sharedPersistenceConfiguration());
+      temporaryLocation.read(template.temporaryLocationConfiguration());
+      storageConfiguration.read(template.globalStorageConfiguration());
       return this;
    }
 }

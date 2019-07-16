@@ -1,18 +1,25 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.ShutdownConfiguration.HOOK_BEHAVIOR;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ShutdownConfiguration> {
-
-   private ShutdownHookBehavior shutdownHookBehavior = ShutdownHookBehavior.DEFAULT;
+   private final AttributeSet attributes;
 
    ShutdownConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      attributes = ShutdownConfiguration.attributeDefinitionSet();
    }
 
    public ShutdownConfigurationBuilder hookBehavior(ShutdownHookBehavior hookBehavior) {
-      this.shutdownHookBehavior = hookBehavior;
+      attributes.attribute(HOOK_BEHAVIOR).set(hookBehavior);
       return this;
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
@@ -24,21 +31,20 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
    @Override
    public
    ShutdownConfiguration create() {
-      return new ShutdownConfiguration(shutdownHookBehavior);
+      return new ShutdownConfiguration(attributes.protect());
    }
 
    @Override
    public
    ShutdownConfigurationBuilder read(ShutdownConfiguration template) {
-      this.shutdownHookBehavior = template.hookBehavior();
-
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
       return "ShutdownConfigurationBuilder{" +
-            "shutdownHookBehavior=" + shutdownHookBehavior +
+            "attributes=" + attributes +
             '}';
    }
 
@@ -49,14 +55,11 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
 
       ShutdownConfigurationBuilder that = (ShutdownConfigurationBuilder) o;
 
-      if (shutdownHookBehavior != that.shutdownHookBehavior) return false;
-
-      return true;
+      return attributes.equals(that.attributes);
    }
 
    @Override
    public int hashCode() {
-      return shutdownHookBehavior != null ? shutdownHookBehavior.hashCode() : 0;
+      return attributes.hashCode();
    }
-
 }

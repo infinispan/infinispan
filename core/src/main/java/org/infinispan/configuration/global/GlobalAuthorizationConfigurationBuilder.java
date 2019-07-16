@@ -2,7 +2,6 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.AUDIT_LOGGER;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ENABLED;
-import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.PRINCIPAL_ROLE_MAPPER;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ROLES;
 
 import java.security.Principal;
@@ -30,10 +29,12 @@ import org.infinispan.util.logging.LogFactory;
 public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalAuthorizationConfiguration> {
    public static final Log log = LogFactory.getLog(GlobalAuthorizationConfigurationBuilder.class);
    private final AttributeSet attributes;
-   private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<String, GlobalRoleConfigurationBuilder>();
+   private final PrincipalRoleMapperConfigurationBuilder roleMapper;
+   private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<>();
 
    public GlobalAuthorizationConfigurationBuilder(GlobalSecurityConfigurationBuilder builder) {
       super(builder.getGlobalConfig());
+      roleMapper = new PrincipalRoleMapperConfigurationBuilder(getGlobalConfig());
       attributes = GlobalAuthorizationConfiguration.attributeDefinitionSet();
    }
 
@@ -68,7 +69,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
     * @param principalRoleMapper
     */
    public GlobalAuthorizationConfigurationBuilder principalRoleMapper(PrincipalRoleMapper principalRoleMapper) {
-      attributes.attribute(PRINCIPAL_ROLE_MAPPER).set(principalRoleMapper);
+      roleMapper.mapper(principalRoleMapper);
       return this;
    }
 
@@ -80,25 +81,27 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
 
    @Override
    public void validate() {
-      if (attributes.attribute(ENABLED).get() && attributes.attribute(PRINCIPAL_ROLE_MAPPER).get() == null) {
+      roleMapper.validate();
+      if (attributes.attribute(ENABLED).get() && roleMapper.mapper() == null) {
          throw log.invalidPrincipalRoleMapper();
       }
    }
 
    @Override
    public GlobalAuthorizationConfiguration create() {
-      Map<String, Role> rolesCfg = new HashMap<String, Role>();
+      Map<String, Role> rolesCfg = new HashMap<>();
       for(GlobalRoleConfigurationBuilder role : this.roles.values()) {
          Role roleCfg = role.create();
          rolesCfg.put(roleCfg.getName(), roleCfg);
       }
-      attributes.attribute(ROLES).set(rolesCfg);
-      return new GlobalAuthorizationConfiguration(attributes.protect());
+      if (!rolesCfg.isEmpty()) attributes.attribute(ROLES).set(rolesCfg);
+      return new GlobalAuthorizationConfiguration(attributes.protect(), roleMapper.create());
    }
 
    @Override
    public Builder<?> read(GlobalAuthorizationConfiguration template) {
       attributes.read(template.attributes());
+      this.roleMapper.read(template.roleMapperConfiguration());
       this.roles.clear();
       for(Role role : template.roles().values()) {
          this.role(role.getName()).read(role);
