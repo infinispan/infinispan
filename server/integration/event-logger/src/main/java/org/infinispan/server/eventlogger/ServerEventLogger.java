@@ -57,7 +57,7 @@ public class ServerEventLogger implements EventLogger {
    @Override
    public void log(EventLogLevel level, EventLogCategory category, String message) {
       textLog(level, category, message);
-      eventLog(new ServerEventImpl(level, category, timeService.instant(), message));
+      eventLog(new ServerEventImpl(timeService.instant(), level, category, message));
    }
 
    void textLog(EventLogLevel level, EventLogCategory category, String message) {
@@ -129,5 +129,4 @@ public class ServerEventLogger implements EventLogger {
       Collections.sort(events);
       return events.subList(0, Math.min(events.size(), count));
    }
-
 }

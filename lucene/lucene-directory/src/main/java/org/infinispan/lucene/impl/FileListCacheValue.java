@@ -13,7 +13,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Maintains a Set of filenames contained in the index. Does not implement Set for simplicity, and does internal locking
+ * Maintains a Set of file names contained in the index. Does not implement Set for simplicity, and does internal locking
  * to provide a safe Externalizer.
  *
  * @author Sanne Grinovero
@@ -22,24 +22,24 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public final class FileListCacheValue {
 
-   private final Set<String> filenames = new HashSet<>();
+   private final Set<String> fileNames = new HashSet<>();
    private final Lock writeLock;
    private final Lock readLock;
 
    /**
-    * Constructs a new empty set of filenames
+    * Constructs a new empty set of file names.
     */
-   public FileListCacheValue() {
+   FileListCacheValue() {
       ReadWriteLock namesLock = new ReentrantReadWriteLock();
       writeLock = namesLock.writeLock();
       readLock = namesLock.readLock();
    }
 
-   @ProtoField(number = 1, collectionImplementation = HashSet.class, name = "file_names")
+   @ProtoField(number = 1, collectionImplementation = HashSet.class)
    Set<String> getFileNames() {
       readLock.lock();
       try {
-         return new HashSet<>(filenames);
+         return new HashSet<>(fileNames);
       } finally {
          readLock.unlock();
       }
@@ -52,7 +52,7 @@ public final class FileListCacheValue {
    void setFileNames(Set<String> names) {
       writeLock.lock();
       try {
-         this.filenames.addAll(names);
+         this.fileNames.addAll(names);
       } finally {
          writeLock.unlock();
       }
@@ -64,14 +64,14 @@ public final class FileListCacheValue {
     */
    public FileListCacheValue(String[] listAll) {
       this();
-      Collections.addAll(filenames, listAll);
+      Collections.addAll(fileNames, listAll);
    }
 
    protected void apply(List<Operation> operations) {
       writeLock.lock();
       try {
          for (Operation operation : operations) {
-            operation.apply(filenames);
+            operation.apply(fileNames);
          }
       } finally {
          writeLock.unlock();
@@ -86,7 +86,7 @@ public final class FileListCacheValue {
    public boolean remove(String fileName) {
       writeLock.lock();
       try {
-         return filenames.remove(fileName);
+         return fileNames.remove(fileName);
       } finally {
          writeLock.unlock();
       }
@@ -100,7 +100,7 @@ public final class FileListCacheValue {
    public boolean add(String fileName) {
       writeLock.lock();
       try {
-         return filenames.add(fileName);
+         return fileNames.add(fileName);
       } finally {
          writeLock.unlock();
       }
@@ -109,8 +109,8 @@ public final class FileListCacheValue {
    public boolean addAndRemove(String toAdd, String toRemove) {
       writeLock.lock();
       try {
-         boolean doneAdd = filenames.add(toAdd);
-         boolean doneRemove = filenames.remove(toRemove);
+         boolean doneAdd = fileNames.add(toAdd);
+         boolean doneRemove = fileNames.remove(toRemove);
          return doneAdd || doneRemove;
       } finally {
          writeLock.unlock();
@@ -120,7 +120,7 @@ public final class FileListCacheValue {
    public String[] toArray() {
       readLock.lock();
       try {
-         return filenames.toArray(new String[filenames.size()]);
+         return fileNames.toArray(new String[0]);
       } finally {
          readLock.unlock();
       }
@@ -129,7 +129,7 @@ public final class FileListCacheValue {
    public boolean contains(String fileName) {
       readLock.lock();
       try {
-         return filenames.contains(fileName);
+         return fileNames.contains(fileName);
       } finally {
          readLock.unlock();
       }
@@ -139,7 +139,7 @@ public final class FileListCacheValue {
    public int hashCode() {
       readLock.lock();
       try {
-         return filenames.hashCode();
+         return fileNames.hashCode();
       } finally {
          readLock.unlock();
       }
@@ -149,21 +149,13 @@ public final class FileListCacheValue {
    public boolean equals(Object obj) {
       if (this == obj)
          return true;
-      if (obj == null)
-         return false;
-      if (FileListCacheValue.class != obj.getClass())
+      if (obj == null || FileListCacheValue.class != obj.getClass())
          return false;
       final FileListCacheValue other = (FileListCacheValue) obj;
-      final HashSet<String> copyFromOther;
-      other.readLock.lock();
-      try {
-         copyFromOther = new HashSet<>(other.filenames);
-      } finally {
-         other.readLock.unlock();
-      }
+      final Set<String> copyFromOther = other.getFileNames();
       readLock.lock();
       try {
-         return (filenames.equals(copyFromOther));
+         return fileNames.equals(copyFromOther);
       } finally {
          readLock.unlock();
       }
@@ -173,7 +165,7 @@ public final class FileListCacheValue {
    public String toString() {
       readLock.lock();
       try {
-         return "FileListCacheValue [filenames=" + filenames + "]";
+         return "FileListCacheValue{fileNames=" + fileNames + "}";
       } finally {
          readLock.unlock();
       }
