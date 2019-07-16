@@ -1,16 +1,16 @@
-package org.infinispan.api.reactive.client.impl;
+package org.infinispan.api.store.client.impl;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.api.client.listener.ClientKeyValueStoreListener;
-import org.infinispan.api.reactive.KeyValueEntry;
-import org.infinispan.api.reactive.KeyValueStore;
-import org.infinispan.api.reactive.WriteResult;
-import org.infinispan.api.reactive.client.impl.listener.ClientListenerImpl;
-import org.infinispan.api.reactive.listener.KeyValueStoreListener;
-import org.infinispan.api.reactive.query.QueryRequest;
+import org.infinispan.api.store.KeyValueEntry;
+import org.infinispan.api.store.KeyValueStore;
+import org.infinispan.api.store.WriteResult;
+import org.infinispan.api.store.client.impl.listener.ClientListenerImpl;
+import org.infinispan.api.store.listener.KeyValueStoreListener;
+import org.infinispan.api.store.query.QueryRequest;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.query.api.continuous.ContinuousQuery;

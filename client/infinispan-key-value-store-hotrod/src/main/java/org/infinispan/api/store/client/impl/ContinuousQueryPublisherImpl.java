@@ -1,7 +1,7 @@
-package org.infinispan.api.reactive.client.impl;
+package org.infinispan.api.store.client.impl;
 
-import org.infinispan.api.reactive.EntryStatus;
-import org.infinispan.api.reactive.KeyValueEntry;
+import org.infinispan.api.store.EntryStatus;
+import org.infinispan.api.store.KeyValueEntry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;

@@ -4,8 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.api.Experimental;
-import org.infinispan.api.reactive.EntryStatus;
-import org.infinispan.api.reactive.listener.KeyValueStoreListener;
+import org.infinispan.api.store.EntryStatus;
+import org.infinispan.api.store.listener.KeyValueStoreListener;
 
 @Experimental
 public final class ClientKeyValueStoreListener implements KeyValueStoreListener {

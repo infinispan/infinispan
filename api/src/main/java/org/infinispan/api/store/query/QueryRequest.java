@@ -1,4 +1,4 @@
-package org.infinispan.api.reactive.query;
+package org.infinispan.api.store.query;
 
 import java.util.Map;
 

@@ -4,7 +4,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 
 import java.util.UUID;
 
-import org.infinispan.api.reactive.KeyValueStore;
+import org.infinispan.api.store.KeyValueStore;
 
 public final class SearchUtil {
    public static final String PEOPLE = "people";

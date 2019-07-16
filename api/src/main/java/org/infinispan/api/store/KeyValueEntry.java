@@ -1,4 +1,4 @@
-package org.infinispan.api.reactive;
+package org.infinispan.api.store;
 
 import java.util.Objects;
 

@@ -305,7 +305,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
     * them as fast as possible. It is entirely possible that a given task is never submitted due to the other tasks
     * completing all the segments asynchronously. After the main thread has submitted all the tasks it will attempt
     * to steal a segment and run it if possible and if it can will subsequently attempt to complete all remaining
-    * segments in the same fashion as the other threads. NOTE that this behavior is not normally how reactive
+    * segments in the same fashion as the other threads. NOTE that this behavior is not normally how store
     * streams are done as given operations are not normally performed until the returned Flowable is subscribed to, but
     * for performance reasons this method eagerly publishes entries. This is because we do not have to context
     * switch an additional thread and we know that it is subscribed to immediately after.

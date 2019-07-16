@@ -5,10 +5,10 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.client.listener.ClientKeyValueStoreListener;
-import org.infinispan.api.reactive.EntryStatus;
-import org.infinispan.api.reactive.KeyValueEntry;
-import org.infinispan.api.reactive.KeyValueStore;
-import org.infinispan.api.reactive.KeyValueStoreConfig;
+import org.infinispan.api.store.EntryStatus;
+import org.infinispan.api.store.KeyValueEntry;
+import org.infinispan.api.store.KeyValueStore;
+import org.infinispan.api.store.KeyValueStoreConfig;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.functional.FunctionalTestUtils;

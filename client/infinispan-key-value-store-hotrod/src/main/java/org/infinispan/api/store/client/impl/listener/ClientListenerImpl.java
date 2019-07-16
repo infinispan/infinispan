@@ -1,11 +1,11 @@
-package org.infinispan.api.reactive.client.impl.listener;
+package org.infinispan.api.store.client.impl.listener;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import org.infinispan.api.client.listener.ClientKeyValueStoreListener;
-import org.infinispan.api.reactive.EntryStatus;
-import org.infinispan.api.reactive.KeyValueEntry;
+import org.infinispan.api.store.EntryStatus;
+import org.infinispan.api.store.KeyValueEntry;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;

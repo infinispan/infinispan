@@ -12,7 +12,7 @@
         <module name="org.apache.xerces" services="import"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@" />
         <module name="com.github.ben-manes.caffeine" slot="@infinispan.module.slot@"/>
-        <!--Export rxjava and reactive streams for store implementations-->
+        <!--Export rxjava and store streams for store implementations-->
         <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@" export="true"/>
         <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@" export="true"/>
         <module name="org.jboss.jandex"/>

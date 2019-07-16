@@ -43,7 +43,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 10.0
  */
-@Test(groups = "functional", testName = "reactive.publisher.impl.RehashClusterPublisherManagerTest")
+@Test(groups = "functional", testName = "store.publisher.impl.RehashClusterPublisherManagerTest")
 public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest {
 
    private static final int[][] START_SEGMENT_OWNERS = new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 0}};

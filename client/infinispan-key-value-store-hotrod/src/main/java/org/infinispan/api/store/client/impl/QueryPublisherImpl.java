@@ -1,4 +1,4 @@
-package org.infinispan.api.reactive.client.impl;
+package org.infinispan.api.store.client.impl;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

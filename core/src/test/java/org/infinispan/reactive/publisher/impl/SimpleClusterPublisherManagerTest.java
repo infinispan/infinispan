@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 10.0
  */
-@Test(groups = "functional", testName = "reactive.publisher.impl.SimpleClusterPublisherManagerTest")
+@Test(groups = "functional", testName = "store.publisher.impl.SimpleClusterPublisherManagerTest")
 @InCacheMode({CacheMode.REPL_SYNC, CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
 public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest {
    @Override

@@ -1,16 +1,16 @@
-package org.infinispan.api.reactive;
+package org.infinispan.api.store;
 
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.api.Experimental;
-import org.infinispan.api.reactive.listener.KeyValueStoreListener;
-import org.infinispan.api.reactive.query.QueryRequest;
+import org.infinispan.api.store.listener.KeyValueStoreListener;
+import org.infinispan.api.store.query.QueryRequest;
 import org.reactivestreams.Publisher;
 
 /**
  * A Reactive Key Value Store provides a highly concurrent and distributed data structure, non blocking and using
- * reactive streams.
+ * store streams.
  * <p>
  *
  * </p>
@@ -93,10 +93,10 @@ public interface KeyValueStore<K, V> {
    CompletionStage<Void> clear();
 
    /**
-    * Executes the query and returns a reactive streams Publisher with the results
+    * Executes the query and returns a store streams Publisher with the results
     *
     * @param ickleQuery query String
-    * @return Publisher reactive streams
+    * @return Publisher store streams
     */
    Publisher<KeyValueEntry<K, V>> find(String ickleQuery);
 
@@ -109,18 +109,18 @@ public interface KeyValueStore<K, V> {
    Publisher<KeyValueEntry<K, V>> find(QueryRequest queryRequest);
 
    /**
-    * Executes the query and returns a reactive streams Publisher with the results
+    * Executes the query and returns a store streams Publisher with the results
     *
     * @param ickleQuery query String
-    * @return Publisher reactive streams
+    * @return Publisher store streams
     */
    Publisher<KeyValueEntry<K, V>> findContinuously(String ickleQuery);
 
    /**
-    * Executes the query and returns a reactive streams Publisher with the results
+    * Executes the query and returns a store streams Publisher with the results
     *
     * @param queryRequest
-    * @return Publisher reactive streams
+    * @return Publisher store streams
     */
    <T> Publisher<KeyValueEntry<K, T>> findContinuously(QueryRequest queryRequest);
 
@@ -128,7 +128,7 @@ public interface KeyValueStore<K, V> {
     * Listens to the {@link KeyValueStoreListener}
     *
     * @param listener
-    * @return Publisher reactive streams
+    * @return Publisher store streams
     */
    Publisher<KeyValueEntry<K, V>> listen(KeyValueStoreListener listener);
 
