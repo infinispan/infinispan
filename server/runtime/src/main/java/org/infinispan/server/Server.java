@@ -42,7 +42,16 @@ import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.util.logging.LogFactory;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
+import org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider;
+import org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider;
+import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
+import org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider;
+import org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider;
+import org.wildfly.security.sasl.localuser.WildFlyElytronSaslLocalUserProvider;
+import org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider;
+import org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider;
+import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -143,7 +152,20 @@ public class Server {
 
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 
-      SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
+      //SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
+
+
+      // Register only the providers that matter to us
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpBasicProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpBearerProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpDigestProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpClientCertProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslPlainProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslDigestProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslScramProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslExternalProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslLocalUserProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslOAuth2Provider.getInstance());
    }
 
    private void parseConfiguration(URL config) {

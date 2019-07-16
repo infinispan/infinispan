@@ -41,11 +41,12 @@ public class ElytronSASLAuthenticationProvider implements ServerAuthenticationPr
 
    @Override
    public SaslServer createSaslServer(String mechanism, List<Principal> principals, String protocol, String serverName, Map<String, String> props) throws SaslException {
-      return saslAuthenticationFactory.createMechanism(mechanism, factory -> {
+      SaslServer saslServer = saslAuthenticationFactory.createMechanism(mechanism, factory -> {
          factory = new ServerNameSaslServerFactory(factory, serverName);
          factory = new ProtocolSaslServerFactory(factory, protocol);
          factory = props != null ? new PropertiesSaslServerFactory(factory, props) : factory;
          return factory;
       });
+      return new ElytronSubjectSaslServer(saslServer, principals, null);
    }
 }

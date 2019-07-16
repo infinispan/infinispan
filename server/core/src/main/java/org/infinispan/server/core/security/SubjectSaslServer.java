@@ -19,9 +19,9 @@ import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
  **/
 public class SubjectSaslServer implements SaslServer {
    public static final String SUBJECT = "org.infinispan.security.Subject";
-   final SaslServer delegate;
-   private final AuthorizingCallbackHandler callbackHandler;
-   private final List<Principal> principals;
+   protected final SaslServer delegate;
+   protected final AuthorizingCallbackHandler callbackHandler;
+   protected final List<Principal> principals;
 
    public SubjectSaslServer(SaslServer delegate, List<Principal> principals, AuthorizingCallbackHandler callbackHandler) {
       this.delegate = delegate;

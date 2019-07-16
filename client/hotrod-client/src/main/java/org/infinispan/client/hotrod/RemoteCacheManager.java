@@ -7,6 +7,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketAddress;
+import java.security.Provider;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -73,10 +75,9 @@ import org.wildfly.security.WildFlyElytronProvider;
 /**
  * <p>Factory for {@link RemoteCache}s.</p>
  * <p>In order to be able to use a {@link RemoteCache}, the
- * {@link RemoteCacheManager} must be started first: this instantiates connections to
- * Hot Rod server(s). Starting the {@link RemoteCacheManager} can be done either at
- * creation by passing start==true to the constructor or by using a constructor that does that for you; or after
- * construction by calling {@link #start()}.</p>
+ * {@link RemoteCacheManager} must be started first: this instantiates connections to Hot Rod server(s). Starting the
+ * {@link RemoteCacheManager} can be done either at creation by passing start==true to the constructor or by using a
+ * constructor that does that for you; or after construction by calling {@link #start()}.</p>
  * <p><b>NOTE:</b> this is an "expensive" object, as it manages a set of persistent TCP connections to the Hot Rod
  * servers. It is recommended to only have one instance of this per JVM, and to cache it between calls to the server
  * (i.e. remoteCache operations)</p>
@@ -113,17 +114,28 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private ExecutorService asyncExecutorService;
 
    static {
+      // Register only the providers that matter to us
       try {
-         Class.forName("org.wildfly.security.WildFlyElytronProvider", true, RemoteCacheManager.class.getClassLoader());
+         // Elytron >= 1.8
+         for (String name : Arrays.asList(
+               "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
+               "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
+               "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
+               "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
+               "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider"
+         )) {
+            Provider provider = (Provider)Class.forName(name).getConstructor(new Class[]{}).newInstance(new Object[]{});
+            SecurityActions.addSecurityProvider(provider);
+         }
+      } catch (Exception e) {
+         // Elytron < 1.8
          SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
-      } catch (Throwable t) {
-         // Ignore
       }
    }
 
    /**
-    * Create a new RemoteCacheManager using the supplied {@link Configuration}.
-    * The RemoteCacheManager will be started automatically
+    * Create a new RemoteCacheManager using the supplied {@link Configuration}. The RemoteCacheManager will be started
+    * automatically
     *
     * @param configuration the configuration to use for this RemoteCacheManager
     * @since 5.3
@@ -133,8 +145,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    /**
-    * Create a new RemoteCacheManager using the supplied {@link Configuration}.
-    * The RemoteCacheManager will be started automatically only if the start parameter is true
+    * Create a new RemoteCacheManager using the supplied {@link Configuration}. The RemoteCacheManager will be started
+    * automatically only if the start parameter is true
     *
     * @param configuration the configuration to use for this RemoteCacheManager
     * @param start         whether or not to start the manager on return from the constructor.
@@ -159,8 +171,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    /**
     * <p>Similar to {@link RemoteCacheManager#RemoteCacheManager(Configuration, boolean)}, but it will try to lookup
-    * the config properties in the classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can
-    * be found in the classpath, defaults will be used, attempting to connect to <tt>127.0.0.1:11222</tt></p>
+    * the config properties in the classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be
+    * found in the classpath, defaults will be used, attempting to connect to <tt>127.0.0.1:11222</tt></p>
     *
     * <p>Refer to
     * {@link ConfigurationBuilder} for a detailed list of available properties.</p>
@@ -225,12 +237,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    /**
-    * Retrieves a named cache from the remote server if the cache has been
-    * defined, otherwise if the cache name is undefined, it will return null.
+    * Retrieves a named cache from the remote server if the cache has been defined, otherwise if the cache name is
+    * undefined, it will return null.
     *
     * @param cacheName name of cache to retrieve
-    * @return a cache instance identified by cacheName or null if the cache
-    * name has not been defined
+    * @return a cache instance identified by cacheName or null if the cache name has not been defined
     */
    @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
@@ -254,8 +265,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    /**
     * Retrieves the default cache from the remote server.
     *
-    * @return a remote cache instance that can be used to send requests to the
-    * default cache in the server
+    * @return a remote cache instance that can be used to send requests to the default cache in the server
     */
    @Override
    public <K, V> RemoteCache<K, V> getCache() {
@@ -300,7 +310,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             Class<? extends Marshaller> clazz = configuration.marshallerClass();
             if (!configuration.serialWhitelist().isEmpty()) {
                // First try to instantiate the instance with the white list if possible
-               marshaller = Util.newInstanceOrNull(clazz, new Class[] {ClassWhiteList.class},
+               marshaller = Util.newInstanceOrNull(clazz, new Class[]{ClassWhiteList.class},
                      configuration.getClassWhiteList());
             }
             if (marshaller == null) {
@@ -356,16 +366,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    /**
-    * Stop the remote cache manager, disconnecting all existing connections.
-    * As part of the disconnection, all registered client cache listeners will
-    * be removed since client no longer can receive callbacks.
+    * Stop the remote cache manager, disconnecting all existing connections. As part of the disconnection, all
+    * registered client cache listeners will be removed since client no longer can receive callbacks.
     */
    @Override
    public void stop() {
       if (isStarted()) {
          log.debugf("Stopping remote cache manager %x", System.identityHashCode(this));
          synchronized (cacheName2RemoteCache) {
-            for(Map.Entry<RemoteCacheKey, RemoteCacheHolder> cache : cacheName2RemoteCache.entrySet()) {
+            for (Map.Entry<RemoteCacheKey, RemoteCacheHolder> cache : cacheName2RemoteCache.entrySet()) {
                cache.getValue().remoteCache().stop();
             }
             cacheName2RemoteCache.clear();
@@ -581,8 +590,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    private <K, V> TransactionalRemoteCacheImpl<K, V> createRemoteTransactionalCache(String cacheName,
-         boolean forceReturnValues, boolean recoveryEnabled, TransactionMode transactionMode,
-         TransactionManager transactionManager) {
+                                                                                    boolean forceReturnValues, boolean recoveryEnabled, TransactionMode transactionMode,
+                                                                                    TransactionManager transactionManager) {
       return new TransactionalRemoteCacheImpl<>(this, cacheName, forceReturnValues, recoveryEnabled, transactionManager,
             getTransactionTable(transactionMode), timeService);
    }
@@ -617,7 +626,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
-         ClientStatistics stats) {
+                                                    ClientStatistics stats) {
       return new OperationsFactory(channelFactory, cacheName, forceReturnValue, codec, listenerNotifier, configuration,
             stats);
    }

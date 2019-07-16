@@ -2139,6 +2139,11 @@
             <version>${versionx.org.glassfish.jaxb.jaxb-runtime}</version>
          </dependency>
          <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>${version.glassfish.json}</version>
+         </dependency>
+         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>txw2</artifactId>
             <version>${versionx.org.glassfish.jaxb.txw2}</version>
