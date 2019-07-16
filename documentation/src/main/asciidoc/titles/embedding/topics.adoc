@@ -1,9 +1,9 @@
 //Reference .adoc topic files for the title content.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::topics/embedded_cache.adoc[leveloffset=+1]
-include::topics/embedded_datagrid.adoc[leveloffset=+1]
-include::topics/execute_grid.adoc[leveloffset=+1]
-include::topics/streams.adoc[leveloffset=+1]
-include::topics/locked_streams.adoc[leveloffset=+1]
-include::topics/cloud.adoc[leveloffset=+1]
+include::../../topics/embedded_cache.adoc[leveloffset=+1]
+include::../../topics/embedded_datagrid.adoc[leveloffset=+1]
+include::../../topics/execute_grid.adoc[leveloffset=+1]
+include::../../topics/streams.adoc[leveloffset=+1]
+include::../../topics/locked_streams.adoc[leveloffset=+1]
+include::../../topics/cloud.adoc[leveloffset=+1]

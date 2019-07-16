@@ -1,4 +1,4 @@
 //Reference .adoc topic files for the title content.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::topics/cross_site_replication.adoc[leveloffset=+1]
+include::../../topics/cross_site_replication.adoc[leveloffset=+1]
