@@ -1,7 +1,9 @@
 package org.infinispan.lucene;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
+
 /**
- * Cache key for a list with current files in cache
+ * Cache key for a list with current files in cache.
  *
  * @since 4.0
  * @author Lukasz Moren
@@ -9,14 +11,13 @@ package org.infinispan.lucene;
  */
 public final class FileListCacheKey extends AbstractIndexScopedKey {
 
-   FileListCacheKey() {};
-
-   public FileListCacheKey(String indexName, final int affinitySegmentId) {
+   @ProtoFactory
+   public FileListCacheKey(String indexName, int affinitySegmentId) {
       super(indexName, affinitySegmentId);
    }
 
    @Override
-   public Object accept(KeyVisitor visitor) throws Exception {
+   public <T> T accept(KeyVisitor<T> visitor) throws Exception {
       return visitor.visit(this);
    }
 
@@ -29,16 +30,15 @@ public final class FileListCacheKey extends AbstractIndexScopedKey {
    public boolean equals(Object obj) {
       if (this == obj)
          return true;
-      if (obj == null)
-         return false;
-      if (FileListCacheKey.class != obj.getClass())
+      if (obj == null || FileListCacheKey.class != obj.getClass())
          return false;
       FileListCacheKey other = (FileListCacheKey) obj;
       return indexName.equals(other.indexName);
    }
 
    /**
-    * Changing the encoding could break backwards compatibility
+    * Changing the encoding could break backwards compatibility .
+    *
     * @see LuceneKey2StringMapper#getKeyMapping(String)
     */
    @Override

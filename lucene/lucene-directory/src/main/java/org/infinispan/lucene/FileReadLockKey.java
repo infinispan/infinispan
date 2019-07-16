@@ -1,5 +1,6 @@
 package org.infinispan.lucene;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -13,12 +14,10 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public final class FileReadLockKey extends AbstractIndexScopedKey {
 
-   @ProtoField(number = 3)
-   String fileName;
+   private final String fileName;
 
-   FileReadLockKey() {}
-
-   public FileReadLockKey(final String indexName, final String fileName, final int affinitySegmentId) {
+   @ProtoFactory
+   public FileReadLockKey(String indexName, String fileName, int affinitySegmentId) {
       super(indexName, affinitySegmentId);
       if (indexName == null)
          throw new IllegalArgumentException("indexName shall not be null");
@@ -32,12 +31,13 @@ public final class FileReadLockKey extends AbstractIndexScopedKey {
     *
     * @return the fileName.
     */
+   @ProtoField(number = 3)
    public String getFileName() {
       return fileName;
    }
 
    @Override
-   public Object accept(KeyVisitor visitor) throws Exception {
+   public <T> T accept(KeyVisitor<T> visitor) throws Exception {
       return visitor.visit(this);
    }
 
@@ -52,9 +52,7 @@ public final class FileReadLockKey extends AbstractIndexScopedKey {
    public boolean equals(Object obj) {
       if (this == obj)
          return true;
-      if (obj == null)
-         return false;
-      if (FileReadLockKey.class != obj.getClass())
+      if (obj == null || FileReadLockKey.class != obj.getClass())
          return false;
       FileReadLockKey other = (FileReadLockKey) obj;
       return fileName.equals(other.fileName) && indexName.equals(other.indexName);
@@ -62,6 +60,6 @@ public final class FileReadLockKey extends AbstractIndexScopedKey {
 
    @Override
    public String toString() {
-      return "RL|" + fileName + "|"+ indexName + "|" + affinitySegmentId;
+      return "RL|" + fileName + "|" + indexName + "|" + affinitySegmentId;
    }
 }

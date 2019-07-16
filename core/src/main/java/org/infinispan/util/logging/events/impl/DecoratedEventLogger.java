@@ -20,7 +20,7 @@ import org.infinispan.util.logging.events.EventLogger;
  */
 public class DecoratedEventLogger implements EventLogger {
    private static final String LOCAL_SCOPE = "local";
-   private EventLogger delegate;
+   private final EventLogger delegate;
    protected String detail;
    protected String context;
    protected String scope;
@@ -45,7 +45,6 @@ public class DecoratedEventLogger implements EventLogger {
       if (scope != null) sb.append(MESSAGES.eventLogContext(scope));
       if (who != null) sb.append(MESSAGES.eventLogContext(who));
    }
-
 
    @Override
    public EventLogger who(String who) {

@@ -11,7 +11,8 @@ import org.infinispan.util.logging.events.impl.DecoratedEventLogger;
  * @since 8.2
  */
 class DecoratedServerEventLogger extends DecoratedEventLogger {
-   private ServerEventLogger delegate;
+
+   private final ServerEventLogger delegate;
 
    DecoratedServerEventLogger(ServerEventLogger delegate) {
       super(delegate);
@@ -25,6 +26,6 @@ class DecoratedServerEventLogger extends DecoratedEventLogger {
       // We don't include detail in this implementation
       sb.append(message);
       delegate.textLog(level, category, sb.toString());
-      delegate.eventLog(new ServerEventImpl(level, category, delegate.getTimeService().instant(), message, detail, context, who, scope));
+      delegate.eventLog(new ServerEventImpl(delegate.getTimeService().instant(), level, category, message, detail, context, who, scope));
    }
 }

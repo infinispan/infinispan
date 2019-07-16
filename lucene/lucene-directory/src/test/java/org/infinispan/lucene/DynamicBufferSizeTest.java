@@ -2,6 +2,8 @@ package org.infinispan.lucene;
 
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.io.IOException;
 
@@ -12,7 +14,6 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -36,20 +37,20 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
    @Test
    public void roundingTest() {
       FileMetadata m = new FileMetadata(10);
-      AssertJUnit.assertEquals(0, m.getNumberOfChunks());
+      assertEquals(0, m.getNumberOfChunks());
       m.setSize(10);
-      AssertJUnit.assertEquals(1, m.getNumberOfChunks());
+      assertEquals(1, m.getNumberOfChunks());
       m.setSize(11);
-      AssertJUnit.assertEquals(2, m.getNumberOfChunks());
+      assertEquals(2, m.getNumberOfChunks());
       m = new FileMetadata(11);
       m.setSize(11);
-      AssertJUnit.assertEquals(1, m.getNumberOfChunks());
+      assertEquals(1, m.getNumberOfChunks());
       m.setSize(22);
-      AssertJUnit.assertEquals(2, m.getNumberOfChunks());
+      assertEquals(2, m.getNumberOfChunks());
       m.setSize(31);
       m = new FileMetadata(10);
       m.setSize(31);
-      AssertJUnit.assertEquals(4, m.getNumberOfChunks());
+      assertEquals(4, m.getNumberOfChunks());
    }
 
    @Test
@@ -73,7 +74,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
 
 
       assert !data1.equals(new FileCacheKey("testIndex", "testFile", -1));
-      AssertJUnit.assertNotNull(data1);
+      assertNotNull(data1);
       assert data1.equals(data4);
 
       assert data1.equals(data3);
@@ -83,6 +84,6 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
 
       assert !data1.equals(data2);
 
-      AssertJUnit.assertEquals("FileMetadata{ size=" + data1.getSize() + '}', data1.toString());
+      assertEquals("FileMetadata{size=" + data1.getSize() + '}', data1.toString());
    }
 }

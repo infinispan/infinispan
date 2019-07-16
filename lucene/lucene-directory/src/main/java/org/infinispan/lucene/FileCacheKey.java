@@ -1,5 +1,6 @@
 package org.infinispan.lucene;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -11,12 +12,10 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public final class FileCacheKey extends AbstractIndexScopedKey {
 
-   @ProtoField(number = 3, name = "file")
-   String fileName;
+   private final String fileName;
 
-   FileCacheKey() {}
-
-   public FileCacheKey(final String indexName, final String fileName, final int affinitySegmentId) {
+   @ProtoFactory
+   public FileCacheKey(String indexName, String fileName, int affinitySegmentId) {
       super(indexName, affinitySegmentId);
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
@@ -24,7 +23,7 @@ public final class FileCacheKey extends AbstractIndexScopedKey {
    }
 
    @Override
-   public Object accept(KeyVisitor visitor) throws Exception {
+   public <T> T accept(KeyVisitor<T> visitor) throws Exception {
       return visitor.visit(this);
    }
 
@@ -33,6 +32,7 @@ public final class FileCacheKey extends AbstractIndexScopedKey {
     *
     * @return the fileName.
     */
+   @ProtoField(number = 3)
    public String getFileName() {
       return fileName;
    }
@@ -48,9 +48,7 @@ public final class FileCacheKey extends AbstractIndexScopedKey {
    public boolean equals(Object obj) {
       if (this == obj)
          return true;
-      if (obj == null)
-         return false;
-      if (FileCacheKey.class != obj.getClass())
+      if (obj == null || FileCacheKey.class != obj.getClass())
          return false;
       FileCacheKey other = (FileCacheKey) obj;
       if (!fileName.equals(other.fileName))
@@ -59,11 +57,12 @@ public final class FileCacheKey extends AbstractIndexScopedKey {
    }
 
    /**
-    * Changing the encoding could break backwards compatibility
+    * Changing the encoding could break backwards compatibility.
+    *
     * @see LuceneKey2StringMapper#getKeyMapping(String)
     */
    @Override
    public String toString() {
-      return "M|" + fileName + "|"+ indexName + "|" + affinitySegmentId;
+      return "M|" + fileName + "|" + indexName + "|" + affinitySegmentId;
    }
 }
