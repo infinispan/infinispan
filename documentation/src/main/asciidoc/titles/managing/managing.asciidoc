@@ -1,5 +1,5 @@
 // Include global attributes
-include::topics/attributes/community-attributes.adoc[]
+include::../../topics/attributes/community-attributes.adoc[]
 
 // Images directory attribute.
 :images_dir: images

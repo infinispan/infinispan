@@ -1,0 +1,4 @@
+//Reference user stories.
+//Please review authoring guidelines in the Contributors Guide.
+
+//include::../../stories/assembly_x.adoc
