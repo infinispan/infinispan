@@ -46,8 +46,6 @@ public class ThreadLeakChecker {
                       "|Transaction Reaper" +
                       // H2
                       "|Generate Seed" +
-                      // atomic-factory Container
-                      "|AtomicFactory-global" +
                       // JDK HTTP client
                       "|Keep-Alive-Timer" +
                       // JVM debug agent thread (sometimes started dynamically by Byteman)
