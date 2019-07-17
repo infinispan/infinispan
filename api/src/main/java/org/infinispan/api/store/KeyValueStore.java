@@ -35,7 +35,7 @@ public interface KeyValueStore<K, V> {
     *
     * @param key
     * @param value
-    * @return Void
+    * @return Boolean. true if insert worked
     */
    CompletionStage<Boolean> insert(K key, V value);
 
@@ -59,14 +59,14 @@ public interface KeyValueStore<K, V> {
    /**
     * Retrieve all keys
     *
-    * @return Publisher
+    * @return Publisher with the Keys
     */
    Publisher<K> keys();
 
    /**
     * Retrieve all entries
     *
-    * @return
+    * @return Publisher of Map.Entry
     */
    Publisher<? extends Map.Entry<K, V>> entries();
 
@@ -74,7 +74,7 @@ public interface KeyValueStore<K, V> {
     * Save many from a Publisher
     *
     * @param pairs
-    * @return Void
+    * @return Write Result for each key
     */
    Publisher<WriteResult<K>> saveMany(Publisher<Map.Entry<K, V>> pairs);
 
@@ -104,7 +104,7 @@ public interface KeyValueStore<K, V> {
     * Find by QueryRequest.
     *
     * @param queryRequest
-    * @return
+    * @return Publisher of KeyValueEntry
     */
    Publisher<KeyValueEntry<K, V>> find(QueryRequest queryRequest);
 
