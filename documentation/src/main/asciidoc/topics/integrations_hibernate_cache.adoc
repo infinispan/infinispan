@@ -196,7 +196,7 @@ You can find more about the configuration check the link:#default_cluster_config
 As mentioned in the single node Wildfly case, {brandname} is the default second level cache provider for JPA/Hibernate when running inside Wildfly.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
 
-When running Wildfly multi-node clusters, it is recommended that you start off by using `standalone-ha.xml` configuration file.
+When running Wildfly multi-node clusters, it is recommended that you start off by using `clustered.xml` configuration file.
 Within this file you can find Hibernate {brandname} caches configured with the correct settings to work in a clustered environment.
 You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
