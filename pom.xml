@@ -118,7 +118,6 @@
       <module>server/runtime</module>
       <module>client/hotrod-client</module>
       <module>client/infinispan-key-value-store-hotrod</module>
-      <module>atomic-factory</module>
       <module>all</module>
       <module>all/cli</module>
       <module>osgi</module>
@@ -5573,7 +5572,6 @@
                         <configuration>
                            <sources>
                               <source>${dir.ispn}/api/src/main/java</source>
-                              <source>${dir.ispn}/atomic-factory/src/main/java</source>
                               <source>${dir.ispn}/cdi/common/src/main/java</source>
                               <source>${dir.ispn}/cdi/embedded/src/main/java</source>
                               <source>${dir.ispn}/cdi/remote/src/main/java</source>
