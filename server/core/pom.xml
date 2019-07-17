@@ -100,13 +100,6 @@
    </dependencies>
 
    <build>
-      <!-- Workaround for ISPN-8843 -->
-       <extensions>
-         <extension>
-            <groupId>kr.motd.maven</groupId>
-            <artifactId>os-maven-plugin</artifactId>
-         </extension>
-      </extensions>
       <plugins>
          <plugin>
             <groupId>org.apache.felix</groupId>

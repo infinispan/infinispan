@@ -4102,6 +4102,12 @@
 
    <build>
       <directory>${buildDirectory}</directory>
+      <extensions>
+         <extension>
+            <groupId>kr.motd.maven</groupId>
+            <artifactId>os-maven-plugin</artifactId>
+         </extension>
+      </extensions>
       <pluginManagement>
          <plugins>
             <plugin>
