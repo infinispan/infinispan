@@ -15,7 +15,6 @@ import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
-import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.QueryFacadeImpl;
 
@@ -173,8 +172,7 @@ final class IndexingTagHandler implements TagHandler {
    private void indexMissingFields() {
       for (FieldDescriptor fieldDescriptor : messageContext.getMessageDescriptor().getFields()) {
          if (!messageContext.isFieldMarked(fieldDescriptor.getNumber())) {
-            Object defaultValue = fieldDescriptor.getJavaType() == JavaType.MESSAGE
-                  || fieldDescriptor.hasDefaultValue() ? fieldDescriptor.getDefaultValue() : null;
+            Object defaultValue = fieldDescriptor.hasDefaultValue() ? fieldDescriptor.getDefaultValue() : null;
             IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
             FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
             if (indexingMetadata == null && isLegacyIndexingEnabled || fieldMapping != null && fieldMapping.index()) {
