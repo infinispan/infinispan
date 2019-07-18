@@ -9,12 +9,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
-import org.infinispan.client.NettyHttpClient;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.commons.junit.Cleanup;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;

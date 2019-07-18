@@ -1,5 +1,7 @@
 package org.infinispan.rest.authentication;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.rest.RestServer;
@@ -13,7 +15,7 @@ import io.netty.channel.ChannelHandlerContext;
  *
  * @author Sebastian Łaskawiec
  */
-public interface Authenticator {
+public interface Authenticator extends Closeable {
 
    /**
     * Challenges specific {@link RestRequest} for authentication.
@@ -35,5 +37,10 @@ public interface Authenticator {
     */
    default boolean isReadyForHttpChallenge() {
       return true;
+   }
+
+   @Override
+   default void close() throws IOException {
+      // No-op
    }
 }

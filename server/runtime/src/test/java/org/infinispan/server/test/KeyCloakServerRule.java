@@ -1,19 +1,18 @@
 package org.infinispan.server.test;
 
-import static org.asynchttpclient.Dsl.asyncHttpClient;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.BoundRequestBuilder;
-import org.asynchttpclient.Response;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.test.TestingUtil;
 import org.junit.rules.TestRule;
@@ -78,18 +77,19 @@ public class KeyCloakServerRule implements TestRule {
    }
 
    public String getAccessTokenForCredentials(String realm, String client, String secret, String username, String password) {
-      try (AsyncHttpClient c = asyncHttpClient()) {
-         String url = String.format("http://%s:%d/auth/realms/%s/protocol/openid-connect/token", container.getContainerIpAddress(), container.getMappedPort(8080), realm);
-         BoundRequestBuilder post = c.preparePost(url)
-               .setHeader("Content-Type", "application/x-www-form-urlencoded")
-               .addFormParam("client_id", client)
-               .addFormParam("client_secret", secret)
-               .addFormParam("username", username)
-               .addFormParam("password", password)
-               .addFormParam("grant_type", "password");
-         Response response = post.execute().get(5, TimeUnit.SECONDS);
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host(container.getContainerIpAddress()).port(container.getMappedPort(8080)).connectionTimeout(5000).socketTimeout(5000);
+      try (RestClient c = RestClient.forConfiguration(builder.build())) {
+         String url = String.format("/auth/realms/%s/protocol/openid-connect/token", realm);
+         Map<String, String> form = new HashMap<>();
+         form.put("client_id", client);
+         form.put("client_secret", secret);
+         form.put("username", username);
+         form.put("password", password);
+         form.put("grant_type", "password");
+         RestResponse response = c.post(url, Collections.singletonMap("Content-Type", "application/x-www-form-urlencoded"), form).toCompletableFuture().get(5, TimeUnit.SECONDS);
          ObjectMapper mapper = new ObjectMapper();
-         Map<String, String> map = mapper.readValue(response.getResponseBody(), Map.class);
+         Map<String, String> map = mapper.readValue(response.getBody(), Map.class);
          return map.get("access_token");
       } catch (Exception e) {
          throw new RuntimeException(e);

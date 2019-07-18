@@ -116,6 +116,7 @@
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>
+      <module>client/rest-client</module>
       <module>client/hotrod-client</module>
       <module>client/infinispan-key-value-store-hotrod</module>
       <module>all</module>
@@ -243,6 +244,7 @@
       <versionx.com.jayway.jsonpath.json-path>2.2.0</versionx.com.jayway.jsonpath.json-path>
       <versionx.com.jgoodies.forms>1.0.7</versionx.com.jgoodies.forms>
       <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
+      <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.sun.istack.istack-commons-runtime>3.0.5</versionx.com.sun.istack.istack-commons-runtime>
       <versionx.com.sun.mail.javax.mail>1.5.5</versionx.com.sun.mail.javax.mail>
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
@@ -405,7 +407,6 @@
       <versionx.org.apache.tomcat.embed.tomcat-embed-websocket>${version.tomcat}</versionx.org.apache.tomcat.embed.tomcat-embed-websocket>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.4.1</versionx.org.assertj.assertj-core>
-      <versionx.org.asynchttpclient.async-http-client>2.10.1</versionx.org.asynchttpclient.async-http-client>
       <versionx.org.beanshell.bsh>2.0b4</versionx.org.beanshell.bsh>
       <versionx.org.checkerframework.checker-compat-qual>2.0.0</versionx.org.checkerframework.checker-compat-qual>
       <versionx.org.codehaus.groovy.groovy>${version.groovy}</versionx.org.codehaus.groovy.groovy>
@@ -987,6 +988,11 @@
             <version>${versionx.com.puppycrawl.tools.checkstyle}</version>
          </dependency>
          <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${versionx.com.squareup.okhttp3.ohhttp}</version>
+         </dependency>
+         <dependency>
             <groupId>com.sun</groupId>
             <artifactId>tools</artifactId>
             <version>${versionx.com.sun.tools}</version>
@@ -1528,11 +1534,6 @@
          </dependency>
          <dependency>
             <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpasyncclient</artifactId>
-            <version>${versionx.org.apache.httpcomponents.httpasyncclient}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${versionx.org.apache.httpcomponents.httpclient}</version>
          </dependency>
@@ -1914,12 +1915,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${versionx.org.assertj.assertj-core}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.asynchttpclient</groupId>
-            <artifactId>async-http-client</artifactId>
-            <version>${versionx.org.asynchttpclient.async-http-client}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -5577,6 +5572,7 @@
                               <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
                               <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
                               <source>${dir.ispn}/client/infinispan-key-value-store-hotrod/src/main/java</source>
+                              <source>${dir.ispn}/client/rest-client/src/main/java</source>
                               <source>${dir.ispn}/commons/src/main/java</source>
                               <source>${dir.ispn}/commons-test/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>

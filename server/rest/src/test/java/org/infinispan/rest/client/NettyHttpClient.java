@@ -1,4 +1,4 @@
-package org.infinispan.client;
+package org.infinispan.rest.client;
 
 import static io.netty.handler.logging.LogLevel.INFO;
 import static io.netty.handler.ssl.ApplicationProtocolNames.HTTP_1_1;
@@ -15,7 +15,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.rest.NettyTruststoreUtil;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 

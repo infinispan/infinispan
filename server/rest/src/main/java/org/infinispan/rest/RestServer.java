@@ -1,5 +1,7 @@
 package org.infinispan.rest;
 
+import java.io.IOException;
+
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -74,6 +76,13 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          restCacheManager.stop();
       }
       if (invocationHelper != null) invocationHelper.stop();
+      AuthenticationConfiguration auth = configuration.authentication();
+      if (auth.enabled()) {
+         try {
+            auth.authenticator().close();
+         } catch (IOException e) {
+         }
+      }
       super.stop();
    }
 

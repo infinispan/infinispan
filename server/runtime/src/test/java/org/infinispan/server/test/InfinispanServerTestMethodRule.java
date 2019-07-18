@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.util.Util;
@@ -97,7 +98,10 @@ public class InfinispanServerTestMethodRule implements TestRule {
 
    public RestClient getRestClient(RestClientConfigurationBuilder clientConfigurationBuilder, CacheMode mode) {
       RestClient restClient = registerResource(infinispanServerRule.newRestClient(clientConfigurationBuilder));
-      Exceptions.unchecked(() -> restClient.createCacheFromTemplate(methodName, "org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
+      RestResponse response = Exceptions.unchecked(() -> restClient.cacheCreateFromTemplate(methodName, "org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
+      if (response.getStatus() != 200) {
+         throw new RuntimeException("Could not create cache " + methodName + ", status = " + response.getStatus());
+      }
       return restClient;
    }
 

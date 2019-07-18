@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.test.Exceptions;
 import org.wildfly.security.http.HttpConstants;
@@ -24,6 +25,8 @@ public class Common {
    public static final Collection<Object[]> SASL_MECHS;
 
    public static final Collection<Object[]> HTTP_MECHS;
+
+   public static final Collection<Protocol> HTTP_PROTOCOLS = Arrays.asList(Protocol.values());
 
    static {
       USER_MAP = new HashMap<>();

@@ -8,7 +8,6 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestClientAHC;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.Exceptions;
@@ -116,7 +115,7 @@ public class InfinispanServerRule implements TestRule {
          InetSocketAddress serverAddress = serverDriver.getServerAddress(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
-      return new RestClientAHC(builder.build());
+      return RestClient.forConfiguration(builder.build());
    }
 
    /**
