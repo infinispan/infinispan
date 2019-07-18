@@ -1,4 +1,4 @@
-package org.infinispan.client.rest;
+package org.infinispan.rest.client;
 
 import java.io.File;
 import java.io.FileInputStream;

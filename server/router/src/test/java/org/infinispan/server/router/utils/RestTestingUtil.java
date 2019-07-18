@@ -1,6 +1,6 @@
 package org.infinispan.server.router.utils;
 
-import org.infinispan.client.NettyHttpClient;
+import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;

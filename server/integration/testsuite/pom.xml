@@ -273,6 +273,12 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-rest</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-router</artifactId>
             <scope>test</scope>
         </dependency>

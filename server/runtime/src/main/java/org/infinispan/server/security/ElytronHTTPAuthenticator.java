@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.rest.RestResponseException;
+import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -29,6 +29,7 @@ import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
 import org.wildfly.security.http.util.SetMechanismInformationMechanismFactory;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -89,7 +90,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                return requestAdapter.getResponse();
             }
          } catch (HttpAuthenticationException e) {
-            throw new RestResponseException(e);
+            return new NettyRestResponse.Builder().status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
          }
       }, executor);
    }
@@ -109,5 +110,10 @@ public class ElytronHTTPAuthenticator implements Authenticator {
    @Override
    public boolean isReadyForHttpChallenge() {
       return serverSecurityRealm.isReadyForHttpChallenge();
+   }
+
+   @Override
+   public void close() {
+      factory.shutdownAuthenticationMechanismFactory();
    }
 }

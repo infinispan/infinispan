@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
-import org.infinispan.client.NettyHttpClient;
+import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.commons.util.Eventually;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;

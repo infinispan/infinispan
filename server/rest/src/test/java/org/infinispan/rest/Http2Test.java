@@ -9,9 +9,9 @@ import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
-import org.infinispan.client.NettyHttpClient;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -25,7 +25,7 @@ import io.netty.handler.ssl.OpenSsl;
 import io.netty.util.CharsetUtil;
 
 /**
- * Most of the REST Server functionality is tested in {@link org.infinispan.rest.RestOperationsTest}. We can do that since
+ * Most of the REST Server functionality is tested elsewhere. We can do that since
  * most of the implementation is exactly the same for both HTTP/1.1 and HTTP/2.0. Here we just do some basic sanity tests.
  *
  * @author Sebastian Łaskawiec

@@ -134,8 +134,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.asynchttpclient</groupId>
-         <artifactId>async-http-client</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-rest</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

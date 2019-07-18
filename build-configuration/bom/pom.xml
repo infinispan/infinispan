@@ -148,6 +148,11 @@
                 <artifactId>infinispan-client-hotrod</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
+           <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-client-rest</artifactId>
+              <version>${version.infinispan}</version>
+           </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-key-value-store-client</artifactId>
