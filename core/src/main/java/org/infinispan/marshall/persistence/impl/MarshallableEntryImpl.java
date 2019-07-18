@@ -117,18 +117,25 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
 
    @Override
    public boolean isExpired(long now) {
-      long expiry = expiryTime();
+      return isExpired(getMetadata(), now, created(), lastUsed());
+   }
+
+   public static boolean isExpired(Metadata metadata, long now, long created, long lastUsed) {
+      long expiry = expiryTime(metadata, created, lastUsed);
       return expiry > 0 && expiry <= now;
    }
 
    @Override
    public long expiryTime() {
-      Metadata metadata = getMetadata();
+      return expiryTime(getMetadata(), created(), lastUsed());
+   }
+
+   public static long expiryTime(Metadata metadata, long created, long lastUsed) {
       if (metadata == null) return -1;
       long lifespan = metadata.lifespan();
-      long lset = lifespan > -1 ? created() + lifespan : -1;
+      long lset = lifespan > -1 ? created + lifespan : -1;
       long maxIdle = metadata.maxIdle();
-      long muet = maxIdle > -1 ? lastUsed() + maxIdle : -1;
+      long muet = maxIdle > -1 ? lastUsed + maxIdle : -1;
       if (lset == -1) return muet;
       if (muet == -1) return lset;
       return min(lset, muet);
