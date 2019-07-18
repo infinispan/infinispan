@@ -14,6 +14,10 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.rocksdb</groupId>
          <artifactId>rocksdbjni</artifactId>
       </dependency>
@@ -97,6 +101,7 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
+                     /proto=${project.basedir}/target/classes/proto,
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                      /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>
@@ -135,6 +140,17 @@
                   <phase>process-classes</phase>
                   <goals>
                      <goal>extract-defaults</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.infinispan.maven-plugins</groupId>
+            <artifactId>proto-schema-compatibility</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>proto-schema-compatibility-check</goal>
                   </goals>
                </execution>
             </executions>

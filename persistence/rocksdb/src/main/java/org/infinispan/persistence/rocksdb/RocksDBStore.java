@@ -3,9 +3,11 @@ package org.infinispan.persistence.rocksdb;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -32,6 +34,8 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.persistence.rocksdb.logging.Log;
@@ -41,6 +45,7 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -94,8 +99,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         this.marshaller = ctx.getPersistenceMarshaller();
         this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
         this.entryFactory = ctx.getMarshallableEntryFactory();
-        // TODO  ISPN-10419 replace with ExpiryBucket class as part persistence context when IPROTO-103 is resolved
-        ctx.getCache().getCacheManager().getClassWhiteList().addClasses(ArrayList.class);
+        ctx.getPersistenceMarshaller().register(new PersistenceContextInitializerImpl());
     }
 
     @Override
@@ -328,43 +332,47 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             expiryEntryQueue.drainTo(entries);
             for (ExpiryEntry entry : entries) {
                 final byte[] expiryBytes = marshall(entry.expiry);
-                final byte[] keyBytes = marshall(entry.key);
                 final byte[] existingBytes = expiredDb.get(expiryBytes);
 
                 if (existingBytes != null) {
                     // in the case of collision make the key a List ...
                     final Object existing = unmarshall(existingBytes);
-                    if (existing instanceof List) {
-                        ((List<Object>) existing).add(entry.key);
+                    if (existing instanceof ExpiryBucket) {
+                        ((ExpiryBucket) existing).entries.add(entry.keyBytes);
                         expiredDb.put(expiryBytes, marshall(existing));
                     } else {
-                        List<Object> al = new ArrayList<>(2);
-                        al.add(existing);
-                        al.add(entry.key);
-                        expiredDb.put(expiryBytes, marshall(al));
+                        ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
+                        expiredDb.put(expiryBytes, marshall(bucket));
                     }
                 } else {
-                    expiredDb.put(expiryBytes, keyBytes);
+                    expiredDb.put(expiryBytes, entry.keyBytes);
                 }
             }
-
-            List<Long> times = new ArrayList<>();
-            List<Object> keys = new ArrayList<>();
 
             long now = ctx.getTimeService().wallClockTime();
             RocksIterator iterator = expiredDb.newIterator(readOptions);
             if (iterator != null) {
                 try (RocksIterator it = iterator) {
+                    List<Long> times = new ArrayList<>();
+                    List<Object> keys = new ArrayList<>();
+                    List<byte[]> marshalledKeys = new ArrayList<>();
+
                     for (it.seekToFirst(); it.isValid(); it.next()) {
                         Long time = (Long) unmarshall(it.key());
                         if (time > now)
                             break;
                         times.add(time);
-                        Object key = unmarshall(it.value());
-                        if (key instanceof List)
-                            keys.addAll((List<?>) key);
-                        else
+                        byte[] marshalledKey = it.value();
+                        Object key = unmarshall(marshalledKey);
+                        if (key instanceof ExpiryBucket) {
+                            for (byte[] bytes : ((ExpiryBucket) key).entries) {
+                                marshalledKeys.add(bytes);
+                                keys.add(unmarshall(bytes));
+                            }
+                        } else {
                             keys.add(key);
+                            marshalledKeys.add(marshalledKey);
+                        }
                     }
 
                     for (Long time : times) {
@@ -374,21 +382,26 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                     if (!keys.isEmpty())
                         log.debugf("purge (up to) %d entries", keys.size());
                     int count = 0;
-                    for (Object key : keys) {
+                    for (int i = 0; i < keys.size(); i++) {
+                        Object key = keys.get(i);
+                        byte[] keyBytes = marshalledKeys.get(i);
                         int segment = handler.calculateSegment(key);
 
                         ColumnFamilyHandle handle = handler.getHandle(segment);
-                        byte[] keyBytes = marshall(key);
                         byte[] valueBytes = db.get(handle, keyBytes);
                         if (valueBytes == null)
                             continue;
-                        MarshallableEntry<K, V> me = valueToMarshallableEntry(key, valueBytes, true);
-                        // TODO race condition: the entry could be updated between the get and delete!
-                        if (me.getMetadata() != null && me.isExpired(now)) {
-                            // somewhat inefficient to FIND then REMOVE...
-                            db.delete(handle, keyBytes);
-                            purgeListener.entryPurged(key);
-                            count++;
+
+                        MarshalledValue mv = (MarshalledValue) unmarshall(valueBytes);
+                        if (mv != null) {
+                            // TODO race condition: the entry could be updated between the get and delete!
+                            Metadata metadata = (Metadata) unmarshall(MarshallUtil.toByteArray(mv.getMetadataBytes()));
+                            if (MarshallableEntryImpl.isExpired(metadata, now, mv.getCreated(), mv.getLastUsed())) {
+                                // somewhat inefficient to FIND then REMOVE...
+                                db.delete(handle, keyBytes);
+                                purgeListener.entryPurged(key);
+                                count++;
+                            }
                         }
                     }
                     if (count != 0)
@@ -445,50 +458,52 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             // which could lead to unexpected results, hence, InternalCacheEntry calls are required
             expiry = maxIdle + ctx.getTimeService().wallClockTime();
         }
-        Long at = expiry;
-        Object key = entry.getKey();
-
         try {
-            expiryEntryQueue.put(new ExpiryEntry(at, key));
+            byte[] keyBytes = entry.getKeyBytes().copy().getBuf();
+            expiryEntryQueue.put(new ExpiryEntry(expiry, keyBytes));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Restore interruption status
         }
     }
 
-    private static final class ExpiryEntry {
-        private final Long expiry;
-        private final Object key;
+    static final class ExpiryBucket {
+        @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+        List<byte[]> entries;
 
-        private ExpiryEntry(long expiry, Object key) {
+        ExpiryBucket(){}
+
+        ExpiryBucket(byte[] existingKey, byte[] newKey) {
+            entries = new ArrayList<>(2);
+            entries.add(existingKey);
+            entries.add(newKey);
+        }
+    }
+
+    private static final class ExpiryEntry {
+
+        long expiry;
+        byte[] keyBytes;
+
+        ExpiryEntry(long expiry, byte[] keyBytes) {
             this.expiry = expiry;
-            this.key = key;
+            this.keyBytes = keyBytes;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ExpiryEntry that = (ExpiryEntry) o;
+            return expiry == that.expiry &&
+                  Arrays.equals(keyBytes, that.keyBytes);
         }
 
         @Override
         public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((key == null) ? 0 : key.hashCode());
+            int result = Objects.hash(expiry);
+            result = 31 * result + Arrays.hashCode(keyBytes);
             return result;
         }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ExpiryEntry other = (ExpiryEntry) obj;
-            if (key == null) {
-                if (other.key != null)
-                    return false;
-            } else if (!key.equals(other.key))
-                return false;
-            return true;
-        }
-
     }
 
     private class RocksKeyIterator extends AbstractIterator<K> {
