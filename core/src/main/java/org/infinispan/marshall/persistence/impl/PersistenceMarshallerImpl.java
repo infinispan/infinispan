@@ -22,6 +22,7 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -223,10 +224,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    static class UserBytes {
 
       @ProtoField(number = 1)
-      byte[] bytes;
+      final byte[] bytes;
 
-      public UserBytes() {}
-
+      @ProtoFactory
       UserBytes(byte[] bytes) {
          this.bytes = bytes;
       }

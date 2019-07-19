@@ -44,7 +44,7 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
    public IncrementableEntryVersion increment(IncrementableEntryVersion initialVersion) {
       if (initialVersion instanceof SimpleClusteredVersion) {
          SimpleClusteredVersion old = (SimpleClusteredVersion) initialVersion;
-         return new SimpleClusteredVersion(topologyId, old.version + 1);
+         return new SimpleClusteredVersion(topologyId, old.getVersion() + 1);
       } else {
          throw new IllegalArgumentException("I only know how to deal with SimpleClusteredVersions, not " + initialVersion.getClass().getName());
       }

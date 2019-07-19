@@ -51,7 +51,7 @@ public interface Metadata {
    /**
     * Metadata builder
     */
-   public interface Builder {
+   interface Builder {
 
       /**
        * Set lifespan time with a given time unit.

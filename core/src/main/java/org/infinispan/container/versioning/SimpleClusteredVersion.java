@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import net.jcip.annotations.Immutable;
@@ -24,23 +25,22 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
    /**
     * The cache topology id in which it was first created.
     */
-   @ProtoField(number = 1, defaultValue = "0")
-   int topologyId;
+   private final int topologyId;
 
-   @ProtoField(number = 2, defaultValue = "0")
-   long version;
+   private final long version;
 
-   SimpleClusteredVersion() {}
-
+   @ProtoFactory
    public SimpleClusteredVersion(int topologyId, long version) {
       this.version = version;
       this.topologyId = topologyId;
    }
 
+   @ProtoField(number = 1, defaultValue = "-1")
    public int getTopologyId() {
       return topologyId;
    }
 
+   @ProtoField(number = 2, defaultValue = "-1")
    public long getVersion() {
       return version;
    }
@@ -97,7 +97,6 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public SimpleClusteredVersion readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          int topologyId = unmarshaller.readInt();
          long version = unmarshaller.readLong();
