@@ -15,6 +15,7 @@ import org.infinispan.functional.MetaParam.MetaLifespan;
 import org.infinispan.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -31,8 +32,17 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return new MetaParamsInternalMetadata(params);
    }
 
-   MetaParamsInternalMetadata() {
+   @ProtoFactory
+   MetaParamsInternalMetadata(NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion,
+                              long created, long lastUsed, long lifespan, long maxIdle) {
       this.params = new MetaParams(MetaParams.EMPTY_ARRAY, 0);
+      if (numericVersion != null || clusteredVersion != null) {
+         this.params.add(new MetaEntryVersion(numericVersion == null ? clusteredVersion : numericVersion));
+      }
+      if (created > -1) params.add(new MetaCreated(created));
+      if (lastUsed > -1) params.add(new MetaLastUsed(lastUsed));
+      if (lifespan > -1) params.add(new MetaLifespan(lifespan));
+      if (maxIdle > -1) params.add(new MetaMaxIdle(maxIdle));
    }
 
    private MetaParamsInternalMetadata(MetaParams params) {
@@ -41,12 +51,12 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @Override
    public long created() {
-      return params.find(MetaCreated.class).map(mc -> mc.get()).orElse(0L);
+      return params.find(MetaCreated.class).map(MetaParam.MetaLong::get).orElse(0L);
    }
 
    @Override
    public long lastUsed() {
-      return params.find(MetaLastUsed.class).map(ml -> ml.get()).orElse(0L);
+      return params.find(MetaLastUsed.class).map(MetaParam.MetaLong::get).orElse(0L);
    }
 
    @Override
@@ -113,38 +123,20 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return version instanceof NumericVersion ? (NumericVersion) version : null;
    }
 
-   void setNumericVersion(NumericVersion version) {
-      params.add(new MetaEntryVersion(version));
-   }
-
    @ProtoField(number = 2)
    SimpleClusteredVersion getClusteredVersion() {
       EntryVersion version = version();
       return version instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) version : null;
    }
 
-   void setClusteredVersion(SimpleClusteredVersion version) {
-      params.add(new MetaEntryVersion(version));
-   }
-
-   @ProtoField(number = 3, defaultValue = "-1")
+   @ProtoField(number = 3, defaultValue = "0")
    long getCreated() {
       return created();
    }
 
-   void setCreated(long created) {
-      if (created > -1)
-         params.add(new MetaCreated(created));
-   }
-
-   @ProtoField(number = 4, defaultValue = "-1")
+   @ProtoField(number = 4, defaultValue = "0")
    long getLastUsed() {
       return lastUsed();
-   }
-
-   void setLastUsed(long lastUsed) {
-      if (lastUsed > -1)
-         params.add(new MetaLastUsed(lastUsed));
    }
 
    @ProtoField(number = 5, defaultValue = "-1")
@@ -152,19 +144,9 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return lifespan();
    }
 
-   void setLifespan(long lifespan) {
-      if (lifespan > -1)
-         params.add(new MetaLifespan(lifespan));
-   }
-
    @ProtoField(number = 6, defaultValue = "-1")
    long getMaxIdle() {
       return maxIdle();
-   }
-
-   void setMaxIdle(long maxIdle) {
-      if (maxIdle > -1)
-         params.add(new MetaMaxIdle(maxIdle));
    }
 
    public static class Builder implements Metadata.Builder {

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -17,13 +18,11 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class WrappedByteArray implements WrappedBytes {
    public static final WrappedByteArray EMPTY_BYTES = new WrappedByteArray(Util.EMPTY_BYTE_ARRAY);
-   @ProtoField(number = 1)
-   byte[] bytes;
+   private final byte[] bytes;
    private transient int hashCode;
    private transient boolean initializedHashCode;
 
-   public WrappedByteArray() {}
-
+   @ProtoFactory
    public WrappedByteArray(byte[] bytes) {
       this.bytes = bytes;
    }
@@ -36,6 +35,7 @@ public class WrappedByteArray implements WrappedBytes {
    }
 
    @Override
+   @ProtoField(number = 1)
    public byte[] getBytes() {
       return bytes;
    }

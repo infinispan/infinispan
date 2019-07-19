@@ -5,6 +5,7 @@ import static org.infinispan.counter.util.Utils.calculateState;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import net.jcip.annotations.Immutable;
@@ -22,16 +23,11 @@ public class CounterValue {
 
    //A valid zero value
    private static final CounterValue ZERO = new CounterValue(0, CounterState.VALID);
+   private final long value;
+   private final CounterState state;
 
-   @ProtoField(number = 1, defaultValue = "0")
-   long value;
-
-   @ProtoField(number = 2)
-   CounterState state;
-
-   CounterValue() {}
-
-   private CounterValue(long value, CounterState state) {
+   @ProtoFactory
+   CounterValue(long value, CounterState state) {
       this.value = value;
       this.state = state;
    }
@@ -99,6 +95,7 @@ public class CounterValue {
    /**
     * @return the counter's value.
     */
+   @ProtoField(number = 1, defaultValue = "0")
    public long getValue() {
       return value;
    }
@@ -106,6 +103,7 @@ public class CounterValue {
    /**
     * @return the counter's state.
     */
+   @ProtoField(number = 2)
    public CounterState getState() {
       return state;
    }

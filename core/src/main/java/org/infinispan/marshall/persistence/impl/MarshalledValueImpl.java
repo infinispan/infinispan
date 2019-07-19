@@ -7,6 +7,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.spi.MarshalledValue;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -17,12 +18,17 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class MarshalledValueImpl implements MarshalledValue {
 
-   static final MarshalledValue EMPTY = new MarshalledValueImpl();
+   static final MarshalledValue EMPTY = new MarshalledValueImpl((ByteBuffer) null, null, -1, -1);
 
-   private ByteBuffer valueBytes;
-   private ByteBuffer metadataBytes;
-   private long created;
-   private long lastUsed;
+   private final ByteBuffer valueBytes;
+   private final ByteBuffer metadataBytes;
+   private final long created;
+   private final long lastUsed;
+
+   @ProtoFactory
+   MarshalledValueImpl(byte[] value, byte[] metadata, long created, long lastUsed) {
+      this(new ByteBufferImpl(value), new ByteBufferImpl(metadata), created, lastUsed);
+   }
 
    MarshalledValueImpl(ByteBuffer valueBytes, ByteBuffer metadataBytes, long created, long lastUsed) {
       this.valueBytes = valueBytes;
@@ -31,24 +37,15 @@ public class MarshalledValueImpl implements MarshalledValue {
       this.lastUsed = lastUsed;
    }
 
-   MarshalledValueImpl() {}
-
    @ProtoField(number = 1, name = "value")
    byte[] getValue() {
       return valueBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(valueBytes);
    }
 
-   void setValue(byte[] bytes) {
-      valueBytes = new ByteBufferImpl(bytes);
-   }
 
    @ProtoField(number = 2, name = "metadata")
    byte[] getMetadata() {
       return metadataBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(metadataBytes);
-   }
-
-   void setMetadata(byte[] bytes) {
-      metadataBytes = new ByteBufferImpl(bytes);
    }
 
    @Override
@@ -57,18 +54,10 @@ public class MarshalledValueImpl implements MarshalledValue {
       return created;
    }
 
-   void setCreated(long created) {
-      this.created = created;
-   }
-
    @Override
    @ProtoField(number = 4, name = "lastUsed", defaultValue = "-1")
    public long getLastUsed() {
       return lastUsed;
-   }
-
-   void setLastUsed(long lastUsed) {
-      this.lastUsed = lastUsed;
    }
 
    @Override
