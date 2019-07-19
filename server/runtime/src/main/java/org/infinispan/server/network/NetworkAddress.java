@@ -8,6 +8,7 @@ import java.util.Enumeration;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.server.Server;
 
 /**
@@ -45,6 +46,31 @@ public class NetworkAddress {
             '}';
    }
 
+   public static NetworkAddress fromString(String name, String value) {
+      switch (value) {
+         case "GLOBAL":
+            return globalAddress(name);
+         case "LOOPBACK":
+            return loopback(name);
+         case "NON_LOOPBACK":
+            return nonLoopback(name);
+         case "SITE_LOCAL":
+            return siteLocal(name);
+         case "LINK_LOCAL":
+            return linkLocalAddress(name);
+         default:
+            if (value.startsWith("match-interface:")) {
+               return matchInterface(name, value.substring(value.indexOf(':') + 1));
+            } else if (value.startsWith("match-address:")) {
+               return matchAddress(name, value.substring(value.indexOf(':') + 1));
+            } else if (value.startsWith("match-host:")) {
+               return matchHost(name, value.substring(value.indexOf(':') + 1));
+            } else {
+               return inetAddress(name, value);
+            }
+      }
+   }
+
    public static NetworkAddress globalAddress(String name) {
       return new NetworkAddress(name, findAddress(a -> !a.isLoopbackAddress() && !a.isSiteLocalAddress() && !a.isLinkLocalAddress()));
    }
@@ -62,15 +88,18 @@ public class NetworkAddress {
    }
 
    public static NetworkAddress matchInterface(String name, String value) {
-      throw new UnsupportedOperationException(); // TODO
+      String regex = GlobUtils.globToRegex(value);
+      return new NetworkAddress(name, findInterface(i -> i.getName().matches(regex)).getInetAddresses().nextElement());
    }
 
    public static NetworkAddress matchAddress(String name, String value) {
-      throw new UnsupportedOperationException(); // TODO
+      String regex = GlobUtils.globToRegex(value);
+      return new NetworkAddress(name, findAddress(a -> a.getHostAddress().matches(regex)));
    }
 
    public static NetworkAddress matchHost(String name, String value) {
-      throw new UnsupportedOperationException(); // TODO
+      String regex = GlobUtils.globToRegex(value);
+      return new NetworkAddress(name, findAddress(a -> a.getHostName().matches(regex)));
    }
 
    public static NetworkAddress inetAddress(String name, String value) {
@@ -96,7 +125,7 @@ public class NetworkAddress {
                for (Enumeration addresses = networkInterface.getInetAddresses(); addresses.hasMoreElements(); ) {
                   InetAddress address = (InetAddress) addresses.nextElement();
                   if (Server.log.isDebugEnabled()) {
-                     Server.log.debugf("Network address %s", address);
+                     Server.log.debugf("Network address %s (%b %b %b)", address, address.isLoopbackAddress(), address.isLinkLocalAddress(), address.isSiteLocalAddress());
                   }
                   if (matcher.test(address)) {
                      return address;
@@ -108,5 +137,24 @@ public class NetworkAddress {
          throw new CacheConfigurationException(e);
       }
       throw new CacheConfigurationException("No matching addresses found");
+   }
+
+   static NetworkInterface findInterface(Predicate<NetworkInterface> matcher) {
+      try {
+         for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+            NetworkInterface networkInterface = interfaces.nextElement();
+            if (networkInterface.isUp()) {
+               if (Server.log.isDebugEnabled()) {
+                  Server.log.debugf("Network interface %s", networkInterface);
+               }
+               if (matcher.test(networkInterface)) {
+                  return networkInterface;
+               }
+            }
+         }
+      } catch (SocketException e) {
+         throw new CacheConfigurationException(e);
+      }
+      throw new CacheConfigurationException("No matching interface found");
    }
 }
