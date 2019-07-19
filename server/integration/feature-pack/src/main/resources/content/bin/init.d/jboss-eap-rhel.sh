@@ -174,7 +174,7 @@ stop() {
 		let kwait=$SHUTDOWN_WAIT
 
 		# Try issuing SIGTERM
-		kill -15 $kpid
+                su -s /bin/sh -c "kill -15 $kpid" $JBOSS_USER
 		until [ `ps --pid $kpid 2> /dev/null | grep -c $kpid 2> /dev/null` -eq '0' ] || [ $count -gt $kwait ]
 			do
 			sleep 1
@@ -182,7 +182,11 @@ stop() {
 		done
 
 		if [ $count -gt $kwait ]; then
-			kill -9 $kpid
+                       su -s /bin/sh -c "kill -9 $kpid" $JBOSS_USER 2> /dev/null
+                       if [ "$?" != 0  ]; then
+                               failure
+                               exit 1
+                       fi
 		fi
 	fi
 	rm -f $JBOSS_PIDFILE
