@@ -198,8 +198,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
       switch (element) {
          case INET_ADDRESS:
+            builder.addNetworkInterface(NetworkAddress.fromString(name, ParseUtils.requireSingleAttribute(reader, Attribute.VALUE)));
             ParseUtils.requireNoContent(reader);
-            builder.addNetworkInterface(NetworkAddress.inetAddress(name, ParseUtils.requireSingleAttribute(reader, Attribute.VALUE)));
             break;
          case LINK_LOCAL:
             ParseUtils.requireNoAttributes(reader);
@@ -227,16 +227,16 @@ public class ServerConfigurationParser implements ConfigurationParser {
             builder.addNetworkInterface(NetworkAddress.siteLocal(name));
             break;
          case MATCH_INTERFACE:
-            ParseUtils.requireNoContent(reader);
             builder.addNetworkInterface(NetworkAddress.matchInterface(name, ParseUtils.requireSingleAttribute(reader, Attribute.VALUE)));
+            ParseUtils.requireNoContent(reader);
             break;
          case MATCH_ADDRESS:
-            ParseUtils.requireNoContent(reader);
             builder.addNetworkInterface(NetworkAddress.matchAddress(name, ParseUtils.requireSingleAttribute(reader, Attribute.VALUE)));
+            ParseUtils.requireNoContent(reader);
             break;
          case MATCH_HOST:
-            ParseUtils.requireNoContent(reader);
             builder.addNetworkInterface(NetworkAddress.matchHost(name, ParseUtils.requireSingleAttribute(reader, Attribute.VALUE)));
+            ParseUtils.requireNoContent(reader);
             break;
          default:
             throw ParseUtils.unexpectedElement(reader);

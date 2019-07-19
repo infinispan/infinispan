@@ -38,6 +38,15 @@ public class Bootstrap {
                parameter = command.substring(equals + 1);
                command = command.substring(0, equals);
             }
+         } else if (command.startsWith("-D")) {
+            if (command.length() < 3) {
+               stdErr.println(Messages.MSG.invalidArgument(command));
+               exitHandler.exit(1);
+               return;
+            } else {
+               parameter = command.substring(2);
+               command = command.substring(0, 2);
+            }
          } else if (command.startsWith("-")) {
             if (command.length() != 2) {
                stdErr.println(Messages.MSG.invalidShortArgument(command));
@@ -77,13 +86,17 @@ public class Bootstrap {
             case "--port-offset":
                properties.setProperty(Server.INFINISPAN_PORT_OFFSET, parameter);
                break;
+            case "-D":
+               int equals = parameter.indexOf('=');
+               properties.setProperty(parameter.substring(0, equals), parameter.substring(equals + 1));
+               break;
             case "-v":
             case "--version":
                help(stdOut, false);
                exitHandler.exit(0);
                break;
             default:
-               stdErr.println(Messages.MSG.unknownParameter(args[i]));
+               stdErr.println(Messages.MSG.unknownArgument(args[i]));
                exitHandler.exit(1);
                break;
          }
@@ -124,6 +137,7 @@ public class Bootstrap {
          stdOut.printf("  -h, --help                    Displays this message and exits.\n");
          stdOut.printf("  -s, --server-root=<path>      Uses the specified path as root for the server. Defaults to '%s'.\n", Server.DEFAULT_SERVER_ROOT_DIR);
          stdOut.printf("  -v, --version                 Displays version information and exits.\n");
+         stdOut.printf("  -D<name>=<value>              Sets a system property to the specified value.\n");
       }
    }
 }

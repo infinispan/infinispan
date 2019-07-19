@@ -10,7 +10,7 @@
    <server xmlns="urn:infinispan:server:10.0">
       <interfaces>
          <interface name="public">
-            <loopback/>
+            <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
          </interface>
       </interfaces>
 
