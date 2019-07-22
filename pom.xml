@@ -165,9 +165,6 @@
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
       <dir.ispn>../</dir.ispn>
-      <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
-      <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
-      <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}</testjvm.commonArgs>
       <testjvm.jigsawArgs />
       <testjvm.extraArgs/>
@@ -465,7 +462,6 @@
       <versionx.org.hibernate.hibernate-validator>${version.hibernate.core}</versionx.org.hibernate.hibernate-validator>
       <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
       <versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>${version.lucene.featurepack}</versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>
-      <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
       <versionx.org.javassist.javassist>3.24.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.aesh.aesh>0.66.13</versionx.org.jboss.aesh.aesh>
       <versionx.org.jboss.arquillian.config.arquillian-config-api>${version.arquillian}</versionx.org.jboss.arquillian.config.arquillian-config-api>
@@ -2497,13 +2493,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.jacoco</groupId>
-            <artifactId>org.jacoco.agent</artifactId>
-            <version>${versionx.org.jacoco.org.jacoco.agent}</version>
-            <scope>test</scope>
-            <classifier>runtime</classifier>
-         </dependency>
-         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>${versionx.org.javassist.javassist}</version>
@@ -4091,12 +4080,6 @@
          <artifactId>javax.annotation-api</artifactId>
          <scope>provided</scope>
       </dependency>
-      <dependency>
-         <groupId>org.jacoco</groupId>
-         <artifactId>org.jacoco.agent</artifactId>
-         <classifier>runtime</classifier>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
@@ -4249,7 +4232,7 @@
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                      <ansi.strip>${ansi.strip}</ansi.strip>
                   </systemPropertyVariables>
-                  <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+                  <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} @{argLine}</argLine>
                </configuration>
             </plugin>
             <plugin>
@@ -4668,7 +4651,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${testNGListeners}</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true @{argLine}</argLine>
             </configuration>
          </plugin>
          <plugin>
@@ -5402,267 +5385,75 @@
             <log4j.configurationFile>${infinispan.root}/log4j2-trace.xml</log4j.configurationFile>
          </properties>
       </profile>
-      <profile>
-         <id>coverage</id>
-
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <argLine combine.self="override">${forkJvmArgs} ${jacoco.agent.argLine}</argLine>
-                  </configuration>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <version>1.0.0</version>
-                  <executions>
-                     <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
-                     <execution>
-                        <goals>
-                           <goal>set-system-properties</goal>
-                        </goals>
-                        <configuration>
-                           <properties>
-                              <property>
-                                 <name>jacoco.reportPath</name>
-                                 <value>${session.executionRootDirectory}/jacoco</value>
-                              </property>
-                           </properties>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <!-- Starting jacoco agent for recording code coverage. -->
-               <plugin>
-                  <groupId>org.jacoco</groupId>
-                  <artifactId>jacoco-maven-plugin</artifactId>
-                  <version>${version.jacoco}</version>
-                  <executions>
-                     <execution>
-                        <id>default-prepare-agent</id>
-                        <goals>
-                           <goal>prepare-agent</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <propertyName>jacoco.agent.argLine</propertyName>
-                     <destFile>${dir.jacoco}/${project.artifactId}.exec</destFile>
-                     <excludes>
-                        <exclude>**/logging/**</exclude>
-                     </excludes>
-                  </configuration>
-               </plugin>
-               <!-- Overriding surefire configuration, for attaching jacoco agent to command line. -->
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <dependencies>
-                     <dependency>
-                        <groupId>org.apache.ant</groupId>
-                        <artifactId>ant</artifactId>
-                        <version>${version.ant}</version>
-                     </dependency>
-                     <dependency>
-                        <groupId>ant-contrib</groupId>
-                        <artifactId>ant-contrib</artifactId>
-                        <version>${version.ant-contrib}</version>
-                        <exclusions>
-                           <exclusion>
-                              <groupId>ant</groupId>
-                              <artifactId>ant</artifactId>
-                           </exclusion>
-                        </exclusions>
-                     </dependency>
-                     <dependency>
-                        <groupId>org.apache.ant</groupId>
-                        <artifactId>ant-nodeps</artifactId>
-                        <version>${version.ant-nodeps}</version>
-                     </dependency>
-                  </dependencies>
-                  <executions>
-                     <execution>
-                        <id>copy-generated-classes</id>
-                        <phase>test</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <target>
-                                 <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
-                                 <echo message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
-                                 <copydir dest="${jacoco.reportPath}/classes"
-                                          src="${project.build.directory}/classes"
-                                          if:set="hasClasses" xmlns:if="ant:if"/>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-      <profile>
-         <id>jacocoReport</id>
-
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <version>1.0.0</version>
-                  <executions>
-                     <execution>
-                        <goals>
-                           <goal>set-system-properties</goal>
-                        </goals>
-                        <configuration>
-                           <properties>
-                              <property>
-                                 <name>jacoco.reportPath</name>
-                                 <value>${session.executionRootDirectory}/jacoco</value>
-                              </property>
-                           </properties>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>delete-existing-jacoco-report</id>
-                        <phase>initialize</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <target>
-                              <echo>Deleting existing Jacoco Report Directory.</echo>
-                              <delete dir="${dir.jacoco.report}"/>
-                              <delete dir="${dir.jacoco.merged}"/>
-                              <delete dir="${project.build.directory}/classes"/>
-                              <echo>Copying the generated classes file to ${project.build.directory}/classes
-                              </echo>
-                              <copydir dest="${project.build.directory}/classes"
-                                       src="${jacoco.reportPath}/classes"/>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>build-helper-maven-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                           <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                           <sources>
-                              <source>${dir.ispn}/api/src/main/java</source>
-                              <source>${dir.ispn}/cdi/common/src/main/java</source>
-                              <source>${dir.ispn}/cdi/embedded/src/main/java</source>
-                              <source>${dir.ispn}/cdi/remote/src/main/java</source>
-                              <source>${dir.ispn}/checkstyle/src/main/java</source>
-                              <source>${dir.ispn}/cli/cli-client/src/main/java</source>
-                              <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
-                              <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
-                              <source>${dir.ispn}/client/infinispan-key-value-store-hotrod/src/main/java</source>
-                              <source>${dir.ispn}/commons/src/main/java</source>
-                              <source>${dir.ispn}/commons-test/src/main/java</source>
-                              <source>${dir.ispn}/core/src/main/java</source>
-                              <source>${dir.ispn}/demos/distexec/src/main/java</source>
-                              <source>${dir.ispn}/demos/gridfs-webdav//src/main/java</source>
-                              <source>${dir.ispn}/demos/gui/src/main/java</source>
-                              <source>${dir.ispn}/demos/lucene-directory-demo/src/main/java</source>
-                              <source>${dir.ispn}/extended-statistics/src/main/java</source>
-                              <source>${dir.ispn}/jcache/commons/src/main/java</source>
-                              <source>${dir.ispn}/jcache/embedded/src/main/java</source>
-                              <source>${dir.ispn}/jcache/remote/src/main/java</source>
-                              <source>${dir.ispn}/lucene/directory-provider/src/main/java</source>
-                              <source>${dir.ispn}/lucene/lucene-directory/src/main/java</source>
-                              <source>${dir.ispn}/object-filter/src/main/java</source>
-                              <source>${dir.ispn}/osgi/src/main/java</source>
-                              <source>${dir.ispn}/persistence/cli/src/main/java</source>
-                              <source>${dir.ispn}/persistence/jdbc/src/main/java</source>
-                              <source>${dir.ispn}/persistence/jpa/src/main/java</source>
-                              <source>${dir.ispn}/persistence/leveldb/src/main/java</source>
-                              <source>${dir.ispn}/persistence/remote/src/main/java</source>
-                              <source>${dir.ispn}/persistence/rest/src/main/java</source>
-                              <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>
-                              <source>${dir.ispn}/persistence/soft-index/src/main/java</source>
-                              <source>${dir.ispn}/query/src/main/java</source>
-                              <source>${dir.ispn}/query-dsl/src/main/java</source>
-                              <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>
-                              <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
-                              <source>${dir.ispn}/scripting/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring5/spring5-common/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring5/spring5-embedded/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring5/spring5-remote/src/main/java</source>
-                              <source>${dir.ispn}/tasks/src/main/java</source>
-                              <source>${dir.ispn}/tasks-api/src/main/java</source>
-                              <source>${dir.ispn}/tools/src/main/java</source>
-                              <source>${dir.ispn}/tree/src/main/java</source>
-                           </sources>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-
-               <plugin>
-                  <groupId>org.jacoco</groupId>
-                  <artifactId>jacoco-maven-plugin</artifactId>
-                  <version>${version.jacoco}</version>
-                  <executions>
-                     <execution>
-                        <id>default-report</id>
-                        <goals>
-                           <goal>report</goal>
-                        </goals>
-                        <phase>install</phase>
-                     </execution>
-                     <execution>
-                        <id>default-merge</id>
-                        <goals>
-                           <goal>merge</goal>
-                        </goals>
-                        <configuration>
-                           <fileSets>
-                              <fileSet>
-                                 <directory>${dir.jacoco}</directory>
-                                 <includes>
-                                    <include>*.exec</include>
-                                 </includes>
-                              </fileSet>
-                           </fileSets>
-                           <destFile>${dir.jacoco.merged}/jacoco.exec</destFile>
-                        </configuration>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <dataFile>${dir.jacoco.merged}/jacoco.exec</dataFile>
-                     <outputDirectory>${dir.jacoco.report}</outputDirectory>
-                     <excludes>
-                        <exclude>**/logging/**</exclude>
-                     </excludes>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
+       <profile>
+           <id>sonar</id>
+           <properties>
+               <sonar.jacoco.reportPaths>target/coverage-reports/jacoco.exec,target/coverage-reports/jacoco-it.exec</sonar.jacoco.reportPaths>
+               <sonar.java.source>11</sonar.java.source>
+           </properties>
+           <build>
+               <plugins>
+                   <plugin>
+                       <groupId>org.sonarsource.scanner.maven</groupId>
+                       <artifactId>sonar-maven-plugin</artifactId>
+                       <version>${version.sonar}</version>
+                   </plugin>
+               </plugins>
+           </build>
+       </profile>
+       <profile>
+           <id>no-coverage</id>
+           <activation>
+               <property>
+                   <name>!coverage</name>
+               </property>
+           </activation>
+           <properties>
+               <argLine></argLine>
+           </properties>
+       </profile>
+       <profile>
+           <id>coverage</id>
+           <activation>
+               <property>
+                   <name>coverage</name>
+               </property>
+           </activation>
+           <properties>
+               <coverage.output>${project.build.directory}/coverage-reports</coverage.output>
+               <jacoco.ut.destFile>${coverage.output}/jacoco.exec</jacoco.ut.destFile>
+               <jacoco.it.destFile>${coverage.output}/jacoco-it.exec</jacoco.it.destFile>
+           </properties>
+           <build>
+               <plugins>
+                   <plugin>
+                       <groupId>org.jacoco</groupId>
+                       <artifactId>jacoco-maven-plugin</artifactId>
+                       <version>${version.jacoco}</version>
+                       <executions>
+                           <execution>
+                               <id>prepare-agent</id>
+                               <goals>
+                                   <goal>prepare-agent</goal>
+                               </goals>
+                               <configuration>
+                                   <destFile>${jacoco.ut.destFile}</destFile>
+                               </configuration>
+                           </execution>
+                           <execution>
+                               <id>prepare-agent-integration</id>
+                               <goals>
+                                   <goal>prepare-agent-integration</goal>
+                               </goals>
+                               <configuration>
+                                   <destFile>${jacoco.it.destFile}</destFile>
+                               </configuration>
+                           </execution>
+                       </executions>
+                   </plugin>
+               </plugins>
+           </build>
+       </profile>
       <profile>
          <id>owasp</id>
             <build>
