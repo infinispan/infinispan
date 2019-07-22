@@ -60,7 +60,7 @@ public class ScriptMetadataParser {
                   metadataBuilder.role(value);
                   break;
                case "datatype":
-                  metadataBuilder.dataType(MediaType.parse(value));
+                  metadataBuilder.dataType(MediaType.fromString(value));
                   break;
                default:
                   throw log.unknownScriptProperty(key);

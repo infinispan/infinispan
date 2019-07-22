@@ -22,7 +22,7 @@ public class GzipEncoder implements Encoder {
 
    @Override
    public MediaType getStorageFormat() {
-      return MediaType.parse("application/gzip");
+      return MediaType.fromString("application/gzip");
    }
 
    @Override

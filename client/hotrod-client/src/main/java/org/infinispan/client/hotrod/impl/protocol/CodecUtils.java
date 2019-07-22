@@ -55,7 +55,7 @@ public final class CodecUtils {
    static MediaType readCustomMediaType(ByteBuf buffer) {
       byte[] customMediaTypeBytes = ByteBufUtil.readArray(buffer);
       String strCustomMediaType = new String(customMediaTypeBytes, CharsetUtil.UTF_8);
-      MediaType customMediaType = MediaType.parse(strCustomMediaType);
+      MediaType customMediaType = MediaType.fromString(strCustomMediaType);
       return customMediaType.withParameters(readMediaTypeParams(buffer));
    }
 

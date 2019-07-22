@@ -120,6 +120,10 @@ public final class MediaType {
       return toString();
    }
 
+   /**
+    * @deprecated replaced by {@link #fromString}
+    */
+   @Deprecated
    public static MediaType parse(String str) {
       return fromString(str);
    }
@@ -155,7 +159,7 @@ public final class MediaType {
 
    private static double parseWeight(String weightValue) {
       try {
-         return Double.valueOf(weightValue);
+         return Double.parseDouble(weightValue);
       } catch (NumberFormatException nf) {
          throw log.invalidWeight(weightValue);
       }
