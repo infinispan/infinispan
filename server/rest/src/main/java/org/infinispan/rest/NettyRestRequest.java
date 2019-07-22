@@ -26,7 +26,7 @@ public class NettyRestRequest implements RestRequest, ReferenceCounted {
 
    private final static Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
 
-   private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.parse("application/x-java-object;type=java.lang.String");
+   private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("application/x-java-object;type=java.lang.String");
 
    public static final String EXTENDED_HEADER = "extended";
    private static final String MAX_TIME_IDLE_HEADER = "maxIdleTimeSeconds";
@@ -104,14 +104,14 @@ public class NettyRestRequest implements RestRequest, ReferenceCounted {
    public MediaType contentType() {
       String contentTypeHeader = getContentTypeHeader();
       if (contentTypeHeader == null) return MediaType.MATCH_ALL;
-      return MediaType.parse(contentTypeHeader);
+      return MediaType.fromString(contentTypeHeader);
    }
 
    @Override
    public MediaType keyContentType() {
       String header = request.headers().get(KEY_CONTENT_TYPE_HEADER);
       if (header == null) return DEFAULT_KEY_CONTENT_TYPE;
-      return MediaType.parse(header);
+      return MediaType.fromString(header);
    }
 
    @Override

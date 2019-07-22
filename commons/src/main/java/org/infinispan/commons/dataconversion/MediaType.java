@@ -120,6 +120,7 @@ public final class MediaType {
       return toString();
    }
 
+   @Deprecated
    public static MediaType parse(String str) {
       return fromString(str);
    }
