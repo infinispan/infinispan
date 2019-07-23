@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
@@ -79,7 +80,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, configuration.maxContentLength());
       pipeline.addLast(httpCodec);
       if(!corsRules.isEmpty()) {
-         pipeline.addLast(new org.infinispan.rest.cors.CorsHandler(corsRules, true));
+         pipeline.addLast(new CorsHandler(corsRules, true));
       }
       pipeline.addLast(new HttpContentCompressor(configuration.getCompressionLevel()));
       pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, this::upgradeCodecForHttp11));
