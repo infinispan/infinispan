@@ -43,7 +43,7 @@ public class TestNGSuiteChecksTest {
 
    @AfterSuite(alwaysRun = true)
    public void afterSuite() {
-      ThreadLeakChecker.checkForLeaks();
+      ThreadLeakChecker.checkForLeaks("");
    }
 
    private void checkAnnotations(List<String> errors, Set<Class> classes, Collection<ITestNGMethod> methods) {

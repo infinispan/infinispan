@@ -19,6 +19,7 @@ import org.apache.directory.server.factory.ServerAnnotationProcessor;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.test.Exceptions;
 import org.junit.rules.TestRule;
@@ -79,6 +80,9 @@ public class LdapServerRule implements TestRule {
       } finally {
          Util.recursiveFileRemove(directoryService.getInstanceLayout().getInstanceDirectory());
       }
+
+      // LdapServer creates an ExecutorFilter with an "unmanaged" executor and doesn't stop the executor itself
+      ThreadLeakChecker.ignoreThreadsContaining("pool-.*thread-");
    }
 
    @CreateDS(
