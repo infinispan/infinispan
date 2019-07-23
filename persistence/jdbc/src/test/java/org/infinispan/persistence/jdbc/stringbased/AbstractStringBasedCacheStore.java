@@ -189,4 +189,9 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
         s.executeUpdate(tableManager.getDeleteAllRowsSql());
         connectionFactory.releaseConnection(connection);
     }
+
+    @AfterMethod(alwaysRun = true)
+    public void tearDown() {
+       connectionFactory.stop();
+    }
 }
