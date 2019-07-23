@@ -9,7 +9,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -139,7 +138,7 @@ public class ThreadLeakChecker {
       threadInfo.set(new LeakException("after-" + testName));
    }
 
-   private static void updateThreadOwnership(List<String> availableOwners) {
+   private static void updateThreadOwnership(String testName) {
       // Update the thread ownership information
       Set<Thread> currentThreads = getThreadsSnapshot();
       runningThreads.keySet().retainAll(currentThreads);
@@ -166,7 +165,7 @@ public class ThreadLeakChecker {
          try {
             Object threadLocalsMap = threadLocalsField.get(thread);
             Object entry = threadLocalsMap != null ? getEntryMethod.invoke(threadLocalsMap, threadInfo) : null;
-            LeakException stacktrace = entry != null ? (LeakException) valueField.get(entry) : UNKNOWN;
+            LeakException stacktrace = entry != null ? (LeakException) valueField.get(entry) : new LeakException(testName);
             runningThreads.putIfAbsent(thread, new LeakInfo(thread, stacktrace));
          } catch (IllegalAccessException | InvocationTargetException e) {
             log.error("Error extracting backtrace of leaked thread " + thread.getName());
@@ -179,20 +178,21 @@ public class ThreadLeakChecker {
     *
     * Assumes that no tests are running.
     */
-   public static void checkForLeaks() {
+   public static void checkForLeaks(String lastTestName) {
       if (!ENABLED)
          return;
 
       lock.lock();
       try {
-         performCheck();
+         performCheck(lastTestName);
       } finally {
          lock.unlock();
       }
    }
 
-   private static void performCheck() {
-      updateThreadOwnership(Collections.singletonList("UNKNOWN"));
+   private static void performCheck(String lastTestName) {
+      String ownerTest = "UNKNOWN[" + lastTestName + "]";
+      updateThreadOwnership(ownerTest);
       List<LeakInfo> leaks = computeLeaks();
 
       if (!leaks.isEmpty()) {
@@ -204,7 +204,7 @@ public class ThreadLeakChecker {
             Thread.currentThread().interrupt();
          }
          // Update the thread ownership information
-         updateThreadOwnership(Collections.singletonList("UNKNOWN"));
+         updateThreadOwnership(ownerTest);
          leaks = computeLeaks();
       }
 
@@ -215,7 +215,7 @@ public class ThreadLeakChecker {
                throw new IOException("Cannot create report directory " + reportsDir.getAbsolutePath());
             }
             PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(
-               new File(reportsDir, "TEST-ThreadLeakChecker.xml"));
+               new File(reportsDir, "TEST-ThreadLeakChecker" + lastTestName + ".xml"));
             String property = System.getProperty("infinispan.modulesuffix");
             String moduleName = property != null ? property.substring(1) : "";
             writer.start(moduleName, leaks.size(), 0, leaks.size(), 0, false);

@@ -18,7 +18,7 @@ public class JUnitTestListener extends RunListener {
    private ThreadLocal<Boolean> currentTestIsSuccessful = new ThreadLocal<>();
 
    private final TestSuiteProgress progressLogger;
-   private String currentTestName;
+   private String currentTestRunName;
 
    public JUnitTestListener() {
       progressLogger = new TestSuiteProgress();
@@ -68,13 +68,14 @@ public class JUnitTestListener extends RunListener {
    public void testRunStarted(Description description) throws Exception {
       EnvironmentCheck.checkJVMVersion();
       ThreadLeakChecker.saveInitialThreads();
+      currentTestRunName = description.getDisplayName();
    }
 
    @Override
    public void testRunFinished(Result result) {
       try {
          // We don't use @RunWith(Suite.class) so we only have a single suite
-         ThreadLeakChecker.checkForLeaks();
+         ThreadLeakChecker.checkForLeaks(currentTestRunName);
       } catch (Throwable e) {
          progressLogger.configurationFailed("[ERROR]", e);
          throw e;

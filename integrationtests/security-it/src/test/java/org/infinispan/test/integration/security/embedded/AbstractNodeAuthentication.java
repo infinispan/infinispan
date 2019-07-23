@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -329,6 +330,9 @@ public abstract class AbstractNodeAuthentication {
             krbLdapServer.stop();
             krbStarted = false;
          }
+
+         // LdapServer creates an ExecutorFilter with an "unmanaged" executor and doesn't stop the executor itself
+         ThreadLeakChecker.ignoreThreadsContaining("pool-.*thread-");
       }
    }
 
