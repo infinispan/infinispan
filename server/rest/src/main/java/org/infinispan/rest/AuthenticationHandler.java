@@ -45,14 +45,22 @@ public class AuthenticationHandler extends BaseHttpRequestHandler {
       restAccessLoggingHandler.preLog(request);
       NettyRestRequest nettyRequest = new NettyRestRequest(request);
       authenticator.challenge(nettyRequest, ctx).whenComplete((authResponse, authThrowable) -> {
-         if (authThrowable != null) {
-            handleError(ctx, request, authThrowable);
-         } else if (authResponse.getStatus() == UNAUTHORIZED.code()) {
-            sendResponse(ctx, request, ((NettyRestResponse) authResponse).getResponse());
-         } else {
+         boolean hasError = authThrowable != null;
+         boolean authorized = authResponse.getStatus() != UNAUTHORIZED.code();
+         if (!hasError && authorized) {
             subject = nettyRequest.getSubject();
             authorization = nettyRequest.getAuthorizationHeader();
             ctx.fireChannelRead(request);
+         } else {
+            try {
+               if (hasError) {
+                  handleError(ctx, request, authThrowable);
+               } else {
+                  sendResponse(ctx, request, ((NettyRestResponse) authResponse).getResponse());
+               }
+            } finally {
+               request.release();
+            }
          }
       });
    }

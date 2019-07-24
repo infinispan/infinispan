@@ -20,9 +20,13 @@ import io.netty.handler.codec.http.FullHttpResponse;
  **/
 public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
-   protected final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
+   BaseHttpRequestHandler() {
+      super(false);
+   }
 
-   protected void handleError(ChannelHandlerContext ctx, FullHttpRequest request, Throwable throwable) {
+   final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
+
+   void handleError(ChannelHandlerContext ctx, FullHttpRequest request, Throwable throwable) {
       Throwable cause = CompletableFutures.extractException(throwable);
       NettyRestResponse errorResponse;
       if (cause instanceof RestResponseException) {
@@ -42,7 +46,6 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
    protected void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
       ctx.executor().execute(() -> {
          restAccessLoggingHandler.log(ctx, request, response);
-         request.release();
          ctx.writeAndFlush(response);
       });
    }

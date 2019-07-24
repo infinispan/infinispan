@@ -56,12 +56,16 @@ public class Http20RequestHandler extends BaseHttpRequestHandler {
          restRequest.setSubject(authenticationHandler.getSubject());
       }
       restServer.getRestDispatcher().dispatch(restRequest).whenComplete((restResponse, throwable) -> {
-         if (throwable == null) {
-            NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
-            addCorrelatedHeaders(request, nettyRestResponse.getResponse());
-            sendResponse(ctx, request, nettyRestResponse.getResponse());
-         } else {
-            handleError(ctx, request, throwable);
+         try {
+            if (throwable == null) {
+               NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
+               addCorrelatedHeaders(request, nettyRestResponse.getResponse());
+               sendResponse(ctx, request, nettyRestResponse.getResponse());
+            } else {
+               handleError(ctx, request, throwable);
+            }
+         } finally {
+            request.release();
          }
       });
    }

@@ -15,14 +15,13 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.util.ReferenceCounted;
 
 /**
  * A {@link RestRequest} backed by Netty.
  *
  * @since 10.0
  */
-public class NettyRestRequest implements RestRequest, ReferenceCounted {
+public class NettyRestRequest implements RestRequest {
 
    private final static Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
 
@@ -44,7 +43,7 @@ public class NettyRestRequest implements RestRequest, ReferenceCounted {
    private Map<String, String> variables;
 
    NettyRestRequest(FullHttpRequest request) {
-      this.request = request.retain();
+      this.request = request;
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
       this.parameters = queryStringDecoder.parameters();
       this.path = queryStringDecoder.path();
@@ -221,42 +220,4 @@ public class NettyRestRequest implements RestRequest, ReferenceCounted {
             '}';
    }
 
-   @Override
-   public int refCnt() {
-      return request.refCnt();
-   }
-
-   @Override
-   public NettyRestRequest retain() {
-      request.retain();
-      return this;
-   }
-
-   @Override
-   public NettyRestRequest retain(int increment) {
-      request.retain(increment);
-      return this;
-   }
-
-   @Override
-   public NettyRestRequest touch() {
-      request.touch();
-      return this;
-   }
-
-   @Override
-   public NettyRestRequest touch(Object hint) {
-      request.touch(hint);
-      return this;
-   }
-
-   @Override
-   public boolean release() {
-      return request.release();
-   }
-
-   @Override
-   public boolean release(int decrement) {
-      return request.release();
-   }
 }
