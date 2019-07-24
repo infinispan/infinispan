@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-jps -l|grep infinispan-server-runtime|cut -f1 -d' '|xargs kill -SIGCONT
+jps -lm | grep "org.infinispan.server.loader.Loader org.infinispan.server.Bootstrap" | cut -f1 -d' ' | xargs kill -SIGCONT

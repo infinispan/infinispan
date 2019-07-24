@@ -1,7 +1,7 @@
 #!/bin/sh
 
 LOADER_CLASS=org.infinispan.server.loader.Loader
-MAIN_CLASS=org.infinispan.server.Bootstrap
+MAIN_CLASS=org.infinispan.server.security.UserTool
 ARGUMENTS=
 
 # Use --debug to activate debug mode with an optional argument to specify the port.
@@ -11,7 +11,6 @@ ARGUMENTS=
 # By default debug mode is disabled.
 DEBUG_MODE="${DEBUG:-false}"
 DEBUG_PORT="${DEBUG_PORT:-8787}"
-GC_LOG="$GC_LOG"
 while [ "$#" -gt 0 ]
 do
     case "$1" in
@@ -38,10 +37,6 @@ GREP="grep"
 
 # Use the maximum available, or set MAX_FD != -1 to use that
 MAX_FD="maximum"
-
-# tell linux glibc how many memory pools can be created that are used by malloc
-MALLOC_ARENA_MAX="${MALLOC_ARENA_MAX:-1}"
-export MALLOC_ARENA_MAX
 
 # OS specific support (must be 'true' or 'false').
 cygwin=false;
@@ -99,14 +94,6 @@ else
  fi
 fi
 export ISPN_HOME
-
-# Read an optional running configuration file
-if [ "x$RUN_CONF" = "x" ]; then
-    RUN_CONF="$DIRNAME/server.conf"
-fi
-if [ -r "$RUN_CONF" ]; then
-    . "$RUN_CONF"
-fi
 
 # Set debug settings if not already set
 if [ "$DEBUG_MODE" = "true" ]; then
@@ -211,8 +198,6 @@ fi
 if [ "x$ISPN_CONFIG_DIR" = "x" ]; then
    ISPN_CONFIG_DIR="$ISPN_BASE_DIR/conf"
 fi
-# get the bootstrap jar
-BOOTSTRAP_JAR="$ISPN_HOME/lib/infinispan-server-runtime-*.jar"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -223,8 +208,6 @@ if $cygwin; then
     ISPN_LOG_DIR=`cygpath --path --windows "$ISPN_LOG_DIR"`
     ISPN_CONFIG_DIR=`cygpath --path --windows "$ISPN_CONFIG_DIR"`
 fi
-
-
 
 if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
     # Check for -d32/-d64 in JAVA_OPTS
@@ -254,21 +237,6 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         fi
     fi
 
-    if [ "$GC_LOG" = "true" ]; then
-        # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled
-        NO_GC_LOG_ROTATE=`echo $JAVA_OPTS | $GREP "\-verbose:gc"`
-        if [ "x$NO_GC_LOG_ROTATE" = "x" ]; then
-            # backup prior gc logs
-            mv -f "$ISPN_LOG_DIR/gc.log.0" "$ISPN_LOG_DIR/backupgc.log.0" >/dev/null 2>&1
-            mv -f "$ISPN_LOG_DIR/gc.log.1" "$ISPN_LOG_DIR/backupgc.log.1" >/dev/null 2>&1
-            mv -f "$ISPN_LOG_DIR/gc.log.2" "$ISPN_LOG_DIR/backupgc.log.2" >/dev/null 2>&1
-            mv -f "$ISPN_LOG_DIR/gc.log.3" "$ISPN_LOG_DIR/backupgc.log.3" >/dev/null 2>&1
-            mv -f "$ISPN_LOG_DIR/gc.log.4" "$ISPN_LOG_DIR/backupgc.log.4" >/dev/null 2>&1
-            mv -f "$ISPN_LOG_DIR"/gc.log.*.current "$ISPN_LOG_DIR/backupgc.log.current" >/dev/null 2>&1
-            "$JAVA" $JVM_OPTVERSION -verbose:gc -Xloggc:"$ISPN_LOG_DIR/gc.log" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading -version >/dev/null 2>&1 && mkdir -p $ISPN_LOG_DIR && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -verbose:gc -Xloggc:\"$ISPN_LOG_DIR/gc.log\" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading"
-        fi
-    fi
-
     JAVA_OPTS="$PREPEND_JAVA_OPTS $JAVA_OPTS"
 fi
 
@@ -277,67 +245,7 @@ for JAR in "$ISPN_HOME/boot"/*.jar; do
     CLASSPATH="$CLASSPATH:$JAR"
 done
 
-if "$DEBUG_MODE"; then
-    # Display our environment
-    echo "========================================================================="
-    echo "  Bootstrap Environment"
-    echo "  ISPN_HOME: $ISPN_HOME"
-    echo "  JAVA: $JAVA"
-    echo "  JAVA_OPTS: $JAVA_OPTS"
-    echo "========================================================================="
-fi
-
-while true; do
-   if [ "x$LAUNCH_ISPN_IN_BACKGROUND" = "x" ]; then
-      # Execute the JVM in the foreground
-      eval \"$JAVA\" $JAVA_OPTS \
-         -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
-         -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
-         -classpath "$CLASSPATH" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS"
-      ISPN_STATUS=$?
-   else
-      # Execute the JVM in the background
-      eval \"$JAVA\" $JAVA_OPTS \
-         -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
-         -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
-         -classpath "$CLASSPATH" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS" "&"
-      ISPN_PID=$!
-      # Trap common signals and relay them to the server process
-      trap "kill -HUP  $ISPN_PID" HUP
-      trap "kill -TERM $ISPN_PID" INT
-      trap "kill -QUIT $ISPN_PID" QUIT
-      trap "kill -PIPE $ISPN_PID" PIPE
-      trap "kill -TERM $ISPN_PID" TERM
-      if [ "x$ISPN_PIDFILE" != "x" ]; then
-        echo $ISPN_PID > $ISPN_PIDFILE
-      fi
-      # Wait until the background process exits
-      WAIT_STATUS=128
-      while [ "$WAIT_STATUS" -ge 128 ]; do
-         wait $ISPN_PID 2>/dev/null
-         WAIT_STATUS=$?
-         if [ "$WAIT_STATUS" -gt 128 ]; then
-            SIGNAL=`expr $WAIT_STATUS - 128`
-            SIGNAL_NAME=`kill -l $SIGNAL`
-            echo "*** Server process ($ISPN_PID) received $SIGNAL_NAME signal ***" >&2
-         fi
-      done
-      if [ "$WAIT_STATUS" -lt 127 ]; then
-         ISPN_STATUS=$WAIT_STATUS
-      else
-         ISPN_STATUS=0
-      fi
-      if [ "$ISPN_STATUS" -ne 10 ]; then
-            # Wait for a complete shudown
-            wait $ISPN_PID 2>/dev/null
-      fi
-      if [ "x$ISPN_PIDFILE" != "x" ]; then
-            grep "$ISPN_PID" $ISPN_PIDFILE && rm $ISPN_PIDFILE
-      fi
-   fi
-   if [ "$ISPN_STATUS" -eq 10 ]; then
-      echo "Restarting server..."
-   else
-      exit $ISPN_STATUS
-   fi
-done
+eval \"$JAVA\" $JAVA_OPTS \
+   -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
+   -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
+   -classpath "$CLASSPATH" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS"

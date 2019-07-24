@@ -190,14 +190,29 @@
          </plugin>
          <plugin>
             <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-               <archive>
-                  <manifest>
-                     <addClasspath>true</addClasspath>
-                     <mainClass>org.infinispan.server.Bootstrap</mainClass>
-                  </manifest>
-               </archive>
-            </configuration>
+            <executions>
+               <execution>
+                  <id>default-jar</id>
+                  <configuration>
+                     <excludes>
+                        <exclude>org/infinispan/server/loader/**</exclude>
+                     </excludes>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>loader</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+                  <configuration>
+                     <classifier>loader</classifier>
+                     <includes>
+                        <include>org/infinispan/server/loader/*</include>
+                     </includes>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
