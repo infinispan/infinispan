@@ -18,4 +18,16 @@ public interface Messages {
 
    @Message(value = "Invalid argument '%s'. The - prefix must be used only for single-character arguments.", id = 90003)
    String invalidShortArgument(String command);
+
+   @Message(value = "Username: ")
+   String userToolUsername();
+
+   @Message(value = "Password: ")
+   String userToolPassword();
+
+   @Message(value = "User '%s' already exists. Overwrite (y/n) ? ")
+   String userToolUserExists(String username);
+
+   @Message(value = "Cannot add user '%s' without a password.\n")
+   String userToolNoPassword(String username);
 }

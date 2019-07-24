@@ -15,9 +15,9 @@ The server is laid out as follows:
 
 * `/bin` scripts
    * `server.sh` server startup shell script for Unix/Linux
-   * `server.ps1` server startup script for Windows Powershell 
+   * `user-tool.sh` script to create/modify users
+* `/boot` jars needed to boot the server 
 * `/lib` server jars
-   * `infinispan-server.jar` uber-jar of all dependencies required to run the server.
 * `/server` default server instance folder
 * `/server/log` log files
 * `/server/configuration` configuration files
