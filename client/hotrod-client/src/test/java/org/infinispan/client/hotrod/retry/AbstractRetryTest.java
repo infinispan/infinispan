@@ -63,7 +63,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
       remoteCacheManager = createRemoteCacheManager(hotRodServer1.getPort());
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
-      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
+      channelFactory = remoteCacheManager.getChannelFactory();
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 

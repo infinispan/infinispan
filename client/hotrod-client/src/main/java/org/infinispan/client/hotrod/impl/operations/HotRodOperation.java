@@ -23,8 +23,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoop;
 import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
@@ -37,8 +35,7 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
-      HotRodConstants, Runnable {
+public abstract class HotRodOperation<T> extends CompletableFuture<T> implements HotRodConstants, Runnable {
    private static final Log log = LogFactory.getLog(HotRodOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -53,6 +50,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    protected final HeaderParams header;
    private final MarshallerRegistry marshallerRegistry;
    protected volatile ScheduledFuture<?> timeoutFuture;
+   private Channel channel;
 
    private static final byte NO_TX = 0;
    private static final byte XA_TX = 1;
@@ -110,7 +108,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       completeExceptionally(log.connectionClosed(address, address));
    }
 
-   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+   public void exceptionCaught(Channel channel, Throwable cause) {
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
@@ -119,9 +117,9 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
             // don't close the channel, server just sent an error, there's nothing wrong with the channel
          } else {
             if (trace) {
-               log.tracef(cause, "Requesting %s close due to exception", ctx.channel());
+               log.tracef(cause, "Requesting %s close due to exception", channel);
             }
-            ctx.close();
+            channel.close();
          }
       } finally {
          completeExceptionally(cause);
@@ -162,13 +160,15 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       return super.complete(value);
    }
 
-   public void scheduleTimeout(EventLoop eventLoop) {
+   public void scheduleTimeout(Channel channel) {
       assert timeoutFuture == null;
-      this.timeoutFuture = eventLoop.schedule(this, channelFactory.socketTimeout(), TimeUnit.MILLISECONDS);
+      this.channel = channel;
+      this.timeoutFuture = channel.eventLoop().schedule(this, channelFactory.socketTimeout(), TimeUnit.MILLISECONDS);
    }
 
    @Override
    public void run() {
-      completeExceptionally(new SocketTimeoutException(this + " timed out after " + channelFactory.socketTimeout() + " ms"));
+      exceptionCaught(channel, new SocketTimeoutException(this + " timed out after " + channelFactory.socketTimeout() + " ms"));
    }
+
 }

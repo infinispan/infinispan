@@ -567,6 +567,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return channelFactory.getNumIdle();
    }
 
+   @Override
+   public long getRetries() {
+      return channelFactory.getRetries();
+   }
+
    private static class RemoteCacheKey {
 
       final String cacheName;

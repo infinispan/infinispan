@@ -156,7 +156,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       assert !isDone();
       timeoutFuture.cancel(false);
       timeoutFuture = null;
-      scheduleTimeout(channel.eventLoop());
+      scheduleTimeout(channel);
    }
 
    @Override
