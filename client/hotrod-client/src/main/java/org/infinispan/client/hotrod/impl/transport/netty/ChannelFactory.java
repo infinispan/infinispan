@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -97,6 +98,7 @@ public class ChannelFactory {
    private final AtomicInteger topologyAge = new AtomicInteger(0);
 
    private MarshallerRegistry marshallerRegistry;
+   private LongAdder totalRetries = new LongAdder();
 
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId,
                      Marshaller marshaller, ExecutorService executorService,
@@ -586,6 +588,14 @@ public class ChannelFactory {
 
    public Configuration getConfiguration() {
       return configuration;
+   }
+
+   public long getRetries() {
+      return totalRetries.longValue();
+   }
+
+   public void incrementRetryCount() {
+      totalRetries.increment();
    }
 
    public enum ClusterSwitchStatus {
