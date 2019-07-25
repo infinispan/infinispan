@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="infinispan-jboss-marshalling-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
+    <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
+
+    <feature name="infinispan-jboss-marshalling" version="${project.version}">
+        <feature>transaction</feature>
+        <feature version="${project.version}">infinispan-core</feature>
+
+        <bundle>mvn:org.infinispan/infinispan-jboss-marshalling/${project.version}</bundle>
+        <bundle>wrap:mvn:org.jboss.marshalling/jboss-marshalling-osgi/${version.jboss.marshalling}</bundle>
+    </feature>
+</features>

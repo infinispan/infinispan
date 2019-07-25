@@ -45,7 +45,7 @@ It is also possible to configure the Java Hot Rod client using a properties file
 ----
 infinispan.client.hotrod.transport_factory = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory
 infinispan.client.hotrod.server_list = 127.0.0.1:11222
-infinispan.client.hotrod.marshaller = org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
+infinispan.client.hotrod.marshaller = org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller
 infinispan.client.hotrod.async_executor_factory = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory
 infinispan.client.hotrod.default_executor_factory.pool_size = 1
 infinispan.client.hotrod.default_executor_factory.queue_size = 10000

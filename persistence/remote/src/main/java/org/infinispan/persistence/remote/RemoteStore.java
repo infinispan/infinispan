@@ -20,7 +20,7 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.EnumUtil;

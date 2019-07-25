@@ -11,7 +11,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
+import org.infinispan.jboss.marshalling.commons.ExtendedRiverUnmarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.jboss.marshalling.ByteInput;

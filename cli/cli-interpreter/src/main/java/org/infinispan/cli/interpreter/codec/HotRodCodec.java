@@ -3,7 +3,7 @@ package org.infinispan.cli.interpreter.codec;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 

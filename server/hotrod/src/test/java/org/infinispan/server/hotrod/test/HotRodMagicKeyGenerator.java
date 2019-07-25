@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod.test;
 import java.util.Random;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.distribution.LocalizedCacheTopology;
 
 /**

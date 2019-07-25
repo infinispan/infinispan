@@ -4,7 +4,6 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
-import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
@@ -12,8 +11,6 @@ import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -42,7 +39,6 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassWhiteList classWhiteList = embeddedCacheManager.getClassWhiteList();
 
-      ClassLoader classLoader = globalConfiguration.classLoader();
       JavaSerializationMarshaller javaSerializationMarshaller = new JavaSerializationMarshaller(classWhiteList);
 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
@@ -50,16 +46,17 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
       encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller.wired()));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
+      encoderRegistry.registerTranscoder(new DefaultTranscoder(javaSerializationMarshaller));
 
-      GenericJBossMarshaller jBossMarshaller;
-      try {
-         Util.loadClassStrict("org.jboss.marshalling.Marshalling", globalConfiguration.classLoader());
-         jBossMarshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
-         encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(jBossMarshaller));
-      } catch (ClassNotFoundException e) {
-         jBossMarshaller = null;
-      }
-      encoderRegistry.registerTranscoder(new DefaultTranscoder(jBossMarshaller, javaSerializationMarshaller));
+      // TODO this needs to be registered via jboss-marshalling lifecycle somehow
+//      GenericJBossMarshaller jBossMarshaller;
+//      try {
+//         Util.loadClassStrict("org.jboss.marshalling.Marshalling", globalConfiguration.classLoader());
+//         jBossMarshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
+//         encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(jBossMarshaller));
+//      } catch (ClassNotFoundException e) {
+//         jBossMarshaller = null;
+//      }
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
       encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);

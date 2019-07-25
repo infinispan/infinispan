@@ -14,32 +14,27 @@ import java.util.Set;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 
 /**
  * Handle conversions between text/plain, url-encoded, java objects, and octet-stream contents.
  *
  * @since 9.2
  */
-public final class DefaultTranscoder implements Transcoder {
+public class DefaultTranscoder implements Transcoder {
 
    private static final Log log = LogFactory.getLog(DefaultTranscoder.class);
 
-   private static final Set<MediaType> supportedTypes = new HashSet<>();
+   protected static final Set<MediaType> supportedTypes = new HashSet<>();
 
-   private final GenericJBossMarshaller jbossMarshaller;
-   private final JavaSerializationMarshaller javaMarshaller;
+   protected final JavaSerializationMarshaller javaMarshaller;
 
-   public DefaultTranscoder(GenericJBossMarshaller marshaller, JavaSerializationMarshaller javaMarshaller) {
+   public DefaultTranscoder(JavaSerializationMarshaller javaMarshaller) {
       this.javaMarshaller = javaMarshaller;
-      this.jbossMarshaller = marshaller;
    }
 
    public DefaultTranscoder() {
       this.javaMarshaller = new JavaSerializationMarshaller();
-      this.jbossMarshaller = new GenericJBossMarshaller();
    }
 
    static {
@@ -86,11 +81,14 @@ public final class DefaultTranscoder implements Transcoder {
          if (contentType.match(TEXT_PLAIN)) {
             return StandardConversions.convertTextToOctetStream(content, contentType);
          }
-         Marshaller marshaller = jbossMarshallingIsPresent() ? jbossMarshaller : javaMarshaller;
-         return StandardConversions.convertJavaToOctetStream(content, contentType, marshaller);
+         return convertJavaToOctetStream(content, contentType);
       } catch (EncodingException | InterruptedException | IOException e) {
          throw log.unsupportedContent(content);
       }
+   }
+
+   protected Object convertJavaToOctetStream(Object content, MediaType contentType) throws InterruptedException, IOException {
+      return StandardConversions.convertJavaToOctetStream(content, contentType, javaMarshaller);
    }
 
    private Object convertToUrlEncoded(Object content, MediaType contentType) {
@@ -159,21 +157,10 @@ public final class DefaultTranscoder implements Transcoder {
       throw log.unsupportedContent(content);
    }
 
-   private Object tryDeserialize(byte[] content) {
-      if (!jbossMarshallingIsPresent())
-         return deseralize(content, javaMarshaller);
-
+   protected Object tryDeserialize(byte[] content) {
       try {
-         return jbossMarshaller.objectFromByteBuffer(content);
-      } catch (IOException | ClassNotFoundException e1) {
-         return deseralize(content, javaMarshaller);
-      }
-   }
-
-   private Object deseralize(byte[] content, Marshaller marshaller){
-      try {
-         return marshaller.objectFromByteBuffer(content);
-      } catch (IOException | ClassNotFoundException e1) {
+         return javaMarshaller.objectFromByteBuffer(content);
+      } catch (IOException | ClassNotFoundException e) {
          return new String(content, UTF_8);
       }
    }
@@ -206,10 +193,5 @@ public final class DefaultTranscoder implements Transcoder {
    @Override
    public boolean supportsConversion(MediaType mediaType, MediaType other) {
       return in(mediaType, supportedTypes) && in(other, supportedTypes);
-   }
-
-   // jbossMarshaller will be null if jboss-marshalling is not present on the classpath
-   private boolean jbossMarshallingIsPresent() {
-      return jbossMarshaller != null;
    }
 }

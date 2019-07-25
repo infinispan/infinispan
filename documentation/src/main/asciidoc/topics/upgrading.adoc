@@ -535,7 +535,7 @@ Please use instead `DistributionManager.getLocality(Object key)`.
 * JMX operation `void setStatisticsEnabled(boolean enabled)` from class `org.infinispan.interceptors.TxInterceptor`
 Please use instead the `statisticsEnabled` attribute.
 
-* Method `boolean delete(boolean synchronous)` from class `org.infinispan.io.GridFile`.
+* Method `boolean delete(boolean synchronous)` from class `org.infinispan.jboss.marshalling.io.GridFile`.
 Please use instead `GridFile.delete()`.
 
 * JMX attribute `long getLocallyInterruptedTransactions()` from class

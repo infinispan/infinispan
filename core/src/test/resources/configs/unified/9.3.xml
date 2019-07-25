@@ -199,7 +199,7 @@
          <versioning scheme="SIMPLE"/>
       </local-cache>
       <local-cache name="compatibility" deadlock-detection-spin="200">
-         <compatibility marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
+         <compatibility marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller" />
       </local-cache>
       <local-cache name="custom-container">
          <data-container class="org.infinispan.configuration.QueryableDataContainer"

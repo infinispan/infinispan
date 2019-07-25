@@ -2,9 +2,9 @@ package org.infinispan.jboss.marshalling.core;
 
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
-import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
-import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
+import org.infinispan.jboss.marshalling.commons.AbstractJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.DefaultContextClassResolver;
+import org.infinispan.jboss.marshalling.commons.SerializeWithExtFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;
