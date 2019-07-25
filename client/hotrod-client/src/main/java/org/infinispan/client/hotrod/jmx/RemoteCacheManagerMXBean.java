@@ -25,6 +25,11 @@ public interface RemoteCacheManagerMXBean {
    int getIdleConnectionCount();
 
    /**
+    * Returns the total number of retries that have been executed
+    */
+   long getRetries();
+
+   /**
     * Switch remote cache manager to a different cluster, previously
     * declared via configuration. If the switch was completed successfully,
     * this method returns {@code true}, otherwise it returns {@code false}.

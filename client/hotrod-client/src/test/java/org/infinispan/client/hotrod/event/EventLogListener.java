@@ -83,7 +83,7 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
    }
 
    @ClientCacheEntryExpired @SuppressWarnings("unused")
-   public void handleExpiriedEvent(ClientCacheEntryExpiredEvent e) {
+   public void handleExpiredEvent(ClientCacheEntryExpiredEvent e) {
       expiredEvents.add(e);
    }
 

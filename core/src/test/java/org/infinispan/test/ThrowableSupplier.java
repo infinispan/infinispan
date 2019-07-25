@@ -7,6 +7,6 @@ package org.infinispan.test;
  * @since 10.0
  */
 @FunctionalInterface
-public interface ExceptionSupplier<T> {
-   T get() throws Exception;
+public interface ThrowableSupplier<T> {
+   T get() throws Throwable;
 }

@@ -13,7 +13,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderException;
 
 /**
@@ -60,7 +59,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
    }
 
    @Override
-   protected Throwable handleException(Throwable cause, ChannelHandlerContext ctx, SocketAddress address) {
+   protected Throwable handleException(Throwable cause, Channel channel, SocketAddress address) {
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
@@ -69,7 +68,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
          complete(pingResponse);
          return null;
       }
-      return super.handleException(cause, ctx, address);
+      return super.handleException(cause, channel, address);
    }
 
    @Override

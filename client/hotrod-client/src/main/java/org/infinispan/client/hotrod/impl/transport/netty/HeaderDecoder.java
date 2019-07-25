@@ -74,7 +74,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       }
       HotRodOperation<?> prev = incomplete.put(operation.header().messageId(), operation);
       assert prev == null : "Already registered: " + prev + ", new: " + operation;
-      operation.scheduleTimeout(channel.eventLoop());
+      operation.scheduleTimeout(channel);
    }
 
    @Override
@@ -201,12 +201,12 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       if (operation != null) {
-         operation.exceptionCaught(ctx, cause);
+         operation.exceptionCaught(ctx.channel(), cause);
       } else {
          TransportException transportException = log.errorFromUnknownOperation(ctx.channel(), cause, ctx.channel().remoteAddress());
          for (HotRodOperation<?> op : incomplete.values()) {
             try {
-               op.exceptionCaught(ctx, transportException);
+               op.exceptionCaught(ctx.channel(), transportException);
             } catch (Throwable t) {
                log.errorf(t, "Failed to complete %s", op);
             }
@@ -227,6 +227,10 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             log.errorf(t, "Failed to complete %s", op);
          }
       }
+      failoverClientListeners();
+   }
+
+   public void failoverClientListeners() {
       for (byte[] listenerId : listeners) {
          listenerNotifier.failoverClientListener(listenerId);
       }
