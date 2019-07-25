@@ -22,7 +22,6 @@ import org.infinispan.counter.exception.CounterException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 
 /**
  * A base operation class for the counter's operation.
@@ -90,8 +89,8 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    }
 
    @Override
-   protected Throwable handleException(Throwable cause, ChannelHandlerContext ctx, SocketAddress address) {
-      cause =  super.handleException(cause, ctx, address);
+   protected Throwable handleException(Throwable cause, Channel channel, SocketAddress address) {
+      cause =  super.handleException(cause, channel, address);
       if (cause instanceof CounterException) {
          completeExceptionally(cause);
          return null;

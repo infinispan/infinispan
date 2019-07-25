@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
@@ -87,7 +86,7 @@ public class PingOperation extends HotRodOperation<PingResponse> implements Chan
    }
 
    @Override
-   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+   public void exceptionCaught(Channel channel, Throwable cause) {
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
@@ -95,7 +94,7 @@ public class PingOperation extends HotRodOperation<PingResponse> implements Chan
       if (pingResponse.isCacheNotFound()) {
          complete(pingResponse);
       } else {
-         super.exceptionCaught(ctx, cause);
+         super.exceptionCaught(channel, cause);
       }
    }
 }

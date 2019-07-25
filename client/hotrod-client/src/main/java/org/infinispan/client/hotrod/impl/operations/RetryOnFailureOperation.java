@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
@@ -134,25 +133,25 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    }
 
    @Override
-   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      SocketAddress address = ctx == null ? null : ChannelRecord.of(ctx.channel()).getUnresolvedAddress();
-      cause = handleException(cause, ctx, address);
+   public void exceptionCaught(Channel channel, Throwable cause) {
+      SocketAddress address = channel == null ? null : ChannelRecord.of(channel).getUnresolvedAddress();
+      cause = handleException(cause, channel, address);
       if (cause != null) {
          // ctx.close() triggers channelInactive; we want to complete this to signal that no retries are expected
          try {
             completeExceptionally(cause);
          } finally {
-            if (ctx != null) {
+            if (channel != null) {
                if (trace) {
-                  log.tracef(cause, "(1) %s Requesting %s close due to exception", this.toString(), ctx.channel());
+                  log.tracef(cause, "(1) %s Requesting %s close due to exception", this.toString(), channel);
                }
-               ctx.close();
+               channel.close();
             }
          }
       }
    }
 
-   protected Throwable handleException(Throwable cause, ChannelHandlerContext ctx, SocketAddress address) {
+   protected Throwable handleException(Throwable cause, Channel channel, SocketAddress address) {
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
@@ -165,16 +164,20 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          if (address != null) {
             updateFailedServers(address);
          }
-         if (ctx != null) {
+         if (channel != null) {
             // We need to remove decoder even if we're about to close the channel
             // because otherwise we would be notified through channelInactive and we would retry (again).
-            if (ctx.pipeline().get(HeaderDecoder.NAME) != null) {
-               ctx.pipeline().remove(HeaderDecoder.NAME);
+            HeaderDecoder headerDecoder = (HeaderDecoder)channel.pipeline().get(HeaderDecoder.NAME);
+            if (headerDecoder != null) {
+               channel.pipeline().remove(HeaderDecoder.NAME);
             }
             if (trace) {
-               log.tracef(cause, "(2) Requesting %s close due to exception", ctx.channel());
+               log.tracef(cause, "(2) Requesting %s close due to exception", channel);
             }
-            ctx.close();
+            channel.close();
+            if (headerDecoder != null) {
+               headerDecoder.failoverClientListeners();
+            }
          }
          logAndRetryOrFail(cause, true);
          return null;
@@ -197,6 +200,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             log.tracef(e, "Exception encountered in %s. Retry %d out of %d", this, retryCount, channelFactory.getMaxRetries());
          }
          retryCount++;
+         channelFactory.incrementRetryCount();
          retryIfNotDone();
       } else if (canSwitchCluster) {
          channelFactory.trySwitchCluster(currentClusterName, cacheName).whenComplete((status, throwable) -> {

@@ -606,6 +606,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return channelFactory.getNumIdle();
    }
 
+   @Override
+   public long getRetries() {
+      return channelFactory.getRetries();
+   }
+
    private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
                                                     ClientStatistics stats) {
       return new OperationsFactory(channelFactory, cacheName, forceReturnValue, codec, listenerNotifier, configuration,
