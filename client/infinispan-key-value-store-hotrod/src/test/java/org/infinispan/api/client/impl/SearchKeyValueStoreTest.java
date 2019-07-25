@@ -22,6 +22,9 @@ import org.infinispan.api.reactive.KeyValueStoreConfig;
 import org.infinispan.api.reactive.query.ContinuousQueryRequestBuilder;
 import org.infinispan.api.reactive.query.QueryRequest;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -53,10 +56,6 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      /**
-       * In real world example, we should only need to call this way
-       * Infinispan infinispan = InfinispanClient.newInfinispan();
-       */
       infinispan = new InfinispanClientImpl(remoteCacheManager);
       KeyValueStoreConfig storeConfig = KeyValueStoreConfig.init(Person.class)
             .withPackageName("org.infinispan")
@@ -78,9 +77,11 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
-      ClientConfigurationLoader.DEFAULT_CONFIGURATION_BUILDER
-            .addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      return new InternalRemoteCacheManager(ClientConfigurationLoader.DEFAULT_CONFIGURATION_BUILDER.build());
+      Configuration config = new ConfigurationBuilder()
+            .marshaller(ProtoStreamMarshaller.class)
+            .addServer().host("127.0.0.1").port(hotrodServer.getPort())
+            .build();
+      return new InternalRemoteCacheManager(config);
    }
 
    @Test
