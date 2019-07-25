@@ -1,5 +1,7 @@
 package org.infinispan.api.store.client.impl;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -18,7 +20,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.reactivestreams.Publisher;
 
-import io.reactivex.Flowable;
 import io.reactivex.processors.UnicastProcessor;
 
 /**
@@ -76,16 +77,16 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public Publisher<WriteResult<K>> saveMany(Publisher<Map.Entry<K, V>> pairs) {
+   public Publisher<WriteResult<K>> saveMany(Collection<Map.Entry<K, V>> pairs) {
       UnicastProcessor<WriteResult<K>> unicastProcessor = UnicastProcessor.create();
 
-      Flowable<Map.Entry<K, V>> entryFlowable = Flowable.fromPublisher(pairs);
+      Iterator<Map.Entry<K, V>> iterator = pairs.iterator();
+      while (iterator.hasNext()) {
+         Map.Entry<K, V> next = iterator.next();
+         cache.putAsync(next.getKey(), next.getValue())
+               .whenComplete((r, ex) -> unicastProcessor.onNext(new WriteResult<>(next.getKey(), ex)));
 
-      entryFlowable.subscribe(e -> {
-         cache.putAsync(e.getKey(), e.getValue())
-               .whenComplete((r, ex) -> unicastProcessor.onNext(new WriteResult<>(e.getKey(), ex)));
-      });
-
+      }
       return unicastProcessor;
    }
 
@@ -100,14 +101,14 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public Publisher<KeyValueEntry<K, V>> find(String ickleQuery) {
+   public Publisher<KeyValueEntry<K, V>> queryOnce(String ickleQuery) {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.create(ickleQuery);
       return new QueryPublisherImpl(query, cache.getRemoteCacheManager().getAsyncExecutorService());
    }
 
    @Override
-   public Publisher<KeyValueEntry<K, V>> find(QueryRequest queryRequest) {
+   public Publisher<KeyValueEntry<K, V>> queryOnce(QueryRequest queryRequest) {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.create(queryRequest.getIckleQuery());
       query.setParameters(queryRequest.getParams());
@@ -117,7 +118,7 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public Publisher<KeyValueEntry<K, V>> findContinuously(String ickleQuery) {
+   public Publisher<KeyValueEntry<K, V>> query(String ickleQuery) {
       ContinuousQuery<K, V> continuousQuery = Search.getContinuousQuery(cache);
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.create(ickleQuery);
@@ -125,7 +126,7 @@ public class KeyValueStoreImpl<K, V> implements KeyValueStore<K, V> {
    }
 
    @Override
-   public <T> Publisher<KeyValueEntry<K, T>> findContinuously(QueryRequest queryRequest) {
+   public <T> Publisher<KeyValueEntry<K, T>> query(QueryRequest queryRequest) {
       ContinuousQuery<K, V> continuousQuery = Search.getContinuousQuery(cache);
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.create(queryRequest.getIckleQuery())

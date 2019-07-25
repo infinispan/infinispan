@@ -1,5 +1,6 @@
 package org.infinispan.api.store;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -76,7 +77,7 @@ public interface KeyValueStore<K, V> {
     * @param pairs
     * @return Write Result for each key
     */
-   Publisher<WriteResult<K>> saveMany(Publisher<Map.Entry<K, V>> pairs);
+   Publisher<WriteResult<K>> saveMany(Collection<Map.Entry<K, V>> pairs);
 
    /**
     * Estimate the size of the store
@@ -98,7 +99,7 @@ public interface KeyValueStore<K, V> {
     * @param ickleQuery query String
     * @return Publisher store streams
     */
-   Publisher<KeyValueEntry<K, V>> find(String ickleQuery);
+   Publisher<KeyValueEntry<K, V>> queryOnce(String ickleQuery);
 
    /**
     * Find by QueryRequest.
@@ -106,7 +107,7 @@ public interface KeyValueStore<K, V> {
     * @param queryRequest
     * @return Publisher of KeyValueEntry
     */
-   Publisher<KeyValueEntry<K, V>> find(QueryRequest queryRequest);
+   Publisher<KeyValueEntry<K, V>> queryOnce(QueryRequest queryRequest);
 
    /**
     * Executes the query and returns a store streams Publisher with the results
@@ -114,7 +115,7 @@ public interface KeyValueStore<K, V> {
     * @param ickleQuery query String
     * @return Publisher store streams
     */
-   Publisher<KeyValueEntry<K, V>> findContinuously(String ickleQuery);
+   Publisher<KeyValueEntry<K, V>> query(String ickleQuery);
 
    /**
     * Executes the query and returns a store streams Publisher with the results
@@ -122,7 +123,7 @@ public interface KeyValueStore<K, V> {
     * @param queryRequest
     * @return Publisher store streams
     */
-   <T> Publisher<KeyValueEntry<K, T>> findContinuously(QueryRequest queryRequest);
+   <T> Publisher<KeyValueEntry<K, T>> query(QueryRequest queryRequest);
 
    /**
     * Listens to the {@link KeyValueStoreListener}

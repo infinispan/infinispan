@@ -8,6 +8,9 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.InfinispanClient;
@@ -26,7 +29,6 @@ import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.reactivex.Flowable;
 import io.reactivex.subscribers.TestSubscriber;
 
 @Test(groups = "functional", testName = "org.infinispan.api.client.impl.KeyyValueStoreSimpleTest")
@@ -89,9 +91,13 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
    }
 
    public void testSaveMany() {
-      Publisher<WriteResult<Integer>> publisher = store.saveMany(Flowable.fromArray(new AbstractMap.SimpleEntry(1, "adios"),
-            new AbstractMap.SimpleEntry(2, "agur"),
-            new AbstractMap.SimpleEntry(3, "ciao")));
+      List<Map.Entry<Integer, String>> list = new ArrayList<>();
+
+      list.add(new AbstractMap.SimpleEntry(1, "adios"));
+      list.add(new AbstractMap.SimpleEntry(2, "agur"));
+      list.add(new AbstractMap.SimpleEntry(3, "ciao"));
+
+      Publisher<WriteResult<Integer>> publisher = store.saveMany(list);
 
       TestSubscriber<WriteResult<Integer>> testSubscriber = new TestSubscriber<>();
       publisher.subscribe(testSubscriber);

@@ -92,7 +92,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
             .all()
             .build();
 
-      Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
+      Publisher<KeyValueEntry<String, Person>> continuously = store.query(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
       personTestSubscriber.awaitCount(1);
@@ -124,7 +124,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
             .query("SELECT firstName FROM org.infinispan.Person p")
             .created().build();
 
-      Publisher<KeyValueEntry<String, Object[]>> continuously = store.findContinuously(queryRequest);
+      Publisher<KeyValueEntry<String, Object[]>> continuously = store.query(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
       personTestSubscriber.assertValueCount(6);
@@ -148,7 +148,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       QueryRequest queryRequest = ContinuousQueryRequestBuilder.query("FROM org.infinispan.Person p")
             .created().build();
 
-      Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
+      Publisher<KeyValueEntry<String, Person>> continuously = store.query(queryRequest);
 
       continuously.subscribe(personTestSubscriber);
 
@@ -161,7 +161,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       QueryRequest queryRequest = ContinuousQueryRequestBuilder.query("FROM org.infinispan.Person p")
             .created().build();
 
-      Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
+      Publisher<KeyValueEntry<String, Person>> continuously = store.query(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
 
@@ -178,7 +178,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       QueryRequest queryRequest = ContinuousQueryRequestBuilder.query("FROM org.infinispan.Person p")
             .updated().build();
 
-      Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
+      Publisher<KeyValueEntry<String, Person>> continuously = store.query(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
       personTestSubscriber.assertSubscribed();
@@ -197,7 +197,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
       QueryRequest queryRequest = ContinuousQueryRequestBuilder.query("FROM org.infinispan.Person p")
             .deleted().build();
 
-      Publisher<KeyValueEntry<String, Person>> continuously = store.findContinuously(queryRequest);
+      Publisher<KeyValueEntry<String, Person>> continuously = store.query(queryRequest);
       continuously.subscribe(personTestSubscriber);
 
       personTestSubscriber.assertSubscribed();
