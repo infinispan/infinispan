@@ -9,14 +9,15 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
-import org.infinispan.api.configuration.ClientConfig;
 import org.infinispan.api.Infinispan;
+import org.infinispan.api.client.configuration.InfinispanClientConfigImpl;
+import org.infinispan.api.configuration.ClientConfig;
 import org.infinispan.api.exception.InfinispanConfigurationException;
-import org.infinispan.api.reactive.client.impl.KeyValueStoreImpl;
 import org.infinispan.api.exception.InfinispanException;
 import org.infinispan.api.marshalling.Marshaller;
 import org.infinispan.api.reactive.KeyValueStore;
 import org.infinispan.api.reactive.KeyValueStoreConfig;
+import org.infinispan.api.reactive.client.impl.KeyValueStoreImpl;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
@@ -30,13 +31,12 @@ public class InfinispanClientImpl implements Infinispan {
    private Set<String> files = ConcurrentHashMap.newKeySet();
    private ExecutorService asyncExecutorService;
 
-   public InfinispanClientImpl(ClientConfig clientConfig) {
-      if (clientConfig instanceof ClientConfigurationLoader.ConfigurationWrapper) {
-         ClientConfigurationLoader.ConfigurationWrapper wrapper = (ClientConfigurationLoader.ConfigurationWrapper) clientConfig;
-         cacheManager = new RemoteCacheManager(wrapper.getConfiguration());
+   public InfinispanClientImpl(ClientConfig infinispanClientConfig) {
+      if (infinispanClientConfig instanceof InfinispanClientConfigImpl) {
+         InfinispanClientConfigImpl infinispanClientConfigImpl = (InfinispanClientConfigImpl) infinispanClientConfig;
+         cacheManager = new RemoteCacheManager(infinispanClientConfigImpl.getConfiguration());
       } else {
-         //TODO Handle this better in ISPN-9929
-         throw new InfinispanConfigurationException("Unable to construct InfinispanClientImpl. ClientConfig is not a ClientConfigurationLoader.ConfigurationWrapper");
+         throw new InfinispanConfigurationException("Unable to construct InfinispanClientImpl. ClientConfig is not a InfinispanClientConfigImpl");
       }
       asyncExecutorService = cacheManager.getAsyncExecutorService();
    }

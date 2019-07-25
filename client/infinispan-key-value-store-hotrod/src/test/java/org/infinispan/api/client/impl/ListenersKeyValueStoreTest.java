@@ -39,10 +39,6 @@ public class ListenersKeyValueStoreTest extends SingleHotRodServerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      /**
-       * In real world example, we should only need to call this way
-       * Infinispan infinispan = InfinispanClient.newInfinispan();
-       */
       infinispan = new InfinispanClientImpl(remoteCacheManager);
       store = FunctionalTestUtils.await(infinispan.getKeyValueStore(CACHE_NAME, KeyValueStoreConfig.defaultConfig()));
    }

@@ -3,19 +3,15 @@ package org.infinispan.api.client.impl;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.AbstractMap;
 
 import org.infinispan.api.Infinispan;
-import org.infinispan.api.InfinispanClient;
-import org.infinispan.api.configuration.ClientConfig;
 import org.infinispan.api.reactive.KeyValueStore;
 import org.infinispan.api.reactive.KeyValueStoreConfig;
 import org.infinispan.api.reactive.WriteResult;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.functional.FunctionalTestUtils;
@@ -48,10 +44,6 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      /**
-       * In real world example, we should only need to call this way
-       * Infinispan infinispan = InfinispanClient.newInfinispan();
-       */
       infinispan = new InfinispanClientImpl(remoteCacheManager);
       store = FunctionalTestUtils.await(infinispan.getKeyValueStore(CACHE_NAME, KeyValueStoreConfig.defaultConfig()));
    }
@@ -66,14 +58,6 @@ public class KeyValueStoreTest extends SingleHotRodServerTest {
    public void clearStoreBeforeEachTest() {
       KeyValueStore<Integer, String> store = FunctionalTestUtils.await(infinispan.getKeyValueStore(CACHE_NAME, KeyValueStoreConfig.defaultConfig()));
       await(store.clear());
-   }
-
-   public void testConfiguration() {
-      // TODO: new configuration API https://issues.jboss.org/browse/ISPN-9929
-      ClientConfig clientConfig = new ClientConfigurationLoader.ConfigurationWrapper(new ConfigurationBuilder().build());
-      Infinispan client = InfinispanClient.newInfinispan(clientConfig);
-      assertNotNull(client);
-      await(client.stop());
    }
 
    public void testGetNoValue() {
