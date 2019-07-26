@@ -9,7 +9,7 @@ import java.util.Set;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 
 /**
  * A remote iterator for testing that does a callback when certain keys are reached.

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -38,6 +39,10 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements Pe
    public TestObjectStreamMarshaller() {
       cacheManager = TestCacheManagerFactory.createCacheManager();
       marshaller = (PersistenceMarshallerImpl) cacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
+   }
+
+   public ClassWhiteList getWhiteList() {
+      return cacheManager.getClassWhiteList();
    }
 
    @Override

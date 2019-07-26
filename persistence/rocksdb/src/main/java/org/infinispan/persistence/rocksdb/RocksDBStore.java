@@ -94,6 +94,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         this.marshaller = ctx.getPersistenceMarshaller();
         this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
         this.entryFactory = ctx.getMarshallableEntryFactory();
+        // TODO  ISPN-10419 replace with ExpiryBucket class as part persistence context when IPROTO-103 is resolved
+        ctx.getCache().getCacheManager().getClassWhiteList().addClasses(ArrayList.class);
     }
 
     @Override

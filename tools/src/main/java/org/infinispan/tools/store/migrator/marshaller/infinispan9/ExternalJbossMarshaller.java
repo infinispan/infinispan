@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 
 import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
+import org.infinispan.jboss.marshalling.commons.ExtendedRiverUnmarshaller;
 import org.infinispan.tools.store.migrator.marshaller.LegacyJBossMarshaller;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractUnsupportedStreamingMarshaller;
 import org.jboss.marshalling.ObjectTable;

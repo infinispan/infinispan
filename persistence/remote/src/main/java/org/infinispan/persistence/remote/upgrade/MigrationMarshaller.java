@@ -1,8 +1,8 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
-import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
-import org.infinispan.commons.marshall.jboss.CheckedClassResolver;
+import org.infinispan.jboss.marshalling.commons.AbstractJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.CheckedClassResolver;
 
 /**
  * MigrationMarshaller. Uses the Remote Store classloader so that appropriate

@@ -56,6 +56,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
       log.debug("Rehash is complete!");
       expected = new HashMap<Integer, BigObject>();
+      cacheManagers.forEach(cm -> cm.getClassWhiteList().addClasses(BigObject.class));
    }
 
    public void testForFailure() {

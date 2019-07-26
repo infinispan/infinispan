@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.RemoteException;
@@ -84,7 +84,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
          nonOwnerCache.get("yourkey");
          fail("Should have failed with a org.infinispan.marshall.NotSerializableException");
       } catch (RemoteException e) {
-         assertTrue(e.getCause() instanceof NotSerializableException);
+         assertTrue(e.getCause() instanceof MarshallingException);
       }
    }
 
@@ -98,7 +98,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       Cache nonOwnerCache = nonOwners[0];
       ownerCache.put("diffkey", new ExceptionExternalizable());
       Exceptions
-            .expectException(RemoteException.class, TestException.class, () -> nonOwnerCache.get("diffkey"));
+            .expectException(RemoteException.class, MarshallingException.class, () -> nonOwnerCache.get("diffkey"));
    }
 
    private static class ExceptionExternalizable implements Externalizable, ExternalPojo {

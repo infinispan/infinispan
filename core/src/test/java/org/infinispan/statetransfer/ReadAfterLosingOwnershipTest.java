@@ -2,6 +2,9 @@ package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -11,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -155,9 +159,10 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
+   @SerializeWith(SingleKeyConsistentHashFactory.Externalizer.class)
    public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
 
-      public SingleKeyConsistentHashFactory() {
+      SingleKeyConsistentHashFactory() {
          super(1);
       }
 
@@ -171,6 +176,17 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
                return new int[][]{{0, 1}};
             default:
                return new int[][]{{0, members.size() - 1}};
+         }
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<SingleKeyConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, SingleKeyConsistentHashFactory object) throws IOException {
+         }
+
+         @Override
+         public SingleKeyConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new SingleKeyConsistentHashFactory();
          }
       }
    }

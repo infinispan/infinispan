@@ -3,7 +3,6 @@ package org.infinispan.distribution.ch.impl;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -11,6 +10,7 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
@@ -167,7 +167,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
 
       @Override
       public Set<Class<? extends ReplicatedConsistentHashFactory>> getTypeClasses() {
-         return Collections.<Class<? extends ReplicatedConsistentHashFactory>>singleton(ReplicatedConsistentHashFactory.class);
+         return Util.asSet(ReplicatedConsistentHashFactory.class);
       }
    }
 }

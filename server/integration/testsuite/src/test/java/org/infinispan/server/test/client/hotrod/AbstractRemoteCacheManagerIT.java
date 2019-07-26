@@ -136,7 +136,7 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .forceReturnValues(false)
                 .tcpNoDelay(true)
                 .transportFactory("org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory")
-                .marshaller("org.infinispan.commons.marshall.jboss.GenericJBossMarshaller")
+                .marshaller("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller")
                 .asyncExecutorFactory().factoryClass("org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory")
                 .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "10")
                 .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.queue_size", "100000")

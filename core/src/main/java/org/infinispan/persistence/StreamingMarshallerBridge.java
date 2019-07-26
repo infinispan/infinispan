@@ -10,7 +10,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.marshall.core.MarshallingException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 
 /**

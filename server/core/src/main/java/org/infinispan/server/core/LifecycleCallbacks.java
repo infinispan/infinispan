@@ -2,7 +2,7 @@ package org.infinispan.server.core;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryTranscoder;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;

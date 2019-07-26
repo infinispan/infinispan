@@ -21,7 +21,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.locking.AbstractLockingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -36,7 +35,6 @@ import org.testng.annotations.Test;
 @Test(testName = "lock.APITest", groups = "functional")
 @CleanupAfterMethod
 public class APITest extends MultipleCacheManagersTest {
-   private EmbeddedCacheManager cm1, cm2;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -46,12 +44,7 @@ public class APITest extends MultipleCacheManagersTest {
       cfg.transaction().lockingMode(LockingMode.PESSIMISTIC)
             .cacheStopTimeout(0)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-
-      cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      registerCacheManager(cm1, cm2);
-      cm1.getCache();
-      cm2.getCache();
+      createCluster(cfg, 2);
    }
 
    public void testProperties() {

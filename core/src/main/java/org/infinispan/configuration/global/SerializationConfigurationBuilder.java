@@ -14,7 +14,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.jboss.marshalling.ClassResolver;
 
 /**
  * Configures serialization and marshalling settings.
@@ -121,8 +120,10 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * Class resolver to use when unmarshalling objects.
     *
     * @param classResolver
+    * @deprecated since 10.0 {@link org.jboss.marshalling.ClassResolver} is specific to jboss-marshalling and will be removed in a future version.
     */
-   public SerializationConfigurationBuilder classResolver(ClassResolver classResolver) {
+   @Deprecated
+   public SerializationConfigurationBuilder classResolver(Object classResolver) {
       attributes.attribute(CLASS_RESOLVER).set(classResolver);
       return this;
    }

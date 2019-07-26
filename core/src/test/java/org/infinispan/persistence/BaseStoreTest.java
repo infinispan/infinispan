@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -29,7 +30,6 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
@@ -60,7 +60,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    protected static final int WRITE_DELETE_BATCH_MIN_ENTRIES = 80;
    protected static final int WRITE_DELETE_BATCH_MAX_ENTRIES = 120;
-   private TestObjectStreamMarshaller marshaller;
+   protected TestObjectStreamMarshaller marshaller;
    protected abstract AdvancedLoadWriteStore createStore() throws Exception;
 
    protected AdvancedLoadWriteStore<Object, Object> cl;
@@ -524,7 +524,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
       assertIsEmpty();
 
-      Marshaller userMarshaller = new JBossMarshaller();
+      Marshaller userMarshaller = new JavaSerializationMarshaller();
       WrappedBytes key = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Pojo().role("key")));
       WrappedBytes key2 = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Pojo().role("key2")));
       WrappedBytes value = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Pojo().role("value")));

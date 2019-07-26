@@ -76,6 +76,7 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
       for (EmbeddedCacheManager cacheManager : cacheManagers) {
          MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cacheManager);
          multimapCacheCluster.put(cacheManager.getAddress(), multimapCacheManager.get(cacheName));
+         cacheManager.getClassWhiteList().addClasses(SuperPerson.class);
       }
    }
 

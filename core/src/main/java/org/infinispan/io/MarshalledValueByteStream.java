@@ -3,12 +3,10 @@ package org.infinispan.io;
 
 import java.io.OutputStream;
 
-import org.jboss.marshalling.ByteOutput;
-
 /**
  * A stream of bytes which can be written to, and the underlying byte array can be directly accessed.
  *
- * By implementing {@link org.jboss.marshalling.ByteOutput} we avoid the need for the byte stream to be wrapped by
+ * If you require a {@link org.jboss.marshalling.ByteOutput} instance, then you now need to wrap the stream via
  * {@link org.jboss.marshalling.Marshalling#createByteOutput(OutputStream)}
  *
  * @author Manik Surtani
@@ -17,7 +15,7 @@ import org.jboss.marshalling.ByteOutput;
  * @deprecated since 10.0
  */
 @Deprecated
-public abstract class MarshalledValueByteStream extends OutputStream implements ByteOutput {
+public abstract class MarshalledValueByteStream extends OutputStream {
 
    public abstract int size();
 

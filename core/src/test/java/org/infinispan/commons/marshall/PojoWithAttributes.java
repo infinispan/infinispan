@@ -39,14 +39,14 @@ public class PojoWithAttributes {
       this.uuid = uuid;
    }
 
-   static void writeObject(ObjectOutput output, PojoWithAttributes pojo) throws IOException {
+   public static void writeObject(ObjectOutput output, PojoWithAttributes pojo) throws IOException {
       output.writeInt(pojo.age);
       output.writeObject(pojo.entry);
       output.writeObject(pojo.key);
       output.writeObject(pojo.uuid);
    }
 
-   static PojoWithAttributes readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public static PojoWithAttributes readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int age = input.readInt();
       CacheEntry entry = (CacheEntry) input.readObject();
       Key key = (Key) input.readObject();

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
@@ -42,15 +43,20 @@ public class PersistenceMockUtil {
    }
 
    public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller, TimeService timeService) {
-      Cache mockCache = mockCache(nodeName, configuration, timeService);
-      MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(marshaller);
-      return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
-                                           SingleSegmentKeyPartitioner.getInstance(), marshaller,
-                                           timeService, new ByteBufferFactoryImpl(), mef, mef,
-                                           new WithinThreadExecutor());
+      return createContext(nodeName, configuration, marshaller, timeService, null);
    }
 
-   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService) {
+   public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller,
+                                                     TimeService timeService, ClassWhiteList whiteList) {
+      Cache mockCache = mockCache(nodeName, configuration, timeService, whiteList);
+      MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(marshaller);
+      return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
+            SingleSegmentKeyPartitioner.getInstance(), marshaller,
+            timeService, new ByteBufferFactoryImpl(), mef, mef,
+            new WithinThreadExecutor());
+   }
+
+   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService, ClassWhiteList whiteList) {
       String cacheName = "mock-cache";
       AdvancedCache cache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
 
@@ -69,6 +75,7 @@ public class PersistenceMockUtil {
 
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
       when(cache.getCacheManager().getCacheManagerConfiguration()) .thenReturn(gc);
+      when(cache.getCacheManager().getClassWhiteList()).thenReturn(whiteList);
       when(cache.getName()).thenReturn(cacheName);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);

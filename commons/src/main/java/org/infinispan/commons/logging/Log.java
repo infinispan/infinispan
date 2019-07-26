@@ -12,6 +12,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.counter.exception.CounterException;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.jboss.logging.BasicLogger;
@@ -202,6 +203,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Feature %s is disabled!", id = 944)
    CacheConfigurationException featureDisabled(String feature);
+
+   @Message(value = "Unable to marshall Object '%s' wrapped by '%s', the wrapped object must be registered with the marshallers SerializationContext", id = 945)
+   MarshallingException unableToMarshallRuntimeObject(String wrappedObjectClass, String wrapperClass);
 
    //----- counters exceptions // don't use the same id range ------
 

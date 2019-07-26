@@ -3,6 +3,9 @@ package org.infinispan.distribution.groups;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -13,6 +16,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -148,7 +153,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       return builder;
    }
 
-
+   @SerializeWith(CustomConsistentHashFactory.Externalizer.class)
    private static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
       private final CacheMode cacheMode;
 
@@ -173,6 +178,21 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
             return new int[][]{{0}};
          } else {
             throw new IllegalStateException();
+         }
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<CustomConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, CustomConsistentHashFactory object) throws IOException {
+            output.writeObject(object.trait);
+            MarshallUtil.marshallEnum(object.cacheMode, output);
+         }
+
+         @Override
+         public CustomConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            Trait trait = (Trait) input.readObject();
+            CacheMode cacheMode = MarshallUtil.unmarshallEnum(input, CacheMode::valueOf);
+            return new CustomConsistentHashFactory<>(trait, cacheMode);
          }
       }
    }

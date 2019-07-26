@@ -19,6 +19,11 @@ public class Person implements Serializable, ExternalPojo {
       this.name = name;
    }
 
+   public Person(String name, Address address) {
+      this.name = name;
+      this.address = address;
+   }
+
    public String getName() {
       return name;
    }
