@@ -307,7 +307,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         } catch (InterruptedException e) {
             throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.", e);
         }
-        try {
+        try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
             if (stopped) {
                 throw new PersistenceException("RocksDB is stopped");
             }
@@ -340,7 +340,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             List<Object> keys = new ArrayList<>();
 
             long now = ctx.getTimeService().wallClockTime();
-            RocksIterator iterator = expiredDb.newIterator(new ReadOptions().setFillCache(false));
+            RocksIterator iterator = expiredDb.newIterator(readOptions);
             if (iterator != null) {
                 try (RocksIterator it = iterator) {
                     for (it.seekToFirst(); it.isValid(); it.next()) {
@@ -384,6 +384,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                         log.debugf("purged %d entries", count);
                 } catch (Exception e) {
                     throw new PersistenceException(e);
+                } finally {
+                    readOptions.close();
                 }
             }
         } catch (PersistenceException e) {
@@ -733,12 +735,13 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         }
 
         <P> Flowable<P> publish(int segment, Function<RocksIterator, Flowable<P>> function) {
+            ReadOptions readOptions = new ReadOptions().setFillCache(false);
             return Flowable.using(() -> {
                 semaphore.acquire();
                 if (stopped) {
                     throw new PersistenceException("RocksDB is stopped");
                 }
-                return wrapIterator(db, segment);
+                return wrapIterator(db, readOptions, segment);
             }, iterator -> {
                 if (iterator == null) {
                     return Flowable.empty();
@@ -749,11 +752,12 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                 if (iterator != null) {
                     iterator.close();
                 }
+                readOptions.close();
                 semaphore.release();
             });
         }
 
-        abstract RocksIterator wrapIterator(RocksDB db, int segment);
+        abstract RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment);
 
         private void writeBatch(WriteBatch batch) throws InterruptedException, RocksDBException {
             semaphore.acquire();
@@ -813,11 +817,11 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             } catch (InterruptedException e) {
                 throw new PersistenceException("Cannot acquire semaphore", e);
             }
-            try {
+            try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
                 if (stopped) {
                     throw new PersistenceException("RocksDB is stopped");
                 }
-                RocksIterator optionalIterator = wrapIterator(db, -1);
+                RocksIterator optionalIterator = wrapIterator(db, readOptions, -1);
                 if (optionalIterator != null && (configuration.clearThreshold() > 0 || segments == null)) {
                     try (RocksIterator it = optionalIterator) {
                         for (it.seekToFirst(); it.isValid(); it.next()) {
@@ -896,11 +900,11 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             }
         }
 
-        protected RocksIterator wrapIterator(RocksDB db, int segment) {
+        protected RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment) {
             // Some Cache Store tests use clear and in case of the Rocks DB implementation
             // this clears out internal references and results in throwing exceptions
             // when getting an iterator. Unfortunately there is no nice way to check that...
-            return db.newIterator(defaultColumnFamilyHandle, new ReadOptions().setFillCache(false));
+            return db.newIterator(defaultColumnFamilyHandle, readOptions);
         }
 
         @Override
@@ -1015,11 +1019,11 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             } catch (InterruptedException e) {
                 throw new PersistenceException("Cannot acquire semaphore", e);
             }
-            try {
+            try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
                 if (stopped) {
                     throw new PersistenceException("RocksDB is stopped");
                 }
-                RocksIterator optionalIterator = wrapIterator(db, segment);
+                RocksIterator optionalIterator = wrapIterator(db, readOptions, segment);
                 if (optionalIterator != null) {
                     ColumnFamilyHandle handle = handles.get(segment);
                     try (RocksIterator it = optionalIterator) {
@@ -1089,10 +1093,10 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         }
 
         @Override
-        RocksIterator wrapIterator(RocksDB db, int segment) {
+        RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment) {
             ColumnFamilyHandle handle = handles.get(segment);
             if (handle != null) {
-                return db.newIterator(handle, new ReadOptions().setFillCache(false));
+                return db.newIterator(handle, readOptions);
             }
             return null;
         }
