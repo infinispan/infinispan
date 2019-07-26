@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "marshall.MarshalledValuesFineGrainedTest")
 public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
    EmbeddedCacheManager ecm;
-   final CustomClass key = new CustomClass("key");
-   final CustomClass value = new CustomClass("value");
+   final CustomClasses.CustomClass key = new CustomClasses.CustomClass("key");
+   final CustomClasses.CustomClass value = new CustomClasses.CustomClass("value");
 
    @AfterMethod
    public void cleanup() {

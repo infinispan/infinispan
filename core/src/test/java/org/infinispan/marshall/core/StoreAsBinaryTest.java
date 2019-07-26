@@ -9,9 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.EncoderCache;
-import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -35,6 +33,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
+import org.infinispan.marshall.CustomClasses;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -85,9 +84,9 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache1 = cache(0, "replSync");
       cache(1, "replSync");
 
-      Exceptions.expectException(NotSerializableException.class, () -> cache1.put("Hello", new Object()));
+      Exceptions.expectException(MarshallingException.class, () -> cache1.put("Hello", new Object()));
 
-      Exceptions.expectException(NotSerializableException.class, () -> cache1.put(new Object(), "Hello"));
+      Exceptions.expectException(MarshallingException.class, () -> cache1.put(new Object(), "Hello"));
    }
 
    public void testReleaseObjectValueReferences() {
@@ -490,11 +489,11 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    public void testMarshallValueWithCustomReadObjectMethod() {
       Cache<Object, Object> cache1 = cache(0, "replSync");
       Cache<Object, Object> cache2 = cache(1, "replSync");
-      CustomReadObjectMethod obj = new CustomReadObjectMethod();
+      CustomClasses.CustomReadObjectMethod obj = new CustomClasses.CustomReadObjectMethod();
       cache1.put("ab-key", obj);
       assertEquals(obj, cache2.get("ab-key"));
 
-      ObjectThatContainsACustomReadObjectMethod anotherObj = new ObjectThatContainsACustomReadObjectMethod();
+      CustomClasses.ObjectThatContainsACustomReadObjectMethod anotherObj = new CustomClasses.ObjectThatContainsACustomReadObjectMethod();
       anotherObj.anObjectWithCustomReadObjectMethod = obj;
       cache1.put("cd-key", anotherObj);
       assertEquals(anotherObj, cache2.get("cd-key"));
@@ -670,83 +669,6 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
          return "Pojo{" +
                "i=" + i +
                '}';
-      }
-   }
-
-   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable, ExternalPojo {
-      private static final long serialVersionUID = 1L;
-      //      Integer id;
-      CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
-      Integer balance;
-//      String branch;
-
-      @Override
-      public boolean equals(Object obj) {
-         if (obj == this)
-            return true;
-         if (!(obj instanceof ObjectThatContainsACustomReadObjectMethod))
-            return false;
-         ObjectThatContainsACustomReadObjectMethod acct = (ObjectThatContainsACustomReadObjectMethod) obj;
-//         if (!safeEquals(id, acct.id))
-//            return false;
-//         if (!safeEquals(branch, acct.branch))
-//            return false;
-         return safeEquals(balance, acct.balance) && safeEquals(anObjectWithCustomReadObjectMethod, acct.anObjectWithCustomReadObjectMethod);
-      }
-
-      @Override
-      public int hashCode() {
-         int result = 17;
-//         result = result * 31 + safeHashCode(id);
-//         result = result * 31 + safeHashCode(branch);
-         result = result * 31 + safeHashCode(balance);
-         result = result * 31 + safeHashCode(anObjectWithCustomReadObjectMethod);
-         return result;
-      }
-
-      private static int safeHashCode(Object obj) {
-         return obj == null ? 0 : obj.hashCode();
-      }
-
-      private static boolean safeEquals(Object a, Object b) {
-         return (a == b || (a != null && a.equals(b)));
-      }
-   }
-
-   public static class CustomReadObjectMethod implements Serializable, ExternalPojo {
-      private static final long serialVersionUID = 1L;
-      String lastName;
-      String ssn;
-      transient boolean deserialized;
-
-      CustomReadObjectMethod() {
-         this("Zamarreno", "234-567-8901");
-      }
-
-      CustomReadObjectMethod(String lastName, String ssn) {
-         this.lastName = lastName;
-         this.ssn = ssn;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-         if (obj == this) return true;
-         if (!(obj instanceof CustomReadObjectMethod)) return false;
-         CustomReadObjectMethod pk = (CustomReadObjectMethod) obj;
-         return lastName.equals(pk.lastName) && ssn.equals(pk.ssn);
-      }
-
-      @Override
-      public int hashCode() {
-         int result = 17;
-         result = result * 31 + lastName.hashCode();
-         result = result * 31 + ssn.hashCode();
-         return result;
-      }
-
-      private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-         ois.defaultReadObject();
-         deserialized = true;
       }
    }
 }

@@ -17,7 +17,7 @@ import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

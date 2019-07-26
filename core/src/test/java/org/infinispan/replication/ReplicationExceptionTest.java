@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.io.NotSerializableException;
 import java.io.Serializable;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
@@ -14,7 +15,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -74,14 +75,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          // We should not come here.
          assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
       } catch (RuntimeException runtime) {
-         Throwable t = runtime.getCause();
-         if (runtime instanceof NotSerializableException
-                  || t instanceof NotSerializableException
-                  || t.getCause() instanceof NotSerializableException) {
-            log.trace("received NotSerializableException - as expected");
-         } else {
-            throw runtime;
-         }
+         assertTrue(runtime instanceof MarshallingException);
+         assertTrue(runtime.getCause() instanceof NotSerializableException);
       }
    }
 

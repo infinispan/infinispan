@@ -1,6 +1,5 @@
 package org.infinispan.commons.util;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -12,6 +11,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.MarshallUtil;
 
 import net.jcip.annotations.Immutable;
 
@@ -29,8 +33,7 @@ import net.jcip.annotations.Immutable;
  * @since 4.0
  */
 @Immutable
-public class ImmutableListCopy<E> extends AbstractList<E> implements Externalizable, Immutables.Immutable {
-   private static final long serialVersionUID = 10929568968966L;
+public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.Immutable {
    private E[] elements;
 
    /**
@@ -218,31 +221,28 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       return result;
    }
 
-   /**
-    * Format: - entry array size (int) - elements (Object)
-    *
-    * @param out stream to write to
-    * @throws IOException
-    */
-   @Override
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeInt(elements.length);
-      for (E e : elements) out.writeObject(e);
-   }
+   public static class Externalizer implements AdvancedExternalizer<ImmutableListCopy> {
 
-   /**
-    * See {@link #writeExternal(java.io.ObjectOutput)} for serialization format
-    *
-    * @param in stream
-    * @throws IOException
-    * @throws ClassNotFoundException
-    */
-   @Override
-   @SuppressWarnings("unchecked")
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      int size = in.readInt();
-      elements = (E[]) new Object[size];
-      for (int i = 0; i < size; i++) elements[i] = (E) in.readObject();
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_LIST_COPY;
+      }
+
+      @Override
+      public Set<Class<? extends ImmutableListCopy>> getTypeClasses() {
+         return Util.asSet(ImmutableListCopy.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ImmutableListCopy object) throws IOException {
+         MarshallUtil.marshallArray(object.elements, output);
+      }
+
+      @Override
+      public ImmutableListCopy readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object[] elements = MarshallUtil.unmarshallArray(input, Util::objectArray);
+         return new ImmutableListCopy<>(elements);
+      }
    }
 
    private class ImmutableIterator implements ListIterator<E> {

@@ -70,8 +70,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss.marshalling</groupId>
-         <artifactId>jboss-marshalling-osgi</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jboss-marshalling</artifactId>
       </dependency>
 
       <dependency>

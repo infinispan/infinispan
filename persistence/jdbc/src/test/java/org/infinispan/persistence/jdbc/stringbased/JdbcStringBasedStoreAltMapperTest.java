@@ -20,6 +20,7 @@ import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -40,8 +41,8 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
    protected AdvancedLoadWriteStore cacheStore;
    protected TableManager tableManager;
-   protected static final Person MIRCEA = new Person("Mircea", "Markus", 28);
-   protected static final Person MANIK = new Person("Manik", "Surtani", 18);
+   protected static final Person MIRCEA = new Person("Mircea");
+   protected static final Person MANIK = new Person("Manik");
    protected PersistenceMarshaller marshaller;
 
    protected JdbcStringBasedStoreConfigurationBuilder createJdbcConfig(ConfigurationBuilder builder) {

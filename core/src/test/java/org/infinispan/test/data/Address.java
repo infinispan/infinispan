@@ -9,6 +9,14 @@ public class Address implements Serializable {
    String city = "San Jose";
    int zip = 0;
 
+   public Address() {}
+
+   public Address(String street, String city, int zip) {
+      this.street = street;
+      this.city = city;
+      this.zip = zip;
+   }
+
    public String getStreet() {
       return street;
    }
@@ -36,10 +44,6 @@ public class Address implements Serializable {
    public String toString() {
       return "street=" + getStreet() + ", city=" + getCity() + ", zip=" + getZip();
    }
-
-//    public Object writeReplace() {
-// return this;
-//    }
 
    public boolean equals(Object o) {
       if (this == o) return true;

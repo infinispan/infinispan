@@ -1,7 +1,6 @@
 package org.infinispan.marshall;
 
 import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
-import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,8 +48,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.NotSerializableException;
-import org.infinispan.commons.marshall.PojoWithJBossExternalize;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -78,9 +75,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
-import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
-import org.infinispan.marshall.core.MarshallingException;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -99,7 +93,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
 import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
@@ -110,7 +103,7 @@ import org.testng.annotations.Test;
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
-   private StreamingMarshaller marshaller;
+   protected StreamingMarshaller marshaller;
    private EmbeddedCacheManager cm;
 
    private final TransactionFactory gtf = new TransactionFactory();
@@ -365,8 +358,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {
-      ObjectThatContainsACustomReadObjectMethod obj = new ObjectThatContainsACustomReadObjectMethod();
-      obj.anObjectWithCustomReadObjectMethod = new CustomReadObjectMethod();
+      CustomClasses.ObjectThatContainsACustomReadObjectMethod obj = new CustomClasses.ObjectThatContainsACustomReadObjectMethod();
+      obj.anObjectWithCustomReadObjectMethod = new CustomClasses.CustomReadObjectMethod();
       marshallAndAssertEquality(obj);
    }
 
@@ -378,30 +371,16 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert rEntry.contentType.equals(entry.contentType);
    }
 
+   @Test(expectedExceptions = MarshallingException.class)
    public void testNestedNonSerializable() throws Exception {
       PutKeyValueCommand cmd = new PutKeyValueCommand("k", new Object(), false, new EmbeddedMetadata.Builder().build(), 0,
             EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(null));
-      try {
-         marshaller.objectToByteBuffer(cmd);
-      } catch (NotSerializableException e) {
-         log.info("Log exception for output format verification", e);
-         TraceInformation inf = (TraceInformation) e.getCause();
-         if (inf != null) {
-            assert inf.toString().contains("in object java.lang.Object@");
-         }
-      }
+      marshaller.objectToByteBuffer(cmd);
    }
 
+   @Test(expectedExceptions = MarshallingException.class)
    public void testNonSerializable() throws Exception {
-      try {
-         marshaller.objectToByteBuffer(new Object());
-      } catch (NotSerializableException e) {
-         log.info("Log exception for output format verification", e);
-         TraceInformation inf = (TraceInformation) e.getCause();
-         if (inf != null) {
-            assert inf.toString().contains("in object java.lang.Object@");
-         }
-      }
+      marshaller.objectToByteBuffer(new Object());
    }
 
    public void testConcurrentHashMap() throws Exception {
@@ -426,19 +405,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    }
 
+   @Test(expectedExceptions = MarshallingException.class)
    public void testErrorUnmarshalling() throws Exception {
       Pojo pojo = new PojoWhichFailsOnUnmarshalling();
       byte[] bytes = marshaller.objectToByteBuffer(pojo);
-      try {
-         marshaller.objectFromByteBuffer(bytes);
-      } catch (MarshallingException e) {
-         log.info("Log exception for output format verification", e);
-         IOException ioEx = (IOException) e.getCause();
-         TraceInformation inf = (TraceInformation) ioEx.getCause();
-         if (inf != null)
-            assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
-      }
-
+      marshaller.objectFromByteBuffer(bytes);
    }
 
    public void testMarshallingSerializableSubclass() throws Exception {
@@ -458,11 +429,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assertEquals("2345", readChild2.getId());
       assertEquals(1234, readChild2.getChild1Obj().someInt);
       assertEquals("1234", readChild2.getChild1Obj().getId());
-   }
-
-   public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
-      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(27, k(m));
-      marshallAndAssertEquality(pojo);
    }
 
    public void testErrorUnmarshallInputStreamAvailable() throws Exception {
@@ -499,11 +465,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    public void testSerializableWithAnnotation() throws Exception {
       marshallAndAssertEquality(new PojoWithSerializeWith(20, "k2"));
-   }
-
-   public void testIsMarshallableJBossExternalizeAnnotation() throws Exception {
-      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, "k2");
-      assertTrue(marshaller.isMarshallable(pojo));
    }
 
    public void testListArray() throws Exception {

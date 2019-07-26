@@ -45,6 +45,11 @@ import java.util.Set;
 public interface AdvancedExternalizer<T> extends Externalizer<T> {
 
    /**
+    * The minimum ID which will be respected by Infinispan for user specified {@link AdvancedExternalizer} implementations.
+    */
+   int USER_EXT_ID_MIN = 2500;
+
+   /**
     * Returns a collection of Class instances representing the types that this
     * AdvancedExternalizer can marshall.  Clearly, empty sets are not allowed.
     * The externalizer framework currently requires all individual types to be

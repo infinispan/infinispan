@@ -6,7 +6,7 @@ import java.util.Random;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.marshall.CustomClass;
+import org.infinispan.marshall.CustomClasses;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.jgroups.util.UUID;
 import org.testng.annotations.Factory;
@@ -34,8 +34,8 @@ public class MemoryBasedEvictionFunctionalStoreAsBinaryTest extends MemoryBasedE
       // Note that there is overhead for the map itself, so we will not get exactly the same amount
       // More than likely there will be a few hundred byte overhead
       for (float i = 0; i < numberInserted; i++) {
-         cache.put(new CustomClass(randomStringFullOfInt(random, 10)),
-                 new CustomClass(randomStringFullOfInt(random, 10)));
+         cache.put(new CustomClasses.CustomClass(randomStringFullOfInt(random, 10)),
+                 new CustomClasses.CustomClass(randomStringFullOfInt(random, 10)));
       }
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }

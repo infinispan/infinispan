@@ -9,6 +9,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -18,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -217,6 +221,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       return op.perform(cache0, key);
    }
 
+   @SerializeWith(CustomConsistentHashFactory.Externalizer.class)
    private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
       private CustomConsistentHashFactory() {
          super(1);
@@ -232,6 +237,17 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
                return new int[][]{{0, 1}};
             default:
                return new int[][]{{members.size() - 1, 0}};
+         }
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<CustomConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, CustomConsistentHashFactory object) throws IOException {
+         }
+
+         @Override
+         public CustomConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new CustomConsistentHashFactory();
          }
       }
    }

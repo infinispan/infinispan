@@ -15,6 +15,7 @@
         <module name="io.netty" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
         <module name="com.github.ben-manes.caffeine" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.jboss-marshalling" slot="@infinispan.module.slot@" export="true"/>
         <module name="org.infinispan.protostream" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query.remote.client" slot="@infinispan.module.slot@"/>

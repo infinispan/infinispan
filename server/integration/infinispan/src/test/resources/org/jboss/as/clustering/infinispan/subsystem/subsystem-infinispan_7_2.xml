@@ -9,7 +9,7 @@
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
+            <compatibility enabled="true" marshaller="org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller" />
             <file-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" relative-to="jboss.server.temp.dir" shared="false" singleton="false" max-entries="1000000">
                 <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
             </file-store>
@@ -29,7 +29,7 @@
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
+            <compatibility enabled="true" marshaller="org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller" />
             <rest-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" shared="true" singleton="false" append-cache-name-to-path="false">
                 <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
                 <remote-server outbound-socket-binding="rest-server-1" />

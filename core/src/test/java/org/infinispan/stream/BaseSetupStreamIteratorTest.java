@@ -3,6 +3,9 @@ package org.infinispan.stream;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfigurationBuilder;
@@ -112,6 +116,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       }
    }
 
+   @SerializeWith(TestDefaultConsistentHashFactory.Externalizer.class)
    private static class TestDefaultConsistentHashFactory
          extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
       TestDefaultConsistentHashFactory() {
@@ -131,8 +136,20 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
                return new int[][]{{0, 1}, {1, 2}, {2, 1}};
          }
       }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<TestDefaultConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, TestDefaultConsistentHashFactory object) throws IOException {
+         }
+
+         @Override
+         public TestDefaultConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new TestDefaultConsistentHashFactory();
+         }
+      }
    }
 
+   @SerializeWith(TestScatteredConsistentHashFactory.Externalizer.class)
    private static class TestScatteredConsistentHashFactory
          extends BaseControlledConsistentHashFactory<ScatteredConsistentHash> {
       TestScatteredConsistentHashFactory() {
@@ -150,6 +167,17 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
                return new int[][]{{0}, {0}, {0}};
             default:
                return new int[][]{{0}, {1}, {2}};
+         }
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<TestScatteredConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, TestScatteredConsistentHashFactory object) throws IOException {
+         }
+
+         @Override
+         public TestScatteredConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new TestScatteredConsistentHashFactory();
          }
       }
    }

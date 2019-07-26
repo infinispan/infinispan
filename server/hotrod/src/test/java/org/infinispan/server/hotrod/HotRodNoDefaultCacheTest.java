@@ -6,6 +6,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodSer
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
@@ -28,7 +29,7 @@ public class HotRodNoDefaultCacheTest extends SingleCacheManagerTest {
 
    @Override
    public EmbeddedCacheManager createCacheManager() {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(null);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager((ConfigurationBuilder) null);
       return cm;
    }
 

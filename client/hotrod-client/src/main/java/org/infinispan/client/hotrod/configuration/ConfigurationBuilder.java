@@ -29,7 +29,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;

@@ -33,6 +33,7 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(cacheMode, false);
       createClusteredCaches(NUM_NODES, cfgBuilder);
+      cacheManagers.forEach(cm -> cm.getClassWhiteList().addClasses(NoOpCacheEventFilterConverterWithDependencies.class));
    }
 
    public void testEventFilterCurrentState() {

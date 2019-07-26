@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.UUID;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
@@ -24,6 +25,7 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -466,6 +468,7 @@ public class TestCacheManagerFactory {
       GlobalConfiguration globalConfiguration = gc.build();
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
+      addTestClassesToWhiteList(defaultCacheManager);
       return defaultCacheManager;
    }
 
@@ -474,6 +477,17 @@ public class TestCacheManagerFactory {
       setNodeName(holder.getGlobalConfigurationBuilder());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
+      addTestClassesToWhiteList(defaultCacheManager);
       return defaultCacheManager;
+   }
+
+   private static void addTestClassesToWhiteList(EmbeddedCacheManager cm) {
+      ClassWhiteList whiteList = cm.getClassWhiteList();
+      whiteList.addClasses(MagicKey.class);
+      whiteList.addRegexps(
+            "org.infinispan.*Test*",
+            "org.infinispan.marshall.CustomClasses*",
+            "org.infinispan.test.data.*"
+      );
    }
 }

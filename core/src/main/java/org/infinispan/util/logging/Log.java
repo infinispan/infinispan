@@ -1873,4 +1873,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Ignoring 'marshaller' attribute. Common marshallers are already available at runtime, and to deploy a custom marshaller, consult the 'Encoding' section in the user guide", id = 553)
    void marshallersNotSupported();
+
+   @LogMessage(level = WARN)
+   @Message(value = "infinispan-boss-marshalling dependency detected, jboss-marshalling has been deprecated and will be removed in the future", id = 554)
+   void jbossMarshallingDetected();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to set method %s accessible", id = 555)
+   void unableToSetAccessible(Method m, @Cause Exception e);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Starting user marshaller '%s'", id = 556)
+   void startingUserMarshaller(String marshallerClass);
 }

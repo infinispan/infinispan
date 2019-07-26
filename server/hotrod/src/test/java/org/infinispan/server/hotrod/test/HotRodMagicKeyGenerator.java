@@ -3,8 +3,8 @@ package org.infinispan.server.hotrod.test;
 import java.util.Random;
 
 import org.infinispan.Cache;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.marshall.core.JBossMarshaller;
 
 /**
  * {@link org.infinispan.distribution.MagicKey} equivalent for HotRod
@@ -18,7 +18,7 @@ public class HotRodMagicKeyGenerator {
       LocalizedCacheTopology cacheTopology = cache.getAdvancedCache().getDistributionManager().getCacheTopology();
       Random r = new Random();
 
-      JBossMarshaller sm = new JBossMarshaller();
+      GenericJBossMarshaller sm = new GenericJBossMarshaller();
       for (int i = 0; i < 1000; i++) {
          String candidate = String.valueOf(r.nextLong());
          byte[] candidateBytes = sm.objectToByteBuffer(candidate, 64);
@@ -31,7 +31,7 @@ public class HotRodMagicKeyGenerator {
    }
 
    public static String getStringObject(byte[] bytes) throws Exception {
-      JBossMarshaller sm = new JBossMarshaller();
+      GenericJBossMarshaller sm = new GenericJBossMarshaller();
       return ((String) sm.objectFromByteBuffer(bytes));
    }
 }

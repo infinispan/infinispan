@@ -1,9 +1,7 @@
 package org.infinispan.invalidation;
 
-import static org.testng.AssertJUnit.assertNotNull;
-
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.replication.ReplicationExceptionTest;
@@ -26,27 +24,10 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "invalidAsync", invalidAsync);
    }
 
-   public void testNonSerializableAsyncInvalid() throws Exception {
-      doNonSerializableInvalidTest("invalidAsync");
-   }
-
-   private void doNonSerializableInvalidTest(String cacheName) {
+   @Test(expectedExceptions = MarshallingException.class)
+   public void testNonSerializableAsyncInvalid() {
+      String cacheName = "invalidAsync";
       AdvancedCache cache1 = cache(0, cacheName).getAdvancedCache();
-      AdvancedCache cache2 = cache(1, cacheName).getAdvancedCache();
-      try {
-         cache1.put(new ReplicationExceptionTest.ContainerData(), "test-" + cacheName);
-         // We should not come here.
-         assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
-      } catch (RuntimeException runtime) {
-         Throwable t = runtime.getCause();
-         if (runtime instanceof NotSerializableException
-                  || t instanceof NotSerializableException
-                  || t.getCause() instanceof NotSerializableException) {
-            log.trace("received NotSerializableException - as expected");
-         } else {
-            throw runtime;
-         }
-      }
+      cache1.put(new ReplicationExceptionTest.ContainerData(), "test-" + cacheName);
    }
-
 }

@@ -16,7 +16,6 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.parsing.Element;
-import org.jboss.marshalling.ClassResolver;
 
 public class SerializationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class)
@@ -29,7 +28,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
             }
          })
          .immutable().build();
-   public static final AttributeDefinition<ClassResolver> CLASS_RESOLVER = AttributeDefinition.builder("classResolver", null, ClassResolver.class).immutable().build();
+   public static final AttributeDefinition<Object> CLASS_RESOLVER = AttributeDefinition.builder("classResolver", null, Object.class).immutable().build();
    public static final AttributeDefinition<Map<Integer, AdvancedExternalizer<?>>> ADVANCED_EXTERNALIZERS = AttributeDefinition.builder("advancedExternalizer", null, (Class<Map<Integer, AdvancedExternalizer<?>>>) (Class<?>) Map.class)
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashMap::new).immutable().build();
@@ -41,16 +40,16 @@ public class SerializationConfiguration implements ConfigurationInfo {
    }
 
    private final Attribute<Map<Integer, AdvancedExternalizer<?>>> advancedExternalizers;
-   private final ClassResolver classResolver;
-   private final Marshaller marshaller;
-   private final short version;
+   private final Attribute<Object> classResolver;
+   private final Attribute<Marshaller> marshaller;
+   private final Attribute<Short> version;
    private final AttributeSet attributes;
 
    SerializationConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      this.marshaller = attributes.attribute(MARSHALLER).get();
-      this.version = attributes.attribute(VERSION).get();
-      this.classResolver = attributes.attribute(CLASS_RESOLVER).get();
+      this.marshaller = attributes.attribute(MARSHALLER);
+      this.version = attributes.attribute(VERSION);
+      this.classResolver = attributes.attribute(CLASS_RESOLVER);
       this.advancedExternalizers = attributes.attribute(ADVANCED_EXTERNALIZERS);
    }
 
@@ -60,19 +59,20 @@ public class SerializationConfiguration implements ConfigurationInfo {
    }
 
    public Marshaller marshaller() {
-      return marshaller;
+      return marshaller.get();
    }
 
    public short version() {
-      return version;
+      return version.get();
    }
 
    public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers.get();
    }
 
-   public ClassResolver classResolver() {
-      return classResolver;
+   @Deprecated
+   public Object classResolver() {
+      return classResolver.get();
    }
 
    public AttributeSet attributes() {

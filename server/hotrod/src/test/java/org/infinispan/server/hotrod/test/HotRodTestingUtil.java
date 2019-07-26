@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,7 +39,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
@@ -532,7 +532,7 @@ public class HotRodTestingUtil {
 
    public static byte[] marshall(Object obj) {
       try {
-         return obj == null ? null : new JBossMarshaller().objectToByteBuffer(obj, 64);
+         return obj == null ? null : new GenericJBossMarshaller().objectToByteBuffer(obj, 64);
       } catch (IOException | InterruptedException e) {
          throw new CacheException(e);
       }
@@ -541,7 +541,7 @@ public class HotRodTestingUtil {
 
    public static <T> T unmarshall(byte[] key) {
       try {
-         return (T) new JBossMarshaller().objectFromByteBuffer(key);
+         return (T) new GenericJBossMarshaller().objectFromByteBuffer(key);
       } catch (IOException | ClassNotFoundException e) {
          throw new CacheException(e);
       }

@@ -2,11 +2,19 @@ package org.infinispan.util;
 
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
@@ -113,6 +121,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       this.membersToUse = membersToUse;
    }
 
+   @SerializeWith(Externalizer.class)
    public static class Default extends ControlledConsistentHashFactory<DefaultConsistentHash> {
       public Default(int primaryOwnerIndex, int... backupOwnerIndexes) {
          super(new DefaultTrait(), primaryOwnerIndex, backupOwnerIndexes);
@@ -126,6 +135,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    /**
     * Ignores backup-owner part of the calls
     */
+   @SerializeWith(Externalizer.class)
    public static class Scattered extends ControlledConsistentHashFactory<ScatteredConsistentHash> {
       public Scattered(int primaryOwnerIndex) {
          super(new ScatteredTrait(), primaryOwnerIndex);
@@ -143,6 +153,48 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       @Override
       public void setOwnerIndexes(int[][] segmentOwners) {
          super.setOwnerIndexes(segmentOwners);
+      }
+   }
+
+   public static class Externalizer extends AbstractExternalizer<ControlledConsistentHashFactory> {
+
+      @Override
+      public Set<Class<? extends ControlledConsistentHashFactory>> getTypeClasses() {
+         return Util.asSet(Default.class, Scattered.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ControlledConsistentHashFactory object) throws IOException {
+         output.writeByte(object instanceof Default ? 0 : 1);
+         int numOwners = object.ownerIndexes.length;
+         MarshallUtil.marshallSize(output, numOwners);
+         for (int i = 0; i < numOwners; i++) {
+            int[] ownerSegments = object.ownerIndexes[i];
+            MarshallUtil.marshallSize(output, ownerSegments.length);
+            for (int segment : ownerSegments)
+               output.writeInt(segment);
+         }
+         output.writeObject(object.membersToUse);
+      }
+
+      @Override
+      public ControlledConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         byte type = input.readByte();
+
+         int numOwners = MarshallUtil.unmarshallSize(input);
+         int[][] indexes = new int[numOwners][];
+         for (int i = 0; i < numOwners; i++) {
+            int numSegments = MarshallUtil.unmarshallSize(input);
+            int[] segments = new int[numSegments];
+            for (int j = 0; j < numSegments; j++) {
+               segments[j] = input.readInt();
+            }
+            indexes[i] = segments;
+         }
+         ControlledConsistentHashFactory chf = type == 0 ? new Default(indexes) : new Scattered(indexes[0]);
+         List<Address> membersToUse = (List<Address>) input.readObject();
+         chf.setMembersToUse(membersToUse);
+         return chf;
       }
    }
 }

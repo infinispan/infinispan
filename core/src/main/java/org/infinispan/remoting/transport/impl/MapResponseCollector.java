@@ -68,7 +68,7 @@ public abstract class MapResponseCollector extends ValidResponseCollector<Map<Ad
    void recordException(Exception e) {
       if (this.exception == null) {
          this.exception = e;
-      } else {
+      } else if (this.exception != e) {
          this.exception.addSuppressed(e);
       }
    }

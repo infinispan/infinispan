@@ -2,11 +2,13 @@
 <features name="infinispan-cachestore-remote-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
    <repository>mvn:org.infinispan/infinispan-commons/${project.version}/xml/features</repository>
    <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
+   <repository>mvn:org.infinispan/infinispan-jboss-marshalling/${project.version}/xml/features</repository>
    <repository>mvn:org.infinispan/infinispan-client-hotrod/${project.version}/xml/features</repository>
 
    <feature name="infinispan-cachestore-remote" version="${project.version}">
       <feature version="${project.version}">infinispan-commons</feature>
       <feature version="${project.version}">infinispan-core</feature>
+      <feature version="${project.version}">infinispan-jboss-marshalling</feature>
       <feature version="${project.version}">infinispan-client-hotrod</feature>
       <bundle>mvn:org.infinispan/infinispan-cachestore-remote/${project.version}</bundle>
    </feature>

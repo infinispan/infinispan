@@ -8,6 +8,9 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +25,7 @@ import java.util.function.Consumer;
 import org.infinispan.Cache;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -817,10 +821,10 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       return controlledRpcManager;
    }
 
-   @SuppressWarnings("unchecked")
+   @SerializeWith(SingleKeyConsistentHashFactory.Externalizer.class)
    public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
 
-      public SingleKeyConsistentHashFactory() {
+      SingleKeyConsistentHashFactory() {
          super(1);
       }
 
@@ -828,6 +832,17 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
          assertEquals("Wrong number of owners.", 1, numOwners);
          return new int[][]{{members.size() - 1}};
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<SingleKeyConsistentHashFactory> {
+         @Override
+         public void writeObject(ObjectOutput output, SingleKeyConsistentHashFactory object) throws IOException {
+         }
+
+         @Override
+         public SingleKeyConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new SingleKeyConsistentHashFactory();
+         }
       }
    }
 

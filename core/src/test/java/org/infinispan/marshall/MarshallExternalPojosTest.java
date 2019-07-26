@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.lang.reflect.Method;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -31,17 +30,6 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
       waitForClusterToForm(CACHE_NAME);
    }
 
-   public void testReplicateJBossExternalizePojo(Method m) {
-      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, k(m));
-      doReplicatePojo(m, pojo);
-   }
-
-   @Test(dependsOnMethods = "testReplicateJBossExternalizePojo")
-   public void testReplicateJBossExternalizePojoToNewJoiningNode(Method m) {
-      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(48, k(m));
-      doReplicatePojoToNewJoiningNode(m, pojo);
-   }
-
    public void testReplicateMarshallableByPojo(Method m) {
       PojoWithSerializeWith pojo = new PojoWithSerializeWith(17, k(m));
       doReplicatePojo(m, pojo);
@@ -53,14 +41,14 @@ public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
       doReplicatePojoToNewJoiningNode(m, pojo);
    }
 
-   private void doReplicatePojo(Method m, Object o) {
+   protected void doReplicatePojo(Method m, Object o) {
       Cache cache1 = manager(0).getCache(CACHE_NAME);
       Cache cache2 = manager(1).getCache(CACHE_NAME);
       cache1.put(k(m), o);
       assertEquals(o, cache2.get(k(m)));
    }
 
-   private void doReplicatePojoToNewJoiningNode(Method m, Object o) {
+   protected void doReplicatePojoToNewJoiningNode(Method m, Object o) {
       Cache cache1 = manager(0).getCache(CACHE_NAME);
       EmbeddedCacheManager cm = createCacheManager();
       try {

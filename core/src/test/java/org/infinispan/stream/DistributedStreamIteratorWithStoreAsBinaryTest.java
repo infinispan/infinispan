@@ -41,6 +41,7 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       builderUsed.clustering().hash().numOwners(1);
       builderUsed.memory().storageType(StorageType.BINARY);
       createClusteredCaches(3, builderUsed);
+      cacheManagers.forEach(cm -> cm.getClassWhiteList().addRegexps("java.util.Collections\\$SingletonMap"));
    }
 
    @Test

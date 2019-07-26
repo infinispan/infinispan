@@ -19,14 +19,12 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -47,7 +45,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -119,51 +116,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(cache.get(asUTF8Bytes(key2Unencoded)), asUTF8Bytes(value2Unencoded));
          }
       });
-   }
-
-   @Test
-   public void testObjectEncoder() {
-      GenericJbossMarshallerEncoder encoder = new GenericJbossMarshallerEncoder(DataConversionTest.class.getClassLoader());
-      withCacheManager(new CacheManagerCallable(
-            createCacheManager(new ConfigurationBuilder())) {
-
-         GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-
-         private byte[] marshall(Object o) {
-            try {
-               return marshaller.objectToByteBuffer(o);
-            } catch (IOException | InterruptedException e) {
-               Assert.fail("Cannot marshall content");
-            }
-            return null;
-         }
-
-         @Override
-         public void call() {
-            GlobalComponentRegistry registry = cm.getGlobalComponentRegistry();
-            EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
-            encoderRegistry.registerEncoder(encoder);
-
-            cm.getClassWhiteList().addClasses(Person.class);
-            Cache<byte[], byte[]> cache = cm.getCache();
-
-            // Write encoded content to the cache
-            Person key1 = new Person("key1");
-            Person value1 = new Person("value1");
-            byte[] encodedKey1 = marshall(key1);
-            byte[] encodedValue1 = marshall(value1);
-            cache.put(encodedKey1, encodedValue1);
-
-            // Read encoded content
-            assertEquals(cache.get(encodedKey1), encodedValue1);
-
-            // Read with a different valueEncoder
-            AdvancedCache<Person, Person> encodingCache = (AdvancedCache<Person, Person>) cache.getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
-
-            assertEquals(encodingCache.get(key1), value1);
-         }
-      });
-
    }
 
    @Test
