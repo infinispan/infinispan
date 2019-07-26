@@ -15,6 +15,7 @@ import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.sql.Connection;
@@ -39,9 +40,15 @@ public abstract class AbstractStringBasedCacheStore {
     protected TableManipulationConfiguration tableConfiguration;
     protected Cache<String, String> cache;
 
-    @Test
+   @AfterMethod
+   public void cleanAfterEach() {
+      tableManager.stop();
+      connectionFactory.stop();
+      TestingUtil.killCacheManagers(dcm);
+   }
+
+   @Test
     public void testPutGetRemoveWithoutPassivationWithPreload() throws Exception {
-        try {
             dcm = configureCacheManager(false, true, false);
             cache = dcm.getCache();
             assertCleanCacheAndStore(cache);
@@ -65,14 +72,10 @@ public abstract class AbstractStringBasedCacheStore {
             cache.remove("k1");
             assertNull(cache.get("k1"));
             assertNull(getValueByKey("k1"));
-        } finally {
-            TestingUtil.killCacheManagers(dcm);
-        }
     }
 
     @Test
     public void testPutGetRemoveWithPassivationWithoutPreload() throws Exception {
-        try {
             dcm = configureCacheManager(true, false, true);
             cache = dcm.getCache();
             assertCleanCacheAndStore(cache);
@@ -105,9 +108,6 @@ public abstract class AbstractStringBasedCacheStore {
             cache.remove("k1");
             assertNull(cache.get("k1"));
             assertNull(getValueByKey("k1"));
-        } finally {
-            TestingUtil.killCacheManagers(dcm);
-        }
     }
 
     public DefaultCacheManager configureCacheManager(boolean passivation, boolean preload, boolean eviction) throws Exception {
