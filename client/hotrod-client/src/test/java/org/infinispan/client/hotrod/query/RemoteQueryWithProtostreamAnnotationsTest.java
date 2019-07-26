@@ -20,7 +20,7 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
 public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServerTest {
 
    @ProtoDoc("@Indexed")
-   @ProtoMessage(name = "Memo")
+   @ProtoName("Memo")
    public static class Memo {
 
       private int id;

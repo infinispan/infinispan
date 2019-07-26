@@ -40,7 +40,6 @@ public class StrongCounterKey implements CounterKey {
       StrongCounterKey that = (StrongCounterKey) o;
 
       return counterName.equals(that.counterName);
-
    }
 
    @Override

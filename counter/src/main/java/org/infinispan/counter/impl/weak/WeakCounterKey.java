@@ -58,7 +58,6 @@ public class WeakCounterKey implements CounterKey {
 
       return index == that.index &&
             counterName.equals(that.counterName);
-
    }
 
    @Override

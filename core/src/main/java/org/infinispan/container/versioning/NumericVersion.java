@@ -53,10 +53,7 @@ public class NumericVersion implements IncrementableEntryVersion {
       if (o == null || getClass() != o.getClass()) return false;
 
       NumericVersion that = (NumericVersion) o;
-
-      if (version != that.version) return false;
-
-      return true;
+      return version == that.version;
    }
 
    @Override

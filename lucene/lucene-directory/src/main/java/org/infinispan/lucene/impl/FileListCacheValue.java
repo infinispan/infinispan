@@ -14,8 +14,8 @@ import org.infinispan.protostream.annotations.ProtoField;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Maintains a Set of file names contained in the index. Does not implement Set for simplicity, and does internal locking
- * to provide a safe Externalizer.
+ * Maintains a Set of file names contained in the index. Does not implement Set for simplicity, and does internal
+ * locking to provide a safe Externalizer.
  *
  * @author Sanne Grinovero
  * @since 7.0
@@ -42,7 +42,7 @@ public final class FileListCacheValue {
       this.readLock = namesLock.readLock();
    }
 
-   @ProtoField(number = 1, collectionImplementation = HashSet.class)
+   @ProtoField(number = 1)
    Set<String> getFileNames() {
       readLock.lock();
       try {
@@ -54,6 +54,7 @@ public final class FileListCacheValue {
 
    /**
     * Initializes a new instance storing the passed values.
+    *
     * @param listAll the strings to store.
     */
    public FileListCacheValue(String[] listAll) {
@@ -74,6 +75,7 @@ public final class FileListCacheValue {
 
    /**
     * Removes the filename from the set if it exists
+    *
     * @param fileName
     * @return true if the set was mutated
     */
@@ -88,6 +90,7 @@ public final class FileListCacheValue {
 
    /**
     * Adds the filename from the set if it exists
+    *
     * @param fileName
     * @return true if the set was mutated
     */

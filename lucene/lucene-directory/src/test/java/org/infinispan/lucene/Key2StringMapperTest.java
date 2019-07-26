@@ -74,7 +74,7 @@ public class Key2StringMapperTest {
       mapper.getKeyMapping("filename|RL|5|indexname");
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "filename must not be null")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "File name must not be null")
    public void testChunkCacheKeyInitWithNllFileName() {
       new ChunkCacheKey("index-A", null, 0, 1024, -1);
    }

@@ -22,7 +22,7 @@ public final class ChunkCacheKey extends AbstractIndexScopedKey {
    public ChunkCacheKey(String indexName, String fileName, int chunkId, int bufferSize, int affinitySegmentId) {
       super(indexName, affinitySegmentId);
       if (fileName == null)
-         throw new IllegalArgumentException("filename must not be null");
+         throw new IllegalArgumentException("File name must not be null");
       this.fileName = fileName;
       this.chunkId = chunkId;
       this.bufferSize = bufferSize;
@@ -39,9 +39,9 @@ public final class ChunkCacheKey extends AbstractIndexScopedKey {
    }
 
    /**
-    * Get the fileName.
+    * Get the file name.
     *
-    * @return the fileName.
+    * @return the file name.
     */
    @ProtoField(number = 4)
    public String getFileName() {

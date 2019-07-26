@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -49,7 +49,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
    protected RemoteInfinispanServer server;
 
    @ProtoDoc("@Indexed")
-   @ProtoMessage(name = "User")
+   @ProtoName("User")
    public static class AnnotatedUser {
 
       private int id;
@@ -94,7 +94,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
       }
    }
 
-   @ProtoMessage(name = "Address")
+   @ProtoName("Address")
    public static class AnnotatedAddress {
 
       private String street;

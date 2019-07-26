@@ -151,6 +151,9 @@ public final class MediaType {
       return new MediaType(typeSubtype[0].trim(), typeSubtype[1].trim(), paramMap);
    }
 
+   /**
+    * Parse a comma separated list of media type trees.
+    */
    public static Stream<MediaType> parseList(String mediaTypeList) {
       return stream(mediaTypeList.split(","))
             .map(MediaType::fromString)
@@ -199,8 +202,7 @@ public final class MediaType {
    }
 
    public boolean match(MediaType other) {
-      return other != null && (other.matchesAll() || this.matchesAll() || (other.typeSubtype.equals(this.typeSubtype))
-      );
+      return other != null && (other.matchesAll() || this.matchesAll() || other.typeSubtype.equals(this.typeSubtype));
    }
 
    public boolean matchesAll() {

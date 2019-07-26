@@ -300,12 +300,10 @@ public final class IndexingMetadata {
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
                .metadataCreator(new IndexingMetadataCreator())
-               .parentBuilder()
             .annotation(ANALYZER_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(ANALYZER_DEFINITION_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
-               .parentBuilder()
             .annotation(INDEXED_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(INDEXED_FIELD_INDEX_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.BOOLEAN)
@@ -313,7 +311,6 @@ public final class IndexingMetadata {
                .attribute(INDEXED_FIELD_STORE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.BOOLEAN)
                   .defaultValue(true)
-               .parentBuilder()
             .annotation(FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .repeatable(FIELDS_ANNOTATION)
                .attribute(FIELD_NAME_ATTRIBUTE)
@@ -341,7 +338,6 @@ public final class IndexingMetadata {
                .attribute(FIELD_INDEX_NULL_AS_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue(DO_NOT_INDEX_NULL)
-               .parentBuilder()
             .annotation(SORTABLE_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .repeatable(SORTABLE_FIELDS_ANNOTATION);
    }
