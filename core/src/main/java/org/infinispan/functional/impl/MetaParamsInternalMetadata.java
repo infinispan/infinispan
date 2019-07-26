@@ -49,11 +49,25 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       this.params = params;
    }
 
+   @ProtoField(number = 1)
+   NumericVersion getNumericVersion() {
+      EntryVersion version = version();
+      return version instanceof NumericVersion ? (NumericVersion) version : null;
+   }
+
+   @ProtoField(number = 2)
+   SimpleClusteredVersion getClusteredVersion() {
+      EntryVersion version = version();
+      return version instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) version : null;
+   }
+
+   @ProtoField(number = 3, defaultValue = "-1")
    @Override
    public long created() {
       return params.find(MetaCreated.class).map(MetaParam.MetaLong::get).orElse(0L);
    }
 
+   @ProtoField(number = 4, defaultValue = "-1")
    @Override
    public long lastUsed() {
       return params.find(MetaLastUsed.class).map(MetaParam.MetaLong::get).orElse(0L);
@@ -83,12 +97,14 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return deadline;
    }
 
+   @ProtoField(number = 5, defaultValue = "-1")
    @Override
    public long lifespan() {
       return params.find(MetaLifespan.class)
             .orElse(MetaLifespan.defaultValue()).get();
    }
 
+   @ProtoField(number = 6, defaultValue = "-1")
    @Override
    public long maxIdle() {
       return params.find(MetaMaxIdle.class)
@@ -112,41 +128,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @Override
    public String toString() {
-      return "MetaParamsInternalMetadata{" +
-         "params=" + params +
-         '}';
-   }
-
-   @ProtoField(number = 1)
-   NumericVersion getNumericVersion() {
-      EntryVersion version = version();
-      return version instanceof NumericVersion ? (NumericVersion) version : null;
-   }
-
-   @ProtoField(number = 2)
-   SimpleClusteredVersion getClusteredVersion() {
-      EntryVersion version = version();
-      return version instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) version : null;
-   }
-
-   @ProtoField(number = 3, defaultValue = "-1")
-   long getCreated() {
-      return created();
-   }
-
-   @ProtoField(number = 4, defaultValue = "-1")
-   long getLastUsed() {
-      return lastUsed();
-   }
-
-   @ProtoField(number = 5, defaultValue = "-1")
-   long getLifespan() {
-      return lifespan();
-   }
-
-   @ProtoField(number = 6, defaultValue = "-1")
-   long getMaxIdle() {
-      return maxIdle();
+      return "MetaParamsInternalMetadata{params=" + params + '}';
    }
 
    public static class Builder implements Metadata.Builder {

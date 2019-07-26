@@ -73,11 +73,7 @@ public class EmbeddedMetadata implements Metadata {
       if (o == null || getClass() != o.getClass()) return false;
 
       EmbeddedMetadata that = (EmbeddedMetadata) o;
-
-      if (version != null ? !version.equals(that.version) : that.version != null)
-         return false;
-
-      return true;
+      return version != null ? version.equals(that.version) : that.version == null;
    }
 
    @Override
@@ -87,9 +83,7 @@ public class EmbeddedMetadata implements Metadata {
 
    @Override
    public String toString() {
-      return "EmbeddedMetadata{" +
-            "version=" + version +
-            '}';
+      return "EmbeddedMetadata{version=" + version + '}';
    }
 
    public static class Builder implements Metadata.Builder {
@@ -173,11 +167,9 @@ public class EmbeddedMetadata implements Metadata {
 
    public static class EmbeddedExpirableMetadata extends EmbeddedMetadata {
 
-      @ProtoField(number = 3, defaultValue = "-1")
-      final long lifespan;
+      private final long lifespan;
 
-      @ProtoField(number = 4, defaultValue = "-1")
-      final long maxIdle;
+      private final long maxIdle;
 
       @ProtoFactory
       EmbeddedExpirableMetadata(long lifespan, long maxIdle, NumericVersion numericVersion,
@@ -191,11 +183,13 @@ public class EmbeddedMetadata implements Metadata {
          this.maxIdle = maxIdle;
       }
 
+      @ProtoField(number = 3, defaultValue = "-1")
       @Override
       public long lifespan() {
          return lifespan;
       }
 
+      @ProtoField(number = 4, defaultValue = "-1")
       @Override
       public long maxIdle() {
          return maxIdle;
@@ -233,7 +227,7 @@ public class EmbeddedMetadata implements Metadata {
 
    public static class EmbeddedLifespanExpirableMetadata extends EmbeddedMetadata {
 
-      final long lifespan;
+      private final long lifespan;
 
       protected EmbeddedLifespanExpirableMetadata(long lifespan, EntryVersion version) {
          super(version);
@@ -245,14 +239,9 @@ public class EmbeddedMetadata implements Metadata {
          this(lifespan, numericVersion != null ? numericVersion : clusteredVersion);
       }
 
+      @ProtoField(number = 3, defaultValue = "-1")
       @Override
       public long lifespan() {
-         return lifespan;
-      }
-
-      // Need a separate getter method as needs to conform to protostream getter format and has to be accessed via MemcachedMetadata
-      @ProtoField(number = 3, defaultValue = "-1")
-      public long getLifespan() {
          return lifespan;
       }
 
@@ -286,8 +275,7 @@ public class EmbeddedMetadata implements Metadata {
 
    public static class EmbeddedMaxIdleExpirableMetadata extends EmbeddedMetadata {
 
-      @ProtoField(number = 3, defaultValue = "-1")
-      final long maxIdle;
+      private final long maxIdle;
 
       @ProtoFactory
       EmbeddedMaxIdleExpirableMetadata(long maxIdle, NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion) {
@@ -299,6 +287,7 @@ public class EmbeddedMetadata implements Metadata {
          this.maxIdle = maxIdle;
       }
 
+      @ProtoField(number = 3, defaultValue = "-1")
       @Override
       public long maxIdle() {
          return maxIdle;

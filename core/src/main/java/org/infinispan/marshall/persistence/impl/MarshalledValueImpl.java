@@ -42,7 +42,6 @@ public class MarshalledValueImpl implements MarshalledValue {
       return valueBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(valueBytes);
    }
 
-
    @ProtoField(number = 2, name = "metadata")
    byte[] getMetadata() {
       return metadataBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(metadataBytes);

@@ -28,9 +28,9 @@ public final class FileCacheKey extends AbstractIndexScopedKey {
    }
 
    /**
-    * Get the fileName.
+    * Get the file name.
     *
-    * @return the fileName.
+    * @return the file name.
     */
    @ProtoField(number = 3)
    public String getFileName() {
@@ -51,9 +51,7 @@ public final class FileCacheKey extends AbstractIndexScopedKey {
       if (obj == null || FileCacheKey.class != obj.getClass())
          return false;
       FileCacheKey other = (FileCacheKey) obj;
-      if (!fileName.equals(other.fileName))
-         return false;
-      return indexName.equals(other.indexName);
+      return fileName.equals(other.fileName) && indexName.equals(other.indexName);
    }
 
    /**

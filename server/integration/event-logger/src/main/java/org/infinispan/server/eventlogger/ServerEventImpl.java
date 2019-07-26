@@ -25,18 +25,13 @@ public final class ServerEventImpl implements EventLog {
 
    private final String message;
 
-   // TODO protostream does not support Optional yet so we cannot annotate the getter, we annotate the field instead and leave it package local for now
-   @ProtoField(number = 5)
-   final String detail;
+   private final String detail;
 
-   @ProtoField(number = 6)
-   final String who;
+   private final String who;
 
-   @ProtoField(number = 7)
-   final String context;
+   private final String context;
 
-   @ProtoField(number = 8)
-   final String scope;
+   private final String scope;
 
    @ProtoFactory
    ServerEventImpl(long whenMs, EventLogLevel level, EventLogCategory category, String message, String detail, String context, String who, String scope) {
@@ -89,25 +84,25 @@ public final class ServerEventImpl implements EventLog {
       return message;
    }
 
-   //@ProtoField(number = 5)
+   @ProtoField(number = 5)
    @Override
    public Optional<String> getDetail() {
       return Optional.ofNullable(detail);
    }
 
-   //@ProtoField(number = 6)
+   @ProtoField(number = 6)
    @Override
    public Optional<String> getWho() {
       return Optional.ofNullable(who);
    }
 
-   //@ProtoField(number = 7)
+   @ProtoField(number = 7)
    @Override
    public Optional<String> getContext() {
       return Optional.ofNullable(context);
    }
 
-   //@ProtoField(number = 8)
+   @ProtoField(number = 8)
    @Override
    public Optional<String> getScope() {
       return Optional.ofNullable(scope);

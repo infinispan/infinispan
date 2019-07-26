@@ -15,7 +15,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -38,7 +38,7 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, AnnotatedUser> remoteCache;
 
-   @ProtoMessage(name = "User")
+   @ProtoName("User")
    public static class AnnotatedUser {
 
       private int id;

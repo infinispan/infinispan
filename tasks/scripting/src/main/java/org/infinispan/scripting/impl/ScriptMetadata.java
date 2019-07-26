@@ -5,7 +5,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TY
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -18,9 +17,8 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
- * ScriptMetadata. Holds meta information about a script obtained either implicitly by the script
- * name and extension, or explicitly by its header. See the "Script metadata" chapter in the User Guide for
- * the syntax and format.
+ * ScriptMetadata. Holds meta information about a script obtained either implicitly by the script name and extension, or
+ * explicitly by its header. See the "Script metadata" chapter in the User Guide for the syntax and format.
  *
  * @author Tristan Tarrant
  * @since 7.2
@@ -29,27 +27,19 @@ public class ScriptMetadata implements Metadata {
 
    private final static Set<String> TEXT_BASED_MEDIA = Util.asSet(TEXT_PLAIN_TYPE, APPLICATION_JSON_TYPE, APPLICATION_XML_TYPE);
 
-   @ProtoField(number = 1)
-   final String name;
+   private final String name;
 
-   @ProtoField(number = 2)
-   final ExecutionMode mode;
+   private final ExecutionMode mode;
 
-   @ProtoField(number = 3)
-   final String extension;
+   private final String extension;
 
-   @ProtoField(number = 4, collectionImplementation = HashSet.class)
-   final Set<String> parameters;
+   private final Set<String> parameters;
 
-   @ProtoField(number = 5)
-   final MediaType dataType;
+   private final MediaType dataType;
 
-   @ProtoField(number = 6)
-   final String language;
+   private final String language;
 
-   @ProtoField(number = 7)
-   final String role;
-
+   private final String role;
 
    @ProtoFactory
    ScriptMetadata(String name, String language, String extension, ExecutionMode mode, Set<String> parameters,
@@ -63,35 +53,42 @@ public class ScriptMetadata implements Metadata {
       this.dataType = dataType;
    }
 
-   public Optional<String> language() {
-      return Optional.ofNullable(language);
-   }
-
-   public String extension() {
-      return extension;
-   }
-
-   public Set<String> parameters() {
-      return parameters;
-   }
-
-   public Optional<String> role() {
-      return Optional.ofNullable(role);
-   }
-
+   @ProtoField(number = 1)
    public String name() {
       return name;
    }
 
+   @ProtoField(number = 2)
    public ExecutionMode mode() {
       return mode;
    }
 
+   @ProtoField(number = 3)
+   public String extension() {
+      return extension;
+   }
+
+   @ProtoField(number = 4)
+   public Set<String> parameters() {
+      return parameters;
+   }
+
+   @ProtoField(number = 5)
    public MediaType dataType() {
       if (TEXT_BASED_MEDIA.contains(dataType.getTypeSubtype())) {
          return dataType.withClassType(String.class);
       }
       return dataType;
+   }
+
+   @ProtoField(number = 6)
+   public Optional<String> language() {
+      return Optional.ofNullable(language);
+   }
+
+   @ProtoField(number = 7)
+   public Optional<String> role() {
+      return Optional.ofNullable(role);
    }
 
    @Override
@@ -128,13 +125,13 @@ public class ScriptMetadata implements Metadata {
    }
 
    public static class Builder implements Metadata.Builder {
-      String name;
-      String extension;
-      String language;
-      String role;
-      ExecutionMode mode;
-      Set<String> parameters = Collections.emptySet();
-      MediaType dataType = MediaType.APPLICATION_OBJECT;
+      private String name;
+      private String extension;
+      private String language;
+      private String role;
+      private ExecutionMode mode;
+      private Set<String> parameters = Collections.emptySet();
+      private MediaType dataType = MediaType.APPLICATION_OBJECT;
 
       public ScriptMetadata.Builder name(String name) {
          this.name = name;

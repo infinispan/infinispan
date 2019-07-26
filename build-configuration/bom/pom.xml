@@ -481,6 +481,8 @@
                         </excludes>
                         <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files
                         </compilerArgument>
+                        <!-- Include method parameter debug info -->
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
                 <plugin>

@@ -4427,6 +4427,8 @@
                   <excludes>
                      <exclude>**/package-info.java</exclude>
                   </excludes>
+                  <!-- Include method parameter debug info -->
+                  <parameters>true</parameters>
                </configuration>
             </plugin>
             <plugin>
@@ -5066,6 +5068,8 @@
                            <additionalClasspathElements>
                               <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
                            </additionalClasspathElements>
+                           <!-- Include method parameter debug info -->
+                           <parameters>true</parameters>
                         </configuration>
                      </execution>
                   </executions>
@@ -5141,6 +5145,8 @@
                            <release>10</release>
                            <compileSourceRoots>${project.basedir}/src/test/java10</compileSourceRoots>
                            <outputDirectory>${project.build.testOutputDirectory}/META-INF/versions/10</outputDirectory>
+                           <!-- Include method parameter debug info -->
+                           <parameters>true</parameters>
                         </configuration>
                      </execution>
                   </executions>

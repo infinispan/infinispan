@@ -7,13 +7,13 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
+import org.infinispan.protostream.annotations.ProtoName;
 
 /**
  * @since 9.2
  */
 @Indexed
-@ProtoMessage(name = "CryptoCurrency")
+@ProtoName("CryptoCurrency")
 @ProtoDoc("@Indexed")
 public class CryptoCurrency implements Serializable {
 
