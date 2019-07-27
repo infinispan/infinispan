@@ -1,6 +1,7 @@
 package org.infinispan.server.core;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.dataconversion.BinaryTranscoder;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -38,5 +39,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
       encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
+
+      BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
+      transcoder.overrideMarshaller(marshaller);
    }
 }
