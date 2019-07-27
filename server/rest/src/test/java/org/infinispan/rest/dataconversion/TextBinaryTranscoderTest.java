@@ -5,6 +5,7 @@ import static org.testng.Assert.assertTrue;
 
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -16,7 +17,7 @@ public class TextBinaryTranscoderTest extends AbstractTranscoderTest {
    @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-      transcoder = new DefaultTranscoder();
+      transcoder = new DefaultTranscoder(new JavaSerializationMarshaller());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

@@ -73,6 +73,13 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    }
 
    @Override
+   public <T extends Transcoder> T getTranscoder(Class<T> clazz) {
+      Transcoder transcoder = transcoders.stream().filter(p -> p.getClass().equals(clazz)).findFirst().orElse(null);
+      if (transcoder == null) return null;
+      return clazz.cast(transcoder);
+   }
+
+   @Override
    public boolean isConversionSupported(MediaType from, MediaType to) {
       if (from == null || to == null) {
          throw new NullPointerException("MediaType must not be null!");

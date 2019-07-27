@@ -140,6 +140,10 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
          @Override
          public void call() {
+            GlobalComponentRegistry registry = cm.getGlobalComponentRegistry();
+            EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
+            encoderRegistry.registerEncoder(encoder);
+
             cm.getClassWhiteList().addClasses(Person.class);
             Cache<byte[], byte[]> cache = cm.getCache();
 

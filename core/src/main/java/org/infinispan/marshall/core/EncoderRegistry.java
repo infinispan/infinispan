@@ -36,5 +36,7 @@ public interface EncoderRegistry {
     */
    Transcoder getTranscoder(MediaType type1, MediaType type2);
 
+   <T extends Transcoder> T getTranscoder(Class<T> clazz);
+
    boolean isConversionSupported(MediaType from, MediaType to);
 }
