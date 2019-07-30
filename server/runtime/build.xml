@@ -8,6 +8,7 @@
       <mkdir dir="${output.dir}"/>
       <copy todir="${output.dir}">
          <fileset dir="${server.dir}"/>
+         <filterset refid="brandfilter"/>
       </copy>
       <chmod dir="${output.dir}/bin" perm="ugo+x" includes="*.sh"/>
       <copy todir="${output.dir}/boot" flatten="true">

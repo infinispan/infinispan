@@ -69,7 +69,7 @@
       <xs:simpleContent>
          <xs:extension base="xs:string">
             <xs:attribute type="xs:string" name="name" use="required"/>
-            <xs:attribute type="xs:int" name="port" use="required"/>
+            <xs:attribute type="xs:string" name="port" use="required"/>
             <xs:attribute type="xs:string" name="interface"/>
          </xs:extension>
       </xs:simpleContent>
