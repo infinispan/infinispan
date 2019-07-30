@@ -126,7 +126,7 @@ public class UserTool extends Main {
                password = new String(System.console().readPassword(MSG.userToolPassword()));
             }
          } else {
-            stdErr.printf(MSG.userToolNoPassword(username));
+            stdErr.println(MSG.userToolNoPassword(username));
             exit(1);
          }
       }
@@ -175,16 +175,16 @@ public class UserTool extends Main {
 
    public void help(PrintStream out) {
       out.printf("Usage:\n");
-      out.printf("  -u, --user=<name>                  The name of the user to add.\n");
-      out.printf("  -p, --password=<password>          The password of the user.\n");
-      out.printf("  -g, --groups=<group1[,group2...]>  Comma-separated list of groups to add to the user.\n");
-      out.printf("  -f, --users-file=<file>            The name of the users properties file relative to the server configuration path. Defaults to '%s'.\n", DEFAULT_USERS_PROPERTIES_FILE);
-      out.printf("  -w, --groups-file=<file>           The name of the groups properties file relative to the server configuration path. Defaults to '%s'.\n", DEFAULT_GROUPS_PROPERTIES_FILE);
-      out.printf("  -r, --realm=<realm>                The name of the realm. Defaults to '%s'.", DEFAULT_REALM_NAME);
-      out.printf("  -s, --server-root=<path>           Uses the specified path as root for the server. Defaults to '%s'.\n", Server.DEFAULT_SERVER_ROOT_DIR);
-      out.printf("  -b, --batch-mode                   Do not ask for confirmation when overwriting existing users.\n");
-      out.printf("  -h, --help                         Displays this message and exits.\n");
-      out.printf("  -v, --version                      Displays version information and exits.\n");
+      out.printf("  -u, --user=<name>                  %s\n", MSG.userToolHelpUser());
+      out.printf("  -p, --password=<password>          %s\n", MSG.userToolHelpPassword());
+      out.printf("  -g, --groups=<group1[,group2...]>  %s\n", MSG.userToolHelpGroups());
+      out.printf("  -f, --users-file=<file>            %s\n", MSG.userToolHelpUsersFile(DEFAULT_USERS_PROPERTIES_FILE));
+      out.printf("  -w, --groups-file=<file>           %s\n", MSG.userToolHelpGroupsFile(DEFAULT_GROUPS_PROPERTIES_FILE));
+      out.printf("  -r, --realm=<realm>                %s\n", MSG.userToolHelpRealm(DEFAULT_REALM_NAME));
+      out.printf("  -s, --server-root=<path>           %s\n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
+      out.printf("  -b, --batch-mode                   %s\n", MSG.userToolHelpBatchMode());
+      out.printf("  -h, --help                         %s\n", MSG.toolHelpHelp());
+      out.printf("  -v, --version                      %s\n", MSG.toolHelpVersion());
    }
 
    @Override

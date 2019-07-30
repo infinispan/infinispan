@@ -62,7 +62,9 @@ public class Server {
 
    // Properties
    public static final String INFINISPAN_BIND_ADDRESS = "infinispan.bind.address";
+   public static final String INFINISPAN_BIND_PORT = "infinispan.bind.port";
    public static final String INFINISPAN_CLUSTER_NAME = "infinispan.cluster.name";
+   public static final String INFINISPAN_CLUSTER_STACK = "infinispan.cluster.stack";
    public static final String INFINISPAN_NODE_NAME = "infinispan.node.name";
    public static final String INFINISPAN_PORT_OFFSET = "infinispan.socket.binding.port-offset";
    /**
@@ -88,12 +90,16 @@ public class Server {
 
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
+
    public static final String DEFAULT_SERVER_CONFIG = "conf";
    public static final String DEFAULT_SERVER_DATA = "data";
    public static final String DEFAULT_SERVER_LIB = "lib";
    public static final String DEFAULT_SERVER_LOG = "log";
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
    public static final String DEFAULT_CONFIGURATION_FILE = "infinispan.xml";
+   public static final String DEFAULT_CLUSTER_NAME = "cluster";
+   public static final String DEFAULT_CLUSTER_STACK = "tcp";
+   public static final int DEFAULT_BIND_PORT = 11222;
 
    private final TimeService timeService;
    private final File serverRoot;
@@ -149,6 +155,9 @@ public class Server {
       properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_DATA_PATH, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
+      properties.putIfAbsent(INFINISPAN_BIND_PORT, DEFAULT_BIND_PORT);
+      properties.putIfAbsent(INFINISPAN_CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
+      properties.putIfAbsent(INFINISPAN_CLUSTER_STACK, DEFAULT_CLUSTER_STACK);
 
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 

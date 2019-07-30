@@ -13,6 +13,8 @@ import java.util.logging.LogManager;
 import org.infinispan.Version;
 import org.infinispan.server.tool.Main;
 
+import static org.infinispan.server.logging.Messages.MSG;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -51,6 +53,12 @@ public class Bootstrap extends Main {
             // Fall through
          case "--bind-address":
             properties.setProperty(Server.INFINISPAN_BIND_ADDRESS, parameter);
+            break;
+         case "-p":
+            parameter = args.next();
+            // Fall through
+         case "--bind-port":
+            properties.setProperty(Server.INFINISPAN_BIND_PORT, parameter);
             break;
          case "-n":
             parameter = args.next();
@@ -105,15 +113,17 @@ public class Bootstrap extends Main {
    @Override
    public void help(PrintStream out) {
       out.printf("Usage:\n");
-      out.printf("  -b, --bind-address=<address>  Binds the server to the specified address.\n");
-      out.printf("  -c, --server-config=<config>  Uses the specified configuration file. Defaults to '%s'.\n", Server.DEFAULT_CONFIGURATION_FILE);
-      out.printf("  -h, --help                    Displays this message and exits.\n");
-      out.printf("  -g, --cluster-name=<name>     Sets the name of the cluster.\n");
-      out.printf("  -n, --node-name=<name>        Sets the name of this node. Must be unique across the cluster.\n");
-      out.printf("  -o, --port-offset=<offset>    Adds the specified offset to all ports.\n");
-      out.printf("  -s, --server-root=<path>      Uses the specified path as root for the server. Defaults to '%s'.\n", Server.DEFAULT_SERVER_ROOT_DIR);
-      out.printf("  -v, --version                 Displays version information and exits.\n");
-      out.printf("  -D<name>=<value>              Sets a system property to the specified value.\n");
+      out.printf("  -b, --bind-address=<address>  %s\n", MSG.serverHelpBindAddress());
+      out.printf("  -c, --server-config=<config>  %s\n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
+      out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
+      out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName(Server.DEFAULT_CLUSTER_NAME));
+      out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack(Server.DEFAULT_CLUSTER_STACK));
+      out.printf("  -n, --node-name=<name>        %s\n", MSG.serverHelpNodeName());
+      out.printf("  -o, --port-offset=<offset>    %s\n", MSG.serverHelpPortOffset());
+      out.printf("  -p, --bind-port=<port>        %s\n", MSG.serverHelpBindPort(Server.DEFAULT_BIND_PORT));
+      out.printf("  -s, --server-root=<path>      %s\n", MSG.toolHelpServerRoot(Server.DEFAULT_SERVER_ROOT_DIR));
+      out.printf("  -v, --version                 %s\n", MSG.toolHelpVersion());
+      out.printf("  -D<name>=<value>              %s\n", MSG.serverHelpProperty());
    }
 
    @Override
