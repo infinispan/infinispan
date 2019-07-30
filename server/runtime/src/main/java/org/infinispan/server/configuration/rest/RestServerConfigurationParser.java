@@ -245,7 +245,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
 
       ParseUtils.requireNoContent(reader);
-      builder.authenticator(serverBuilder.getHTTPAuthenticationProvider(securityRealm));
+      builder.authenticator(serverBuilder.getSecurityRealm(securityRealm).getHTTPAuthenticationProvider());
    }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {

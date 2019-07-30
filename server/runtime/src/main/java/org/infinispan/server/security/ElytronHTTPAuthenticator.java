@@ -20,7 +20,6 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
-import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.http.HttpAuthenticationFactory;
 import org.wildfly.security.http.HttpAuthenticationException;
@@ -38,12 +37,14 @@ import io.netty.channel.ChannelHandlerContext;
 public class ElytronHTTPAuthenticator implements Authenticator {
 
    private final HttpAuthenticationFactory factory;
+   private final ServerSecurityRealm serverSecurityRealm;
    private Executor executor;
    private RestServerConfiguration configuration;
 
-   public ElytronHTTPAuthenticator(String name, SecurityDomain domain) {
+   public ElytronHTTPAuthenticator(String name, ServerSecurityRealm serverSecurityRealm) {
+      this.serverSecurityRealm = serverSecurityRealm;
       HttpAuthenticationFactory.Builder httpBuilder = HttpAuthenticationFactory.builder();
-      httpBuilder.setSecurityDomain(domain);
+      httpBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
 
       final Provider elytronProvider = new WildFlyElytronProvider();
       HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory(() -> new Provider[]{elytronProvider});
@@ -103,5 +104,10 @@ public class ElytronHTTPAuthenticator implements Authenticator {
             throw new CacheConfigurationException("Could not create HTTP authentication mechanism " + name);
          }
       }
+   }
+
+   @Override
+   public boolean isReadyForHttpChallenge() {
+      return serverSecurityRealm.isReadyForHttpChallenge();
    }
 }

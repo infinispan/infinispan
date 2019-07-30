@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Properties;
 
 import org.infinispan.server.Server;
 import org.wildfly.security.auth.SupportLevel;
@@ -53,25 +54,26 @@ public class PropertiesSecurityRealm implements SecurityRealm {
    }
 
    void reload() {
-      try (InputStream usersInputStream = new FileInputStream(usersFile);
-           InputStream groupsInputStream = groupsFile != null ? new FileInputStream(groupsFile) : null) {
-         delegate.load(usersInputStream, groupsInputStream);
-      } catch (IOException e) {
-         throw Server.log.unableToLoadRealmPropertyFiles(e);
+      long loadTime = delegate.getLoadTime();
+      if (usersFile.lastModified() > loadTime || groupsFile.lastModified() > loadTime) {
+         try (InputStream usersInputStream = new FileInputStream(usersFile);
+              InputStream groupsInputStream = groupsFile != null ? new FileInputStream(groupsFile) : null) {
+            delegate.load(usersInputStream, groupsInputStream);
+         } catch (IOException e) {
+            throw Server.log.unableToLoadRealmPropertyFiles(e);
+         }
       }
-   }
-
-   long getLoadTime() {
-      return delegate.getLoadTime();
    }
 
    @Override
    public RealmIdentity getRealmIdentity(Principal principal) throws RealmUnavailableException {
+      reload();
       return delegate.getRealmIdentity(principal);
    }
 
    @Override
    public RealmIdentity getRealmIdentity(Evidence evidence) throws RealmUnavailableException {
+      reload();
       return delegate.getRealmIdentity(evidence);
    }
 
@@ -83,5 +85,15 @@ public class PropertiesSecurityRealm implements SecurityRealm {
    @Override
    public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
       return delegate.getEvidenceVerifySupport(evidenceType, algorithmName);
+   }
+
+   public boolean isEmpty() {
+      Properties p = new Properties();
+      try (InputStream is = new FileInputStream(usersFile)) {
+         p.load(is);
+      } catch (IOException e) {
+         // Ignore
+      }
+      return p.isEmpty();
    }
 }
