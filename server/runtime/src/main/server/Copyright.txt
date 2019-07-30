@@ -1,0 +1,5 @@
+Copyright 2009 - ${current.year}, Red Hat Inc. and/or its affiliates.
+
+The files in this repository or distribution are licensed under various
+open source licenses. Details about the licenses of individual packages
+can be found in the docs/licenses directory.
