@@ -59,7 +59,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException nonAbsolutePath(String path);
 
    @Message(value = "Duplicate security domain '%s'", id = 80012)
-   CacheConfigurationException duplicateSecurityDomain(String name);
+   CacheConfigurationException duplicateSecurityRealm(String name);
 
    @Message(value = "Duplicate realm type '%s' in realm '%s'", id = 80013)
    CacheConfigurationException duplicateRealmType(String type, String name);

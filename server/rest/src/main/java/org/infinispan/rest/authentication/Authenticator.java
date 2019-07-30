@@ -28,4 +28,12 @@ public interface Authenticator {
     * @param restServer
     */
    default void init(RestServer restServer) {}
+
+   /**
+    * Returns whether the realm backing this authenticator is ready to authenticate users
+    * @return a boolean indicating whether the real is empty (i.e. has no users)
+    */
+   default boolean isReadyForHttpChallenge() {
+      return true;
+   }
 }

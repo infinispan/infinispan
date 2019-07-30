@@ -9,6 +9,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -36,6 +37,7 @@ import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.security.HostnameVerificationPolicy;
 import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.server.security.KeycloakRoleDecoder;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.security.realm.KerberosSecurityRealm;
 import org.infinispan.server.security.realm.PropertiesSecurityRealm;
 import org.kohsuke.MetaInfServices;
@@ -276,6 +278,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
       SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
       boolean hasTrustStore = false;
+      Supplier<Boolean> httpChallengeReadiness = () -> true;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -292,7 +295,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
                parseLocalRealm(reader, domainBuilder);
                break;
             case PROPERTIES_REALM:
-               parsePropertiesRealm(reader, domainBuilder);
+               PropertiesSecurityRealm realm = parsePropertiesRealm(reader, domainBuilder);
+               httpChallengeReadiness = () -> realm.isEmpty();
                break;
             case SERVER_IDENTITIES:
                parseServerIdentitities(reader, sslContextBuilder);
@@ -310,7 +314,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
       domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
       SecurityDomain securityDomain = domainBuilder.build();
-      builder.addSecurityRealm(name, securityDomain);
+      ServerSecurityRealm serverRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness);
+      builder.addSecurityRealm(name, serverRealm);
       /*if (hasTrustStore) {
          sslContextBuilder.setSecurityDomain(securityDomain);
       }*/
@@ -631,7 +636,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parsePropertiesRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
+   private PropertiesSecurityRealm parsePropertiesRealm(XMLExtendedStreamReader reader, SecurityDomain.Builder domainBuilder) throws XMLStreamException {
       String name = "properties";
       File usersFile = null;
       File groupsFile = null;
@@ -706,12 +711,14 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader);
       }
-      domainBuilder.addRealm(name,
-            new PropertiesSecurityRealm(usersFile, groupsFile, plainText, groupsAttribute, realmName)).build();
+      PropertiesSecurityRealm realm = new PropertiesSecurityRealm(usersFile, groupsFile, plainText, groupsAttribute, realmName);
+      domainBuilder.addRealm(name, realm).build();
 
       if (domainBuilder.getDefaultRealmName() == null) {
          domainBuilder.setDefaultRealmName(name);
       }
+
+      return realm;
    }
 
    private void parseServerIdentitities(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
