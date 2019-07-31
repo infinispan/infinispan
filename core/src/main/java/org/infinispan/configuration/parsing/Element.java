@@ -24,6 +24,7 @@ public enum Element {
     BLOCKING_BOUNDED_QUEUE_THREAD_POOL,
     CACHE_CONTAINER,
     CACHED_THREAD_POOL,
+    CLASS,
     CLUSTERING,
     CLUSTER_LOADER,
     CLUSTER_STORE,
@@ -77,6 +78,7 @@ public enum Element {
     PROPERTIES,
     PROPERTY,
     RECOVERY,
+    REGEX,
     REMOTE_SITE,
     REMOTE_SITES,
     REPLICATED_CACHE,
@@ -108,6 +110,7 @@ public enum Element {
     VALUE_DATA_TYPE("value"),
     VERSIONING,
     VOLATILE_CONFIGURATION_STORAGE,
+    WHITE_LIST,
     WRITE_BEHIND,
     ;
 

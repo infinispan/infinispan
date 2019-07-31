@@ -58,6 +58,7 @@ import org.infinispan.security.PrincipalRoleMapperContext;
 import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.data.Person;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -435,13 +436,17 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
    @Test
    public void testSerializationConfig() throws IOException {
+      final String regexp = "org.infinispan.test.*";
       AdvancedExternalizer<?> mapExternalizer = new MapExternalizer();
       AdvancedExternalizer<?> opExternalizer = new TerminalOperationExternalizer();
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       globalConfigurationBuilder.serialization()
             .marshaller(new JavaSerializationMarshaller())
             .addAdvancedExternalizer(1, mapExternalizer)
-            .addAdvancedExternalizer(2, opExternalizer).create();
+            .addAdvancedExternalizer(2, opExternalizer)
+            .whiteList()
+            .addClass(Person.class.getName())
+            .addRegexp(regexp).create();
 
       GlobalConfiguration globalConfiguration = globalConfigurationBuilder.build();
       String json = jsonWriter.toJSON(globalConfiguration);
@@ -452,6 +457,15 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       JsonNode externalizerMap = serialization.get("advanced-externalizer");
       assertEquals(MapExternalizer.class.getName(), externalizerMap.get("1").asText());
       assertEquals(TerminalOperationExternalizer.class.getName(), externalizerMap.get("2").asText());
+
+      JsonNode whiteList = serialization.get("white-list");
+      JsonNode classes = whiteList.get("classes");
+      assertTrue(classes.isArray());
+      assertEquals(Person.class.getName(), classes.iterator().next().asText());
+
+      JsonNode regexps = whiteList.get("regexps");
+      assertTrue(regexps.isArray());
+      assertEquals(regexp, regexps.iterator().next().asText());
    }
 
    @Test

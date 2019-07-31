@@ -149,7 +149,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private volatile ComponentStatus status = ComponentStatus.INSTANTIATED;
 
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
-   private final ClassWhiteList classWhiteList = new ClassWhiteList();
+   private final ClassWhiteList classWhiteList;
    private CacheManagerInfo cacheManagerInfo;
 
    // Keep the transport around so async view listeners can still see the address after stop
@@ -260,6 +260,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       ModuleRepository.Builder moduleRepositoryBuilder = new ModuleRepository.Builder(
          globalConfiguration.classLoader());
       ModuleRepository moduleRepository = moduleRepositoryBuilder.build(globalConfiguration);
+      this.classWhiteList = globalConfiguration.serialization().whiteList().create();
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
                                                                  moduleRepository);
       this.globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
@@ -370,6 +371,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
+         classWhiteList = globalConfiguration.serialization().whiteList().create();
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
