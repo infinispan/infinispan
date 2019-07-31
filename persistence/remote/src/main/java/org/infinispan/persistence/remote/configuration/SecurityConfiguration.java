@@ -44,4 +44,31 @@ public class SecurityConfiguration implements ConfigurationInfo {
    public ElementDefinition getElementDefinition() {
       return ELEMENT_DEFINITION;
    }
+
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SecurityConfiguration that = (SecurityConfiguration) o;
+
+      if (!authentication.equals(that.authentication)) return false;
+      return ssl.equals(that.ssl);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = authentication.hashCode();
+      result = 31 * result + ssl.hashCode();
+      return result;
+   }
+
+   @Override
+   public String toString() {
+      return "SecurityConfiguration{" +
+            "authentication=" + authentication +
+            ", ssl=" + ssl +
+            '}';
+   }
 }

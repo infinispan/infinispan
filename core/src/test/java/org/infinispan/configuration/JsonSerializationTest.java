@@ -51,6 +51,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.PrincipalRoleMapperContext;
@@ -67,6 +68,7 @@ import org.testng.annotations.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Test(testName = "config.JsonSerializationTest", groups = "functional")
 public class JsonSerializationTest extends AbstractInfinispanTest {
@@ -276,6 +278,51 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertRole(roles, "vassal", "READ", "WRITE", "LISTEN");
    }
 
+   @Test
+   public void testJGroups() throws IOException {
+      ParserRegistry parserRegistry = new ParserRegistry();
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/config-with-jgroups-stack.xml");
+      GlobalConfiguration configuration = holder.getGlobalConfigurationBuilder().build();
+
+      String toJSON = jsonWriter.toJSON(configuration);
+      JsonNode node = new ObjectMapper().readTree(toJSON);
+
+      JsonNode infinispan = node.get("infinispan");
+      JsonNode jgroups = infinispan.get("jgroups");
+
+      assertEquals(JGroupsTransport.class.getName(), jgroups.get("transport").asText());
+
+      JsonNode stackFile = jgroups.get("stack-file");
+      assertEquals(4, stackFile.size());
+      Iterator<JsonNode> stackFiles = stackFile.elements();
+      assertStackFile(stackFiles.next(), "tcp", "default-configs/default-jgroups-tcp.xml");
+      assertStackFile(stackFiles.next(), "udp", "default-configs/default-jgroups-udp.xml");
+      assertStackFile(stackFiles.next(), "udp-test", "stacks/udp.xml");
+      assertStackFile(stackFiles.next(), "tcp-test", "stacks/tcp_mping/tcp1.xml");
+
+      JsonNode stack = jgroups.get("stack");
+      assertEquals(5, stack.size());
+
+      JsonNode mping = stack.elements().next();
+      assertEquals(15, mping.size());
+      assertEquals("mping", mping.get("name").asText());
+
+      ObjectNode tcp = (ObjectNode) mping.get("TCP");
+      assertEquals(9, tcp.size());
+      assertEquals("7800", tcp.get("bind_port").asText());
+      assertEquals("30", tcp.get("port_range").asText());
+      assertEquals("20000000", tcp.get("recv_buf_size").asText());
+      assertEquals("640000", tcp.get("send_buf_size").asText());
+      assertEquals("300", tcp.get("sock_conn_timeout").asText());
+      assertEquals("no-bundler", tcp.get("bundler_type").asText());
+      assertEquals("0", tcp.get("thread_pool.min_threads").asText());
+      assertEquals("25", tcp.get("thread_pool.max_threads").asText());
+      assertEquals("5000", tcp.get("thread_pool.keep_alive_time").asText());
+
+      ObjectNode fdSock = (ObjectNode) mping.get("FD_SOCK");
+      assertEquals(0, fdSock.size());
+   }
+
    private void assertRole(JsonNode role, String roleName, String... roles) {
       ArrayNode roleNode = (ArrayNode) role.get(roleName);
       Set<String> expected = Arrays.stream(roles).collect(Collectors.toSet());
@@ -283,6 +330,10 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(expected, nodeRoles);
    }
 
+   private void assertStackFile(JsonNode node, String name, String path) {
+      assertEquals(node.get("name").asText(), name);
+      assertEquals(node.get("path").asText(), path);
+   }
 
    private void assertThreadFactory(JsonNode node, String name, String groupName, String pattern, String prio) {
       assertEquals(node.get("name").asText(), name);

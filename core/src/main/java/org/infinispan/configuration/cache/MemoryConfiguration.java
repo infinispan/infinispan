@@ -2,14 +2,10 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.parsing.Element.MEMORY;
 
-import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.attributes.AsElementAttributeSerializer;
-import org.infinispan.commons.configuration.attributes.Attribute;
-import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
@@ -23,68 +19,14 @@ import org.infinispan.eviction.EvictionType;
  */
 public class MemoryConfiguration implements Matchable<MemoryConfiguration>, ConfigurationInfo {
 
-   private static AttributeSerializer<StorageType, MemoryConfiguration, MemoryConfigurationBuilder> STORAGE_SERIALIZER = new AsElementAttributeSerializer<StorageType, MemoryConfiguration, MemoryConfigurationBuilder>() {
-      @Override
-      public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
-         return nestedName == null && StorageType.forElement(nestingName) != null;
-      }
-
-      @Override
-      public String getParentElement(MemoryConfiguration configurationElement) {
-         StorageType storageType = configurationElement.storageType();
-         return storageType != null ? storageType.getElement().getLocalName() : null;
-      }
-
-      @Override
-      public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, MemoryConfigurationBuilder builderInfo) {
-         return StorageType.forElement(nesting);
-      }
-
-   };
-
-   private static AttributeSerializer<Object, MemoryConfiguration, MemoryConfigurationBuilder> UNDER_STORAGE = new AttributeSerializer<Object, MemoryConfiguration, MemoryConfigurationBuilder>() {
-      @Override
-      public String getParentElement(MemoryConfiguration configurationElement) {
-         StorageType storageType = configurationElement.storageType();
-         return storageType != null ? storageType.getElement().getLocalName() : null;
-      }
-
-      @Override
-      public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
-         return StorageType.forElement(nestingName) != null && nestedName.equals(attributeDefinition.xmlName());
-      }
-   };
-
-   public static final AttributeDefinition<Integer> ADDRESS_COUNT = AttributeDefinition.builder("address-count", 1_048_576).serializer(UNDER_STORAGE).build();
-   public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition
-         .builder("storage", StorageType.OBJECT).copier(IdentityAttributeCopier.INSTANCE)
-         .serializer(STORAGE_SERIALIZER)
-         .immutable().build();
-   public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder("size", -1L).serializer(UNDER_STORAGE).build();
-   public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).serializer(UNDER_STORAGE).build();
-   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).serializer(UNDER_STORAGE).build();
+   private final List<ConfigurationInfo> subElements;
+   private final MemoryStorageConfiguration memoryStorageConfiguration;
 
    public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(MEMORY.getLocalName());
 
-   static public AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(MemoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
-            STORAGE_TYPE, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, ADDRESS_COUNT);
-   }
-
-   private final Attribute<Long> size;
-   private final Attribute<EvictionType> evictionType;
-   private final Attribute<EvictionStrategy> evictionStrategy;
-   private final Attribute<StorageType> storageType;
-   private final Attribute<Integer> addressCount;
-   private final AttributeSet attributes;
-
-   MemoryConfiguration(AttributeSet attributes) {
-      this.attributes = attributes;
-      storageType = attributes.attribute(STORAGE_TYPE);
-      size = attributes.attribute(SIZE);
-      evictionType = attributes.attribute(EVICTION_TYPE);
-      evictionStrategy = attributes.attribute(EVICTION_STRATEGY);
-      addressCount = attributes.attribute(ADDRESS_COUNT);
+   MemoryConfiguration(MemoryStorageConfiguration memoryStorageConfiguration) {
+      this.memoryStorageConfiguration = memoryStorageConfiguration;
+      this.subElements = Collections.singletonList(memoryStorageConfiguration);
    }
 
    @Override
@@ -92,12 +34,17 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
       return ELEMENT_DEFINITION;
    }
 
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
+   }
+
    /**
     * Storage type to use for the data container
     * @return
     */
    public StorageType storageType() {
-      return storageType.get();
+      return memoryStorageConfiguration.storageType();
    }
 
    /**
@@ -105,11 +52,11 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * @return
     */
    public long size() {
-      return size.get();
+      return memoryStorageConfiguration.size();
    }
 
    public void size(long newSize) {
-      size.set(newSize);
+      memoryStorageConfiguration.size(newSize);
    }
 
    /**
@@ -117,7 +64,7 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * @return
     */
    public EvictionType evictionType() {
-      return evictionType.get();
+      return memoryStorageConfiguration.evictionType();
    }
 
    /**
@@ -125,7 +72,7 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * @return
     */
    public EvictionStrategy evictionStrategy() {
-      return evictionStrategy.get();
+      return memoryStorageConfiguration.evictionStrategy();
    }
 
    /**
@@ -133,7 +80,7 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * @return
     */
    public boolean isEvictionEnabled() {
-      return size.get() > 0 && evictionStrategy.get().isRemovalBased();
+      return memoryStorageConfiguration.size() > 0 && memoryStorageConfiguration.evictionStrategy().isRemovalBased();
    }
 
    /**
@@ -141,40 +88,32 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
     * @return
     */
    public int addressCount() {
-      return addressCount.get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
+      return memoryStorageConfiguration.addressCount();
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      MemoryConfiguration other = (MemoryConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      MemoryConfiguration that = (MemoryConfiguration) o;
+
+      return memoryStorageConfiguration.equals(that.memoryStorageConfiguration);
    }
 
+   @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
+      return memoryStorageConfiguration.hashCode();
    }
 
    @Override
    public String toString() {
-      return "MemoryConfiguration [attributes=" + attributes + "]";
+      return "MemoryConfiguration{" +
+            "memoryStorageConfiguration=" + memoryStorageConfiguration +
+            '}';
    }
 
+   public MemoryStorageConfiguration heapConfiguration() {
+      return memoryStorageConfiguration;
+   }
 }

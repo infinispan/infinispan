@@ -48,7 +48,7 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
             }
 
             @Override
-            public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object value, TransactionConfigurationBuilder builderInfo) {
+            public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object value, TransactionConfigurationBuilder builderInfo) {
                Parser.TransactionMode txMode = Parser.TransactionMode.valueOf(value.toString());
                builderInfo.transaction().transactionMode(txMode.getMode());
                builderInfo.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());

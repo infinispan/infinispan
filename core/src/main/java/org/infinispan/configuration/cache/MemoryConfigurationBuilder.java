@@ -1,14 +1,11 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.MemoryConfiguration.ADDRESS_COUNT;
-import static org.infinispan.configuration.cache.MemoryConfiguration.EVICTION_STRATEGY;
-import static org.infinispan.configuration.cache.MemoryConfiguration.EVICTION_TYPE;
-import static org.infinispan.configuration.cache.MemoryConfiguration.SIZE;
-import static org.infinispan.configuration.cache.MemoryConfiguration.STORAGE_TYPE;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -27,11 +24,18 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    private static final Log log = LogFactory.getLog(MemoryConfigurationBuilder.class, Log.class);
 
-   private AttributeSet attributes;
+   private MemoryStorageConfigurationBuilder memoryStorageConfigurationBuilder;
+   private final List<ConfigurationBuilderInfo> elements;
 
    MemoryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
-      attributes = MemoryConfiguration.attributeDefinitionSet();
+      this.memoryStorageConfigurationBuilder = new MemoryStorageConfigurationBuilder(builder);
+      this.elements = Collections.singletonList(memoryStorageConfigurationBuilder);
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return elements;
    }
 
    /**
@@ -40,7 +44,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return this configuration builder
     */
    public MemoryConfigurationBuilder storageType(StorageType storageType) {
-      attributes.attribute(STORAGE_TYPE).set(storageType);
+      memoryStorageConfigurationBuilder.storageType(storageType);
       return this;
    }
 
@@ -49,7 +53,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured storage type
     */
    public StorageType storageType() {
-      return attributes.attribute(STORAGE_TYPE).get();
+      return memoryStorageConfigurationBuilder.storageType();
    }
 
    /**
@@ -62,13 +66,8 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @param size the maximum size for the container
     */
    public MemoryConfigurationBuilder size(long size) {
-      attributes.attribute(SIZE).set(size);
+      memoryStorageConfigurationBuilder.size(size);
       return this;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    @Override
@@ -81,7 +80,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured evicted size
     */
    public long size() {
-      return attributes.attribute(SIZE).get();
+      return memoryStorageConfigurationBuilder.size();
    }
 
    /**
@@ -97,7 +96,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @param type
     */
    public MemoryConfigurationBuilder evictionType(EvictionType type) {
-      attributes.attribute(EVICTION_TYPE).set(type);
+      memoryStorageConfigurationBuilder.evictionType(type);
       return this;
    }
 
@@ -106,7 +105,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured eviction type
     */
    public EvictionType evictionType() {
-      return attributes.attribute(EVICTION_TYPE).get();
+      return memoryStorageConfigurationBuilder.evictionType();
    }
 
    /**
@@ -124,7 +123,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return this
     */
    public MemoryConfigurationBuilder evictionStrategy(EvictionStrategy strategy) {
-      attributes.attribute(EVICTION_STRATEGY).set(strategy);
+      memoryStorageConfigurationBuilder.evictionStrategy(strategy);
       return this;
    }
 
@@ -133,7 +132,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured eviction stategy
     */
    public EvictionStrategy evictionStrategy() {
-      return attributes.attribute(EVICTION_STRATEGY).get();
+      return memoryStorageConfigurationBuilder.evictionStrategy();
    }
 
    /**
@@ -146,7 +145,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return this
     */
    public MemoryConfigurationBuilder addressCount(int addressCount) {
-      attributes.attribute(ADDRESS_COUNT).set(addressCount);
+      memoryStorageConfigurationBuilder.addressCount(addressCount);
       return this;
    }
 
@@ -156,26 +155,26 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured amount of address pointers
     */
    public int addressCount() {
-      return attributes.attribute(ADDRESS_COUNT).get();
+      return memoryStorageConfigurationBuilder.addressCount();
    }
 
    @Override
    public void validate() {
-      StorageType type = attributes.attribute(STORAGE_TYPE).get();
+      StorageType type = memoryStorageConfigurationBuilder.storageType();
       if (type != StorageType.OBJECT) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
             throw log.groupingOnlyCompatibleWithObjectStorage(type);
          }
       }
 
-      long size = attributes.attribute(SIZE).get();
-      EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
+      long size = memoryStorageConfigurationBuilder.size();
+      EvictionType evictionType = memoryStorageConfigurationBuilder.evictionType();
       if (evictionType == EvictionType.MEMORY) {
          switch (type) {
             case OBJECT:
                throw log.offHeapMemoryEvictionNotSupportedWithObject();
             case OFF_HEAP:
-               int addressCount = attributes.attribute(ADDRESS_COUNT).get();
+               int addressCount = memoryStorageConfigurationBuilder.addressCount();
                // Note this is cast to long as we have to multiply by 8 below which could overflow
                long actualAddressCount = OffHeapDataContainer.getActualAddressCount(addressCount << 3);
                actualAddressCount = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(actualAddressCount);
@@ -185,7 +184,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
          }
       }
 
-      EvictionStrategy strategy = attributes.attribute(EVICTION_STRATEGY).get();
+      EvictionStrategy strategy = memoryStorageConfigurationBuilder.evictionStrategy();
       if (!strategy.isEnabled()) {
          if (size > 0) {
             EvictionStrategy newStrategy = EvictionStrategy.REMOVE;
@@ -217,18 +216,35 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public MemoryConfiguration create() {
-      return new MemoryConfiguration(attributes.protect());
+      return new MemoryConfiguration(memoryStorageConfigurationBuilder.create());
    }
 
    @Override
    public MemoryConfigurationBuilder read(MemoryConfiguration template) {
-      attributes.read(template.attributes());
-
+      memoryStorageConfigurationBuilder.read(template.heapConfiguration());
       return this;
    }
 
    @Override
+   public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
+      switch (name) {
+         case "off-heap":
+            memoryStorageConfigurationBuilder.storageType(StorageType.OFF_HEAP);
+            break;
+         case "binary":
+            memoryStorageConfigurationBuilder.storageType(StorageType.BINARY);
+            break;
+         case "object":
+            memoryStorageConfigurationBuilder.storageType(StorageType.OBJECT);
+            break;
+      }
+      return memoryStorageConfigurationBuilder;
+   }
+
+   @Override
    public String toString() {
-      return "MemoryConfigurationBuilder [attributes=" + attributes + "]";
+      return "MemoryConfigurationBuilder{" +
+            "memoryStorageConfigurationBuilder=" + memoryStorageConfigurationBuilder +
+            '}';
    }
 }

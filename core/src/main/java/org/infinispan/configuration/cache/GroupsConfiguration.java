@@ -29,7 +29,7 @@ public class GroupsConfiguration implements Matchable<GroupsConfiguration>, Conf
    public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder("groupers", null, (Class<List<Grouper<?>>>) (Class<?>) List.class).initializer(LinkedList::new)
          .serializer(new AttributeSerializer<List<Grouper<?>>, GroupsConfiguration, GroupsConfigurationBuilder>() {
             @Override
-            public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, GroupsConfigurationBuilder builderInfo) {
+            public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object attrValue, GroupsConfigurationBuilder builderInfo) {
                List<String> values = (List<String>) attrValue;
                return values.stream().map(v -> Util.getInstance(v, builderInfo.getClass().getClassLoader())).collect(Collectors.toList());
             }

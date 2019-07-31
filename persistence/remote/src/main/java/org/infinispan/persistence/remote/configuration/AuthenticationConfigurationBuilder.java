@@ -3,21 +3,17 @@ package org.infinispan.persistence.remote.configuration;
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.CALLBACK_HANDLER;
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.CLIENT_SUBJECT;
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.ENABLED;
-import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.PASSWORD;
-import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.REALM;
-import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.SASL_MECHANISM;
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.SASL_PROPERTIES;
 import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.SERVER_NAME;
-import static org.infinispan.persistence.remote.configuration.AuthenticationConfiguration.USERNAME;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -30,10 +26,11 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  * @since 9.1
  */
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(AuthenticationConfigurationBuilder.class);
+   private MechanismConfigurationBuilder mechanismConfigurationBuilder;
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, AuthenticationConfiguration.attributeDefinitionSet());
+      this.mechanismConfigurationBuilder = new MechanismConfigurationBuilder(builder);
    }
 
    @Override
@@ -44,6 +41,19 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public ElementDefinition getElementDefinition() {
       return AuthenticationConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return Collections.singletonList(mechanismConfigurationBuilder);
+   }
+
+   @Override
+   public ConfigurationBuilderInfo getBuilderInfo(String name, String qualifier) {
+      if (name.equals("digest") || name.equals("plain") | name.equals("external")) {
+         return mechanismConfigurationBuilder.saslMechanism(name);
+      }
+      return ConfigurationBuilderInfo.super.getBuilderInfo(name, qualifier);
    }
 
    /**
@@ -81,7 +91,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
     * Selects the SASL mechanism to use for the connection to the server
     */
    public AuthenticationConfigurationBuilder saslMechanism(String saslMechanism) {
-      this.attributes.attribute(SASL_MECHANISM).set(saslMechanism);
+      mechanismConfigurationBuilder.saslMechanism(saslMechanism);
       return this;
    }
 
@@ -114,7 +124,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
     * This is mutually exclusive with explicitly providing the CallbackHandler
     */
    public AuthenticationConfigurationBuilder username(String username) {
-      this.attributes.attribute(USERNAME).set(username);
+      this.mechanismConfigurationBuilder.username(username);
       return this;
    }
 
@@ -122,7 +132,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
     * Specifies the password to be used for authentication. A username is also required
     */
    public AuthenticationConfigurationBuilder password(String password) {
-      this.attributes.attribute(PASSWORD).set(password);
+      this.mechanismConfigurationBuilder.password(password);
       return this;
    }
 
@@ -138,18 +148,19 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
     * Specifies the realm to be used for authentication. Username and password also need to be supplied.
     */
    public AuthenticationConfigurationBuilder realm(String realm) {
-      this.attributes.attribute(REALM).set(realm);
+      this.mechanismConfigurationBuilder.realm(realm);
       return this;
    }
 
    @Override
    public AuthenticationConfiguration create() {
-      return new AuthenticationConfiguration(attributes.protect());
+      return new AuthenticationConfiguration(attributes.protect(), mechanismConfigurationBuilder.create());
    }
 
    @Override
    public Builder<?> read(AuthenticationConfiguration template) {
       this.attributes.read(template.attributes());
+      this.mechanismConfigurationBuilder.read(template.mechanismConfiguration());
       return this;
    }
 

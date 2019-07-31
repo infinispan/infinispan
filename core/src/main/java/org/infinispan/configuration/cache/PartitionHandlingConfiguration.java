@@ -31,7 +31,7 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
    public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy", MergePolicy.NONE, EntryMergePolicy.class)
          .serializer(new AttributeSerializer<EntryMergePolicy, ConfigurationInfo, ConfigurationBuilderInfo>() {
             @Override
-            public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, ConfigurationBuilderInfo builderInfo) {
+            public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object attrValue, ConfigurationBuilderInfo builderInfo) {
                String strValue = attrValue.toString();
                MergePolicy mp = MergePolicy.fromString(strValue);
                return mp == MergePolicy.CUSTOM ? Util.getInstance(strValue, builderInfo.getClass().getClassLoader()) : mp;

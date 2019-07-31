@@ -1,18 +1,12 @@
 package org.infinispan.persistence.remote.configuration;
 
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.ENABLED;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.KEYSTORE_CERTIFICATE_PASSWORD;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.KEYSTORE_FILENAME;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.KEYSTORE_PASSWORD;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.KEYSTORE_TYPE;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.KEY_ALIAS;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.PROTOCOL;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.SNI_HOSTNAME;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.SSL_CONTEXT;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.TRUSTSTORE_FILENAME;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.TRUSTSTORE_PASSWORD;
-import static org.infinispan.persistence.remote.configuration.SslConfiguration.TRUSTSTORE_TYPE;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.net.ssl.SSLContext;
@@ -34,13 +28,25 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
 
-   protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
+   private KeyStoreConfigurationBuilder keyStoreConfigurationBuilder;
+   private TrustStoreConfigurationBuilder trustStoreConfigurationBuilder;
+   private List<ConfigurationBuilderInfo> subElements;
+
+   SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, SslConfiguration.attributeDefinitionSet());
+      this.keyStoreConfigurationBuilder = new KeyStoreConfigurationBuilder(builder);
+      this.trustStoreConfigurationBuilder = new TrustStoreConfigurationBuilder(builder);
+      this.subElements = Arrays.asList(keyStoreConfigurationBuilder, trustStoreConfigurationBuilder);
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return subElements;
    }
 
    @Override
    public AttributeSet attributes() {
-      return SslConfiguration.attributeDefinitionSet();
+      return attributes;
    }
 
    @Override
@@ -77,7 +83,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * specify a {@link #keyStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}
     */
    public SslConfigurationBuilder keyStoreFileName(String keyStoreFileName) {
-      this.attributes.attribute(KEYSTORE_FILENAME).set(keyStoreFileName);
+      keyStoreConfigurationBuilder.keyStoreFileName(keyStoreFileName);
       return this;
    }
 
@@ -85,7 +91,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * Specifies the type of the keystore, such as JKS or JCEKS. Defaults to JKS
     */
    public SslConfigurationBuilder keyStoreType(String keyStoreType) {
-      this.attributes.attribute(KEYSTORE_TYPE).set(keyStoreType);
+      keyStoreConfigurationBuilder.keyStoreType(keyStoreType);
       return this;
    }
 
@@ -94,7 +100,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * {@link #keyStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}
     */
    public SslConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
-      this.attributes.attribute(KEYSTORE_PASSWORD).set(new String(keyStorePassword));
+      keyStoreConfigurationBuilder.keyStorePassword(keyStorePassword);
       return this;
    }
 
@@ -104,12 +110,12 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * {@link #keyStorePassword(char[])} will be used.
     */
    public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.attributes.attribute(KEYSTORE_CERTIFICATE_PASSWORD).set(new String(keyStoreCertificatePassword));
+      keyStoreConfigurationBuilder.keyStoreCertificatePassword(keyStoreCertificatePassword);
       return this;
    }
 
    public SslConfigurationBuilder keyAlias(String keyAlias) {
-      this.attributes.attribute(KEY_ALIAS).set(keyAlias);
+      keyStoreConfigurationBuilder.keyAlias(keyAlias);
       return this;
    }
 
@@ -123,7 +129,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * to specify a {@link #trustStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}
     */
    public SslConfigurationBuilder trustStoreFileName(String trustStoreFileName) {
-      this.attributes.attribute(TRUSTSTORE_FILENAME).set(trustStoreFileName);
+      trustStoreConfigurationBuilder.trustStoreFileName(trustStoreFileName);
       return this;
    }
 
@@ -131,7 +137,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * Specifies the type of the truststore, such as JKS or JCEKS. Defaults to JKS
     */
    public SslConfigurationBuilder trustStoreType(String trustStoreType) {
-      this.attributes.attribute(TRUSTSTORE_TYPE).set(trustStoreType);
+      trustStoreConfigurationBuilder.trustStoreType(trustStoreType);
       return this;
    }
 
@@ -140,7 +146,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * {@link #trustStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}
     */
    public SslConfigurationBuilder trustStorePassword(char[] trustStorePassword) {
-      this.attributes.attribute(TRUSTSTORE_PASSWORD).set(new String(trustStorePassword));
+      trustStoreConfigurationBuilder.trustStorePassword(trustStorePassword);
       return this;
    }
 
@@ -171,12 +177,14 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(attributes.protect());
+      return new SslConfiguration(attributes.protect(), keyStoreConfigurationBuilder.create(), trustStoreConfigurationBuilder.create());
    }
 
    @Override
    public SslConfigurationBuilder read(SslConfiguration template) {
       this.attributes.read(template.attributes());
+      this.keyStoreConfigurationBuilder.read(template.keyStoreConfiguration());
+      this.trustStoreConfigurationBuilder.read(template.trustStoreConfiguration());
       return this;
    }
 }

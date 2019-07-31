@@ -22,7 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -52,7 +52,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
                 .setXmlName(Attribute.SIZE.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(MemoryConfiguration.SIZE.getDefaultValue()))
+                .setDefaultValue(new ModelNode().set(MemoryStorageConfiguration.SIZE.getDefaultValue()))
                 .build();
 
     static final SimpleAttributeDefinition EVICTION =
@@ -61,7 +61,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setValidator(new EnumValidator<>(EvictionType.class, true, false))
-                .setDefaultValue(new ModelNode().set(MemoryConfiguration.EVICTION_TYPE.getDefaultValue().name()))
+                .setDefaultValue(new ModelNode().set(MemoryStorageConfiguration.EVICTION_TYPE.getDefaultValue().name()))
                 .build();
 
     static final SimpleAttributeDefinition STRATEGY =

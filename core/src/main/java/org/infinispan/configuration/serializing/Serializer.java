@@ -37,6 +37,7 @@ import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
@@ -570,20 +571,20 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeMemory(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
       MemoryConfiguration memory = configuration.memory();
-      AttributeSet attributes = memory.attributes();
+      AttributeSet attributes = memory.heapConfiguration().attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.MEMORY);
          writer.writeStartElement(memory.storageType().getElement());
          switch (memory.storageType()) {
             case OFF_HEAP:
-               attributes.write(writer, MemoryConfiguration.ADDRESS_COUNT, Attribute.ADDRESS_COUNT);
-               attributes.write(writer, MemoryConfiguration.EVICTION_STRATEGY, Attribute.STRATEGY);
+               attributes.write(writer, MemoryStorageConfiguration.ADDRESS_COUNT, Attribute.ADDRESS_COUNT);
+               attributes.write(writer, MemoryStorageConfiguration.EVICTION_STRATEGY, Attribute.STRATEGY);
                // fall through
             case BINARY:
-               attributes.write(writer, MemoryConfiguration.EVICTION_TYPE, Attribute.EVICTION);
+               attributes.write(writer, MemoryStorageConfiguration.EVICTION_TYPE, Attribute.EVICTION);
                // fall through
             case OBJECT:
-               attributes.write(writer, MemoryConfiguration.SIZE, Attribute.SIZE);
+               attributes.write(writer, MemoryStorageConfiguration.SIZE, Attribute.SIZE);
          }
          writer.writeEndElement();
          writer.writeEndElement();
