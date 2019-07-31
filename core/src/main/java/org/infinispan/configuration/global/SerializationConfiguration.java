@@ -1,7 +1,10 @@
 package org.infinispan.configuration.global;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.Version;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
@@ -44,18 +47,27 @@ public class SerializationConfiguration implements ConfigurationInfo {
    private final Attribute<Marshaller> marshaller;
    private final Attribute<Short> version;
    private final AttributeSet attributes;
+   private final WhiteListConfiguration whiteListConfig;
+   private final List<ConfigurationInfo> subElements;
 
-   SerializationConfiguration(AttributeSet attributes) {
+   SerializationConfiguration(AttributeSet attributes, WhiteListConfiguration whiteListConfig) {
       this.attributes = attributes.checkProtection();
       this.marshaller = attributes.attribute(MARSHALLER);
       this.version = attributes.attribute(VERSION);
       this.classResolver = attributes.attribute(CLASS_RESOLVER);
       this.advancedExternalizers = attributes.attribute(ADVANCED_EXTERNALIZERS);
+      this.whiteListConfig = whiteListConfig;
+      this.subElements = Collections.singletonList(whiteListConfig);
    }
 
    @Override
    public ElementDefinition getElementDefinition() {
       return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
    }
 
    public Marshaller marshaller() {
@@ -75,8 +87,13 @@ public class SerializationConfiguration implements ConfigurationInfo {
       return classResolver.get();
    }
 
+   @Override
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   public WhiteListConfiguration whiteList() {
+      return whiteListConfig;
    }
 
    @Override
@@ -92,8 +109,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
       if (o == null || getClass() != o.getClass()) return false;
 
       SerializationConfiguration that = (SerializationConfiguration) o;
-
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override

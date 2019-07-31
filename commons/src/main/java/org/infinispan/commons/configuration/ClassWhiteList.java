@@ -5,6 +5,7 @@ import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -80,7 +81,7 @@ public final class ClassWhiteList {
       this(Collections.emptySet(), regexps);
    }
 
-   private ClassWhiteList(Collection<String> classes, List<String> regexps) {
+   public ClassWhiteList(Collection<String> classes, List<String> regexps) {
       Collection<String> classList = requireNonNull(classes, "Classes must not be null");
       Collection<String> regexList = requireNonNull(regexps, "Regexps must not be null");
       this.classes.addAll(classList);
@@ -101,6 +102,10 @@ public final class ClassWhiteList {
 
    public void addClasses(Class<?>... classes) {
       stream(classes).forEach(c -> this.classes.add(c.getName()));
+   }
+
+   public void addClasses(String... classes) {
+      this.classes.addAll(Arrays.asList(classes));
    }
 
    public void addRegexps(String... regexps) {
