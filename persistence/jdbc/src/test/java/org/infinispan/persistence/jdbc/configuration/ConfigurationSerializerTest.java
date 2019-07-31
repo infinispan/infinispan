@@ -31,6 +31,10 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
          JdbcStringBasedStoreConfiguration before = (JdbcStringBasedStoreConfiguration) beforeStore;
          JdbcStringBasedStoreConfiguration after = (JdbcStringBasedStoreConfiguration) afterStore;
          compareAttributeSets("Configuration " + name + " table", before.table().attributes(), after.table().attributes());
+         compareAttributeSets("Configuration " + name + " idColumn", before.table().idColumnConfiguration().attributes(), after.table().idColumnConfiguration().attributes());
+         compareAttributeSets("Configuration " + name + " dataColumn", before.table().dataColumnConfiguration().attributes(), after.table().dataColumnConfiguration().attributes());
+         compareAttributeSets("Configuration " + name + " timestampColumn", before.table().timeStampColumnConfiguration().attributes(), after.table().timeStampColumnConfiguration().attributes());
+         compareAttributeSets("Configuration " + name + " segmentColumn", before.table().segmentColumnConfiguration().attributes(), after.table().segmentColumnConfiguration().attributes());
       }
       super.compareStoreConfiguration(name, beforeStore, afterStore);
    }

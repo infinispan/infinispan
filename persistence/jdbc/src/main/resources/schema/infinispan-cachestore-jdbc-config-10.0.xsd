@@ -91,6 +91,11 @@
           <xs:documentation>Defines the column in which to store the timestamp of the cache entry or bucket.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="segment-column" type="tns:segment-column" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Defines the column in which to store the segment number.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
     <xs:attribute name="fetch-size" type="xs:int" default="${TableManipulation.fetchSize}">
       <xs:annotation>
@@ -149,6 +154,19 @@
     <xs:attribute name="type" type="xs:string" default="BIGINT">
       <xs:annotation>
         <xs:documentation>The type of the column used to store the cache entry or bucket timestamp.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="segment-column">
+    <xs:attribute name="name" type="xs:string" default="version">
+      <xs:annotation>
+        <xs:documentation>The name of the column used to store the segment number.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="type" type="xs:string" default="BIGINT">
+      <xs:annotation>
+        <xs:documentation>The type of the column used to store the segment number.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
