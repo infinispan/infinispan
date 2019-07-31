@@ -64,9 +64,11 @@ public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractS
       attributes.write(writer, TableManipulationConfiguration.CREATE_ON_START, Attribute.CREATE_ON_START);
       attributes.write(writer, TableManipulationConfiguration.DROP_ON_EXIT, Attribute.DROP_ON_EXIT);
 
-      writeJDBCStoreColumn(writer, Element.ID_COLUMN, attributes, TableManipulationConfiguration.ID_COLUMN_NAME, TableManipulationConfiguration.ID_COLUMN_TYPE);
-      writeJDBCStoreColumn(writer, Element.DATA_COLUMN, attributes, TableManipulationConfiguration.DATA_COLUMN_NAME, TableManipulationConfiguration.DATA_COLUMN_TYPE);
-      writeJDBCStoreColumn(writer, Element.TIMESTAMP_COLUMN, attributes, TableManipulationConfiguration.TIMESTAMP_COLUMN_NAME, TableManipulationConfiguration.TIMESTAMP_COLUMN_TYPE);
+      writeJDBCStoreColumn(writer, Element.ID_COLUMN, configuration.idColumnConfiguration().attributes(), IdColumnConfiguration.ID_COLUMN_NAME, IdColumnConfiguration.ID_COLUMN_TYPE);
+      writeJDBCStoreColumn(writer, Element.DATA_COLUMN, configuration.dataColumnConfiguration().attributes(), DataColumnConfiguration.DATA_COLUMN_NAME, DataColumnConfiguration.DATA_COLUMN_TYPE);
+      writeJDBCStoreColumn(writer, Element.TIMESTAMP_COLUMN, configuration.timeStampColumnConfiguration().attributes(), TimestampColumnConfiguration.TIMESTAMP_COLUMN_NAME, TimestampColumnConfiguration.TIMESTAMP_COLUMN_TYPE);
+
+      writeJDBCStoreColumn(writer, Element.SEGMENT_COLUMN, configuration.segmentColumnConfiguration().attributes(), SegmentColumnConfiguration.SEGMENT_COLUMN_NAME, SegmentColumnConfiguration.SEGMENT_COLUMN_TYPE);
 
       writer.writeEndElement();
    }
