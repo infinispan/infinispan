@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
 import org.infinispan.server.tool.Main;
 

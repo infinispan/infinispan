@@ -1,6 +1,6 @@
 package org.infinispan.cli.interpreter.statement;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;

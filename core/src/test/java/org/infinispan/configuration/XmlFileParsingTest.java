@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;

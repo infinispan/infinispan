@@ -1,6 +1,6 @@
 package org.jboss.as.clustering.infinispan.cs.deployment;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;

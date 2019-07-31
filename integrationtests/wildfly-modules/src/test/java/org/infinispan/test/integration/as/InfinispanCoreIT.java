@@ -3,7 +3,7 @@ package org.infinispan.test.integration.as;
 import static org.junit.Assert.assertEquals;
 
 import org.infinispan.Cache;
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;

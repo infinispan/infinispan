@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.arquillian.api.ContainerResource;
 import org.jboss.as.arquillian.container.ManagementClient;

@@ -15,7 +15,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;

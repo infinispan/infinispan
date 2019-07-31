@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;

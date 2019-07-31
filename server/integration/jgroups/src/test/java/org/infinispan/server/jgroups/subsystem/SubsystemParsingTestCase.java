@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.server.commons.controller.Operations;
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.jboss.as.controller.PathAddress;

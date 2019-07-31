@@ -2,7 +2,7 @@ package org.infinispan.test.integration.as.client;
 
 import static org.junit.Assert.assertEquals;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;

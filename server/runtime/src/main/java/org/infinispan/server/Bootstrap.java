@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.logging.LogManager;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
 import static org.infinispan.server.logging.Messages.MSG;

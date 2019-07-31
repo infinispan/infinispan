@@ -168,13 +168,6 @@
          </resource>
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
-            <filtering>true</filtering>
-            <includes>
-               <include>META-INF/infinispan-version.properties</include>
-            </includes>
-         </resource>
-         <resource>
-            <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
             <includes>
                <include>schema/*-${infinispan.core.schema.version}.xsd</include>
@@ -188,7 +181,6 @@
             </includes>
             <excludes>
                <exclude>features.xml</exclude>
-               <exclude>META-INF/infinispan-version.properties</exclude>
                <exclude>schema/**</exclude>
             </excludes>
          </resource>

@@ -96,12 +96,20 @@
          </resource>
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>META-INF/infinispan-version.properties</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
             <includes>
                <include>**/*</include>
             </includes>
             <excludes>
                <exclude>features.xml</exclude>
+               <exclude>META-INF/infinispan-version.properties</exclude>
             </excludes>
          </resource>
       </resources>

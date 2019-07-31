@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.JsonReader;

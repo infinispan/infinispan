@@ -2,7 +2,7 @@ package org.infinispan.server.endpoint.deployments;
 
 import java.util.List;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;

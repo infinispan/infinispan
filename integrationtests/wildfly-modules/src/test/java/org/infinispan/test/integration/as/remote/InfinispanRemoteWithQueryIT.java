@@ -1,6 +1,6 @@
 package org.infinispan.test.integration.as.remote;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.test.integration.as.client.BaseHotRodQueryIT;
 import org.infinispan.test.integration.as.client.HotRodQueryIT;
 import org.infinispan.test.integration.as.client.Person;

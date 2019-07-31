@@ -4608,7 +4608,6 @@
                   <manifest>
                      <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                      <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                     <mainClass>org.infinispan.Version</mainClass>
                   </manifest>
                   <manifestEntries>
                      <Implementation-Codename>${infinispan.codename}</Implementation-Codename>

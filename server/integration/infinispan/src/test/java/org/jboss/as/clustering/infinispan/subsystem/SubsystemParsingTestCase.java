@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.server.commons.controller.Operations;
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;

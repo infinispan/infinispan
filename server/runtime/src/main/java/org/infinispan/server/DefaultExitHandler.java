@@ -1,6 +1,6 @@
 package org.infinispan.server;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

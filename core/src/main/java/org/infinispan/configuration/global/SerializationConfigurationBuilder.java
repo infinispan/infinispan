@@ -9,7 +9,7 @@ import static org.infinispan.configuration.global.SerializationConfiguration.VER
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;

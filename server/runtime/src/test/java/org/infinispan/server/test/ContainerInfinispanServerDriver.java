@@ -14,7 +14,7 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.test.Exceptions;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.DockerClientFactory;

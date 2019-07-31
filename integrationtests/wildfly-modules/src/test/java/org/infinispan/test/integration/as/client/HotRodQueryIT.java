@@ -1,6 +1,6 @@
 package org.infinispan.test.integration.as.client;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;

@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import javax.inject.Inject;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.eviction.EvictionType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;

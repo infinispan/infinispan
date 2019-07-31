@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.infinispan.Version;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Features;
+import org.infinispan.commons.util.Version;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -37,7 +37,7 @@ import org.infinispan.factories.scopes.Scopes;
 public class GlobalConfiguration implements ConfigurationInfo {
 
    /**
-    * Default replication version, from {@link org.infinispan.Version#getVersionShort}.
+    * Default replication version, from {@link org.infinispan.commons.util.Version#getVersionShort}.
     *
     * @deprecated Since 9.4, use {@code Version.getVersionShort()} instead.
     */

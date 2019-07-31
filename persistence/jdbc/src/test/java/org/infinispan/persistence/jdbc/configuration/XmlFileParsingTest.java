@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.test.AbstractInfinispanTest;

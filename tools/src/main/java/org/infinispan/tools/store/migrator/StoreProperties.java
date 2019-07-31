@@ -8,7 +8,7 @@ import static org.infinispan.tools.store.migrator.Element.VERSION;
 
 import java.util.Properties;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 
 public class StoreProperties{

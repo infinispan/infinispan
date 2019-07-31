@@ -14,7 +14,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.Properties;
 
 import org.infinispan.Cache;
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

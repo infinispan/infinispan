@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
 
 import org.infinispan.Cache;
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;

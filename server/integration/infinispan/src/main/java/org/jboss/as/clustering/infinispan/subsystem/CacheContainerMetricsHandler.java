@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.infinispan.SecurityActions;

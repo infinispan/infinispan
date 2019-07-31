@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;

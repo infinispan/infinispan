@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.IllegalLifecycleStateException;
-import org.infinispan.Version;
+import org.infinispan.commons.util.Version;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.NotSerializableException;
