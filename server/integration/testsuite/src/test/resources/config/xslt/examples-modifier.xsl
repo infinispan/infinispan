@@ -22,6 +22,7 @@
     <xsl:param name="removeRestSecurity">true</xsl:param>
     <xsl:param name="restEncrypt">false</xsl:param>
     <xsl:param name="remoteStoreHrVersion">none</xsl:param>
+    <xsl:param name="trace">none</xsl:param>
 
     <xsl:template match="node()|@*" name="copynode">
         <xsl:copy>
@@ -67,6 +68,78 @@
         </xsl:if>
     </xsl:template>
 
+    <!--
+        An XSLT style sheet which will enable trace logging for the test suite.
+        This can be enabled via -Dtrace=org.infinispan.category1,org.jgroups.category2
+    -->
+    <xsl:template name="output-loggers">
+        <xsl:param name="list" />
+        <xsl:variable name="first" select="substring-before(concat($list,','), ',')" />
+        <xsl:variable name="remaining" select="substring-after($list, ',')"/>
+        <xsl:element name="logger">
+            <xsl:attribute name="category">
+                <xsl:value-of select="$first"></xsl:value-of>
+            </xsl:attribute>
+            <xsl:element name="level">
+                <xsl:attribute name="name">
+                    <xsl:value-of select="'TRACE'"/>
+                </xsl:attribute>
+            </xsl:element>
+        </xsl:element>
+        <xsl:if test="string-length($remaining) > 0">
+            <xsl:call-template name="output-loggers">
+                <xsl:with-param name="list" select="$remaining" />
+            </xsl:call-template>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsLogging)]/*[local-name()='console-handler']" use-when="$trace">
+        <xsl:choose>
+            <xsl:when test="$trace='none'">
+                <xsl:copy>
+                    <xsl:apply-templates select="node()|@*"/>
+                </xsl:copy>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:copy>
+                    <xsl:attribute name="name">
+                        <xsl:value-of select="'CONSOLE'"/>
+                    </xsl:attribute>
+                    <!--define INFO log level for console logger, otherwise it slows down running tests with multiple servers-->
+                    <level name="INFO"/>
+                    <formatter>
+                        <named-formatter name="COLOR-PATTERN"/>
+                    </formatter>
+                </xsl:copy>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsLogging)]/*[local-name()='periodic-rotating-file-handler']" use-when="$trace">
+        <xsl:choose>
+            <xsl:when test="$trace='none'">
+                <xsl:copy>
+                    <xsl:apply-templates select="node()|@*"/>
+                </xsl:copy>
+            </xsl:when>
+            <xsl:otherwise>
+                <file-handler>
+                    <xsl:attribute name="name">
+                        <xsl:value-of select="'FILE'"/>
+                    </xsl:attribute>
+                    <level name="TRACE"/>
+                    <formatter>
+                        <named-formatter name="PATTERN"/>
+                    </formatter>
+                    <file relative-to="jboss.server.log.dir" path="server.log"/>
+                    <append value="true"/>
+                </file-handler>
+                <xsl:call-template name="output-loggers">
+                    <xsl:with-param name="list" select="$trace" />
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
 
     <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsEndpoint)]">
         <xsl:if test="$infinispanServerEndpoint = 'false'">
