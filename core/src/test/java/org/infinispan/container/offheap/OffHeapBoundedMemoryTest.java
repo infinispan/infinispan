@@ -10,7 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.MemoryUnit;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
@@ -32,7 +32,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
             // Only allocate enough for address count - oops
-            .size(16 + MemoryConfiguration.ADDRESS_COUNT.getDefaultValue() * 8)
+            .size(16 + MemoryStorageConfiguration.ADDRESS_COUNT.getDefaultValue() * 8)
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);

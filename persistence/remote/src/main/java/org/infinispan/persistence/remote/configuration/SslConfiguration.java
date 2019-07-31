@@ -1,19 +1,17 @@
 package org.infinispan.persistence.remote.configuration;
 
 import static org.infinispan.persistence.remote.configuration.Element.ENCRYPTION;
-import static org.infinispan.persistence.remote.configuration.Element.KEYSTORE;
-import static org.infinispan.persistence.remote.configuration.Element.TRUSTSTORE;
+
+import java.util.Arrays;
+import java.util.List;
 
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.NestingAttributeSerializer;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.util.Util;
 
 /**
  * SslConfiguration.
@@ -22,33 +20,41 @@ import org.infinispan.commons.util.Util;
  * @since 9.1
  */
 public class SslConfiguration implements ConfigurationInfo {
-
-   static final AttributeSerializer<String, ?, ?> UNDER_KEYSTORE = new NestingAttributeSerializer<>(KEYSTORE.getLocalName());
-   static final AttributeSerializer<String, ?, ?> UNDER_TRUSTSTORE = new NestingAttributeSerializer<>(TRUSTSTORE.getLocalName());
-
    static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false, Boolean.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> KEYSTORE_FILENAME = AttributeDefinition.builder("keyStoreFilename", null, String.class).xmlName(org.infinispan.persistence.remote.configuration.Attribute.FILENAME.getLocalName()).immutable().autoPersist(false).serializer(UNDER_KEYSTORE).build();
-   static final AttributeDefinition<String> KEYSTORE_TYPE = AttributeDefinition.builder("keyStoreType", "JKS", String.class).immutable().autoPersist(false).serializer(UNDER_KEYSTORE).xmlName(org.infinispan.persistence.remote.configuration.Attribute.TYPE.getLocalName()).build();
-   static final AttributeDefinition<String> KEYSTORE_PASSWORD = AttributeDefinition.builder("keyStorePassword", null, String.class).xmlName(org.infinispan.persistence.remote.configuration.Attribute.PASSWORD.getLocalName()).immutable().autoPersist(false).serializer(UNDER_KEYSTORE).build();
-   static final AttributeDefinition<String> KEYSTORE_CERTIFICATE_PASSWORD = AttributeDefinition.builder("keyStoreCertificatePassword", null, String.class).immutable().serializer(UNDER_KEYSTORE).xmlName(org.infinispan.persistence.remote.configuration.Attribute.CERTIFICATE_PASSWORD.getLocalName()).autoPersist(false).build();
-   static final AttributeDefinition<String> KEY_ALIAS = AttributeDefinition.builder("keyAlias", null, String.class).immutable().autoPersist(false).serializer(UNDER_KEYSTORE).build();
    static final AttributeDefinition<SSLContext> SSL_CONTEXT = AttributeDefinition.builder("sslContext", null, SSLContext.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> TRUSTSTORE_FILENAME = AttributeDefinition.builder("trustStoreFilename", null, String.class).immutable().autoPersist(false).serializer(UNDER_TRUSTSTORE).xmlName(org.infinispan.persistence.remote.configuration.Attribute.FILENAME.getLocalName()).build();
-   static final AttributeDefinition<String> TRUSTSTORE_TYPE = AttributeDefinition.builder("trustStoreType", "JKS", String.class).immutable().autoPersist(false).serializer(UNDER_TRUSTSTORE).xmlName(org.infinispan.persistence.remote.configuration.Attribute.TYPE.getLocalName()).build();
-   static final AttributeDefinition<String> TRUSTSTORE_PASSWORD = AttributeDefinition.builder("trustStorePassword", null, String.class).immutable().autoPersist(false).serializer(UNDER_TRUSTSTORE).xmlName(org.infinispan.persistence.remote.configuration.Attribute.PASSWORD.getLocalName()).build();
    static final AttributeDefinition<String> SNI_HOSTNAME = AttributeDefinition.builder("sniHostname", null, String.class).immutable().build();
    static final AttributeDefinition<String> PROTOCOL = AttributeDefinition.builder("protocol", null, String.class).immutable().build();
 
    static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ENCRYPTION.getLocalName());
+
    private final AttributeSet attributes;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SslConfiguration.class, ENABLED, KEYSTORE_FILENAME, KEYSTORE_TYPE, KEYSTORE_PASSWORD, KEYSTORE_CERTIFICATE_PASSWORD,
-            KEY_ALIAS, TRUSTSTORE_FILENAME, TRUSTSTORE_TYPE, TRUSTSTORE_PASSWORD, SNI_HOSTNAME, PROTOCOL);
+      return new AttributeSet(SslConfiguration.class, ENABLED, SNI_HOSTNAME, PROTOCOL);
    }
 
-   SslConfiguration(AttributeSet attributes) {
+   private KeyStoreConfiguration keyStoreConfiguration;
+   private TrustStoreConfiguration trustStoreConfiguration;
+   private List<ConfigurationInfo> subElements;
+
+   SslConfiguration(AttributeSet attributes, KeyStoreConfiguration keyStoreConfiguration, TrustStoreConfiguration trustStoreConfiguration) {
       this.attributes = attributes.checkProtection();
+      this.keyStoreConfiguration = keyStoreConfiguration;
+      this.trustStoreConfiguration = trustStoreConfiguration;
+      this.subElements = Arrays.asList(keyStoreConfiguration, trustStoreConfiguration);
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return subElements;
+   }
+
+   public KeyStoreConfiguration keyStoreConfiguration() {
+      return keyStoreConfiguration;
+   }
+
+   public TrustStoreConfiguration trustStoreConfiguration() {
+      return trustStoreConfiguration;
    }
 
    @Override
@@ -65,23 +71,23 @@ public class SslConfiguration implements ConfigurationInfo {
    }
 
    public String keyStoreFileName() {
-      return attributes.attribute(KEYSTORE_FILENAME).get();
+      return keyStoreConfiguration.keyStoreFileName();
    }
 
    public String keyStoreType() {
-      return attributes.attribute(KEYSTORE_TYPE).get();
+      return keyStoreConfiguration.keyStoreType();
    }
 
    public char[] keyStorePassword() {
-      return Util.toCharArray(attributes.attribute(KEYSTORE_PASSWORD).get());
+      return keyStoreConfiguration.keyStorePassword();
    }
 
    public char[] keyStoreCertificatePassword() {
-      return Util.toCharArray(attributes.attribute(KEYSTORE_CERTIFICATE_PASSWORD).get());
+      return keyStoreConfiguration.keyStoreCertificatePassword();
    }
 
    public String keyAlias() {
-      return attributes.attribute(KEY_ALIAS).get();
+      return keyStoreConfiguration.keyAlias();
    }
 
    public SSLContext sslContext() {
@@ -89,16 +95,15 @@ public class SslConfiguration implements ConfigurationInfo {
    }
 
    public String trustStoreFileName() {
-      return attributes.attribute(TRUSTSTORE_FILENAME).get();
+      return trustStoreConfiguration.trustStoreFileName();
    }
 
-
    public String trustStoreType() {
-      return attributes.attribute(TRUSTSTORE_TYPE).get();
+      return trustStoreConfiguration.trustStoreType();
    }
 
    public char[] trustStorePassword() {
-      return Util.toCharArray(attributes.attribute(TRUSTSTORE_PASSWORD).get());
+      return trustStoreConfiguration.trustStorePassword();
    }
 
    public String sniHostName() {
@@ -110,18 +115,33 @@ public class SslConfiguration implements ConfigurationInfo {
    }
 
    @Override
-   public String toString() {
-      return attributes.toString();
-   }
-
-   @Override
    public boolean equals(Object o) {
-      SslConfiguration other = (SslConfiguration) o;
-      return attributes.equals(other.attributes);
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SslConfiguration that = (SslConfiguration) o;
+
+      if (attributes != null ? !attributes.equals(that.attributes) : that.attributes != null) return false;
+      if (keyStoreConfiguration != null ? !keyStoreConfiguration.equals(that.keyStoreConfiguration) : that.keyStoreConfiguration != null)
+         return false;
+      return trustStoreConfiguration != null ? trustStoreConfiguration.equals(that.trustStoreConfiguration) : that.trustStoreConfiguration == null;
    }
 
    @Override
    public int hashCode() {
-      return attributes.hashCode();
+      int result = attributes != null ? attributes.hashCode() : 0;
+      result = 31 * result + (keyStoreConfiguration != null ? keyStoreConfiguration.hashCode() : 0);
+      result = 31 * result + (trustStoreConfiguration != null ? trustStoreConfiguration.hashCode() : 0);
+      return result;
    }
+
+   @Override
+   public String toString() {
+      return "SslConfiguration{" +
+            "attributes=" + attributes +
+            ", keyStoreConfiguration=" + keyStoreConfiguration +
+            ", trustStoreConfiguration=" + trustStoreConfiguration +
+            '}';
+   }
+
 }

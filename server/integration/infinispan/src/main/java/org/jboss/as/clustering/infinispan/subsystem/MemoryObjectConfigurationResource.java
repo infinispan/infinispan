@@ -22,7 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.AttributeDefinition;
@@ -51,7 +51,7 @@ public class MemoryObjectConfigurationResource extends CacheConfigurationChildRe
                 .setXmlName(Attribute.SIZE.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(MemoryConfiguration.SIZE.getDefaultValue()))
+                .setDefaultValue(new ModelNode().set(MemoryStorageConfiguration.SIZE.getDefaultValue()))
                 .build();
 
     static final SimpleAttributeDefinition STRATEGY =

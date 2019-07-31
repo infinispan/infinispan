@@ -1,10 +1,12 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationInfo;
-import org.infinispan.commons.configuration.attributes.AsElementAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.jgroups.conf.ProtocolConfiguration;
 
@@ -13,40 +15,23 @@ import org.jgroups.conf.ProtocolConfiguration;
  */
 public class JGroupsProtocolConfiguration implements ConfigurationInfo {
 
-   static final AttributeDefinition<ProtocolConfiguration> PROTOCOL_CONFIG = AttributeDefinition
-         .builder("protocolConfig", null, ProtocolConfiguration.class)
-         .immutable().serializer(new AsElementAttributeSerializer<ProtocolConfiguration, JGroupsProtocolConfiguration, JGroupsProtocolConfigurationBuilder>() {
-            @Override
-            public String getSerializationName(Attribute<ProtocolConfiguration> attribute, JGroupsProtocolConfiguration configurationElement) {
-               return attribute.get().getProtocolName();
-            }
+   static final AttributeDefinition<ProtocolConfiguration> PROTOCOL_CONFIG = AttributeDefinition.builder("protocolConfig", null, ProtocolConfiguration.class).immutable().serializer(new AttributeSerializer<ProtocolConfiguration, JGroupsProtocolConfiguration, ConfigurationBuilderInfo>() {
+      @Override
+      public Object getSerializationValue(Attribute<ProtocolConfiguration> attribute, JGroupsProtocolConfiguration cfg) {
+         return attribute.get().getProperties();
+      }
 
-            @Override
-            public Object getSerializationValue(Attribute<ProtocolConfiguration> attribute, JGroupsProtocolConfiguration configurationElement) {
-               return attribute.get().getProperties();
-            }
-         }).build();
+      @Override
+      public String getSerializationName(Attribute<ProtocolConfiguration> attribute, JGroupsProtocolConfiguration configurationElement) {
+         return null;
+      }
+   }).xmlName("properties").build();
+
+   private final ElementDefinition elementDefinition;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JGroupsProtocolConfiguration.class, PROTOCOL_CONFIG);
    }
-
-   public static ElementDefinition ELEMENT_DEFINITION = new ElementDefinition<JGroupsProtocolConfiguration>() {
-      @Override
-      public boolean isTopLevel() {
-         return false;
-      }
-
-      @Override
-      public ElementOutput toExternalName(JGroupsProtocolConfiguration configuration) {
-         return new ElementOutput(configuration.protocolConfiguration().getProtocolName());
-      }
-
-      @Override
-      public boolean supports(String elementName) {
-         return true;
-      }
-   };
 
    private final Attribute<ProtocolConfiguration> protocolConfiguration;
    private final AttributeSet attributes;
@@ -54,11 +39,12 @@ public class JGroupsProtocolConfiguration implements ConfigurationInfo {
    JGroupsProtocolConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.protocolConfiguration = attributes.attribute(PROTOCOL_CONFIG);
+      this.elementDefinition = new DefaultElementDefinition(protocolConfiguration.get().getProtocolName(), true, false);
    }
 
    @Override
    public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINITION;
+      return elementDefinition;
    }
 
    public AttributeSet attributes() {

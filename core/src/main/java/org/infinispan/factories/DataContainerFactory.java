@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
@@ -95,7 +96,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize,
                memoryConfiguration.evictionType());
       }
-      memoryConfiguration.attributes().attribute(MemoryConfiguration.SIZE).addListener((newSize, old) ->
+      memoryConfiguration.heapConfiguration().attributes().attribute(MemoryStorageConfiguration.SIZE).addListener((newSize, old) ->
             dataContainer.resize(newSize.get()));
       return dataContainer;
    }

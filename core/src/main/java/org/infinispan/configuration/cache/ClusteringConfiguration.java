@@ -48,7 +48,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
       }
 
       @Override
-      public Object readAttributeValue(String enclosing, String nesting, AttributeDefinition attributeDefinition, Object value, ConfigurationBuilderInfo builderInfo) {
+      public Object readAttributeValue(String enclosing, AttributeDefinition attributeDefinition, Object value, ConfigurationBuilderInfo builderInfo) {
          return CacheMode.fromParts(enclosing.substring(0, enclosing.indexOf("-")), value.toString());
       }
 

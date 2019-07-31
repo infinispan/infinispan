@@ -14,7 +14,7 @@ public class ClassAttributeSerializer<T, U extends ConfigurationInfo, B extends 
    public static final AttributeSerializer<Object, ConfigurationInfo, ConfigurationBuilderInfo> INSTANCE = new ClassAttributeSerializer<>();
 
    @Override
-   public Object readAttributeValue(String enclosingElement, String nesting, AttributeDefinition attributeDefinition, Object attrValue, B builderInfo) {
+   public Object readAttributeValue(String enclosingElement, AttributeDefinition attributeDefinition, Object attrValue, B builderInfo) {
       return Util.getInstance(attrValue.toString(), builderInfo.getClass().getClassLoader());
    }
 

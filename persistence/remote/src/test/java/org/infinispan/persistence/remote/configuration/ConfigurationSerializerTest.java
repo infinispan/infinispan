@@ -24,5 +24,6 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       RemoteStoreConfiguration before = (RemoteStoreConfiguration) beforeStore;
       RemoteStoreConfiguration after = (RemoteStoreConfiguration) afterStore;
       AssertJUnit.assertEquals("Wrong connection pool for " + name + " configuration.", before.connectionPool(), after.connectionPool());
+      AssertJUnit.assertEquals("Wrong security config for " + name + " configuration.", before.security(), after.security());
    }
 }

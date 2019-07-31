@@ -7,7 +7,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer.SerializationMode;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 
@@ -60,15 +59,6 @@ public class JsonReader {
       AttributeSet attributes = builderInfo.attributes();
       if (attributes == null) throw new CacheConfigurationException(
             String.format("Cannot find any attribute or element under '%s' to handle element '%s'", builderInfo, element));
-      //Handle attributes serialized as elements
-      for (Attribute a : attributes.attributes()) {
-         AttributeDefinition<?> attributeDefinition = a.getAttributeDefinition();
-         AttributeSerializer<?, ?, ?> serializerConfig = attributeDefinition.getSerializerConfig();
-         SerializationMode serializationMode = serializerConfig.getSerializationMode();
-         if (serializationMode == SerializationMode.AS_ELEMENT && serializerConfig.canRead(element, nesting, null, attributeDefinition)) {
-            readAttribute(builderInfo, element, nesting, null, null);
-         }
-      }
       // Handle attributes serialized as name/value pair
       Pair simpleAttribute1 = findSimpleAttribute(element, null, nesting, builderInfo);
       if (simpleAttribute1 != null) {
@@ -105,7 +95,7 @@ public class JsonReader {
    private void readAttribute(ConfigurationBuilderInfo builderInfo, String enclosing, String nesting, String name, Object value) {
       Pair pair = findSimpleAttribute(enclosing, nesting, name, builderInfo);
       if (pair != null) {
-         readAttribute(enclosing, nesting, value, pair.attribute, pair.builderInfo);
+         readAttribute(enclosing, value, pair.attribute, pair.builderInfo);
       } else {
          ElementDefinition element = builderInfo.getElementDefinition();
          if (element != null && element.isSynthetic(name)) {
@@ -115,10 +105,10 @@ public class JsonReader {
       }
    }
 
-   private void readAttribute(String enclosing, String nesting, Object value, Attribute a, ConfigurationBuilderInfo builderInfo) {
+   private void readAttribute(String enclosing, Object value, Attribute a, ConfigurationBuilderInfo builderInfo) {
       AttributeDefinition<?> attributeDefinition = a.getAttributeDefinition();
       AttributeSerializer serializerConfig = attributeDefinition.getSerializerConfig();
-      Object attrValue = serializerConfig.readAttributeValue(enclosing, nesting, attributeDefinition, value, builderInfo);
+      Object attrValue = serializerConfig.readAttributeValue(enclosing, attributeDefinition, value, builderInfo);
       a.set(attrValue);
    }
 

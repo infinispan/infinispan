@@ -95,11 +95,16 @@ public class JsonWriter {
          }
 
          if (attribute.isModified()) {
-            if (attrName != null && !attrName.isEmpty() && attrValue != null) {
-               if (topLevelElement.isEmpty()) {
-                  json.set(attrName, attrValue);
-               } else {
-                  json.at(topLevelElement, Json.object()).set(attrName, attrValue);
+            if (attrName == null && attrValue instanceof Map) {
+               Map<String, Object> valueMap = (Map<String, Object>) attrValue;
+               valueMap.forEach(json::set);
+            } else {
+               if (attrName != null && !attrName.isEmpty() && attrValue != null) {
+                  if (topLevelElement.isEmpty()) {
+                     json.set(attrName, attrValue);
+                  } else {
+                     json.at(topLevelElement, Json.object()).set(attrName, attrValue);
+                  }
                }
             }
          }
