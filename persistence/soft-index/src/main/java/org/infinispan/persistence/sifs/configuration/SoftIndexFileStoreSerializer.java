@@ -26,18 +26,18 @@ public class SoftIndexFileStoreSerializer extends AbstractStoreSerializer implem
    }
 
    private void writeDataElement(XMLExtendedStreamWriter writer, SoftIndexFileStoreConfiguration configuration) throws XMLStreamException {
-      configuration.attributes().write(writer, Element.DATA.getLocalName(),
-            SoftIndexFileStoreConfiguration.DATA_LOCATION,
-            SoftIndexFileStoreConfiguration.MAX_FILE_SIZE,
-            SoftIndexFileStoreConfiguration.SYNC_WRITES);
+      configuration.data().attributes().write(writer, Element.DATA.getLocalName(),
+            DataConfiguration.DATA_LOCATION,
+            DataConfiguration.MAX_FILE_SIZE,
+            DataConfiguration.SYNC_WRITES);
    }
 
    private void writeIndexElement(XMLExtendedStreamWriter writer, SoftIndexFileStoreConfiguration configuration) throws XMLStreamException {
-      configuration.attributes().write(writer, Element.INDEX.getLocalName(),
-            SoftIndexFileStoreConfiguration.INDEX_LOCATION,
-            SoftIndexFileStoreConfiguration.INDEX_QUEUE_LENGTH,
-            SoftIndexFileStoreConfiguration.INDEX_SEGMENTS,
-            SoftIndexFileStoreConfiguration.MIN_NODE_SIZE,
-            SoftIndexFileStoreConfiguration.MAX_NODE_SIZE);
+      configuration.index().attributes().write(writer, Element.INDEX.getLocalName(),
+            IndexConfiguration.INDEX_LOCATION,
+            IndexConfiguration.INDEX_QUEUE_LENGTH,
+            IndexConfiguration.INDEX_SEGMENTS,
+            IndexConfiguration.MIN_NODE_SIZE,
+            IndexConfiguration.MAX_NODE_SIZE);
    }
 }

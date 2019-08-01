@@ -28,14 +28,6 @@ public interface ElementDefinition<C extends ConfigurationInfo> {
    }
 
    /**
-    * @return true if the attributeName inside the element is not mapped to any {@link Attribute}, but
-    * as a helper to identify the element when reading it back.
-    */
-   default boolean isSynthetic(String attributeName) {
-      return false;
-   }
-
-   /**
     * @return true if a serialized elementName matches this ElementDefinition.
     */
    boolean supports(String elementName);

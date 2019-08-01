@@ -43,8 +43,8 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
       }
 
       @Override
-      public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
-         return nestedName != null && nestedName.equals(MODE.getLocalName());
+      public boolean canRead(String name, AttributeDefinition attributeDefinition) {
+         return name != null && name.equals(MODE.getLocalName());
       }
 
       @Override

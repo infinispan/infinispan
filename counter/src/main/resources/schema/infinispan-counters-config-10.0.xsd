@@ -45,32 +45,21 @@
     <xs:complexType name="strong-counter">
         <xs:complexContent>
             <xs:extension base="tns:counter">
-                <xs:sequence>
-                    <xs:element name="lower-bound" minOccurs="0" maxOccurs="1">
-                        <xs:complexType>
-                            <xs:attribute name="value" type="xs:int">
-                                <xs:annotation>
-                                    <xs:documentation>
-                                        Sets the counter's lower bound (inclusive). It makes the strong consistent
-                                        counter bounded.
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:attribute>
-                        </xs:complexType>
-                    </xs:element>
-                    <xs:element name="upper-bound" minOccurs="0" maxOccurs="1">
-                        <xs:complexType>
-                            <xs:attribute name="value" type="xs:int">
-                                <xs:annotation>
-                                    <xs:documentation>
-                                        Sets the counter's upper bound (inclusive). it makes the strong consistent
-                                        counter bounded.
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:attribute>
-                        </xs:complexType>
-                    </xs:element>
-                </xs:sequence>
+                <xs:attribute name="lower-bound" type="xs:int">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Sets the counter's lower bound (inclusive). It makes the strong consistent counter bounded.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="upper-bound" type="xs:int">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Sets the counter's upper bound (inclusive). it makes the strong consistent
+                            counter bounded.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

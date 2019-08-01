@@ -32,11 +32,6 @@ public class DummyInMemoryStoreConfiguration extends AbstractSegmentedStoreConfi
       }
 
       @Override
-      public boolean isSynthetic(String attribute) {
-         return attribute.equals("class");
-      }
-
-      @Override
       public boolean supports(String name) {
          return false;
       }

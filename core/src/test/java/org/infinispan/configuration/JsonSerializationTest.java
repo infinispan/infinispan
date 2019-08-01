@@ -4,9 +4,11 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.security.Principal;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -58,6 +61,7 @@ import org.infinispan.security.PrincipalRoleMapperContext;
 import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -166,6 +170,12 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       testConfigurations(builderHolder);
    }
 
+   private ConfigurationBuilderHolder parseStringConfiguration(String config) {
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
+      return parserRegistry.parse(is, null);
+   }
+
    @Test
    public void testResourcesConfiguration() throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry();
@@ -175,6 +185,25 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
          ConfigurationBuilderHolder builderHolder = parserRegistry.parse(new FileInputStream(f), new URLXMLResourceResolver(f.toURI().toURL()));
          testConfigurations(builderHolder);
       }
+   }
+
+   @Test
+   public void testDummyInMemoryStore() {
+      String config = TestingUtil.wrapXMLWithoutSchema(
+            "<cache-container default-cache=\"default\"><local-cache name=\"default\">\n" +
+                  "<persistence ><store class=\"org.infinispan.persistence.dummy.DummyInMemoryStore\" >\n" +
+                  "<property name=\"storeName\">myStore</property>" +
+                  "</store></persistence></local-cache></cache-container>"
+      );
+      ConfigurationBuilderHolder holder = parseStringConfiguration(config);
+      PersistenceConfiguration cfg = holder.getDefaultConfigurationBuilder().build().persistence();
+      ConfigurationBuilder before = holder.getNamedConfigurationBuilders().get("default");
+
+      String toJSON = jsonWriter.toJSON(cfg);
+      ConfigurationBuilder after = new ConfigurationBuilder();
+      jsonReader.readJson(after, toJSON);
+
+      assertEquals(before.build().persistence(), after.persistence().build().persistence());
    }
 
    @Test

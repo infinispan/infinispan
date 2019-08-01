@@ -12,6 +12,9 @@ import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 
+/**
+ * @since 10.0
+ */
 public class JsonWriter {
 
    static {
@@ -82,29 +85,16 @@ public class JsonWriter {
       Json json = Json.object();
 
       for (Attribute<?> attribute : attributeSet.attributes()) {
-         boolean isPersistent = attribute.isPersistent();
          AttributeSerializer serializerConfig = attribute.getAttributeDefinition().getSerializerConfig();
-         String topLevelElement = serializerConfig.getParentElement(element);
          String attrName = serializerConfig.getSerializationName(attribute, element);
          Object attrValue = serializerConfig.getSerializationValue(attribute, element);
-
-         if (attribute.isModified()) isPersistent = true;
-
-         if (isPersistent && !topLevelElement.isEmpty() && json.at(topLevelElement) == null) {
-            json.set(topLevelElement, Json.object());
-         }
-
          if (attribute.isModified()) {
             if (attrName == null && attrValue instanceof Map) {
                Map<String, Object> valueMap = (Map<String, Object>) attrValue;
                valueMap.forEach(json::set);
             } else {
                if (attrName != null && !attrName.isEmpty() && attrValue != null) {
-                  if (topLevelElement.isEmpty()) {
-                     json.set(attrName, attrValue);
-                  } else {
-                     json.at(topLevelElement, Json.object()).set(attrName, attrValue);
-                  }
+                  json.set(attrName, attrValue);
                }
             }
          }

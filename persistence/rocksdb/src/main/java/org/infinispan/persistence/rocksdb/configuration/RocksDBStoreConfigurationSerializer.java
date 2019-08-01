@@ -26,10 +26,12 @@ public class RocksDBStoreConfigurationSerializer extends AbstractStoreSerializer
          attributes.write(writer, RocksDBStoreConfiguration.COMPRESSION_TYPE, Attribute.TYPE);
          writer.writeEndElement();
       }
-      if (attributes.attribute(RocksDBStoreConfiguration.EXPIRED_LOCATION).isModified() || attributes.attribute(RocksDBStoreConfiguration.EXPIRY_QUEUE_SIZE).isModified()) {
+      RocksDBExpirationConfiguration expiration = configuration.expiration();
+      AttributeSet expirationAttrs = expiration.attributes();
+      if (expirationAttrs.attribute(RocksDBExpirationConfiguration.EXPIRED_LOCATION).isModified() || expirationAttrs.attribute(RocksDBExpirationConfiguration.EXPIRY_QUEUE_SIZE).isModified()) {
          writer.writeStartElement(Element.EXPIRATION);
-         attributes.write(writer, RocksDBStoreConfiguration.EXPIRED_LOCATION, Attribute.PATH);
-         attributes.write(writer, RocksDBStoreConfiguration.EXPIRY_QUEUE_SIZE, Attribute.QUEUE_SIZE);
+         expirationAttrs.write(writer, RocksDBExpirationConfiguration.EXPIRED_LOCATION, Attribute.PATH);
+         expirationAttrs.write(writer, RocksDBExpirationConfiguration.EXPIRY_QUEUE_SIZE, Attribute.QUEUE_SIZE);
          writer.writeEndElement();
       }
       writeCommonStoreElements(writer, configuration);
