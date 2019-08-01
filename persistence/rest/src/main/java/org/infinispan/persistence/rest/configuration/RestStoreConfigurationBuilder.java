@@ -1,16 +1,15 @@
 package org.infinispan.persistence.rest.configuration;
 
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH;
-import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.HOST;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.KEY2STRING_MAPPER;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.MAX_CONTENT_LENGTH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.METADATA_HELPER;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PATH;
-import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PORT;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.RAW_VALUES;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -31,10 +30,14 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
       implements RestStoreConfigurationChildBuilder<RestStoreConfigurationBuilder>, ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(RestStoreConfigurationBuilder.class, Log.class);
    private final ConnectionPoolConfigurationBuilder connectionPool;
+   private final RemoteServerConfigurationBuilder remoteServer;
+   private final List<ConfigurationBuilderInfo> subElements;
 
    public RestStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RestStoreConfiguration.attributeDefinitionSet());
       connectionPool = new ConnectionPoolConfigurationBuilder(this);
+      remoteServer = new RemoteServerConfigurationBuilder();
+      subElements = Arrays.asList(connectionPool, remoteServer);
    }
 
    @Override
@@ -49,7 +52,7 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
-      return Collections.singletonList(connectionPool);
+      return subElements;
    }
 
    @Override
@@ -64,7 +67,7 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public RestStoreConfigurationBuilder host(String host) {
-      attributes.attribute(HOST).set(host);
+      remoteServer.host(host);
       return this;
    }
 
@@ -100,7 +103,7 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public RestStoreConfigurationBuilder port(int port) {
-      attributes.attribute(PORT).set(port);
+      remoteServer.port(port);
       return this;
    }
 
@@ -124,23 +127,21 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public RestStoreConfiguration create() {
-      return new RestStoreConfiguration(attributes.protect(), async.create(), connectionPool.create());
+      return new RestStoreConfiguration(attributes.protect(), async.create(), connectionPool.create(), remoteServer.create());
    }
 
    @Override
    public RestStoreConfigurationBuilder read(RestStoreConfiguration template) {
       super.read(template);
       this.connectionPool.read(template.connectionPool());
-
+      this.remoteServer.read(template.remoteServer());
       return this;
    }
 
    @Override
    public void validate() {
       this.connectionPool.validate();
-      if (attributes.attribute(HOST).get() == null) {
-         throw log.hostNotSpecified();
-      }
+      this.remoteServer.validate();
       String path = attributes.attribute(PATH).get();
       if (!path.endsWith("/")) {
          path(path + "/");

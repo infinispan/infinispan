@@ -1,5 +1,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.persistence.sifs.configuration.DataConfiguration;
+import org.infinispan.persistence.sifs.configuration.IndexConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
@@ -55,7 +57,7 @@ public class SoftIndexConfigurationResource extends BaseStoreConfigurationResour
                .setXmlName(Attribute.MAX_FILE_SIZE.getLocalName())
                .setAllowExpression(true)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(SoftIndexFileStoreConfiguration.MAX_FILE_SIZE.getDefaultValue()))
+               .setDefaultValue(new ModelNode().set(DataConfiguration.MAX_FILE_SIZE.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition SYNC_WRITES =
@@ -63,7 +65,7 @@ public class SoftIndexConfigurationResource extends BaseStoreConfigurationResour
                .setXmlName(Attribute.SYNC_WRITES.getLocalName())
                .setAllowExpression(true)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(SoftIndexFileStoreConfiguration.SYNC_WRITES.getDefaultValue()))
+               .setDefaultValue(new ModelNode().set(DataConfiguration.SYNC_WRITES.getDefaultValue()))
                .build();
 
    // Index Attributes
@@ -72,7 +74,7 @@ public class SoftIndexConfigurationResource extends BaseStoreConfigurationResour
                .setXmlName(Attribute.MAX_QUEUE_LENGTH.getLocalName())
                .setAllowExpression(true)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(SoftIndexFileStoreConfiguration.INDEX_QUEUE_LENGTH.getDefaultValue()))
+               .setDefaultValue(new ModelNode().set(IndexConfiguration.INDEX_QUEUE_LENGTH.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition SEGMENTS =
@@ -80,7 +82,7 @@ public class SoftIndexConfigurationResource extends BaseStoreConfigurationResour
                .setXmlName(Attribute.SEGMENTS.getLocalName())
                .setAllowExpression(true)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(SoftIndexFileStoreConfiguration.INDEX_SEGMENTS.getDefaultValue()))
+               .setDefaultValue(new ModelNode().set(IndexConfiguration.INDEX_SEGMENTS.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition MAX_NODE_SIZE =
@@ -88,7 +90,7 @@ public class SoftIndexConfigurationResource extends BaseStoreConfigurationResour
                .setXmlName(Attribute.MAX_NODE_SIZE.getLocalName())
                .setAllowExpression(true)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(SoftIndexFileStoreConfiguration.MAX_NODE_SIZE.getDefaultValue()))
+               .setDefaultValue(new ModelNode().set(IndexConfiguration.MAX_NODE_SIZE.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition MIN_NODE_SIZE =
@@ -96,7 +98,7 @@ public class SoftIndexConfigurationResource extends BaseStoreConfigurationResour
                .setXmlName(Attribute.MIN_NODE_SIZE.getLocalName())
                .setAllowExpression(true)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(SoftIndexFileStoreConfiguration.MIN_NODE_SIZE.getDefaultValue()))
+               .setDefaultValue(new ModelNode().set(IndexConfiguration.MIN_NODE_SIZE.getDefaultValue()))
                .build();
 
 

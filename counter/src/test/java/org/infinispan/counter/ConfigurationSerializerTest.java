@@ -51,7 +51,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
 
    @DataProvider
    public static Object[][] configurationFiles() {
-      return new Object[][]{{Paths.get("config/counters.xml")}};
+      return new Object[][]{{Paths.get("config/counters.xml")}, {Paths.get("config/counters-9.4.xml")}};
    }
 
    public void testParser() throws IOException {

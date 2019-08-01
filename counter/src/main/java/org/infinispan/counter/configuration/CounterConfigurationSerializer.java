@@ -70,18 +70,6 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
          throws XMLStreamException {
       writer.writeStartElement(Element.STRONG_COUNTER);
       configuration.attributes().write(writer);
-      if (configuration.attributes().attribute(StrongCounterConfiguration.LOWER_BOUND).isModified()) {
-         writeBound(Element.LOWER_BOUND, configuration.lowerBound(), writer);
-      }
-      if (configuration.attributes().attribute(StrongCounterConfiguration.UPPER_BOUND).isModified()) {
-         writeBound(Element.UPPER_BOUND, configuration.upperBound(), writer);
-      }
-      writer.writeEndElement();
-   }
-
-   private void writeBound(Element element, long value, XMLExtendedStreamWriter writer) throws XMLStreamException {
-      writer.writeStartElement(element);
-      writer.writeAttribute(Attribute.VALUE, Long.toString(value));
       writer.writeEndElement();
    }
 }

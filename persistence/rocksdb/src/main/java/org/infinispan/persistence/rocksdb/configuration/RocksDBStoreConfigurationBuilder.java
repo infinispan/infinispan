@@ -4,9 +4,10 @@ import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfi
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CACHE_SIZE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CLEAR_THRESHOLD;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.COMPRESSION_TYPE;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.EXPIRED_LOCATION;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.EXPIRY_QUEUE_SIZE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
+
+import java.util.Collection;
+import java.util.Collections;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
@@ -23,13 +24,20 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RocksDBStoreConfiguration, RocksDBStoreConfigurationBuilder>
       implements ConfigurationBuilderInfo {
 
+   RocksDBExpirationConfigurationBuilder expiration = new RocksDBExpirationConfigurationBuilder();
+
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RocksDBStoreConfiguration.attributeDefinitionSet());
    }
 
    @Override
    public ElementDefinition getElementDefinition() {
-      return RocksDBStoreConfiguration.ELEMENT_DEFINTION;
+      return RocksDBStoreConfiguration.ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
+      return Collections.singletonList(expiration);
    }
 
    @Override
@@ -43,7 +51,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    }
 
    public RocksDBStoreConfigurationBuilder expiredLocation(String expiredLocation) {
-      attributes.attribute(EXPIRED_LOCATION).set(expiredLocation);
+      expiration.expiredLocation(expiredLocation);
       return self();
    }
 
@@ -58,7 +66,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    }
 
    public RocksDBStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
-      attributes.attribute(EXPIRY_QUEUE_SIZE).set(expiryQueueSize);
+      expiration.expiryQueueSize(expiryQueueSize);
       return self();
    }
 
@@ -76,16 +84,18 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    public void validate() {
       // how do you validate required attributes?
       super.validate();
+      expiration.validate();
    }
 
    @Override
    public RocksDBStoreConfiguration create() {
-      return new RocksDBStoreConfiguration(attributes.protect(), async.create());
+      return new RocksDBStoreConfiguration(attributes.protect(), async.create(), expiration.create());
    }
 
    @Override
    public Builder<?> read(RocksDBStoreConfiguration template) {
       super.read(template);
+      expiration.read(template.expiration());
       return self();
    }
 

@@ -33,6 +33,7 @@ public class Version {
    private final short marshallVersion;
    private final String majorMinor;
    private final String major;
+   private final String minor;
 
 
    private Version() {
@@ -54,6 +55,7 @@ public class Version {
       marshallVersion = Short.valueOf(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
       major = parts[0];
+      minor = parts[1];
    }
 
    public static String getVersion() {
@@ -86,6 +88,10 @@ public class Version {
 
    public static String getMajor() {
       return INSTANCE.major;
+   }
+
+   public static String getMinor() {
+      return INSTANCE.minor;
    }
 
    public static boolean compareTo(byte[] v) {

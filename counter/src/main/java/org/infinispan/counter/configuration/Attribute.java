@@ -13,11 +13,13 @@ public enum Attribute {
 
    CONCURRENCY_LEVEL("concurrency-level"),
    INITIAL_VALUE("initial-value"),
+   LOWER_BOUND("lower-bound"),
    NAME("name"),
    NUM_OWNERS("num-owners"),
    RELIABILITY("reliability"),
    STORAGE("storage"),
-   VALUE("value"),;
+   UPPER_BOUND("upper-bound"),
+   VALUE("value");
    private static final Map<String, Attribute> ATTRIBUTES;
 
    static {

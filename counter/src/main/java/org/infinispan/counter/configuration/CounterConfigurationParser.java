@@ -13,12 +13,14 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
+import org.infinispan.configuration.parsing.Schema;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.logging.Log;
@@ -114,7 +116,12 @@ public class CounterConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case STRONG_COUNTER:
-               parseStrongCounter(reader, builder.addStrongCounter());
+               Schema schema = getSchema(reader);
+               if (!schema.since(10, 0)) {
+                  parseStrongCounterLegacy(reader, builder.addStrongCounter());
+               } else {
+                  parseStrongCounter(reader, builder.addStrongCounter());
+               }
                break;
             case WEAK_COUNTER:
                parseWeakCounter(reader, builder.addWeakCounter());
@@ -123,6 +130,12 @@ public class CounterConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
          }
       }
+   }
+
+   private Schema getSchema(XMLStreamReader reader) {
+      String namespaceURI = reader.getNamespaceURI();
+      if(namespaceURI == null) return new Schema(Integer.parseInt(Version.getMajor()), Integer.parseInt(Version.getMinor()));
+      return Schema.fromNamespaceURI(namespaceURI);
    }
 
    private void parseWeakCounter(XMLStreamReader reader, WeakCounterConfigurationBuilder builder)
@@ -142,7 +155,7 @@ public class CounterConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseStrongCounter(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
+   private void parseStrongCounterLegacy(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -194,6 +207,27 @@ public class CounterConfigurationParser implements ConfigurationParser {
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+
+   private void parseStrongCounter(XMLStreamReader reader, StrongCounterConfigurationBuilder builder)
+         throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case UPPER_BOUND:
+               builder.upperBound(Long.parseLong(value));
+               break;
+            case LOWER_BOUND:
+               builder.lowerBound(Long.parseLong(value));
+               break;
+            default:
+               parserCommonCounterAttributes(reader, builder, i, attribute, value);
          }
       }
       ParseUtils.requireNoContent(reader);

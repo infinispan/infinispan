@@ -1,16 +1,16 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
-import static org.infinispan.persistence.rocksdb.configuration.Element.EXPIRATION;
 import static org.infinispan.persistence.rocksdb.configuration.Element.ROCKSDB_STORE;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.NestingAttributeSerializer;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -28,45 +28,48 @@ import org.infinispan.persistence.rocksdb.RocksDBStore;
 @SerializedWith(RocksDBStoreConfigurationSerializer.class)
 public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
 
-   private static AttributeSerializer UNDER_EXPIRATION = new NestingAttributeSerializer<>(EXPIRATION.getLocalName());
-
    final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-RocksDBStore/data").immutable().xmlName("path").build();
-   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("expiredLocation", "Infinispan-RocksDBStore/expired").immutable().autoPersist(false).xmlName("path").serializer(UNDER_EXPIRATION).build();
    final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder("compressionType", CompressionType.NONE).immutable().autoPersist(false).build();
    final static AttributeDefinition<Integer> BLOCK_SIZE = AttributeDefinition.builder("blockSize", 0).immutable().build();
    final static AttributeDefinition<Long> CACHE_SIZE = AttributeDefinition.builder("cacheSize", 0l).immutable().build();
-   final static AttributeDefinition<Integer> EXPIRY_QUEUE_SIZE = AttributeDefinition.builder("expiryQueueSize", 10000).immutable().autoPersist(false).serializer(UNDER_EXPIRATION).build();
    final static AttributeDefinition<Integer> CLEAR_THRESHOLD = AttributeDefinition.builder("clearThreshold", 10000).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RocksDBStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, EXPIRED_LOCATION, COMPRESSION_TYPE,
-            BLOCK_SIZE, CACHE_SIZE, EXPIRY_QUEUE_SIZE, CLEAR_THRESHOLD);
+      return new AttributeSet(RocksDBStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, COMPRESSION_TYPE,
+            BLOCK_SIZE, CACHE_SIZE, CLEAR_THRESHOLD);
    }
 
-   public static ElementDefinition ELEMENT_DEFINTION = new DefaultElementDefinition(ROCKSDB_STORE.getLocalName());
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ROCKSDB_STORE.getLocalName());
 
    private final Attribute<String> location;
-   private final Attribute<String> expiredLocation;
    private final Attribute<CompressionType> compressionType;
    private final Attribute<Integer> blockSize;
    private final Attribute<Long> cacheSize;
-   private final Attribute<Integer> expiryQueueSize;
    private final Attribute<Integer> clearThreshold;
+   private final RocksDBExpirationConfiguration expiration;
 
-   public RocksDBStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+   public RocksDBStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, RocksDBExpirationConfiguration expiration) {
       super(attributes, async);
       location = attributes.attribute(LOCATION);
-      expiredLocation = attributes.attribute(EXPIRED_LOCATION);
       compressionType = attributes.attribute(COMPRESSION_TYPE);
       blockSize = attributes.attribute(BLOCK_SIZE);
       cacheSize = attributes.attribute(CACHE_SIZE);
-      expiryQueueSize = attributes.attribute(EXPIRY_QUEUE_SIZE);
       clearThreshold = attributes.attribute(CLEAR_THRESHOLD);
+      this.expiration = expiration;
+   }
+
+   public RocksDBExpirationConfiguration expiration() {
+      return expiration;
    }
 
    @Override
    public ElementDefinition getElementDefinition() {
-      return ELEMENT_DEFINTION;
+      return ELEMENT_DEFINITION;
+   }
+
+   @Override
+   public List<ConfigurationInfo> subElements() {
+      return Collections.singletonList(expiration);
    }
 
    @Override
@@ -79,7 +82,7 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
    }
 
    public String expiredLocation() {
-      return expiredLocation.get();
+      return expiration.expiredLocation();
    }
 
    public CompressionType compressionType() {
@@ -95,7 +98,7 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
    }
 
    public int expiryQueueSize() {
-      return expiryQueueSize.get();
+      return expiration.expiryQueueSize();
    }
 
    public int clearThreshold() {

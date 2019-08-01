@@ -17,19 +17,13 @@ import org.infinispan.commons.util.Util;
  */
 public abstract class AttributeSerializer<T, U extends ConfigurationInfo, B extends ConfigurationBuilderInfo> {
 
-   public boolean canRead(String enclosing, String nestingName, String nestedName, AttributeDefinition attributeDefinition) {
-      return nestingName == null && nestedName != null && nestedName.equals(attributeDefinition.xmlName());
+   public boolean canRead(String name, AttributeDefinition attributeDefinition) {
+      return name != null && name.equals(attributeDefinition.xmlName());
    }
 
    /**
-    * Returns the parent element that this attribute should be placed under when serializing, or empty String if the attribute is not nested.
-    */
-   public String getParentElement(U configurationElement) {
-      return "";
-   }
-
-   /**
-    * @return The desired serialised attribute name.
+    * @return The desired serialised attribute name or null if the attribute name is to be omitted and the value will
+    * be written directly
     */
    public String getSerializationName(Attribute<T> attribute, U configurationElement) {
       return attribute.getAttributeDefinition().xmlName();
@@ -43,7 +37,7 @@ public abstract class AttributeSerializer<T, U extends ConfigurationInfo, B exte
    }
 
    /**
-    * Read attribute value from serialized format, if {@link #canRead(String, String, String, AttributeDefinition)} is true
+    * Read attribute value from serialized format, if {@link #canRead(String, AttributeDefinition)} is true
     * for this instance of serializer.
     *
     * @param enclosingElement The parent element where the attribute is located.
