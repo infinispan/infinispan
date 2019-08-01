@@ -70,7 +70,7 @@ public class GlobalJmxStatisticsConfiguration implements ConfigurationInfo {
 
    /**
     * @return the cache manager name
-    * @deprecated use {@link GlobalConfigurationBuilder#cacheManagerName()} instead
+    * @deprecated use {@link GlobalConfiguration#cacheManagerName()} instead
     */
    @Deprecated
    public String cacheManagerName() {

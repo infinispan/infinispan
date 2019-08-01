@@ -12,6 +12,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.CacheManagerInfo;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
@@ -118,6 +119,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public Health getHealth() {
       return cm.getHealth();
+   }
+
+   @Override
+   public CacheManagerInfo getCacheManagerInfo() {
+      return cm.getCacheManagerInfo();
    }
 
    @Override

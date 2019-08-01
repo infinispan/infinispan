@@ -109,6 +109,10 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.globalJmxStatistics();
    }
 
+   public String cacheManagerName() {
+      return cacheContainerConfiguration.cacheManagerName();
+   }
+
    public TransportConfiguration transport() {
       return cacheContainerConfiguration.transport();
    }

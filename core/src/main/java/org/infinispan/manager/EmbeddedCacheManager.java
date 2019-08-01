@@ -332,6 +332,11 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    Health getHealth();
 
    /**
+    * @return an instance of {@link CacheManagerInfo} used to get basic info about the cache manager.
+    */
+   CacheManagerInfo getCacheManagerInfo();
+
+   /**
     * Provides an {@link EmbeddedCacheManagerAdmin} whose methods affect the entire cluster as opposed to a single node.
     *
     * @since 9.2

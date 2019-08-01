@@ -30,8 +30,8 @@ public class TransportConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Long> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
            "initialClusterTimeout", TimeUnit.MINUTES.toMillis(1)).build();
    public static final AttributeDefinition<String> STACK = AttributeDefinition.builder("stack", null, String.class).build();
-   public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", null, String.class).build();
-   public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", null, String.class).build();
+   public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", "transport-pool", String.class).build();
+   public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", "remote-command-pool", String.class).build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TransportConfiguration.class, CLUSTER_NAME, MACHINE_ID, RACK_ID, SITE_ID, NODE_NAME,
