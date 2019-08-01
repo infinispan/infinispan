@@ -1044,7 +1044,9 @@ public class Parser implements ConfigurationParser {
 
       ThreadPoolConfiguration threadPoolConfiguration = threadPool.asThreadPoolConfigurationBuilder();
       DefaultThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
-      threadFactory.setComponent(shortened(componentName));
+      if (threadFactory != null) {
+         threadFactory.setComponent(shortened(componentName));
+      }
       return threadPoolConfiguration;
    }
 

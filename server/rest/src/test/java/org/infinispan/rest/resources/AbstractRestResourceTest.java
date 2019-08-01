@@ -41,7 +41,8 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
    protected void createCacheManagers() throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      GlobalConfigurationBuilder globalConfiguration = globalBuilder.clusteredDefault();
+      globalBuilder.globalJmxStatistics().enable();
+      GlobalConfigurationBuilder globalConfiguration = globalBuilder.clusteredDefault().cacheManagerName("default");
 
       createCluster(globalConfiguration, getDefaultCacheBuilder(), NUM_SERVERS);
 

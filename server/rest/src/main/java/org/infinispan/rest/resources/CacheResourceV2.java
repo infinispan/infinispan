@@ -1,5 +1,6 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -149,9 +150,11 @@ public class CacheResourceV2 extends CacheResource {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
 
-      MediaType accept = ConfigResource.getAccept(request);
+      MediaType accept = CacheManagerResource.getAccept(request);
       responseBuilder.contentType(accept);
-
+      if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
+         responseBuilder.status(NOT_FOUND).build();
+      }
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request.getSubject());
       if (cache == null)
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());

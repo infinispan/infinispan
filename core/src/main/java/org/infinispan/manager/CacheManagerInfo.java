@@ -1,0 +1,156 @@
+package org.infinispan.manager;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.infinispan.Version;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.configuration.ConfigurationManager;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+
+/**
+ * @since 10.0
+ */
+public class CacheManagerInfo {
+
+   public static final List<String> LOCAL_NODE = Collections.singletonList("local");
+   private final DefaultCacheManager cacheManager;
+   private final ConfigurationManager configurationManager;
+   private final GlobalComponentRegistry globalComponentRegistry;
+   private InternalCacheRegistry internalCacheRegistry;
+
+   public CacheManagerInfo(DefaultCacheManager cacheManager) {
+      this.cacheManager = cacheManager;
+      this.configurationManager = cacheManager.getConfigurationManager();
+      this.globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
+      this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+
+   }
+
+   public String getCoordinatorAddress() {
+      Transport t = cacheManager.getTransport();
+      return t == null ? "N/A" : t.getCoordinator().toString();
+   }
+
+   public boolean isCoordinator() {
+      return cacheManager.getTransport() != null && cacheManager.getTransport().isCoordinator();
+   }
+
+   public String getCacheManagerStatus() {
+      return cacheManager.getStatus().toString();
+   }
+
+
+   public Set<BasicCacheInfo> getDefinedCaches() {
+      return cacheManager.getCacheNames().stream().map(c -> {
+         boolean started = cacheManager.getCaches().containsKey(c);
+         return new BasicCacheInfo(c, started);
+      }).collect(Collectors.toSet());
+   }
+
+   public Set<String> getCacheConfigurationNames() {
+      Set<String> names = new HashSet<>(configurationManager.getDefinedConfigurations());
+      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      internalCacheRegistry.filterPrivateCaches(names);
+      if (names.isEmpty())
+         return Collections.emptySet();
+      else
+         return Immutables.immutableSetWrap(names);
+   }
+
+   public String getCreatedCacheCount() {
+      long created = cacheManager.getCaches().keySet().stream().filter(c -> !internalCacheRegistry.isInternalCache(c)).count();
+      return String.valueOf(created);
+   }
+
+   public String getRunningCacheCount() {
+      long running = cacheManager.getCaches().keySet().stream().filter(c -> cacheManager.isRunning(c) && !internalCacheRegistry.isInternalCache(c)).count();
+      return String.valueOf(running);
+   }
+
+   public String getVersion() {
+      return Version.getVersion();
+   }
+
+   public String getName() {
+      return configurationManager.getGlobalConfiguration().globalJmxStatistics().cacheManagerName();
+   }
+
+   public String getNodeAddress() {
+      return cacheManager.getLogicalAddressString();
+   }
+
+   public String getPhysicalAddresses() {
+      if (cacheManager.getTransport() == null) return "local";
+      List<Address> address = cacheManager.getTransport().getPhysicalAddresses();
+      return address == null ? "local" : address.toString();
+   }
+
+   public List<String> getClusterMembers() {
+      if (cacheManager.getTransport() == null) return LOCAL_NODE;
+      return cacheManager.getTransport().getMembers().stream().map(Objects::toString).collect(Collectors.toList());
+   }
+
+   public List<String> getClusterMembersPhysicalAddresses() {
+      if (cacheManager.getTransport() == null) return LOCAL_NODE;
+      List<Address> addressList = cacheManager.getTransport().getMembersPhysicalAddresses();
+      return addressList.stream().map(Objects::toString).collect(Collectors.toList());
+   }
+
+   public int getClusterSize() {
+      if (cacheManager.getTransport() == null) return 1;
+      return cacheManager.getTransport().getMembers().size();
+   }
+
+   public String getClusterName() {
+      return configurationManager.getGlobalConfiguration().transport().clusterName();
+   }
+
+   private String getLogicalAddressString() {
+      return cacheManager.getAddress() == null ? "local" : cacheManager.getAddress().toString();
+   }
+
+   static class BasicCacheInfo {
+      String name;
+      boolean started;
+
+      BasicCacheInfo(String name, boolean started) {
+         this.name = name;
+         this.started = started;
+      }
+
+      public String getName() {
+         return name;
+      }
+
+      public boolean isStarted() {
+         return started;
+      }
+   }
+
+   static class ClusterMember {
+      String name;
+      String address;
+
+      public ClusterMember(String name, String address) {
+         this.name = name;
+         this.address = address;
+      }
+
+      public String getName() {
+         return name;
+      }
+
+      public String getAddress() {
+         return address;
+      }
+   }
+
+}

@@ -28,7 +28,7 @@ public class JsonWriter {
    void writeElement(Json parent, ConfigurationInfo element, boolean renderName) {
       ElementDefinition configurationElement = element.getElementDefinition();
       if (configurationElement == null) {
-         throw new CacheConfigurationException("No ElementDefinition found for " + this.getClass());
+         throw new CacheConfigurationException("No ElementDefinition found for " + element.getClass());
       }
 
       AttributeSet attributes = element.attributes();
