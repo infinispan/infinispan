@@ -20,7 +20,6 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 
@@ -92,11 +91,13 @@ public final class MediaType {
    private static final double DEFAULT_WEIGHT = 1.0;
    private static final Charset DEFAULT_CHARSET = UTF_8;
 
-   private final Map<String, String> params = new HashMap<>(2);
-   private final String type;
-   private final String subType;
-   private final String typeSubtype;
-   private final transient double weight;
+   private Map<String, String> params = new HashMap<>(2);
+   private String type;
+   private String subType;
+   private String typeSubtype;
+   private transient double weight;
+
+   MediaType() {}
 
    public MediaType(String type, String subtype) {
       this(type, subtype, emptyMap());
@@ -120,17 +121,24 @@ public final class MediaType {
       return toString();
    }
 
-   public static MediaType parse(String str) {
-      return fromString(str);
+   void setTree(String tree) {
+      MediaType type = MediaType.fromString(tree);
+      this.type = type.type;
+      this.subType = type.subType;
+      this.typeSubtype = type.typeSubtype;
+      this.weight = type.weight;
    }
 
-   @ProtoFactory
-   public static MediaType fromString(String tree) {
-      if (tree == null || tree.isEmpty()) throw log.missingMediaType();
-      int separatorIdx = tree.indexOf(';');
+   public static MediaType fromString(String mediaType) {
+      return parse(mediaType);
+   }
+
+   public static MediaType parse(String str) {
+      if (str == null || str.isEmpty()) throw log.missingMediaType();
+      int separatorIdx = str.indexOf(';');
       boolean emptyParams = separatorIdx == -1;
-      String types = emptyParams ? tree : tree.substring(0, separatorIdx);
-      String params = emptyParams ? "" : tree.substring(separatorIdx + 1);
+      String types = emptyParams ? str : str.substring(0, separatorIdx);
+      String params = emptyParams ? "" : str.substring(separatorIdx + 1);
       Map<String, String> paramMap = parseParams(params);
 
       // "*" is not a valid MediaType according to the https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html,
@@ -149,7 +157,7 @@ public final class MediaType {
 
    public static Stream<MediaType> parseList(String mediaTypeList) {
       return stream(mediaTypeList.split(","))
-            .map(MediaType::fromString)
+            .map(MediaType::parse)
             .sorted(Comparator.comparingDouble((MediaType m) -> m.weight).reversed());
    }
 

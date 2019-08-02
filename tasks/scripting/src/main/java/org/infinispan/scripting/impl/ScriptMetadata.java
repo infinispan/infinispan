@@ -14,7 +14,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -30,28 +29,28 @@ public class ScriptMetadata implements Metadata {
    private final static Set<String> TEXT_BASED_MEDIA = Util.asSet(TEXT_PLAIN_TYPE, APPLICATION_JSON_TYPE, APPLICATION_XML_TYPE);
 
    @ProtoField(number = 1)
-   final String name;
+   String name;
 
    @ProtoField(number = 2)
-   final ExecutionMode mode;
+   ExecutionMode mode;
 
    @ProtoField(number = 3)
-   final String extension;
+   String extension;
 
    @ProtoField(number = 4, collectionImplementation = HashSet.class)
-   final Set<String> parameters;
+   Set<String> parameters;
 
    @ProtoField(number = 5)
-   final MediaType dataType;
+   MediaType dataType;
 
    @ProtoField(number = 6)
-   final String language;
+   String language;
 
    @ProtoField(number = 7)
-   final String role;
+   String role;
 
+   ScriptMetadata() {}
 
-   @ProtoFactory
    ScriptMetadata(String name, String language, String extension, ExecutionMode mode, Set<String> parameters,
                   String role, MediaType dataType) {
       this.name = name;

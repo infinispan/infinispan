@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.impl.entries.CounterKey;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
 
@@ -17,14 +16,16 @@ import org.infinispan.util.ByteString;
  */
 public class StrongCounterKey implements CounterKey {
 
-   private final ByteString counterName;
+   @ProtoField(number = 1)
+   ByteString counterName;
+
+   StrongCounterKey() {}
 
    StrongCounterKey(String counterName) {
       this(ByteString.fromString(counterName));
    }
 
-   @ProtoFactory
-   StrongCounterKey(ByteString counterName) {
+   private StrongCounterKey(ByteString counterName) {
       this.counterName = Objects.requireNonNull(counterName);
    }
 
@@ -56,7 +57,6 @@ public class StrongCounterKey implements CounterKey {
    }
 
    @Override
-   @ProtoField(number = 1)
    public ByteString getCounterName() {
       return counterName;
    }

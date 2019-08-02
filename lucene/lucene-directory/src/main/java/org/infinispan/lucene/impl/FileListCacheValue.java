@@ -8,7 +8,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import net.jcip.annotations.ThreadSafe;
@@ -23,7 +22,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public final class FileListCacheValue {
 
-   private final Set<String> fileNames;
+   private final Set<String> fileNames = new HashSet<>();
    private final Lock writeLock;
    private final Lock readLock;
 
@@ -31,15 +30,9 @@ public final class FileListCacheValue {
     * Constructs a new empty set of file names.
     */
    FileListCacheValue() {
-      this(new HashSet<>());
-   }
-
-   @ProtoFactory
-   FileListCacheValue(Set<String> fileNames) {
       ReadWriteLock namesLock = new ReentrantReadWriteLock();
-      this.fileNames = fileNames;
-      this.writeLock = namesLock.writeLock();
-      this.readLock = namesLock.readLock();
+      writeLock = namesLock.writeLock();
+      readLock = namesLock.readLock();
    }
 
    @ProtoField(number = 1, collectionImplementation = HashSet.class)
@@ -49,6 +42,19 @@ public final class FileListCacheValue {
          return new HashSet<>(fileNames);
       } finally {
          readLock.unlock();
+      }
+   }
+
+   /**
+    * Setter method for protostream, writeLock is not strictly necessary as it should not be
+    * possible for this method to be called before protostream returns the initialized method.
+    */
+   void setFileNames(Set<String> names) {
+      writeLock.lock();
+      try {
+         this.fileNames.addAll(names);
+      } finally {
+         writeLock.unlock();
       }
    }
 
@@ -157,6 +163,11 @@ public final class FileListCacheValue {
 
    @Override
    public String toString() {
-      return "FileListCacheValue{fileNames=" + getFileNames() + "}";
+      readLock.lock();
+      try {
+         return "FileListCacheValue{fileNames=" + fileNames + "}";
+      } finally {
+         readLock.unlock();
+      }
    }
 }

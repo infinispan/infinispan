@@ -1,13 +1,11 @@
 package org.infinispan.server.memcached;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -18,16 +16,13 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetadata {
 
-   @ProtoField(number = 5, defaultValue = "0")
-   final long flags;
+   @ProtoField(number = 5, defaultValue = "-1")
+   long flags;
 
-   @ProtoFactory
-   MemcachedMetadata(long flags, long lifespan, NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion) {
-      this(flags, lifespan, numericVersion != null ? numericVersion : clusteredVersion);
-   }
+   MemcachedMetadata() {}
 
-   private MemcachedMetadata(long flags, long lifespan, EntryVersion version) {
-      super(lifespan, version);
+   private MemcachedMetadata(long flags, EntryVersion version, long lifespan, TimeUnit lifespanUnit) {
+      super(lifespan, lifespanUnit, version);
       this.flags = flags;
    }
 
@@ -58,7 +53,7 @@ class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetada
       return "MemcachedMetadata{" +
             "flags=" + flags +
             ", version=" + version() +
-            ", lifespan=" + lifespan() +
+            ", lifespanTime=" + lifespan() +
             '}';
    }
 
@@ -73,7 +68,7 @@ class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetada
 
       @Override
       public Metadata build() {
-         return new MemcachedMetadata(flags, lifespan == null ? -1 : lifespanUnit.toMillis(lifespan), version);
+         return new MemcachedMetadata(flags, version, lifespan == null ? -1 : lifespan, lifespanUnit);
       }
    }
 }

@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -19,14 +18,15 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class NumericVersion implements IncrementableEntryVersion {
 
-   private final long version;
+   @ProtoField(number = 1, defaultValue = "0")
+   long version;
 
-   @ProtoFactory
+   NumericVersion() {}
+
    public NumericVersion(long version) {
       this.version = version;
    }
 
-   @ProtoField(number = 1, defaultValue = "-1")
    public long getVersion() {
       return version;
    }
@@ -75,7 +75,7 @@ public class NumericVersion implements IncrementableEntryVersion {
 
       @Override
       public Set<Class<? extends NumericVersion>> getTypeClasses() {
-         return Collections.singleton(NumericVersion.class);
+         return Collections.<Class<? extends NumericVersion>>singleton(NumericVersion.class);
       }
 
       @Override

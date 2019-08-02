@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.entries.CounterKey;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
 
@@ -18,10 +17,14 @@ import org.infinispan.util.ByteString;
  */
 public class WeakCounterKey implements CounterKey {
 
-   private final ByteString counterName;
-   private final int index;
+   @ProtoField(number = 1)
+   ByteString counterName;
 
-   @ProtoFactory
+   @ProtoField(number = 2, defaultValue = "0")
+   int index;
+
+   WeakCounterKey() {}
+
    WeakCounterKey(ByteString counterName, int index) {
       this.counterName = Objects.requireNonNull(counterName);
       this.index = requirePositive(index);
@@ -34,13 +37,6 @@ public class WeakCounterKey implements CounterKey {
       return i;
    }
 
-   @Override
-   @ProtoField(number = 1)
-   public ByteString getCounterName() {
-      return counterName;
-   }
-
-   @ProtoField(number = 2, defaultValue = "0")
    int getIndex() {
       return index;
    }
@@ -74,5 +70,10 @@ public class WeakCounterKey implements CounterKey {
             "counterName=" + counterName +
             ", index=" + index +
             '}';
+   }
+
+   @Override
+   public ByteString getCounterName() {
+      return counterName;
    }
 }
