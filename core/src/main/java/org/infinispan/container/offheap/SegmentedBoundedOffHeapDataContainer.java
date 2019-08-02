@@ -234,7 +234,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
                map.remove(ice.getKey(), addressToRemove);
                // Note this is non blocking now
                AbstractInternalDataContainer.handleEviction(ice.getKey(), ice, orderer, passivator.running(),
-                     evictionManager, this);
+                     evictionManager, this, null);
             } finally {
                entryWriteLock.unlock();
             }

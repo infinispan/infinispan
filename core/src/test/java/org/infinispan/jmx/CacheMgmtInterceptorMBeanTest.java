@@ -145,6 +145,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertStores(2);
       TestingUtil.cleanUpDataContainerForCache(cache);
       assertCurrentNumberOfEntriesInMemory(1);
+      eventuallyAssertEvictions(2);
       assertCurrentNumberOfEntries(4);
    }
 
@@ -228,14 +229,14 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assert Float.parseFloat(receivedVal) == expectedValue : "expecting " + expectedValue + " for " + attrName + ", but received " + receivedVal;
    }
 
-   private void eventuallyAssertEvictions(float expectedValue) {
+   private void eventuallyAssertEvictions(long expectedValue) {
       eventuallyAssertAttributeValue("Evictions", expectedValue);
-      assertEquals(expectedValue, (float) advanced.getStats().getEvictions());
+      assertEquals(expectedValue, advanced.getStats().getEvictions());
    }
 
-   private void assertEvictions(float expectedValue) throws Exception {
+   private void assertEvictions(long expectedValue) throws Exception {
       assertAttributeValue("Evictions", expectedValue);
-      assert expectedValue == advanced.getStats().getEvictions();
+      assertEquals(expectedValue, advanced.getStats().getEvictions());
    }
 
    private void assertMisses(float expectedValue) throws Exception {

@@ -15,6 +15,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -54,6 +55,7 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 
 /**
  * Abstract class implemenation for a segmented data container. All methods delegate to
@@ -217,7 +219,8 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             // Note this is non blocking and we ignore the return value
             // - we don't need an orderer as it is handled in OrderedClusteringDependentLogic
             // - we don't need eviction manager either as it is handled in NotifyHelper
-            byRef.set(handleEviction(key, entry, null, passivator.running(), null, this));
+            byRef.set(handleEviction(key, entry, null, passivator.running(), null, this,
+                  null));
             computeEntryRemoved(o, entry);
             return null;
          });
@@ -498,7 +501,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                listener.onEntryChosenForEviction(key, value);
             }
          }
-      });
+      }).removalListener(listener);
    }
 
    static <K, V> Caffeine<K, V> caffeineBuilder() {
@@ -518,7 +521,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
     */
    public static <K, V> CompletionStage<Void> handleEviction(K key, InternalCacheEntry<K, V> value,
          NonBlockingOrderer orderer, PassivationManager passivator, EvictionManager<K, V> evictionManager,
-         DataContainer<K, V> dataContainer) {
+         DataContainer<K, V> dataContainer, CompletionStage<Void> writeDelay) {
       CompletableFuture<OPERATION> future = new CompletableFuture<>();
       CompletionStage<OPERATION> ordererStage = null;
       if (orderer != null) {
@@ -540,6 +543,25 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                   // If we are here it means this is after the eviction has completed - and thus if the
                   // entry is in the container it means the write put it there, so we skip eviction
                   if (dataContainer.containsKey(key)) {
+                     // AT this point we don't know for a fact if this WRITE has caused the entry to still be in the
+                     // DataContainer or if we are still in the eviction synchronized block just before it is removed
+                     // Thus we have to use the writeDelay if there is one provided. This will delay our operation
+                     // enough to ensure we are outside of the eviction lock and can view the key in the data container
+                     // as the current value - but still hold the orderer which prevents any additional updates
+                     if (writeDelay != null) {
+                        if (trace) {
+                           log.tracef("Delaying check for %s verify if passivation should occur as there was a" +
+                                 " concurrent write", key);
+                        }
+                        return writeDelay.thenCompose(ignore -> {
+                           // Recheck the data container after eviction has completed
+                           if (dataContainer.containsKey(key)) {
+                              return skipEviction(orderer, key, future, operation);
+                           } else {
+                              return handleNotificationAndOrderer(key, value, passivator.passivateAsync(value), orderer, evictionManager, future);
+                           }
+                        });
+                     }
                      return skipEviction(orderer, key, future, operation);
                   }
                default:
@@ -572,10 +594,26 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       return stage;
    }
 
-   final class DefaultEvictionListener {
+   final class DefaultEvictionListener implements RemovalListener<K, InternalCacheEntry<K, V>> {
+      Map<Object, CompletableFuture<Void>> ensureEvictionDone = new ConcurrentHashMap<>();
 
       void onEntryChosenForEviction(K key, InternalCacheEntry<K, V> value) {
-         handleEviction(key, value, orderer, passivator.running(), evictionManager, AbstractInternalDataContainer.this);
+         CompletableFuture<Void> future = new CompletableFuture<>();
+         ensureEvictionDone.put(key, future);
+         handleEviction(key, value, orderer, passivator.running(), evictionManager, AbstractInternalDataContainer.this,
+               future);
+      }
+
+      // It is very important that the fact that this method is invoked AFTER the entry has been evicted outside of the
+      // lock. This way we can see if the entry has been updated concurrently with an eviction properly
+      @Override
+      public void onRemoval(K key, InternalCacheEntry<K, V> value, RemovalCause cause) {
+         if (cause == RemovalCause.SIZE) {
+            CompletableFuture<Void> future = ensureEvictionDone.remove(key);
+            if (future != null) {
+               future.complete(null);
+            }
+         }
       }
    }
 
