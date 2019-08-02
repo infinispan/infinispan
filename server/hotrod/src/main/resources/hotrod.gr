@@ -109,7 +109,7 @@ mediaParamValue: string;
 mediaTypeDescription returns MediaType switch mediaTypeDefinition
    : { 0 }? { MediaType.APPLICATION_UNKNOWN }
    | { 1 }? mediaTypeId mediaTypeParams { MediaTypeIds.getMediaType((short) mediaTypeId).withParameters(mediaTypeParams) }
-   | { 2 }? mediaTypeName mediaTypeParams { MediaType.fromString(mediaTypeName).withParameters(mediaTypeParams) }
+   | { 2 }? mediaTypeName mediaTypeParams { MediaType.parse(mediaTypeName).withParameters(mediaTypeParams) }
    | { throw new RequestParsingException("Unknown MediaType definition: " + mediaTypeDefinition, version, messageId); }
    ;
 

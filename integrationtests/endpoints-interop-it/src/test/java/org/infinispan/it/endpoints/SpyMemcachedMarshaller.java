@@ -37,7 +37,7 @@ public class SpyMemcachedMarshaller extends AbstractMarshaller {
 
    @Override
    public MediaType mediaType() {
-      return MediaType.fromString("application/x-memcached");
+      return MediaType.parse("application/x-memcached");
    }
 
 }

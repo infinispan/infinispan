@@ -197,7 +197,7 @@ public class HotRodCustomMarshallerEventIT {
 
         @Override
         public MediaType mediaType() {
-            return MediaType.fromString("application/custom-id");
+            return MediaType.parse("application/custom-id");
         }
     }
 }

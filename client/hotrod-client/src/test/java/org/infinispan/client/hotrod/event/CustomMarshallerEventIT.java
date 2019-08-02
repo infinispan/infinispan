@@ -119,7 +119,7 @@ public class CustomMarshallerEventIT extends SingleHotRodServerTest {
 
       @Override
       public MediaType mediaType() {
-         return MediaType.fromString("application/x-custom-id");
+         return MediaType.parse("application/x-custom-id");
       }
    }
 

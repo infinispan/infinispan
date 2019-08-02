@@ -58,7 +58,7 @@ class MemcachedSubsystemAdd extends ProtocolServiceSubsystemAdd {
       final String clientEncoding = MemcachedConnectorResource.CLIENT_ENCODING.resolveModelAttribute(context, config).asString();
       // Create the builder
       MemcachedServerConfigurationBuilder configurationBuilder = new MemcachedServerConfigurationBuilder();
-      configurationBuilder.clientEncoding(MediaType.fromString(clientEncoding));
+      configurationBuilder.clientEncoding(MediaType.parse(clientEncoding));
       this.configureProtocolServer(context, configurationBuilder, config);
 
       // Create the service
