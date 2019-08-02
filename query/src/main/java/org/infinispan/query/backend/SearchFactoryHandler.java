@@ -131,8 +131,7 @@ final class SearchFactoryHandler {
       return searchFactory.getIndexBindings().get(c) != null;
    }
 
-   private CompletionStage<Void> handleClusterRegistryRegistration(QueryKnownClasses.KnownClassKey knownClassKey) {
-      Class<?> clazz = knownClassKey.getKnownClass(classLoader);
+   private CompletionStage<Void> handleClusterRegistryRegistration(final Class<?> clazz) {
       if (hasIndex(clazz)) {
          return null;
       }
@@ -156,7 +155,7 @@ final class SearchFactoryHandler {
       @CacheEntryCreated
       public CompletionStage<Void> created(CacheEntryCreatedEvent<QueryKnownClasses.KnownClassKey, Boolean> e) {
          if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            return handleClusterRegistryRegistration(e.getKey());
+            return handleClusterRegistryRegistration(e.getKey().loadClassInstance(classLoader));
          }
          return null;
       }
@@ -164,7 +163,7 @@ final class SearchFactoryHandler {
       @CacheEntryModified
       public CompletionStage<Void> modified(CacheEntryModifiedEvent<QueryKnownClasses.KnownClassKey, Boolean> e) {
          if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            return handleClusterRegistryRegistration(e.getKey());
+            return handleClusterRegistryRegistration(e.getKey().loadClassInstance(classLoader));
          }
          return null;
       }

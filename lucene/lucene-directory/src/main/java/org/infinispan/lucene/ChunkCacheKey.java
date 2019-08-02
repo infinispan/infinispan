@@ -1,6 +1,5 @@
 package org.infinispan.lucene;
 
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -12,14 +11,18 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public final class ChunkCacheKey extends AbstractIndexScopedKey {
 
-   private final int chunkId;
+   @ProtoField(number = 3, defaultValue = "0")
+   int chunkId;
 
-   private final String fileName;
+   @ProtoField(number = 4, name = "file")
+   String fileName;
 
-   private final int bufferSize;
+   @ProtoField(number = 5, defaultValue = "0")
+   int bufferSize;
 
-   @ProtoFactory
-   public ChunkCacheKey(String indexName, String fileName, int chunkId, int bufferSize, int affinitySegmentId) {
+   ChunkCacheKey() {}
+
+   public ChunkCacheKey(final String indexName, final String fileName, final int chunkId, final int bufferSize, final int affinitySegmentId) {
       super(indexName, affinitySegmentId);
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
@@ -33,19 +36,8 @@ public final class ChunkCacheKey extends AbstractIndexScopedKey {
     *
     * @return the chunkId.
     */
-   @ProtoField(number = 3, defaultValue = "0")
    public int getChunkId() {
       return chunkId;
-   }
-
-   /**
-    * Get the fileName.
-    *
-    * @return the fileName.
-    */
-   @ProtoField(number = 4)
-   public String getFileName() {
-      return fileName;
    }
 
    /**
@@ -53,13 +45,21 @@ public final class ChunkCacheKey extends AbstractIndexScopedKey {
     *
     * @return the bufferSize.
     */
-   @ProtoField(number = 5, defaultValue = "1024")
    public int getBufferSize() {
       return bufferSize;
    }
 
+   /**
+    * Get the fileName.
+    *
+    * @return the fileName.
+    */
+   public String getFileName() {
+      return fileName;
+   }
+
    @Override
-   public <T> T accept(KeyVisitor<T> visitor) throws Exception {
+   public Object accept(KeyVisitor visitor) throws Exception {
       return visitor.visit(this);
    }
 
@@ -75,7 +75,9 @@ public final class ChunkCacheKey extends AbstractIndexScopedKey {
    public boolean equals(Object obj) {
       if (this == obj)
          return true;
-      if (obj == null || ChunkCacheKey.class != obj.getClass())
+      if (obj == null)
+         return false;
+      if (ChunkCacheKey.class != obj.getClass())
          return false;
       ChunkCacheKey other = (ChunkCacheKey) obj;
       if (chunkId != other.chunkId)
@@ -86,7 +88,7 @@ public final class ChunkCacheKey extends AbstractIndexScopedKey {
    }
 
    /**
-    * Changing the encoding could break backwards compatibility.
+    * Changing the encoding could break backwards compatibility
     *
     * @see LuceneKey2StringMapper#getKeyMapping(String)
     */

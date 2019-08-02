@@ -19,7 +19,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
@@ -146,7 +145,7 @@ public final class QueryKnownClasses {
          ClassLoader classLoader = knownClassesCache.getClassLoader();
          return knownClassesCache.keySet().stream()
                .filter(k -> k.cacheName.equals(cacheName))
-               .map(k -> k.getKnownClass(classLoader))
+               .map(k -> k.loadClassInstance(classLoader))
                .collect(Collectors.toSet());
       } finally {
          transactionHelper.resume(tx);
@@ -244,31 +243,28 @@ public final class QueryKnownClasses {
             + ", localCache=" + (localCache != null ? localCache.get() : null) + '}';
    }
 
-   public static final class KnownClassKey {
+   public static class KnownClassKey {
 
       @ProtoField(number = 1)
-      final String cacheName;
+      String cacheName;
 
       @ProtoField(number = 2)
-      final String className;
+      String clazzName;
 
-      private Class<?> clazz;
+      Class<?> clazz;
 
-      @ProtoFactory
-      KnownClassKey(String cacheName, String className) {
-         this.cacheName = cacheName;
-         this.className = className;
-      }
+      KnownClassKey() {}
 
       KnownClassKey(String cacheName, Class<?> clazz) {
-         this(cacheName, clazz.getName());
+         this.cacheName = cacheName;
          this.clazz = clazz;
+         this.clazzName = clazz.getName();
       }
 
-      Class<?> getKnownClass(ClassLoader classLoader) {
+      Class<?> loadClassInstance(ClassLoader classLoader) {
          if (clazz == null) {
             try {
-               clazz = Util.loadClassStrict(className, classLoader);
+               clazz = Util.loadClassStrict(clazzName, classLoader);
             } catch (ClassNotFoundException e) {
                throw new IllegalStateException(e);
             }

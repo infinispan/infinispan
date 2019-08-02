@@ -3,7 +3,6 @@ package org.infinispan.server.eventlogger;
 import java.time.Instant;
 import java.util.Optional;
 
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -15,35 +14,40 @@ import org.infinispan.util.logging.events.EventLogLevel;
  * @author Tristan Tarrant
  * @since 8.2
  */
-public final class ServerEventImpl implements EventLog {
+public class ServerEventImpl implements EventLog {
 
-   private final Instant when;
+   private Instant when;
 
-   private final EventLogLevel level;
+   @ProtoField(number = 1)
+   EventLogLevel level;
 
-   private final EventLogCategory category;
+   @ProtoField(number = 2)
+   EventLogCategory category;
 
-   private final String message;
+   @ProtoField(number = 3)
+   String message;
 
-   // TODO protostream does not support Optional yet so we cannot annotate the getter, we annotate the field instead and leave it package local for now
-   @ProtoField(number = 5)
-   final String detail;
-
-   @ProtoField(number = 6)
-   final String who;
-
-   @ProtoField(number = 7)
-   final String context;
-
-   @ProtoField(number = 8)
-   final String scope;
-
-   @ProtoFactory
-   ServerEventImpl(long whenMs, EventLogLevel level, EventLogCategory category, String message, String detail, String context, String who, String scope) {
-      this(Instant.ofEpochMilli(whenMs), level, category, message, detail, context, who, scope);
+   @ProtoField(number = 4, name = "epoch", defaultValue = "0")
+   long getEpoch() {
+      return when.getEpochSecond();
    }
 
-   ServerEventImpl(Instant when, EventLogLevel level, EventLogCategory category, String message, String detail, String context, String who, String scope) {
+   @ProtoField(number = 5, name = "detail")
+   String detail;
+
+
+   @ProtoField(number = 6, name = "who")
+   String who;
+
+   @ProtoField(number = 7, name = "context")
+   String context;
+
+   @ProtoField(number = 8, name = "scope")
+   String scope;
+
+   ServerEventImpl() {}
+
+   ServerEventImpl(EventLogLevel level, EventLogCategory category, Instant when, String message, String detail, String context, String who, String scope) {
       this.level = level;
       this.category = category;
       this.message = message;
@@ -54,8 +58,8 @@ public final class ServerEventImpl implements EventLog {
       this.scope = scope;
    }
 
-   ServerEventImpl(Instant when, EventLogLevel level, EventLogCategory category, String message) {
-      this(when, level, category, message, null, null, null, null);
+   ServerEventImpl(EventLogLevel level, EventLogCategory category, Instant when, String message) {
+      this(level, category, when, message, null, null, null, null);
    }
 
    @Override
@@ -63,54 +67,43 @@ public final class ServerEventImpl implements EventLog {
       return when;
    }
 
-   /**
-    * Milliseconds since epoch.
-    */
-   @ProtoField(number = 1, name = "when", defaultValue = "0")
-   long getWhenMs() {
-      return when.toEpochMilli();
-   }
-
-   @ProtoField(number = 2)
    @Override
    public EventLogLevel getLevel() {
       return level;
    }
 
-   @ProtoField(number = 3)
    @Override
    public EventLogCategory getCategory() {
       return category;
    }
 
-   @ProtoField(number = 4)
    @Override
    public String getMessage() {
       return message;
    }
 
-   //@ProtoField(number = 5)
    @Override
    public Optional<String> getDetail() {
       return Optional.ofNullable(detail);
    }
 
-   //@ProtoField(number = 6)
    @Override
    public Optional<String> getWho() {
       return Optional.ofNullable(who);
    }
 
-   //@ProtoField(number = 7)
    @Override
    public Optional<String> getContext() {
       return Optional.ofNullable(context);
    }
 
-   //@ProtoField(number = 8)
    @Override
    public Optional<String> getScope() {
       return Optional.ofNullable(scope);
+   }
+
+   void setEpoch(long epoch) {
+      this.when = Instant.ofEpochSecond(epoch);
    }
 
    @Override
@@ -122,9 +115,9 @@ public final class ServerEventImpl implements EventLog {
    @Override
    public String toString() {
       return "ServerEventImpl{" +
-            "when=" + when +
-            ", level=" + level +
+            "level=" + level +
             ", category=" + category +
+            ", when=" + when +
             ", message='" + message + '\'' +
             ", detail=" + detail +
             ", context=" + context +

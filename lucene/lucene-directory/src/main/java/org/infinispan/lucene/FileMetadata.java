@@ -1,6 +1,5 @@
 package org.infinispan.lucene;
 
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -13,26 +12,18 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public final class FileMetadata {
 
-   private final int bufferSize;
-
-   private long size;
-
-   @ProtoFactory
-   public FileMetadata(int bufferSize, long size) {
-      this.bufferSize = bufferSize;
-      this.size = size;
-   }
-
-   public FileMetadata(int bufferSize) {
-      this(bufferSize, 0);
-   }
-
-   @ProtoField(number = 1, defaultValue = "1024")
-   public int getBufferSize() {
-      return bufferSize;
-   }
+   @ProtoField(number = 1, defaultValue = "0")
+   int bufferSize;
 
    @ProtoField(number = 2, defaultValue = "0")
+   long size = 0;
+
+   FileMetadata() {}
+
+   public FileMetadata(int bufferSize) {
+      this.bufferSize = bufferSize;
+   }
+
    public long getSize() {
       return size;
    }
@@ -41,9 +32,17 @@ public final class FileMetadata {
       this.size = size;
    }
 
+   public int getBufferSize() {
+      return bufferSize;
+   }
+
    public int getNumberOfChunks() {
-      int numChunks = (int) size / bufferSize;
-      return size % bufferSize == 0 ? numChunks : numChunks + 1;
+      if (size % bufferSize == 0) {
+         return (int) size / bufferSize;
+      }
+      else {
+         return (int) (size / bufferSize) + 1;
+      }
    }
 
    public boolean isMultiChunked() {
@@ -59,7 +58,7 @@ public final class FileMetadata {
          return false;
       }
       FileMetadata metadata = (FileMetadata) o;
-      return size == metadata.size && bufferSize == metadata.bufferSize;
+      return  size == metadata.size && bufferSize == metadata.bufferSize;
    }
 
    @Override
@@ -69,6 +68,6 @@ public final class FileMetadata {
 
    @Override
    public String toString() {
-      return "FileMetadata{size=" + size + '}';
+      return "FileMetadata{" +  " size=" + size + '}';
    }
 }

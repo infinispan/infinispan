@@ -5,7 +5,6 @@ import java.util.Arrays;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Descriptor;
 
@@ -28,7 +27,8 @@ public final class ProtobufValueWrapper implements WrappedBytes {
    /**
     * The protobuf encoded payload.
     */
-   private final byte[] binary;
+   @ProtoField(number = 1)
+   byte[] binary;
 
    /**
     * The lazily computed hashCode. Transient field!
@@ -40,7 +40,8 @@ public final class ProtobufValueWrapper implements WrappedBytes {
     */
    private transient Descriptor messageDescriptor;
 
-   @ProtoFactory
+   ProtobufValueWrapper() {}
+
    public ProtobufValueWrapper(byte[] binary) {
       if (binary == null) {
          throw new IllegalArgumentException("argument cannot be null");
@@ -53,7 +54,6 @@ public final class ProtobufValueWrapper implements WrappedBytes {
     *
     * @return the wrapped byte array
     */
-   @ProtoField(number = 1)
    public byte[] getBinary() {
       return binary;
    }

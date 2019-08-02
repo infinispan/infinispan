@@ -11,7 +11,8 @@ import org.infinispan.distribution.ch.AffinityTaggedKey;
 public interface IndexScopedKey extends AffinityTaggedKey {
 
    /**
-    * Different indexes are required to use different names.
+    * Different indexes are required to use different names
+    * @return
     */
    String getIndexName();
 
@@ -23,4 +24,5 @@ public interface IndexScopedKey extends AffinityTaggedKey {
    int getAffinitySegmentId();
 
    <T> T accept(KeyVisitor<T> visitor) throws Exception;
+
 }

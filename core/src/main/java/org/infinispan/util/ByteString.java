@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.infinispan.commons.util.Util;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -18,22 +17,20 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Tristan Tarrant
  * @since 9.0
  */
-public final class ByteString {
+public class ByteString {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
-   private transient String s;
+   private String s;
    private transient int hash;
+   private byte[] bytes;
 
-   @ProtoField(number = 1)
-   final byte[] bytes;
+   ByteString() {}
 
-   @ProtoFactory
-   ByteString(byte[] bytes) {
+   private ByteString(byte[] bytes) {
       if (bytes.length > 255) {
          throw new IllegalArgumentException("ByteString must be shorter than 255 bytes");
       }
-      this.bytes = bytes;
-      this.hash = Arrays.hashCode(bytes);
+      setBytes(bytes);
    }
 
    public static ByteString fromString(String s) {
@@ -66,6 +63,16 @@ public final class ByteString {
          s = new String(bytes, CHARSET);
       }
       return s;
+   }
+
+   @ProtoField(number = 1)
+   byte[] getBytes() {
+      return bytes;
+   }
+
+   void setBytes(byte[] bytes) {
+      this.bytes = bytes;
+      this.hash = Arrays.hashCode(bytes);
    }
 
    public static void writeObject(ObjectOutput output, ByteString object) throws IOException {
