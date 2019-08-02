@@ -59,7 +59,6 @@ class ClassIdentifiers implements ClassIds {
    public int getId(Class<?> clazz) {
       Integer id = classToId.get(clazz);
       if (id == null) {
-         assert ExternallyMarshallable.isAllowed(clazz) : "Check support for " + clazz;
          return -1;
       } else {
          return id.intValue();

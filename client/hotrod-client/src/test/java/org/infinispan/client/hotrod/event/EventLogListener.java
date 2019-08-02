@@ -20,7 +20,6 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.filter.NamedFactory;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
@@ -250,7 +249,7 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
          return new StaticCacheEventFilter(staticKey);
       }
 
-      static class StaticCacheEventFilter<K> implements CacheEventFilter<K, String>, Serializable, ExternalPojo {
+      static class StaticCacheEventFilter<K> implements CacheEventFilter<K, String>, Serializable {
          final K staticKey;
 
          StaticCacheEventFilter(K staticKey) {

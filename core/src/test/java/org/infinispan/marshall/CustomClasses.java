@@ -5,10 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Objects;
 
-import org.infinispan.marshall.core.ExternalPojo;
-
 public class CustomClasses {
-   public static class CustomClass implements Serializable, ExternalPojo {
+   public static class CustomClass implements Serializable {
       final String val;
 
       public CustomClass(String val) {
@@ -44,7 +42,7 @@ public class CustomClasses {
       }
    }
 
-   public static class CustomReadObjectMethod implements Serializable, ExternalPojo {
+   public static class CustomReadObjectMethod implements Serializable {
       private static final long serialVersionUID = 1L;
       String lastName;
       String ssn;
@@ -81,7 +79,7 @@ public class CustomClasses {
       }
    }
 
-   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable, ExternalPojo {
+   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable {
       private static final long serialVersionUID = 1L;
       public CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
       Integer balance;

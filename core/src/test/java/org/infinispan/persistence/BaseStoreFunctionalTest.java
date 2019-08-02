@@ -29,7 +29,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -153,7 +152,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(new Pojo(4), cache.get("k4"));
    }
 
-   public static class Pojo implements Serializable, ExternalPojo {
+   public static class Pojo implements Serializable {
 
       private final int i;
 

@@ -35,7 +35,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -244,7 +243,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageAsyncXSiteReplicationTime"), (long) -1);
    }
 
-   public static class SlowToSerialize implements Externalizable, ExternalPojo {
+   public static class SlowToSerialize implements Externalizable {
       String val;
       transient long delay;
 

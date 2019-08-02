@@ -8,8 +8,6 @@ package org.infinispan.test.hibernate.cache.commons.util;
 
 import java.io.Serializable;
 
-import org.infinispan.marshall.core.ExternalPojo;
-
 public class TestingKeyFactory {
 
 	private TestingKeyFactory() {
@@ -25,7 +23,7 @@ public class TestingKeyFactory {
 	}
 
 	//For convenience implement both interfaces.
-	private static class TestingEntityCacheKey implements Serializable, ExternalPojo {
+	private static class TestingEntityCacheKey implements Serializable {
 
 		private final String id;
 

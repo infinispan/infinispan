@@ -19,7 +19,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -219,7 +218,7 @@ public class APINonTxOffHeapTest extends APINonTxTest {
       assertCacheSize(0);
    }
 
-   static class CustomObjectKey implements Serializable, ExternalPojo {
+   static class CustomObjectKey implements Serializable {
       private static final long serialVersionUID = 1L;
 
       final String name;

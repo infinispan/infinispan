@@ -2,9 +2,7 @@ package org.infinispan.statetransfer;
 
 import java.io.Serializable;
 
-import org.infinispan.marshall.core.ExternalPojo;
-
-public class BigObject implements Serializable, ExternalPojo {
+public class BigObject implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

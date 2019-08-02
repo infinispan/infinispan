@@ -15,10 +15,10 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "marshall.MarshallExternalPojosTest")
-public class MarshallExternalPojosTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "marshall.MarshallExternalizersTest")
+public class MarshallExternalizersTest extends MultipleCacheManagersTest {
 
-   private static final String CACHE_NAME = MarshallExternalPojosTest.class.getName();
+   private static final String CACHE_NAME = MarshallExternalizersTest.class.getName();
 
    @Override
    protected void createCacheManagers() throws Throwable {

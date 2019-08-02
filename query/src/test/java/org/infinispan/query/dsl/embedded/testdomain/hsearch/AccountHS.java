@@ -19,7 +19,6 @@ import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinArrayBridge;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
@@ -28,7 +27,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Limits;
  * @since 7.0
  */
 @Indexed
-public class AccountHS implements Account, Serializable, ExternalPojo {
+public class AccountHS implements Account, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField

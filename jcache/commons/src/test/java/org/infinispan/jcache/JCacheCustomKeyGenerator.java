@@ -7,8 +7,6 @@ import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.GeneratedCacheKey;
 
-import org.infinispan.marshall.core.ExternalPojo;
-
 /**
  * Custom implementation of {@link javax.cache.annotation.CacheKeyGenerator}. Compatible with methods providing one key parameter.
  *
@@ -24,7 +22,7 @@ public class JCacheCustomKeyGenerator implements CacheKeyGenerator {
       return new CustomGeneratedCacheKey(cacheKeyInvocationContext.getKeyParameters()[0].getValue());
    }
 
-   public static class CustomGeneratedCacheKey implements GeneratedCacheKey, ExternalPojo {
+   public static class CustomGeneratedCacheKey implements GeneratedCacheKey {
 
       private Object value;
 

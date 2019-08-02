@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
@@ -161,7 +160,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
       }
    }
 
-   public static class DelayedUnmarshal implements Serializable, ExternalPojo {
+   public static class DelayedUnmarshal implements Serializable {
 
       private static final long serialVersionUID = 1L;
 

@@ -614,7 +614,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class Pojo implements Externalizable, ExternalPojo {
+   public static class Pojo implements Externalizable {
       public int i;
       static int serializationCount, deserializationCount;
       final Log log = LogFactory.getLog(Pojo.class);

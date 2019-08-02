@@ -19,7 +19,6 @@ import java.util.Optional;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -374,12 +373,12 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       return buffer.array();
    }
 
-   private static class AcceptedKeyFilterFactory implements CacheEventFilterFactory, Serializable, ExternalPojo {
+   private static class AcceptedKeyFilterFactory implements CacheEventFilterFactory, Serializable {
       Optional<byte[]> staticKey = null;
 
       @Override
       public <K, V> CacheEventFilter<K, V> getFilter(Object[] params) {
-         return (CacheEventFilter<K, V> & Serializable & ExternalPojo) ((key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {
+         return (CacheEventFilter<K, V> & Serializable) ((key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {
             byte[] checkKey = staticKey.orElseGet(() -> (byte[]) params[0]);
             return Arrays.equals(checkKey, (byte[]) key);
          });
@@ -387,12 +386,12 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
    }
 
    private static class AcceptedKeyValueConverterFactory
-         implements CacheEventConverterFactory, Serializable, ExternalPojo {
+         implements CacheEventConverterFactory, Serializable {
       Optional<byte[]> staticKey = null;
 
       @Override
       public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
-         return (CacheEventConverter<K, V, C>) (CacheEventConverter<byte[], byte[], byte[]> & Serializable & ExternalPojo) ((key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {
+         return (CacheEventConverter<K, V, C>) (CacheEventConverter<byte[], byte[], byte[]> & Serializable) ((key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {
             byte[] checkKey = staticKey.orElseGet(() -> (byte[]) params[0]);
             if (newValue == null || !Arrays.equals(checkKey, key)) {
                return addLengthPrefix(key);

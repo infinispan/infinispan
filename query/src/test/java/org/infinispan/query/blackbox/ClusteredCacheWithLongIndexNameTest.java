@@ -13,7 +13,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -86,7 +85,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
    // index name as in bug description
    @Indexed(index = "default_taskworker-java__com.google.appengine.api.datastore.Entity")
-   private static class ClassWithLongIndexName implements Serializable, ExternalPojo {
+   private static class ClassWithLongIndexName implements Serializable {
 
       private static final long serialVersionUID = 1;
 

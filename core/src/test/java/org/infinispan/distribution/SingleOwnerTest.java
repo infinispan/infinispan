@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Exceptions;
@@ -101,7 +100,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
             .expectException(RemoteException.class, MarshallingException.class, () -> nonOwnerCache.get("diffkey"));
    }
 
-   private static class ExceptionExternalizable implements Externalizable, ExternalPojo {
+   private static class ExceptionExternalizable implements Externalizable {
       private static final long serialVersionUID = -483939825697574242L;
 
       @Override
