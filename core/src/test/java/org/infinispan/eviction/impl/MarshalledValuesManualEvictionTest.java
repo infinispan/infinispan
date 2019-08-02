@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -68,7 +67,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       assertEquals(1, ManualEvictionPojo.reads.get());
    }
 
-   public static class ManualEvictionPojo implements Externalizable, ExternalPojo {
+   public static class ManualEvictionPojo implements Externalizable {
       static AtomicInteger writes = new AtomicInteger();
       static AtomicInteger reads = new AtomicInteger();
       int i;

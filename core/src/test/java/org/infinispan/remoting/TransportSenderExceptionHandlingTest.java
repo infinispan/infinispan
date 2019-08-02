@@ -13,12 +13,11 @@ import java.util.EmptyStackException;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -126,7 +125,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       }
    }
 
-   enum FailureType implements ExternalPojo {
+   enum FailureType {
       EXCEPTION_FROM_LISTENER, ERROR_FROM_LISTENER,
       EXCEPTION_FROM_INTERCEPTOR, ERROR_FROM_INTERCEPTOR
    }
@@ -144,7 +143,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       }
    }
 
-   public static class BrokenDeserializationPojo implements Externalizable, ExternalPojo {
+   public static class BrokenDeserializationPojo implements Externalizable {
 
       @Override
       public void writeExternal(ObjectOutput out) throws IOException {

@@ -29,7 +29,6 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
@@ -622,7 +621,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
 
 
-   public static class Pojo implements Serializable, ExternalPojo {
+   public static class Pojo implements Serializable {
 
       private String role;
 

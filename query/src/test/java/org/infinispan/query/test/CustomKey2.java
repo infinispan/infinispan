@@ -2,11 +2,10 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.Transformable;
 
 @Transformable
-public class CustomKey2 implements Serializable, ExternalPojo {
+public class CustomKey2 implements Serializable {
 
    private static final long serialVersionUID = -1;
 

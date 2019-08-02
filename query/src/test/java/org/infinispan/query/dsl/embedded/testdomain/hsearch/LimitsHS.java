@@ -9,14 +9,13 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinArrayBridge;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
 /**
  * @author anistor@redhat.com
  * @since 9.4.1
  */
-public class LimitsHS implements Limits, Serializable, ExternalPojo {
+public class LimitsHS implements Limits, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private Double maxDailyLimit;

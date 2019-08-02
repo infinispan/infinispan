@@ -14,7 +14,6 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -82,7 +81,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       }
    }
 
-   private static class Key implements Serializable, ExternalPojo {
+   private static class Key implements Serializable {
       String actualKey;
 
       private Key(String actualKey) {

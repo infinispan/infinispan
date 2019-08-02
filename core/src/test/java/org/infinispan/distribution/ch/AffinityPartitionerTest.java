@@ -10,7 +10,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -51,7 +50,7 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
       return conf;
    }
 
-   static class AffinityKey implements AffinityTaggedKey, Serializable, ExternalPojo {
+   static class AffinityKey implements AffinityTaggedKey, Serializable {
       final int segmentId;
 
       public AffinityKey(int segmentId) {

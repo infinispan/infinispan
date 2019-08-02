@@ -13,7 +13,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -24,7 +23,7 @@ import org.infinispan.remoting.transport.Address;
  */
 @SerializeWith(ReplicatedControlledConsistentHashFactory.Externalizer.class)
 public class ReplicatedControlledConsistentHashFactory
-      implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable, ExternalPojo {
+      implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
    private volatile List<Address> membersToUse;
    private int[] primaryOwnerIndices;
 

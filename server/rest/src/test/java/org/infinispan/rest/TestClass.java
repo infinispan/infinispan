@@ -2,9 +2,7 @@ package org.infinispan.rest;
 
 import java.io.Serializable;
 
-import org.infinispan.marshall.core.ExternalPojo;
-
-public class TestClass implements Serializable, ExternalPojo {
+public class TestClass implements Serializable {
 
    private String name;
 

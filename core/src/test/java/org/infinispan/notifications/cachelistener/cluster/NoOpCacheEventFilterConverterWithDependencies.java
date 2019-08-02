@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -17,7 +16,7 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
  */
 @Scope(Scopes.NONE)
 public class NoOpCacheEventFilterConverterWithDependencies<K, V>
-      extends AbstractCacheEventFilterConverter<K, V, V> implements Serializable, ExternalPojo {
+      extends AbstractCacheEventFilterConverter<K, V, V> implements Serializable {
 
    private transient Cache cache;
 

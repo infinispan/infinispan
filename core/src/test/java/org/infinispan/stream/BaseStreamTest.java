@@ -46,7 +46,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -289,7 +288,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachInjected<E> implements Consumer<E>,
-         CacheAware<Integer, String>, Serializable, ExternalPojo {
+         CacheAware<Integer, String>, Serializable {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -857,7 +856,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachIntInjected implements IntConsumer,
-         CacheAware<Integer, String>, Serializable, ExternalPojo {
+         CacheAware<Integer, String>, Serializable {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -1319,7 +1318,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachLongInjected implements LongConsumer,
-         CacheAware<Long, String>, Serializable, ExternalPojo {
+         CacheAware<Long, String>, Serializable {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -1790,7 +1789,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachDoubleInjected<E> implements DoubleConsumer,
-         CacheAware<Double, String>, Serializable, ExternalPojo {
+         CacheAware<Double, String>, Serializable {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;

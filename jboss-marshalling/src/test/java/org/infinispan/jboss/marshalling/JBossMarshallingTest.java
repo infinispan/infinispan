@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.jboss.marshalling.ByteInput;
 import org.jboss.marshalling.ByteOutput;
@@ -107,7 +106,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       }
    }
 
-   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable, ExternalPojo {
+   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable {
       private static final long serialVersionUID = 1L;
       public CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
       Integer balance;

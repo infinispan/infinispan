@@ -8,7 +8,6 @@ import java.sql.Connection;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.jdbc.impl.table.TableName;
@@ -51,7 +50,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       }
    }
 
-   static class Person implements Serializable, ExternalPojo {
+   static class Person implements Serializable {
       int age;
       String name;
       private static final long serialVersionUID = 4227565864228124235L;

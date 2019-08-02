@@ -5,15 +5,13 @@ import java.io.Serializable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 
-import org.infinispan.marshall.core.ExternalPojo;
-
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
 @Entity
-public class Vehicle implements Serializable, ExternalPojo {
+public class Vehicle implements Serializable {
    /**
     *
     */

@@ -74,7 +74,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -571,7 +570,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public interface I {
    }
 
-   public static class Pojo implements I, Externalizable, ExternalPojo {
+   public static class Pojo implements I, Externalizable {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
@@ -717,7 +716,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class Parent implements Serializable, ExternalPojo {
+   static class Parent implements Serializable {
        private final String id;
        private final Child1 child1Obj;
 
@@ -753,7 +752,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
        }
    }
 
-   static class Human implements Serializable, ExternalPojo {
+   static class Human implements Serializable {
 
       int age;
 
@@ -779,7 +778,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class HumanComparator implements Comparator<Human>, Serializable, ExternalPojo {
+   static class HumanComparator implements Comparator<Human>, Serializable {
 
       @Override
       public int compare(Human o1, Human o2) {

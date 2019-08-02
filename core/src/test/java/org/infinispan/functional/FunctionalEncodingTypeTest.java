@@ -15,7 +15,6 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -116,7 +115,7 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
          return ID;
       }
 
-      static class Wrapper implements Serializable, ExternalPojo {
+      static class Wrapper implements Serializable {
          private final Object content;
 
          Wrapper(Object content) {
@@ -174,7 +173,7 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
          return ID;
       }
 
-      static class Wrapper implements Serializable, ExternalPojo {
+      static class Wrapper implements Serializable {
          private final Object content;
 
          Wrapper(Object content) {

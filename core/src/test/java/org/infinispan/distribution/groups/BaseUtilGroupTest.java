@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Group;
-import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 
@@ -139,7 +138,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       public abstract TestCache create(String groupName, List<Cache<GroupKey, String>> cacheList);
    }
 
-   public static class GroupKey implements Serializable, ExternalPojo {
+   public static class GroupKey implements Serializable {
 
       private final String group;
       private final int key;
