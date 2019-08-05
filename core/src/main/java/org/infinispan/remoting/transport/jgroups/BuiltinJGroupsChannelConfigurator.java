@@ -20,6 +20,22 @@ public class BuiltinJGroupsChannelConfigurator extends FileJGroupsChannelConfigu
       return loadBuiltIn("udp", "default-configs/default-jgroups-udp.xml", properties);
    }
 
+   public static BuiltinJGroupsChannelConfigurator KUBERNETES(Properties properties) {
+      return loadBuiltIn("kubernetes", "default-configs/default-jgroups-kubernetes.xml", properties);
+   }
+
+   public static BuiltinJGroupsChannelConfigurator EC2(Properties properties) {
+      return loadBuiltIn("ec2", "default-configs/default-jgroups-ec2.xml", properties);
+   }
+
+   public static BuiltinJGroupsChannelConfigurator GOOGLE(Properties properties) {
+      return loadBuiltIn("google", "default-configs/default-jgroups-google.xml", properties);
+   }
+
+   public static BuiltinJGroupsChannelConfigurator AZURE(Properties properties) {
+      return loadBuiltIn("azure", "default-configs/default-jgroups-azure.xml", properties);
+   }
+
    private static BuiltinJGroupsChannelConfigurator loadBuiltIn(String name, String path, Properties properties) {
       try (InputStream xml = FileLookupFactory.newInstance().lookupFileStrict(path, BuiltinJGroupsChannelConfigurator.class.getClassLoader())) {
          return new BuiltinJGroupsChannelConfigurator(name, path, xml, properties);

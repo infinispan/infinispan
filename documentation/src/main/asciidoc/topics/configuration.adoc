@@ -323,14 +323,16 @@ In both cases above, {brandname} looks for _jgroups.xml_ first in your classpath
 {brandname} ships with a few different JGroups files (packaged in infinispan-core.jar) which means they will already be on your classpath by default.
 All you need to do is specify the file name, e.g., instead of `jgroups.xml` above, specify `/default-configs/default-jgroups-tcp.xml`.
 
-The configurations available are:
+The available configurations (with their stack names in brackets) are:
 
-*  default-jgroups-udp.xml - Uses UDP as a transport, and UDP multicast for discovery.  Usually suitable for larger (over 100 nodes) clusters _or_ if you are using replication or invalidation. Minimises opening too many sockets.
-*  default-jgroups-tcp.xml - Uses TCP as a transport and UDP multicast for discovery.  Better for smaller clusters (under 100 nodes) _only if_ you are using distribution, as TCP is more efficient as a point-to-point protocol
-*  default-jgroups-ec2.xml - Uses TCP as a transport and link:http://jgroups.org/manual/index.html#_s3_ping[S3_PING] for discovery.  Suitable on link:http://aws.amazon.com/ec2/[Amazon EC2] nodes where UDP multicast isn't available.
-*  default-jgroups-kubernetes.xml - Uses TCP as a transport and link:https://github.com/jgroups-extras/jgroups-kubernetes[KUBE_PING] for discovery.  Suitable on link:http://kubernetes.io/[Kubernetes] and link:https://www.openshift.org/[OpenShift] nodes where UDP multicast is not always available.
+*  default-jgroups-udp.xml (`udp`) - Uses UDP as a transport, and UDP multicast for discovery.  Usually suitable for larger (over 100 nodes) clusters _or_ if you are using replication or invalidation. Minimises opening too many sockets.
+*  default-jgroups-tcp.xml (`tcp`) - Uses TCP as a transport and UDP multicast for discovery.  Better for smaller clusters (under 100 nodes) _only if_ you are using distribution, as TCP is more efficient as a point-to-point protocol
+*  default-jgroups-ec2.xml (`ec2`) - Uses TCP as a transport and link:http://jgroups.org/manual/index.html#_s3_ping[S3_PING] for discovery.  Suitable on link:http://aws.amazon.com/ec2/[Amazon EC2] nodes where UDP multicast is not available.
+*  default-jgroups-kubernetes.xml (`kubernetes`) - Uses TCP as a transport and DNS_PING for discovery.  Suitable on link:http://kubernetes.io/[Kubernetes] and link:https://www.openshift.org/[OpenShift] nodes where UDP multicast is not always available.
+*  default-jgroups-google.xml (`google`) - Uses TCP as a transport and link:https://github.com/jgroups-extras/jgroups-google[GOOGLE_PING2] for discovery.  Suitable on link:https://cloud.google.com/[Google Cloud Platform]  nodes where UDP multicast is not available.
+*  default-jgroups-azure.xml (`azure`) - Uses TCP as a transport and link:https://github.com/jgroups-extras/jgroups-google[GOOGLE_PING2] for discovery.  Suitable on link:https://cloud.google.com/[Google Cloud Platform]  nodes where UDP multicast is not available.
 
-When using the XML configuration, the `tcp` and `udp` stacks are pre-declared for you, so that you don't need to do it yourself. Just reference them directly in the transport:
+When using the XML configuration, stack names for the above are pre-declared for you, so that you don't need to do it yourself. Just reference them directly in the transport:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----

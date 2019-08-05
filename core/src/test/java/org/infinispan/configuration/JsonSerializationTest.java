@@ -294,10 +294,14 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(JGroupsTransport.class.getName(), jgroups.get("transport").asText());
 
       JsonNode stackFile = jgroups.get("stack-file");
-      assertEquals(4, stackFile.size());
+      assertEquals(8, stackFile.size());
       Iterator<JsonNode> stackFiles = stackFile.elements();
       assertStackFile(stackFiles.next(), "tcp", "default-configs/default-jgroups-tcp.xml");
       assertStackFile(stackFiles.next(), "udp", "default-configs/default-jgroups-udp.xml");
+      assertStackFile(stackFiles.next(), "kubernetes", "default-configs/default-jgroups-kubernetes.xml");
+      assertStackFile(stackFiles.next(), "ec2", "default-configs/default-jgroups-ec2.xml");
+      assertStackFile(stackFiles.next(), "google", "default-configs/default-jgroups-google.xml");
+      assertStackFile(stackFiles.next(), "azure", "default-configs/default-jgroups-azure.xml");
       assertStackFile(stackFiles.next(), "udp-test", "stacks/udp.xml");
       assertStackFile(stackFiles.next(), "tcp-test", "stacks/tcp_mping/tcp1.xml");
 
