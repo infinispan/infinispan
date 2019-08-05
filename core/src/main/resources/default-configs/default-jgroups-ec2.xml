@@ -1,7 +1,11 @@
+<!--
+   This configuration file uses NATIVE_S3_PING which is not shipped as part of the default jgroups distribution. To use
+   it you must add a dependency on org.jgroups.aws.s3:native-s3-ping:0.9.5
+-->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
-   <TCP bind_addr="${jgroups.tcp.address:127.0.0.1}"
+   <TCP bind_addr="${jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.tcp.port:7800}"
         enable_diagnostics="false"
         thread_naming_pattern="pl"
@@ -13,15 +17,9 @@
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
         thread_pool.keep_alive_time="60000"
    />
-   <S3_PING access_key="${jgroups.s3.access_key}" 
-            secret_access_key="${jgroups.s3.secret_access_key}" 
-            location="${jgroups.s3.bucket}" 
-            pre_signed_delete_url="${jgroups.s3.pre_signed_delete_url}"
-            pre_signed_put_url="${jgroups.s3.pre_signed_put_url}"
-            prefix="${jgroups.s3.prefix}"
-   />
-   <MERGE3 min_interval="10000" 
-           max_interval="30000" 
+   <org.jgroups.aws.s3.NATIVE_S3_PING region_name="${jgroups.s3.region_name}" bucket_name="${jgroups.s3.bucket_name}" />
+   <MERGE3 min_interval="10000"
+           max_interval="30000"
    />
    <FD_SOCK />
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
@@ -50,10 +48,10 @@
                join_timeout="${jgroups.join_timeout:5000}"
    />
    <UFC_NB max_credits="3m"
-        min_threshold="0.40"
+           min_threshold="0.40"
    />
    <MFC_NB max_credits="3m"
-        min_threshold="0.40"
+           min_threshold="0.40"
    />
    <FRAG3/>
 </config>

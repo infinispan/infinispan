@@ -107,6 +107,10 @@ Distributed Streams has parts rewritten to utilize non blocking reactive streams
 are not supported as values from operations as per the reactive streams spec. Please utilize other means to denote
 a null value.
 
+=== Removed the infinispan-cloud module
+The infinispan-cloud module has been removed and the `kubernetes`, `ec2`, `google` and `azure` default configurations have been included in `infinispan-core` and can be
+referenced as default named JGroups configurations.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes

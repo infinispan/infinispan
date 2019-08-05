@@ -1,5 +1,1 @@
-<protocol type="GOOGLE_PING">
-  <property name="location">The name of the bucket</property>
-  <property name="access_key">The access key</property>
-  <property name="secret_access_key">The secret access key</property>
-</protocol>
+<org.jgroups.protocols.google.GOOGLE_PING2 location="${jgroups.google.bucket_name}" />

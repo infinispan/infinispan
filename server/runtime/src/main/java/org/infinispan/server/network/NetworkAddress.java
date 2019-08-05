@@ -8,7 +8,6 @@ import java.util.Enumeration;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.server.Server;
 
 /**
@@ -87,18 +86,15 @@ public class NetworkAddress {
       return new NetworkAddress(name, findAddress(a -> a.isSiteLocalAddress()));
    }
 
-   public static NetworkAddress matchInterface(String name, String value) {
-      String regex = GlobUtils.globToRegex(value);
+   public static NetworkAddress matchInterface(String name, String regex) {
       return new NetworkAddress(name, findInterface(i -> i.getName().matches(regex)).getInetAddresses().nextElement());
    }
 
-   public static NetworkAddress matchAddress(String name, String value) {
-      String regex = GlobUtils.globToRegex(value);
+   public static NetworkAddress matchAddress(String name, String regex) {
       return new NetworkAddress(name, findAddress(a -> a.getHostAddress().matches(regex)));
    }
 
-   public static NetworkAddress matchHost(String name, String value) {
-      String regex = GlobUtils.globToRegex(value);
+   public static NetworkAddress matchHost(String name, String regex) {
       return new NetworkAddress(name, findAddress(a -> a.getHostName().matches(regex)));
    }
 

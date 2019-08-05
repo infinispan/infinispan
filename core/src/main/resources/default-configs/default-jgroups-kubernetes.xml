@@ -1,8 +1,12 @@
+<!--
+   This configuration file uses DNS_PING. You should set the DNS_PING dns_query parameter (or the jgroups.dns.query
+   property) to point to the DNS record which should return all members of the cluster.
+-->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
 
-   <TCP bind_addr="${jgroups.tcp.address:match-interface:eth.*}"
+   <TCP bind_addr="${jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.tcp.port:7800}"
         enable_diagnostics="false"
         thread_naming_pattern="pl"
@@ -15,10 +19,9 @@
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
         thread_pool.keep_alive_time="60000"
    />
-   <kubernetes.KUBE_PING
-   />
-   <MERGE3 min_interval="10000" 
-           max_interval="30000" 
+   <dns.DNS_PING dns_query="${jgroups.dns.query}" />
+   <MERGE3 min_interval="10000"
+           max_interval="30000"
    />
    <FD_SOCK />
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
@@ -47,10 +50,10 @@
                join_timeout="${jgroups.join_timeout:5000}"
    />
    <UFC_NB max_credits="3m"
-        min_threshold="0.40"
+           min_threshold="0.40"
    />
    <MFC_NB max_credits="3m"
-        min_threshold="0.40"
+           min_threshold="0.40"
    />
    <FRAG3/>
 </config>

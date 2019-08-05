@@ -90,7 +90,6 @@
       <module>plugins/infinispan-defaults-maven-plugin</module>
       <module>core</module>
       <module>jboss-marshalling</module>
-      <module>cloud</module>
       <module>extended-statistics</module>
       <module>counter</module>
       <module>multimap</module>
