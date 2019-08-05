@@ -432,6 +432,7 @@
       <versionx.org.codehaus.jackson.jackson-core-asl>${version.codehaus.jackson}</versionx.org.codehaus.jackson.jackson-core-asl>
       <versionx.org.codehaus.jackson.jackson-mapper-asl>${version.codehaus.jackson}</versionx.org.codehaus.jackson.jackson-mapper-asl>
       <versionx.org.codehaus.mojo.animal-sniffer-annotations>1.14</versionx.org.codehaus.mojo.animal-sniffer-annotations>
+      <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.plexus.plexus-classworlds>2.5.2</versionx.org.codehaus.plexus.plexus-classworlds>
       <versionx.org.codehaus.plexus.plexus-compiler-api>2.3</versionx.org.codehaus.plexus.plexus-compiler-api>
       <versionx.org.codehaus.plexus.plexus-compiler-javac>2.3</versionx.org.codehaus.plexus.plexus-compiler-javac>
@@ -4080,7 +4081,7 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-pmd-plugin</artifactId>
                <!-- See also reporting plugins -->
-               <version>3.9</version>
+               <version>3.12.0</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
                   <targetJdk>${version.java}</targetJdk>
@@ -4131,6 +4132,11 @@
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>ideauidesigner-maven-plugin</artifactId>
                <version>1.0-beta-1</version>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>versions-maven-plugin</artifactId>
+               <version>${versionx.org.codehaus.mojo.versions-maven-plugin}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -4544,7 +4550,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-            <version>3.9.0</version>
+            <version>3.12.0</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
