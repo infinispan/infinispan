@@ -174,4 +174,8 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
       // We can't use optimized size and require iteration if we have entries
       return CompletableFuture.completedFuture(-1);
    }
+
+   public int pendingPassivations() {
+      return map.size();
+   }
 }
