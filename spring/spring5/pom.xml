@@ -73,11 +73,13 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-test</artifactId>
                 <version>${version.spring5}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-jdbc</artifactId>
                 <version>${version.spring5}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -96,30 +98,6 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
-                <artifactId>spring-aop</artifactId>
-                <version>${versionx.org.springframework.spring5-aop}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-beans</artifactId>
-                <version>${versionx.org.springframework.spring5-beans}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
-                <version>${versionx.org.springframework.spring5-context}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context-support</artifactId>
-                <version>${versionx.org.springframework.spring5-context-support}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${versionx.org.springframework.spring5-core}</version>
                 <scope>provided</scope>
@@ -132,26 +110,8 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
-                <artifactId>spring-jdbc</artifactId>
-                <version>${versionx.org.springframework.spring5-jdbc}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-test</artifactId>
-                <version>${versionx.org.springframework.spring5-test}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
                 <artifactId>spring-tx</artifactId>
                 <version>${versionx.org.springframework.spring5-tx}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-web</artifactId>
-                <version>${versionx.org.springframework.spring5-web}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -159,12 +119,6 @@
                 <artifactId>spring-webmvc</artifactId>
                 <version>${versionx.org.springframework.spring5-webmvc}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.session</groupId>
-                <artifactId>spring-session-core</artifactId>
-                <version>${versionx.org.springframework.session.spring5-session}</version>
-                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
