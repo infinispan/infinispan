@@ -1,6 +1,5 @@
 package org.infinispan.query.test;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -13,16 +12,19 @@ public class Book {
 
    @Field
    private String title;
+
    @Field
    private String description;
+
    @IndexedEmbedded
-   private Set<Author> authors = new HashSet<Author>();
+   private Set<Author> authors;
 
    public Book(String title, String description, Set<Author> authors) {
       this.title = title;
       this.description = description;
       this.authors = authors;
    }
+
    public String getTitle() {
       return title;
    }
@@ -47,15 +49,14 @@ public class Book {
       this.authors = authors;
    }
 
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Book)) return false;
-      Book book = (Book) o;
-      return title.equals(book.title) &&
-            Objects.equals(description, book.description) &&
-            authors.equals(book.authors);
+      Book other = (Book) o;
+      return Objects.equals(title, other.title) &&
+            Objects.equals(description, other.description) &&
+            Objects.equals(authors, other.authors);
    }
 
    @Override
