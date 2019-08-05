@@ -83,7 +83,7 @@ pipeline {
             steps {
                 // Commit and tag once everything is good
                 sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag -Dtag=${version}"
             }
         }
 
