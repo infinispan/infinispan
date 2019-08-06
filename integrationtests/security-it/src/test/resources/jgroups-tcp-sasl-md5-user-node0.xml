@@ -57,6 +57,4 @@
    <UFC_NB max_credits="3m" min_threshold="0.40"/>
    <MFC_NB max_credits="3m" min_threshold="0.40"/>
    <FRAG3/>
-   <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
-    
 </config>

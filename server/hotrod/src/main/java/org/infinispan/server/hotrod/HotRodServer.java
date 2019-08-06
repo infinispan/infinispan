@@ -324,8 +324,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       // Map cluster address to server endpoint address
       log.debugf("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address);
-      // Guaranteed delivery required since if data is lost, there won't be
-      // any further cache calls, so negative acknowledgment can cause issues.
       addressCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES)
                   .put(clusterAddress, address);
    }

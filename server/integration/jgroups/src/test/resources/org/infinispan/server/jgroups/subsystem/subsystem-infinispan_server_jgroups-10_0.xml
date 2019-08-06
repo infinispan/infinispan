@@ -41,7 +41,6 @@
             <protocol type="UFC_NB"/>
             <protocol type="MFC_NB"/>
             <protocol type="FRAG3"/>
-            <protocol type="RSVP"/>
             <relay site="LONDON">
                 <remote-site name="SFO" channel="bridge"/>
                 <remote-site name="NYC" channel="bridge"/>

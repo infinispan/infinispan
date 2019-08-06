@@ -55,7 +55,6 @@
     <MFC_NB max_credits="3m"
          min_threshold="0.40"/>
 
-    <RSVP />
     <FRAG3/>
 </config>
 

@@ -111,6 +111,11 @@ a null value.
 The infinispan-cloud module has been removed and the `kubernetes`, `ec2`, `google` and `azure` default configurations have been included in `infinispan-core` and can be
 referenced as default named JGroups configurations.
 
+=== Removed experimental flag GUARANTEED_DELIVERY
+Almost as soon as GUARANTEED_DELIVERY was added, UNICAST3 and NAKACK2.resend_last_seqno removed the need for it.
+It was always documented as experimental, so we removed it without deprecation and we also removed the RSVP protocol
+from the default JGroups stacks.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes

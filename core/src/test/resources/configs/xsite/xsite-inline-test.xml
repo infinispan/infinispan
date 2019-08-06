@@ -45,7 +45,6 @@
               min_threshold="0.40"/>
          <MFC_NB max_credits="3m"
               min_threshold="0.40"/>
-         <RSVP />
          <FRAG3/>
       </stack>
       <stack name="xsite" extends="udp">
