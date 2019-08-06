@@ -6,11 +6,15 @@ pipeline {
     }
 
     parameters {
-        string(defaultValue: '0.0.0.Qualifier', description: 'Release version', name: 'version')
+        string(name: 'version', defaultValue: '0.0.0.Qualifier', description: 'Release version')
+        string(name: 'nextVersion', defaultValue: '', description: 'Next release (blank to stay on current SNAPSHOT)')
+        gitParameter(name: 'branch', defaultValue: 'origin/master', branchFilter: 'origin/(.*)', type: 'PT_BRANCH', description: 'Branch to release from')
     }
 
     options {
         timeout(time: 3, unit: 'HOURS')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '100', daysToKeepStr: '61'))
     }
 
     stages {
@@ -35,7 +39,7 @@ pipeline {
 
         stage('Version') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${version} -DprocessAllModules=true"
             }
         }
 
@@ -43,7 +47,7 @@ pipeline {
             steps {
                 // Create a staging repository on Nexus
                 script {
-                    STAGING_REPO_ID = sh(returnStdout: true, script: "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-open -pl .|grep \"Opened \"|cut -f3 -d' '").trim()
+                    STAGING_REPO_ID = sh(returnStdout: true, script: "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-open -pl .|grep \"Opened \"|grep -oE \"[^ ]+\$\"").trim()
                 }
                 echo "Staging repository: $STAGING_REPO_ID"
             }
@@ -65,8 +69,18 @@ pipeline {
         stage('Tag') {
             steps {
                 // Commit and tag once everything is good
-                sh "$MAVEN_HOME/bin/mvn -B -v scm:checkin -Dmessage=\"Releasing version ${version}\""
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag -Dtag=${version}"
+            }
+        }
+
+        stage('Next version') {
+            when {
+                expression { params.nextVersion != '' }
+            }
+            steps {
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${nextVersion} -DprocessAllModules=true"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Dmessage='next version ${nextVersion}' -DscmVersion=${branch} -DscmVersionType=branch scm:checkin"
             }
         }
     }
