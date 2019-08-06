@@ -185,40 +185,6 @@ public enum Flag {
    SKIP_XSITE_BACKUP,
 
    /**
-    * Using a synchronous cache (whether replicated or distributed) provides
-    * the cache caller guarantees that data has been sent to other cluster
-    * nodes correctly and has been applied successfully. At the network
-    * level, message delivery acknowledgement protocols are used to provide
-    * these guarantees.
-    *
-    * In order to increase performance and achieve better throughput, it's
-    * common to use negative acknowledgment protocols to confirm the
-    * delivery of messages. The problem with these protocols is that if the
-    * last message is lost, it can be difficult to recover it because a new
-    * message would need to be sent to find the gap.
-    *
-    * Some cache use cases might involve storing an entry in a synchronously
-    * replicated or distributed cache, and if that store operation fails, the
-    * application fails to start. One such example is the Infinispan Hot Rod
-    * server. When it starts, the first thing it does is add its endpoint
-    * information to a cache which is used to notify clients of topology
-    * changes. If this operation fails, the server cannot start because
-    * topologies won't include this node, and no more cache operations
-    * are attempted.
-    *
-    * So, in exceptional use cases such as this, a cluster wide cache update
-    * should be positively acknowledged by the other nodes, so that if the
-    * data is lost, it can be retransmitted immediately without the need
-    * to wait for an extra cluster wide operation to detect the lost message.
-    * The way to force a particular cache operation to be positively
-    * acknowledged is to send this flag.
-    *
-    * Note that this is flag is <b>EXPERIMENTAL</b> and so there is a high
-    * probability that it will be removed in future Infinispan versions.
-    */
-   GUARANTEED_DELIVERY,
-
-   /**
     * This flag skips listener notifications as a result of a cache operation.
     * For example, if this flag is passed as a result of a {@link Cache#get(Object)}
     * call, no callbacks will be made on listeners annotated with
