@@ -177,11 +177,6 @@
                 <protocol type="FRAG3">
                     <property name="frag_size">8000</property>
                 </protocol>
-                <protocol type="RSVP">
-                    <property name="timeout">60000</property>
-                    <property name="resend_interval">500</property>
-                    <property name="ack_on_delivery">false</property>
-                </protocol>
             </stack>
             <stack name="tcp">
                 <transport type="TCP" socket-binding="jgroups-tcp">
@@ -214,11 +209,6 @@
                     <property name="min_threshold">0.40</property>
                 </protocol>
                 <protocol type="FRAG3"/>
-                <protocol type="RSVP">
-                    <property name="timeout">60000</property>
-                    <property name="resend_interval">500</property>
-                    <property name="ack_on_delivery">false</property>
-                </protocol>
             </stack>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:jmx:1.1">

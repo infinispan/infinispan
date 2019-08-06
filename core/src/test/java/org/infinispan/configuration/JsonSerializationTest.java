@@ -309,7 +309,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(5, stack.size());
 
       JsonNode mping = stack.elements().next();
-      assertEquals(15, mping.size());
+      assertEquals(14, mping.size());
       assertEquals("mping", mping.get("name").asText());
 
       ObjectNode tcp = (ObjectNode) mping.get("TCP");
