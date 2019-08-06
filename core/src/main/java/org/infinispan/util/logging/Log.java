@@ -1885,4 +1885,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Starting user marshaller '%s'", id = 556)
    void startingUserMarshaller(String marshallerClass);
+
+   @Message(value = "Unable to configure JGroups Stack '%s'", id = 557)
+   CacheConfigurationException unableToAddJGroupsStack(String name, @Cause Exception e);
 }
