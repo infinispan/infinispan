@@ -96,7 +96,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
          }
 
          // Sending may block in flow-control or even in TCP, so we must do it outside the critical section
-         transport.sendCommand(target, command, requestId, deliverOrder, false, true, false);
+         transport.sendCommand(target, command, requestId, deliverOrder, true, false);
 
          // Scheduling the timeout task may also block
          // If this is the last target, set the request timeout at the deadline

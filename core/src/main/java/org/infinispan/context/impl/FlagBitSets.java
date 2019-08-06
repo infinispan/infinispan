@@ -32,7 +32,6 @@ public class FlagBitSets {
    public static final long DELTA_WRITE = EnumUtil.bitSetOf(Flag.DELTA_WRITE);
    public static final long IGNORE_RETURN_VALUES = EnumUtil.bitSetOf(Flag.IGNORE_RETURN_VALUES);
    public static final long SKIP_XSITE_BACKUP = EnumUtil.bitSetOf(Flag.SKIP_XSITE_BACKUP);
-   public static final long GUARANTEED_DELIVERY = EnumUtil.bitSetOf(Flag.GUARANTEED_DELIVERY);
    public static final long SKIP_LISTENER_NOTIFICATION = EnumUtil.bitSetOf(Flag.SKIP_LISTENER_NOTIFICATION);
    public static final long SKIP_STATISTICS = EnumUtil.bitSetOf(Flag.SKIP_STATISTICS);
    @Deprecated
