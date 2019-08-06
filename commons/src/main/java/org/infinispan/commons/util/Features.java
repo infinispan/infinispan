@@ -3,7 +3,7 @@ package org.infinispan.commons.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Enumeration;
+import java.util.Collection;
 import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -25,9 +25,8 @@ public class Features {
    public Features(ClassLoader classLoader) {
       features = new Properties();
       try {
-         Enumeration<URL> featureFiles = classLoader.getResources(FEATURES_FILE);
-         while (featureFiles.hasMoreElements()) {
-            URL url = featureFiles.nextElement();
+         Collection<URL> featureFiles = FileLookupFactory.newInstance().lookupFileLocations(FEATURES_FILE, classLoader);
+         for (URL url : featureFiles) {
             try (InputStream is = url.openStream()) {
                features.load(is);
             }
