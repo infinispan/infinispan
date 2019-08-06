@@ -9,6 +9,8 @@ import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUT
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
@@ -457,8 +459,10 @@ public class Parser implements ConfigurationParser {
       URL url = FileLookupFactory.newInstance().lookupFileLocation(path, holder.getClassLoader());
       try (InputStream xml = (url != null ? url : resourceResolver.resolveResource(path)).openStream()) {
          holder.addJGroupsStack(new FileJGroupsChannelConfigurator(name, path, xml, properties));
-      } catch (Exception e) {
+      } catch (FileNotFoundException e) {
          throw log.jgroupsConfigurationNotFound(path);
+      } catch (IOException e) {
+         throw log.unableToAddJGroupsStack(name, e);
       }
    }
 
