@@ -744,6 +744,7 @@
    <xs:complexType name="security-realm-ssl">
       <xs:sequence>
          <xs:element type="tns:security-realm-keystore" name="keystore"/>
+         <xs:element type="tns:security-realm-ssl-engine" name="engine" minOccurs="0"/>
       </xs:sequence>
    </xs:complexType>
    <xs:complexType name="security-realm-keystore">
@@ -753,6 +754,10 @@
       <xs:attribute type="xs:string" name="alias"/>
       <xs:attribute type="xs:string" name="key-password"/>
       <xs:attribute type="xs:string" name="generate-self-signed-certificate-host"/>
+   </xs:complexType>
+   <xs:complexType name="security-realm-ssl-engine">
+      <xs:attribute type="tns:name-list" name="enabled-protocols"/>
+      <xs:attribute type="xs:string" name="enabled-ciphersuites"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-properties">
@@ -766,6 +771,7 @@
    <xs:complexType name="security-realm-user-properties">
       <xs:attribute type="xs:string" name="path" use="required"/>
       <xs:attribute type="xs:string" name="relative-to"/>
+      <xs:attribute type="xs:string" name="digest-realm-name"/>
       <xs:attribute type="xs:boolean" name="plain-text" default="false"/>
    </xs:complexType>
 
@@ -782,6 +788,10 @@
       <xs:attribute type="xs:string" name="url" use="required"/>
       <xs:attribute type="xs:string" name="principal"/>
       <xs:attribute type="xs:string" name="credential"/>
+      <xs:attribute type="xs:boolean" name="direct-verification"/>
+      <xs:attribute type="xs:int" name="page-size"/>
+      <xs:attribute type="xs:string" name="search-dn"/>
+      <xs:attribute type="xs:string" name="rdn-identifier"/>
    </xs:complexType>
 
    <xs:complexType name="ldap-identity-mapping">
@@ -790,7 +800,7 @@
          <xs:element type="tns:ldap-user-password-mapper" name="user-password-mapper" minOccurs="0"/>
       </xs:sequence>
       <xs:attribute type="xs:string" name="rdn-identifier"/>
-      <xs:attribute type="xs:string" name="search-base-dn"/>
+      <xs:attribute type="xs:string" name="search-dn"/>
    </xs:complexType>
 
    <xs:complexType name="ldap-attribute-mapping">
@@ -801,7 +811,7 @@
 
    <xs:complexType name="ldap-attribute">
       <xs:attribute type="xs:string" name="filter" use="required"/>
-      <xs:attribute type="xs:string" name="filter-base-dn" />
+      <xs:attribute type="xs:string" name="filter-dn" />
       <xs:attribute type="xs:string" name="from" />
       <xs:attribute type="xs:string" name="to" />
    </xs:complexType>
@@ -825,12 +835,15 @@
       <xs:attribute type="tns:name-list" name="issuer"/>
       <xs:attribute type="tns:name-list" name="audience"/>
       <xs:attribute type="xs:string" name="public-key"/>
+      <xs:attribute type="xs:long" name="jku-timeout"/>
+      <xs:attribute type="xs:string" name="client-ssl-context"/>
    </xs:complexType>
 
    <xs:complexType name="oauth2-introspection">
       <xs:attribute type="xs:string" name="client-id"/>
       <xs:attribute type="xs:string" name="client-secret"/>
       <xs:attribute type="xs:string" name="introspection-url"/>
+      <xs:attribute type="xs:string" name="client-ssl-context"/>
       <xs:attribute type="xs:string" name="host-name-verification-policy"/>
    </xs:complexType>
 
@@ -847,10 +860,14 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-kerberos">
-      <xs:attribute type="xs:string" name="name" default="kerberos"/>
+      <xs:attribute type="xs:string" name="keytab-path"/>
+      <xs:attribute type="xs:string" name="relative-to"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-truststore">
-      <xs:attribute type="xs:string" name="name" default="truststore"/>
+      <xs:attribute type="xs:string" name="path" use="required"/>
+      <xs:attribute type="xs:string" name="provider"/>
+      <xs:attribute type="xs:string" name="keystore-password" use="required"/>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.data.path"/>
    </xs:complexType>
 </xs:schema>

@@ -96,4 +96,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot configure a protocol with the same socket binding used by the endpoint. Use a dedicated socket binding.", id = 80023)
    CacheConfigurationException protocolCannotUseSameSocketBindingAsEndpoint();
+
+   @Message(value = "Invalid URL", id = 80024)
+   CacheConfigurationException invalidUrl();
+
 }

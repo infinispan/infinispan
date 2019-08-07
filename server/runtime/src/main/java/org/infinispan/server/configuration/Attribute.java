@@ -36,7 +36,7 @@ public enum Attribute {
    ISSUER,
    JKU_TIMEOUT,
    KEYSTORE_PASSWORD,
-   KEYTAB,
+   KEYTAB_PATH,
    KEY_PASSWORD,
    LEVELS,
    NAME,
