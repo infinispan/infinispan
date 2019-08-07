@@ -179,9 +179,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
     * org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
     * <p/>
-    * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#activateAsync(Object, int)}
-    * depending if the value
-    * returned by the {@link org.infinispan.container.DataContainer.ComputeAction} is null or not respectively.
+    * The {@code key} must be activated by invoking {@link org.infinispan.eviction.ActivationManager#activateAsync(Object, int)}.
     * <p>
     * Note the entry provided to {@link org.infinispan.container.DataContainer.ComputeAction} may be expired as these
     * entries are not filtered as many other methods do.

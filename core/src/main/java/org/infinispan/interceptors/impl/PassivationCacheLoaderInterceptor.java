@@ -10,8 +10,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.concurrent.NonBlockingOrderer;
-import org.infinispan.util.concurrent.NonBlockingOrderer.OPERATION;
+import org.infinispan.util.concurrent.DataOperationOrderer;
+import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -19,7 +19,8 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject NonBlockingOrderer orderer;
+   @Inject
+   DataOperationOrderer orderer;
    @Inject ActivationManager activationManager;
 
    @Override
@@ -30,11 +31,11 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
    }
 
    static <K, V> CompletionStage<InternalCacheEntry<K, V>> handlePassivationLoad(Object key, int segment,
-                                                                                 NonBlockingOrderer orderer,
+                                                                                 DataOperationOrderer orderer,
                                                                                  ActivationManager activationManager,
                                                                                  Supplier<CompletionStage<InternalCacheEntry<K, V>>> supplier) {
-      CompletableFuture<OPERATION> future = new CompletableFuture<>();
-      CompletionStage<OPERATION> delayStage = orderer.orderOn(key, future);
+      CompletableFuture<Operation> future = new CompletableFuture<>();
+      CompletionStage<Operation> delayStage = orderer.orderOn(key, future);
 
       CompletionStage<InternalCacheEntry<K, V>> retrievalStage;
       if (delayStage != null) {
@@ -44,7 +45,9 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
       }
       return retrievalStage.whenComplete((value, t) -> {
          if (value != null) {
-            log.tracef("Activating key: %s - not waiting for response", value.getKey());
+            if (trace) {
+               log.tracef("Activating key: %s - not waiting for response", value.getKey());
+            }
             // Note we don't wait on this to be removed, which allows the load to continue ahead. However
             // we can't release the orderer acquisition until the remove is complete
             activationManager.activateAsync(value.getKey(), segment)
@@ -52,10 +55,10 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
                      if (throwable != null) {
                         log.warnf("Activation of key %s failed for some reason", t);
                      }
-                     orderer.completeOperation(key, future, OPERATION.READ);
+                     orderer.completeOperation(key, future, Operation.READ);
                   });
          } else {
-            orderer.completeOperation(key, future, OPERATION.READ);
+            orderer.completeOperation(key, future, Operation.READ);
          }
       });
    }

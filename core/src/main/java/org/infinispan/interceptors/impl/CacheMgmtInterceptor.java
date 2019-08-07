@@ -85,7 +85,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // This is just here to notify that evictions are counted in the data container now by invoking
+      // This is just here to notify that evictions are counted in the ClusteringDependentLogic via NotifyHelper and
       // EvictionManager
       return super.visitEvictCommand(ctx, command);
    }

@@ -74,23 +74,6 @@ public class ActivationManagerImpl implements ActivationManager {
    }
 
    @Override
-   public CompletionStage<Void> onUpdateAsync(Object key, boolean newEntry) {
-      if (!passivation || !newEntry) {
-         //we don't have passivation or the entry already exists in container.
-         return CompletableFutures.completedNull();
-      }
-      CompletionStage<Boolean> stage = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PRIVATE);
-      return stage.handle((removed, throwable) -> {
-         if (throwable != null) {
-            log.unableToRemoveEntryAfterActivation(key, throwable);
-         } else if (statisticsEnabled && removed != null && removed) {
-            activations.increment();
-         }
-         return null;
-      });
-   }
-
-   @Override
    public void onRemove(Object key, boolean newEntry) {
       if (!passivation) {
          return;
@@ -117,40 +100,6 @@ public class ActivationManagerImpl implements ActivationManager {
       } catch (CacheException e) {
          log.unableToRemoveEntryAfterActivation(key, e);
       }
-   }
-
-   @Override
-   public CompletionStage<Void> onRemoveAsync(Object key, boolean newEntry) {
-      if (!passivation) {
-         return CompletableFutures.completedNull();
-      }
-      //if we are the primary owner, we need to remove from the shared store,
-      final boolean primaryOwner = distributionManager != null && distributionManager.getCacheTopology().getDistribution(key).isPrimary();
-      CompletionStage<Boolean> stage = null;
-      if (newEntry) {
-         //the entry does not exists in data container. We need to remove from private and shared stores.
-         //if we are the primary owner
-         stage = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key),
-               primaryOwner ? BOTH : PRIVATE);
-      } else {
-         //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
-         //so it was already activate in the private stores.
-         if (primaryOwner) {
-            stage = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH);
-         }
-      }
-
-      if (stage != null) {
-         return stage.handle((removed, throwable) -> {
-            if (throwable != null) {
-               log.unableToRemoveEntryAfterActivation(key, throwable);
-            } else if (statisticsEnabled && removed != null && removed) {
-               activations.increment();
-            }
-            return null;
-         });
-      }
-      return CompletableFutures.completedNull();
    }
 
    @Override

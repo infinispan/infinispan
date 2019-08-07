@@ -15,47 +15,26 @@ import org.infinispan.factories.scopes.Scopes;
 public interface ActivationManager {
 
    /**
-    * Almost the same as {@link #onUpdateAsync(Object, boolean)} except that it is performed
-    * synchronously on the same thread that invoked it. This method will eventually be removed when
-    * the data container can handle asynchronous passivation/activation.
-    * @deprecated since 10.0 - please use {@link #onUpdateAsync(Object, boolean)} instead.
+    * This method should no longer be used - please use {@link #activateAsync(Object, int)} instead.
+    * @deprecated since 10.0
     */
    @Deprecated
    void onUpdate(Object key, boolean newEntry);
 
    /**
-    * Almost the same as {@link #onRemoveAsync(Object, boolean)} except that it is performed
-    * synchronously on the same thread that invoked it. This method will eventually be removed when
-    * the data container can handle asynchronous passivation/activation.
-    * @deprecated since 10.0 - please use {@link #onRemoveAsync(Object, boolean)} instead.
+    * This method should no longer be used - please use {@link #activateAsync(Object, int)} instead.
+    * @deprecated since 10.0
     */
    @Deprecated
    void onRemove(Object key, boolean newEntry);
 
    /**
-    * Remove key and associated value from cache store and update the activation counter.
-    *
-    * @param key      Key to remove
-    * @param newEntry {@code true} if the entry does not exists in-memory
-    * @return stage then when complete has updated appropriate stores
-    * @deprecated
+    * Activates an entry, effectively removing it from the underlying persistence store. Note that the removal may
+    * be done asynchronously and when the returned Stage is complete the removal is also completed.
+    * @param key key to activate
+    * @param segment segment the key maps to
+    * @return stage that when complete the entry has been activated
     */
-   @Deprecated
-   CompletionStage<Void> onUpdateAsync(Object key, boolean newEntry);
-
-   /**
-    * Remove key and associated value from cache store and update the activation counter.
-    * <p/>
-    * The key is also removed from the shared configured stores.
-    *
-    * @param key      Key to activate
-    * @param newEntry {@code true} if the entry does not exists in-memory
-    * @return stage then when complete has updated appropriate stores
-    * @deprecated
-    */
-   @Deprecated
-   CompletionStage<Void> onRemoveAsync(Object key, boolean newEntry);
-
    CompletionStage<Void> activateAsync(Object key, int segment);
 
    long getPendingActivationCount();

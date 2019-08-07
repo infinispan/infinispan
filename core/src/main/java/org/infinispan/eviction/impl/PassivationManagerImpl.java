@@ -59,10 +59,6 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
    public void start() {
       enabled = !persistenceManager.isReadOnly() && cfg.persistence().passivation() && cfg.persistence().usingStores();
       if (enabled) {
-         if (!(persistenceManager instanceof PassivationPersistenceManager)) {
-            throw new CacheException("Passivation is enabled, but PersistenceManager is not instanceof " +
-                  "PersistancePassivationManager was " + persistenceManager.getClass());
-         }
          passivationPersistenceManager = (PassivationPersistenceManager) persistenceManager;
          statsEnabled = cfg.jmxStatistics().enabled();
       }

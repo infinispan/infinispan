@@ -8,10 +8,11 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.concurrent.NonBlockingOrderer;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 
 public class PassivationClusteredCacheLoaderInterceptor<K, V> extends ClusteredCacheLoaderInterceptor<K, V> {
-   @Inject NonBlockingOrderer orderer;
+   @Inject
+   DataOperationOrderer orderer;
    @Inject ActivationManager activationManager;
 
    @Override

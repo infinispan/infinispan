@@ -1,6 +1,5 @@
 package org.infinispan.persistence.internal;
 
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -143,42 +142,6 @@ public class PersistenceUtil {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }
       return loaded;
-   }
-
-   public static <K, V> CompletionStage<MarshallableEntry<K, V>> loadEntryAsync(PersistenceManager persistenceManager, Object key,
-         int segment, InvocationContext context, boolean includeStores) {
-      CompletionStage<MarshallableEntry<K, V>> stage;
-      if (segment != SEGMENT_NOT_PROVIDED) {
-         stage = persistenceManager.loadFromAllStores(key, segment, context.isOriginLocal(), includeStores);
-      } else {
-         stage = persistenceManager.loadFromAllStores(key, context.isOriginLocal(), includeStores);
-      }
-      if (trace) {
-         stage = stage.thenApply(loaded -> {
-            log.tracef("Loaded %s for key %s from persistence.", loaded, key);
-            return loaded;
-         });
-      }
-      return stage;
-   }
-
-   public static <K, V> void putIfAbsentDataContainer(InternalCacheEntry<K, V> ice, DataContainer<K, V> dataContainer,
-         TimeService timeService, int segment) {
-      K key = ice.getKey();
-
-      DataContainer.ComputeAction<K, V> putIfAbsentOrExpired = (k, oldEntry, factory) -> {
-         if (oldEntry != null &&
-               (!oldEntry.canExpire() || !oldEntry.isExpired(timeService.wallClockTime()))) {
-               return oldEntry;
-         }
-         return ice;
-      };
-
-      if (segment != SEGMENT_NOT_PROVIDED && dataContainer instanceof InternalDataContainer) {
-         ((InternalDataContainer<K, V>) dataContainer).compute(segment, key, putIfAbsentOrExpired);
-      } else {
-         dataContainer.compute(key, putIfAbsentOrExpired);
-      }
    }
 
    public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {

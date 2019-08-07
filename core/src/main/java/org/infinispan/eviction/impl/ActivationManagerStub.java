@@ -1,6 +1,5 @@
 package org.infinispan.eviction.impl;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.eviction.ActivationManager;
@@ -21,16 +20,6 @@ public class ActivationManagerStub implements ActivationManager {
 
    @Override
    public void onRemove(Object key, boolean newEntry) {
-   }
-
-   @Override
-   public CompletableFuture<Void> onUpdateAsync(Object key, boolean newEntry) {
-      return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public CompletionStage<Void> onRemoveAsync(Object key, boolean newEntry) {
-      return CompletableFutures.completedNull();
    }
 
    @Override

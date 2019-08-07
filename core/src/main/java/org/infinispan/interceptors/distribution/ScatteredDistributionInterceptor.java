@@ -112,8 +112,8 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CommandAckCollector.MultiTargetCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.NonBlockingOrderer;
-import org.infinispan.util.concurrent.NonBlockingOrderer.OPERATION;
+import org.infinispan.util.concurrent.DataOperationOrderer;
+import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -141,7 +141,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject PersistenceManager persistenceManager;
    @Inject Configuration configuration;
-   @Inject NonBlockingOrderer orderer;
+   @Inject DataOperationOrderer orderer;
    @Inject EvictionManager evictionManager;
    @Inject ActivationManager activationManager;
 
@@ -414,13 +414,13 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       // Our update cannot use entry.commit and instead uses data container directly - thus we must do the passivation
       // ourselves
       Object key = entry.getKey();
-      CompletableFuture<OPERATION> orderingStage = new CompletableFuture<>();
-      CompletionStage<OPERATION> waitStage = orderer.orderOn(key, orderingStage);
+      CompletableFuture<Operation> orderingStage = new CompletableFuture<>();
+      CompletionStage<Operation> waitStage = orderer.orderOn(key, orderingStage);
       CompletionStage<Boolean> committedStage;
       if (waitStage == null) {
-         committedStage = CompletableFutures.booleanStage(wasCommitted, entry);
+         committedStage = CompletableFutures.booleanStage(wasCommitted.test(entry));
       } else {
-         committedStage = waitStage.thenCompose(ignore -> CompletableFutures.booleanStage(wasCommitted, entry));
+         committedStage = waitStage.thenCompose(ignore -> CompletableFutures.booleanStage(wasCommitted.test(entry)));
       }
       CompletionStage<Void> lastStage = committedStage.thenCompose(committed -> {
          if (committed) {
@@ -435,7 +435,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
       });
       return lastStage.whenComplete((ignore, ignoreT) -> orderer.completeOperation(key, orderingStage,
-            entry.isRemoved() ? OPERATION.REMOVE : OPERATION.WRITE));
+            entry.isRemoved() ? Operation.REMOVE : Operation.WRITE));
    }
 
    private CompletionStage<Void> commitSingleEntryIfNewer(RepeatableReadEntry entry, InvocationContext ctx, VisitableCommand command) {

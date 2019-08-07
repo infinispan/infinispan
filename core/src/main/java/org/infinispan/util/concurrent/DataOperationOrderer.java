@@ -12,14 +12,16 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Ordering construct allowing concurrent operations that wish to do operations upon the same key to wait until
  * the most recently registered operation is complete in a non blocking way.
+ * @author wburns
+ * @since 10.0
  */
-public class NonBlockingOrderer {
+public class DataOperationOrderer {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final static boolean trace = log.isTraceEnabled();
 
-   private final ConcurrentMap<Object, CompletionStage<OPERATION>> objectStages = new ConcurrentHashMap<>();
+   private final ConcurrentMap<Object, CompletionStage<Operation>> objectStages = new ConcurrentHashMap<>();
 
-   public enum OPERATION {
+   public enum Operation {
       READ,
       REMOVE,
       WRITE
@@ -34,17 +36,8 @@ public class NonBlockingOrderer {
     * @return stage that signals when the operation that is registering its own future may continue or null if nothing
     *         to wait on
     */
-   public CompletionStage<OPERATION> orderOn(Object key, CompletionStage<OPERATION> register) {
-      CompletionStage<OPERATION> current;
-      while (true) {
-         current = objectStages.putIfAbsent(key, register);
-         if (current == null) {
-            break;
-         }
-         if (objectStages.replace(key, current, register)) {
-            break;
-         }
-      }
+   public CompletionStage<Operation> orderOn(Object key, CompletionStage<Operation> register) {
+      CompletionStage<Operation> current = objectStages.put(key, register);
       if (trace) {
          log.tracef("Ordering upcoming future %s for key %s to run after %s", register, key, current);
       }
@@ -52,15 +45,16 @@ public class NonBlockingOrderer {
    }
 
    /**
-    * Completes a given operation by freeing any memory for the future and completing it
+    * Completes a given operation and removes all internal references from the orderer
     * @param key delineating identifier for an operation
     * @param registeredFuture previously registered future that is removed from memory as needed
     * @param operation the type of operation
     */
-   public void completeOperation(Object key, CompletableFuture<OPERATION> registeredFuture, OPERATION operation) {
+   public void completeOperation(Object key, CompletableFuture<Operation> registeredFuture, Operation operation) {
       if (trace) {
          log.tracef("Ordered future %s is completed for key %s from op %s", registeredFuture, key, operation);
       }
+      // If nothing was removed that is fine - means another operation has been registered
       objectStages.remove(key, registeredFuture);
       registeredFuture.complete(operation);
    }

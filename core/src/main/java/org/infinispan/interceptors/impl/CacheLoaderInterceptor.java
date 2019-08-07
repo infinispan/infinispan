@@ -59,6 +59,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -418,8 +419,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       if (trace) {
          log.tracef("Loading entry for key %s", key);
       }
-      CompletionStage<InternalCacheEntry<K, V>> resultStage = PersistenceUtil.<K, V>loadEntryAsync(persistenceManager, key,
-            segment, ctx, includeStores).thenApply(me -> {
+      CompletionStage<InternalCacheEntry<K, V>> resultStage = persistenceManager.<K, V>loadFromAllStores(key, segment,
+            ctx.isOriginLocal(), includeStores).thenApply(me -> {
          if (me != null) {
             InternalCacheEntry<K, V> ice = PersistenceUtil.convert(me, iceFactory);
             if (getStatisticsEnabled()) {
@@ -429,7 +430,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
                log.tracef("Loaded entry: %s for key %s from store and attempting to insert into data container",
                      ice, key);
             }
-            PersistenceUtil.putIfAbsentDataContainer(ice, dataContainer, timeService, segment);
+
+            DataContainer.ComputeAction<K, V> putIfAbsentOrExpired = (k, oldEntry, factory) -> {
+               if (oldEntry != null &&
+                     (!oldEntry.canExpire() || !oldEntry.isExpired(timeService.wallClockTime()))) {
+                  return oldEntry;
+               }
+               return ice;
+            };
+
+            dataContainer.compute(segment, (K) key, putIfAbsentOrExpired);
             return ice;
          } else {
             if (trace) {
