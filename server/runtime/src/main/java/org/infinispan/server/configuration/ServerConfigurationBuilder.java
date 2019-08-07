@@ -1,9 +1,7 @@
 package org.infinispan.server.configuration;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
@@ -12,8 +10,8 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.SinglePortServerConfigurationBuilder;
+import org.infinispan.server.configuration.security.SecurityConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.network.SocketBinding;
 import org.infinispan.server.security.ServerSecurityRealm;
 
@@ -22,13 +20,13 @@ import org.infinispan.server.security.ServerSecurityRealm;
  * @since 10.0
  */
 public class ServerConfigurationBuilder implements Builder<ServerConfiguration> {
-   private final Map<String, NetworkAddress> networkInterfaces = new HashMap<>(2);
-   private final Map<String, ServerSecurityRealm> securityRealms = new HashMap<>(2);
-   private final Map<String, SSLContext> sslContexts = new HashMap<>(2);
-   private final Map<String, SocketBinding> socketBindings = new HashMap<>(2);
    private final List<ProtocolServerConfigurationBuilder<?, ?>> connectors = new ArrayList<>(2);
    private final GlobalConfigurationBuilder builder;
    private final SinglePortServerConfigurationBuilder endpoint = new SinglePortServerConfigurationBuilder();
+
+   private final InterfacesConfigurationBuilder interfaces = new InterfacesConfigurationBuilder();
+   private final SocketBindingsConfigurationBuilder socketBindings = new SocketBindingsConfigurationBuilder(this);
+   private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder();
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
       this.builder = builder;
@@ -53,36 +51,16 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return endpoint;
    }
 
-   public void addSecurityRealm(String name, ServerSecurityRealm domain) {
-      if (securityRealms.putIfAbsent(name, domain) != null) {
-         throw Server.log.duplicateSecurityRealm(name);
-      }
+   public SecurityConfigurationBuilder security() {
+      return security;
    }
 
-   public void addSSLContext(String name, SSLContext sslContext) {
-      if (sslContexts.putIfAbsent(name, sslContext) != null) {
-         throw Server.log.duplicateSecurityRealm(name);
-      }
+   public InterfacesConfigurationBuilder interfaces() {
+      return interfaces;
    }
 
-   public void addNetworkInterface(NetworkAddress networkAddress) {
-      if (networkInterfaces.putIfAbsent(networkAddress.getName(), networkAddress) != null) {
-         throw Server.log.duplicatePath(networkAddress.getName());
-      }
-   }
-
-   public void addSocketBinding(String name, NetworkAddress networkAddress, int port) {
-      if (socketBindings.putIfAbsent(name, new SocketBinding(name, networkAddress, port)) != null) {
-         throw Server.log.duplicatePath(name);
-      }
-   }
-
-   public void addSocketBinding(String name, String interfaceName, int port) {
-      if (networkInterfaces.containsKey(interfaceName)) {
-         addSocketBinding(name, networkInterfaces.get(interfaceName), port);
-      } else {
-         throw Server.log.unknownInterface(interfaceName);
-      }
+   public SocketBindingsConfigurationBuilder socketBindings() {
+      return socketBindings;
    }
 
    @Override
@@ -92,9 +70,9 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    @Override
    public ServerConfiguration create() {
       return new ServerConfiguration(
-            networkInterfaces,
-            socketBindings,
-            securityRealms,
+            interfaces.create(),
+            socketBindings.create(),
+            security.create(),
             connectors.stream().map(b -> b.create()).collect(Collectors.toList()),
             endpoint.create()
       );
@@ -106,48 +84,39 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return this;
    }
 
-   public SocketBinding getSocketBinding(String name) {
-      if (socketBindings.containsKey(name)) {
-         return socketBindings.get(name);
-      } else {
-         throw Server.log.unknownSocketBinding(name);
-      }
-   }
-
    public ServerSecurityRealm getSecurityRealm(String name) {
-      if (securityRealms.containsKey(name)) {
-         return securityRealms.get(name);
-      } else {
+      ServerSecurityRealm serverSecurityRealm = security.realms().getServerSecurityRealm(name);
+      if (serverSecurityRealm == null) {
          throw Server.log.unknownSecurityDomain(name);
       }
+      return serverSecurityRealm;
    }
 
    public boolean hasSSLContext(String name) {
-      return sslContexts.containsKey(name);
+      return security.realms().getSSLContext(name) != null;
    }
 
    public SSLContext getSSLContext(String name) {
-      if (sslContexts.containsKey(name)) {
-         return sslContexts.get(name);
-      } else {
+      SSLContext sslContext = security.realms().getSSLContext(name);
+      if (sslContext == null) {
          throw Server.log.unknownSecurityDomain(name);
       }
+      return sslContext;
    }
 
-   public void applySocketBinding(String name, ProtocolServerConfigurationBuilder builder) {
-      SocketBinding socketBinding = socketBindings.get(name);
-      if (socketBinding != null) {
-         String host = socketBinding.getAddress().getAddress().getHostAddress();
-         int port = socketBinding.getPort();
-         if (builder != endpoint) {
-            // Ensure we are using a different socket binding than the one used by the single-port endpoint
-            if (endpoint.host().equals(host) && endpoint.port() == port) {
-               throw Server.log.protocolCannotUseSameSocketBindingAsEndpoint();
-            }
-         }
-         builder.host(host).port(port);
-      } else {
-         throw Server.log.unknownSocketBinding(name);
+   public void applySocketBinding(String bingingName, ProtocolServerConfigurationBuilder builder) {
+      if (!socketBindings.exists(bingingName)) {
+         throw Server.log.unknownSocketBinding(bingingName);
       }
+      SocketBinding socketBinding = socketBindings.getSocketBinding(bingingName);
+      String host = socketBinding.getAddress().getAddress().getHostAddress();
+      int port = socketBinding.getPort();
+      if (builder != endpoint) {
+         // Ensure we are using a different socket binding than the one used by the single-port endpoint
+         if (endpoint.host().equals(host) && endpoint.port() == port) {
+            throw Server.log.protocolCannotUseSameSocketBindingAsEndpoint();
+         }
+      }
+      builder.host(host).port(port);
    }
 }
