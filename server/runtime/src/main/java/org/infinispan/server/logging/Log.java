@@ -84,4 +84,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "Protocol Router listening on %s:%d", id = 80019)
    void routerStarted(String host, int port);
+
+   @Message(value = "Cannot use a trust store without a server identity", id = 80020)
+   CacheConfigurationException trustStoreWithoutServerIdentity();
+
+   @Message(value = "Authentication cannot be configured without a security realm", id = 80021)
+   CacheConfigurationException authenticationWithoutSecurityRealm();
+
+   @Message(value = "Cannot configure protocol encryption under a single port endpoint. Use a dedicated socket binding.", id = 80022)
+   CacheConfigurationException cannotConfigureProtocolEncryptionUnderSinglePort();
+
+   @Message(value = "Cannot configure a protocol with the same socket binding used by the endpoint. Use a dedicated socket binding.", id = 80023)
+   CacheConfigurationException protocolCannotUseSameSocketBindingAsEndpoint();
 }

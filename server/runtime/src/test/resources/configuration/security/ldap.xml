@@ -9,11 +9,6 @@
                <user-password-mapper from="userPassword" />
             </identity-mapping>
          </ldap-realm>
-         <server-identities>
-            <ssl>
-               <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret" alias="server"/>
-            </ssl>
-         </server-identities>
       </security-realm>
    </security-realms>
 </security>

@@ -51,7 +51,7 @@ public class SslUtils {
          //we want to minimize the impact of possibly bugs in hacked SSL Context.
          return new AlpnHackedJdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
       } else {
-         return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
+         return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth, null, false);
       }
    }
 

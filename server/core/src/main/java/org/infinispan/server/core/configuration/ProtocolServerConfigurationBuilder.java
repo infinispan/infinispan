@@ -68,10 +68,18 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       return this.self();
    }
 
+   public String host() {
+      return attributes.attribute(HOST).get();
+   }
+
    @Override
    public S port(int port) {
       attributes.attribute(PORT).set(port);
       return this.self();
+   }
+
+   public int port() {
+      return attributes.attribute(PORT).get();
    }
 
    @Override

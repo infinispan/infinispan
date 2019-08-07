@@ -13,11 +13,13 @@ import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -64,6 +66,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
 
    private void parseHotRodConnector(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder serverBuilder, HotRodServerConfigurationBuilder builder)
          throws XMLStreamException {
+      boolean dedicatedSocketBinding = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -82,9 +85,9 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
-               // TODO: check that the socket binding is different from the single-port endpoint
                serverBuilder.applySocketBinding(value, builder);
                builder.startTransport(true);
+               dedicatedSocketBinding = true;
                break;
             }
             default: {
@@ -104,6 +107,9 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case ENCRYPTION: {
+               if (!dedicatedSocketBinding) {
+                  throw Server.log.cannotConfigureProtocolEncryptionUnderSinglePort();
+               }
                parseEncryption(reader, serverBuilder, builder.ssl().enable());
                break;
             }
@@ -115,6 +121,8 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
+      String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
+      builder.sslContext(serverBuilder.getSSLContext(securityRealm));
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -125,7 +133,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SECURITY_REALM: {
-               builder.sslContext(serverBuilder.getSSLContext(value));
+               // Already seen
                break;
             }
             default: {
@@ -170,13 +178,14 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
-      String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
+      ServerSecurityRealm securityRealm = serverBuilder.endpoint().securityRealm();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SECURITY_REALM: {
-               // Already seen
+               securityRealm = serverBuilder.getSecurityRealm(value);
                break;
             }
             default: {
@@ -196,7 +205,10 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      builder.serverAuthenticationProvider(serverBuilder.getSecurityRealm(securityRealm).getSASLAuthenticationProvider());
+      if (securityRealm == null) {
+         throw Server.log.authenticationWithoutSecurityRealm();
+      }
+      builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider());
    }
 
    private void parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
