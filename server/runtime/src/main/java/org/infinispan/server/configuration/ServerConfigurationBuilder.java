@@ -122,6 +122,10 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       }
    }
 
+   public boolean hasSSLContext(String name) {
+      return sslContexts.containsKey(name);
+   }
+
    public SSLContext getSSLContext(String name) {
       if (sslContexts.containsKey(name)) {
          return sslContexts.get(name);
@@ -133,7 +137,15 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    public void applySocketBinding(String name, ProtocolServerConfigurationBuilder builder) {
       SocketBinding socketBinding = socketBindings.get(name);
       if (socketBinding != null) {
-         builder.host(socketBinding.getAddress().getAddress().getHostAddress()).port(socketBinding.getPort());
+         String host = socketBinding.getAddress().getAddress().getHostAddress();
+         int port = socketBinding.getPort();
+         if (builder != endpoint) {
+            // Ensure we are using a different socket binding than the one used by the single-port endpoint
+            if (endpoint.host().equals(host) && endpoint.port() == port) {
+               throw Server.log.protocolCannotUseSameSocketBindingAsEndpoint();
+            }
+         }
+         builder.host(host).port(port);
       } else {
          throw Server.log.unknownSocketBinding(name);
       }

@@ -9,6 +9,7 @@ import org.infinispan.server.router.configuration.builder.HotRodRouterBuilder;
 import org.infinispan.server.router.configuration.builder.RestRouterBuilder;
 import org.infinispan.server.router.configuration.builder.RoutingBuilder;
 import org.infinispan.server.router.configuration.builder.SinglePortRouterBuilder;
+import org.infinispan.server.security.ServerSecurityRealm;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -20,6 +21,7 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
    private HotRodRouterBuilder hotRodRouter = new HotRodRouterBuilder(this);
    private RestRouterBuilder restRouter = new RestRouterBuilder(this);
    private SinglePortRouterBuilder singlePortRouter = new SinglePortRouterBuilder(this);
+   private ServerSecurityRealm securityRealm;
 
    public SinglePortServerConfigurationBuilder() {
       super(HotRodServer.DEFAULT_HOTROD_PORT, SinglePortRouterConfiguration.attributeDefinitionSet());
@@ -72,6 +74,15 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
    @Override
    public SinglePortRouterBuilder singlePort() {
       return singlePortRouter;
+   }
+
+   public SinglePortServerConfigurationBuilder securityRealm(ServerSecurityRealm securityRealm) {
+      this.securityRealm = securityRealm;
+      return this;
+   }
+
+   public ServerSecurityRealm securityRealm() {
+      return securityRealm;
    }
 
    public void applyConfigurationToProtocol(ProtocolServerConfigurationBuilder builder) {

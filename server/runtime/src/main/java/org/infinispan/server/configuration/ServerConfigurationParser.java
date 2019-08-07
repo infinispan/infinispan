@@ -276,7 +276,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseSecurityRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
       String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
       SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
-      SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
+      SSLContextBuilder sslContextBuilder = null;
       boolean hasTrustStore = false;
       Supplier<Boolean> httpChallengeReadiness = () -> true;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
@@ -299,7 +299,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                httpChallengeReadiness = () -> realm.isEmpty();
                break;
             case SERVER_IDENTITIES:
-               parseServerIdentitities(reader, sslContextBuilder);
+               sslContextBuilder = parseServerIdentitities(reader);
                break;
             case TOKEN_REALM:
                parseTokenRealm(reader, builder, domainBuilder);
@@ -316,14 +316,16 @@ public class ServerConfigurationParser implements ConfigurationParser {
       SecurityDomain securityDomain = domainBuilder.build();
       ServerSecurityRealm serverRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness);
       builder.addSecurityRealm(name, serverRealm);
-      /*if (hasTrustStore) {
-         sslContextBuilder.setSecurityDomain(securityDomain);
-      }*/
-      sslContextBuilder.setWrap(false);
-      try {
-         builder.addSSLContext(name, sslContextBuilder.build().create());
-      } catch (GeneralSecurityException e) {
-         throw new CacheConfigurationException(e);
+      if (sslContextBuilder != null) {
+         /*if (hasTrustStore) {
+            sslContextBuilder.setSecurityDomain(securityDomain);
+         }*/
+         sslContextBuilder.setWrap(false);
+         try {
+            builder.addSSLContext(name, sslContextBuilder.build().create());
+         } catch (GeneralSecurityException e) {
+            throw new CacheConfigurationException(e);
+         }
       }
    }
 
@@ -357,6 +359,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
+      ParseUtils.requireNoContent(reader);
       FileSystemSecurityRealm fileSystemSecurityRealm = new FileSystemSecurityRealm(new File(ParseUtils.resolvePath(path, relativeTo)).toPath(), NameRewriter.IDENTITY_REWRITER, levels, encoded);
       domainBuilder.addRealm(name, fileSystemSecurityRealm).build();
 
@@ -721,8 +724,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
       return realm;
    }
 
-   private void parseServerIdentitities(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
+   private SSLContextBuilder parseServerIdentitities(XMLExtendedStreamReader reader) throws
          XMLStreamException {
+      SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -733,6 +737,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
          }
       }
+      return sslContextBuilder;
    }
 
    private void parseSSL(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
@@ -841,6 +846,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseTrustStoreRealm(XMLExtendedStreamReader reader, SSLContextBuilder sslContextBuilder) throws
          XMLStreamException {
+      if (sslContextBuilder == null) {
+         throw Server.log.trustStoreWithoutServerIdentity();
+      }
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
       String path = attributes[0];
       String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
@@ -887,16 +895,20 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) throws XMLStreamException {
       holder.pushScope(ENDPOINTS_SCOPE);
-      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING);
-      builder.applySocketBinding(attributes[0], builder.endpoint());
+      String socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
+      builder.applySocketBinding(socketBinding, builder.endpoint());
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         String value = reader.getAttributeValue(i);
          switch (attribute) {
             case SOCKET_BINDING:
                // Already seen
                break;
+            case SECURITY_REALM:
+               // Set the endpoint security realm and fall-through
+               builder.endpoint().securityRealm(builder.getSecurityRealm(value));
             default:
                parseCommonConnectorAttributes(reader, i, builder, builder.endpoint());
                break;
@@ -933,7 +945,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
             break;
          }
          case SECURITY_REALM: {
-            builder.ssl().enable().sslContext(serverBuilder.getSSLContext(value));
+            if (serverBuilder.hasSSLContext(value)) {
+               builder.ssl().enable().sslContext(serverBuilder.getSSLContext(value));
+            }
             break;
          }
          case SEND_BUFFER_SIZE: {

@@ -22,9 +22,11 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.rest.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.core.configuration.SslConfigurationBuilder;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -78,6 +80,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
 
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
+      boolean dedicatedSocketBinding = false;
       RestServerConfigurationBuilder builder = serverBuilder.addConnector(RestServerConfigurationBuilder.class);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -114,9 +117,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
-               // TODO: check that the socket binding is different from the single-port endpoint
                serverBuilder.applySocketBinding(value, builder);
                builder.startTransport(true);
+               dedicatedSocketBinding = true;
                break;
             }
             default: {
@@ -132,6 +135,9 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case ENCRYPTION: {
+               if (!dedicatedSocketBinding) {
+                  throw Server.log.cannotConfigureProtocolEncryptionUnderSinglePort();
+               }
                parseEncryption(reader, serverBuilder, builder.ssl().enable());
                break;
             }
@@ -225,13 +231,14 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
-      String securityRealm = ParseUtils.requireAttributes(reader, org.infinispan.server.configuration.hotrod.Attribute.SECURITY_REALM)[0];
+      ServerSecurityRealm securityRealm = serverBuilder.endpoint().securityRealm();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SECURITY_REALM: {
-               // Already seen
+               securityRealm = serverBuilder.getSecurityRealm(value);
                break;
             }
             case MECHANISMS: {
@@ -245,21 +252,26 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
 
       ParseUtils.requireNoContent(reader);
-      builder.authenticator(serverBuilder.getSecurityRealm(securityRealm).getHTTPAuthenticationProvider());
+      if (securityRealm == null) {
+         throw Server.log.authenticationWithoutSecurityRealm();
+      }
+      builder.authenticator(securityRealm.getHTTPAuthenticationProvider());
    }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
+      String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
+      builder.sslContext(serverBuilder.getSSLContext(securityRealm));
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         String value = replaceProperties(reader.getAttributeValue(i));
+         String value = reader.getAttributeValue(i);
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
                builder.requireClientAuth(Boolean.parseBoolean(value));
                break;
             }
             case SECURITY_REALM: {
-               builder.sslContext(serverBuilder.getSSLContext(value));
+               // Already seen
                break;
             }
             default: {

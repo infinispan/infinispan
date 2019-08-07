@@ -4,11 +4,6 @@
          <token-realm name="token">
             <oauth2-introspection introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect" client-id="infinispan-server" client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>
          </token-realm>
-         <server-identities>
-            <ssl>
-               <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret" alias="server"/>
-            </ssl>
-         </server-identities>
       </security-realm>
    </security-realms>
 </security>

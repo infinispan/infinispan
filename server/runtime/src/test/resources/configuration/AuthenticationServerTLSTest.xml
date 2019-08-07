@@ -16,7 +16,7 @@
 
       <xi:include href="socket-bindings/default.xml"/>
 
-      <xi:include href="security/properties.xml"/>
+      <xi:include href="security/properties-tls.xml"/>
 
       <xi:include href="endpoints/default-auth-tls.xml"/>
    </server>

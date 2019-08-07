@@ -30,7 +30,7 @@ public class SslEngineConfiguration {
       this.keyAlias = keyAlias;
       this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
-      this.trustStoreType  = trustStoreType;
+      this.trustStoreType = trustStoreType;
       this.trustStorePassword = trustStorePassword;
       this.protocol = protocol;
    }
@@ -73,6 +73,14 @@ public class SslEngineConfiguration {
 
    public String protocol() {
       return protocol;
+   }
+
+   public String[] protocols() {
+      if (protocol != null) {
+         return new String[]{protocol};
+      } else {
+         return null;
+      }
    }
 
    @Override
