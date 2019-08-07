@@ -23,7 +23,7 @@ public interface PassivationManager extends JmxStatisticsExposer {
 
    /**
     * Almost the same as {@link #passivateAsync(InternalCacheEntry)} except that it is performed
-    * synchronously on the same thread that invoked it. This method will be removed very soon!
+    * synchronously on the same thread that invoked it.
     * @deprecated since 10.0 - please use {@link #passivateAsync(InternalCacheEntry)} instead.
     */
    @Deprecated

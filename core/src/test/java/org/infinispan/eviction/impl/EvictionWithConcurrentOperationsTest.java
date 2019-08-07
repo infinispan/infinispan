@@ -52,7 +52,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.NonBlockingOrderer;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.mockito.AdditionalAnswers;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -416,14 +416,14 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       CheckPoint operationCheckPoint = new CheckPoint();
       operationCheckPoint.triggerForever(blockOnCompletion ? Mocks.AFTER_RELEASE : Mocks.BEFORE_RELEASE);
 
-      NonBlockingOrderer original;
+      DataOperationOrderer original;
       if (blockOnCompletion) {
          // Blocks just before releasing the orderer
-         original = Mocks.blockingMock(operationCheckPoint, NonBlockingOrderer.class, cache, AdditionalAnswers::delegatesTo,
+         original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
                (stub, m) -> stub.when(m).completeOperation(eq(key), any(), any()));
       } else {
          // Blocks just after acquiring orderer
-         original = Mocks.blockingMock(operationCheckPoint, NonBlockingOrderer.class, cache, AdditionalAnswers::delegatesTo,
+         original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
                (stub, m) -> stub.when(m).orderOn(eq(key), any()));
       }
 
@@ -433,14 +433,14 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       operationCheckPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
       // Replace the original so the eviction doesn't get blocked by the other check point
-      TestingUtil.replaceComponent(cache, NonBlockingOrderer.class, original, true);
+      TestingUtil.replaceComponent(cache, DataOperationOrderer.class, original, true);
 
       // We use this checkpoint to wait until the eviction is in process (that is that it has the caffeine lock
       // and has to wait until the prior orderer above completes
       CheckPoint evictionCheckPoint = new CheckPoint();
       evictionCheckPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
-      Mocks.blockingMock(evictionCheckPoint, NonBlockingOrderer.class, cache, AdditionalAnswers::delegatesTo, (stub, m) ->
+      Mocks.blockingMock(evictionCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo, (stub, m) ->
             stub.when(m).orderOn(eq(key), any()));
 
       // Put another key, which will evict our original key

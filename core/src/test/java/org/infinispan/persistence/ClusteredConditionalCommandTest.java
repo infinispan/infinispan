@@ -84,7 +84,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          for (EmbeddedCacheManager cacheManager : cacheManagers) {
             ActivationManager activationManager = TestingUtil.extractComponent(cacheManager.getCache(PRIVATE_STORE_CACHE_NAME),
                   ActivationManager.class);
-            // Make sure no passivations are pending, which could leak between tests
+            // Make sure no activations are pending, which could leak between tests
             eventuallyEquals((long) 0, activationManager::getPendingActivationCount);
          }
       }

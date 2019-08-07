@@ -12,7 +12,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
@@ -67,10 +66,6 @@ public class CompletableFutures {
 
    public static CompletionStage<Boolean> booleanStage(boolean trueOrFalse) {
       return trueOrFalse ? completedTrueFuture : completedFalseFuture;
-   }
-
-   public static <T> CompletionStage<Boolean> booleanStage(Predicate<? super T> predicate, T value) {
-      return booleanStage(predicate.test(value));
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {

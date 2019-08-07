@@ -26,7 +26,7 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.util.concurrent.NonBlockingOrderer;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.mockito.AdditionalAnswers;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -78,7 +78,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       operationCheckPoint.trigger(Mocks.BEFORE_RELEASE);
 
       // Blocks just before releasing the orderer
-      Mocks.blockingMock(operationCheckPoint, NonBlockingOrderer.class, cache, AdditionalAnswers::delegatesTo,
+      Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
             (stub, m) -> stub.when(m).completeOperation(eq(key), any(), any()));
 
       // Put the key which will wait on releasing the orderer at the end
@@ -118,13 +118,16 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       operationCheckPoint.triggerForever(Mocks.AFTER_RELEASE);
 
       // Blocks eviction from acquiring orderer - but has entry lock
-      Mocks.blockingMock(operationCheckPoint, NonBlockingOrderer.class, cache, AdditionalAnswers::delegatesTo,
+      DataOperationOrderer original = Mocks.blockingMock(operationCheckPoint, DataOperationOrderer.class, cache, AdditionalAnswers::delegatesTo,
             (stub, m) -> stub.when(m).orderOn(eq(key), any()));
 
       // This will be stuck evicting the key until it can get the orderer
       Future<Object> putFuture = fork(() -> cache.put("other-key", "other-value"));
 
       operationCheckPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      // Now restore the original orderer so our put can properly retrieve it
+      TestingUtil.replaceComponent(cache, DataOperationOrderer.class, original, true);
 
       String newValue = "value-2";
       Future<Object> evictedKeyPutFuture = fork(() -> cache.put(key, newValue));

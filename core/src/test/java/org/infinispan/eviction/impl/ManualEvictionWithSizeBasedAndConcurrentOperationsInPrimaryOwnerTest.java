@@ -153,7 +153,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
          assertInMemory(key1, "v1");
       } else {
-         //the eviction was trigger and the key is no longer in the map
+         //the eviction was triggered and the key is no longer in the map
          assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
 
          //let the eviction continue and wait for put

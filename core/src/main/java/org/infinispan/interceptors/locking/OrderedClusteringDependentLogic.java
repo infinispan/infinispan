@@ -24,14 +24,13 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.NonBlockingOrderer;
-import org.infinispan.util.concurrent.NonBlockingOrderer.OPERATION;
+import org.infinispan.util.concurrent.DataOperationOrderer;
+import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * ClusteringDependentLogic that orders write operations using the {@link NonBlockingOrderer} component.
+ * ClusteringDependentLogic that orders write operations using the {@link DataOperationOrderer} component.
  */
 @Scope(Scopes.NAMED_CACHE)
 public class OrderedClusteringDependentLogic implements ClusteringDependentLogic {
@@ -41,7 +40,8 @@ public class OrderedClusteringDependentLogic implements ClusteringDependentLogic
    private final ClusteringDependentLogic cdl;
    private final boolean passivation;
 
-   @Inject NonBlockingOrderer orderer;
+   @Inject
+   DataOperationOrderer orderer;
    @Inject ActivationManager activationManager;
    @Inject InternalDataContainer dataContainer;
    @Inject KeyPartitioner keyPartioner;
@@ -81,10 +81,10 @@ public class OrderedClusteringDependentLogic implements ClusteringDependentLogic
    private CompletionStage<Void> commitEntryOrdered(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                                                     Flag trackFlag, boolean l1Invalidation) {
       Object key = entry.getKey();
-      CompletableFuture<OPERATION> ourFuture = new CompletableFuture<>();
+      CompletableFuture<Operation> ourFuture = new CompletableFuture<>();
       // If this future is null it means there is another pending read/write/eviction for this key, thus
       // we have to wait on it before performing our commit to ensure data is updated properly
-      CompletionStage<OPERATION> waitingFuture = orderer.orderOn(key, ourFuture);
+      CompletionStage<Operation> waitingFuture = orderer.orderOn(key, ourFuture);
 
       CompletionStage<Void> chainedStage;
       // We have to wait on another operation to complete before doing the update
@@ -110,47 +110,45 @@ public class OrderedClusteringDependentLogic implements ClusteringDependentLogic
 
       Object key = entry.getKey();
       int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartioner);
-      CompletableFuture<OPERATION> ourFuture = new CompletableFuture<>();
-      // If this future is null it means there is another pending read/write/eviction for this key, thus
+      CompletableFuture<Operation> ourFuture = new CompletableFuture<>();
+      // If this future is not null it means there is another pending read/write/eviction for this key, thus
       // we have to wait on it before performing our commit to ensure data is updated properly
-      CompletionStage<OPERATION> waitingFuture = orderer.orderOn(key, ourFuture);
+      CompletionStage<Operation> waitingFuture = orderer.orderOn(key, ourFuture);
       // We don't want to waste time removing an entry from the store if it is in the data container
       // We use peek here instead of containsKey as the value could be expired - if so we want to make sure
       // passivation manager knows the key is not in the store
 
-      CompletionStage<Object> keyIfNotInContainerStage;
-      // We have to wait on another operation to complete before doing the update
+      CompletionStage<Void> chainedStage;
       if (waitingFuture != null) {
-         keyIfNotInContainerStage = waitingFuture.thenCompose(ignore1 -> {
-            // Note this variable is only set if the entry wasn't in the data container - which means it may be in the store
-            Object keyIfNotInContainer = dataContainer.peek(segment, key) == null ? key : null;
-            return cdl.commitEntry(entry, command, ctx, trackFlag, l1Invalidation)
-                  .thenApply(ignore2 -> keyIfNotInContainer);
-         });
+         // We have to wait on another operation to complete before doing the update
+         chainedStage = waitingFuture.thenCompose(ignore -> activateKey(key, segment, entry, command, ctx, trackFlag, l1Invalidation));
       } else {
-         // Note this variable is only set if the entry wasn't in the data container - which means it may be in the store
-         Object keyIfNotInContainer = dataContainer.peek(segment, key) == null ? key : null;
-         keyIfNotInContainerStage = cdl.commitEntry(entry, command, ctx, trackFlag, l1Invalidation)
-            .thenApply(ignore -> keyIfNotInContainer);
+         chainedStage = activateKey(key, segment, entry, command, ctx, trackFlag, l1Invalidation);
       }
-      // We have to remove from the store if the entry wasn't in memory
-      CompletionStage<Void> chainedStage = keyIfNotInContainerStage.thenCompose(keyIfNotInContainer -> {
-         if (keyIfNotInContainer != null) {
-            if (trace) {
-               log.tracef("Activating entry for key %s due to update in dataContainer", key);
-            }
-            return activationManager.activateAsync(key, segment);
-         } else if (trace) {
-            log.tracef("Skipping removal from store as %s was in the data container", key);
-         }
-         return CompletableFutures.completedNull();
-      });
       // After everything is done we have to make sure to complete our future
       return chainedStage.whenComplete((ignore, ignoreT) -> orderer.completeOperation(key, ourFuture, operation(entry)));
    }
 
-   private static OPERATION operation(CacheEntry entry) {
-      return entry.isRemoved() ? OPERATION.REMOVE : OPERATION.WRITE;
+   private CompletionStage<Void> activateKey(Object key, int segment, CacheEntry entry, FlagAffectedCommand command,
+         InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+      // If entry wasn't in container we should activate to remove from store
+      boolean shouldActivate = dataContainer.peek(segment, key) == null;
+      CompletionStage<Void> commitStage =  cdl.commitEntry(entry, command, ctx, trackFlag, l1Invalidation);
+      if (shouldActivate) {
+         return commitStage.thenCompose(ignore1 -> {
+            if (trace) {
+               log.tracef("Activating entry for key %s due to update in dataContainer", key);
+            }
+            return activationManager.activateAsync(key, segment);
+         });
+      } else if (trace) {
+         log.tracef("Skipping removal from store as %s was in the data container", key);
+      }
+      return commitStage;
+   }
+
+   private static Operation operation(CacheEntry entry) {
+      return entry.isRemoved() ? Operation.REMOVE : Operation.WRITE;
    }
 
    @Override

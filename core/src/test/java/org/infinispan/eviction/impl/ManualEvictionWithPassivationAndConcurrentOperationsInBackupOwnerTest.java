@@ -23,4 +23,14 @@ public class ManualEvictionWithPassivationAndConcurrentOperationsInBackupOwnerTe
    protected void configureEviction(ConfigurationBuilder builder) {
       builder.memory().size(-1);
    }
+
+   @Override
+   public void testEvictionDuringRemove() {
+      // Ignore this test as it requires size eviction
+   }
+
+   @Override
+   public void testEvictionDuringWrite() {
+      // Ignore this test as it requires size eviction
+   }
 }
