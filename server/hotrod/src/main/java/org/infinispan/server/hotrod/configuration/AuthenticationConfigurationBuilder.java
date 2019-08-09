@@ -1,19 +1,13 @@
 package org.infinispan.server.hotrod.configuration;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.security.auth.Subject;
-import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
-import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
 import org.infinispan.server.hotrod.logging.Log;
 
 /**
@@ -23,16 +17,17 @@ import org.infinispan.server.hotrod.logging.Log;
  * @since 7.0
  */
 public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChildConfigurationBuilder implements Builder<AuthenticationConfiguration> {
+   private final AttributeSet attributes;
+
    private static final Log log = LogFactory.getLog(AuthenticationConfigurationBuilder.class, Log.class);
    private boolean enabled = false;
    private ServerAuthenticationProvider serverAuthenticationProvider;
-   private Set<String> allowedMechs = new LinkedHashSet<String>();
-   private Map<String, String> mechProperties = new HashMap<String, String>();
-   private String serverName;
    private Subject serverSubject;
+   private SaslConfigurationBuilder sasl = new SaslConfigurationBuilder();
 
    AuthenticationConfigurationBuilder(HotRodServerChildConfigurationBuilder builder) {
       super(builder);
+      this.attributes = AuthenticationConfiguration.attributeDefinitionSet();
    }
 
    public AuthenticationConfigurationBuilder enable() {
@@ -56,22 +51,22 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
    }
 
    public AuthenticationConfigurationBuilder addAllowedMech(String mech) {
-      this.allowedMechs.add(mech);
+      sasl.addAllowedMech(mech);
       return this;
    }
 
    public AuthenticationConfigurationBuilder mechProperties(Map<String, String> mechProperties) {
-      this.mechProperties = mechProperties;
+      sasl.setMechProperty(mechProperties);
       return this;
    }
 
    public AuthenticationConfigurationBuilder addMechProperty(String key, String value) {
-      this.mechProperties.put(key, value);
+      sasl.addMechProperty(key, value);
       return this;
    }
 
    public AuthenticationConfigurationBuilder serverName(String serverName) {
-      this.serverName = serverName;
+      sasl.serverName(serverName);
       return this;
    }
 
@@ -80,43 +75,35 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       return this;
    }
 
+   public AuthenticationConfigurationBuilder securityRealm(String name) {
+      attributes.attribute(AuthenticationConfiguration.SECURITY_REALM).set(name);
+      return this;
+   }
+
+   public SaslConfigurationBuilder sasl() {
+      return sasl;
+   }
+
    @Override
    public void validate() {
       if (enabled) {
          if (serverAuthenticationProvider == null) {
             throw log.serverAuthenticationProvider();
          }
-         Set<String> allMechs = new LinkedHashSet<String>();
-         Collections.addAll(allMechs, ExternalSaslServerFactory.NAMES);
-         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true)) {
-            for (String mech : factory.getMechanismNames(mechProperties)) {
-               allMechs.add(mech);
-            }
-         }
-         if (allowedMechs.isEmpty()) {
-            allowedMechs = allMechs;
-         } else if (!allMechs.containsAll(allowedMechs)) {
-            throw log.invalidAllowedMechs(allowedMechs, allMechs);
-         }
-         if (serverName == null) {
-            throw log.missingServerName();
-         }
+         sasl.validate();
       }
    }
 
    @Override
    public AuthenticationConfiguration create() {
-      return new AuthenticationConfiguration(enabled, Collections.unmodifiableSet(allowedMechs), serverAuthenticationProvider, mechProperties, serverName, serverSubject);
+      return new AuthenticationConfiguration(attributes.protect(), sasl.create(), enabled, serverAuthenticationProvider, serverSubject);
    }
 
    @Override
    public Builder<?> read(AuthenticationConfiguration template) {
       this.enabled = template.enabled();
-      this.allowedMechs.clear();
-      this.allowedMechs.addAll(template.allowedMechs());
       this.serverAuthenticationProvider = template.serverAuthenticationProvider();
-      this.mechProperties = template.mechProperties();
-      this.serverName = template.serverName();
+      this.sasl.read(template.sasl());
       return this;
    }
 

@@ -16,6 +16,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
 import org.infinispan.server.configuration.security.FileSystemRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.GroupsPropertiesConfigurationBuilder;
 import org.infinispan.server.configuration.security.JwtConfigurationBuilder;
@@ -794,9 +795,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) throws XMLStreamException {
+      EndpointsConfigurationBuilder endpoints = builder.endpoints();
       holder.pushScope(ENDPOINTS_SCOPE);
       String socketBinding = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING)[0];
-      builder.applySocketBinding(socketBinding, builder.endpoint());
+      endpoints.socketBinding(socketBinding);
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -808,7 +810,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case SECURITY_REALM:
                // Set the endpoint security realm and fall-through
-               builder.endpoint().securityRealm(builder.getSecurityRealm(value));
+               endpoints.securityRealm(value);
             default:
                parseCommonConnectorAttributes(reader, i, builder, builder.endpoint());
                break;
@@ -866,6 +868,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
             builder.workerThreads(Integer.parseInt(value));
             break;
          }
+         case IGNORED_CACHES:
+            break;
          default:
             throw ParseUtils.unexpectedAttribute(reader, index);
       }

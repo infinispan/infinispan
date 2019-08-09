@@ -3,16 +3,13 @@ package org.infinispan.server.hotrod.configuration;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
-import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_AWAIT_INITIAL_TRANSFER;
-import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_LOCK_TIMEOUT;
-import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_REPL_TIMEOUT;
-import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_STATE_TRANSFER;
 
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
+import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.logging.Log;
@@ -28,6 +25,8 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
    private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
+   private final TopologyCacheConfigurationBuilder topologyCache = new TopologyCacheConfigurationBuilder();
+   private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
    public HotRodServerConfigurationBuilder() {
       super(HotRodServer.DEFAULT_HOTROD_PORT, HotRodServerConfiguration.attributeDefinitionSet());
@@ -41,6 +40,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    @Override
    public AuthenticationConfigurationBuilder authentication() {
       return authentication;
+   }
+
+   public EncryptionConfigurationBuilder encryption() {
+      return encryption;
    }
 
    /**
@@ -67,7 +70,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyLockTimeout(long topologyLockTimeout) {
-      attributes.attribute(TOPOLOGY_LOCK_TIMEOUT).set(topologyLockTimeout);
+      topologyCache.lockTimeout(topologyLockTimeout);
       return this;
    }
 
@@ -77,7 +80,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyReplTimeout(long topologyReplTimeout) {
-      attributes.attribute(TOPOLOGY_REPL_TIMEOUT).set(topologyReplTimeout);
+      topologyCache.replicationTimeout(topologyReplTimeout);
       return this;
    }
 
@@ -87,7 +90,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyAwaitInitialTransfer(boolean topologyAwaitInitialTransfer) {
-      attributes.attribute(TOPOLOGY_AWAIT_INITIAL_TRANSFER).set(topologyAwaitInitialTransfer);
+      topologyCache.awaitInitialTransfer(topologyAwaitInitialTransfer);
       return this;
    }
 
@@ -98,19 +101,21 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {
-      attributes.attribute(TOPOLOGY_STATE_TRANSFER).set(topologyStateTransfer);
+      topologyCache.lazyRetrieval(!topologyStateTransfer);
       return this;
    }
 
    @Override
    public HotRodServerConfiguration create() {
-      return new HotRodServerConfiguration(attributes.protect(), ssl.create(), authentication.create());
+      return new HotRodServerConfiguration(attributes.protect(), topologyCache.create(), ssl.create(), authentication.create(), encryption.create());
    }
 
    @Override
    public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template) {
       super.read(template);
       this.authentication.read(template.authentication());
+      this.topologyCache.read(template.topologyCache());
+      this.encryption.read(template.encryption());
       return this;
    }
 
@@ -121,6 +126,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
          throw log.missingHostAddress();
       }
       authentication.validate();
+      topologyCache.validate();
    }
 
    public HotRodServerConfiguration build(boolean validate) {

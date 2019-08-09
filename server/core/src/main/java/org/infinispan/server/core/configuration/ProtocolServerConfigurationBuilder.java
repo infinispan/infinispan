@@ -1,5 +1,21 @@
 package org.infinispan.server.core.configuration;
 
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.ADMIN_OPERATION_HANDLER;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.DEFAULT_CACHE_NAME;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IDLE_TIMEOUT;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IGNORED_CACHES;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IO_THREADS;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.PORT;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.RECV_BUF_SIZE;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.SEND_BUF_SIZE;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.SOCKET_BINDING;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.START_TRANSPORT;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_KEEPALIVE;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_NODELAY;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.WORKER_THREADS;
+
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
@@ -7,21 +23,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.ADMIN_OPERATION_HANDLER;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.DEFAULT_CACHE_NAME;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IO_THREADS;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IDLE_TIMEOUT;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IGNORED_CACHES;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.PORT;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.RECV_BUF_SIZE;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.SEND_BUF_SIZE;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.START_TRANSPORT;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_KEEPALIVE;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_NODELAY;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.WORKER_THREADS;
 
 public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
       implements ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
@@ -138,6 +139,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    @Override
    public S adminOperationsHandler(AdminOperationsHandler handler) {
       attributes.attribute(ADMIN_OPERATION_HANDLER).set(handler);
+      return this.self();
+   }
+
+   @Override
+   public S socketBinding(String name) {
+      attributes.attribute(SOCKET_BINDING).set(name);
       return this.self();
    }
 

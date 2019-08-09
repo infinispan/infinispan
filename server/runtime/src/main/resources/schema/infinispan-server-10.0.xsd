@@ -10,14 +10,14 @@
       <xs:sequence>
          <xs:element type="tns:interfaces" name="interfaces">
             <xs:unique name="interface-name-unique">
-               <xs:selector xpath="./tns:interface" />
-               <xs:field xpath="@name" />
+               <xs:selector xpath="./tns:interface"/>
+               <xs:field xpath="@name"/>
             </xs:unique>
          </xs:element>
          <xs:element type="tns:socket-bindings" name="socket-bindings">
             <xs:unique name="socket-binding-unique">
-               <xs:selector xpath="./tns:socket-binding" />
-               <xs:field xpath="@name" />
+               <xs:selector xpath="./tns:socket-binding"/>
+               <xs:field xpath="@name"/>
             </xs:unique>
          </xs:element>
          <xs:element type="tns:security" name="security"/>
@@ -79,8 +79,8 @@
       <xs:sequence>
          <xs:element type="tns:security-realms" name="security-realms">
             <xs:unique name="security-real-unique">
-               <xs:selector xpath="./tns:security-realm" />
-               <xs:field xpath="@name" />
+               <xs:selector xpath="./tns:security-realm"/>
+               <xs:field xpath="@name"/>
             </xs:unique>
          </xs:element>
       </xs:sequence>
@@ -138,22 +138,24 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="endpoints" >
+   <xs:complexType name="endpoints">
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
             <xs:sequence>
                <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0"
+                           maxOccurs="unbounded"/>
             </xs:sequence>
-            <xs:attribute name="socket-binding" type="xs:string" >
+            <xs:attribute name="socket-binding" type="xs:string">
                <xs:annotation>
                   <xs:documentation>The socket on which the endpoint connector will bind itself</xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="security-realm" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The name of the security realm to use for authentication/authorization/encryption</xs:documentation>
+                  <xs:documentation>The name of the security realm to use for authentication/authorization/encryption
+                  </xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>
@@ -170,7 +172,8 @@
             </xs:attribute>
             <xs:attribute name="name" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The logical name to give to this connector. This attribute is required when there are more
+                  <xs:documentation>The logical name to give to this connector. This attribute is required when there
+                     are more
                      connectors of the same type defined.
                   </xs:documentation>
                </xs:annotation>
@@ -188,6 +191,21 @@
                <xs:element name="authentication" type="tns:authentication" minOccurs="0"/>
                <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
             </xs:all>
+            <xs:attribute name="external-host" type="xs:string" use="optional">
+               <xs:annotation>
+                  <xs:documentation>Sets the external address of this node, i.e. the address which clients will connect
+                     to. Defaults to the server's socket-binding address
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="external-port" type="xs:int" use="optional">
+               <xs:annotation>
+                  <xs:documentation>Sets the external port of this node, i.e. the port which clients will connect to.
+                     Defaults
+                     to the server's socket-binding port
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
@@ -248,11 +266,6 @@
    </xs:complexType>
 
    <xs:complexType name="topology-state-transfer">
-      <xs:attribute name="cache-suffix" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>Deprecated</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
       <xs:attribute name="lock-timeout" type="xs:int" use="optional">
          <xs:annotation>
             <xs:documentation>Configures the lock acquisition timeout for the topology cache. Defaults to 10 seconds
@@ -265,30 +278,11 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="update-timeout" type="xs:int" use="optional">
+      <xs:attribute name="lazy-retrieval" type="xs:boolean" default="false">
          <xs:annotation>
-            <xs:documentation>This setting has been deprecated and will be ignored.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="external-host" type="xs:string" use="optional">
-         <xs:annotation>
-            <xs:documentation>Sets the external address of this node, i.e. the address which clients will connect to.
-               Defaults to the server's socket-binding address
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="external-port" type="xs:int" use="optional">
-         <xs:annotation>
-            <xs:documentation>Sets the external port of this node, i.e. the port which clients will connect to. Defaults
-               to the server's socket-binding port
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="lazy-retrieval" type="xs:boolean" use="optional">
-         <xs:annotation>
-            <xs:documentation>Configures whether to enable state transfer for the topology cache. If disabled, a
+            <xs:documentation>Configures whether to enable state transfer for the topology cache. If enabled, a
                ClusterCacheLoader will be used to lazily retrieve topology information from the
-               other nodes. Defaults to true.
+               other nodes. Defaults to false.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -497,7 +491,7 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="auth-method" type="tns:auth-method" use="optional" default="NONE">
+      <xs:attribute name="mechanisms" type="tns:name-list" default="NONE">
          <xs:annotation>
             <xs:documentation>The authentication method to require. Can be NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO.
                Defaults to NONE. Setting it to a different value requires enabling a security-realm.
@@ -574,41 +568,6 @@
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
-
-   <xs:simpleType name="auth-method">
-      <xs:restriction base="xs:token">
-         <xs:enumeration value="NONE">
-            <xs:annotation>
-               <xs:documentation>Client authentication is disabled</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-         <xs:enumeration value="BASIC">
-            <xs:annotation>
-               <xs:documentation>Client authentication will be performed using the Basic scheme</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-         <xs:enumeration value="DIGEST">
-            <xs:annotation>
-               <xs:documentation>Client authentication will be performed using the Digest scheme</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-         <xs:enumeration value="CLIENT_CERT">
-            <xs:annotation>
-               <xs:documentation>Client authentication will be use the peer's certificate</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-         <xs:enumeration value="SPNEGO">
-            <xs:annotation>
-               <xs:documentation>Client authentication will be use the SPNEGO scheme</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-         <xs:enumeration value="BEARER">
-            <xs:annotation>
-               <xs:documentation>Client authentication will be use the BEARER scheme</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-      </xs:restriction>
-   </xs:simpleType>
 
    <xs:simpleType name="extended-headers">
       <xs:restriction base="xs:token">
@@ -811,15 +770,15 @@
 
    <xs:complexType name="ldap-attribute">
       <xs:attribute type="xs:string" name="filter" use="required"/>
-      <xs:attribute type="xs:string" name="filter-dn" />
-      <xs:attribute type="xs:string" name="from" />
-      <xs:attribute type="xs:string" name="to" />
+      <xs:attribute type="xs:string" name="filter-dn"/>
+      <xs:attribute type="xs:string" name="from"/>
+      <xs:attribute type="xs:string" name="to"/>
    </xs:complexType>
 
    <xs:complexType name="ldap-user-password-mapper">
-      <xs:attribute type="xs:string" name="from" />
-      <xs:attribute type="xs:boolean" name="verifiable" />
-      <xs:attribute type="xs:boolean" name="writable" />
+      <xs:attribute type="xs:string" name="from"/>
+      <xs:attribute type="xs:boolean" name="verifiable"/>
+      <xs:attribute type="xs:boolean" name="writable"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-token">

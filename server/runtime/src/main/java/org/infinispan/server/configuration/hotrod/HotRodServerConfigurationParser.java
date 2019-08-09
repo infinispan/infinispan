@@ -2,7 +2,7 @@ package org.infinispan.server.configuration.hotrod;
 
 import java.util.EnumSet;
 
-import javax.security.sasl.Sasl;
+import javax.net.ssl.SSLContext;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -16,9 +16,12 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
-import org.infinispan.server.core.configuration.SslConfigurationBuilder;
+import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
+import org.infinispan.server.core.configuration.SniConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.hotrod.configuration.PolicyConfigurationBuilder;
+import org.infinispan.server.hotrod.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -50,7 +53,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          case HOTROD_CONNECTOR: {
             ServerConfigurationBuilder serverBuilder = builder.module(ServerConfigurationBuilder.class);
             if (serverBuilder != null) {
-               parseHotRodConnector(reader, holder, serverBuilder, serverBuilder.addConnector(HotRodServerConfigurationBuilder.class));
+               parseHotRodConnector(reader, holder, serverBuilder, serverBuilder.endpoints().addConnector(HotRodServerConfigurationBuilder.class));
             }
             break;
          }
@@ -86,6 +89,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
+               builder.socketBinding(value);
                serverBuilder.applySocketBinding(value, builder);
                builder.startTransport(true);
                dedicatedSocketBinding = true;
@@ -111,7 +115,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                if (!dedicatedSocketBinding) {
                   throw Server.log.cannotConfigureProtocolEncryptionUnderSinglePort();
                }
-               parseEncryption(reader, serverBuilder, builder.ssl().enable());
+               parseEncryption(reader, serverBuilder, builder.encryption());
                break;
             }
             default: {
@@ -121,16 +125,17 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
+   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption) throws XMLStreamException {
       String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
-      builder.sslContext(serverBuilder.getSSLContext(securityRealm));
+      SSLContext sslContext = serverBuilder.getSSLContext(securityRealm);
+      encryption.realm(securityRealm).sslContext(sslContext);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
-               builder.requireClientAuth(Boolean.parseBoolean(value));
+               encryption.requireClientAuth(Boolean.parseBoolean(value));
                break;
             }
             case SECURITY_REALM: {
@@ -146,7 +151,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
-               parseSni(reader, serverBuilder, builder);
+               parseSni(reader, serverBuilder, encryption.addSni());
                break;
             }
             default: {
@@ -156,18 +161,19 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
+   private void parseSni(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case HOST_NAME: {
-               builder.sniHostName(value);
+               sni.host(value);
                break;
             }
             case SECURITY_REALM: {
-               builder.sslContext(serverBuilder.getSSLContext(value));
+               sni.realm(value);
+               sni.sslContext(serverBuilder.getSSLContext(value));
                break;
             }
             default: {
@@ -211,10 +217,12 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
+      builder.securityRealm(securityRealm.getName());
       builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider());
    }
 
    private void parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+      SaslConfigurationBuilder sasl = builder.sasl();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -225,21 +233,25 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SERVER_NAME: {
-               builder.serverName(value);
+               sasl.serverName(value);
                break;
             }
             case MECHANISMS: {
                for (String mech : reader.getListAttributeValue(i)) {
-                  builder.addAllowedMech(mech);
+                  sasl.addAllowedMech(mech);
                }
                break;
             }
             case QOP: {
-               builder.addMechProperty(Sasl.QOP, value);
+               for (String qop : reader.getListAttributeValue(i)) {
+                  sasl.addQOP(qop);
+               }
                break;
             }
             case STRENGTH: {
-               builder.addMechProperty(Sasl.STRENGTH, value);
+               for (String s : reader.getListAttributeValue(i)) {
+                  sasl.addStrength(s);
+               }
                break;
             }
             default: {
@@ -261,7 +273,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case PROPERTY: {
-               builder.addMechProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME), reader.getElementText());
+               sasl.addProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME), reader.getElementText());
                break;
             }
             default: {
@@ -276,6 +288,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       if (reader.getAttributeCount() > 0) {
          throw ParseUtils.unexpectedAttribute(reader, 0);
       }
+      PolicyConfigurationBuilder policy = builder.sasl().policy();
       // Handle nested elements.
       final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
@@ -284,30 +297,30 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             throw ParseUtils.unexpectedElement(reader);
          }
          visited.add(element);
-         String value = ParseUtils.readStringAttributeElement(reader, Attribute.VALUE.name());
+         String value = ParseUtils.readStringAttributeElement(reader, Attribute.VALUE.toString());
          switch (element) {
             case FORWARD_SECRECY: {
-               builder.addMechProperty(Sasl.POLICY_FORWARD_SECRECY, value);
+               policy.forwardSecrecy().value(Boolean.parseBoolean(value));
                break;
             }
             case NO_ACTIVE: {
-               builder.addMechProperty(Sasl.POLICY_NOACTIVE, value);
+               policy.noActive().value(Boolean.parseBoolean(value));
                break;
             }
             case NO_ANONYMOUS: {
-               builder.addMechProperty(Sasl.POLICY_NOANONYMOUS, value);
+               policy.noAnonymous().value(Boolean.parseBoolean(value));
                break;
             }
             case NO_DICTIONARY: {
-               builder.addMechProperty(Sasl.POLICY_NODICTIONARY, value);
+               policy.noDictionary().value(Boolean.parseBoolean(value));
                break;
             }
             case NO_PLAIN_TEXT: {
-               builder.addMechProperty(Sasl.POLICY_NOPLAINTEXT, value);
+               policy.noPlainText().value(Boolean.parseBoolean(value));
                break;
             }
             case PASS_CREDENTIALS: {
-               builder.addMechProperty(Sasl.POLICY_PASS_CREDENTIALS, value);
+               policy.passCredentials().value(Boolean.parseBoolean(value));
                break;
             }
             default: {
@@ -336,7 +349,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case LAZY_RETRIEVAL: {
-               builder.topologyStateTransfer(Boolean.parseBoolean(value));
+               builder.topologyStateTransfer(!Boolean.parseBoolean(value));
                break;
             }
             default: {

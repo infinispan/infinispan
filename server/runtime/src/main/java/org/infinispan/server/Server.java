@@ -34,6 +34,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.logging.Log;
 import org.infinispan.server.router.RoutingTable;
+import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.infinispan.server.router.router.impl.singleport.SinglePortEndpointRouter;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
@@ -245,7 +246,7 @@ public class Server {
          ServerConfiguration serverConfiguration = cm.getCacheManagerConfiguration().module(ServerConfiguration.class);
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
          ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
-         serverConfiguration.connectors().parallelStream().forEach(configuration -> {
+         serverConfiguration.endpoints().connectors().parallelStream().forEach(configuration -> {
             try {
                Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
                ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
@@ -268,10 +269,11 @@ public class Server {
             }
          });
          // Next we start the single-port endpoint
-         SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(serverConfiguration.endpoint());
+         SinglePortRouterConfiguration singlePortRouter = serverConfiguration.endpoints().singlePortRouter();
+         SinglePortEndpointRouter endpointServer = new SinglePortEndpointRouter(singlePortRouter);
          endpointServer.start(new RoutingTable(routes.keySet()));
          protocolServers.put("endpoint", endpointServer);
-         log.protocolStarted(endpointServer.getName(), serverConfiguration.endpoint().host(), serverConfiguration.endpoint().port());
+         log.protocolStarted(endpointServer.getName(), singlePortRouter.host(), singlePortRouter.port());
          // Change status
          this.status = ComponentStatus.RUNNING;
          log.serverStarted(Version.getBrandName(), Version.getVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));

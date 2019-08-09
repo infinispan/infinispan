@@ -1,8 +1,7 @@
 package org.infinispan.rest.configuration;
 
-import static org.infinispan.rest.configuration.AuthenticationConfiguration.AUTHENTICATOR;
-import static org.infinispan.rest.configuration.AuthenticationConfiguration.ENABLED;
 import static org.infinispan.rest.configuration.AuthenticationConfiguration.MECHANISMS;
+import static org.infinispan.rest.configuration.AuthenticationConfiguration.SECURITY_REALM;
 
 import java.util.List;
 
@@ -21,6 +20,8 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  */
 public class AuthenticationConfigurationBuilder extends AbstractProtocolServerConfigurationChildBuilder<RestServerConfiguration, AuthenticationConfigurationBuilder> implements Builder<AuthenticationConfiguration> {
    private final AttributeSet attributes;
+   private Authenticator authenticator;
+   private boolean enabled;
 
    AuthenticationConfigurationBuilder(ProtocolServerConfigurationBuilder builder) {
       super(builder);
@@ -36,18 +37,23 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
    }
 
    public AuthenticationConfigurationBuilder enabled(boolean enabled) {
-      attributes.attribute(ENABLED).set(enabled);
+      this.enabled = enabled;
+      return this;
+   }
+
+   public AuthenticationConfigurationBuilder securityRealm(String realm) {
+      attributes.attribute(SECURITY_REALM).set(realm);
       return this;
    }
 
    public AuthenticationConfigurationBuilder authenticator(Authenticator authenticator) {
-      attributes.attribute(AUTHENTICATOR).set(authenticator);
+      this.authenticator = authenticator;
       return this.enable();
    }
 
    public AuthenticationConfigurationBuilder addMechanisms(String... mechanisms) {
       List<String> mechs = attributes.attribute(MECHANISMS).get();
-      for(int i = 0; i < mechanisms.length; i++) {
+      for (int i = 0; i < mechanisms.length; i++) {
          mechs.add(mechanisms[i]);
       }
       attributes.attribute(MECHANISMS).set(mechs);
@@ -56,14 +62,14 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
 
    @Override
    public void validate() {
-      if (attributes.attribute(ENABLED).get() && attributes.attribute(AUTHENTICATOR).isNull()) {
+      if (enabled && authenticator == null) {
          throw RestServerConfigurationBuilder.logger.authenticationWithoutAuthenticator();
       }
    }
 
    @Override
    public AuthenticationConfiguration create() {
-      return new AuthenticationConfiguration(attributes.protect());
+      return new AuthenticationConfiguration(attributes.protect(), authenticator, enabled);
    }
 
    @Override

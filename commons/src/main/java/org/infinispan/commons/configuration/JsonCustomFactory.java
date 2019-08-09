@@ -5,6 +5,8 @@ import static org.infinispan.commons.configuration.Json.factory;
 import java.util.Collection;
 import java.util.Map;
 
+import org.infinispan.commons.dataconversion.MediaType;
+
 /**
  * Custom {@link Json.Factory} to handle cache attribute values.
  *
@@ -44,6 +46,8 @@ public class JsonCustomFactory extends Json.DefaultFactory {
          return object;
       } else if (anything instanceof Class<?>) {
          return factory().string(((Class<?>) anything).getName());
+      } else if (anything instanceof MediaType) {
+         return factory().string(anything.toString());
       } else if (anything.getClass().isArray()) {
          Class<?> comp = anything.getClass().getComponentType();
          if (!comp.isPrimitive())

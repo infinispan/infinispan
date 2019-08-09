@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.commons.util.FileLookup;
@@ -16,9 +17,11 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfiguration;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
+import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -61,19 +64,25 @@ public class ServerConfigurationParserTest {
       assertTrue(defaultInterface.getAddress().isLoopbackAddress());
 
       // Socket bindings
-      assertEquals(2, server.socketBindings().size());
-      Assert.assertEquals(11222, server.socketBindings().get("default").getPort());
+      assertEquals(5, server.socketBindings().size());
       Assert.assertEquals(11221, server.socketBindings().get("memcached").getPort());
+      Assert.assertEquals(12221, server.socketBindings().get("memcached-2").getPort());
+      Assert.assertEquals(11222, server.socketBindings().get("default").getPort());
+      Assert.assertEquals(11223, server.socketBindings().get("hotrod").getPort());
+      Assert.assertEquals(8080, server.socketBindings().get("rest").getPort());
 
       // Connectors
-      assertEquals(3, server.connectors().size());
-      assertTrue(server.connectors().get(0) instanceof HotRodServerConfiguration);
-      assertTrue(server.connectors().get(1) instanceof RestServerConfiguration);
-      assertTrue(server.connectors().get(2) instanceof MemcachedServerConfiguration);
+      List<ProtocolServerConfiguration> connectors = server.endpoints().connectors();
+      assertEquals(4, connectors.size());
+      assertTrue(connectors.get(0) instanceof HotRodServerConfiguration);
+      assertTrue(connectors.get(1) instanceof RestServerConfiguration);
+      assertTrue(connectors.get(2) instanceof MemcachedServerConfiguration);
+      assertTrue(connectors.get(3) instanceof MemcachedServerConfiguration);
 
       // Ensure endpoints are bound to the interfaces
-      assertEquals(server.socketBindings().get("default").getAddress().getAddress().getHostAddress(), server.endpoint().host());
-      assertEquals(server.socketBindings().get("default").getPort(), server.endpoint().port());
-      assertEquals(server.socketBindings().get("memcached").getPort(), server.connectors().get(2).port());
+      SinglePortRouterConfiguration singlePortRouter = server.endpoints().singlePortRouter();
+      assertEquals(server.socketBindings().get("default").getAddress().getAddress().getHostAddress(), singlePortRouter.host());
+      assertEquals(server.socketBindings().get("default").getPort(), singlePortRouter.port());
+      assertEquals(server.socketBindings().get("memcached").getPort(), server.endpoints().connectors().get(2).port());
    }
 }
