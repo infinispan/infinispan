@@ -2,7 +2,6 @@ package org.infinispan.factories;
 
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 
 import org.infinispan.Version;
@@ -196,11 +194,20 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return getOrCreateComponent(TimeService.class);
    }
 
+   /**
+    * This method returns true if there is an mbean server running
+    * <p>
+    * NOTE: This method is here for Quarkus (due to mbean usage) - so do not remove without modifying Quarkus as well
+    * @return true if any mbean server is running
+    */
+   private boolean isMBeanServerRunning() {
+      return !MBeanServerFactory.findMBeanServer(null).isEmpty();
+   }
+
    @Override
    protected synchronized void addShutdownHook() {
-      ArrayList<MBeanServer> al = MBeanServerFactory.findMBeanServer(null);
       ShutdownHookBehavior shutdownHookBehavior = globalConfiguration.shutdown().hookBehavior();
-      boolean registerShutdownHook = (shutdownHookBehavior == ShutdownHookBehavior.DEFAULT && al.isEmpty())
+      boolean registerShutdownHook = (shutdownHookBehavior == ShutdownHookBehavior.DEFAULT && !isMBeanServerRunning())
             || shutdownHookBehavior == ShutdownHookBehavior.REGISTER;
 
       if (registerShutdownHook) {

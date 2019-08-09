@@ -34,8 +34,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    private static final long DEFAULT_EXPIRY = TimeUnit.HOURS.toMillis(6);
 
    @Override
-   @SuppressWarnings("unchecked")
-   public <RecoveryManager> RecoveryManager construct(Class<RecoveryManager> componentType) {
+   public Object construct(String name) {
       if (configuration.transaction().recovery().enabled()) {
          String recoveryCacheName = configuration.transaction().recovery().recoveryInfoCacheName();
          log.tracef("Using recovery cache name %s", recoveryCacheName);

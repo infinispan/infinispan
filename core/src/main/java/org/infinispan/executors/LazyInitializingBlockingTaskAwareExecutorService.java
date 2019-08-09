@@ -1,11 +1,14 @@
 package org.infinispan.executors;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,7 +21,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * A delegating executor that lazily constructs and initializes the underlying executor.
@@ -33,8 +35,50 @@ public final class LazyInitializingBlockingTaskAwareExecutorService
    private static final BlockingTaskAwareExecutorService STOPPED;
 
    static {
-      STOPPED = new BlockingTaskAwareExecutorServiceImpl("", new WithinThreadExecutor(), null);
-      STOPPED.shutdown();
+      STOPPED = new EmptyBlockingTaskAwareExecutorService();
+   }
+
+   static final class EmptyBlockingTaskAwareExecutorService extends AbstractExecutorService implements BlockingTaskAwareExecutorService {
+
+      @Override
+      public void execute(BlockingRunnable runnable) {
+         throw new RejectedExecutionException();
+      }
+
+      @Override
+      public void checkForReadyTasks() {
+
+      }
+
+      @Override
+      public void shutdown() {
+
+      }
+
+      @Override
+      public List<Runnable> shutdownNow() {
+         return Collections.emptyList();
+      }
+
+      @Override
+      public boolean isShutdown() {
+         return true;
+      }
+
+      @Override
+      public boolean isTerminated() {
+         return true;
+      }
+
+      @Override
+      public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+         return true;
+      }
+
+      @Override
+      public void execute(Runnable command) {
+         throw new RejectedExecutionException();
+      }
    }
 
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;

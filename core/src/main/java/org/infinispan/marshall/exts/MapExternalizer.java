@@ -3,8 +3,10 @@ package org.infinispan.marshall.exts;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -115,10 +117,26 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
 
    @Override
    public Set<Class<? extends Map>> getTypeClasses() {
-      return Util.<Class<? extends Map>>asSet(
+      Set<Class<? extends Map>> typeClasses = Util.asSet(
             HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class,
             ReadOnlySegmentAwareMap.class, ConcurrentHashMap.class,
-            EntryVersionsMap.class, getPrivateSingletonMapClass(), getPrivateEmptyMapClass());
+            EntryVersionsMap.class);
+      typeClasses.addAll(getSupportedPrivateClasses());
+      return typeClasses;
+   }
+
+   /**
+    * Returns an immutable Set that contains all of the private classes (e.g. java.util.Collections$EmptyMap) that
+    * are supported by this Externalizer. This method is to be used by external sources if these private classes
+    * need additional processing to be available.
+    * @return immutable set of the private classes
+    */
+   public static Set<Class<? extends Map>> getSupportedPrivateClasses() {
+      Set<Class<? extends Map>> classNames = new HashSet<>(Arrays.asList(
+            getPrivateSingletonMapClass(),
+            getPrivateEmptyMapClass()
+      ));
+      return Collections.unmodifiableSet(classNames);
    }
 
    private static Class<? extends Map> getPrivateSingletonMapClass() {

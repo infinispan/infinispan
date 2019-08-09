@@ -1,8 +1,6 @@
 package org.infinispan.factories;
 
 
-import static org.infinispan.commons.util.Util.getInstance;
-
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
@@ -91,12 +89,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
    @Override
    @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
-      Class<?> componentImpl;
       boolean isTransactional = configuration.transaction().transactionMode().isTransactional();
       if (componentName.equals(InvocationContextFactory.class.getName())) {
-         componentImpl = isTransactional ? TransactionalInvocationContextFactory.class
-               : NonTransactionalInvocationContextFactory.class;
-         return getInstance(componentImpl);
+         return isTransactional ? new TransactionalInvocationContextFactory()
+               : new NonTransactionalInvocationContextFactory();
       } else if (componentName.equals(CacheNotifier.class.getName())) {
          return new CacheNotifierImpl();
       } else if (componentName.equals(CacheConfigurationMBean.class.getName())) {
