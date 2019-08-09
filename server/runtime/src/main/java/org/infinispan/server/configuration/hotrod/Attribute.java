@@ -25,6 +25,7 @@ public enum Attribute {
    SERVER_CONTEXT_NAME,
    SERVER_NAME,
    SOCKET_BINDING,
+   TOPOLOGY_STATE_TRANSFER,
    STRENGTH,
    VALUE,
    ;

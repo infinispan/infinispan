@@ -1,14 +1,13 @@
 package org.infinispan.server.configuration;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
 import org.infinispan.server.configuration.endpoint.SinglePortServerConfigurationBuilder;
 import org.infinispan.server.configuration.security.SecurityConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -20,35 +19,23 @@ import org.infinispan.server.security.ServerSecurityRealm;
  * @since 10.0
  */
 public class ServerConfigurationBuilder implements Builder<ServerConfiguration> {
-   private final List<ProtocolServerConfigurationBuilder<?, ?>> connectors = new ArrayList<>(2);
    private final GlobalConfigurationBuilder builder;
-   private final SinglePortServerConfigurationBuilder endpoint = new SinglePortServerConfigurationBuilder();
 
    private final InterfacesConfigurationBuilder interfaces = new InterfacesConfigurationBuilder();
    private final SocketBindingsConfigurationBuilder socketBindings = new SocketBindingsConfigurationBuilder(this);
    private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder();
+   private final EndpointsConfigurationBuilder endpoints = new EndpointsConfigurationBuilder(this);
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
       this.builder = builder;
    }
 
-   public <T extends ProtocolServerConfigurationBuilder<?, ?>> T addConnector(Class<T> klass) {
-      try {
-         T builder = klass.getConstructor().newInstance();
-         this.connectors.add(builder);
-         this.endpoint.applyConfigurationToProtocol(builder);
-         return builder;
-      } catch (Exception e) {
-         throw Server.log.cannotInstantiateProtocolServerConfigurationBuilder(klass, e);
-      }
-   }
-
    public List<ProtocolServerConfigurationBuilder<?, ?>> connectors() {
-      return connectors;
+      return endpoints.connectors();
    }
 
    public SinglePortServerConfigurationBuilder endpoint() {
-      return endpoint;
+      return endpoints.singlePort();
    }
 
    public SecurityConfigurationBuilder security() {
@@ -63,6 +50,10 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return socketBindings;
    }
 
+   public EndpointsConfigurationBuilder endpoints() {
+      return endpoints;
+   }
+
    @Override
    public void validate() {
    }
@@ -73,8 +64,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
             interfaces.create(),
             socketBindings.create(),
             security.create(),
-            connectors.stream().map(b -> b.create()).collect(Collectors.toList()),
-            endpoint.create()
+            endpoints.create()
       );
    }
 
@@ -111,6 +101,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       SocketBinding socketBinding = socketBindings.getSocketBinding(bingingName);
       String host = socketBinding.getAddress().getAddress().getHostAddress();
       int port = socketBinding.getPort();
+      SinglePortServerConfigurationBuilder endpoint = endpoints().singlePort();
       if (builder != endpoint) {
          // Ensure we are using a different socket binding than the one used by the single-port endpoint
          if (endpoint.host().equals(host) && endpoint.port() == port) {

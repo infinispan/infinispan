@@ -7,6 +7,8 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
+import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
@@ -32,9 +34,16 @@ public class MemcachedServerConfiguration extends ProtocolServerConfiguration {
       return new AttributeSet(MemcachedServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS, CLIENT_ENCODING);
    }
 
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("memcached-connector");
+
    MemcachedServerConfiguration(AttributeSet attributes, SslConfiguration ssl) {
       super(attributes, ssl);
       clientEncoding = attributes.attribute(CLIENT_ENCODING);
+   }
+
+   @Override
+   public ElementDefinition getElementDefinition() {
+      return ELEMENT_DEFINITION;
    }
 
    public MediaType clientEncoding() {

@@ -9,11 +9,10 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.network.SocketBinding;
-import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -23,8 +22,7 @@ import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 public class ServerConfiguration implements ConfigurationInfo {
    private final InterfacesConfiguration interfaces;
    private final SocketBindingsConfiguration socketBindings;
-   private final List<ProtocolServerConfiguration> connectors;
-   private final SinglePortRouterConfiguration endpoint;
+   private final EndpointsConfiguration endpoints;
 
    private final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERVER.toString(), true, false);
    private final List<ConfigurationInfo> elements = new ArrayList<>();
@@ -33,15 +31,14 @@ public class ServerConfiguration implements ConfigurationInfo {
          InterfacesConfiguration interfaces,
          SocketBindingsConfiguration socketBindings,
          SecurityConfiguration security,
-         List<ProtocolServerConfiguration> connectors,
-         SinglePortRouterConfiguration endpoint) {
+         EndpointsConfiguration endpoints) {
       this.interfaces = interfaces;
       this.socketBindings = socketBindings;
-      this.connectors = connectors;
-      this.endpoint = endpoint;
+      this.endpoints = endpoints;
       elements.add(interfaces);
       elements.add(socketBindings);
       elements.add(security);
+      elements.add(endpoints);
    }
 
    @Override
@@ -62,11 +59,7 @@ public class ServerConfiguration implements ConfigurationInfo {
       return socketBindings.socketBindings().stream().collect(Collectors.toMap(SocketBindingConfiguration::name, SocketBindingConfiguration::getSocketBinding));
    }
 
-   public List<ProtocolServerConfiguration> connectors() {
-      return connectors;
-   }
-
-   public SinglePortRouterConfiguration endpoint() {
-      return endpoint;
+   public EndpointsConfiguration endpoints() {
+      return endpoints;
    }
 }

@@ -10,12 +10,13 @@ import java.util.Map;
 public enum Attribute {
    UNKNOWN(null), // must be first
 
+   CACHE,
    CACHE_CONTAINER,
+   CLIENT_ENCODING,
    IDLE_TIMEOUT,
    IO_THREADS,
    NAME,
-   SOCKET_BINDING
-   ;
+   SOCKET_BINDING;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

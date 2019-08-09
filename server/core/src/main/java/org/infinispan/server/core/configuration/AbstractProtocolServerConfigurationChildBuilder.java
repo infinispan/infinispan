@@ -109,6 +109,12 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public S socketBinding(String name) {
+      builder.socketBinding(name);
+      return self();
+   }
+
+   @Override
    public T build() {
       return builder.build();
    }

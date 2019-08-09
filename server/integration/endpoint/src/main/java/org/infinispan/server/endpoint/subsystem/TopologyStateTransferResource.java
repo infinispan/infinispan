@@ -18,7 +18,7 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
+import org.infinispan.server.hotrod.configuration.TopologyCacheConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -54,7 +54,7 @@ public class TopologyStateTransferResource extends SimpleResourceDefinition {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.LAZY_RETRIEVAL)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(HotRodServerConfiguration.TOPOLOGY_STATE_TRANSFER.getDefaultValue()))
+                 .setDefaultValue(new ModelNode().set(TopologyCacheConfiguration.LAZY_RETRIEVAL.getDefaultValue()))
                  .build();
 
    static final SimpleAttributeDefinition AWAIT_INITIAL_RETRIEVAL =
@@ -62,14 +62,14 @@ public class TopologyStateTransferResource extends SimpleResourceDefinition {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.AWAIT_INITIAL_RETRIEVAL)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(HotRodServerConfiguration.TOPOLOGY_AWAIT_INITIAL_TRANSFER.getDefaultValue()))
+                 .setDefaultValue(new ModelNode().set(TopologyCacheConfiguration.TOPOLOGY_AWAIT_INITIAL_TRANSFER.getDefaultValue()))
                  .build();
 
    static final SimpleAttributeDefinition LOCK_TIMEOUT =
          new SimpleAttributeDefinitionBuilder(ModelKeys.LOCK_TIMEOUT, ModelType.LONG, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.LOCK_TIMEOUT)
-                 .setDefaultValue(new ModelNode().set(HotRodServerConfiguration.TOPOLOGY_LOCK_TIMEOUT.getDefaultValue()))
+                 .setDefaultValue(new ModelNode().set(TopologyCacheConfiguration.TOPOLOGY_LOCK_TIMEOUT.getDefaultValue()))
                  .setRestartAllServices()
                  .build();
 
@@ -78,7 +78,7 @@ public class TopologyStateTransferResource extends SimpleResourceDefinition {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.REPLICATION_TIMEOUT)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(HotRodServerConfiguration.TOPOLOGY_REPL_TIMEOUT.getDefaultValue()))
+                 .setDefaultValue(new ModelNode().set(TopologyCacheConfiguration.TOPOLOGY_REPL_TIMEOUT.getDefaultValue()))
                  .build();
 
    static final SimpleAttributeDefinition[] TOPOLOGY_ATTRIBUTES = { EXTERNAL_HOST, EXTERNAL_PORT, LAZY_RETRIEVAL, AWAIT_INITIAL_RETRIEVAL, LOCK_TIMEOUT, REPLICATION_TIMEOUT };

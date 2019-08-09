@@ -2,13 +2,10 @@ package org.infinispan.server.configuration.rest;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
+import javax.net.ssl.SSLContext;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -20,19 +17,18 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.rest.configuration.AuthenticationConfigurationBuilder;
+import org.infinispan.rest.configuration.CorsConfigurationBuilder;
+import org.infinispan.rest.configuration.CorsRuleConfigurationBuilder;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
-import org.infinispan.server.core.configuration.SslConfigurationBuilder;
+import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
+import org.infinispan.server.core.configuration.SniConfigurationBuilder;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
-
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.cors.CorsConfig;
-import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 
 /**
  * Server endpoint configuration parser
@@ -81,7 +77,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private void parseRest(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder)
          throws XMLStreamException {
       boolean dedicatedSocketBinding = false;
-      RestServerConfigurationBuilder builder = serverBuilder.addConnector(RestServerConfigurationBuilder.class);
+      RestServerConfigurationBuilder builder = serverBuilder.endpoints().addConnector(RestServerConfigurationBuilder.class);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -117,6 +113,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case SOCKET_BINDING: {
+               builder.socketBinding(value);
                serverBuilder.applySocketBinding(value, builder);
                builder.startTransport(true);
                dedicatedSocketBinding = true;
@@ -138,7 +135,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                if (!dedicatedSocketBinding) {
                   throw Server.log.cannotConfigureProtocolEncryptionUnderSinglePort();
                }
-               parseEncryption(reader, serverBuilder, builder.ssl().enable());
+               parseEncryption(reader, serverBuilder, builder.encryption());
                break;
             }
             case CORS_RULES: {
@@ -155,12 +152,12 @@ public class RestServerConfigurationParser implements ConfigurationParser {
    private void parseCorsRules(XMLExtendedStreamReader reader, RestServerConfigurationBuilder builder)
          throws XMLStreamException {
       ParseUtils.requireNoAttributes(reader);
-      List<CorsConfig> rules = new ArrayList<>();
+      CorsConfigurationBuilder cors = builder.cors();
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CORS_RULE: {
-               rules.add(parseCorsRule(reader));
+               parseCorsRule(reader, cors.addNewRule());
                break;
             }
             default: {
@@ -168,28 +165,24 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      builder.addAll(rules);
    }
 
-   private CorsConfig parseCorsRule(XMLExtendedStreamReader reader) throws XMLStreamException {
-      boolean allowCredentials = false;
-      Optional<Long> maxAge = Optional.empty();
-      Optional<String[]> allowedHeaders = Optional.empty();
-      Optional<String[]> allowedOrigins = Optional.empty();
-      Optional<HttpMethod[]> allowedMethods = Optional.empty();
-      Optional<String[]> exposeHeaders = Optional.empty();
-
+   private void parseCorsRule(XMLExtendedStreamReader reader, CorsRuleConfigurationBuilder corsRule) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case NAME: {
+               corsRule.name(value);
+               break;
+            }
             case ALLOW_CREDENTIALS: {
-               allowCredentials = true;
+               corsRule.allowCredentials(Boolean.parseBoolean(value));
                break;
             }
             case MAX_AGE_SECONDS: {
-               maxAge = Optional.of(Long.parseLong(value));
+               corsRule.maxAge(Long.parseLong(value));
                break;
             }
             default: {
@@ -199,21 +192,23 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          final Element element = Element.forName(reader.getLocalName());
+         String[] values = reader.getElementText().split(",");
          switch (element) {
+
             case ALLOWED_HEADERS: {
-               allowedHeaders = Optional.of(reader.getElementText().split(","));
+               corsRule.allowHeaders(values);
                break;
             }
             case ALLOWED_ORIGINS: {
-               allowedOrigins = Optional.of(reader.getElementText().split(","));
+               corsRule.allowOrigins(values);
                break;
             }
             case ALLOWED_METHODS: {
-               allowedMethods = Optional.of(Arrays.stream(reader.getElementText().split(",")).map(HttpMethod::valueOf).toArray(HttpMethod[]::new));
+               corsRule.allowMethods(values);
                break;
             }
             case EXPOSE_HEADERS: {
-               exposeHeaders = Optional.of(reader.getElementText().split(","));
+               corsRule.exposeHeaders(values);
                break;
             }
             default: {
@@ -221,13 +216,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-      CorsConfigBuilder builder = allowedOrigins.isPresent() ? CorsConfigBuilder.forOrigins(allowedOrigins.get()) : CorsConfigBuilder.forAnyOrigin();
-      if (allowCredentials) builder.allowCredentials();
-      maxAge.ifPresent(a -> builder.maxAge(a));
-      allowedHeaders.ifPresent(h -> builder.allowedRequestHeaders(h));
-      allowedMethods.ifPresent(m -> builder.allowedRequestMethods(m));
-      exposeHeaders.ifPresent(h -> builder.exposeHeaders(h));
-      return builder.build();
    }
 
    private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
@@ -238,6 +226,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case SECURITY_REALM: {
+               builder.securityRealm(value);
                securityRealm = serverBuilder.getSecurityRealm(value);
                break;
             }
@@ -258,16 +247,17 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       builder.authenticator(securityRealm.getHTTPAuthenticationProvider());
    }
 
-   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SslConfigurationBuilder builder) throws XMLStreamException {
+   private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption) throws XMLStreamException {
       String securityRealm = ParseUtils.requireAttributes(reader, Attribute.SECURITY_REALM)[0];
-      builder.sslContext(serverBuilder.getSSLContext(securityRealm));
+      SSLContext sslContext = serverBuilder.getSSLContext(securityRealm);
+      encryption.realm(securityRealm).sslContext(sslContext);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          String value = reader.getAttributeValue(i);
          switch (attribute) {
             case REQUIRE_SSL_CLIENT_AUTH: {
-               builder.requireClientAuth(Boolean.parseBoolean(value));
+               encryption.requireClientAuth(Boolean.parseBoolean(value));
                break;
             }
             case SECURITY_REALM: {
@@ -287,7 +277,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
-               parseSni(reader, builder);
+               parseSni(reader, serverBuilder, encryption.addSni());
                break;
             }
             default: {
@@ -300,8 +290,27 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          ParseUtils.requireNoContent(reader);
    }
 
-   private void parseSni(XMLExtendedStreamReader reader, SslConfigurationBuilder builder) {
-
+   private void parseSni(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, SniConfigurationBuilder sni) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case HOST_NAME: {
+               sni.host(value);
+               break;
+            }
+            case SECURITY_REALM: {
+               sni.realm(value);
+               sni.sslContext(serverBuilder.getSSLContext(value));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
 }

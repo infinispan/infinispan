@@ -2,6 +2,7 @@ package org.infinispan.server.configuration.memcached;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
@@ -41,7 +42,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
          case MEMCACHED_CONNECTOR: {
             ServerConfigurationBuilder serverBuilder = builder.module(ServerConfigurationBuilder.class);
             if (serverBuilder != null) {
-               parseMemcached(reader, serverBuilder, serverBuilder.addConnector(MemcachedServerConfigurationBuilder.class));
+               parseMemcached(reader, serverBuilder, serverBuilder.endpoints().addConnector(MemcachedServerConfigurationBuilder.class));
             } else {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -63,12 +64,21 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
       String[] required = ParseUtils.requireAttributes(reader, Attribute.SOCKET_BINDING);
       serverBuilder.applySocketBinding(required[0], builder);
       builder.startTransport(true);
+      builder.socketBinding(required[0]);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case CACHE: {
+               builder.cache(value);
+               break;
+            }
             case CACHE_CONTAINER: {
+               break;
+            }
+            case CLIENT_ENCODING: {
+               builder.clientEncoding(MediaType.fromString(value));
                break;
             }
             case IDLE_TIMEOUT: {
@@ -87,7 +97,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
                // Already seen
                break;
             default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
+               ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
          }
       }
