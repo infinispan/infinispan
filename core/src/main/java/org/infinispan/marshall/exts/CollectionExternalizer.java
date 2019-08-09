@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -137,18 +138,32 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
 
    @Override
    public Set<Class<? extends Collection>> getTypeClasses() {
-      return Util.asSet(ArrayList.class, LinkedList.class,
-            getPrivateArrayListClass(),
-            getPrivateUnmodifiableListClass(),
-            getPrivateSingletonListClass(),
-            getPrivateEmptyListClass(),
-            getPrivateEmptySetClass(),
+      Set<Class<? extends Collection>> typeClasses = Util.asSet(ArrayList.class, LinkedList.class,
             HashSet.class, TreeSet.class,
-            getPrivateSingletonSetClass(),
-            getPrivateSynchronizedSetClass(), getPrivateUnmodifiableSetClass(),
             ArrayDeque.class,
             ReadOnlySegmentAwareCollection.class,
             FastCopyHashMap.KeySet.class, FastCopyHashMap.Values.class, FastCopyHashMap.EntrySet.class);
+      typeClasses.addAll(getSupportedPrivateClasses());
+      return typeClasses;
+   }
+
+   /**
+    * Returns an immutable Set that contains all of the private classes (e.g. java.util.Collections$EmptyList) that
+    * are supported by this Externalizer. This method is to be used by external sources if these private classes
+    * need additional processing to be available.
+    * @return immutable set of the private classes
+    */
+   public static Set<Class<Collection>> getSupportedPrivateClasses() {
+      Set<Class<Collection>> classNames = new HashSet<>(Arrays.asList(
+            getPrivateArrayListClass(),
+            getPrivateUnmodifiableListClass(),
+            getPrivateEmptyListClass(),
+            getPrivateEmptySetClass(),
+            getPrivateSingletonListClass(),
+            getPrivateSingletonSetClass(),
+            getPrivateSynchronizedSetClass(),
+            getPrivateUnmodifiableSetClass()));
+      return Collections.unmodifiableSet(classNames);
    }
 
    private static Class<Collection> getPrivateArrayListClass() {
