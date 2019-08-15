@@ -499,7 +499,7 @@
       <versionx.org.jboss.byteman.byteman-submit>${version.byteman}</versionx.org.jboss.byteman.byteman-submit>
       <versionx.org.jboss.classfilewriter.jboss-classfilewriter>1.2.2.Final</versionx.org.jboss.classfilewriter.jboss-classfilewriter>
       <versionx.org.jboss.invocation.jboss-invocation>1.5.1.Final</versionx.org.jboss.invocation.jboss-invocation>
-      <versionx.org.jboss.jandex>2.0.5.Final</versionx.org.jboss.jandex>
+      <versionx.org.jboss.jandex>2.1.1.Final</versionx.org.jboss.jandex>
       <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-dmr>1.5.0.Final</versionx.org.jboss.jboss-dmr>
       <versionx.org.jboss.jboss-transaction-spi>7.6.0.Final</versionx.org.jboss.jboss-transaction-spi>
@@ -4708,6 +4708,18 @@
                      </target>
                   </configuration>
                </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.jboss.jandex</groupId>
+            <artifactId>jandex-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>make-index</id>
+                  <goals>
+                     <goal>jandex</goal>
+                  </goals>
+                </execution>
             </executions>
          </plugin>
       </plugins>
