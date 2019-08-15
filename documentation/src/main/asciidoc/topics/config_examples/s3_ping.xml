@@ -1,5 +1,3 @@
-[source,xml,options="nowrap"]
-----
 <protocol type="org.jgroups.aws.s3.NATIVE_S3_PING" module="org.jgroups.aws.s3:{infinispanslot}">
   <property name="region_name">${jgroups.s3.region:}</property>
   <property name="bucket_name">${jgroups.s3.bucket_name:}</property>

@@ -1,19 +1,20 @@
-// Include global attributes
-include::../../topics/attributes/community-attributes.adoc[]
-
-// Images directory attribute.
+//Directory attributes
 :images_dir: images
+:stories: ../../stories
+:topics: ../../topics
 
-= Technical Overview: {brandname} {infinispanversion}
+//Community doc attributes
+include::{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
 :toc2:
 :icons: font
 :toclevels: 3
 :numbered:
 :stem: asciimath
 
-//Reference .adoc topic files for the title content.
-//Will eventually be replaced with user stories (assemblies).
-include::topics.adoc[]
+//Title
+= Technical Overview: {brandname} {infinispanversion}
 
-//Topics assembled into user stories.
-//include::stories.adoc[]
+//User stories
+include::stories.adoc[]

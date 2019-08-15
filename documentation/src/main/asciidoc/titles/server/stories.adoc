@@ -1,4 +1,18 @@
-//Reference user stories.
+//Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-//include::../../stories/assembly_x.adoc
+include::{topics}/con_server.adoc[leveloffset=+1]
+include::{topics}/operating_modes.adoc[leveloffset=+1]
+include::{topics}/configuring_server.adoc[leveloffset=+1]
+include::{topics}/rolling_upgrades.adoc[leveloffset=+1]
+include::{topics}/server_protocols.adoc[leveloffset=+1]
+include::{topics}/server_protocols_hotrod.adoc[leveloffset=+1]
+//topic included in server_protocols_hotrod.adoc
+//include::{topics}/server_protocols_hotrod_transaction.adoc[leveloffset=+1]
+include::{topics}/server_protocols_rest.adoc[leveloffset=+1]
+include::{topics}/server_protocols_memcached.adoc[leveloffset=+1]
+include::{topics}/scripting.adoc[leveloffset=+1]
+include::{topics}/server_tasks.adoc[leveloffset=+1]
+include::{topics}/server_health.adoc[leveloffset=+1]
+include::{topics}/server_multitenancy.adoc[leveloffset=+1]
+include::{topics}/single_port.adoc[leveloffset=+1]

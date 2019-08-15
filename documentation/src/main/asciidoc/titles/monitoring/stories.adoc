@@ -1,4 +1,10 @@
-//Reference user stories.
+//Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-//include::../../stories/assembly_x.adoc
+include::{topics}/management_server.adoc[leveloffset=+1]
+include::{topics}/management.adoc[leveloffset=+1]
+include::{topics}/cli.adoc[leveloffset=+2]
+include::{topics}/hawt.adoc[leveloffset=+2]
+include::{topics}/mgmt_plugins.adoc[leveloffset=+2]
+//The following topic is empty and causes a build error.
+//include::{topics}/monitoring.adoc[leveloffset=+1]
