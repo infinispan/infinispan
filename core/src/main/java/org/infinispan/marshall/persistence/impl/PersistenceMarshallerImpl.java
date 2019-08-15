@@ -245,7 +245,19 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    }
 
    private boolean isPersistenceClass(Object o) {
-      return serializationContext.canMarshall(o.getClass());
+      return o instanceof String ||
+            o instanceof Long ||
+            o instanceof Integer ||
+            o instanceof Double ||
+            o instanceof Float ||
+            o instanceof Boolean ||
+            o instanceof byte[] ||
+            o instanceof Byte ||
+            o instanceof Short ||
+            o instanceof Character ||
+            o instanceof java.util.Date ||
+            o instanceof java.time.Instant ||
+            serializationContext.canMarshall(o.getClass());
    }
 
    private boolean isUserMarshallable(Object o) {
