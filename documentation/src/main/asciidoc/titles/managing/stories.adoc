@@ -1,4 +1,16 @@
-//Reference user stories.
+//Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-//include::../../stories/assembly_x.adoc
+include::{topics}/eviction.adoc[leveloffset=+1]
+include::{topics}/persistence.adoc[leveloffset=+1]
+include::{topics}/persistence_sfs.adoc[leveloffset=+2]
+include::{topics}/persistence_sifs.adoc[leveloffset=+2]
+include::{topics}/persistence_jdbc.adoc[leveloffset=+2]
+include::{topics}/persistence_remote.adoc[leveloffset=+2]
+include::{topics}/persistence_cluster.adoc[leveloffset=+2]
+include::{topics}/persistence_cli.adoc[leveloffset=+2]
+include::{topics}/persistence_rocksdb.adoc[leveloffset=+2]
+include::{topics}/persistence_jpa.adoc[leveloffset=+2]
+include::{topics}/persistence_custom.adoc[leveloffset=+2]
+include::{topics}/persistence_storemigrator.adoc[leveloffset=+2]
+include::{topics}/persistence_spi.adoc[leveloffset=+2]

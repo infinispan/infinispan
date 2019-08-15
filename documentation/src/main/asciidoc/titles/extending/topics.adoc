@@ -1,5 +1,0 @@
-//Reference .adoc topic files for the title content.
-//Please review authoring guidelines in the Contributors Guide.
-
-include::../../topics/extending.adoc[leveloffset=+1]
-include::../../topics/interceptors.adoc[leveloffset=+1]

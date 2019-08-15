@@ -1,19 +1,24 @@
-// Include global attributes
-include::../../topics/attributes/community-attributes.adoc[]
-
-// Images directory attribute.
+//Directory attributes
 :images_dir: images
+:stories: ../../stories
+:topics: ../../topics
 
-= Contributing to {brandname}
-The {brandname} community
+//Community doc attributes
+include::{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
 :toc2:
 :icons: font
-:toclevels: 2
+:toclevels: 3
 :numbered:
+:stem: asciimath
+
+//Title
+= Contributing to {brandname}
 
 Feel like contributing to {brandname}?  This guide will help you set up your
 environment, walk you through best practices, and help you debug, improve
 and add features to {brandname}.
 
-//Reference .adoc topic files for the title content.
-include::topics.adoc[]
+//User stories
+include::stories.adoc[]

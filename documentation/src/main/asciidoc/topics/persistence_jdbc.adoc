@@ -21,7 +21,7 @@ be available in a future release.
 ====
 endif::productized[]
 
-==== Connection management (pooling)
+=== Connection management (pooling)
 In order to obtain a connection to the database the JDBC cache store relies on a link:{javadocroot}/org/infinispan/persistence/jdbc/connectionfactory/ConnectionFactory.html[ConnectionFactory]
 implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource()
 or simpleConnection() methods on the JdbcStringBasedStoreConfigurationBuilder class or declaratively using one of the

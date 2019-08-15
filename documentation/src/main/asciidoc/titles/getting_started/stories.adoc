@@ -1,4 +1,6 @@
-//Reference user stories.
+//Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-//include::../../stories/assembly_x.adoc
+include::{topics}/installation.adoc[leveloffset=+1]
+include::{topics}/create_project.adoc[leveloffset=+1]
+include::{topics}/gui_demo.adoc[leveloffset=+1]
