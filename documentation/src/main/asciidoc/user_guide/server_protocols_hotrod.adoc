@@ -1204,8 +1204,8 @@ clients.
 
 When near cache is enabled, its size must be configured by defining
 the maximum number of entries to keep in the near cache. When the maximum is
-reached, near cached entries are evicted using a least-recently-used (LRU)
-algorithm. If providing 0 or a negative value, it is assumed that the near
+reached, near cached entries are evicted.
+If providing 0 or a negative value, it is assumed that the near
 cache is unbounded.
 
 WARNING: Users should be careful when configuring near cache to be
