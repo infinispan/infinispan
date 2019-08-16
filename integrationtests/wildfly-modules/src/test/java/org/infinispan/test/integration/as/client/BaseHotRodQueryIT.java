@@ -12,7 +12,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
@@ -49,7 +50,7 @@ public class BaseHotRodQueryIT {
    public void testRemoteQuery() throws Exception {
       rcm = createCacheManager();
 
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(rcm);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("test.proto")
             .addClass(Person.class)
@@ -85,7 +86,7 @@ public class BaseHotRodQueryIT {
    public void testUninverting() throws Exception {
       rcm = createCacheManager();
 
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(rcm);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("test.proto")
             .addClass(Person.class)

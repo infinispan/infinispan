@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
 import java.io.IOException;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 
@@ -14,6 +16,10 @@ public final class MarshallerRegistration {
    public static final String PROTOBUF_RES = "/sample_bank_account/bank.proto";
 
    private MarshallerRegistration() {
+   }
+
+   public static void registerMarshallers(RemoteCacheManager remoteCacheManager) throws IOException {
+      registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager));
    }
 
    /**

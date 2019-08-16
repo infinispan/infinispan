@@ -20,8 +20,9 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.junit.Cleanup;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
@@ -106,7 +107,7 @@ public class RemoteQueryDescriptorIT {
    }
 
    private int queryResultsIn(RemoteInfinispanServer server, RemoteCacheManager remoteCacheManager) throws IOException {
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+      MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager));
       RemoteCache<Integer, User> remoteCache = remoteCacheManager.getCache("repl_descriptor");
       Query query = Search.getQueryFactory(remoteCache).from(User.class).build();
 
@@ -126,7 +127,7 @@ public class RemoteQueryDescriptorIT {
       user.setId(0);
       user.setName("user1");
       user.setSurname("surname");
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+      MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager));
 
       RemoteCache<Object, Object> cache = remoteCacheManager.getCache("repl_descriptor");
       cache.put(1, user);

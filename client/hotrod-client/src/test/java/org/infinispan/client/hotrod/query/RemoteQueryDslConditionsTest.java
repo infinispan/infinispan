@@ -24,11 +24,12 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -120,7 +121,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       //initialize client-side serialization context
-      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
       MarshallerRegistration.registerMarshallers(serCtx);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());

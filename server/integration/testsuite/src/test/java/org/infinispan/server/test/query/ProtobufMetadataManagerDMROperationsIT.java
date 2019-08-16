@@ -15,7 +15,7 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;

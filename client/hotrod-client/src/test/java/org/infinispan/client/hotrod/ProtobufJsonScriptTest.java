@@ -11,10 +11,10 @@ import static org.testng.AssertJUnit.assertFalse;
 import java.io.IOException;
 import java.util.Collections;
 
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -49,7 +49,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
+      MarshallerRegistration.registerMarshallers(client(0));
    }
 
    @Override

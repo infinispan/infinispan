@@ -16,7 +16,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -133,7 +134,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       String bankSchemaFile = Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
       FileDescriptorSource fds = new FileDescriptorSource();
       fds.addProtoFile("sample_bank_account/bank.proto", bankSchemaFile);
-      SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
+      SerializationContext ctx = MarshallerUtil.getSerializationContext(manager);
       ctx.registerProtoFiles(fds);
       ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());

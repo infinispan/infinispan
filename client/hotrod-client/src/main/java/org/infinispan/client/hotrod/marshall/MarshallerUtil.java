@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamConstants;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -12,7 +13,9 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.CheckedInputStream;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.SerializationContext;
 
 /**
  * @author Galder Zamarreño
@@ -22,6 +25,21 @@ public final class MarshallerUtil {
    private static final Log log = LogFactory.getLog(MarshallerUtil.class, Log.class);
 
    private MarshallerUtil() {
+   }
+
+   /**
+    * A convenience method to return the {@link SerializationContext} associated with the {@link ProtoStreamMarshaller}
+    * configured on the provided {@link RemoteCacheManager}.
+    *
+    * @return the associated {@link SerializationContext}
+    * @throws HotRodClientException if the cache manager is not configured to use a {@link ProtoStreamMarshaller}
+    */
+   public static SerializationContext getSerializationContext(RemoteCacheManager remoteCacheManager) {
+      Marshaller marshaller = remoteCacheManager.getMarshaller();
+      if (marshaller instanceof ProtoStreamMarshaller) {
+         return ((ProtoStreamMarshaller) marshaller).getSerializationContext();
+      }
+      throw new HotRodClientException("The cache manager must be configured with a ProtoStreamMarshaller");
    }
 
    @SuppressWarnings("unchecked")

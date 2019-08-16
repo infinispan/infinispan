@@ -10,7 +10,8 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.testng.annotations.Test;
@@ -32,7 +33,7 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
             .build());
 
       //initialize client-side serialization context
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("crypto.proto")
             .addClass(CryptoCurrency.class)

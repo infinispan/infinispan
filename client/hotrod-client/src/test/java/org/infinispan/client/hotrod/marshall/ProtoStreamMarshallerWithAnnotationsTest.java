@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -84,7 +85,7 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
       remoteCache = remoteCacheManager.getCache();
 
       //initialize client-side serialization context
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       protoSchemaBuilder.fileName("test.proto")
             .addClass(AnnotatedUser.class)
@@ -109,7 +110,7 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
       Object localObject = cache.get(key);
       assertNotNull(localObject);
       assertTrue(localObject instanceof byte[]);
-      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager), (byte[]) localObject);
+      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(MarshallerUtil.getSerializationContext(remoteCacheManager), (byte[]) localObject);
       assertTrue(unmarshalledObject instanceof AnnotatedUser);
       assertUser((AnnotatedUser) unmarshalledObject);
 

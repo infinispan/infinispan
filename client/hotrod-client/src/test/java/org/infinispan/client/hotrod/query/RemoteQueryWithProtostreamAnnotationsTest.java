@@ -10,9 +10,10 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -154,7 +155,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
             "   /* @IndexedField */\n" +
             "   required string name = 2;\n" +
             "}";
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
       serializationContext.registerProtoFiles(FileDescriptorSource.fromString("author.proto", authorSchemaFile));
       serializationContext.registerMarshaller(new MessageMarshaller<Author>() {
          @Override

@@ -14,7 +14,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.filter.Filters;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.api.continuous.ContinuousQuery;
@@ -42,7 +42,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
          throw new IllegalArgumentException("cache parameter cannot be null");
       }
       this.cache = cache;
-      serializationContext = ProtoStreamMarshaller.getSerializationContext(cache.getRemoteCacheManager());
+      serializationContext = MarshallerUtil.getSerializationContext(cache.getRemoteCacheManager());
    }
 
    @Override

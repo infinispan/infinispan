@@ -24,12 +24,13 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.EmbeddedUserMarshaller;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -45,7 +46,6 @@ import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCache
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -92,7 +92,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       }
 
       //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
+      MarshallerRegistration.registerMarshallers(client(0));
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

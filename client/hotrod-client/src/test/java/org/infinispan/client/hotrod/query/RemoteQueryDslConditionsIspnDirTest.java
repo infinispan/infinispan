@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.query;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 

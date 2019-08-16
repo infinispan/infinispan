@@ -25,11 +25,12 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.filter.Filters;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -81,7 +82,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
+      MarshallerRegistration.registerMarshallers(client(0));
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -142,7 +143,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       remoteCache.put("user_" + user3.getId(), user3);
       assertEquals(3, remoteCache.size());
 
-      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(client(0));
+      SerializationContext serCtx = MarshallerUtil.getSerializationContext(client(0));
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
@@ -210,7 +211,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       remoteCache.put("user_" + user3.getId(), user3);
       assertEquals(3, remoteCache.size());
 
-      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(client(0));
+      SerializationContext serCtx = MarshallerUtil.getSerializationContext(client(0));
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
@@ -244,7 +245,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
             .select(max("age"))
             .build();
 
-      ClientEntryListener listener = new ClientEntryListener(ProtoStreamMarshaller.getSerializationContext(client(0)));
+      ClientEntryListener listener = new ClientEntryListener(MarshallerUtil.getSerializationContext(client(0)));
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
    }
 

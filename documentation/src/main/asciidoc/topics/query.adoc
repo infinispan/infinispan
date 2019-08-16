@@ -1564,7 +1564,7 @@ following example highlights this process.
 [source,java,numbered]
 ----
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.protostream.SerializationContext;
 ...
 
@@ -1575,7 +1575,7 @@ clientBuilder.addServer()
 
 RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
-SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
 
 FileDescriptorSource fds = new FileDescriptorSource();
 fds.addProtoFiles("/library.proto");
