@@ -6,7 +6,8 @@ import java.io.IOException;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.SerializationContext;
@@ -42,7 +43,7 @@ public class JsonIndexingProtobufStoreTest extends BaseJsonTest {
             .build());
 
       //initialize client-side serialization context
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("crypto.proto")
             .addClass(CryptoCurrency.class)

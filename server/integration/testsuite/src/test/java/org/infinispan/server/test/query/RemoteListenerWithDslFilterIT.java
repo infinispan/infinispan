@@ -25,7 +25,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvents;
 import org.infinispan.client.hotrod.filter.Filters;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
@@ -108,7 +108,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       remoteCache.put(user3.getId(), user3);
       assertEquals(3, remoteCache.size());
 
-      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCache.getRemoteCacheManager());
+      SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCache.getRemoteCacheManager());
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(User.class)

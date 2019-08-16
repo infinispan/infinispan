@@ -1,11 +1,10 @@
-package org.infinispan.query.remote.client;
+package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 
@@ -16,17 +15,24 @@ import org.infinispan.protostream.SerializationContext;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
+public class ProtoStreamMarshaller extends AbstractMarshaller {
 
-   protected BaseProtoStreamMarshaller() {
+   protected final SerializationContext serializationContext;
+
+   public ProtoStreamMarshaller() {
+      this(ProtobufUtil.newSerializationContext());
+   }
+
+   public ProtoStreamMarshaller(SerializationContext serializationContext) {
+      this.serializationContext = serializationContext;
    }
 
    /**
-    * Subclasses must implement this method in order to provide a way to lookup the {@link SerializationContext}
-    *
     * @return the SerializationContext instance to use
     */
-   protected abstract SerializationContext getSerializationContext();
+   public SerializationContext getSerializationContext() {
+      return serializationContext;
+   }
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {

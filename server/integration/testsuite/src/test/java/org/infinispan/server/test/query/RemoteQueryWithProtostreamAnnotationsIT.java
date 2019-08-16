@@ -12,7 +12,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -137,7 +138,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
       remoteCache = remoteCacheManager.getCache(cacheName);
 
       //initialize client-side serialization context
-      SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("test.proto")
             .addClass(AnnotatedUser.class)

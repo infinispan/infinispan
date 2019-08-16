@@ -1,5 +1,10 @@
 package org.infinispan.server.test.query;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.util.stream.IntStream;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -8,7 +13,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
@@ -20,11 +26,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.io.IOException;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests for indexing persistence across server restarts.
@@ -54,7 +55,7 @@ public class IndexFlushingIT {
 
         remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
-        SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+        SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
         ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
         String protoSchema = protoSchemaBuilder.fileName("transaction.proto")
                 .addClass(Transaction.class)

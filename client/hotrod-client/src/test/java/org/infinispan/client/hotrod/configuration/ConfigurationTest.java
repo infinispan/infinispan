@@ -13,6 +13,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTI
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_IDLE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_DOMAIN;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_NAME;
@@ -28,7 +29,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -68,10 +69,10 @@ import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -395,7 +396,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
    public void testPropertyReplacement() throws IOException, UnsupportedCallbackException {
       System.setProperty("test.property.server_list", "myhost:12345");
-      System.setProperty("test.property.marshaller", "org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller");
+      System.setProperty("test.property.marshaller", "org.infinispan.commons.marshall.ProtoStreamMarshaller");
       System.setProperty("test.property.tcp_no_delay", "false");
       System.setProperty("test.property.tcp_keep_alive", "true");
       System.setProperty("test.property.key_size_estimate", "128");

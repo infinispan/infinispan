@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -33,9 +34,9 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(testName = "client.hotrod.marshall.ProtoStreamMarshallerTest", groups = "functional")
+@Test(testName = "client.hotrod.marshall.ClientProtoStreamMarshallerTest", groups = "functional")
 @CleanupAfterMethod
-public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
+public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
@@ -56,7 +57,7 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       remoteCache = remoteCacheManager.getCache();
 
       //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+      MarshallerRegistration.registerMarshallers(remoteCacheManager);
 
       return cacheManager;
    }
@@ -77,7 +78,7 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       Object localObject = cache.get(key);
       assertNotNull(localObject);
       assertTrue(localObject instanceof byte[]);
-      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager), (byte[]) localObject);
+      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(MarshallerUtil.getSerializationContext(remoteCacheManager), (byte[]) localObject);
       assertTrue(unmarshalledObject instanceof User);
       assertUser((User) unmarshalledObject);
 

@@ -20,7 +20,7 @@ import org.infinispan.api.reactive.KeyValueStoreConfig;
 import org.infinispan.api.reactive.client.impl.KeyValueStoreImpl;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
@@ -64,7 +64,7 @@ public class InfinispanClientImpl implements Infinispan {
    @Override
    public CompletionStage<Void> stop() {
       if (!files.isEmpty()) {
-         SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(cacheManager);
+         SerializationContext ctx = MarshallerUtil.getSerializationContext(cacheManager);
          files.forEach(ctx::unregisterProtoFile);
       }
       files.clear();
@@ -83,7 +83,7 @@ public class InfinispanClientImpl implements Infinispan {
 
       if (file != null) return;
       files.add(fileName);
-      SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(cacheManager);
+      SerializationContext ctx = MarshallerUtil.getSerializationContext(cacheManager);
 
       // TODO: Does not work https://issues.jboss.org/browse/ISPN-9973
       for (Marshaller marshaller : config.getMarshallers()) {
