@@ -153,6 +153,10 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
 
          switch (attribute) {
+            case SERIALIZATION_CONTEXT_INITIALIZER: {
+               builder.serialization().contextInitializer(Util.getInstance(value, holder.getClassLoader()));
+               break;
+            }
             case MARSHALLER_CLASS: {
                builder.serialization().marshaller(Util.getInstance(value, holder.getClassLoader()));
                break;
