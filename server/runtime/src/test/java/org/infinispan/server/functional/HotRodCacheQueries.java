@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
@@ -80,7 +79,9 @@ public class HotRodCacheQueries {
       @ProtoField(number = 2)
       public Integer id;
 
-      @ProtoFactory
+      public Person() {
+      }
+
       public Person(String name, Integer id) {
          this.name = name;
          this.id = id;
