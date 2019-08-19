@@ -554,6 +554,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="context-initializer" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                The FQN of a SerializationContextInitializer implementation which is used to initialize a Protostream based marshaller for user types.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
     </xs:sequence>

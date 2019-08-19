@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.SerializationConfiguration.ADVANCED_EXTERNALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.CLASS_RESOLVER;
+import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZER;
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
 import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
 
@@ -14,6 +15,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
  * Configures serialization and marshalling settings.
@@ -127,6 +129,11 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    @Deprecated
    public SerializationConfigurationBuilder classResolver(Object classResolver) {
       attributes.attribute(CLASS_RESOLVER).set(classResolver);
+      return this;
+   }
+
+   public SerializationConfigurationBuilder contextInitializer(SerializationContextInitializer initializer) {
+      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZER).set(initializer);
       return this;
    }
 

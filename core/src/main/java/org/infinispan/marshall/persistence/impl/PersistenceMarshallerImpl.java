@@ -63,8 +63,10 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    @Override
    public void start() {
       userMarshaller = createUserMarshaller();
-      log.startingUserMarshaller(userMarshaller.getClass().getName());
-      userMarshaller.start();
+      if (userMarshaller != null) {
+         log.startingUserMarshaller(userMarshaller.getClass().getName());
+         userMarshaller.start();
+      }
 
       register(new PersistenceContextInitializerImpl());
    }
@@ -75,6 +77,12 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       Marshaller marshaller = serializationConfig.marshaller();
       if (marshaller != null)
          return marshaller;
+
+      // The user has specified a SerializationContextInitializer, so jboss-marshalling is ignored and serializationContext updated
+      if (serializationConfig.contextInitializer() != null) {
+         register(serializationContext, serializationConfig.contextInitializer());
+         return null;
+      }
 
       // If no marshaller or SerializationContextInitializer specified, then we attempt to load `infinispan-jboss-marshalling`
       // and the JBossUserMarshaller, however if it does not exist then we default to the JavaSerializationMarshaller
@@ -110,7 +118,8 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public void stop() {
-      userMarshaller.stop();
+      if (userMarshaller != null)
+         userMarshaller.stop();
    }
 
    @Override
@@ -170,7 +179,17 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       // TODO if persistenceClass, i.e. protobuf based, return estimate based upon schema
-      return userMarshaller.getBufferSizePredictor(o);
+      return userMarshaller != null ? userMarshaller.getBufferSizePredictor(o) : new BufferSizePredictor() {
+         @Override
+         public int nextSize(Object obj) {
+            // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
+            return 4096;
+         }
+
+         @Override
+         public void recordSize(int previousSize) {
+         }
+      };
    }
 
    @Override
