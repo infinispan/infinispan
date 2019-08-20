@@ -3,8 +3,11 @@ package org.infinispan.remoting.jgroups;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -27,7 +30,10 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
          "</infinispan>";
       EmbeddedCacheManager cm = null;
       try {
-         cm = new DefaultCacheManager(new ByteArrayInputStream(config.getBytes()));
+         ConfigurationBuilderHolder cbh = new ParserRegistry().parse(new ByteArrayInputStream(config.getBytes()), Void -> {
+            throw new FileNotFoundException();
+         });
+         cm = new DefaultCacheManager(cbh, true);
          cm.getCache();
          fail("CacheManager construction should have failed");
       } catch (Exception e) {
