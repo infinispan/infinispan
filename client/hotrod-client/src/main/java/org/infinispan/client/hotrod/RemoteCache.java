@@ -470,7 +470,10 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    /**
     * Returns a set with all the listeners registered by this client for the
     * given cache.
+    *
+    * @deprecated Since 10.0, with no replacement
     */
+   @Deprecated
    Set<Object> getListeners();
 
    /**

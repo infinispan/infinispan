@@ -566,6 +566,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
       return cache.removeListenerAsync(listener);
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       return cache.getListeners();

@@ -980,6 +980,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return notifier.removeListenerAsync(listener);
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       return notifier.getListeners();
