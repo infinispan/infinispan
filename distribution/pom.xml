@@ -385,7 +385,7 @@
       <profile>
          <id>nexus-staging</id>
          <activation>
-            <property><name>skipNexusStaging</name></property>
+            <property><name>deployServerZip</name></property>
          </activation>
          <build>
             <plugins>

@@ -85,7 +85,7 @@ pipeline {
             script {
                 if (!env.BRANCH_NAME.startsWith('PR-')) {
                     configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -s $MAVEN_SETTINGS -Dmaven.main.skip=true -Dmaven.test.skip=true"
+                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -s $MAVEN_SETTINGS -Pdistribution -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true"
                     }
                 }
             }
