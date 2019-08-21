@@ -275,9 +275,6 @@ public class RemoteCommandsFactory {
             case StateResponseCommand.COMMAND_ID:
                command = new StateResponseCommand(cacheName);
                break;
-            case RemoveCacheCommand.COMMAND_ID:
-               command = new RemoveCacheCommand(cacheName, cacheManager);
-               break;
             case TxCompletionNotificationCommand.COMMAND_ID:
                command = new TxCompletionNotificationCommand(cacheName);
                break;
