@@ -93,6 +93,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.getWithMetadataAsync(key);
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       return delegate.getListeners();

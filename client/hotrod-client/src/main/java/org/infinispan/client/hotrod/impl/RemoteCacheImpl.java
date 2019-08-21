@@ -512,6 +512,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       await(op.execute());
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       ClientListenerNotifier listenerNotifier = operationsFactory.getListenerNotifier();

@@ -52,6 +52,9 @@ public interface Listenable {
 
    /**
     * @return a set of all listeners registered on this component.
+    *
+    * @deprecated Since 10.0, with no replacement
     */
+   @Deprecated
    Set<Object> getListeners();
 }

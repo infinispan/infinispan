@@ -845,6 +845,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       return null;
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       return null;  // TODO: Customise this generated block

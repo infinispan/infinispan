@@ -1112,6 +1112,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return cacheNotifier.removeListenerAsync(listener);
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       return cacheNotifier.getListeners();

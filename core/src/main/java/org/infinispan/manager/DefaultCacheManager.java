@@ -836,6 +836,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       authzHelper.checkPermission(AuthorizationPermission.LISTEN);

@@ -149,6 +149,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       return delegate.removeListenerAsync(listener);
    }
 
+   @Deprecated
    @Override
    public Set<Object> getListeners() {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
