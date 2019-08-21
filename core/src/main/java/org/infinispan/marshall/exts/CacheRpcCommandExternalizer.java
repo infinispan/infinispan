@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
-import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
@@ -79,7 +78,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(LockControlCommand.class,
                StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
                SingleRpcCommand.class, CommitCommand.class,
-               PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
+               PrepareCommand.class, RollbackCommand.class,
                TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
                GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
                VersionedPrepareCommand.class, CreateCacheCommand.class, CancelCommand.class,
