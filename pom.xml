@@ -250,7 +250,6 @@
       <versionx.com.google.guava.guava>25.0-jre</versionx.com.google.guava.guava>
       <versionx.com.google.inject.guice>4.2.0</versionx.com.google.inject.guice>
       <versionx.com.google.j2objc.j2objc-annotations>1.1</versionx.com.google.j2objc.j2objc-annotations>
-      <versionx.com.google.protobuf.protobuf-java>3.0.2</versionx.com.google.protobuf.protobuf-java>
       <versionx.com.h2database.h2>1.4.193</versionx.com.h2database.h2>
       <versionx.com.intellij.forms_rt>6.0.5</versionx.com.intellij.forms_rt>
       <versionx.com.io7m.xom.xom>1.2.10</versionx.com.io7m.xom.xom>
@@ -259,7 +258,6 @@
       <versionx.com.mchange.c3p0>${version.c3p0}</versionx.com.mchange.c3p0>
       <versionx.com.mchange.mchange-commons-java>0.2.7</versionx.com.mchange.mchange-commons-java>
       <versionx.com.microsoft.azure.azure-storage>6.1.0</versionx.com.microsoft.azure.azure-storage>
-      <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.com.sun.istack.istack-commons-runtime>3.0.5</versionx.com.sun.istack.istack-commons-runtime>
       <versionx.com.sun.mail.javax.mail>1.6.1</versionx.com.sun.mail.javax.mail>
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
@@ -1007,11 +1005,6 @@
             <version>${versionx.com.google.j2objc.j2objc-annotations}</version>
          </dependency>
          <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>${versionx.com.google.protobuf.protobuf-java}</version>
-         </dependency>
-         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>${versionx.com.h2database.h2}</version>
@@ -1057,11 +1050,6 @@
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
             <version>${version.checkstyle}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>protoparser</artifactId>
-            <version>${versionx.com.squareup.protoparser}</version>
          </dependency>
          <dependency>
             <groupId>com.sun</groupId>
