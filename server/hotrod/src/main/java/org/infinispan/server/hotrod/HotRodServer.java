@@ -8,9 +8,9 @@ import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterMana
 import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -710,7 +710,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 }
 
-class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean>, Serializable {
+@SerializeWith(value = CheckAddressTask.CheckAddressTaskExternalizer.class)
+class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
    private final String cacheName;
    private final Address clusterAddress;
 
@@ -728,5 +729,18 @@ class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean>, Seria
       // If the cache isn't started just play like this node has the address in the cache - it will be added as it
       // joins, so no worries
       return true;
+   }
+
+   public static final class CheckAddressTaskExternalizer implements Externalizer<CheckAddressTask> {
+      @Override
+      public void writeObject(ObjectOutput output, CheckAddressTask object) throws IOException {
+         output.writeUTF(object.cacheName);
+         output.writeObject(object.clusterAddress);
+      }
+
+      @Override
+      public CheckAddressTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new CheckAddressTask(input.readUTF(), (Address) input.readObject());
+      }
    }
 }
