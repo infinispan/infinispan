@@ -517,6 +517,7 @@
             <dirname property="vault.dir" file="@{keystore}"/>
             <mkdir dir="${vault.dir}" />
             <java jar="${server1.dist}/jboss-modules.jar" fork="true" failonerror="true" jvm="${server.jvm}/bin/java">
+                <env key="JAVA_TOOL_OPTIONS" value="${server.jvm.args}"/>
                 <jvmarg value="--add-modules=java.se" if:set="isJigsaw"/>
                 <jvmarg value="-Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}"/>
                 <arg value="-mp"/>
