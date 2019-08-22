@@ -14,7 +14,10 @@ import org.infinispan.protostream.SerializationContext;
  * <pre>META-INF/services/</pre> folder in their jar, containing the fully qualified class name of the implementation.
  *
  * @since 9.3
+ * @deprecated since 10.0, please provide a {@link org.infinispan.protostream.SerializationContextInitializer}
+ * implementation via the server's SerializationConfiguration.
  */
+@Deprecated
 public interface ProtostreamSerializationContextInitializer {
 
    void init(SerializationContext serializationContext) throws IOException;
