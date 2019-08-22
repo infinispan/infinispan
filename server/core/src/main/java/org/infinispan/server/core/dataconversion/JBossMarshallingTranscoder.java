@@ -16,8 +16,8 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -30,11 +30,14 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
 
    protected final static Log logger = LogFactory.getLog(JBossMarshallingTranscoder.class, Log.class);
    private final Transcoder jsonObjectTranscoder;
-   private final GenericJBossMarshaller marshaller;
+   private final Marshaller marshaller;
 
-   public JBossMarshallingTranscoder(JsonTranscoder jsonObjectTranscoder, GenericJBossMarshaller marshaller) {
+   public JBossMarshallingTranscoder(JsonTranscoder jsonObjectTranscoder, Marshaller marshaller) {
       super(APPLICATION_JBOSS_MARSHALLING, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON, APPLICATION_UNKNOWN);
       this.jsonObjectTranscoder = jsonObjectTranscoder;
+      if (!marshaller.mediaType().match(APPLICATION_JBOSS_MARSHALLING)) {
+         throw new IllegalArgumentException("Provided Marshaller " + marshaller + " cannot handle: " + APPLICATION_JBOSS_MARSHALLING);
+      }
       this.marshaller = marshaller;
    }
 

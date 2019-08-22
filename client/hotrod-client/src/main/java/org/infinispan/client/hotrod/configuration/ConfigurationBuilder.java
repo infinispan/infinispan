@@ -29,7 +29,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
@@ -452,8 +451,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       try {
          // First see if marshalling is in the class path - if so we can use the generic marshaller
          // We have to use the commons class loader, since marshalling is its dependency
-         Class.forName("org.jboss.marshalling.river.RiverMarshaller", false, Util.class.getClassLoader());
-         marshallerClass = GenericJBossMarshaller.class;
+         marshallerClass = Class.forName("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller", true, ConfigurationBuilder.class.getClassLoader())
+            .asSubclass(Marshaller.class);
       } catch (ClassNotFoundException e) {
          log.tracef("JBoss Marshalling is not on the class path - Only byte[] instances can be marshalled");
          // Otherwise we fall back to a byte[] only marshaller

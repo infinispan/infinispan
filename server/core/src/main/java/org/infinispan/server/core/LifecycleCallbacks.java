@@ -2,7 +2,8 @@ package org.infinispan.server.core;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryTranscoder;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -29,18 +30,30 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
       ClassLoader classLoader = globalConfiguration.classLoader();
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
+      Marshaller marshaller = jbossMarshaller(classLoader, classWhiteList);
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classWhiteList);
 
       encoderRegistry.registerTranscoder(jsonTranscoder);
-      encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, marshaller));
       encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
       encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
 
-      BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
-      transcoder.overrideMarshaller(marshaller);
+      if (marshaller != null) {
+         encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, marshaller));
+         BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
+         transcoder.overrideMarshaller(marshaller);
+      }
+   }
+
+   Marshaller jbossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
+      try {
+         Class<?> marshallerClass = classLoader.loadClass("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
+         return Util.newInstanceOrNull(marshallerClass.asSubclass(Marshaller.class),
+               new Class[] { ClassLoader.class, ClassWhiteList.class}, classLoader, classWhiteList);
+      } catch (ClassNotFoundException e) {
+         return null;
+      }
    }
 }

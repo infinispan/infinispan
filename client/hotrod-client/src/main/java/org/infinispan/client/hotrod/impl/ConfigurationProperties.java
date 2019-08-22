@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -136,7 +135,7 @@ public class ConfigurationProperties {
    }
 
    public String getMarshaller() {
-      return props.getProperty(MARSHALLER, GenericJBossMarshaller.class.getName());
+      return props.getProperty(MARSHALLER, "org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
    }
 
    public void setMarshaller(String marshaller) {
