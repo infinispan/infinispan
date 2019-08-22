@@ -8,6 +8,7 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -39,6 +40,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
@@ -112,6 +114,7 @@ public final class LifecycleManager implements ModuleLifecycle {
 
       SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
       ClassLoader classLoader = globalCfg.classLoader();
+      processSerializationContextInitializer(globalCfg.serialization().contextInitializer(), serCtx);
       processProtostreamSerializationContextInitializers(classLoader, serCtx);
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
@@ -131,6 +134,18 @@ public final class LifecycleManager implements ModuleLifecycle {
          } catch (Exception e) {
             throw log.errorInitializingSerCtx(e);
          }
+      }
+   }
+
+   private void processSerializationContextInitializer(SerializationContextInitializer sci, SerializationContext serCtx) {
+      if (sci == null)
+         return;
+
+      try {
+         sci.registerSchema(serCtx);
+         sci.registerMarshallers(serCtx);
+      } catch (Exception e) {
+         throw log.errorInitializingSerCtx(e);
       }
    }
 
