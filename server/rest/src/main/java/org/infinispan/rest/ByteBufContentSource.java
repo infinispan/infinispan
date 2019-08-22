@@ -2,6 +2,8 @@ package org.infinispan.rest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.util.Arrays;
+
 import org.infinispan.rest.framework.ContentSource;
 
 import io.netty.buffer.ByteBuf;
@@ -23,7 +25,13 @@ public class ByteBufContentSource implements ContentSource {
    public byte[] rawContent() {
       if (byteBuf != null) {
          if (byteBuf.hasArray()) {
-            return byteBuf.array();
+            int offset = byteBuf.arrayOffset();
+            int size = byteBuf.readableBytes();
+            byte[] underlyingBytes = byteBuf.array();
+            if (offset == 0 && underlyingBytes.length == size) {
+               return underlyingBytes;
+            }
+            return Arrays.copyOfRange(underlyingBytes, offset, offset + size);
          } else {
             byte[] bufferCopy = new byte[byteBuf.readableBytes()];
             byteBuf.readBytes(bufferCopy);
