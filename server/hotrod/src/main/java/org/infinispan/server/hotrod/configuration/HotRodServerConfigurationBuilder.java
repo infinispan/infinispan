@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder> implements
       Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
-   private Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
 
    public HotRodServerConfigurationBuilder() {

@@ -22,7 +22,7 @@ import io.netty.util.CharsetUtil;
  */
 
 public abstract class AdminServerTask<T> implements Task {
-   protected final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    @Override
    public final String getName() {
