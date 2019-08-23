@@ -111,12 +111,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    }
 
    private void register(SerializationContext ctx, SerializationContextInitializer initializer) {
-      if (initializer == null) return;
-      try {
+      if (initializer != null) {
          initializer.registerSchema(ctx);
          initializer.registerMarshallers(ctx);
-      } catch (IOException e) {
-         throw new CacheException("Exception encountered when initialising SerializationContext", e);
       }
    }
 
