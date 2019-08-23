@@ -5,6 +5,18 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.logging.Log;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -12,7 +24,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.group.ChannelGroup;
@@ -26,17 +37,6 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.Util;
-import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.MeasurementType;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.core.logging.Log;
 
 /**
  * A Netty based transport.
@@ -50,30 +50,15 @@ import org.infinispan.server.core.logging.Log;
 public class NettyTransport implements Transport {
 
    static private final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
-   static private final boolean isLog4jAvailable;
+   static private final boolean isLog4jAvailable = isIsLog4jAvailable();
 
-   private static final String USE_EPOLL_PROPERTY = "infinispan.server.channel.epoll";
-   private static final boolean IS_LINUX = System.getProperty("os.name").toLowerCase().startsWith("linux");
-   private static final boolean EPOLL_DISABLED = System.getProperty(USE_EPOLL_PROPERTY, "true").equalsIgnoreCase("false");
-   private static final boolean USE_NATIVE_EPOLL;
-
-   static {
-      boolean exception;
+   // This method is here to be replaced by Quarkus
+   private static boolean isIsLog4jAvailable() {
       try {
          Util.loadClassStrict("org.apache.logging.log4j.Logger", Thread.currentThread().getContextClassLoader());
-         exception = false;
+         return true;
       } catch (ClassNotFoundException e) {
-         exception = true;
-      }
-      isLog4jAvailable = !exception;
-
-      if (Epoll.isAvailable()) {
-         USE_NATIVE_EPOLL = !EPOLL_DISABLED && IS_LINUX;
-      } else {
-         if (IS_LINUX) {
-            log.epollNotAvailable(Epoll.unavailabilityCause().toString());
-         }
-         USE_NATIVE_EPOLL = false;
+         return false;
       }
    }
 
@@ -321,13 +306,13 @@ public class NettyTransport implements Transport {
    }
 
    private Class<? extends ServerChannel> getServerSocketChannel() {
-      Class<? extends ServerChannel> channel = USE_NATIVE_EPOLL ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
+      Class<? extends ServerChannel> channel = EPollAvailable.USE_NATIVE_EPOLL ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
       log.createdSocketChannel(channel.getName(), configuration.toString());
       return channel;
    }
 
    private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
-      EventLoopGroup eventLoop = USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
+      EventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
               new NioEventLoopGroup(nThreads, threadFactory);
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
       return eventLoop;

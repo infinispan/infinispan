@@ -11,23 +11,23 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.impl.transport.netty.EpollAvailabilityTest")
 public class EpollAvailabilityTest extends AbstractInfinispanTest {
-   public static final String TRANSPORT_HELPER_CLASS = "org.infinispan.client.hotrod.impl.transport.netty.TransportHelper";
+   public static final String EPOLL_AVAILABLE_CLASS = "org.infinispan.client.hotrod.impl.transport.netty.EPollAvailable";
    public static final String LOG_FORMAT = "%-5p (%t) [%c{1}] %m%throwable{10}%n";
 
    public void testEpollNotAvailable() throws Exception {
       Thread testThread = Thread.currentThread();
-      StringLogAppender logAppender = new StringLogAppender(TRANSPORT_HELPER_CLASS,
+      StringLogAppender logAppender = new StringLogAppender(EPOLL_AVAILABLE_CLASS,
             Level.TRACE,
             t -> t == testThread,
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       try {
          CherryPickClassLoader classLoader = new CherryPickClassLoader(
-               new String[]{TRANSPORT_HELPER_CLASS},
+               new String[]{EPOLL_AVAILABLE_CLASS},
                null,
                new String[]{"io.netty.channel.epoll.Epoll"}, this.getClass().getClassLoader()
          );
-         Class.forName(TRANSPORT_HELPER_CLASS, true, classLoader);
+         Class.forName(EPOLL_AVAILABLE_CLASS, true, classLoader);
          String firstLine = logAppender.getLog(0);
          assertTrue(firstLine, firstLine.contains("io.netty.channel.epoll.Epoll"));
       } finally {
