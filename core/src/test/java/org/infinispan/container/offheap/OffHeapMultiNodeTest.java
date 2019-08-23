@@ -7,17 +7,26 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.distribution.DistributionTestHelper;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "commands.OffHeapMultiNodeTest")
@@ -116,6 +125,43 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
          assertEquals(e.getValue(), map.get(e.getKey()));
       });
       assertEquals(cacheSize, count.get());
+   }
+
+   public void testRemoveSegments() {
+      Cache<String, String> cache = cache(0);
+
+      String key = "some-key";
+      String value = "some-value";
+      DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
+      DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+
+      Object storedKey = keyDataConversion.toStorage(key);
+      Object storedValue = valueDataConversion.toStorage(value);
+
+      Cache<String, String> primaryOwnerCache;
+      int segmentWrittenTo;
+      List<Cache<String, String>> caches = caches();
+      if (caches.size() == 1) {
+         primaryOwnerCache = cache;
+         segmentWrittenTo = 0;
+      } else {
+         primaryOwnerCache = DistributionTestHelper.getFirstOwner(storedKey, caches());
+         KeyPartitioner keyPartitioner = TestingUtil.extractComponent(primaryOwnerCache, KeyPartitioner.class);
+
+         segmentWrittenTo = keyPartitioner.getSegment(storedKey);
+      }
+
+      InternalDataContainer container = TestingUtil.extractComponent(primaryOwnerCache, InternalDataContainer.class);
+
+      assertEquals(0, container.size());
+
+      container.put(storedKey, storedValue, new EmbeddedMetadata.Builder().build());
+
+      assertEquals(1, container.size());
+
+      container.removeSegments(IntSets.immutableSet(segmentWrittenTo));
+
+      assertEquals(0, container.size());
    }
 
    static DataContainer<WrappedByteArray, WrappedByteArray> castDC(Object obj) {
