@@ -157,6 +157,6 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
 
    @Override
    public void removeSegments(IntSet segments) {
-      InternalDataContainerAdapter.removeSegmentEntries(super.delegate(), segments, listeners, keyPartitioner);
+      InternalDataContainerAdapter.removeSegmentEntries(this, segments, listeners, keyPartitioner);
    }
 }
