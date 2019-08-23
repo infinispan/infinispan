@@ -188,7 +188,7 @@ public class HotRodCustomMarshallerIteratorIT {
 
       @Override
       public void init(SerializationContext serializationContext) throws IOException {
-         serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(ServerCtxInitializer.class.getClassLoader(), "/sample_bank_account/bank.proto"));
+         serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(getClass().getClassLoader(), "/sample_bank_account/bank.proto"));
          serializationContext.registerMarshaller(new UserMarshaller());
          serializationContext.registerMarshaller(new GenderMarshaller());
       }
@@ -197,7 +197,7 @@ public class HotRodCustomMarshallerIteratorIT {
    public static class CustomProtoStreamMarshaller extends ProtoStreamMarshaller {
       public CustomProtoStreamMarshaller() throws IOException {
          SerializationContext serCtx = getSerializationContext();
-         serCtx.registerProtoFiles(FileDescriptorSource.fromResources(CustomProtoStreamMarshaller.class.getClassLoader(), "/sample_bank_account/bank.proto"));
+         serCtx.registerProtoFiles(FileDescriptorSource.fromResources(getClass().getClassLoader(), "/sample_bank_account/bank.proto"));
          serCtx.registerMarshaller(new UserMarshaller());
          serCtx.registerMarshaller(new GenderMarshaller());
       }
