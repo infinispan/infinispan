@@ -138,14 +138,9 @@ public final class LifecycleManager implements ModuleLifecycle {
    }
 
    private void processSerializationContextInitializer(SerializationContextInitializer sci, SerializationContext serCtx) {
-      if (sci == null)
-         return;
-
-      try {
+      if (sci != null) {
          sci.registerSchema(serCtx);
          sci.registerMarshallers(serCtx);
-      } catch (Exception e) {
-         throw log.errorInitializingSerCtx(e);
       }
    }
 
