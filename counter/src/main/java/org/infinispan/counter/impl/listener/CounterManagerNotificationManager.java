@@ -126,10 +126,9 @@ public class CounterManagerNotificationManager {
       if (topologyListener.registered) {
          topologyListener.unregister(cache);
       }
-      if (listenersRegistered) {
-         cache.removeListener(valueListener);
-         listenersRegistered = false;
-      }
+      // Too late to remove the listener now, because internal caches are already stopped
+      // But because clustered listeners are removed automatically when the originator leaves,
+      // it's not really necessary.
       counters.clear();
       this.cache = null;
    }
