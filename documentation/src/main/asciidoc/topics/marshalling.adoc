@@ -31,7 +31,7 @@ Store as binary enables data to be stored in its serialized form. This can be us
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::config_examples/atom memory_binary.xml[]
+include::config_examples/memory_binary.xml[]
 ----
 
 * Programmatically:

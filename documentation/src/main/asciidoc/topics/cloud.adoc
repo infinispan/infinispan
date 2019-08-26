@@ -54,7 +54,7 @@ include::config_examples/s3ping.xml[]
 .NATIVE_S3_PING support in library mode
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::dependencies_maven/ispn_cloud_s3.xml[]
+include::dependencies_maven/ispn_cloud_ec2.xml[]
 ----
 
 === JDBC_PING

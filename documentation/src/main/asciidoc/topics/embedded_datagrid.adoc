@@ -165,7 +165,7 @@ along with
 
 [source,java]
 ----
-include::code_examples/ConfigEmbeddedCacheManagerReplication[]
+include::code_examples/ConfigEmbeddedCacheManagerReplication.java[]
 ----
 
 == Configuring a distributed data-grid

@@ -105,7 +105,7 @@ Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` as follows:
 
 [source,java,options=nowrap]
 ----
-include::code_examples/ SpringCacheEvictExample.java[]
+include::code_examples/SpringCacheEvictExample.java[]
 ----
 
 [[spring_configure_timeouts]]
