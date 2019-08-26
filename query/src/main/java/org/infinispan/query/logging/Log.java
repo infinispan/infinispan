@@ -12,7 +12,6 @@ import java.util.List;
 import javax.transaction.Transaction;
 
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.exception.SearchException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
@@ -142,7 +141,7 @@ public interface Log extends BasicLogger {
    void detectedUnknownIndexedEntities(String cacheName, String classNames);
 
    @Message(value = "The type %s is not an indexed entity.", id = 14030)
-   IllegalArgumentException getNoIndexedEntityException(String typeName);
+   IllegalArgumentException notAnIndexedEntityException(String typeName);
 
    @Message(value = "Unable to resume suspended transaction %s", id = 14033)
    CacheException unableToResumeSuspendedTx(Transaction transaction, @Cause Throwable cause);
@@ -160,13 +159,13 @@ public interface Log extends BasicLogger {
    CacheException queryModuleNotInitialised();
 
    @Message(value = "Queries containing groups or aggregations cannot be converted to an indexed query", id = 14039)
-   SearchException groupAggregationsNotSupported();
+   CacheException groupAggregationsNotSupported();
 
    @Message(value = "Unable to define filters, please use filters in the query string instead.", id = 14040)
-   SearchException filterNotSupportedWithQueryString();
+   CacheException filterNotSupportedWithQueryString();
 
    @Message(value = "Unable to define sort, please use sorting in the query string instead.", id = 14041)
-   SearchException sortNotSupportedWithQueryString();
+   CacheException sortNotSupportedWithQueryString();
 
    @Message(value = "Cannot execute query: cluster is operating in degraded mode and partition handling configuration doesn't allow reads and writes.", id = 14042)
    AvailabilityException partitionDegraded();
