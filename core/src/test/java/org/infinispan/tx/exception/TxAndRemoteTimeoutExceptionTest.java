@@ -83,12 +83,14 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
 
    private void runAssertion(CacheOperation operation) throws NotSupportedException, SystemException, HeuristicMixedException, HeuristicRollbackException, InvalidTransactionException, RollbackException {
+      // Start tx1
       tm.begin();
       cache(1).put("k1", "v1");
       EmbeddedTransaction k1LockOwner = (EmbeddedTransaction) tm.suspend();
       assertFalse(lm1.isLocked("k1"));
-
       assertEquals(1, txTable1.getLocalTxCount());
+
+      // Start tx2
       tm.begin();
       cache(0).put("k2", "v2");
       assertFalse(lm0.isLocked("k2"));
@@ -101,11 +103,13 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
       final Transaction tx2 = tm.suspend();
 
+      // Acquire k1 for tx1
       tm.resume(k1LockOwner);
       k1LockOwner.runPrepare();
       tm.suspend();
-      tm.resume(tx2);
 
+      // Try (and fail) to commit tx2
+      tm.resume(tx2);
       try {
          tm.commit();
          fail("Rollback expected.");
@@ -116,9 +120,12 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       assertEquals(0, txTable0.getLocalTxCount());
       assertEquals(1, txTable1.getLocalTxCount());
 
+      // Commit tx1
       log.trace("Right before second commit");
       tm.resume(k1LockOwner);
       k1LockOwner.runCommit(false);
+
+      // Final checks
       assertEquals("v1", cache(0).get("k1"));
       assertEquals("v1", cache(1).get("k1"));
       assertEquals(0, txTable1.getLocalTxCount());

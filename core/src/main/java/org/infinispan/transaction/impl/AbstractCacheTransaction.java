@@ -184,7 +184,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public boolean ownsLock(Object key) {
-      return getLockedKeys().contains(key);
+      final Set<Object> keys = lockedKeys.get();
+      return keys != null && keys.contains(key);
    }
 
    @Override
@@ -206,13 +207,14 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (backupKeyLocks == null) {
          backupKeyLocks = new HashMap<>();
       }
+      if (trace) log.tracef("Transaction %s added backup lock: %s", tx, toStr(key));
       backupKeyLocks.put(key, new CompletableFuture<>());
    }
 
    public void registerLockedKey(Object key) {
       // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
       final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(new HashSet<>(INITIAL_LOCK_CAPACITY)) : value);
-      if (trace) log.tracef("Registering locked key: %s", toStr(key));
+      if (trace) log.tracef("Transaction %s added lock: %s", tx, toStr(key));
       keys.add(key);
    }
 
@@ -334,6 +336,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public synchronized void cleanupBackupLocks() {
       if (backupKeyLocks != null) {
+         if (trace) log.tracef("Transaction %s removing all backup locks: %s", tx, toStr(backupKeyLocks.keySet()));
          for (CompletableFuture<Void> cf : backupKeyLocks.values()) {
             cf.complete(null);
          }
@@ -347,6 +350,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
          for (Object key : keys) {
             CompletableFuture<Void> cf = backupKeyLocks.remove(key);
             if (cf != null) {
+               if (trace) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
                cf.complete(null);
             }
          }
@@ -357,6 +361,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (backupKeyLocks != null) {
          CompletableFuture<Void> cf = backupKeyLocks.remove(key);
          if (cf != null) {
+            if (trace) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
             cf.complete(null);
          }
       }

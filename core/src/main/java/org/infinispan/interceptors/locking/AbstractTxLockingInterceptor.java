@@ -1,24 +1,23 @@
 package org.infinispan.interceptors.locking;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
-import org.infinispan.util.logging.Log;
+import org.infinispan.util.concurrent.locks.PendingLockPromise;
 
 /**
  * Base class for transaction based locking interceptors.
@@ -26,12 +25,8 @@ import org.infinispan.util.logging.Log;
  * @author Mircea.Markus@jboss.com
  */
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
-   private final boolean trace = getLog().isTraceEnabled();
-
    @Inject PartitionHandlingManager partitionHandlingManager;
    @Inject PendingLockManager pendingLockManager;
-
-   final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
@@ -39,7 +34,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) throws Throwable {
+   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) {
       if (ctx.isInTxScope())
          return invokeNext(ctx, command);
 
@@ -63,52 +58,44 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * locks to be released. The backup lock will be released either by a commit/rollback/unlock command or by
     * the originator leaving the cluster (if recovery is disabled).
     */
-   final KeyAwareLockPromise lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout)
-         throws InterruptedException {
+   final InvocationStage lockOrRegisterBackupLock(TxInvocationContext<?> ctx, VisitableCommand command, Object key,
+                                                  long lockTimeout) {
       switch (cdl.getCacheTopology().getDistribution(key).writeOwnership()) {
          case PRIMARY:
-            if (trace) {
-               getLog().tracef("Acquiring locks on %s.", toStr(key));
-            }
-            return checkPendingAndLockKey(ctx, key, lockTimeout);
+            return checkPendingAndLockKey(ctx, command, key, lockTimeout);
          case BACKUP:
-            if (trace) {
-               getLog().tracef("Acquiring backup locks on %s.", key);
-            }
             ctx.getCacheTransaction().addBackupLockForKey(key);
+            // fallthrough
          default:
-            return KeyAwareLockPromise.NO_OP;
+            return InvocationStage.completedNullStage();
       }
    }
 
    /**
-    * Same as {@link #lockOrRegisterBackupLock(TxInvocationContext, Object, long)}
+    * Same as {@link #lockOrRegisterBackupLock(TxInvocationContext, VisitableCommand, Object, long)}
     *
     * @return a collection with the keys locked.
     */
-   final KeyAwareLockPromise lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, Collection<?> keys,
-                                                                  long lockTimeout) throws InterruptedException {
+   final InvocationStage lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, VisitableCommand command,
+                                                     Collection<?> keys, long lockTimeout) {
       if (keys.isEmpty()) {
-         return KeyAwareLockPromise.NO_OP;
+         return InvocationStage.completedNullStage();
       }
 
-      final Log log = getLog();
       Collection<Object> keysToLock = new ArrayList<>(keys.size());
-
+      AbstractCacheTransaction cacheTransaction = ctx.getCacheTransaction();
       LocalizedCacheTopology cacheTopology = cdl.getCacheTopology();
       for (Object key : keys) {
+         // Skip keys that are already locked (when retrying a lock/prepare command)
+         if (cacheTransaction.ownsLock(key))
+            continue;
+
          switch (cacheTopology.getDistribution(key).writeOwnership()) {
             case PRIMARY:
-               if (trace) {
-                  log.tracef("Acquiring locks on %s.", toStr(key));
-               }
                keysToLock.add(key);
                break;
             case BACKUP:
-               if (trace) {
-                  log.tracef("Acquiring backup locks on %s.", toStr(key));
-               }
-               ctx.getCacheTransaction().addBackupLockForKey(key);
+               cacheTransaction.addBackupLockForKey(key);
                break;
             default:
                break;
@@ -116,10 +103,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
 
       if (keysToLock.isEmpty()) {
-         return KeyAwareLockPromise.NO_OP;
+         return InvocationStage.completedNullStage();
       }
 
-      return checkPendingAndLockAllKeys(ctx, keysToLock, lockTimeout);
+      return checkPendingAndLockAllKeys(ctx, command, keysToLock, lockTimeout);
    }
 
    /**
@@ -142,17 +129,32 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * Note: The algorithm described below only when nodes leave the cluster, so it doesn't add a performance burden
     * when the cluster is stable.
     */
-   private KeyAwareLockPromise checkPendingAndLockKey(InvocationContext ctx, Object key, long lockTimeout) throws InterruptedException {
-      final long remaining = pendingLockManager.awaitPendingTransactionsForKey((TxInvocationContext<?>) ctx, key,
-                                                                               lockTimeout, TimeUnit.MILLISECONDS);
-      return lockAndRecord(ctx, key, remaining);
+   private InvocationStage checkPendingAndLockKey(TxInvocationContext<?> ctx, VisitableCommand command, Object key,
+                                                  long lockTimeout) {
+      PendingLockPromise pendingLockPromise =
+         pendingLockManager.checkPendingTransactionsForKey(ctx, key, lockTimeout, TimeUnit.MILLISECONDS);
+      if (pendingLockPromise.isReady()) {
+         return lockAndRecord(ctx, command, key, lockTimeout);
+      }
+
+      return pendingLockPromise.toInvocationStage().thenApplyMakeStage(ctx, command, (rCtx, rCommand, rv) -> {
+         long remaining = pendingLockPromise.getRemainingTimeout();
+         return lockAndRecord(ctx, command, key, remaining);
+      });
    }
 
-   private KeyAwareLockPromise checkPendingAndLockAllKeys(InvocationContext ctx, Collection<Object> keys, long lockTimeout)
-         throws InterruptedException {
-      final long remaining = pendingLockManager.awaitPendingTransactionsForAllKeys((TxInvocationContext<?>) ctx, keys,
-                                                                                   lockTimeout, TimeUnit.MILLISECONDS);
-      return lockAllAndRecord(ctx, keys, remaining);
+   private InvocationStage checkPendingAndLockAllKeys(TxInvocationContext<?> ctx, VisitableCommand command,
+                                                      Collection<Object> keys, long lockTimeout) {
+      PendingLockPromise pendingLockPromise =
+         pendingLockManager.checkPendingTransactionsForKeys(ctx, keys, lockTimeout, TimeUnit.MILLISECONDS);
+      if (pendingLockPromise.isReady()) {
+         return lockAllAndRecord(ctx, command, keys, lockTimeout);
+      }
+
+      return pendingLockPromise.toInvocationStage().thenApplyMakeStage(ctx, command, ((rCtx, rCommand, rv) -> {
+         long remaining = pendingLockPromise.getRemainingTimeout();
+         return lockAllAndRecord(ctx, command, keys, remaining);
+      }));
    }
 
    void releaseLockOnTxCompletion(TxInvocationContext ctx) {

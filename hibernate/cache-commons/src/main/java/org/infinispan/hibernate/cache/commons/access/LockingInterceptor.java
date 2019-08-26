@@ -17,9 +17,9 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.hibernate.cache.commons.util.CompletableFunction;
 import org.infinispan.interceptors.InvocationFinallyFunction;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -80,7 +80,7 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
    };
 
    @Override
-   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       try {
          if (trace) {
             Ownership ownership = cdl.getCacheTopology().getDistribution(command.getKey()).writeOwnership();
@@ -91,8 +91,8 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
             ctx.setLockOwner( command.getCommandInvocationId() );
          }
 
-         LockPromise lockPromise = lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
-         return lockPromise.toInvocationStage().andHandle(ctx, command, invokeNextAndUnlock);
+         InvocationStage lockStage = lockAndRecord(ctx, command, command.getKey(), getLockTimeoutMillis(command));
+         return lockStage.andHandle(ctx, command, invokeNextAndUnlock);
       }
       catch (Throwable t) {
          lockManager.unlockAll(ctx);

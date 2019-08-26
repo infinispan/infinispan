@@ -6,19 +6,13 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
-import org.infinispan.remoting.inboundhandler.action.LockAction;
-import org.infinispan.remoting.inboundhandler.action.PendingTxAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.BlockingRunnable;
-import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,10 +29,6 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    private static final boolean trace = log.isTraceEnabled();
 
    private final CheckTopologyAction checkTopologyAction;
-
-   @Inject LockManager lockManager;
-   @Inject DistributionManager distributionManager;
-   @Inject PendingLockManager pendingLockManager;
 
    private boolean pessimisticLocking;
    private long lockAcquisitionTimeout;
@@ -72,8 +62,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
                   runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService, sync);
                } else {
                   runnable = createReadyActionRunnable(command, reply, commandTopologyId, onExecutorService,
-                        sync, createReadyAction(commandTopologyId, (PrepareCommand) command)
-                  );
+                        sync, createReadyAction(commandTopologyId, (PrepareCommand) command));
                }
                break;
             case LockControlCommand.COMMAND_ID:
@@ -129,9 +118,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       final long timeoutMillis = replicableCommand.hasZeroLockAcquisition() ? 0 : lockAcquisitionTimeout;
 
       DefaultReadyAction action = new DefaultReadyAction(new ActionState(replicableCommand, topologyId, timeoutMillis),
-                                                         checkTopologyAction,
-                                                         new PendingTxAction(pendingLockManager, distributionManager),
-                                                         new LockAction(lockManager, distributionManager));
+                                                         checkTopologyAction);
       action.registerListener();
       return action;
    }

@@ -11,7 +11,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -61,8 +61,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
             keysToLock.add(key);
          }
       }
-      KeyAwareLockPromise lockPromise = lockAllAndRecord(ctx, keysToLock, getLockTimeoutMillis(command));
-      return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
+      InvocationStage lockStage = lockAllAndRecord(ctx, command, keysToLock, getLockTimeoutMillis(command));
+      return nonTxLockAndInvokeNext(ctx, command, lockStage, unlockAllReturnHandler);
    }
 
    private void assertNonTransactional(InvocationContext ctx) {

@@ -48,6 +48,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "statetransfer.TxReplay3Test")
 public class TxReplay3Test extends MultipleCacheManagersTest {
+   private static final Log log = LogFactory.getLog(TxReplay3Test.class);
 
    private static final String VALUE_1 = "v1";
    private static final String VALUE_2 = "v2";
@@ -119,7 +120,6 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
 
    private static class UnsureResponseRpcManager extends AbstractDelegatingRpcManager {
 
-      private static final Log log = LogFactory.getLog(UnsureResponseRpcManager.class);
       private final StateSequencer sequencer;
       private volatile boolean triggered = false;
 
@@ -157,7 +157,6 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
 
    private static class Handler extends AbstractDelegatingHandler {
 
-      private static final Log log = LogFactory.getLog(Handler.class);
       private final StateSequencer sequencer;
       private volatile boolean triggered = false;
       private volatile Address origin;

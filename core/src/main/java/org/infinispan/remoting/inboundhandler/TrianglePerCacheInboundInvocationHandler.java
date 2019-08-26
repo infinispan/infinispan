@@ -5,8 +5,6 @@ import static org.infinispan.context.impl.FlagBitSets.FORCE_ASYNCHRONOUS;
 import static org.infinispan.context.impl.FlagBitSets.FORCE_SYNCHRONOUS;
 import static org.infinispan.remoting.inboundhandler.DeliverOrder.NONE;
 
-import java.util.Collection;
-
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -28,7 +26,6 @@ import org.infinispan.remoting.inboundhandler.action.Action;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.ActionStatus;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
-import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -40,7 +37,6 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.locks.LockListener;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;
-import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -64,17 +60,13 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    @Inject CommandAckCollector commandAckCollector;
    @Inject CommandsFactory commandsFactory;
 
-   private long lockTimeout;
    private Address localAddress;
-   private boolean isLocking;
    private boolean syncCache;
 
    @Override
    public void start() {
       super.start();
-      lockTimeout = configuration.locking().lockAcquisitionTimeout();
       localAddress = rpcManager.getAddress();
-      isLocking = !configuration.clustering().cacheMode().isScattered();
       syncCache = configuration.clustering().cacheMode().isSynchronous();
    }
 
@@ -211,8 +203,9 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private void handleSingleRpcCommand(SingleRpcCommand command, Reply reply, DeliverOrder order) {
       if (executeOnExecutorService(order, command)) {
          int commandTopologyId = extractCommandTopologyId(command);
-         BlockingRunnable runnable = createReadyActionRunnable(command, reply, commandTopologyId, order.preserveOrder(),
-               createReadyAction(commandTopologyId, command));
+         BlockingRunnable runnable = createDefaultRunnable(command, reply, commandTopologyId,
+                                                           TopologyMode.READY_TX_DATA,
+                                                           order.preserveOrder());
          remoteCommandsExecutor.execute(runnable);
       } else {
          createDefaultRunnable(command, reply, extractCommandTopologyId(command), TopologyMode.WAIT_TX_DATA,
@@ -334,30 +327,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                   backupCommand.getFlags());
          }
       };
-   }
-
-   private ReadyAction createReadyAction(int topologyId, RemoteLockCommand command) {
-      if (command.hasSkipLocking() || !isLocking) {
-         return null;
-      }
-      Collection<?> keys = command.getKeysToLock();
-      if (keys.isEmpty()) {
-         return null;
-      }
-      final long timeoutMillis = command.hasZeroLockAcquisition() ? 0 : lockTimeout;
-
-      DefaultReadyAction action = new DefaultReadyAction(new ActionState(command, topologyId, timeoutMillis),
-            this,
-            new LockAction(lockManager, distributionManager));
-      action.registerListener();
-      return action;
-   }
-
-   private ReadyAction createReadyAction(int topologyId, SingleRpcCommand singleRpcCommand) {
-      ReplicableCommand command = singleRpcCommand.getCommand();
-      return command instanceof RemoteLockCommand ?
-            createReadyAction(topologyId, (RemoteLockCommand & ReplicableCommand) command) :
-            null;
    }
 
    private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, int segmentId) {
