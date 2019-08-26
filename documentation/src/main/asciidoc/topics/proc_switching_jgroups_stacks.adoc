@@ -1,0 +1,4 @@
+= Switching JGroups Stacks
+You can switch stacks from the command-line using the jboss.default.jgroups.stack property:
+
+ bin/standalone.sh -c clustered.xml -Djboss.default.jgroups.stack=tcp

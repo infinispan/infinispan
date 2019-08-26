@@ -1,0 +1,1 @@
+$ curl --digest -L -D - "http://localhost:9990/management/subsystem/datagrid-infinispan/cache-container/clustered/health/HEALTH?operation=resource&include-runtime=true&json.pretty=1" --header "Content-Type: application/json" -u username:password

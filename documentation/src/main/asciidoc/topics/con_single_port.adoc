@@ -1,0 +1,12 @@
+Single-Port is a special type of router connector which allows exposing multiple protocols over the same TCP port.
+This approach is very convenient because it reduces the number of ports required by a server, with advantages in security, configuration and management.
+Protocol switching is handled in three ways:
+
+* *HTTP/1.1 Upgrade header*: initiate an HTTP/1.1 connection and send an `Upgrade: protocol` header where protocol is the name assigned to the desired endpoint.
+* *TLS/ALPN*: protocol selection is performed based on the SNI specified by the client.
+* *Hot Rod header detection*: if a Hot Rod endpoint is present in the router configuration, then any attempt to send a Hot Rod header will be detected and the protocol will be switched automatically.
+
+[NOTE]
+====
+The initial implementation supports only HTTP/1.1, HTTP/2 and Hot Rod protocols. The Memcached protocol is not supported.
+====

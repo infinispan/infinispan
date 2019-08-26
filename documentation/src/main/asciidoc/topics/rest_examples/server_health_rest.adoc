@@ -1,0 +1,28 @@
+HTTP/1.1 200 OK
+Connection: keep-alive
+Authentication-Info: nextnonce="AuZzFxz7uC4NMTQ3MDgyNTU1NTQ3OCfIJBHXVpPHPBdzGUy7Qts=",qop="auth",rspauth="b518c3170e627bd732055c382ce5d970",cnonce="NGViOWM0NDY5OGJmNjY0MjcyOWE4NDkyZDU3YzNhYjY=",nc=00000001
+Content-Type: application/json; charset=utf-8
+Content-Length: 1927
+Date: <time_stamp>
+
+{
+    "cache-health" : "HEALTHY",
+    "cluster-health" : ["test", "HEALTHY"],
+    "cluster-name" : "clustered",
+    "free-memory" : 96778,
+    "log-tail" : [
+        "<time_stamp> INFO  [org.infinispan.server.endpoint] (MSC service thread 1-5) DGENDPT10001: HotRodServer listening on 127.0.0.1:11222",
+        "<time_stamp> INFO  [org.infinispan.server.endpoint] (MSC service thread 1-1) DGENDPT10001: MemcachedServer listening on 127.0.0.1:11211",
+        "<time_stamp> INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___protobuf_metadata cache from clustered container",
+        "<time_stamp> INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-6) DGISPN0001: Started ___script_cache cache from clustered container",
+        "<time_stamp> INFO  [org.jboss.as.clustering.infinispan] (MSC service thread 1-5) DGISPN0001: Started ___hotRodTopologyCache cache from clustered container",
+        "<time_stamp> INFO  [org.infinispan.rest.NettyRestServer] (MSC service thread 1-6) ISPN012003: REST server starting, listening on 127.0.0.1:8080",
+        "<time_stamp> INFO  [org.infinispan.server.endpoint] (MSC service thread 1-6) DGENDPT10002: REST mapped to /rest",
+        "<time_stamp> INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management",
+        "<time_stamp> INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990",
+        "<time_stamp> INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: {brandname} Server <build_version> (WildFly Core <build_version>) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
+    ],
+    "number-of-cpus" : 8,
+    "number-of-nodes" : 1,
+    "total-memory" : 235520
+}%

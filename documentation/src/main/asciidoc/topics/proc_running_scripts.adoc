@@ -1,0 +1,7 @@
+= Running Scripts with the Hot Rod Java Client
+The following example shows how to invoke the above script by passing two named parameters.
+
+[source,java]
+----
+include::code_examples/RemoteCacheScriptParams.java[]
+----

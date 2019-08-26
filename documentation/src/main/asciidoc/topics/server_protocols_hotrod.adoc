@@ -1,7 +1,7 @@
 [[hot_rod_server_usage]]
 = Using Hot Rod Server
 The {brandname} Server distribution contains a server module that implements {brandname}'s custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
-Please refer to {brandname} Server's link:../server_guide/server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
+
 
 To connect to {brandname} over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
@@ -75,7 +75,6 @@ You can use property substitution to replace values at runtime with link:https:/
 [source]
 ----
 infinispan.client.hotrod.server_list = ${server_list}
-
 ----
 
 In the above example the value of the _infinispan.client.hotrod.server_list_ property will be expanded to the value of the _server_list_ Java system property.
@@ -88,11 +87,6 @@ For a complete reference of the available configuration options for the properti
 
 If the server has set up authentication, you need to configure your client accordingly. Depending on the mechs enabled on the server,
 the client must provide the required information.
-
-ifndef::productized[]
-NOTE: This section is about client configuration. If you want to set up the server to require authentication, read the
-link:../server_guide/server_guide.html#security:hotrod_auth[Hot Rod server authentication] section.
-endif::productized[]
 
 ==== DIGEST-MD5
 DIGEST-MD5 is the recommended approach for simple username/password authentication scenarios. If you are using the default
@@ -287,12 +281,6 @@ The actual type of callbacks that your CallbackHandler will need to be able to h
 
 [[hr_encryption]]
 === Encryption
-
-ifndef::productized[]
-NOTE: This section is about client configuration. If you want to set up the server to require encryption, read the
-link:../server_guide/server_guide.html#security:hotrod_rest_encryption[Hot Rod server encryption] section.
-endif::productized[]
-
 Encryption uses TLS/SSL, so it requires setting up an appropriate server certificate chain. Generally, a certificate chain looks like the following:
 
 image::{images_dir}/cert_chain.png[align="center", title="Certificate chain"]
@@ -1490,12 +1478,3 @@ image::{images_dir}/server_modules_9.png[align="center", title="Get versioned"]
 When the ATMs wanted to modify the balance, instead of just calling put, they could call link:http://community.jboss.org/wiki/HotRodProtocol#removeIfUnmodified_request[replaceIfUnmodified] operation passing the latest version number of which the clients are aware of.  The operation will only succeed if the version passed matches the version in the server.  So, the first modification by the ATM would be allowed since the client passes 1 as version and the server side version for the balance is also 1.  On the other hand, the second ATM would not be able to make the modification because after the first ATMs modification the version would have been incremented to 2, and now the passed version (1) and the server side version (2) would not match:
 
 image::{images_dir}/server_modules_10.png[align="center", title="Replace if versions match"]
-
-=== Javadocs
-It is highly recommended to read the following Javadocs (this is pretty much all the public API of the client):
-
-* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]
-* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
-//////////////////////
-//terminate list
-//////////////////////

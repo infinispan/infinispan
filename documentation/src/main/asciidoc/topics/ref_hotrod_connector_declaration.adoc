@@ -1,0 +1,23 @@
+= Hot Rod
+The following connector declaration enables a HotRod server using the _hotrod_ socket binding (declared within a `<socket-binding-group />` element) and exposing the caches declared in the _local_ container, using defaults for all other settings.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/hotrod_connector.xml[]
+----
+
+The connector will create a supporting topology cache with default settings. If you wish to tune these settings add the `<topology-state-transfer />` child element to the connector as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/hotrod_topology_state_transfer.xml[]
+----
+
+The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
+
+Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:{wildflydocroot}/Security%20Realms[documentation] on this. Next add the `<security />` element to the HotRod connector as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/hotrod_security.xml[]
+----

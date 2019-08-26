@@ -1,0 +1,15 @@
+= Kryo
+
+Add the kryo marshaller dependency to your pom:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/kyro_marshaller.xml[]
+----
+
+To register custom Kryo serializer in your own code, you must register the custom serializer with Kryo before any
+marshalling begins. This can be achieved by implementing a service provider for the `SerializerRegistryService.java` interface, placing all serializer registrations
+in the `register(Kryo)` method; where serializers should be registered with the supplied `Kryo` object using the Kryo api.
+e.g. `kryo.register(ExampleObject.class, new ExampleObjectSerializer())`.  Implementations of this interface are loaded
+via Java's ServiceLoader api, therefore the full path of the implementing class(es) should be provided in a
+`META-INF/services/org/infinispan/marshaller/kryo/SerializerRegistryService` file within your deployment jar.

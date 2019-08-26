@@ -1,0 +1,15 @@
+= Locking
+To define the locking configuration for a cache, add the `<locking/>` element as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/locking.xml[]
+----
+
+The possible attributes for the locking element are:
+
+*  _isolation_ sets the cache locking isolation level. Can be NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE. Defaults to REPEATABLE_READ
+*  _striping_ if true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system.
+*  _acquire-timeout_ maximum time to attempt a particular lock acquisition.
+*  _concurrency-level_ concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with {brandname}.
+*  _concurrent-updates_ for non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance.

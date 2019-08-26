@@ -1,0 +1,10 @@
+= Endpoint subsystem configuration
+
+The endpoint subsystem exposes a whole container (or in the case of Memcached, a single cache) over a specific connector protocol. You can define as many connector as you need, provided they bind on different interfaces/ports.
+
+The subsystem declaration is enclosed in the following XML element:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_subsystem_endpoint.xml[]
+----

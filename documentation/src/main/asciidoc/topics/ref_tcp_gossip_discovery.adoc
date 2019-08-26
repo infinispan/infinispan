@@ -1,0 +1,7 @@
+= TCP Gossip Discovery
+The default configurations come with a variety of pre-configured stacks for different environments. For example, the +tcpgossip+ stack uses Gossip discovery:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/tcp_gossip.xml[]
+----

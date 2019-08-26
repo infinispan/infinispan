@@ -1,0 +1,16 @@
+= Cache Containers
+The {brandname} subsystem can declare multiple containers. A container is declared as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_subsystem_containers.xml[]
+----
+
+Note that in server mode is the lack of an implicit default cache, but the ability to specify a named cache as the default.
+
+If you need to declare clustered caches (distributed, replicated, invalidation), you also need to specify the `<transport/>` element which references an existing JGroups transport. This is not needed if you only intend to have local caches only.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_jgroups_transport.xml[]
+----

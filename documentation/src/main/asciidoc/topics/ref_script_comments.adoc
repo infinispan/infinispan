@@ -1,0 +1,12 @@
+= Script Metadata Comments 
+
+Properties are specified as +key=value+ pairs, separated by commas.
+You can use several different comment styles: The `//`, `;;`, `#` depending on the scripting language you use.
+You can split metadata over multiple lines if necessary, and you can use single (') or double (") quotes to delimit your values.
+
+The following are examples of valid metadata comments:
+[source,javascript]
+----
+// name=test, language=javascript
+// mode=local, parameters=[a,b,c]
+----

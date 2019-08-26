@@ -1,0 +1,26 @@
+= Setting Up Target Clusters
+
+. Start the target cluster with unique network properties or a different JGroups cluster name to keep it separate from the source cluster.
+. Configure a `RemoteCacheStore` on the target cluster for each cache you want to migrate from the source cluster.
++
+`RemoteCacheStore` settings::
++
+* `remote-server` must point to the source cluster via the `outbound-socket-binding` property.
+* `remoteCacheName` must match the cache name on the source cluster.
+* `hotrod-wrapping` must be `true` (enabled).
+* `shared` must be `true` (enabled).
+* `purge` must be `false` (disabled).
+* `passivation` must be `false` (disabled).
+* `protocol-version` matches the Hot Rod protocol version of the source cluster.
++
+.Example `RemoteCacheStore` Configuration
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/remote_cache_store.xml[]
+----
++
+. Configure the target cluster to handle all client requests instead of the source cluster:
+.. Configure all clients to point to the target cluster instead of the source cluster.
+.. Restart each client node.
++
+The target cluster lazily loads data from the source cluster on demand via `RemoteCacheStore`.

@@ -1,0 +1,4 @@
+= Script Metadata
+Script metadata is additional information about the script that the user can provide to the server to affect how a
+script is executed.
+It is contained in a specially-formatted comment on the first lines of the script.

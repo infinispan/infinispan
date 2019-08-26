@@ -1,0 +1,13 @@
+= Expiration
+To define a default expiration for entries in a cache, add the `<expiration/>` element as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/expiration.xml[]
+----
+
+The possible attributes for the expiration element are:
+
+*  _lifespan_ maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire.
+*  _max-idle_ maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
+*  _interval_ interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.

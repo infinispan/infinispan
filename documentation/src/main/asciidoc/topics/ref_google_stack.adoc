@@ -1,0 +1,7 @@
+= Google Ping
+Similarly, when using Google's Cloud Platform, use the +google+ stack:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/google_ping.xml[]
+----
