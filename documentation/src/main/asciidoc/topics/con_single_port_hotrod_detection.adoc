@@ -1,0 +1,4 @@
+= Hot Rod Protocol Detection
+The single-port router has built-in automatic detection of Hot Rod messages which trigger a transparent "upgrade" to the
+Hot Rod protocol. This means that no changes are required on the client side to connect to a single-port endpoint.
+It also means that older clients will also be able to function seamlessly.

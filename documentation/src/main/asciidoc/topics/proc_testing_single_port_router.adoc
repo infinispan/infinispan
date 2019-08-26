@@ -1,0 +1,11 @@
+= Testing the Single-Port router
+
+A tool such as `curl` can be used to access cache using both _cleartext upgrade_ or TLS/ALPN. Here's an example:
+
+[source,bash]
+----
+include::rest_examples/curl_singleport_test.adoc[]
+----
+
+The `--http2-prior-knowledge` can be exchanged with `--http2` switch allowing to control how the switch procedure
+is being done (via Plain-Text Upgrade or TLS/ALPN).

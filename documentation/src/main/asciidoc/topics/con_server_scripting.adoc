@@ -1,0 +1,5 @@
+= Scripting
+
+Scripting is a feature of {brandname} Server which allows invoking server-side scripts from remote clients.
+Scripting leverages the JDK's javax.script ScriptEngines, therefore allowing the use of any JVM languages which offer one.
+By default, the JDK comes with Nashorn, a ScriptEngine capable of running JavaScript.

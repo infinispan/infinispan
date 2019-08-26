@@ -1,0 +1,9 @@
+= Distributed Script Execution
+The following is a script which runs on all nodes.
+Each node will return its address, and the results from all nodes will be collected in a List and returned to the client.
+
+[source,javascript]
+----
+// mode:distributed,language=javascript
+cacheManager.getAddress().toString();
+----

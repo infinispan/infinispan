@@ -1,0 +1,12 @@
+= Server group configuration
+A server-group configuration includes the following required attributes:
+
+* name -- the name of the server group
+* profile -- the name of the profile the servers in the group should run
+
+In addition, the following optional elements are available:
+
+* socket-binding-group -- specifies the name of the default socket binding group to use on servers in the group. Can be overridden on a per-server basis in host.xml. If not provided in the server-group element, it must be provided for each server in host.xml.
+* deployments -- the deployment content that should be deployed on the servers in the group.
+* system-properties -- system properties that should be set on all servers in the group
+* jvm -- default jvm settings for all servers in the group. The Host Controller will merge these settings with any provided in host.xml to derive the settings to use to launch the server's JVM. See JVM settings for further details.

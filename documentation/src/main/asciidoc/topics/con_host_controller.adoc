@@ -1,0 +1,12 @@
+= Host Controller
+When the +domain.sh+ or +domain.bat+ script is run on a host, a process known as a Host Controller is launched.
+The Host Controller is solely concerned with server management; it does not itself handle {brandname} server workloads.
+The Host Controller is responsible for starting and stopping the individual {brandname} server processes that run on its host, and interacts with the Domain Controller to help manage them.
+
+Each Host Controller by default reads its configuration from the domain/configuration/host.xml file located in the {brandname} Server installation on its host's filesystem.
+The host.xml file contains configuration information that is specific to the particular host.
+Primarily:
+
+* the listing of the names of the actual {brandname} Server instances that are meant to run off of this installation.
+* configuration of how the Host Controller is to contact the Domain Controller to register itself and access the domain configuration. This may either be configuration of how to find and contact a remote Domain Controller, or a configuration telling the Host Controller to itself act as the Domain Controller.
+* configuration of items that are specific to the local physical installation. For example, named interface definitions declared in domain.xml (see below) can be mapped to an actual machine-specific IP address in host.xml. Abstract path names in domain.xml can be mapped to actual filesystem paths in host.xml.

@@ -1,0 +1,7 @@
+= Cache declarations
+Now you can declare your caches. Please be aware that only the caches declared in the configuration will be available to the endpoints and that attempting to access an undefined cache is an illegal operation. Contrast this with the default {brandname} library behaviour where obtaining an undefined cache will implicitly create one using the default settings. The following are example declarations for all four available types of caches:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/ispn_cache_declarations.xml[]
+----

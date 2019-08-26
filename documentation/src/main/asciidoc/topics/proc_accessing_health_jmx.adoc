@@ -1,0 +1,4 @@
+= Accessing Health API using JMX
+
+At first you need to connect to the {brandname} Server using JMX (use JConsole or other tool for this).
+Next, navigate to object name `jboss.datagrid-infinispan:type=CacheManager,name="clustered",component=CacheContainerHealth`.

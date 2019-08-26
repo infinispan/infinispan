@@ -1,0 +1,26 @@
+= Accessing Health API using CLI
+
+You can access the Health API from the Command Line Interface (CLI), as in the following examples:
+
+Standalone::
++
+[source,options=nowrap,subs=attributes+]
+----
+$ bin/{brandcli}.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
+----
+
+Domain Mode::
++
+[source,options=nowrap,subs=attributes+]
+----
+$ bin/{brandcli}.sh -c "/host=master/server=${servername}/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
+----
++
+Where `${servername}` is the name of the {brandname} server instance.
+
+The following is a sample result for the CLI invocation:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::cli_examples/server_health.adoc[]
+----

@@ -1,0 +1,8 @@
+= Installing Scripts
+Scripts are stored in a special script cache, named '___script_cache'.
+Adding a script is therefore as simple as +put+ting it into the cache itself.
+If the name of the script contains a filename extension, e.g. +myscript.js+, then that extension determines the engine that
+will be used to execute it.
+Alternatively the script engine can be selected using script metadata (see below).
+Be aware that, when security is enabled, access to the script cache via the remote protocols requires
+that the user belongs to the pass:['___script_manager'] role.

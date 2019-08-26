@@ -1,0 +1,9 @@
+= Common Protocol Connector Settings
+
+The HotRod and Memcached protocol connectors support a number of tuning attributes in their declaration:
+
+*  _worker-threads_ Sets the number of worker threads. Defaults to 160.
+*  _idle-timeout_ Specifies the maximum time in seconds that connections from client will be kept open without activity. Defaults to -1 (connections will never timeout)
+*  _tcp-nodelay_ Affects TCP NODELAY on the TCP stack. Defaults to enabled.
+*  _send-buffer-size_ Sets the size of the send buffer.
+*  _receive-buffer-size_ Sets the size of the receive buffer.

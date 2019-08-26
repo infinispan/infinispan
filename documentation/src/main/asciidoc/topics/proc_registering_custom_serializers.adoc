@@ -1,0 +1,14 @@
+= Registering Custom Schemas/Serializers
+Custom serializers/schemas for the Kryo/Protostuff marshallers must be
+registered via their respective service interfaces in order to store deserialized objects.
+To achieve this, it is necessary for a *JAR* that contains the service provider to
+be registered in the same directory or module as the marshaller bundle and
+custom classes.
+
+[NOTE]
+====
+It is not necessary for the service provider implementation to be provided in
+the same *JAR* as the user's custom classes. However, the *JAR* that contains
+the provider must be in the same directory/module as the marshaller and custom
+class *JAR* files.
+====

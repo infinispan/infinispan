@@ -1,0 +1,16 @@
+[id='server_modes']
+:context: operating_modes
+= Operating modes
+{brandname} Server provides two different operating modes: standalone and domain.
+
+include::{topics}/con_standalone_server.adoc[leveloffset=+1]
+include::{topics}/con_domain_mode.adoc[leveloffset=+1]
+include::{topics}/con_host_controller.adoc[leveloffset=+2]
+include::{topics}/con_domain_controller.adoc[leveloffset=+2]
+include::{topics}/con_server_groups.adoc[leveloffset=+1]
+include::{topics}/ref_server_group_config.adoc[leveloffset=+2]
+include::{topics}/con_server_nodes.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

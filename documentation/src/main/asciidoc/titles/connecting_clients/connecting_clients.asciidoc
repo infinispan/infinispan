@@ -1,10 +1,10 @@
 //Directory attributes
 :images_dir: images
 :stories: ../../stories
-:topics: ../topics
+:topics: ../../topics
 
 //Community doc attributes
-include::../{topics}/attributes/community-attributes.adoc[]
+include::{topics}/attributes/community-attributes.adoc[]
 
 //Community title attributes
 :toc2:
@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Running {brandname} {infinispanversion} Servers
+= Connecting to {brandname} {infinispanversion} with Remote Clients
 
 //User stories
 include::stories.adoc[]

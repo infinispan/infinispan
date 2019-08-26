@@ -1,0 +1,2 @@
+= TLS/ALPN protocol selection
+Another supported way to select the protocol is to use TLS/ALPN which uses the link:https://tools.ietf.org/html/rfc7301[Application-Layer Protocol Negotiation] spec. This feature requires that you have configured your endpoint to enable TLS. 

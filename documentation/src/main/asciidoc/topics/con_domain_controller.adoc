@@ -1,0 +1,12 @@
+= Domain Controller
+One Host Controller instance is configured to act as the central management point for the entire domain, i.e. to be the Domain Controller.
+The primary responsibility of the Domain Controller is to maintain the domain's central management policy, to ensure all Host Controllers are aware of its current contents, and to assist the Host Controllers in ensuring any running {brandname} server instances are configured in accordance with this policy.
+This central management policy is stored by default in the domain/configuration/domain.xml file in the {brandname} Server installation on Domain Controller's host's filesystem.
+
+A +domain.xml+ file must be located in the +domain/configuration+ directory of an installation that's meant to run the Domain Controller.
+It does not need to be present in installations that are not meant to run a Domain Controller; i.e. those whose Host Controller is configured to contact a remote Domain Controller.
+The presence of a +domain.xml+ file on such a server does no harm.
+
+The +domain.xml+ file includes, among other things, the configuration of the various "profiles" that {brandname} Server instances in the domain can be configured to run.
+A profile configuration includes the detailed configuration of the various subsystems that comprise that profile (e.g. Cache Containers and Caches, Endpoints, Security Realms, DataSources, etc).
+The domain configuration also includes the definition of groups of sockets that those subsystems may open. The domain configuration also includes the definition of "server groups".

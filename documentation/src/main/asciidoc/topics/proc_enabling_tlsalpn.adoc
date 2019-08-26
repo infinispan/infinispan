@@ -1,0 +1,18 @@
+= Enabling ALPN
+If you are using JDK 9 or greater, ALPN is
+supported by default. However, if you are using JDK 8, you will need to use
+https://netty.io/wiki/forked-tomcat-native.html[Netty's BoringSSL] library, which leverages native libraries to enable ALPN.
+
+. Add Netty dependencies.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/netty_bom.xml[]
+----
++
+. Configure your trust store accordingly:
++
+[source,java]
+----
+include::code_examples/ConfigurationBuilderTrustStore.java[]
+----

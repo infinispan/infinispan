@@ -1,0 +1,9 @@
+= DNS Ping
+Use the +dns-ping+ stack to run {brandname} on Kubernetes environments such as OKD or OpenShift:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/dns_ping.xml[]
+----
+
+The value of the `dns_query` property is the DNS query that returns the cluster members. See link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods] for information about Kubernetes DNS naming.

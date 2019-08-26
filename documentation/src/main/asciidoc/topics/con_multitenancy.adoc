@@ -1,0 +1,7 @@
+= Multi-tenancy
+
+Multi-tenancy allows accessing multiple containers as shown below:
+
+image::{images_dir}/multi-tenancy.png[]
+
+Currently there are two supported protocols for accessing the data - using Hot Rod client and using REST interface.

@@ -1,0 +1,7 @@
+= Memcached
+The following connector declaration enables a Memcached server using the _memcached_ socket binding (declared within a `<socket-binding-group />` element) and exposing the _memcachedCache_ cache declared in the _local_ container, using defaults for all other settings. Because of limitations in the Memcached protocol, only one cache can be exposed by a connector. If you wish to expose more than one cache, declare additional memcached-connectors on different socket-bindings.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/memcached_connector.xml[]
+----

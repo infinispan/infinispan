@@ -1,0 +1,7 @@
+= AWS S3 Ping
+Use the +s3+ stack when running in Amazon AWS:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/s3_ping.xml[]
+----

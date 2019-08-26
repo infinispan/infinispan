@@ -1,0 +1,14 @@
+= Standalone mode
+For simple configurations, standalone mode is the easiest to start with.
+It allows both local and clustered configurations, although we only really recommend it for running single nodes, since the configuration, management and coordination of multiple nodes is up to the user's responsibility.
+For example, adding a cache to a cluster of standalone server, the user would need to configure individually to all nodes.
+Note that the default +standalone.xml+ configuration does not provide a JGroups subsystem and therefore cannot work in clustered mode.
+To start standalone mode with an alternative configuration file, use the +-c+ command-line switch as follows:
+
+ bin/standalone.sh -c clustered.xml
+
+If you start the server in clustered mode on multiple hosts, they should automatically discover each other using UDP multicast and form a cluster. If you want to start multiple nodes on a single host, start each one by specifying a port offset using the jboss.socket.binding.port-offset property together with a unique jboss.node.name as follows:
+
+ bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Djboss.node.name=nodeA
+
+If, for some reason, you cannot use UDP multicast, you can use TCP discovery. Read the *JGroups Subsystem Configuration* section below for details on how to configure TCP discovery.

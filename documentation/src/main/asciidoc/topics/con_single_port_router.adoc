@@ -1,0 +1,13 @@
+= Single-Port router
+
+Internally, Single-Port is based on the same router component used to enable multi-tenancy, and therefore it shares the same configuration.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/single_port_router.xml[]
+----
+
+With the configuration above, the Single-Port Router will operate on `rest` and `rest-ssl` socket
+bindings. The router named `router` should typically operate on port `8080` and will use HTTP/1.1 Upgrade
+(also known as _cleartext upgrade_) procedure. The other router instance (called `router-ssl`) should typically
+operate on port `8443` and will use TLS/ALPN.

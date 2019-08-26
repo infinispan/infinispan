@@ -1,0 +1,5 @@
+= Rolling Upgrades
+From a high-level, you do the following to perform rolling upgrades:
+
+. Set up a target cluster. The target cluster is the {brandname} version to which you want to migrate data. The source cluster is the {brandname} deployment that is currently in use. After the target cluster is running, you configure all clients to point to it instead of the source cluster.
+. Synchronize data from the source cluster to the target cluster.
