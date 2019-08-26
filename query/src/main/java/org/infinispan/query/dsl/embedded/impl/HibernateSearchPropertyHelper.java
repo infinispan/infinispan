@@ -202,7 +202,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    private EntityIndexBinding getEntityIndexBinding(Class<?> entityType) {
       EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding == null) {
-         throw log.getNoIndexedEntityException(entityType.getCanonicalName());
+         throw log.notAnIndexedEntityException(entityType.getCanonicalName());
       }
       return indexBinding;
    }

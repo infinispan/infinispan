@@ -22,6 +22,7 @@ import org.apache.lucene.search.SortField.Type;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -422,7 +423,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       hybridQuery.list();
    }
 
-   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed query")
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*cannot be converted to an indexed query")
    public void testPreventAggregationQueries() {
       CacheQuery<Person> aggregationQuery = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.name:'name3' group by p.name", Person.class.getName()),
