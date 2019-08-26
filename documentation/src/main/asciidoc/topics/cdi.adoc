@@ -9,10 +9,10 @@ The integration allows to inject Cache interface and bridge Cache and CacheManag
 To include CDI support for {brandname} in your project, use one of the following dependencies:
 
 .pom.xml for Embedded mode
-include::maven_dependencies/cdi_embedded.adoc[]
+include::dependencies_maven/cdi_embedded.xml[]
 
 .pom.xml for Remote mode
-include::maven_dependencies/cdi_remote.adoc[]
+include::dependencies_maven/cdi_remote.xml[]
 
 .Which version of {brandname} should I use?
 TIP: We recommend using the latest final version {brandname}.

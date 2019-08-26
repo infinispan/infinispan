@@ -47,7 +47,7 @@ Normally a single {brandname} cache can store multiple types of key/value pairs,
 
 [source,java]
 ----
-include::code_examples]$ atom CacheMultipleKeyValuePairs.java[]
+include::code_examples/CacheMultipleKeyValuePairs.java[]
 ----
 
 It's important to note that, when a cache is configured to use a JPA Cache Store, that cache would only be able to store ONE type of data.
