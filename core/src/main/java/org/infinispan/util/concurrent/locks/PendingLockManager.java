@@ -53,7 +53,9 @@ public interface PendingLockManager {
     * @param unit {@link TimeUnit} of {@code time}.
     * @return the remaining timeout.
     * @throws InterruptedException if the thread is interrupted while waiting.
+    * @deprecated Since 10.0, the blocking variants will be removed
     */
+   @Deprecated
    long awaitPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key, long time, TimeUnit unit)
          throws InterruptedException;
 
@@ -67,7 +69,9 @@ public interface PendingLockManager {
     * @param unit {@link TimeUnit} of {@code time}.
     * @return the remaining timeout.
     * @throws InterruptedException if the thread is interrupted while waiting.
+    * @deprecated Since 10.0, the blocking variants will be removed
     */
+   @Deprecated
    long awaitPendingTransactionsForAllKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit)
          throws InterruptedException;
 }

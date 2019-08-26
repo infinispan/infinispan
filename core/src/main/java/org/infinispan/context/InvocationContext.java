@@ -1,5 +1,6 @@
 package org.infinispan.context;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.infinispan.container.impl.EntryFactory;
@@ -78,6 +79,12 @@ public interface InvocationContext extends EntryLookup, Cloneable {
     * Tracks the given key as locked by this invocation context.
     */
    void addLockedKey(Object key);
+
+   default void addLockedKeys(Collection<?> keys) {
+      for (Object key : keys) {
+         addLockedKey(key);
+      }
+   }
 
    /**
     * Returns true if the lock being tested is already held in the current scope, false otherwise.

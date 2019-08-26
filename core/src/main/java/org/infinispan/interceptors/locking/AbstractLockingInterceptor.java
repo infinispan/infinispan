@@ -40,10 +40,10 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -69,7 +69,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    protected abstract Log getLog();
 
    @Override
-   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
       return invokeNext(ctx, command);
    }
 
@@ -124,17 +124,18 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
          return invokeNext(ctx, command);
       }
 
-      LockPromise lockPromise = lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
-      return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
+      InvocationStage lockStage = lockAndRecord(ctx, command, command.getKey(), getLockTimeoutMillis(command));
+      return nonTxLockAndInvokeNext(ctx, command, lockStage, unlockAllReturnHandler);
    }
 
    @Override
-   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
       if (hasSkipLocking(command)) {
          return invokeNext(ctx, command);
       }
-      LockPromise lockPromise = lockAllAndRecord(ctx, Arrays.asList(command.getKeys()), getLockTimeoutMillis(command));
-      return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
+      InvocationStage lockStage = lockAllAndRecord(ctx, command, Arrays.asList(command.getKeys()),
+                                                   getLockTimeoutMillis(command));
+      return nonTxLockAndInvokeNext(ctx, command, lockStage, unlockAllReturnHandler);
    }
 
    @Override
@@ -156,9 +157,10 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       ArrayList<Object> keysToInvalidate = new ArrayList<>(keys.length);
       for (Object key : keys) {
          try {
-            //don't make it async. the command is remote anyway and therefore this should be locked in LockAction
-            // If we ever stop locking there this should be made non-blocking
-            lockAndRecord(ctx, key, 0).lock();
+            // Not blocking because the timeout is 0, although LockManager.tryLock() would have been nice
+            KeyAwareLockPromise lockPromise = lockManager.lock(key, ctx.getLockOwner(), 0, TimeUnit.MILLISECONDS);
+            lockPromise.lock();
+            ctx.addLockedKey(key);
             keysToInvalidate.add(key);
          } catch (TimeoutException te) {
             getLog().unableToLockToInvalidate(key, cdl.getAddress());
@@ -270,14 +272,23 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       return cdl.getCacheTopology().getSegmentDistribution(keySegment).isPrimary();
    }
 
-   protected final KeyAwareLockPromise lockAndRecord(InvocationContext context, Object key, long timeout) {
-      context.addLockedKey(key);
-      return lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS);
+   protected final InvocationStage lockAndRecord(InvocationContext context, VisitableCommand command, Object key,
+                                                 long timeout) {
+      return lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).toInvocationStage()
+                        .thenAcceptMakeStage(context, command, (rCtx, rCommand, rv) -> rCtx.addLockedKey(key));
    }
 
-   final KeyAwareLockPromise lockAllAndRecord(InvocationContext context, Collection<?> keys, long timeout) {
-      keys.forEach(context::addLockedKey);
-      return lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS);
+   final InvocationStage lockAllAndRecord(InvocationContext context, VisitableCommand command, Collection<?> keys,
+                                          long timeout) {
+      return lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).toInvocationStage()
+                        .andFinallyMakeStage(context, command, (rCtx, rCommand, rv, throwable) -> {
+                           if (throwable == null) {
+                              rCtx.addLockedKeys(keys);
+                           } else {
+                              // Clean up in case lockAll acquired one lock and timed out on another
+                              lockManager.unlockAll(keys, rCtx.getLockOwner());
+                           }
+                        });
    }
 
    final boolean hasSkipLocking(FlagAffectedCommand command) {
@@ -288,8 +299,8 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
     * Locks and invoke the next interceptor for non-transactional commands.
     */
    final Object nonTxLockAndInvokeNext(InvocationContext ctx, VisitableCommand command,
-                                       LockPromise lockPromise, InvocationFinallyAction finallyFunction) {
-      return lockPromise.toInvocationStage().andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+                                       InvocationStage lockStage, InvocationFinallyAction finallyFunction) {
+      return lockStage.andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
             lockManager.unlockAll(rCtx);
             throw throwable;

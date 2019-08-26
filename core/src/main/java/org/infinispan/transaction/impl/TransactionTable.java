@@ -566,7 +566,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             // The topology id must be updated after the topology was updated in StateConsumerImpl,
             // as state transfer requires transactions not sent to the new owners to have a smaller topology id.
             currentTopologyId = tce.getNewTopologyId();
-            log.debugf("Topology changed, recalculating minTopologyId");
+            log.debugf("Topology changed, recalculating minimum topology id");
             calculateMinTopologyId(-1);
          }
       }

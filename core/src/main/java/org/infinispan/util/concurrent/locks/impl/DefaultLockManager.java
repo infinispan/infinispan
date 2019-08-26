@@ -409,7 +409,9 @@ public class DefaultLockManager implements LockManager {
          if (UPDATER.compareAndSet(this, LockState.ACQUIRED, state)) {
             //complete the future before cancel other locks. the remaining locks will be invoke onEvent()
             notifier.complete(state);
-            lockPromiseList.forEach(promise -> promise.cancel(state));
+            for (KeyAwareExtendedLockPromise promise : lockPromiseList) {
+               promise.cancel(state);
+            }
          }
       }
 
@@ -422,7 +424,9 @@ public class DefaultLockManager implements LockManager {
 
       @Override
       public Void call() throws Exception {
-         lockPromiseList.forEach(promise -> promise.cancel(LockState.TIMED_OUT));
+         for (KeyAwareExtendedLockPromise promise : lockPromiseList) {
+            promise.cancel(LockState.TIMED_OUT);
+         }
          return null;
       }
 

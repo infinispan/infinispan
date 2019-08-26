@@ -7,11 +7,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * Defines the state a infinispan transaction should have.
@@ -69,7 +70,7 @@ public interface CacheTransaction {
    void addBackupLockForKey(Object key);
 
    /**
-    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#checkPendingAndLockKey(InvocationContext, Object, long)
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#checkPendingAndLockKey(TxInvocationContext, VisitableCommand, Object, long)
     */
    void notifyOnTransactionFinished();
 
