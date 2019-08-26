@@ -14,7 +14,7 @@ To create a named cache across the {brandname} cluster, invoke a `POST` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}
+POST /rest/v2/caches/{cacheName}
 ----
 
 To configure the cache, you supply the configuration in XML or JSON format as
@@ -71,7 +71,7 @@ no payload and an extra request parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?template={templateName}
+POST /rest/v2/caches/{cacheName}?template={templateName}
 ----
 
 [[rest_v2_cache_configuration]]
@@ -80,7 +80,7 @@ To retrieve a {brandname} cache configuration, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/configurations/{name}
+GET /rest/v2/configurations/{name}
 ----
 
 .Headers
@@ -98,7 +98,7 @@ To add entries to a named cache, invoke a `POST` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/{cacheKey}
+POST /rest/v2/caches/{cacheName}/{cacheKey}
 ----
 
 The preceding request places the payload, or request body, in the `cacheName`
@@ -150,7 +150,7 @@ To replace entries in a named cache, invoke a `PUT` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-PUT /v2/caches/{cacheName}/{cacheKey}
+PUT /rest/v2/caches/{cacheName}/{cacheKey}
 ----
 
 The preceding request is the same as a `POST` request to add entries to the cache. However, if the entry already exists, the `PUT` request replaces it instead of returning an HTTP `CONFLICT` status.
@@ -161,7 +161,7 @@ To retrieve data for a specific key in a cache, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/{cacheKey}
+GET /rest/v2/caches/{cacheName}/{cacheKey}
 ----
 
 The preceding request returns data from the given cache, `cacheName`, under the given key, `cacheKey`, as the response body. Responses contain a `Content-Type` headers that correspond to the MediaType negotiation.
@@ -206,7 +206,7 @@ To check if a specific entry exists in a cache, invoke a `HEAD` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /v2/caches/{cacheName}/{cacheKey}
+HEAD /rest/v2/caches/{cacheName}/{cacheKey}
 ----
 
 The preceding request returns only the header fields and the same content that you stored with the entry. For example, if you stored a String, the request returns a String. If you stored binary, base64-encoded, blobs or serialized Java objects, {brandname} does not de-serialize the content in the request.
@@ -228,7 +228,7 @@ To delete entries from a cache, invoke a `DELETE` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/caches/{cacheName}/{cacheKey}
+DELETE /rest/v2/caches/{cacheName}/{cacheKey}
 ----
 
 The preceding request removes the entry under `cacheKey` name from the cache.
@@ -248,7 +248,7 @@ To remove caches, invoke a `DELETE` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/caches/{cacheName}
+DELETE /rest/v2/caches/{cacheName}
 ----
 
 The preceding request deletes all data and removes the cache named `cacheName` from the cluster.
@@ -259,7 +259,7 @@ To delete all data from a cache, invoke a `GET` request with the `?action=clear`
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}?action=clear
+GET /rest/v2/caches/{cacheName}?action=clear
 ----
 
 [[rest_v2_cache_size]]
@@ -268,7 +268,7 @@ To obtain the size of the cache across the entire cluster, invoke a `GET` reques
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}?action=size
+GET /rest/v2/caches/{cacheName}?action=size
 ----
 
 [[rest_v2_query_cache]]
@@ -277,7 +277,7 @@ Invoke a `GET` request to perform and Ickle query on a given cache, as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}?action=search&query={ickle query}
+GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
 ----
 
 The preceding request returns a `JSON` document that contains one or more query hits, for example:
@@ -334,7 +334,7 @@ To use the body of the request instead of specifying query parameters, invoke a 
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=search
+POST /rest/v2/caches/{cacheName}?action=search
 ----
 
 The following is an example of a query in the request body:
@@ -359,7 +359,7 @@ To obtain information about a cache manager, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/cache-managers/{cacheManagerName}
+GET /rest/v2/cache-managers/{cacheManagerName}
 ----
 
 The response will be a JSON document with the following information:
@@ -436,7 +436,7 @@ To retrieve information about the {brandname} cluster health, invoke a `GET` req
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/cache-managers/{cacheManagerName}/health
+GET /rest/v2/cache-managers/{cacheManagerName}/health
 ----
 
 The response will be a JSON document with the following information:
@@ -493,7 +493,7 @@ To check that a {brandname} exists and is available, invoke a `HEAD` request in 
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /v2/cache-managers/{cacheManagerName}/health
+HEAD /rest/v2/cache-managers/{cacheManagerName}/health
 ----
 
 If the preceding request returns a successful response code then the {brandname} REST server is running and serving requests.
@@ -506,7 +506,7 @@ To obtain the https://docs.jboss.org/infinispan/9.4/apidocs/org/infinispan/confi
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/cache-managers/{cacheManagerName}/config
+GET /rest/v2/cache-managers/{cacheManagerName}/config
 ----
 
 .Headers
@@ -525,7 +525,7 @@ To obtain the configuration of all caches:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/cache-managers/{cacheManagerName}/cache-configs
+GET /rest/v2/cache-managers/{cacheManagerName}/cache-configs
 ----
 
 The response will contain a JSON array with each cache and its configuration. Example:
@@ -566,7 +566,7 @@ To obtain the statistics of the Cache Manager, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/cache-managers/{cacheManagerName}/stats
+GET /rest/v2/cache-managers/{cacheManagerName}/stats
 ----
 
 The response will be a JSON document with the following information:
@@ -635,7 +635,7 @@ To create a counter, use a `POST` request with the configuration as payload.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/counters/{counterName}
+POST /rest/v2/counters/{counterName}
 ----
 
 The payload must contain a JSON configuration of the counter. Example:
@@ -671,7 +671,7 @@ To delete a counter, send a `DELETE` request with the counter name.
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/counters/{counterName}
+DELETE /rest/v2/counters/{counterName}
 ----
 
 [[rest_server_counters_config]]
@@ -681,7 +681,7 @@ The get the counter configuration, use a `GET` request with the counter name.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}/config
+GET /rest/v2/counters/{counterName}/config
 ----
 
 The result will be a JSON representation of the counter config.
@@ -692,7 +692,7 @@ To add a value to a named counter, invoke a `POST` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/counters/{counterName}
+POST /rest/v2/counters/{counterName}
 ----
 
 If the request payload is empty, the counter is incremented by one, otherwise the payload is interpreted as a signed long and added to the counter.
@@ -714,7 +714,7 @@ To retrieve the value of a counter, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}
+GET /rest/v2/counters/{counterName}
 ----
 
 .Headers
@@ -734,7 +734,7 @@ To reset counters, use a `GET` request with the `?action=reset` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}?action=reset
+GET /rest/v2/counters/{counterName}?action=reset
 ----
 
 [[rest_server_counters_inc_weak]]
@@ -744,7 +744,7 @@ To increment a Counter, use the `?action=increment` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}?action=increment
+GET /rest/v2/counters/{counterName}?action=increment
 ----
 
 Request responses depend on the type of counter, as follows:
@@ -760,7 +760,7 @@ To add an arbitrary amount to a Counter, use the params `?action=add` and `delta
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}?action=add&delta={delta}
+GET /rest/v2/counters/{counterName}?action=add&delta={delta}
 ----
 
 Request responses depend on the type of counter, as follows:
@@ -777,7 +777,7 @@ To increment a Counter, use the `?action=decrement` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}?action=decrement
+GET /rest/v2/counters/{counterName}?action=decrement
 ----
 
 Request responses depend on the type of counter, as follows:
@@ -791,7 +791,7 @@ Request responses depend on the type of counter, as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
+GET /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
 ----
 
 Atomically sets the value to {update} if the current value is {expect}
@@ -803,7 +803,7 @@ Returns _true_ if successful.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
+GET /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
 ----
 
 Atomically sets the value to {update} if the current value is {expect}. Returns the previous value in the
