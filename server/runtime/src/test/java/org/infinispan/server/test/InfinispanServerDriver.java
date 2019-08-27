@@ -11,7 +11,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -23,12 +22,14 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.management.MBeanServerConnection;
 import javax.security.auth.x500.X500Principal;
 
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
@@ -51,6 +52,7 @@ public abstract class InfinispanServerDriver {
    protected final InetAddress testHostAddress;
    private File confDir;
    private ComponentStatus status;
+   private AtomicLong certSerial = new AtomicLong(1);
 
    protected InfinispanServerDriver(InfinispanServerTestConfiguration configuration, InetAddress testHostAddress) {
       this.configuration = configuration;
@@ -75,7 +77,7 @@ public abstract class InfinispanServerDriver {
       confDir.mkdirs();
       URL configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
       if (configurationFileURL == null) {
-         throw new RuntimeException("Cannot find test configuration file: "+ configuration.configurationFile());
+         throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
       }
       Path configurationFilePath;
       try {
@@ -175,17 +177,26 @@ public abstract class InfinispanServerDriver {
 
          X500Principal CA_DN = dn("CA");
 
+         KeyStore trustStore = KeyStore.getInstance("pkcs12");
+         trustStore.load(null);
+
          SelfSignedX509CertificateAndSigningKey ca = createSelfSignedCertificate(CA_DN, true, "ca");
 
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "server");
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "admin");
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "supervisor");
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "writer");
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "reader");
+         trustStore.setCertificateEntry("ca", ca.getSelfSignedCertificate());
+         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "server", trustStore);
+
+         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "admin", trustStore);
+         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "supervisor", trustStore);
+         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "writer", trustStore);
+         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "reader", trustStore);
+
+         try (FileOutputStream os = new FileOutputStream(getCertificateFile("trust"))) {
+            trustStore.store(os, KEY_PASSWORD.toCharArray());
+         }
 
          createSelfSignedCertificate(CA_DN, true, "untrusted");
 
-      } catch (GeneralSecurityException e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
@@ -219,22 +230,28 @@ public abstract class InfinispanServerDriver {
    protected void createSignedCertificate(PrivateKey signingKey, PublicKey publicKey,
                                           SelfSignedX509CertificateAndSigningKey ca,
                                           X500Principal issuerDN,
-                                          String name) throws CertificateException {
+                                          String name, KeyStore trustStore) throws CertificateException {
       X509Certificate caCertificate = ca.getSelfSignedCertificate();
-      X509Certificate serverCertificate = new X509CertificateBuilder()
+      X509Certificate certificate = new X509CertificateBuilder()
             .setIssuerDn(issuerDN)
             .setSubjectDn(dn(name))
             .setSignatureAlgorithmName("SHA1withRSA")
             .setSigningKey(ca.getSigningKey())
             .setPublicKey(publicKey)
-            .setSerialNumber(new BigInteger("1"))
+            .setSerialNumber(BigInteger.valueOf(certSerial.getAndIncrement()))
             .addExtension(new BasicConstraintsExtension(false, false, -1))
             .build();
+
+      try {
+         trustStore.setCertificateEntry(name, certificate);
+      } catch (KeyStoreException e) {
+         throw new RuntimeException(e);
+      }
 
       writeKeyStore(getCertificateFile(name), ks -> {
          try {
             ks.setCertificateEntry("ca", caCertificate);
-            ks.setKeyEntry(name, signingKey, KEY_PASSWORD.toCharArray(), new X509Certificate[]{serverCertificate, caCertificate});
+            ks.setKeyEntry(name, signingKey, KEY_PASSWORD.toCharArray(), new X509Certificate[]{certificate, caCertificate});
          } catch (KeyStoreException e) {
             throw new RuntimeException(e);
          }
@@ -253,42 +270,56 @@ public abstract class InfinispanServerDriver {
       }
    }
 
+   public void applyKeyStore(ConfigurationBuilder builder, String certificateName) {
+      builder.security().ssl().keyStoreFileName(getCertificateFile(certificateName).getAbsolutePath()).keyStorePassword(KEY_PASSWORD.toCharArray());
+   }
+
+   public void applyTrustStore(ConfigurationBuilder builder, String certificateName) {
+      builder.security().ssl().trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath()).trustStorePassword(KEY_PASSWORD.toCharArray());
+   }
+
    /**
-    * Returns an InetSocketAddress for connecting to a specific port on a specific server. The implementation will
-    * need to provide a specific mapping (e.g. port offset).
+    * Returns an InetSocketAddress for connecting to a specific port on a specific server. The implementation will need
+    * to provide a specific mapping (e.g. port offset).
     *
     * @param server the index of the server
-    * @param port the service port
+    * @param port   the service port
     * @return an unresolved InetSocketeAddress pointing to the actual running service
     */
    public abstract InetSocketAddress getServerAddress(int server, int port);
 
    /**
     * Pauses the server. Equivalent to kill -SIGSTOP
+    *
     * @param server
     */
-   public void pause(int server) {}
+   public void pause(int server) {
+   }
 
    /**
     * Resumes a paused server. Equivalent to kill -SIGCONT
+    *
     * @param server
     */
    public abstract void resume(int server);
 
    /**
     * Gracefully stops a running server
+    *
     * @param server
     */
    public abstract void stop(int server);
 
    /**
     * Forcefully stops a server. Equivalent to kill -SIGKILL
+    *
     * @param server
     */
    public abstract void kill(int server);
 
    /**
     * Returns a {@link MBeanServerConnection} to the specified server
+    *
     * @param server the index of the server
     */
    public abstract MBeanServerConnection getJmxConnection(int server);
