@@ -37,6 +37,10 @@ public final class ParseUtils {
         return new XMLStreamException("Unexpected element '" + reader.getName() + "' encountered", reader.getLocation());
     }
 
+    public static <T extends Enum<T>> XMLStreamException unexpectedElement(final XMLStreamReader reader, T element) {
+        return new XMLStreamException("Unexpected element '" + element.toString() + "' encountered", reader.getLocation());
+    }
+
     /**
      * Get an exception reporting an unexpected end tag for an XML element.
      * @param reader the stream reader

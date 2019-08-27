@@ -37,6 +37,7 @@
                </server-identities>
                <filesystem-realm path="security" levels="3" encoded="false"
                                  relative-to="infinispan.server.config.path"/>
+               <kerberos-realm keytab-path="keytab" relative-to="infinispan.server.config.path"/>
                <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
                            principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
                   <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
@@ -51,7 +52,6 @@
                   </identity-mapping>
                </ldap-realm>
                <local-realm name="test-local"/>
-               <kerberos-realm keytab-path="keytab" relative-to="infinispan.server.config.path"/>
                <properties-realm groups-attribute="Roles">
                   <user-properties path="ServerConfigurationParserTest-user.properties" digest-realm-name="digest"
                                    relative-to="infinispan.server.config.path" plain-text="true"/>
