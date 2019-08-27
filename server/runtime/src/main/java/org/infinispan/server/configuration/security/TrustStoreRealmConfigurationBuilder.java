@@ -12,6 +12,8 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
+import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.provider.util.ProviderUtil;
 import org.wildfly.security.ssl.SSLContextBuilder;
@@ -27,6 +29,11 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
    TrustStoreRealmConfigurationBuilder(RealmConfigurationBuilder securityRealmBuilder) {
       this.securityRealmBuilder = securityRealmBuilder;
       this.attributes = TrustStoreRealmConfiguration.attributeDefinitionSet();
+   }
+
+   public TrustStoreRealmConfigurationBuilder name(String name) {
+      attributes.attribute(TrustStoreRealmConfiguration.NAME).set(name);
+      return this;
    }
 
    public TrustStoreRealmConfigurationBuilder path(String path) {
@@ -59,6 +66,7 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
          if (sslContextBuilder == null) {
             throw Server.log.trustStoreWithoutServerIdentity();
          }
+         String name = attributes.attribute(TrustStoreRealmConfiguration.NAME).get();
          String path = attributes.attribute(TrustStoreRealmConfiguration.PATH).get();
          String relativeTo = attributes.attribute(TrustStoreRealmConfiguration.RELATIVE_TO).get();
          String trustStoreFileName = ParseUtils.resolvePath(path, relativeTo);
@@ -71,6 +79,13 @@ public class TrustStoreRealmConfigurationBuilder implements Builder<TrustStoreRe
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
                if (trustManager instanceof X509TrustManager) {
                   sslContextBuilder.setTrustManager((X509TrustManager) trustManager);
+                  SecurityDomain.Builder domainBuilder = securityRealmBuilder.domainBuilder();
+                  domainBuilder.addRealm(name, new KeyStoreBackedSecurityRealm(keyStore)).build();
+                  if (domainBuilder.getDefaultRealmName() == null) {
+                     domainBuilder.setDefaultRealmName(name);
+                  }
+                  securityRealmBuilder.hasTrustStoreRealm(true);
+                  break;
                }
             }
          } catch (Exception e) {

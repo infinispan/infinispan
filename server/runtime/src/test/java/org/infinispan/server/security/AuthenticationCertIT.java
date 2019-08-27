@@ -34,12 +34,9 @@ public class AuthenticationCertIT {
    @Test
    public void testTrustedCertificate() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyKeyStore(builder, "admin");
       builder.security()
-            .ssl()
-               .trustStoreFileName(SERVERS.getServerDriver().getCertificateFile("ca").getAbsolutePath())
-               .trustStorePassword("secret".toCharArray())
-               .keyStoreFileName(SERVERS.getServerDriver().getCertificateFile("admin").getAbsolutePath())
-               .keyStorePassword("secret".toCharArray())
             .authentication()
                .saslMechanism("EXTERNAL")
                .serverName("infinispan")
@@ -54,12 +51,9 @@ public class AuthenticationCertIT {
    @Test
    public void testUntrustedCertificate() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyKeyStore(builder, "untrusted");
       builder.security()
-            .ssl()
-               .trustStoreFileName(SERVERS.getServerDriver().getCertificateFile("ca").getAbsolutePath())
-               .trustStorePassword("secret".toCharArray())
-               .keyStoreFileName(SERVERS.getServerDriver().getCertificateFile("untrusted").getAbsolutePath())
-               .keyStorePassword("secret".toCharArray())
             .authentication()
                .saslMechanism("EXTERNAL")
                .serverName("infinispan")

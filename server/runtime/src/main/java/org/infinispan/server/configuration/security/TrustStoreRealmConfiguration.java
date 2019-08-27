@@ -11,6 +11,7 @@ import org.infinispan.server.configuration.Element;
  * @since 10.0
  */
 public class TrustStoreRealmConfiguration implements ConfigurationInfo {
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    static final AttributeDefinition<char[]> KEYSTORE_PASSWORD = AttributeDefinition.builder("keystorePassword", null, char[].class)
          .serializer(PasswordSerializer.INSTANCE)
          .build();
@@ -19,7 +20,7 @@ public class TrustStoreRealmConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TrustStoreRealmConfiguration.class, KEYSTORE_PASSWORD, PATH, PROVIDER, RELATIVE_TO);
+      return new AttributeSet(TrustStoreRealmConfiguration.class, NAME, KEYSTORE_PASSWORD, PATH, PROVIDER, RELATIVE_TO);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TRUSTSTORE_REALM.toString());
@@ -33,6 +34,10 @@ public class TrustStoreRealmConfiguration implements ConfigurationInfo {
    @Override
    public ElementDefinition getElementDefinition() {
       return ELEMENT_DEFINITION;
+   }
+
+   public String name() {
+      return attributes.attribute(NAME).get();
    }
 
    @Override

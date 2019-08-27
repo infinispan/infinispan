@@ -262,7 +262,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseSecurityRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, RealmsConfigurationBuilder realms) throws XMLStreamException {
       String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
       RealmConfigurationBuilder securityRealmBuilder = realms.addSecurityRealm(name);
-      boolean hasTrustStore = false;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -289,7 +288,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case TRUSTSTORE_REALM:
                parseTrustStoreRealm(reader, securityRealmBuilder.trustStoreConfiguration());
-               hasTrustStore = true;
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -765,6 +763,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseTrustStoreRealm(XMLExtendedStreamReader reader, TrustStoreRealmConfigurationBuilder trustStoreBuilder) throws
          XMLStreamException {
+      String name = "trust";
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATH);
       String path = attributes[0];
       String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
@@ -775,6 +774,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case NAME:
+               name = value;
+               break;
             case PATH:
                // Already seen
                break;
@@ -791,7 +793,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      trustStoreBuilder.path(path).relativeTo(relativeTo).keyStorePassword(keyStorePassword).provider(keyStoreProvider);
+      trustStoreBuilder.name(name).path(path).relativeTo(relativeTo).keyStorePassword(keyStorePassword).provider(keyStoreProvider);
       ParseUtils.requireNoContent(reader);
       trustStoreBuilder.build();
    }

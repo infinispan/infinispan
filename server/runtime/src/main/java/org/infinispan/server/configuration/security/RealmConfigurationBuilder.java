@@ -36,6 +36,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private SSLContextBuilder sslContextBuilder = null;
    private Supplier<Boolean> httpChallengeReadiness = () -> true;
    private ServerSecurityRealm serverSecurityRealm = null;
+   private boolean hasTrustStoreRealm;
 
    RealmConfigurationBuilder(String name, RealmsConfigurationBuilder realmsBuilder) {
       this.realmsBuilder = realmsBuilder;
@@ -147,9 +148,9 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    SSLContext getSSLContext() {
       if (sslContextBuilder == null) return null;
       if (sslContext == null) {
-         /*if (hasTrustStore) {
-            sslContextBuilder.setSecurityDomain(securityDomain);
-         }*/
+         if (hasTrustStoreRealm) {
+            sslContextBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
+         }
          sslContextBuilder.setWrap(false);
          try {
             sslContext = sslContextBuilder.build().create();
@@ -158,5 +159,9 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
          }
       }
       return sslContext;
+   }
+
+   void hasTrustStoreRealm(boolean hasTrustStoreRealm) {
+      this.hasTrustStoreRealm = hasTrustStoreRealm;
    }
 }

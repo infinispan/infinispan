@@ -54,17 +54,19 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    @Override
    protected void stop() {
       RuntimeException aggregate = new RuntimeException();
-      for (int i = 0; i < servers.size(); i++) {
-         Server server = servers.get(i);
-         server.getExitHandler().exit(0);
-         try {
-            serverFutures.get(i).get();
-         } catch (Throwable t) {
-            aggregate.addSuppressed(t);
+      if (servers != null) {
+         for (int i = 0; i < servers.size(); i++) {
+            Server server = servers.get(i);
+            server.getExitHandler().exit(0);
+            try {
+               serverFutures.get(i).get();
+            } catch (Throwable t) {
+               aggregate.addSuppressed(t);
+            }
          }
-      }
-      if (aggregate.getSuppressed().length > 0) {
-         throw aggregate;
+         if (aggregate.getSuppressed().length > 0) {
+            throw aggregate;
+         }
       }
    }
 

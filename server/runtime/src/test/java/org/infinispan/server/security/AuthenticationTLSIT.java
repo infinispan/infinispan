@@ -48,7 +48,7 @@ public class AuthenticationTLSIT {
    @Test
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.security().ssl().trustStoreFileName(SERVERS.getServerDriver().getCertificateFile("ca").getAbsolutePath()).trustStorePassword("secret".toCharArray());
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
                .saslMechanism(mechanism)
