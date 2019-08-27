@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -237,7 +237,8 @@ public class Server {
       protocolServers = new LinkedHashMap<>(3);
       try {
          // Start the cache manager(s)
-         DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, true);
+         DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);
+         SecurityActions.startCacheManager(cm);
          cacheManagers.put(cm.getName(), cm);
 
          // Start the protocol servers
@@ -245,20 +246,25 @@ public class Server {
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
          ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
          serverConfiguration.connectors().parallelStream().forEach(configuration -> {
-            Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
-            ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
-            protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
-            protocolServer.start(configuration, cm);
-            ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
-            if (protocolConfig.startTransport()) {
-               log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
-            } else {
-               if (protocolServer instanceof HotRodServer) {
-                  routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
-               } else if (protocolServer instanceof RestServer) {
-                  routes.put(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)), 0);
+            try {
+               Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
+               ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
+               protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
+               SecurityActions.startProtocolServer(protocolServer, configuration, cm);
+               ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
+               if (protocolConfig.startTransport()) {
+                  log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
+               } else {
+                  if (protocolServer instanceof HotRodServer) {
+                     routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
+                  } else if (protocolServer instanceof RestServer) {
+                     routes.put(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)), 0);
+                  }
+                  log.protocolStarted(protocolServer.getName());
                }
-               log.protocolStarted(protocolServer.getName());
+            } catch (Throwable t) {
+               System.err.println(t.getMessage());
+               t.printStackTrace();
             }
          });
          // Next we start the single-port endpoint
@@ -280,7 +286,7 @@ public class Server {
       status = ComponentStatus.STOPPING;
       // Shutdown the protocol servers in parallel
       protocolServers.values().parallelStream().forEach(ps -> ps.stop());
-      cacheManagers.values().forEach(cm -> cm.stop());
+      cacheManagers.values().forEach(cm -> SecurityActions.stopCacheManager(cm));
       status = ComponentStatus.TERMINATED;
    }
 

@@ -72,6 +72,11 @@ public class InfinispanServerTestMethodRule implements TestRule {
       return methodName;
    }
 
+   public RemoteCache<String, String> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder) {
+      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
+      return remoteCacheManager.getCache(methodName);
+   }
+
    public <K, V> RemoteCache<K, V> getHotRodCache(CacheMode mode) {
       return getHotRodCache(new ConfigurationBuilder(), mode);
    }

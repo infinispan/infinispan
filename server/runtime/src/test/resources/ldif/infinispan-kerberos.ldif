@@ -164,44 +164,44 @@ objectclass: top
 objectclass: organizationalUnit
 ou: Roles
 
-dn: cn=AdminIspnRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=AdminRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: AdminIspnRole
+cn: AdminRole
 description: the Infinispan admin group
 member: uid=admin,ou=People,dc=infinispan,dc=org
 
-dn: cn=SupervisorIspnRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=SupervisorRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
 cn: SupervisorIspnRole
 description: the Infinispan supervisor group
 member: uid=supervisor,ou=People,dc=infinispan,dc=org
 
-dn: cn=ExecutorIspnRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=ExecutorRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: ExecutorIspnRole
+cn: ExecutorRole
 description: the Infinispan executor group
 member: uid=executor,ou=People,dc=infinispan,dc=org
 
-dn: cn=WriterIspnRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=WriterRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: WriterIspnRole
+cn: WriterRole
 description: the Infinispan writer group
 member: uid=writer,ou=People,dc=infinispan,dc=org
 
-dn: cn=ReaderIspnRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=ReaderRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: ReaderIspnRole
+cn: ReaderRole
 description: the Infinispan reader group
 member: uid=reader,ou=People,dc=infinispan,dc=org
 
-dn: cn=UnprivilegedIspnRole,ou=Roles,dc=infinispan,dc=org
+dn: cn=UnprivilegedRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
-cn: UnprivilegedIspnRole
+cn: UnprivilegedRole
 description: the Infinispan unprivileged group
 member: uid=unprivileged,ou=People,dc=infinispan,dc=org

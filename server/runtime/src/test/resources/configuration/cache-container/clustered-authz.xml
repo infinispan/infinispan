@@ -1,0 +1,12 @@
+<cache-container>
+   <transport cluster="${infinispan.cluster.name}" stack="test"/>
+   <security>
+      <authorization>
+         <identity-role-mapper/>
+         <role name="AdminRole" permissions="ALL"/>
+         <role name="ReaderRole" permissions="READ"/>
+         <role name="WriterRole" permissions="WRITE"/>
+         <role name="SupervisorRole" permissions="READ WRITE EXEC BULK_READ"/>
+      </authorization>
+   </security>
+</cache-container>

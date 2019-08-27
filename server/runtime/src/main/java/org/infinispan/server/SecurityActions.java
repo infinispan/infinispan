@@ -5,7 +5,10 @@ import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.util.Properties;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 
 /**
  * SecurityActions for the org.infinispan.server.server package.
@@ -37,5 +40,33 @@ final class SecurityActions {
                return null;
             }
       );
+   }
+
+   static void startCacheManager(final EmbeddedCacheManager cacheManager) {
+      PrivilegedAction<Void> action = () -> {
+         cacheManager.start();
+         return null;
+      };
+      doPrivileged(action);
+   }
+
+   static boolean stopCacheManager(final EmbeddedCacheManager cacheManager) {
+      PrivilegedAction<Boolean> action = () -> {
+         if (cacheManager.getStatus().allowInvocations()) {
+            cacheManager.stop();
+            return true;
+         } else {
+            return false;
+         }
+      };
+      return doPrivileged(action);
+   }
+
+   static void startProtocolServer(final ProtocolServer server, final ProtocolServerConfiguration configuration, final EmbeddedCacheManager cacheManager) {
+      PrivilegedAction<Void> action = () -> {
+         server.start(configuration, cacheManager);
+         return null;
+      };
+      doPrivileged(action);
    }
 }
