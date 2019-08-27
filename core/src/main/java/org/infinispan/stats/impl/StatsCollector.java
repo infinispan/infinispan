@@ -25,7 +25,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -71,8 +70,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of cache attribute hits",
          displayName = "Number of cache hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP)
    public long getHits() {
       return hits.sum();
    }
@@ -80,8 +78,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of cache attribute misses",
          displayName = "Number of cache misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getMisses() {
       return misses.sum();
@@ -90,8 +87,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of cache removal hits",
          displayName = "Number of cache removal hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getRemoveHits() {
       return removeHits.sum();
@@ -100,18 +96,16 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of cache removals where keys were not found",
          displayName = "Number of cache removal misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getRemoveMisses() {
       return removeMisses.sum();
    }
 
    @ManagedAttribute(
-         description = "number of cache attribute put operations",
+         description = "Number of cache attribute put operations",
          displayName = "Number of cache puts" ,
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getStores() {
       return stores.sum();
@@ -125,8 +119,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of cache eviction operations",
          displayName = "Number of cache evictions",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getEvictions() {
       return evictions.sum();
@@ -135,8 +128,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Percentage hit/(hit+miss) ratio for the cache",
          displayName = "Hit ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY
+         units = Units.PERCENTAGE
    )
    public double getHitRatio() {
       long hitsL = hits.sum();
@@ -149,23 +141,21 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    @ManagedAttribute(
-         description = "read/writes ratio for the cache",
+         description = "Read/writes ratio for the cache",
          displayName = "Read/write ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY
+         units = Units.PERCENTAGE
    )
    public double getReadWriteRatio() {
       long sum = stores.sum();
       if (sum == 0)
          return 0;
-      return (((double) (hits.sum() + misses.sum()) / (double) sum));
+      return (double) (hits.sum() + misses.sum()) / (double) sum;
    }
 
    @ManagedAttribute(
          description = "Average number of milliseconds for a read operation on the cache",
          displayName = "Average read time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.MILLISECONDS
    )
    public long getAverageReadTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageReadTimeNanos());
@@ -174,8 +164,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Average number of nanoseconds for a read operation on the cache",
          displayName = "Average read time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.NANOSECONDS
    )
    public long getAverageReadTimeNanos() {
       long total = hits.sum() + misses.sum();
@@ -187,8 +176,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Average number of milliseconds for a write operation in the cache",
          displayName = "Average write time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.MILLISECONDS
    )
    public long getAverageWriteTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
@@ -197,8 +185,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Average number of nanoseconds for a write operation in the cache",
          displayName = "Average write time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.NANOSECONDS
    )
    public long getAverageWriteTimeNanos() {
       long sum = stores.sum();
@@ -210,8 +197,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Average number of milliseconds for a remove operation in the cache",
          displayName = "Average remove time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.MILLISECONDS
    )
    public long getAverageRemoveTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
@@ -220,14 +206,13 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Average number of nanoseconds for a remove operation in the cache",
          displayName = "Average remove time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.NANOSECONDS
    )
    public long getAverageRemoveTimeNanos() {
       long removes = getRemoveHits();
       if (removes == 0)
          return 0;
-      return (removeTimes.sum()) / removes;
+      return removeTimes.sum() / removes;
    }
 
    @Override
@@ -251,9 +236,8 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    @ManagedAttribute(
-         description = "Number of entries currently in the cache",
-         displayName = "Number of current cache entries",
-         displayType = DisplayType.SUMMARY
+         description = "Number of entries in the cache including passivated entries",
+         displayName = "Number of current cache entries"
    )
    public int getNumberOfEntries() {
       return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
@@ -262,8 +246,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @Override
    @ManagedAttribute(
          description = "Number of entries currently in-memory excluding expired entries",
-         displayName = "Number of in-memory cache entries",
-         displayType = DisplayType.SUMMARY
+         displayName = "Number of in-memory cache entries"
    )
    public int getCurrentNumberOfEntriesInMemory() {
       return dataContainer.size();
@@ -273,8 +256,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          description = "Number of seconds since cache started",
          displayName = "Seconds since cache started",
          units = Units.SECONDS,
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getTimeSinceStart() {
       return timeService.timeDuration(startNanoseconds.get(), TimeUnit.SECONDS);
@@ -283,8 +265,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of seconds since the cache statistics were last reset",
          displayName = "Seconds since cache statistics were reset",
-         units = Units.SECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.SECONDS
    )
    public long getTimeSinceReset() {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
@@ -302,8 +283,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
 
    @ManagedAttribute(
          description = "Amount of memory in bytes allocated for use in eviction for data in the cache",
-         displayName = "Memory Used by data in the cache",
-         displayType = DisplayType.SUMMARY
+         displayName = "Memory used by data in the cache"
    )
    public long getDataMemoryUsed() {
       if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
@@ -313,9 +293,8 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    @ManagedAttribute(
-         description = "Amount in bytes of off-heap memory used by this cache",
-         displayName = "Off-Heap memory used",
-         displayType = DisplayType.SUMMARY
+         description = "Amount off-heap memory used by this cache (bytes)",
+         displayName = "Off-Heap memory used"
    )
    @Override
    public long getOffHeapMemoryUsed() {

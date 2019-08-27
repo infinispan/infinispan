@@ -65,7 +65,6 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -471,8 +470,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @ManagedAttribute(
          description = "Number of transaction prepares performed since last reset",
          displayName = "Prepares",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getPrepares() {
       return prepares.get();
@@ -481,8 +479,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @ManagedAttribute(
          description = "Number of transaction commits performed since last reset",
          displayName = "Commits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getCommits() {
       return commits.get();
@@ -491,8 +488,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @ManagedAttribute(
          description = "Number of transaction rollbacks performed since last reset",
          displayName = "Rollbacks",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getRollbacks() {
       return rollbacks.get();

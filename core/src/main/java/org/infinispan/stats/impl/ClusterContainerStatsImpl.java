@@ -9,7 +9,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -72,32 +71,28 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
    }
 
    @ManagedAttribute(description = "The maximum amount of free memory in bytes across the cluster JVMs",
-         displayName = "Cluster wide available memory.",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide available memory.")
    @Override
    public long getMemoryAvailable() {
       return getStatAsLong(MEMORY_AVAILABLE);
    }
 
    @ManagedAttribute(description = "The maximum amount of memory that JVMs across the cluster will attempt to utilise in bytes",
-         displayName = "Cluster wide max memory of JVMs",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide max memory of JVMs")
    @Override
    public long getMemoryMax() {
       return getStatAsLong(MEMORY_MAX);
    }
 
    @ManagedAttribute(description = "The total amount of memory in the JVMs across the cluster in bytes",
-         displayName = "Cluster wide total memory",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide total memory")
    @Override
    public long getMemoryTotal() {
       return getStatAsLong(MEMORY_TOTAL);
    }
 
    @ManagedAttribute(description = "The amount of memory used by JVMs across the cluster in bytes",
-         displayName = "Cluster wide memory utilisation",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide memory utilisation")
    @Override
    public long getMemoryUsed() {
       return getStatAsLong(MEMORY_USED);

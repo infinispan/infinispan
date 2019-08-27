@@ -14,7 +14,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
@@ -80,8 +79,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(description = "Cache container total average number of milliseconds for all read operation in this cache container",
          displayName = "Cache container total average read time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    @Override
    public long getAverageReadTime() {
       long result = -1;
@@ -109,8 +107,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(description = "Cache container total average number of nanoseconds for all read operation in this cache container",
          displayName = "Cache container total average read time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.NANOSECONDS
+   )
    @Override
    public long getAverageReadTimeNanos() {
       long result = -1;
@@ -147,8 +145,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(description = "Cache container total average number of milliseconds for all remove operation in this cache container",
          displayName = "Cache container total average remove time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS
+   )
    @Override
    public long getAverageRemoveTime() {
       long result = -1;
@@ -176,8 +174,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(description = "Cache container total average number of nanoseconds for all remove operation in this cache container",
          displayName = "Cache container total average remove time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.NANOSECONDS
+   )
    @Override
    public long getAverageRemoveTimeNanos() {
       long result = -1;
@@ -205,8 +203,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(description = "Cache container average number of milliseconds for all write operation in this cache container",
          displayName = "Cache container average write time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS
+   )
    @Override
    public long getAverageWriteTime() {
       long result = -1;
@@ -234,8 +232,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(description = "Cache container average number of nanoseconds for all write operation in this cache container",
          displayName = "Cache container average write time (ns)",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS
+   )
    @Override
    public long getAverageWriteTimeNanos() {
       long result = -1;
@@ -264,8 +262,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total number of cache eviction operations",
          displayName = "Cache container total number of cache evictions",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getEvictions() {
@@ -290,8 +287,8 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total number of cache attribute hits",
          displayName = "Cache container total number of cache hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getHits() {
       long result = -1;
@@ -315,8 +312,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total percentage hit/(hit+miss) ratio for this cache",
          displayName = "Cache container total hit ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY
+         units = Units.PERCENTAGE
    )
    @Override
    public double getHitRatio() {
@@ -347,8 +343,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total number of cache attribute misses",
          displayName = "Cache container total number of cache misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getMisses() {
@@ -372,8 +367,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(
          description = "Cache container total number of entries currently in all caches from this cache container",
-         displayName = "Cache container total number of all cache entries",
-         displayType = DisplayType.SUMMARY
+         displayName = "Cache container total number of all cache entries"
    )
    public int getNumberOfEntries() {
       int result = statisticsEnabled ? 0 : -1;
@@ -390,8 +384,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(
          description = "Cache container total number of entries currently in-memory for all caches in this cache container",
-         displayName = "Cache container total number of in-memory cache entries",
-         displayType = DisplayType.SUMMARY
+         displayName = "Cache container total number of in-memory cache entries"
    )
    public int getCurrentNumberOfEntriesInMemory() {
       int result = statisticsEnabled ? 0 : -1;
@@ -409,8 +402,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container read/writes ratio in all caches from this cache container",
          displayName = "Cache container read/write ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY
+         units = Units.PERCENTAGE
    )
    @Override
    public double getReadWriteRatio() {
@@ -441,8 +433,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total number of cache removal hits",
          displayName = "Cache container total number of cache removal hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getRemoveHits() {
@@ -467,8 +458,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total number of cache removals where keys were not found",
          displayName = "Cache container total number of cache removal misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getRemoveMisses() {
@@ -493,8 +483,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Cache container total number of cache attribute put operations",
          displayName = "Cache container total number of cache puts",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getStores() {
@@ -508,8 +497,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @ManagedAttribute(
          description = "Number of seconds since the cache container statistics were last reset",
          displayName = "Seconds since cache container statistics were reset",
-         units = Units.SECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.SECONDS
    )
    @Override
    public long getTimeSinceReset() {
@@ -563,8 +551,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(
          description = "Amount in bytes of memory used in a given cache container for entries with eviction",
-         displayName = "Container memory used by eviction",
-         displayType = DisplayType.SUMMARY
+         displayName = "Container memory used by eviction"
    )
    @Override
    public long getDataMemoryUsed() {
@@ -584,8 +571,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @ManagedAttribute(
          description = "Amount in bytes of off-heap memory used by this cache container",
-         displayName = "Off-Heap memory used",
-         displayType = DisplayType.SUMMARY
+         displayName = "Off-Heap memory used"
    )
    @Override
    public long getOffHeapMemoryUsed() {

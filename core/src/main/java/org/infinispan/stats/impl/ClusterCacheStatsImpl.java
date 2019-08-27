@@ -55,7 +55,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
@@ -149,8 +148,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide total average number of milliseconds for a read operation on the cache",
          displayName = "Cluster wide total average read time (ms)",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS
+   )
    public long getAverageReadTime() {
       return getStatAsLong(AVERAGE_READ_TIME);
    }
@@ -158,8 +157,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide total average number of nanoseconds for a read operation on the cache",
          displayName = "Cluster wide total average read time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.NANOSECONDS
+   )
    public long getAverageReadTimeNanos() {
       return getStatAsLong(AVERAGE_READ_TIME_NANOS);
    }
@@ -167,8 +166,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide total average number of milliseconds for a remove operation in the cache",
          displayName = "Cluster wide total average remove time (ms)",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS
+   )
    public long getAverageRemoveTime() {
       return getStatAsLong(AVERAGE_REMOVE_TIME);
    }
@@ -176,8 +175,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide total average number of nanoseconds for a remove operation in the cache",
          displayName = "Cluster wide total average remove time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.NANOSECONDS
+   )
    public long getAverageRemoveTimeNanos() {
       return getStatAsLong(AVERAGE_REMOVE_TIME_NANOS);
    }
@@ -185,8 +184,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide average number of milliseconds for a write operation in the cache",
          displayName = "Cluster wide average write time (ms)",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS
+   )
    public long getAverageWriteTime() {
       return getStatAsLong(AVERAGE_WRITE_TIME);
    }
@@ -194,8 +193,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide average number of nanoseconds for a write operation in the cache",
          displayName = "Cluster wide average write time (ns)",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.NANOSECONDS
+   )
    public long getAverageWriteTimeNanos() {
       return getStatAsLong(AVERAGE_WRITE_TIME_NANOS);
    }
@@ -207,8 +206,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Cluster wide total number of cache eviction operations",
          displayName = "Cluster wide total number of cache evictions",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getEvictions() {
       return getStatAsLong(EVICTIONS);
@@ -216,8 +215,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Cluster wide total number of cache attribute hits",
          displayName = "Cluster wide total number of cache hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getHits() {
       return getStatAsLong(HITS);
@@ -225,8 +224,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Cluster wide total percentage hit/(hit+miss) ratio for this cache",
          displayName = "Cluster wide total hit ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY)
+         units = Units.PERCENTAGE
+   )
    @Override
    public double getHitRatio() {
       if (isStatisticsEnabled()) {
@@ -240,31 +239,31 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "Cluster wide total number of cache attribute misses",
          displayName = "Cluster wide total number of cache misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    public long getMisses() {
       return getStatAsLong(MISSES);
    }
 
    @ManagedAttribute(description = "Cluster wide total number of entries currently in the cache, including passivated entries",
-         displayName = "Cluster wide total number of current cache entries",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide total number of current cache entries"
+   )
    public int getNumberOfEntries() {
       return getStatAsInt(NUMBER_OF_ENTRIES);
    }
 
    @Override
    @ManagedAttribute(description = "Cluster wide total number of entries currently stored in-memory",
-         displayName = "Cluster wide total number of in-memory cache entries",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide total number of in-memory cache entries"
+   )
    public int getCurrentNumberOfEntriesInMemory() {
       return getStatAsInt(NUMBER_OF_ENTRIES_IN_MEMORY);
    }
 
    @ManagedAttribute(description = "Cluster wide read/writes ratio for the cache",
          displayName = "Cluster wide read/write ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY)
+         units = Units.PERCENTAGE
+   )
    @Override
    public double getReadWriteRatio() {
       if (isStatisticsEnabled()) {
@@ -277,8 +276,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Cluster wide total number of cache removal hits",
          displayName = "Cluster wide total number of cache removal hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getRemoveHits() {
       return getStatAsLong(REMOVE_HITS);
@@ -286,8 +285,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Cluster wide total number of cache removals where keys were not found",
          displayName = "Cluster wide total number of cache removal misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getRemoveMisses() {
       return getStatAsLong(REMOVE_MISSES);
@@ -295,8 +294,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Cluster wide total number of cache attribute put operations",
          displayName = "Cluster wide total number of cache puts",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getStores() {
       return getStatAsLong(STORES);
@@ -304,8 +303,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Number of seconds since the first cache node started",
          displayName = "Number of seconds since the first cache node started",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getTimeSinceStart() {
       return getStatAsLong(TIME_SINCE_START);
@@ -321,22 +320,20 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStores();
    }
 
-   @Override
    @ManagedAttribute(
          description = "Amount in bytes of memory used across the cluster for entries in this cache with eviction",
-         displayName = "Cluster wide memory used by eviction",
-         displayType = DisplayType.SUMMARY
+         displayName = "Cluster wide memory used by eviction"
    )
+   @Override
    public long getDataMemoryUsed() {
       return getStatAsLong(DATA_MEMORY_USED);
    }
 
-   @Override
    @ManagedAttribute(
          description = "Amount in bytes of off-heap memory used across the cluster for this cache",
-         displayName = "Cluster wide off-heap memory used",
-         displayType = DisplayType.SUMMARY
+         displayName = "Cluster wide off-heap memory used"
    )
+   @Override
    public long getOffHeapMemoryUsed() {
       return getStatAsLong(OFF_HEAP_MEMORY_USED);
    }
@@ -354,16 +351,16 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    }
 
    @ManagedAttribute(description = "Total number of exclusive locks available in the cluster",
-         displayName = "Cluster wide total number of locks",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide total number of locks"
+   )
    @Override
    public int getNumberOfLocksAvailable() {
       return getStatAsInt(NUMBER_OF_LOCKS_AVAILABLE);
    }
 
    @ManagedAttribute(description = "Total number of locks held in the cluster",
-         displayName = "Cluster wide total number of locks held",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Cluster wide total number of locks held"
+   )
    @Override
    public int getNumberOfLocksHeld() {
       return getStatAsInt(NUMBER_OF_LOCKS_HELD);
@@ -372,16 +369,16 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Override
    @ManagedAttribute(description = "The total number of invalidations in the cluster",
          displayName = "Cluster wide total number of invalidations",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    public long getInvalidations() {
       return getStatAsLong(INVALIDATIONS);
    }
 
    @ManagedAttribute(description = "The total number of activations in the cluster",
          displayName = "Cluster wide total number of activations",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getActivations() {
       return getStatAsLong(ACTIVATIONS);
@@ -389,8 +386,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "The total number of passivations in the cluster",
          displayName = "Cluster wide total number of passivations",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getPassivations() {
       return getStatAsLong(PASSIVATIONS);
@@ -398,8 +395,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "The total number of cacheloader load operations in the cluster",
          displayName = "Cluster wide total number of cacheloader loads",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getCacheLoaderLoads() {
       return getStatAsLong(CACHE_LOADER_LOADS);
@@ -407,8 +404,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "The total number of cacheloader load misses in the cluster",
          displayName = "Cluster wide total number of cacheloader misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getCacheLoaderMisses() {
       return getStatAsLong(CACHE_LOADER_MISSES);
@@ -416,8 +413,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "The total number of cachestore store operations in the cluster",
          displayName = "Cluster wide total number of cachestore stores",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getStoreWrites() {
       return getStatAsLong(CACHE_WRITER_STORES);
