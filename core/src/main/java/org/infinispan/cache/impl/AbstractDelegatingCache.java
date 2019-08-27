@@ -18,7 +18,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -89,8 +88,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @ManagedAttribute(
          description = "Returns the cache name",
          displayName = "Cache name",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public String getCacheName() {
       return getName() + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
@@ -100,8 +98,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @ManagedAttribute(
          description = "Returns the version of Infinispan",
          displayName = "Infinispan version",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public String getVersion() {
       return cache.getVersion();
@@ -342,8 +339,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @ManagedAttribute(
          description = "Returns the cache status",
          displayName = "Cache status",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public String getCacheStatus() {
       return getStatus().toString();
@@ -614,8 +610,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @ManagedAttribute(
          description = "Returns the cache configuration in form of properties",
          displayName = "Cache configuration properties",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public Properties getConfigurationAsProperties() {
       return new PropertyFormatter().format(getCacheConfiguration());

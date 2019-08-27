@@ -9,7 +9,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
@@ -166,8 +165,7 @@ public class NettyTransport implements Transport {
       description = "Returns the total number of bytes written " +
                     "by the server back to clients which includes both protocol and user information.",
       displayName = "Number of total number of bytes written",
-      measurementType = MeasurementType.TRENDSUP,
-      displayType = DisplayType.SUMMARY
+      measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getTotalBytesWritten() {
@@ -177,8 +175,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(description = "Returns the total number of bytes read " +
                                    "by the server from clients which includes both protocol and user information.",
                      displayName = "Number of total number of bytes read",
-                     measurementType = MeasurementType.TRENDSUP,
-                     displayType = DisplayType.SUMMARY
+                     measurementType = MeasurementType.TRENDSUP
    )
    @Override
    public long getTotalBytesRead() {
@@ -188,8 +185,8 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the host to which the transport binds.",
       displayName = "Host name",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY)
+      dataType = DataType.TRAIT
+   )
    @Override
    public String getHostName() {
       return address.getHostName();
@@ -198,8 +195,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the port to which the transport binds.",
       displayName = "Port",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY
+      dataType = DataType.TRAIT
    )
    @Override
    public int getPort() {
@@ -209,8 +205,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the number of I/O threads.",
       displayName = "Number of I/O threads",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY
+      dataType = DataType.TRAIT
    )
    @Override
    public int getNumberIOThreads() {
@@ -219,8 +214,7 @@ public class NettyTransport implements Transport {
 
    @ManagedAttribute(
       description = "Returns the number of pending tasks.",
-      displayName = "Pending tasks",
-      displayType = DisplayType.SUMMARY
+      displayName = "Pending tasks"
    )
    @Override
    public int getPendingTasks() {
@@ -232,8 +226,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the idle timeout.",
       displayName = "Idle timeout",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY
+      dataType = DataType.TRAIT
    )
    @Override
    public int getIdleTimeout() {
@@ -243,8 +236,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns whether TCP no delay was configured or not.",
       displayName = "TCP no delay",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY
+      dataType = DataType.TRAIT
    )
    @Override
    public boolean getTcpNoDelay() {
@@ -254,8 +246,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the send buffer size.",
       displayName = "Send buffer size",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY
+      dataType = DataType.TRAIT
    )
    @Override
    public int getSendBufferSize() {
@@ -265,8 +256,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the receive buffer size.",
       displayName = "Receive buffer size",
-      dataType = DataType.TRAIT,
-      displayType = DisplayType.SUMMARY
+      dataType = DataType.TRAIT
    )
    @Override
    public int getReceiveBufferSize() {
@@ -275,8 +265,7 @@ public class NettyTransport implements Transport {
 
    @ManagedAttribute(
       description = "Returns a count of active connections this server.",
-      displayName = "Local active connections",
-      displayType = DisplayType.SUMMARY
+      displayName = "Local active connections"
    )
    @Override
    public int getNumberOfLocalConnections() {
@@ -287,8 +276,7 @@ public class NettyTransport implements Transport {
       description = "Returns a count of active connections in the cluster. " +
                     "This operation will make remote calls to aggregate results, " +
                     "so latency might have an impact on the speed of calculation of this attribute.",
-      displayName = "Cluster-wide number of active connections",
-      displayType = DisplayType.SUMMARY
+      displayName = "Cluster-wide number of active connections"
    )
    @Override
    public int getNumberOfGlobalConnections() {

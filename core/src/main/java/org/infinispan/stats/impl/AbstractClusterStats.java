@@ -14,7 +14,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -79,8 +78,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
    @ManagedAttribute(
          description = "Number of seconds since the cluster-wide statistics were last reset",
          displayName = "Seconds since cluster-wide statistics were reset",
-         units = Units.SECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.SECONDS
    )
    public long getTimeSinceReset() {
       long result = -1;

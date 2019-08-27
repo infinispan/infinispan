@@ -52,7 +52,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
@@ -454,8 +453,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of cache attribute hits",
          displayName = "Number of cache hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY)
+         measurementType = MeasurementType.TRENDSUP)
    public long getHits() {
       return counters.get(StripeB.hitsFieldUpdater);
    }
@@ -463,8 +461,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of cache attribute misses",
          displayName = "Number of cache misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getMisses() {
       return counters.get(StripeB.missesFieldUpdater);
@@ -473,8 +470,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of cache removal hits",
          displayName = "Number of cache removal hits",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getRemoveHits() {
       return counters.get(StripeB.removeHitsFieldUpdater);
@@ -483,8 +479,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of cache removals where keys were not found",
          displayName = "Number of cache removal misses",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getRemoveMisses() {
       return counters.get(StripeB.removeMissesFieldUpdater);
@@ -493,8 +488,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of cache attribute put operations",
          displayName = "Number of cache puts" ,
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getStores() {
       return counters.get(StripeB.storesFieldUpdater);
@@ -503,8 +497,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of cache eviction operations",
          displayName = "Number of cache evictions",
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getEvictions() {
       return counters.get(StripeB.evictionsFieldUpdater);
@@ -513,8 +506,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Percentage hit/(hit+miss) ratio for the cache",
          displayName = "Hit ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY
+         units = Units.PERCENTAGE
    )
    public double getHitRatio() {
       long hitsL = counters.get(StripeB.hitsFieldUpdater);
@@ -529,8 +521,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Read/writes ratio for the cache",
          displayName = "Read/write ratio",
-         units = Units.PERCENTAGE,
-         displayType = DisplayType.SUMMARY
+         units = Units.PERCENTAGE
    )
    public double getReadWriteRatio() {
       long sum = counters.get(StripeB.storesFieldUpdater);
@@ -542,8 +533,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Average number of milliseconds for a read operation on the cache",
          displayName = "Average read time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.MILLISECONDS
    )
    public long getAverageReadTime() {
       long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
@@ -556,8 +546,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Average number of nanoseconds for a read operation on the cache",
          displayName = "Average read time",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.NANOSECONDS
    )
    public long getAverageReadTimeNanos() {
       long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
@@ -569,8 +558,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Average number of milliseconds for a write operation in the cache",
          displayName = "Average write time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.MILLISECONDS
    )
    public long getAverageWriteTime() {
       long sum = counters.get(StripeB.storesFieldUpdater);
@@ -582,8 +570,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Average number of nanoseconds for a write operation in the cache",
          displayName = "Average write time",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.NANOSECONDS
    )
    public long getAverageWriteTimeNanos() {
       long sum = counters.get(StripeB.storesFieldUpdater);
@@ -595,8 +582,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Average number of milliseconds for a remove operation in the cache",
          displayName = "Average remove time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.MILLISECONDS
    )
    public long getAverageRemoveTime() {
       long removes = getRemoveHits();
@@ -608,8 +594,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Average number of nanoseconds for a remove operation in the cache",
          displayName = "Average remove time",
-         units = Units.NANOSECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.NANOSECONDS
    )
    public long getAverageRemoveTimeNanos() {
       long removes = getRemoveHits();
@@ -620,8 +605,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(
          description = "Number of entries in the cache including passivated entries",
-         displayName = "Number of current cache entries",
-         displayType = DisplayType.SUMMARY
+         displayName = "Number of current cache entries"
    )
    public int getNumberOfEntries() {
       return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
@@ -629,8 +613,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(
          description = "Number of entries currently in-memory excluding expired entries",
-         displayName = "Number of in-memory cache entries",
-         displayType = DisplayType.SUMMARY
+         displayName = "Number of in-memory cache entries"
    )
    public int getNumberOfEntriesInMemory() {
       return dataContainer.size();
@@ -638,8 +621,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(
          description = "Amount of memory in bytes allocated for use in eviction for data in the cache",
-         displayName = "Memory Used by data in the cache",
-         displayType = DisplayType.SUMMARY
+         displayName = "Memory used by data in the cache"
    )
    public long getDataMemoryUsed() {
       if (cacheConfiguration.memory().isEvictionEnabled() && cacheConfiguration.memory().evictionType() == EvictionType.MEMORY) {
@@ -649,9 +631,8 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Amount of memory in bytes allocated in off-heap",
-         displayName = "Off-Heap Memory Used",
-         displayType = DisplayType.SUMMARY
+         description = "Amount off-heap memory used by this cache (bytes)",
+         displayName = "Off-Heap memory used"
    )
    public long getOffHeapMemoryUsed() {
       return allocator.getAllocatedAmount();
@@ -659,8 +640,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(
          description = "Amount of nodes required to guarantee data consistency",
-         displayName = "Required Minimum Nodes",
-         displayType = DisplayType.SUMMARY
+         displayName = "Required Minimum Nodes"
    )
    public int getRequiredMinimumNumberOfNodes() {
       return calculateRequiredMinimumNumberOfNodes(cache.wired(), componentRegistry);
@@ -717,8 +697,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          description = "Number of seconds since cache started",
          displayName = "Seconds since cache started",
          units = Units.SECONDS,
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    public long getTimeSinceStart() {
       return timeService.timeDuration(startNanoseconds.get(), TimeUnit.SECONDS);
@@ -734,8 +713,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          description = "Number of seconds since cache started",
          displayName = "Seconds since cache started",
          units = Units.SECONDS,
-         measurementType = MeasurementType.TRENDSUP,
-         displayType = DisplayType.SUMMARY
+         measurementType = MeasurementType.TRENDSUP
    )
    @Deprecated
    public long getElapsedTime() {
@@ -746,8 +724,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @ManagedAttribute(
          description = "Number of seconds since the cache statistics were last reset",
          displayName = "Seconds since cache statistics were reset",
-         units = Units.SECONDS,
-         displayType = DisplayType.SUMMARY
+         units = Units.SECONDS
    )
    public long getTimeSinceReset() {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);

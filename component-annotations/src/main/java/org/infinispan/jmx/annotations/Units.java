@@ -1,11 +1,27 @@
 package org.infinispan.jmx.annotations;
 
 public enum Units {
-   NONE, MILLISECONDS, SECONDS, PERCENTAGE, NANOSECONDS;
+
+   NONE,
+
+   SECONDS,
+
+   MILLISECONDS,
+
+   MICROSECONDS,
+
+   NANOSECONDS,
+
+   PER_SECOND,
+
+   PERCENTAGE,
+
+   BITS,
+
+   BYTES;
 
    @Override
    public String toString() {
-      return this.name().toLowerCase();
+      return name().toLowerCase();
    }
-
 }

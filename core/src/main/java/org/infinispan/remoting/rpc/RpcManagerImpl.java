@@ -38,7 +38,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -477,7 +476,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       asyncXSiteReplicationTime = new DefaultSimpleStat();
    }
 
-   @ManagedAttribute(description = "Number of successful replications", displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Number of successful replications", displayName = "Number of successful replications", measurementType = MeasurementType.TRENDSUP)
    public long getReplicationCount() {
       if (!isStatisticsEnabled()) {
          return -1;
@@ -485,7 +484,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       return replicationCount.get();
    }
 
-   @ManagedAttribute(description = "Number of failed replications", displayName = "Number of failed replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Number of failed replications", displayName = "Number of failed replications", measurementType = MeasurementType.TRENDSUP)
    public long getReplicationFailures() {
       if (!isStatisticsEnabled()) {
          return -1;
@@ -522,7 +521,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       return NumberFormat.getInstance().format(ration) + "%";
    }
 
-   @ManagedAttribute(description = "Successful replications as a ratio of total replications in numeric double format", displayName = "Successful replication ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Successful replications as a ratio of total replications in numeric double format", displayName = "Successful replication ratio", units = Units.PERCENTAGE)
    public double getSuccessRatioFloatingPoint() {
       if (replicationCount.get() == 0 || !statisticsEnabled) return 0;
       return calculateSuccessRatio();
@@ -533,7 +532,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       return replicationCount.get() / totalCount;
    }
 
-   @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds", displayName = "Average time spent in the transport layer", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds", displayName = "Average time spent in the transport layer", units = Units.MILLISECONDS)
    public long getAverageReplicationTime() {
       if (replicationCount.get() == 0) {
          return 0;
@@ -549,69 +548,60 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Returns the average replication time, in milliseconds, for a cross-site replication request",
          displayName = "Average Cross-Site replication time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    public long getAverageXSiteReplicationTime() {
       return isStatisticsEnabled() ? syncXSiteReplicationTime.getAverage(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the minimum replication time, in milliseconds, for a cross-site replication request",
          displayName = "Minimum Cross-Site replication time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    public long getMinimumXSiteReplicationTime() {
       return isStatisticsEnabled() ? syncXSiteReplicationTime.getMin(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the maximum replication time, in milliseconds, for a cross-site replication request",
          displayName = "Minimum Cross-Site replication time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    public long getMaximumXSiteReplicationTime() {
       return isStatisticsEnabled() ? syncXSiteReplicationTime.getMax(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the number of sync cross-site requests",
-         displayName = "Sync Cross-Site replication requests",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Sync Cross-Site replication requests")
    public long getSyncXSiteCount() {
       return isStatisticsEnabled() ? syncXSiteReplicationTime.count() : 0;
    }
 
    @ManagedAttribute(description = "Returns the number of async cross-site requests",
-         displayName = "Async Cross-Site replication requests",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Async Cross-Site replication requests")
    public long getAsyncXSiteCount() {
       return isStatisticsEnabled() ? asyncXSiteCounter.sum() : 0;
    }
 
    @ManagedAttribute(description = "Returns the average replication time, in milliseconds, for an asynchronous cross-site replication request",
          displayName = "Average async Cross-Site replication time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    public long getAverageAsyncXSiteReplicationTime() {
       return isStatisticsEnabled() ? asyncXSiteReplicationTime.getAverage(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the minimum replication time, in milliseconds, for an asynchronous cross-site replication request",
          displayName = "Minimum async Cross-Site replication time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    public long getMinimumAsyncXSiteReplicationTime() {
       return isStatisticsEnabled() ? asyncXSiteReplicationTime.getMin(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the maximum replication time, in milliseconds, for an asynchronous cross-site replication request",
          displayName = "Maximum async Cross-Site replication time",
-         units = Units.MILLISECONDS,
-         displayType = DisplayType.SUMMARY)
+         units = Units.MILLISECONDS)
    public long getMaximumAsyncXSiteReplicationTime() {
       return isStatisticsEnabled() ? asyncXSiteReplicationTime.getMax(-1) : -1;
    }
 
    @ManagedAttribute(description = "Returns the number of async cross-site acknowledges received",
-         displayName = "Async Cross-Site replication acks",
-         displayType = DisplayType.SUMMARY)
+         displayName = "Async Cross-Site replication acks")
    public long getAsyncXSiteAcksCount() {
       return isStatisticsEnabled() ? asyncXSiteReplicationTime.count() : 0;
    }

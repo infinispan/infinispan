@@ -70,7 +70,6 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -444,8 +443,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @ManagedAttribute(
          description = "Returns the cache status",
          displayName = "Cache status",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public String getCacheStatus() {
       return getStatus().toString();
@@ -690,8 +688,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @ManagedAttribute(
          description = "Returns the cache name",
          displayName = "Cache name",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public String getCacheName() {
       return getName() + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
@@ -701,8 +698,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @ManagedAttribute(
          description = "Returns the version of Infinispan",
          displayName = "Infinispan version",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public String getVersion() {
       return Version.getVersion();
@@ -711,8 +707,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @ManagedAttribute(
          description = "Returns the cache configuration in form of properties",
          displayName = "Cache configuration properties",
-         dataType = DataType.TRAIT,
-         displayType = DisplayType.SUMMARY
+         dataType = DataType.TRAIT
    )
    public Properties getConfigurationAsProperties() {
       return new PropertyFormatter().format(configuration);
