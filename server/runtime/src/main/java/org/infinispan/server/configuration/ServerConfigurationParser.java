@@ -91,28 +91,25 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void parseServerElements(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder)
          throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case INTERFACES: {
-               parseInterfaces(reader, builder);
-               break;
-            }
-            case SOCKET_BINDINGS: {
-               parseSocketBindings(reader, builder);
-               break;
-            }
-            case SECURITY: {
-               parseSecurity(reader, builder);
-               break;
-            }
-            case ENDPOINTS: {
-               parseEndpoints(reader, holder, builder);
-               break;
-            }
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.INTERFACES) {
+         parseInterfaces(reader, builder);
+         element = nextElement(reader);
+      }
+      if (element == Element.SOCKET_BINDINGS) {
+         parseSocketBindings(reader, builder);
+         element = nextElement(reader);
+      }
+      if (element == Element.SECURITY) {
+         parseSecurity(reader, builder);
+         element = nextElement(reader);
+      }
+      if (element == Element.ENDPOINTS) {
+         parseEndpoints(reader, holder, builder);
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
       }
    }
 
@@ -233,15 +230,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseSecurity(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case SECURITY_REALMS:
-               parseSecurityRealms(reader, builder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.SECURITY_REALMS) {
+         parseSecurityRealms(reader, builder);
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
       }
    }
 
@@ -262,36 +257,41 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseSecurityRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder, RealmsConfigurationBuilder realms) throws XMLStreamException {
       String name = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
       RealmConfigurationBuilder securityRealmBuilder = realms.addSecurityRealm(name);
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case FILESYSTEM_REALM:
-               parseFileSystemRealm(reader, securityRealmBuilder.fileSystemConfiguration());
-               break;
-            case KERBEROS_REALM:
-               parseKerberosRealm(reader, securityRealmBuilder.kerberosConfiguration());
-               break;
-            case LDAP_REALM:
-               parseLdapRealm(reader, securityRealmBuilder.ldapConfiguration());
-               break;
-            case LOCAL_REALM:
-               parseLocalRealm(reader, securityRealmBuilder.localConfiguration());
-               break;
-            case PROPERTIES_REALM:
-               parsePropertiesRealm(reader, securityRealmBuilder.propertiesRealm());
-               break;
-            case SERVER_IDENTITIES:
-               parseServerIdentities(reader, securityRealmBuilder);
-               break;
-            case TOKEN_REALM:
-               parseTokenRealm(reader, builder, securityRealmBuilder.tokenConfiguration());
-               break;
-            case TRUSTSTORE_REALM:
-               parseTrustStoreRealm(reader, securityRealmBuilder.trustStoreConfiguration());
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.SERVER_IDENTITIES) {
+         parseServerIdentities(reader, securityRealmBuilder);
+         element = nextElement(reader);
+      }
+      if (element == Element.FILESYSTEM_REALM) {
+         parseFileSystemRealm(reader, securityRealmBuilder.fileSystemConfiguration());
+         element = nextElement(reader);
+      }
+      if (element == Element.KERBEROS_REALM) {
+         parseKerberosRealm(reader, securityRealmBuilder.kerberosConfiguration());
+         element = nextElement(reader);
+      }
+      if (element == Element.LDAP_REALM) {
+         parseLdapRealm(reader, securityRealmBuilder.ldapConfiguration());
+         element = nextElement(reader);
+      }
+      if (element == Element.LOCAL_REALM) {
+         parseLocalRealm(reader, securityRealmBuilder.localConfiguration());
+         element = nextElement(reader);
+      }
+      if (element == Element.PROPERTIES_REALM) {
+         parsePropertiesRealm(reader, securityRealmBuilder.propertiesRealm());
+         element = nextElement(reader);
+      }
+      if (element == Element.TOKEN_REALM) {
+         parseTokenRealm(reader, builder, securityRealmBuilder.tokenConfiguration());
+         element = nextElement(reader);
+      }
+      if (element == Element.TRUSTSTORE_REALM) {
+         parseTrustStoreRealm(reader, securityRealmBuilder.trustStoreConfiguration());
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
       }
    }
 
@@ -351,18 +351,16 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case JWT:
-               parseJWT(reader, serverBuilder, tokenRealmConfigBuilder.jwtConfiguration());
-               break;
-            case OAUTH2_INTROSPECTION:
-               parseOauth2Introspection(reader, serverBuilder, tokenRealmConfigBuilder.oauth2Configuration());
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.JWT) {
+         parseJWT(reader, serverBuilder, tokenRealmConfigBuilder.jwtConfiguration());
+         element = nextElement(reader);
+      } else if (element == Element.OAUTH2_INTROSPECTION) {
+         parseOauth2Introspection(reader, serverBuilder, tokenRealmConfigBuilder.oauth2Configuration());
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader);
       }
       tokenRealmConfigBuilder.build();
    }
@@ -662,7 +660,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          element = nextElement(reader);
       }
       if (element != null) {
-         throw ParseUtils.unexpectedElement(reader);
+         throw ParseUtils.unexpectedElement(reader, element);
       }
 
       propertiesBuilder.build();
@@ -671,33 +669,30 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseServerIdentities(XMLExtendedStreamReader reader, RealmConfigurationBuilder securityRealmBuilder) throws
          XMLStreamException {
       ServerIdentitiesConfigurationBuilder identitiesBuilder = securityRealmBuilder.serverIdentitiesConfiguration();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case SSL:
-               parseSSL(reader, identitiesBuilder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.SSL) {
+         parseSSL(reader, identitiesBuilder);
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
       }
    }
 
    private void parseSSL(XMLExtendedStreamReader reader, ServerIdentitiesConfigurationBuilder identitiesBuilder) throws
          XMLStreamException {
       SSLConfigurationBuilder serverIdentitiesBuilder = identitiesBuilder.addSslConfiguration();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case ENGINE:
-               parseSSLEngine(reader, serverIdentitiesBuilder.engine());
-               break;
-            case KEYSTORE:
-               parseKeyStore(reader, serverIdentitiesBuilder.keyStore());
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.KEYSTORE) {
+         parseKeyStore(reader, serverIdentitiesBuilder.keyStore());
+         element = nextElement(reader);
+      }
+      if (element == Element.ENGINE) {
+         parseSSLEngine(reader, serverIdentitiesBuilder.engine());
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
       }
    }
 

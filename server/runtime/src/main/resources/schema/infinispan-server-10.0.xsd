@@ -699,9 +699,9 @@
       <xs:sequence>
          <xs:element type="tns:security-realm-server-identities" name="server-identities" minOccurs="0"/>
          <xs:element type="tns:security-realm-filesystem" name="filesystem-realm" minOccurs="0"/>
+         <xs:element type="tns:security-realm-kerberos" name="kerberos-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-ldap" name="ldap-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-local" name="local-realm" minOccurs="0"/>
-         <xs:element type="tns:security-realm-kerberos" name="kerberos-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-token" name="token-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-truststore" name="truststore-realm" minOccurs="0"/>
