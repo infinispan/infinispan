@@ -33,6 +33,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private boolean tcpKeepAlive = false;
    private Protocol protocol = Protocol.HTTP_11;
    private String contextPath = "/rest";
+   private boolean priorKnowledge;
 
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
@@ -73,6 +74,12 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    @Override
    public RestClientConfigurationBuilder protocol(Protocol protocol) {
       this.protocol = protocol;
+      return this;
+   }
+
+   @Override
+   public RestClientConfigurationBuilder priorKnowledge(boolean enabled) {
+      this.priorKnowledge = enabled;
       return this;
    }
 
@@ -146,7 +153,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
          servers.add(new ServerConfiguration("127.0.0.1", RestClientConfigurationProperties.DEFAULT_REST_PORT));
       }
 
-      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath);
+      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge);
    }
 
 

@@ -13,8 +13,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.rest.NettyHttpClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
+import org.infinispan.client.NettyHttpClient;
 import org.infinispan.commons.util.Eventually;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -37,7 +37,7 @@ public class BenchmarkHttpClient {
    private final ExecutorService executor;
 
    public BenchmarkHttpClient(RestClientConfiguration configuration, int threads) {
-      nettyHttpClient = new NettyHttpClient(configuration);
+      nettyHttpClient = NettyHttpClient.forConfiguration(configuration);
       executor = Executors.newFixedThreadPool(threads);
       executorCompletionService = new ExecutorCompletionService(executor);
    }

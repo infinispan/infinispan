@@ -26,6 +26,12 @@ public interface RestClientConfigurationChildBuilder {
    RestClientConfigurationBuilder protocol(Protocol protocol);
 
    /**
+    * Configure the client to use <a href="https://http2.github.io/http2-spec/#known-http">Prior Knowledge</a>
+    *
+    */
+   RestClientConfigurationBuilder priorKnowledge(boolean enabled);
+
+   /**
     * This property defines the maximum socket connect timeout before giving up connecting to the
     * server.
     */

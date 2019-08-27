@@ -36,6 +36,11 @@ public abstract class AbstractConfigurationChildBuilder implements RestClientCon
    }
 
    @Override
+   public RestClientConfigurationBuilder priorKnowledge(boolean enabled) {
+      return builder.priorKnowledge(enabled);
+   }
+
+   @Override
    public RestClientConfigurationBuilder socketTimeout(int socketTimeout) {
       return builder.socketTimeout(socketTimeout);
    }

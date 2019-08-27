@@ -9,13 +9,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
+import org.infinispan.client.NettyHttpClient;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.junit.Cleanup;
-import org.infinispan.client.rest.NettyHttpClient;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
@@ -53,13 +53,15 @@ public class SinglePortIT {
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host("localhost").port(8080).protocol(Protocol.HTTP_20);
-      try (NettyHttpClient client = new NettyHttpClient(builder.build())) {
-
+      NettyHttpClient client = NettyHttpClient.forConfiguration(builder.build());
+      try {
          //when
          FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
          //then
          assertEquals(HttpResponseStatus.OK, response.status());
+      } finally {
+         client.stop();
       }
    }
 
@@ -73,13 +75,15 @@ public class SinglePortIT {
       builder.addServer().host("localhost").port(8443).protocol(Protocol.HTTP_20)
             .security().ssl().trustStoreFileName(SecurityConfigurationHelper.DEFAULT_TRUSTSTORE_PATH)
             .trustStorePassword(SecurityConfigurationHelper.DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
-
-      try (NettyHttpClient client = new NettyHttpClient(builder.build())) {
+      NettyHttpClient client = NettyHttpClient.forConfiguration(builder.build());
+      try {
          //when
          FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
          //then
          assertEquals(HttpResponseStatus.OK, response.status());
+      } finally {
+         client.stop();
       }
    }
 
