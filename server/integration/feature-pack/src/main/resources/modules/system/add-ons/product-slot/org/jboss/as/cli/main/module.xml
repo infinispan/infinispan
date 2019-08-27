@@ -14,22 +14,34 @@
     </resources>
 
     <dependencies>
-        <!-- for java.beans -->
         <module name="java.datatransfer"/>
+        <!-- for java.beans -->
         <module name="java.desktop"/>
         <module name="java.logging"/>
         <module name="java.management"/>
         <module name="java.prefs"/>
         <module name="java.security.sasl"/>
         <module name="java.xml"/>
-        <module name="jdk.jconsole"/>
+
+        <!-- JAXP default dependencies. DO NOT REMOVE!!!
+             These are loaded by the JAXP redirect facility in jboss-modules when this module is used
+             as a boot module. The purpose is to provide a common default JAXP implementation on all JDKs.
+             This is necessary since we have to override the JAXP APIs to fix incompatibilities
+             with modular class-loading. In the future we may be able to replace this construct
+             if JAXP APIs are fixed on all known JVMs *and* we implement a subsystem to provide a similar
+             default/fallback common parser behavior. Please discuss any design changes in this area
+             on the WildFly development mailing list before enacting.
+        -->
+        <module name="org.apache.xalan" services="import" optional="true"/>
+        <module name="org.apache.xerces" services="import"/>
+        <module name="org.codehaus.woodstox" services="import"/>
+        <!-- END JAXP default dependencies -->
 
         <module name="org.aesh" export="true"/>
         <module name="org.jboss.modules"/>
-        <module name="org.jboss.stdio"/>
         <module name="org.jboss.as.controller-client"/>
         <module name="org.jboss.as.protocol"/>
-        <module name="org.wildfly.security.manager"/>
+        <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="org.jboss.as.patching.cli" optional="true" services="import"/>
         <module name="org.jboss.dmr"/>
         <module name="org.jboss.logging" slot="@infinispan.module.slot@"/>
@@ -39,7 +51,8 @@
         <module name="org.jboss.stdio"/>
         <module name="org.jboss.threads"/>
         <module name="org.jboss.vfs"/>
+        <module name="org.picketbox" optional="true"/>
+        <module name="org.wildfly.common"/>
         <module name="org.wildfly.embedded"/>
-        <module name="org.wildfly.security.elytron-private"/>
     </dependencies>
 </module>
