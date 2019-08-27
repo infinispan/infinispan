@@ -24,8 +24,9 @@ public class RestClientConfiguration {
    private final boolean tcpKeepAlive;
    private final Protocol protocol;
    private final String contextPath;
+   private final boolean priorKnowledge;
 
-   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, int connectionTimeout, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath) {
+   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, int connectionTimeout, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge) {
       this.servers = Collections.unmodifiableList(servers);
       this.protocol = protocol;
       this.connectionTimeout = connectionTimeout;
@@ -34,10 +35,15 @@ public class RestClientConfiguration {
       this.tcpNoDelay = tcpNoDelay;
       this.tcpKeepAlive = tcpKeepAlive;
       this.contextPath = contextPath;
+      this.priorKnowledge = priorKnowledge;
    }
 
    public Protocol protocol() {
       return protocol;
+   }
+
+   public boolean priorKnowledge() {
+      return priorKnowledge;
    }
 
    public int connectionTimeout() {

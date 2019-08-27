@@ -12,11 +12,11 @@ import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
+import org.infinispan.client.NettyHttpClient;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.rest.NettyHttpClient;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
@@ -113,7 +113,7 @@ public class SinglePortTest {
         //when
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host("localhost").port(port).protocol(Protocol.HTTP_20);
-        httpClient = new NettyHttpClient(builder.build());
+        httpClient = NettyHttpClient.forConfiguration(builder.build());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
@@ -164,7 +164,7 @@ public class SinglePortTest {
         // First off we verify that the HTTP side of things works
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host(host).port(port).protocol(Protocol.HTTP_11);
-        httpClient = new NettyHttpClient(builder.build());
+        httpClient = NettyHttpClient.forConfiguration(builder.build());
 
         DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1, POST, restPrefix + "/key", wrappedBuffer("value".getBytes(CharsetUtil.UTF_8)));
         request.trailingHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
@@ -212,7 +212,7 @@ public class SinglePortTest {
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host(singlePortRouter.getHost()).port(singlePortRouter.getPort()).protocol(Protocol.HTTP_20)
               .security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray());
-        httpClient = new NettyHttpClient(builder.build());
+        httpClient = NettyHttpClient.forConfiguration(builder.build());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));

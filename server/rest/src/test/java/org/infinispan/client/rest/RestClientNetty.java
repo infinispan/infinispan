@@ -5,6 +5,7 @@ import static io.netty.buffer.Unpooled.wrappedBuffer;
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.client.NettyHttpClient;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 
@@ -26,14 +27,14 @@ public class RestClientNetty implements RestClient {
 
    public RestClientNetty(RestClientConfiguration configuration) {
       this.configuration = configuration;
-      httpClient = new NettyHttpClient(configuration);
+      httpClient = NettyHttpClient.forConfiguration(configuration);
       baseURL = String.format("%s/v2/caches", configuration.contextPath());
       version = configuration.protocol() == Protocol.HTTP_11 ? HttpVersion.HTTP_1_1 : new HttpVersion("HTTP/2", true);
    }
 
    @Override
    public void close() throws IOException {
-      httpClient.close();
+      httpClient.stop();
    }
 
    private String buildURL(String cache, String key) {
