@@ -5030,11 +5030,11 @@
          </properties>
       </profile>
       <profile>
-         <!-- Profile used to compile Java 10-specific classes. It requires that the java10.home property points to a JDK 10 installation -->
-         <id>jdk10-compile</id>
+         <!-- Profile used to compile Java 11-specific classes. -->
+         <id>jdk11-compile</id>
          <activation>
             <file>
-               <exists>${basedir}/src/main/java10</exists>
+               <exists>${basedir}/src/main/java11</exists>
             </file>
          </activation>
          <build>
@@ -5043,15 +5043,15 @@
                   <artifactId>maven-compiler-plugin</artifactId>
                   <executions>
                      <execution>
-                        <id>java10-compile</id>
+                        <id>java11-compile</id>
                         <phase>compile</phase>
                         <goals>
                            <goal>compile</goal>
                         </goals>
                         <configuration>
-                           <release>10</release>
-                           <compileSourceRoots>${project.basedir}/src/main/java10</compileSourceRoots>
-                           <outputDirectory>${project.build.outputDirectory}/META-INF/versions/10</outputDirectory>
+                           <release>11</release>
+                           <compileSourceRoots>${project.basedir}/src/main/java11</compileSourceRoots>
+                           <outputDirectory>${project.build.outputDirectory}/META-INF/versions/11</outputDirectory>
                            <additionalClasspathElements>
                               <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
                            </additionalClasspathElements>
@@ -5096,13 +5096,13 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <executions>
                      <execution>
-                        <id>java10-test</id>
+                        <id>java11-test</id>
                         <phase>test</phase>
                         <goals>
                            <goal>test</goal>
                         </goals>
                         <configuration>
-                           <groups>org.infinispan.commons.test.categories.Java10</groups>
+                           <groups>org.infinispan.commons.test.categories.Java11</groups>
                         </configuration>
                      </execution>
                   </executions>
@@ -5111,10 +5111,10 @@
          </build>
       </profile>
       <profile>
-         <id>jdk10-test-compile</id>
+         <id>jdk11-test-compile</id>
          <activation>
             <file>
-               <exists>${basedir}/src/test/java10</exists>
+               <exists>${basedir}/src/test/java11</exists>
             </file>
          </activation>
          <build>
@@ -5123,15 +5123,15 @@
                   <artifactId>maven-compiler-plugin</artifactId>
                   <executions>
                      <execution>
-                        <id>java10-test-compile</id>
+                        <id>java11-test-compile</id>
                         <phase>test-compile</phase>
                         <goals>
                            <goal>compile</goal>
                         </goals>
                         <configuration>
-                           <release>10</release>
-                           <compileSourceRoots>${project.basedir}/src/test/java10</compileSourceRoots>
-                           <outputDirectory>${project.build.testOutputDirectory}/META-INF/versions/10</outputDirectory>
+                           <release>11</release>
+                           <compileSourceRoots>${project.basedir}/src/test/java11</compileSourceRoots>
+                           <outputDirectory>${project.build.testOutputDirectory}/META-INF/versions/11</outputDirectory>
                            <!-- Include method parameter debug info -->
                            <parameters>true</parameters>
                         </configuration>
@@ -5191,7 +5191,7 @@
                   <executions>
                      <execution>
                         <!-- Do not run the JDK10+-specific tests with JDK8 -->
-                        <id>java10-test</id>
+                        <id>java11-test</id>
                         <phase>none</phase>
                      </execution>
                   </executions>
