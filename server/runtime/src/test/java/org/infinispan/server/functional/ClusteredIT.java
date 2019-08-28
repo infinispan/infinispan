@@ -14,6 +14,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
       HotRodCacheOperations.class,
       RestOperations.class,
+      RestServerResource.class,
       MemcachedOperations.class,
       HotRodCounterOperations.class,
       HotRodMultiMapOperations.class,

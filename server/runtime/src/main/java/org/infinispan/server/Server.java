@@ -15,6 +15,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
@@ -30,6 +31,7 @@ import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.admin.ServerAdminOperationsHandler;
 import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.logging.Log;
@@ -58,7 +60,7 @@ import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  */
-public class Server {
+public class Server implements ServerManagement {
    public static final Log log = LogFactory.getLog("SERVER", Log.class);
 
    // Properties
@@ -113,6 +115,7 @@ public class Server {
    private Map<String, DefaultCacheManager> cacheManagers;
    private Map<String, ProtocolServer> protocolServers;
    private volatile ComponentStatus status;
+   private ServerConfiguration serverConfiguration;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -243,13 +246,14 @@ public class Server {
          cacheManagers.put(cm.getName(), cm);
 
          // Start the protocol servers
-         ServerConfiguration serverConfiguration = cm.getCacheManagerConfiguration().module(ServerConfiguration.class);
+         serverConfiguration = cm.getCacheManagerConfiguration().module(ServerConfiguration.class);
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
          ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
          serverConfiguration.endpoints().connectors().parallelStream().forEach(configuration -> {
             try {
                Class<? extends ProtocolServer> protocolServerClass = configuration.getClass().getAnnotation(ConfigurationFor.class).value().asSubclass(ProtocolServer.class);
                ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
+               if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
                protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                SecurityActions.startProtocolServer(protocolServer, configuration, cm);
                ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
@@ -284,12 +288,21 @@ public class Server {
       return r;
    }
 
+   @Override
+   public ConfigurationInfo getConfiguration() {
+      return serverConfiguration;
+   }
+
    private void shutdown() {
       status = ComponentStatus.STOPPING;
       // Shutdown the protocol servers in parallel
-      protocolServers.values().parallelStream().forEach(ps -> ps.stop());
+      protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
       cacheManagers.values().forEach(cm -> SecurityActions.stopCacheManager(cm));
       status = ComponentStatus.TERMINATED;
+   }
+
+   public void stop() {
+      getExitHandler().exit(0);
    }
 
    public ConfigurationBuilderHolder getConfigurationBuilderHolder() {
