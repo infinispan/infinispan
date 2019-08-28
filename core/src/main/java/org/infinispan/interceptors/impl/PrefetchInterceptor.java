@@ -195,8 +195,8 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       if (blockedSegments != null) {
          CompletableFuture<Void> blockingFuture = CompletableFuture.allOf(blockedSegments.stream()
                .mapToObj(svm::getBlockingFuture).toArray(CompletableFuture[]::new));
-         return asyncValue(blockingFuture.thenCompose(
-               nil -> makeStage(prefetchKeysIfNeededAndInvokeNext(ctx, command, keys, true)).toCompletableFuture()));
+         return asyncValue(blockingFuture).thenApply(ctx, command,
+               (rCtx, rCommand, rv) -> prefetchKeysIfNeededAndInvokeNext(rCtx, (C) rCommand, keys, true));
       }
       if (transferedKeys != null) {
          return asyncInvokeNext(ctx, command, retrieveRemoteValues(ctx, command, transferedKeys));
@@ -239,7 +239,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                                      rpcManager.getSyncRpcOptions()) :
             rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
                                           rpcManager.getSyncRpcOptions());
-      return makeStage(asyncValue(remoteInvocation).thenApply(ctx, dataCommand, handleRemotelyPrefetchedEntry));
+      return asyncValue(remoteInvocation).thenApplyMakeStage(ctx, dataCommand, handleRemotelyPrefetchedEntry);
    }
 
    private Object handleRemotelyPrefetchedEntry(InvocationContext ctx, VisitableCommand command, Object rv) {
@@ -295,7 +295,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
       command.setTopologyId(originCommand.getTopologyId());
       CompletionStage<Map<Address, Response>> rpcFuture = rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-      return makeStage(asyncValue(rpcFuture).thenApply(ctx, originCommand, (rCtx, rCommand, rv) -> {
+      return asyncValue(rpcFuture).thenApplyMakeStage(ctx, originCommand, (rCtx, rCommand, rv) -> {
          TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rCommand;
          Map<Address, Response> responseMap = (Map<Address, Response>) rv;
          InternalCacheValue[] maxValues = new InternalCacheValue[keys.size()];
@@ -346,7 +346,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          PutMapCommand putMapCommand = commandsFactory.buildPutMapCommand(map, null, STATE_TRANSFER_FLAGS);
          putMapCommand.setTopologyId(topologyAffectedCommand.getTopologyId());
          return invokeNext(rCtx, putMapCommand);
-      }));
+      });
    }
 
    protected Object handleReadManyCommand(InvocationContext ctx, AbstractTopologyAffectedCommand command, Collection<?> keys) throws Throwable {
