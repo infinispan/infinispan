@@ -21,6 +21,10 @@ public class ServerSecurityRealm {
       this.httpChallengeReadiness = httpChallengeReadiness;
    }
 
+   public String getName() {
+      return name;
+   }
+
    public ServerAuthenticationProvider getSASLAuthenticationProvider() {
       return new ElytronSASLAuthenticationProvider(name, securityDomain);
    }

@@ -21,6 +21,7 @@ import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBui
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.sasl.WildFlySasl;
 
 /**
  * Server endpoint configuration parser
@@ -193,6 +194,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
+      if (securityRealm == null) {
+         throw Server.log.authenticationWithoutSecurityRealm();
+      }
+      // Automatically set the digest realm name. It can be overridden by the user
+      builder.addMechProperty(WildFlySasl.REALM_LIST, securityRealm.getName());
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -204,9 +210,6 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
-      }
-      if (securityRealm == null) {
-         throw Server.log.authenticationWithoutSecurityRealm();
       }
       builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider());
    }
