@@ -29,7 +29,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
@@ -378,7 +377,7 @@ public class DefaultLockManager implements LockManager {
       @Override
       public InvocationStage toInvocationStage() {
          if (notifier.isDone()) {
-            return checkState(notifier.getNow(lockState), SyncInvocationStage::new, SimpleAsyncInvocationStage::new);
+            return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage, SimpleAsyncInvocationStage::new);
          } else {
             return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(lockState -> {
                Object rv = checkState(lockState, () -> null, throwable -> throwable);

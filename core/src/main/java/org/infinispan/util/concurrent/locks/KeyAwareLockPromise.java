@@ -1,7 +1,6 @@
 package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.util.concurrent.TimeoutException;
 
 /**
@@ -30,7 +29,7 @@ public interface KeyAwareLockPromise extends LockPromise {
 
       @Override
       public InvocationStage toInvocationStage() {
-         return new SyncInvocationStage();
+         return InvocationStage.completedNullStage();
       }
 
    };

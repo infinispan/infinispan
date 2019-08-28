@@ -21,7 +21,6 @@ import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -59,17 +58,17 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
       InvocationStage originVersionStage = makeStage(asyncInvokeNext(ctx, command, originVersionData));
 
-      InvocationStage newVersionStage = makeStage(originVersionStage.thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      InvocationStage newVersionStage = originVersionStage.thenApplyMakeStage(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
          VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) rCommand;
          if (txInvocationContext.isOriginLocal()) {
             // This is already completed, so just return a sync stage
-            return makeStage(CompletionStages.join(originVersionData));
+            return asyncValue(originVersionData);
          } else {
             return asyncValue(cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
                   versionedPrepareCommand));
          }
-      }));
+      });
 
       return newVersionStage.thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
