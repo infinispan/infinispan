@@ -25,7 +25,7 @@ import io.netty.handler.ssl.SslContext;
 public class RestClientAHC implements RestClient {
    private final RestClientConfiguration configuration;
    private final AsyncHttpClient httpClient;
-   private final String baseURL;
+   private final String baseURL, baseServerURL, baseCachesURL;
 
    public RestClientAHC(RestClientConfiguration configuration) {
       this.configuration = configuration;
@@ -52,7 +52,9 @@ public class RestClientAHC implements RestClient {
       }
       httpClient = new DefaultAsyncHttpClient(builder.build());
       ServerConfiguration server = configuration.servers().get(0);
-      baseURL = String.format("%s://%s:%d%s/v2/caches", sslContext == null ? "http" : "https", server.host(), server.port(), configuration.contextPath());
+      baseURL = String.format("%s://%s:%d%s/v2/", sslContext == null ? "http" : "https", server.host(), server.port(), configuration.contextPath());
+      baseCachesURL = baseURL + "caches";
+      baseServerURL = baseURL + "server";
    }
 
    @Override
@@ -61,7 +63,7 @@ public class RestClientAHC implements RestClient {
    }
 
    private String buildURL(String cache, String key) {
-      return baseURL + "/" + cache + "/" + key;
+      return baseCachesURL + "/" + cache + "/" + key;
    }
 
    public CompletionStage<RestResponse> post(String cache, String key, String value) {
@@ -87,8 +89,44 @@ public class RestClientAHC implements RestClient {
    }
 
    public CompletionStage<RestResponse> createCacheFromTemplate(String cacheName, String template) {
-      String url = String.format("%s/%s?template=%s", baseURL, cacheName, template);
+      String url = String.format("%s/%s?template=%s", baseCachesURL, cacheName, template);
       BoundRequestBuilder request = httpClient.preparePost(url);
+      return execute(request);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverConfig() {
+      return serverGet("config");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverStop() {
+      return serverGet("stop");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverThreads() {
+      return serverGet("threads");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverMemory() {
+      return serverGet("memory");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverEnv() {
+      return serverGet("env");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverInfo() {
+      BoundRequestBuilder request = httpClient.prepareGet(baseServerURL);
+      return execute(request);
+   }
+
+   private CompletionStage<RestResponse> serverGet(String path) {
+      BoundRequestBuilder request = httpClient.prepareGet(baseServerURL + "/" + path);
       return execute(request);
    }
 

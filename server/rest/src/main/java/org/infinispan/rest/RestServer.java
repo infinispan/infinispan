@@ -14,11 +14,11 @@ import org.infinispan.rest.resources.CacheManagerResource;
 import org.infinispan.rest.resources.CacheResource;
 import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.CounterResource;
+import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.SplashResource;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.transport.NettyInitializers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -31,9 +31,10 @@ import io.netty.channel.ChannelOutboundHandler;
  * @author Sebastian Łaskawiec
  */
 public class RestServer extends AbstractProtocolServer<RestServerConfiguration> {
+   private ServerManagement server;
    private RestDispatcher restDispatcher;
    private RestCacheManager<Object> restCacheManager;
-   private final ObjectMapper mapper = new ObjectMapper();
+   private InvocationHelper invocationHelper;
 
    public RestServer() {
       super("REST");
@@ -71,6 +72,11 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    public void stop() {
       super.stop();
       restCacheManager.stop();
+      if (invocationHelper != null) invocationHelper.stop();
+   }
+
+   public void setServer(ServerManagement server) {
+      this.server = server;
    }
 
    @Override
@@ -83,8 +89,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       super.startInternal(configuration, cacheManager);
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
 
-      InvocationHelper invocationHelper = new InvocationHelper(restCacheManager,
-            (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), configuration, getExecutor());
+      invocationHelper = new InvocationHelper(restCacheManager,
+            (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),
+            configuration, server, getExecutor());
 
       String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";
       ResourceManager resourceManager = new ResourceManagerImpl(rootContext);
@@ -94,6 +101,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(new SplashResource());
       resourceManager.registerResource(new CounterResource(invocationHelper));
       resourceManager.registerResource(new CacheManagerResource(invocationHelper));
+      if (server != null) {
+         resourceManager.registerResource(new ServerResource(invocationHelper));
+      }
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }
 }

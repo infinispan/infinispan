@@ -22,13 +22,15 @@ import io.netty.util.CharsetUtil;
 public class RestClientNetty implements RestClient {
    private final RestClientConfiguration configuration;
    private final NettyHttpClient httpClient;
-   private final String baseURL;
+   private final String baseURL, baseCachesURL, baseServerURL;
    private final HttpVersion version;
 
    public RestClientNetty(RestClientConfiguration configuration) {
       this.configuration = configuration;
       httpClient = NettyHttpClient.forConfiguration(configuration);
       baseURL = String.format("%s/v2/caches", configuration.contextPath());
+      baseCachesURL = baseURL + "caches";
+      baseServerURL = baseURL + "server";
       version = configuration.protocol() == Protocol.HTTP_11 ? HttpVersion.HTTP_1_1 : new HttpVersion("HTTP/2", true);
    }
 
@@ -38,7 +40,7 @@ public class RestClientNetty implements RestClient {
    }
 
    private String buildURL(String cache, String key) {
-      return baseURL + "/" + cache + "/" + key;
+      return baseCachesURL + "/" + cache + "/" + key;
    }
 
    @Override
@@ -67,8 +69,44 @@ public class RestClientNetty implements RestClient {
 
    @Override
    public CompletionStage<RestResponse> createCacheFromTemplate(String cacheName, String template) {
-      String url = String.format("%s/%s?template=%s", baseURL, cacheName, template);
+      String url = String.format("%s/%s?template=%s", baseCachesURL, cacheName, template);
       DefaultFullHttpRequest request = new DefaultFullHttpRequest(version, HttpMethod.POST, url);
+      return execute(request);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverConfig() {
+      return serverGet("config");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverStop() {
+      return serverGet("stop");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverThreads() {
+      return serverGet("threads");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverMemory() {
+      return serverGet("memory");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverEnv() {
+      return serverGet("env");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> serverInfo() {
+      DefaultFullHttpRequest request = new DefaultFullHttpRequest(version, HttpMethod.GET, baseServerURL);
+      return execute(request);
+   }
+
+   private CompletionStage<RestResponse> serverGet(String path) {
+      DefaultFullHttpRequest request = new DefaultFullHttpRequest(version, HttpMethod.GET, baseServerURL + "/" + path);
       return execute(request);
    }
 
