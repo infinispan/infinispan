@@ -27,14 +27,4 @@
       <bundle>mvn:org.infinispan/infinispan-query-dsl/${project.version}</bundle>
       <bundle>wrap:mvn:com.google.code.gson/gson/${version.gson}</bundle>
    </feature>
-
-   <!-- deprecated will be removed in the future, use 'infinispan-client-hotrod-with-query' instead -->
-   <feature name="hotrod-client" version="${project.version}">
-      <feature version="${project.version}">infinispan-client-hotrod</feature>
-   </feature>
-
-   <!-- deprecated, will be removed in the future 'infinispan-client-hotrod-with-query' instead -->
-   <feature name="hotrod-client-with-query" version="${project.version}">
-      <feature version="${project.version}">infinispan-client-hotrod-with-query</feature>
-   </feature>
 </features>
