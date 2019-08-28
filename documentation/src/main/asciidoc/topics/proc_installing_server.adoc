@@ -1,0 +1,20 @@
+= Installing {brandname} Server
+Extract the {brandname} server archive to any directory on your host.
+
+.Procedure
+Use any extraction tool with the server archive, for example:
+
+ifndef::productized[]
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/extract_ispn_server.adoc[]
+----
+endif::productized[]
+ifdef::productized[]
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/extract_ispn_server.adoc[]
+----
+endif::productized[]
+
+The resulting directory is your `{server_home}`.

@@ -1,6 +1,0 @@
-= {brandname} Server
-{brandname} Server is a standalone server which exposes any number of caches to clients over a variety of protocols, including HotRod, Memcached and REST.
-
-Because {brandname} Server is closely tied to the latest releases of {brandname} and JGroups, the subsystems which control these components are different, in that they introduce new features and change some existing ones (e.g. cross-site replication, etc).
-
-For this reason, the configuration of these subsystems should use the {brandname} Server-specific schema, although for most use-cases the configuration is interchangeable.

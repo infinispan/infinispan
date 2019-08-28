@@ -14,7 +14,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Running {brandname} {infinispanversion} Servers
+= Deploying and Configuring {brandname} {infinispanversion} Servers
+
+{brandname} server is a managed, distributed, and clusterable data grid that provides elastic scaling and high performance access to caches from multiple endpoints, such as Hot Rod and REST.
 
 //User stories
 include::stories.adoc[]

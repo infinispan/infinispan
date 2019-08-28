@@ -2,8 +2,6 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_getting_started_server.adoc[leveloffset=+1]
-include::{stories}/assembly_server_operating_modes.adoc[leveloffset=+1]
-include::{stories}/assembly_server_modules.adoc[leveloffset=+1]
 include::{stories}/assembly_configuring_server.adoc[leveloffset=+1]
 include::{stories}/assembly_performing_rolling_upgrades.adoc[leveloffset=+1]
 include::{stories}/assembly_scripting_server.adoc[leveloffset=+1]

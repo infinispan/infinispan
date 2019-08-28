@@ -1,8 +1,0 @@
-= Domain mode
-Domain mode is the recommended way to run a cluster of servers, since they can all be managed centrally from a single control point.
-The following diagram explains the topology of an example domain configuration, with 4 server nodes (A1, A2, B1, B2) running on two physical hosts (A, B):
-
-image::{images_dir}/domain.svg[align="center", title="Domain-mode"]
-
-Hosts::
-Each "Host" box in the above diagram represents a physical or virtual host. A physical host can contain zero, one or more server instances.

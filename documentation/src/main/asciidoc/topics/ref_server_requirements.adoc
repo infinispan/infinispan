@@ -1,0 +1,15 @@
+= {brandname} Server Requirements
+Check host system requirements for the {brandname} server.
+
+//Community
+ifndef::productized[]
+{brandname} server requires a Java Virtual Machine and supports:
+
+* Java 8
+* Java 11
+endif::productized[]
+
+//Product
+ifdef::productized[]
+See the link:https://access.redhat.com/articles/2435931[{FullProductName} Supported Configurations].
+endif::productized[]
