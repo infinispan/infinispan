@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Test the infinispan extension can be loaded in WFLY
+ * Test the infinispan extension can be loaded in WildFly.
  *
  * @author Ryan Emerson
  * @since 9.2
@@ -39,7 +39,7 @@ public class InfinispanExtensionIT {
    EmbeddedCacheManager container;
 
    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container/cache/default")
-   Cache cache;
+   Cache<String, Integer> cache;
 
    @Deployment(name = "dep1", order = 1)
    public static Archive<?> dep1() {
@@ -79,7 +79,7 @@ public class InfinispanExtensionIT {
       assertTrue(container.getCacheManagerConfiguration().isClustered());
       assertNotNull(cache);
       cache.put("1", 1);
-      assertEquals(1, cache.get("1"));
+      assertEquals(Integer.valueOf(1), cache.get("1"));
    }
 
    @Test
@@ -88,6 +88,6 @@ public class InfinispanExtensionIT {
       assertNotNull(container);
       assertTrue(container.getCacheManagerConfiguration().isClustered());
       assertNotNull(cache);
-      assertEquals(1, cache.get("1"));
+      assertEquals(Integer.valueOf(1), cache.get("1"));
    }
 }

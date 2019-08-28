@@ -21,11 +21,11 @@ public class ProjectedJsonResult extends BaseJsonQueryResult {
    public ProjectedJsonResult(int totalResults, String[] projections, List<Object> values) {
       super(totalResults);
       hits = new ArrayList<>(projections.length);
-      for (Object result1 : values) {
-         Object[] result = (Object[]) result1;
+      for (Object v : values) {
+         Object[] result = (Object[]) v;
          Map<String, Object> p = new HashMap<>();
-         for (int j = 0; j < projections.length; j++) {
-            p.put(projections[j], result[j]);
+         for (int i = 0; i < projections.length; i++) {
+            p.put(projections[i], result[i]);
          }
          hits.add(new JsonProjection(p));
       }
@@ -34,5 +34,4 @@ public class ProjectedJsonResult extends BaseJsonQueryResult {
    public List<JsonProjection> getHits() {
       return hits;
    }
-
 }

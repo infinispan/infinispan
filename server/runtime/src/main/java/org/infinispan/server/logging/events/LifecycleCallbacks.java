@@ -24,7 +24,7 @@ import org.infinispan.util.logging.events.EventLogger;
  * @author Tristan Tarrant
  * @since 8.2
  */
-@InfinispanModule(name = "server-event-logger", requiredModules = "core")
+@InfinispanModule(name = "server-event-logger", requiredModules = {"core", "query-core"})
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    private EventLogger oldEventLogger;
@@ -53,7 +53,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    private ConfigurationBuilder getTaskHistoryCacheConfiguration(EmbeddedCacheManager cacheManager) {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.memory().size(100l).persistence().passivation(true).expiration().lifespan(7, TimeUnit.DAYS);
+      cfg.memory().size(100L).persistence().passivation(true).expiration().lifespan(7, TimeUnit.DAYS);
       return cfg;
    }
 }

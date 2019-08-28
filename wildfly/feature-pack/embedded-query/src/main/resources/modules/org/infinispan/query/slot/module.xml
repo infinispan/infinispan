@@ -14,6 +14,7 @@
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.query.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.objectfilter" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.lock" slot="@infinispan.module.slot@" services="export" export="true"/>
         <module name="org.infinispan.lucene-directory" slot="@infinispan.module.slot@" services="export"/>

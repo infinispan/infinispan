@@ -16,7 +16,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;

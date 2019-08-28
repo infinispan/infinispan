@@ -10,7 +10,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.query.dsl.IndexedQueryMode;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 
@@ -30,9 +29,9 @@ public interface RemoteQueryManager {
    Class<? extends Matcher> getMatcherClass(MediaType mediaType);
 
    /**
-    * @return {@link QueryEngine}
+    * @return {@link ObjectRemoteQueryEngine}
     */
-   BaseRemoteQueryEngine getQueryEngine(AdvancedCache<?, ?> cache);
+   ObjectRemoteQueryEngine getQueryEngine(AdvancedCache<?, ?> cache);
 
    /**
     * @param queryRequest serialized {@link QueryRequest} provided by the remote client.

@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({MESSAGE, CAUSE})
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 @JsonTypeName(ERROR)
-@SuppressWarnings("unused")
 public class JsonQueryErrorResult extends JsonQueryResponse {
 
    @JsonProperty(MESSAGE)

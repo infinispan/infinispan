@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 9.4
  */
-@SuppressWarnings("unused")
 public class JsonQueryRequest {
 
    private static final Integer DEFAULT_OFFSET = 0;

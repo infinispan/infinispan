@@ -11,7 +11,7 @@ import org.infinispan.query.dsl.Query;
  * (a JP-QL subset with full-text support) or using the query DSL (see {@link org.infinispan.query.dsl}). The matching
  * filters are notified via a callback supplied when registering the filter. The filter will have to specify the fully
  * qualified type name of the matching entity type because simple names cannot be easily resolved as it would happen
- * in the case of an {@link javax.persistence.EntityManager} which has knowledge of all types in advance and is able to
+ * in the case of an {@code javax.persistence.EntityManager} which has knowledge of all types in advance and is able to
  * translate simple names to fully qualified names unambiguously.
  * <p>
  * Full-text predicates are not supported at the moment.

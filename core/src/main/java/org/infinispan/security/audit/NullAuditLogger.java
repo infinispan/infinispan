@@ -23,6 +23,6 @@ public class NullAuditLogger implements AuditLogger {
 
    @Override
    public boolean equals(Object obj) {
-      return (obj != null && obj instanceof NullAuditLogger);
+      return obj instanceof NullAuditLogger;
    }
 }

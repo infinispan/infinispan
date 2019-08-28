@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.management.ObjectName;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -132,7 +133,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       if (!icr.isInternalCache(cacheName)) {
          // a stop dependency must be added for each non-internal cache
          ProtobufMetadataManagerImpl protobufMetadataManager =
-            (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class).running();
+               (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class).running();
          protobufMetadataManager.addCacheDependency(cacheName);
 
          // a remote query manager must be added for each non-internal cache
@@ -145,12 +146,13 @@ public final class LifecycleManager implements ModuleLifecycle {
    private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
       ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
       MediaType valueStorageMediaType = valueEncoding.mediaType();
-      MediaType storageMediaType = cr.getComponent(Cache.class).getAdvancedCache().getValueDataConversion().getStorageMediaType();
+      AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
+      MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
       QuerySerializers querySerializers = buildQuerySerializers(cr, storageMediaType);
 
       boolean isObjectStorage = valueStorageMediaType != null && valueStorageMediaType.match(APPLICATION_OBJECT);
-      if (isObjectStorage) return new ObjectRemoteQueryManager(cr, querySerializers);
-      return new ProtobufRemoteQueryManager(ctx, cr, querySerializers);
+      if (isObjectStorage) return new ObjectRemoteQueryManager(cache, cr, querySerializers);
+      return new ProtobufRemoteQueryManager(cache, cr, ctx, querySerializers);
    }
 
    private QuerySerializers buildQuerySerializers(ComponentRegistry cr, MediaType storageMediaType) {

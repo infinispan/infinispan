@@ -9,8 +9,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
-import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.core.impl.QueryCache;
 
 /**
  * Lookup methods for various internal components of search module.
@@ -54,8 +54,8 @@ public final class ComponentRegistryUtils {
       return getRequiredComponent(cache, KeyTransformationHandler.class);
    }
 
-   public static EmbeddedQueryEngine getEmbeddedQueryEngine(Cache<?, ?> cache) {
-      return getRequiredComponent(cache, EmbeddedQueryEngine.class);
+   public static QueryEngine<Class<?>> getEmbeddedQueryEngine(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, QueryEngine.class);
    }
 
    public static TimeService getTimeService(Cache<?, ?> cache) {

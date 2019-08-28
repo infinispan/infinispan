@@ -21,6 +21,7 @@ import org.infinispan.query.FetchOptions;
 import org.infinispan.query.FetchOptions.FetchMode;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.core.impl.PartitionHandlingSupport;
 
 /**
  * Implementation class of the CacheQuery interface.

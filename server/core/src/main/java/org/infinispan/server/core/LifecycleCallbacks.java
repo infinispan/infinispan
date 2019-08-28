@@ -32,6 +32,7 @@ import org.infinispan.server.core.dataconversion.XMLTranscoder;
  */
 @InfinispanModule(name = "server-core", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
+
    static final String SERVER_STATE_CACHE = "org.infinispan.SERVER_STATE";
 
    @Override
@@ -54,7 +55,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(jsonTranscoder);
       encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
-
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
 
       if (jbossMarshaller != null) {

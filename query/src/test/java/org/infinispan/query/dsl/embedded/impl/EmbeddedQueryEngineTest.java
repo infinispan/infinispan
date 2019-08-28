@@ -79,7 +79,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    @BeforeClass(alwaysRun = true)
    protected void init() throws Exception {
-      qe = new EmbeddedQueryEngine(cache(0).getAdvancedCache(), true);
+      qe = new QueryEngine<>(cache(0).getAdvancedCache(), true);
 
       // create the test objects
       User user1 = new UserHS();
@@ -248,7 +248,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testSimpleProjection1() {
-      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select b.author.name from org.infinispan.query.dsl.embedded.testdomain.Book b", qe.propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select b.author.name from org.infinispan.query.dsl.embedded.testdomain.Book b", qe.getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();
@@ -257,7 +257,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-8564")
    public void testSimpleProjection2() {
-      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select author.name from org.infinispan.query.dsl.embedded.testdomain.Book", qe.propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select author.name from org.infinispan.query.dsl.embedded.testdomain.Book", qe.getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();
@@ -369,7 +369,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testBuildLuceneQuery() {
-      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.getPropertyHelper());
       CacheQuery<UserHS> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
       List<?> list = q.list();
       assertEquals(3, list.size());
@@ -377,7 +377,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
    public void testBuildLuceneQueryOnNonIndexedField() {
-      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.getPropertyHelper());
       CacheQuery<?> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
    }
 
@@ -515,7 +515,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testBooleanComparison() {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
-            "WHERE isDebit = false", qe.propertyHelper);
+            "WHERE isDebit = false", qe.getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();
@@ -524,14 +524,14 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testConstantBooleanExpression() {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
-            "WHERE true", qe.propertyHelper);
+            "WHERE true", qe.getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();
       assertEquals(56, list.size());
 
       parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
-            "WHERE false", qe.propertyHelper);
+            "WHERE false", qe.getPropertyHelper());
       q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       list = q.list();
@@ -540,7 +540,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testFullTextKeyword() {
       IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.Book b " +
-            "where b.preface:('java se'^7 -('bicycle' 'ski')) and b.publisher:'Oracel'~2", qe.propertyHelper);
+            "where b.preface:('java se'^7 -('bicycle' 'ski')) and b.publisher:'Oracel'~2", qe.getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
       List<?> list = q.list();

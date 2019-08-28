@@ -44,12 +44,10 @@ public class ElasticsearchIndexManagerIT extends BaseQueryTest {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies",
-                  "org.infinispan:" + Version.getModuleSlot() + " services, "
-                        + "org.infinispan.query:" + Version.getModuleSlot() + " services")
-            .exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, "
+                  + "org.infinispan.query.core:" + Version.getModuleSlot() + " services, "
+                  + "org.infinispan.query:" + Version.getModuleSlot() + " services"
+            ).exportAsString();
       return new StringAsset(manifest);
    }
-
-
 }

@@ -22,7 +22,7 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.IndexedQueryMode;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
 /**
@@ -40,7 +40,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    private final KeyTransformationHandler keyTransformationHandler;
-   private final EmbeddedQueryEngine queryEngine;
+   private final QueryEngine<Class<?>> queryEngine;
    private final MassIndexer massIndexer;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 

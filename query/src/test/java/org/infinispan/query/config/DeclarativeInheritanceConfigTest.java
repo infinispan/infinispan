@@ -1,5 +1,10 @@
 package org.infinispan.query.config;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Set;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.indexedembedded.Book;
@@ -7,11 +12,6 @@ import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Set;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(testName = "query.config.DeclarativeInheritanceConfigTest", groups = "functional")
 public class DeclarativeInheritanceConfigTest extends SingleCacheManagerTest {

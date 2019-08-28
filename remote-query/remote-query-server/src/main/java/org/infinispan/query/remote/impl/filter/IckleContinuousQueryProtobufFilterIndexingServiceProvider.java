@@ -5,7 +5,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.query.continuous.impl.IckleContinuousQueryFilterIndexingServiceProvider;
+import org.infinispan.query.core.impl.continuous.IckleContinuousQueryFilterIndexingServiceProvider;
 import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.kohsuke.MetaInfServices;
@@ -16,7 +16,6 @@ import org.kohsuke.MetaInfServices;
  * @since 8.1
  */
 @MetaInfServices(FilterIndexingServiceProvider.class)
-@SuppressWarnings("unused")
 public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider extends IckleContinuousQueryFilterIndexingServiceProvider {
 
    private RemoteQueryManager remoteQueryManager;

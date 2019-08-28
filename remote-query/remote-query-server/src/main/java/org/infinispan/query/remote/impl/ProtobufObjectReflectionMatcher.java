@@ -17,23 +17,23 @@ import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ProtobufObjectReflectionMatcher extends ReflectionMatcher {
+final class ProtobufObjectReflectionMatcher extends ReflectionMatcher {
 
    private final SerializationContext serializationContext;
 
-   ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext, SearchIntegrator searchFactory) {
+   private ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext, SearchIntegrator searchFactory) {
       super(new HibernateSearchPropertyHelper(searchFactory, entityNameResolver));
       this.serializationContext = serializationContext;
    }
 
-   ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext) {
+   private ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext) {
       super(entityNameResolver);
       this.serializationContext = serializationContext;
    }
 
    static ProtobufObjectReflectionMatcher create(EntityNameResolver entityNameResolver, SerializationContext ctx, SearchIntegrator searchIntegrator) {
-      if (searchIntegrator == null) return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx);
-      return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx, searchIntegrator);
+      return searchIntegrator == null ? new ProtobufObjectReflectionMatcher(entityNameResolver, ctx) :
+            new ProtobufObjectReflectionMatcher(entityNameResolver, ctx, searchIntegrator);
    }
 
    /**
