@@ -319,7 +319,7 @@ public class RowMatcherTest {
       Query q = queryFactory.from(Person.class)
             .having("name").eq("John").build();
 
-      boolean b[] = {false};
+      boolean[] b = {false};
       FilterSubscription filterSubscription = matcher.registerFilter(q, (userContext, eventType, instance, projection, sortProjection) -> b[0] = true);
 
       ObjectFilter objectFilter = matcher.getObjectFilter(filterSubscription);
@@ -354,7 +354,7 @@ public class RowMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      int matchCount[] = new int[1];
+      int[] matchCount = new int[1];
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, person);

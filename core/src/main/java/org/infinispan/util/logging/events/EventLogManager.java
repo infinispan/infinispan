@@ -16,6 +16,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @since 8.2
  */
 public interface EventLogManager {
+
    /**
     * @return the event logger for the given {@link EmbeddedCacheManager}
     * @throws IllegalLifecycleStateException if the cache manager is not running
@@ -43,5 +44,4 @@ public interface EventLogManager {
     * @return the previous logger
     */
    EventLogger replaceEventLogger(EventLogger newLogger);
-
 }

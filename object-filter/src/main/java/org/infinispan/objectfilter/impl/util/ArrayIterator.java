@@ -2,14 +2,15 @@ package org.infinispan.objectfilter.impl.util;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
- * An immutable Iterator for arrays.
+ * An immutable {@link Iterator} for arrays.
  *
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ArrayIterator<T> implements Iterator<T> {
+final class ArrayIterator<T> implements Iterator<T> {
 
    /**
     * An array of whatever type.
@@ -21,7 +22,7 @@ public final class ArrayIterator<T> implements Iterator<T> {
     */
    private int pos = 0;
 
-   public ArrayIterator(Object array) {
+   ArrayIterator(Object array) {
       if (array == null) {
          throw new IllegalArgumentException("Argument cannot be null");
       }
@@ -31,15 +32,17 @@ public final class ArrayIterator<T> implements Iterator<T> {
       this.array = array;
    }
 
+   @Override
    public boolean hasNext() {
       return pos < Array.getLength(array);
    }
 
+   @Override
    public T next() {
-      return (T) Array.get(array, pos++);
-   }
-
-   public void remove() {
-      throw new UnsupportedOperationException("This iterator is immutable");
+      try {
+         return (T) Array.get(array, pos++);
+      } catch (ArrayIndexOutOfBoundsException e) {
+         throw new NoSuchElementException(e.getMessage());
+      }
    }
 }

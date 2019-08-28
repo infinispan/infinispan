@@ -18,7 +18,7 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
 
-   @Message(id = 28501, value = "The type %s has no property named '%s'.")
+   @Message(id = 28501, value = "The type %s does not have an accessible property named '%s'.")
    ParsingException getNoSuchPropertyException(String typeName, String propertyName);
 
    @Message(id = 28502, value = "Unknown alias: %s.")

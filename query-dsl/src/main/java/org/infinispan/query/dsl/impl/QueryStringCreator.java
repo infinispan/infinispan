@@ -15,7 +15,7 @@ import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
 /**
- * Generates an Ickle query to satisfy the condition created with the builder.
+ * Generates an Ickle query string to satisfy the condition created with the builder (by visiting it).
  *
  * @author anistor@redhat.com
  * @since 6.0

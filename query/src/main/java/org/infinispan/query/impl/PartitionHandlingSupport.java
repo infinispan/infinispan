@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public final class PartitionHandlingSupport {
 
-   private static final Log LOGGER = LogFactory.getLog(PartitionHandlingSupport.class, Log.class);
+   private static final Log log = LogFactory.getLog(PartitionHandlingSupport.class, Log.class);
 
    private final boolean isClustered;
    private final PartitionHandling partitionHandling;
@@ -26,14 +26,12 @@ public final class PartitionHandlingSupport {
    }
 
    public void checkCacheAvailable() {
-      if (!isClustered) return;
-
-      AvailabilityMode availability = cache.getAvailability();
-      if (availability == AvailabilityMode.AVAILABLE) return;
-
-      if (partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
-         throw LOGGER.partitionDegraded();
+      if (isClustered) {
+         if (cache.getAvailability() != AvailabilityMode.AVAILABLE) {
+            if (partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
+               throw log.partitionDegraded();
+            }
+         }
       }
    }
-
 }

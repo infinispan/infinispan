@@ -12,7 +12,7 @@ import org.junit.Test;
 public class LikeConditionTest {
 
    @Test
-   public void testDegeneratedEquals() throws Exception {
+   public void testDegeneratedEquals() {
       LikeCondition likeCondition = new LikeCondition("ab");
       assertTrue(likeCondition.match("ab"));
       assertFalse(likeCondition.match("ac"));
@@ -20,7 +20,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testDegeneratedContains() throws Exception {
+   public void testDegeneratedContains() {
       LikeCondition likeCondition = new LikeCondition("%ab%");
       assertTrue(likeCondition.match("ab"));
       assertTrue(likeCondition.match("xabxx"));
@@ -28,7 +28,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testDegeneratedStartsWith() throws Exception {
+   public void testDegeneratedStartsWith() {
       assertTrue(new LikeCondition("ab%").match("ab"));
       assertTrue(new LikeCondition("ab%").match("abx"));
       assertTrue(new LikeCondition("ab%").match("abxx"));
@@ -43,7 +43,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testDegeneratedEndsWith() throws Exception {
+   public void testDegeneratedEndsWith() {
       assertTrue(new LikeCondition("%ab").match("ab"));
       assertTrue(new LikeCondition("%ab").match("xab"));
       assertTrue(new LikeCondition("%ab").match("xxab"));
@@ -58,7 +58,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testSingleCharWildcard() throws Exception {
+   public void testSingleCharWildcard() {
       LikeCondition likeCondition = new LikeCondition("a_b_c");
       assertTrue(likeCondition.match("aXbYc"));
       assertTrue(likeCondition.match("a_b_c"));
@@ -68,7 +68,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testMultipleCharWildcard() throws Exception {
+   public void testMultipleCharWildcard() {
       LikeCondition likeCondition = new LikeCondition("a%b%c");
       assertTrue(likeCondition.match("abc"));
       assertTrue(likeCondition.match("aXbc"));
@@ -93,7 +93,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testPlusEscaping() throws Exception {
+   public void testPlusEscaping() {
       LikeCondition likeCondition = new LikeCondition("a%aZ+");
       assertTrue(likeCondition.match("aaaZ+"));
       assertFalse(likeCondition.match("aaa"));
@@ -103,7 +103,7 @@ public class LikeConditionTest {
    }
 
    @Test
-   public void testAsteriskEscaping() throws Exception {
+   public void testAsteriskEscaping() {
       LikeCondition likeCondition = new LikeCondition("a%aZ*");
       assertTrue(likeCondition.match("aaaZ*"));
       assertFalse(likeCondition.match("aaa"));

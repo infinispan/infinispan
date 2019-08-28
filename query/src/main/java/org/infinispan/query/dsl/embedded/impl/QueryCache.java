@@ -4,7 +4,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,6 +17,8 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A local cache for 'parsed' queries. Each cache manager has at most one QueryCache which is backed by a lazily

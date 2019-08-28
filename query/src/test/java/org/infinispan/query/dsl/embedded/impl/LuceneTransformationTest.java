@@ -539,7 +539,7 @@ public class LuceneTransformationTest {
    @Test
    public void testRaiseExceptionDueToUnknownQualifiedProperty() {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee has no property named 'foobar'.");
+      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.");
 
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.foobar = 'same'");
    }
@@ -547,7 +547,7 @@ public class LuceneTransformationTest {
    @Test
    public void testRaiseExceptionDueToUnknownUnqualifiedProperty() {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee has no property named 'foobar'.");
+      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.");
 
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where foobar = 'same'");
    }
@@ -563,7 +563,7 @@ public class LuceneTransformationTest {
    @Test
    public void testRaiseExceptionDueToUnknownPropertyInSelectClause() {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee has no property named 'foobar'.");
+      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.");
 
       parseAndTransform("select e.foobar from org.infinispan.query.dsl.embedded.impl.model.Employee e");
    }
@@ -571,7 +571,7 @@ public class LuceneTransformationTest {
    @Test
    public void testRaiseExceptionDueToUnknownPropertyInEmbeddedSelectClause() {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee has no property named 'foo'.");
+      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foo'.");
 
       parseAndTransform("select e.author.foo from org.infinispan.query.dsl.embedded.impl.model.Employee e");
    }
