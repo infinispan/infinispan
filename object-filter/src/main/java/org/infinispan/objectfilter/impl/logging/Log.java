@@ -2,7 +2,6 @@ package org.infinispan.objectfilter.impl.logging;
 
 import java.util.List;
 
-import org.antlr.runtime.RecognitionException;
 import org.infinispan.objectfilter.ParsingException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
@@ -92,7 +91,7 @@ public interface Log extends BasicLogger {
    ParsingException getLeftSideMustBeAPropertyPath();
 
    @Message(id = 28525, value = "Invalid query: %s")
-   ParsingException getQuerySyntaxException(String query, @Cause RecognitionException cause);
+   ParsingException getQuerySyntaxException(String query, @Cause Throwable cause);
 
    @Message(id = 28526, value = "Invalid query: %s; Parser error messages: %s.")
    ParsingException getQuerySyntaxException(String query, List<?> parserErrorMessages);
@@ -102,5 +101,4 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28528, value = "Error parsing content. Data not stored as protobuf?")
    ParsingException errorParsingProtobuf(@Cause Exception e);
-
 }
