@@ -7,8 +7,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.infinispan.Version;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
