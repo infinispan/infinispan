@@ -1,21 +1,30 @@
 package org.infinispan.rest;
 
+import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
+import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
+
 import java.util.List;
 
-import org.infinispan.rest.configuration.RestServerConfiguration;
-
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsHandler;
+import io.netty.handler.codec.http2.CleartextHttp2ServerUpgradeHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.Http2CodecUtil;
+import io.netty.handler.codec.http2.Http2MultiplexCodec;
+import io.netty.handler.codec.http2.Http2MultiplexCodecBuilder;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
+import io.netty.handler.codec.http2.Http2Settings;
+import io.netty.handler.codec.http2.Http2StreamFrameToHttpObjectCodec;
 import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandler;
 import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandlerBuilder;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
@@ -26,22 +35,18 @@ import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.util.AsciiString;
 
 /**
- * Handler responsible for TLS/ALPN negotiation as well as HTTP/1.1 Upgrade header handling
+ * Handler responsible for TLS/ALPN negotiation.
  *
  * @author Sebastian Łaskawiec
  */
 @ChannelHandler.Sharable
-public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandler {
-   private static final int MAX_INITIAL_LINE_SIZE = 4096;
-   private static final int MAX_HEADER_SIZE = 8192;
+public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
    protected final RestServer restServer;
-   private final List<CorsConfig> corsRules;
 
-   public Http11To2UpgradeHandler(RestServer restServer) {
+   public ALPNHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
       this.restServer = restServer;
-      this.corsRules = restServer.getConfiguration().getCorsRules();
    }
 
    @Override
@@ -69,33 +74,57 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       }
    }
 
+   /**
+    * Configure pipeline for HTTP/2 after negotiated via ALPN
+    */
    protected void configureHttp2(ChannelPipeline pipeline) {
       pipeline.addLast(getHttp11To2ConnectionHandler());
       configureAuthentication(pipeline);
-      pipeline.addLast("rest-handler-http2", new Http20RequestHandler(restServer));
+      pipeline.addLast("rest-handler-http2", new RestRequestHandler(restServer));
    }
 
+   /**
+    * Configure pipeline for HTTP/1.1 after negotiated by ALPN
+    */
    protected void configureHttp1(ChannelPipeline pipeline) {
-      RestServerConfiguration configuration = restServer.getConfiguration();
-      final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, configuration.maxContentLength());
-      pipeline.addLast(httpCodec);
-      if(!corsRules.isEmpty()) {
-         pipeline.addLast(new CorsHandler(corsRules, true));
-      }
-      pipeline.addLast(new HttpContentCompressor(configuration.getCompressionLevel()));
-      pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, this::upgradeCodecForHttp11));
+      Http2MultiplexCodec multiplexCodec = Http2MultiplexCodecBuilder.forServer(new ChannelInitializer<Channel>() {
+         @Override
+         protected void initChannel(Channel channel) {
+            ChannelPipeline p = channel.pipeline();
+            p.addLast(new Http2StreamFrameToHttpObjectCodec(true));
+            p.addLast(new HttpObjectAggregator(maxContentLength()));
+            p.addLast(new RestRequestHandler(restServer));
+         }
+      }).initialSettings(Http2Settings.defaultSettings()).build();
 
+      UpgradeCodecFactory upgradeCodecFactory = protocol -> {
+         if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
+            return new Http2ServerUpgradeCodec(multiplexCodec);
+         } else {
+            return null;
+         }
+      };
+
+      HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, maxContentLength());
+      HttpServerUpgradeHandler upgradeHandler = new HttpServerUpgradeHandler(httpCodec, upgradeCodecFactory, maxContentLength());
+      CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler = new CleartextHttp2ServerUpgradeHandler(httpCodec, upgradeHandler, multiplexCodec);
+      pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
+
+      pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
+      List<CorsConfig> corsRules = restServer.getConfiguration().getCorsRules();
+      if (!corsRules.isEmpty()) pipeline.addLast(new CorsHandler(corsRules, true));
       configureAuthentication(pipeline);
-      pipeline.addLast("rest-handler", getHttp1Handler());
+      pipeline.addLast(new Http11RequestHandler(restServer));
    }
+
 
    protected int maxContentLength() {
       return this.restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
    }
 
    /**
-    * Creates a handler for HTTP/1.1 -> HTTP/2 upgrade
+    * Creates a handler to translates between HTTP/1.x objects and HTTP/2 frames
     *
     * @return new instance of {@link HttpToHttp2ConnectionHandler}.
     */
@@ -131,14 +160,4 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       }
       return null;
    }
-
-   protected HttpServerUpgradeHandler.UpgradeCodec upgradeCodecForHttp11(CharSequence protocol) {
-      if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
-         return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
-      } else {
-         // if we don't understand the protocol, we don't want to upgrade
-         return null;
-      }
-   }
-
 }
