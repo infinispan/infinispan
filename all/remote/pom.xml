@@ -302,6 +302,7 @@
                            !org.bouncycastle.*,
                            !org.eclipse.jetty.*,
                            !sun.security.*,
+                           !com.oracle.svm.core.annotate.*,
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
