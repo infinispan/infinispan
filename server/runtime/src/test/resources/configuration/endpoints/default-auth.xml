@@ -1,9 +1,7 @@
 <endpoints socket-binding="default" security-realm="default">
    <hotrod-connector name="hotrod">
       <authentication>
-         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN" server-name="infinispan">
-            <property name="com.sun.security.sasl.digest.realm">default</property>
-         </sasl>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN" server-name="infinispan"/>
       </authentication>
    </hotrod-connector>
    <rest-connector name="rest">

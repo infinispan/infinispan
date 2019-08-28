@@ -1,9 +1,7 @@
 <endpoints socket-binding="default" security-realm="default" require-ssl-client-auth="true">
    <hotrod-connector name="hotrod" >
       <authentication>
-         <sasl mechanisms="EXTERNAL" server-name="infinispan">
-            <property name="com.sun.security.sasl.digest.realm">default</property>
-         </sasl>
+         <sasl mechanisms="EXTERNAL" server-name="infinispan"/>
       </authentication>
    </hotrod-connector>
    <rest-connector name="rest">
