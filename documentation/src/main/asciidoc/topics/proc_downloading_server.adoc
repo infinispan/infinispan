@@ -1,4 +1,42 @@
-= Downloading the Server Distribution
-To get started using the server, download the {brandname} Server distribution, unpack it to a local directory and launch it using the +bin/standalone.sh+ or +bin/standalone.bat+ scripts depending on your platform.
-This will start a single-node server using the +standalone/configuration/standalone.xml+ configuration file, with four endpoints, one for each of the supported protocols.
-These endpoints allow access to all of the caches configured in the {brandname} subsystem (apart from the Memcached endpoint which, because of the protocol's design, only allows access to a single cache).
+= Downloading Server Distributions
+The {brandname} server distribution is an archive of Java libraries (`JAR` files), configuration files, and a `data` directory.
+
+.Procedure
+//Community
+ifndef::productized[]
+Download the {brandname} {infinispanversion} server from link:{download_url}[{brandname} downloads].
+endif::productized[]
+//Product
+ifdef::productized[]
+. Access the {portal}.
+. Download the {FullProductName} {ProductVersion} server from the link:{download_url}[software downloads section].
+endif::productized[]
+
+.Verification
+Use the checksum to verify the integrity of your download.
+
+//Community
+ifndef::productized[]
+. Run the `sha1sum` command with the server download archive as the argument, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/sha_ispn_server.adoc[]
+----
++
+. Compare with the `SHA-1` checksum value on the {brandname} downloads page.
+endif::productized[]
+//Product
+ifdef::productized[]
+. Run the `md5sum` or `sha256sum` command with the server download archive as the argument, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/sha_rhdg_server.adoc[]
+----
++
+. Compare with the `MD5` or `SHA-256` checksum value on the {ProductName} *Software Details* page.
+endif::productized[]
+
+.Reference
+link:{runtime_readme}[{brandname} Server README] describes the contents of the server distribution.

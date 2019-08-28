@@ -1,0 +1,1 @@
+$ sha256sum jboss-datagrid-${version}-server.zip

@@ -1,0 +1,19 @@
+= Adding Data to Caches
+After you define a cache for your {brandname} server cluster, you can add data.
+
+.Procedure
+. Invoke a `POST` request to create a new *key:value* entry.
++
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/curl_post_hello_world.adoc[]
+----
++
+The preceding command creates a new key named `hello` with a value of `world` in the cache named `mycache`.
++
+. Invoke a `GET` request to retrieve the entry.
++
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/curl_get_hello_world.adoc[]
+----
