@@ -15,7 +15,7 @@ import io.netty.handler.codec.http.HttpUtil;
  *
  * @author Sebastian Łaskawiec
  */
-public class Http11RequestHandler extends Http20RequestHandler {
+public class Http11RequestHandler extends RestRequestHandler {
 
    /**
     * Creates new {@link Http11RequestHandler}.

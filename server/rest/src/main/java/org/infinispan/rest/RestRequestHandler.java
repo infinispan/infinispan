@@ -21,23 +21,23 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 
 /**
- * Netty REST handler for HTTP/2.0
+ * Netty handler for REST requests.
  *
  * @author Sebastian Łaskawiec
  */
-public class Http20RequestHandler extends BaseHttpRequestHandler {
+public class RestRequestHandler extends BaseHttpRequestHandler {
 
-   protected final static Log logger = LogFactory.getLog(Http20RequestHandler.class, Log.class);
+   protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;
    private AuthenticationHandler authenticationHandler;
 
    /**
-    * Creates new {@link Http20RequestHandler}.
+    * Creates new {@link RestRequestHandler}.
     *
     * @param restServer Rest Server.
     */
-   public Http20RequestHandler(RestServer restServer) {
+   public RestRequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
    }

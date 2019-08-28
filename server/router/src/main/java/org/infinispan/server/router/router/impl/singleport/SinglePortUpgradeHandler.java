@@ -1,20 +1,14 @@
 package org.infinispan.server.router.router.impl.singleport;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.rest.Http11To2UpgradeHandler;
+import org.infinispan.rest.ALPNHandler;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.ProtocolServer;
 
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 
@@ -23,7 +17,7 @@ import io.netty.handler.ssl.ApplicationProtocolNames;
  *
  * @author Sebastian Łaskawiec
  */
-public class SinglePortUpgradeHandler extends Http11To2UpgradeHandler {
+public class SinglePortUpgradeHandler extends ALPNHandler {
 
    private final boolean useAlpn;
    private final Map<String, ProtocolServer> upgradeServers;
@@ -73,35 +67,6 @@ public class SinglePortUpgradeHandler extends Http11To2UpgradeHandler {
       return null;
    }
 
-   @Override
-   protected HttpServerUpgradeHandler.UpgradeCodec upgradeCodecForHttp11(CharSequence protocol) {
-      // Let's check if it's HTTP/2 - parent handler knows how to upgrade to that - it's REST after all.
-      HttpServerUpgradeHandler.UpgradeCodec upgradeCodec = super.upgradeCodecForHttp11(protocol);
-      if (upgradeCodec == null) {
-         // Not HTTP/2 switch, maybe it's a custom protocol server?
-         if (upgradeServers.containsKey(protocol)) {
-            ProtocolServer protocolServer = upgradeServers.get(protocol);
-            upgradeCodec = new HttpServerUpgradeHandler.UpgradeCodec() {
-               @Override
-               public Collection<CharSequence> requiredUpgradeHeaders() {
-                  return Collections.emptyList();
-               }
-
-               @Override
-               public boolean prepareUpgradeResponse(ChannelHandlerContext ctx, FullHttpRequest upgradeRequest, HttpHeaders upgradeHeaders) {
-                  return true;
-               }
-
-               @Override
-               public void upgradeTo(ChannelHandlerContext ctx, FullHttpRequest upgradeRequest) {
-                  ctx.pipeline().addLast(protocolServer.getInitializer());
-               }
-            };
-         }
-      }
-      // If at this point, this is null, we don't understand the target protocol, let's keep HTTP/1.1
-      return upgradeCodec;
-   }
 
    public Map<String, ProtocolServer> getUpgradeServers() {
       return upgradeServers;
