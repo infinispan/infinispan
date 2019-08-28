@@ -127,8 +127,9 @@ public class DefaultLockManager implements LockManager {
             compositeLockPromise.addLock(new KeyAwareExtendedLockPromise(lockContainer.acquire(key, lockOwner, time, unit), key, unit.toMillis(time)));
          }
       }
+      compositeLockPromise.scheduleLockTimeoutTask(scheduler, time, unit);
       compositeLockPromise.markListAsFinal();
-      return compositeLockPromise.scheduleLockTimeoutTask(scheduler, time, unit);
+      return compositeLockPromise;
    }
 
    private Set<Object> filterDistinctKeys(Collection<?> collection) {
@@ -315,6 +316,7 @@ public class DefaultLockManager implements LockManager {
       @SuppressWarnings("CanBeFinal")
       volatile LockState lockState = LockState.ACQUIRED;
       private final AtomicInteger countersLeft = new AtomicInteger();
+      private ScheduledFuture<Void> timeoutTask;
 
       private CompositeLockPromise(int size, Executor executor) {
          lockPromiseList = new ArrayList<>(size);
@@ -401,12 +403,14 @@ public class DefaultLockManager implements LockManager {
             return;
          }
          if (countersLeft.decrementAndGet() == 0) {
+            timeoutTask.cancel(false);
             notifier.complete(lockState);
          }
       }
 
       private void cancelAll(LockState state) {
          if (UPDATER.compareAndSet(this, LockState.ACQUIRED, state)) {
+            timeoutTask.cancel(false);
             //complete the future before cancel other locks. the remaining locks will be invoke onEvent()
             notifier.complete(state);
             for (KeyAwareExtendedLockPromise promise : lockPromiseList) {
@@ -430,12 +434,13 @@ public class DefaultLockManager implements LockManager {
          return null;
       }
 
-      CompositeLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService, long time, TimeUnit unit) {
-         if (executorService != null && time > 0 && !isAvailable()) {
-            ScheduledFuture<?> future = executorService.schedule(this, time, unit);
-            addListener((state -> future.cancel(false)));
+      /**
+       * Schedule a timeout task. Must be called before {@link #markListAsFinal()}
+       */
+      void scheduleLockTimeoutTask(ScheduledExecutorService executorService, long time, TimeUnit unit) {
+         if (time > 0 && !isAvailable()) {
+            timeoutTask = executorService.schedule(this, time, unit);
          }
-         return this;
       }
 
       private <T> T checkState(LockState state, Supplier<T> acquired, Function<Throwable, T> exception) {
