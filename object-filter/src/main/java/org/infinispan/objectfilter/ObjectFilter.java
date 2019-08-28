@@ -24,6 +24,9 @@ public interface ObjectFilter {
     */
    String[] getProjection();
 
+   /**
+    * The types of the projects paths (see {@link #getProjection()} or {@code null} if there are not projections.
+    */
    Class<?>[] getProjectionTypes();
 
    /**
@@ -31,10 +34,14 @@ public interface ObjectFilter {
     */
    Set<String> getParameterNames();
 
+   /**
+    * The parameter values. Please do not mutate this map. Obtain a new filter instance with new parameter values using
+    * {@link #withParameters(Map)}.
+    */
    Map<String, Object> getParameters();
 
    /**
-    * Creates a new ObjectFilter based on current one and the given parameters.
+    * Creates a new ObjectFilter instance based on the current one and the given parameter values.
     */
    ObjectFilter withParameters(Map<String, Object> namedParameters);
 
@@ -46,7 +53,8 @@ public interface ObjectFilter {
    /**
     * The comparator corresponding to the 'order by' clause, if any.
     *
-    * @return the Comparator or {@code null} if no 'order by' was specified ({@link #getSortFields()} also returns {@code null})
+    * @return the Comparator or {@code null} if no 'order by' was specified ({@link #getSortFields()} also returns
+    * {@code null})
     */
    Comparator<Comparable[]> getComparator();
 

@@ -7,7 +7,7 @@ import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 
 /**
- * A matcher for projection rows. This matcher is not stateless so it cannot be reused.
+ * A matcher for projection rows (Object[]). This matcher is not stateless so it cannot be reused.
  *
  * @author anistor@redhat.com
  * @since 8.0
@@ -54,6 +54,9 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
          this.rowMetadata = rowMetadata;
       }
 
+      /**
+       * Implementation is just for completeness. The name does not matter.
+       */
       @Override
       public String getTypeName() {
          return "Row";
@@ -67,7 +70,7 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
       @Override
       public List<Integer> mapPropertyNamePathToFieldIdPath(String[] path) {
          if (path.length > 1) {
-            throw new IllegalStateException("Nested attributes are not supported");
+            throw new IllegalStateException("Rows do not support nested attributes");
          }
 
          String columnName = path[0];
@@ -83,7 +86,7 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
       @Override
       public RowPropertyHelper.ColumnMetadata makeChildAttributeMetadata(RowPropertyHelper.ColumnMetadata parentAttributeMetadata, Integer attribute) {
          if (parentAttributeMetadata != null) {
-            throw new IllegalStateException("Nested attributes are not supported");
+            throw new IllegalStateException("Rows do not support nested attributes");
          }
          return rowMetadata.getColumns()[attribute];
       }

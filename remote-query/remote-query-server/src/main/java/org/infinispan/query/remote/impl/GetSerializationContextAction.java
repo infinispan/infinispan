@@ -9,7 +9,8 @@ import org.infinispan.protostream.SerializationContext;
  * @author Dan Berindei
  * @since 10.0
  */
-public class GetSerializationContextAction implements PrivilegedAction<SerializationContext> {
+public final class GetSerializationContextAction implements PrivilegedAction<SerializationContext> {
+
    private final EmbeddedCacheManager cacheManager;
 
    public GetSerializationContextAction(EmbeddedCacheManager cacheManager) {

@@ -8,16 +8,16 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.continuous.impl.ContinuousQueryImpl;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
-import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
-import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.SearchManagerImpl;
+import org.infinispan.query.core.impl.EmbeddedQueryFactory;
+import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
+import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
+import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
@@ -47,7 +47,7 @@ public final class Search {
     * Create an event filter out of an Ickle query string.
     */
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(String queryString, Map<String, Object> namedParameters) {
-      IckleFilterAndConverter<K, V> filterAndConverter = new IckleFilterAndConverter<>(queryString, namedParameters, ReflectionMatcher.class);
+      IckleFilterAndConverter<K, V> filterAndConverter = new IckleFilterAndConverter<>(queryString, namedParameters, ObjectReflectionMatcher.class);
       return new IckleCacheEventFilterConverter<>(filterAndConverter);
    }
 
@@ -62,12 +62,15 @@ public final class Search {
     * Obtain the query factory for building DSL based Ickle queries.
     */
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
-      if (cache == null || cache.getAdvancedCache() == null) {
-         throw new IllegalArgumentException("cache parameter shall not be null");
+      if (cache == null) {
+         throw new IllegalArgumentException("cache parameter must not be null");
       }
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
-      ensureAccessPermissions(advancedCache);
-      EmbeddedQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(EmbeddedQueryEngine.class);
+      if (advancedCache == null) {
+         throw new IllegalArgumentException("The given cache must expose an AdvancedCache");
+      }
+      checkBulkReadPermission(advancedCache);
+      QueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
       if (queryEngine == null) {
          throw CONTAINER.queryModuleNotInitialised();
       }
@@ -85,15 +88,18 @@ public final class Search {
     * Obtain the {@link SearchManager} object for a cache.
     */
    public static SearchManager getSearchManager(Cache<?, ?> cache) {
-      if (cache == null || cache.getAdvancedCache() == null) {
-         throw new IllegalArgumentException("cache parameter shall not be null");
+      if (cache == null) {
+         throw new IllegalArgumentException("cache parameter must not be null");
       }
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
-      ensureAccessPermissions(advancedCache);
+      if (advancedCache == null) {
+         throw new IllegalArgumentException("The given cache must expose an AdvancedCache");
+      }
+      checkBulkReadPermission(advancedCache);
       return new SearchManagerImpl(advancedCache);
    }
 
-   private static void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
+   private static void checkBulkReadPermission(AdvancedCache<?, ?> cache) {
       AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
       if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);

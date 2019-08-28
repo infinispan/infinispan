@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 9.4
  */
-
 class BaseJsonQueryResult extends JsonQueryResponse {
 
    private int totalResults;
@@ -22,5 +21,4 @@ class BaseJsonQueryResult extends JsonQueryResponse {
    public int getTotalResults() {
       return totalResults;
    }
-
 }

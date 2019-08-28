@@ -23,6 +23,7 @@
       <module name="org.infinispan.persistence.soft-index" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.hotrod.client" optional="true" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.multimap" services="import" slot="@infinispan.module.slot@"/>
+      <module name="org.infinispan.query.core" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.query" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.scripting" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.wildfly.commons" slot="@infinispan.module.slot@"/>

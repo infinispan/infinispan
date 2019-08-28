@@ -19,8 +19,8 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.dsl.IndexedQueryMode;
-import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
@@ -29,10 +29,12 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
+ * Same as ObjectRemoteQueryEngine but able to deal with protobuf payloads.
+ *
  * @author anistor@redhat.com
  * @since 8.0
  */
-final class RemoteQueryEngine extends BaseRemoteQueryEngine {
+final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
 
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(RemoteQueryManager.class).getQueryEngine(c);
 

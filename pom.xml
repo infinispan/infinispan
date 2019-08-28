@@ -94,11 +94,12 @@
       <module>counter</module>
       <module>multimap</module>
       <module>tools</module>
-      <module>query</module>
       <module>query-dsl</module>
+      <module>query-core</module>
+      <module>query</module>
+      <module>object-filter</module>
       <module>remote-query/remote-query-client</module>
       <module>remote-query/remote-query-server</module>
-      <module>object-filter</module>
       <module>lucene</module>
       <module>lucene/lucene-directory</module>
       <module>lucene/directory-provider</module>
@@ -5615,6 +5616,7 @@
                               <source>${dir.ispn}/persistence/rest/src/main/java</source>
                               <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>
                               <source>${dir.ispn}/persistence/soft-index/src/main/java</source>
+                              <source>${dir.ispn}/query-core/src/main/java</source>
                               <source>${dir.ispn}/query/src/main/java</source>
                               <source>${dir.ispn}/query-dsl/src/main/java</source>
                               <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>

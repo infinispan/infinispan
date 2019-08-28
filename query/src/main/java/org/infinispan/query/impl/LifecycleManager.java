@@ -46,7 +46,6 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
@@ -61,13 +60,8 @@ import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.clustered.commandworkers.QueryBox;
-import org.infinispan.query.continuous.impl.ContinuousQueryResult;
-import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
-import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
-import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
-import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
-import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneBytesRefExternalizer;
@@ -96,7 +90,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
-@InfinispanModule(name = "query", requiredModules = "core", optionalModules = "lucene-directory")
+@InfinispanModule(name = "query", requiredModules = {"core", "query-core"}, optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
 
    /**
@@ -126,7 +120,7 @@ public class LifecycleManager implements ModuleLifecycle {
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
 
-            createQueryInterceptorIfNeeded(cr.getComponent(BasicComponentRegistry.class), cfg, cache, searchFactory, keyTransformationHandler);
+            createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory, keyTransformationHandler);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
             cr.registerComponent(new QueryBox(), QueryBox.class);
@@ -135,16 +129,9 @@ public class LifecycleManager implements ModuleLifecycle {
             cr.registerComponent(massIndexer, MassIndexer.class);
          }
 
-         registerMatcher(cr, searchFactory, aggregatedClassLoader);
-
-         cr.registerComponent(new EmbeddedQueryEngine(cache, isIndexed), EmbeddedQueryEngine.class);
+         cr.registerComponent(ObjectReflectionMatcher.create(new ReflectionEntityNamesResolver(aggregatedClassLoader), searchFactory), ObjectReflectionMatcher.class);
+         cr.registerComponent(new QueryEngine<>(cache, isIndexed), QueryEngine.class);
       }
-   }
-
-   private void registerMatcher(ComponentRegistry cr, SearchIntegrator searchFactory, ClassLoader classLoader) {
-      ReflectionMatcher reflectionMatcher = searchFactory == null ? new ReflectionMatcher(classLoader) :
-            new ReflectionMatcher(new HibernateSearchPropertyHelper(searchFactory, new ReflectionEntityNamesResolver(classLoader)));
-      cr.registerComponent(reflectionMatcher, ReflectionMatcher.class);
    }
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
@@ -165,11 +152,12 @@ public class LifecycleManager implements ModuleLifecycle {
       }
    }
 
-   private void createQueryInterceptorIfNeeded(BasicComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
+   private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
                                                SearchIntegrator searchIntegrator, KeyTransformationHandler keyTransformationHandler) {
       CONTAINER.registeringQueryInterceptor(cache.getName());
 
-      ComponentRef<QueryInterceptor> queryInterceptorRef = cr.getComponent(QueryInterceptor.class);
+      BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+      ComponentRef<QueryInterceptor> queryInterceptorRef = bcr.getComponent(QueryInterceptor.class);
       if (queryInterceptorRef != null) {
          // could be already present when two caches share a config
          return;
@@ -183,7 +171,7 @@ public class LifecycleManager implements ModuleLifecycle {
          keyTransformationHandler.registerTransformer(kt.getKey(), (Class<? extends Transformer>) kt.getValue());
       }
 
-      AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class).wired();
+      AsyncInterceptorChain ic = bcr.getComponent(AsyncInterceptorChain.class).wired();
 
       EntryWrappingInterceptor wrappingInterceptor = ic.findInterceptorExtending(EntryWrappingInterceptor.class);
       AsyncInterceptor lastLoadingInterceptor = ic.findInterceptorExtending(CacheLoaderInterceptor.class);
@@ -192,14 +180,14 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
-      cr.registerComponent(QueryInterceptor.class, queryInterceptor, true);
-      cr.addDynamicDependency(AsyncInterceptorChain.class.getName(), QueryInterceptor.class.getName());
+      bcr.registerComponent(QueryInterceptor.class, queryInterceptor, true);
+      bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), QueryInterceptor.class.getName());
 
       if (cfg.transaction().transactionMode().isTransactional()) {
          TxQueryInterceptor txQueryInterceptor = new TxQueryInterceptor(txOldValues, queryInterceptor);
          ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
-         cr.registerComponent(TxQueryInterceptor.class, txQueryInterceptor, true);
-         cr.addDynamicDependency(AsyncInterceptorChain.class.getName(), TxQueryInterceptor.class.getName());
+         bcr.registerComponent(TxQueryInterceptor.class, txQueryInterceptor, true);
+         bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), TxQueryInterceptor.class.getName());
       }
    }
 
@@ -377,17 +365,10 @@ public class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      gcr.registerComponent(new QueryCache(), QueryCache.class);
-
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
 
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_AND_CONVERTER, new IckleFilterAndConverter.IckleFilterAndConverterExternalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new IckleFilterAndConverter.FilterResultExternalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CACHE_EVENT_FILTER_CONVERTER, new IckleCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new IckleContinuousQueryCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResult.Externalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_TERM, new LuceneTermQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());

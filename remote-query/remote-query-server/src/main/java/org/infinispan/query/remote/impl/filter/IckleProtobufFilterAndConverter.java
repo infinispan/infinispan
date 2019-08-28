@@ -13,8 +13,8 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
-import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 

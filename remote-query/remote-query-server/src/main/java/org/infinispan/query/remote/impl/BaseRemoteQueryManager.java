@@ -4,10 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.impl.QueryRequest;
@@ -18,12 +16,12 @@ import org.infinispan.query.remote.client.impl.QueryRequest;
 abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
    final AdvancedCache<?, ?> cache;
-   final QuerySerializers querySerializers;
-   final DataConversion keyDataConversion;
-   final DataConversion valueDataConversion;
+   private final QuerySerializers querySerializers;
+   private final DataConversion keyDataConversion;
+   private final DataConversion valueDataConversion;
 
-   BaseRemoteQueryManager(ComponentRegistry cr, QuerySerializers querySerializers) {
-      this.cache = cr.getComponent(Cache.class).getAdvancedCache();
+   BaseRemoteQueryManager(AdvancedCache<?, ?> cache, QuerySerializers querySerializers) {
+      this.cache = cache;
       this.querySerializers = querySerializers;
       this.keyDataConversion = cache.getKeyDataConversion();
       this.valueDataConversion = cache.getValueDataConversion();

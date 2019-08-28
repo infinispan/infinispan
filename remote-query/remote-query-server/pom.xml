@@ -25,12 +25,17 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query</artifactId>
+         <artifactId>infinispan-query-dsl</artifactId>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query-dsl</artifactId>
+         <artifactId>infinispan-query-core</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
       </dependency>
 
       <dependency>

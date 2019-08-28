@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 
 import java.util.Map;
@@ -9,48 +10,42 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.objectfilter.Matcher;
+import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 
 /**
  * Implementation of {@link RemoteQueryManager} for caches storing deserialized content (Java Objects).
  *
  * @since 9.4
  */
-class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
+final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
 
-   private final Map<String, BaseRemoteQueryEngine> enginePerMediaType = new ConcurrentHashMap<>();
+   private final Map<String, ObjectRemoteQueryEngine> enginePerMediaType = new ConcurrentHashMap<>();
 
-   protected final SerializationContext serCtx;
-   protected final boolean isIndexed;
+   private final SerializationContext serCtx;
+
+   private final SearchIntegrator searchIntegrator;
 
    private final ComponentRegistry cr;
 
-   ObjectRemoteQueryManager(ComponentRegistry cr, QuerySerializers querySerializers) {
-      super(cr, querySerializers);
+   ObjectRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, QuerySerializers querySerializers) {
+      super(cache, querySerializers);
       this.cr = cr;
-      this.isIndexed = cache.getCacheConfiguration().indexing().index().isEnabled();
+      this.searchIntegrator = cr.getComponent(SearchIntegrator.class);
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());
-      this.registerObjectQueryMatcher(cr);
-      this.registerProtobufObjectQueryMatcher(cr);
-   }
 
+      BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+      ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_OBJECT), searchIntegrator);
+      bcr.replaceComponent(ObjectReflectionMatcher.class.getName(), objectReflectionMatcher, true);
 
-   private void registerObjectQueryMatcher(ComponentRegistry cr) {
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
-      EntityNameResolver entityNameResolver = createEntityNamesResolver(MediaType.APPLICATION_OBJECT);
-      ObjectReflectionMatcher matcher = ObjectReflectionMatcher.create(entityNameResolver, searchIntegrator);
-      cr.registerComponent(matcher, matcher.getClass());
-   }
-
-   private void registerProtobufObjectQueryMatcher(ComponentRegistry cr) {
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
-      EntityNameResolver entityNameResolver = createEntityNamesResolver(APPLICATION_PROTOSTREAM);
-      ProtobufObjectReflectionMatcher matcher = ProtobufObjectReflectionMatcher.create(entityNameResolver, serCtx, searchIntegrator);
-      cr.registerComponent(matcher, matcher.getClass());
+      ProtobufObjectReflectionMatcher protobufObjectReflectionMatcher = ProtobufObjectReflectionMatcher.create(createEntityNamesResolver(APPLICATION_PROTOSTREAM), serCtx, searchIntegrator);
+      bcr.registerComponent(ProtobufObjectReflectionMatcher.class, protobufObjectReflectionMatcher, true);
    }
 
    @Override
@@ -59,7 +54,7 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
    }
 
    @Override
-   public BaseRemoteQueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
+   public ObjectRemoteQueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
       return getQueryEngineForMediaType(cache.getValueDataConversion().getRequestMediaType());
    }
 
@@ -68,16 +63,16 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       return filterResult;
    }
 
-   private BaseRemoteQueryEngine getQueryEngineForMediaType(MediaType mediaType) {
-      BaseRemoteQueryEngine queryEngine = enginePerMediaType.get(mediaType.getTypeSubtype());
-      if (queryEngine != null) return queryEngine;
+   private ObjectRemoteQueryEngine getQueryEngineForMediaType(MediaType mediaType) {
+      ObjectRemoteQueryEngine queryEngine = enginePerMediaType.get(mediaType.getTypeSubtype());
+      if (queryEngine == null) {
+         ReflectionMatcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ? cr.getComponent(ProtobufObjectReflectionMatcher.class) :
+               cr.getComponent(ObjectReflectionMatcher.class);
 
-      Matcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ? cr.getComponent(ProtobufObjectReflectionMatcher.class) :
-            cr.getComponent(ObjectReflectionMatcher.class);
-
-      ObjectRemoteQueryEngine engine = new ObjectRemoteQueryEngine(cache, matcher.getClass(), isIndexed);
-      enginePerMediaType.put(mediaType.getTypeSubtype(), engine);
-      return engine;
+         queryEngine = new ObjectRemoteQueryEngine(cache, searchIntegrator != null, matcher.getClass());
+         enginePerMediaType.put(mediaType.getTypeSubtype(), queryEngine);
+      }
+      return queryEngine;
    }
 
    private EntityNameResolver createEntityNamesResolver(MediaType mediaType) {
@@ -85,15 +80,14 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
          return new ProtobufEntityNameResolver(serCtx);
       } else {
          ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-
          ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
-         if (isIndexed) {
+         if (searchIntegrator != null) {
             // If indexing is enabled, then use the known set of classes for lookup and the global classloader as a fallback.
-            QueryInterceptor qi = cr.getComponent(QueryInterceptor.class);
-            return name -> qi.getKnownClasses().stream()
-                  .filter(c -> c.getName().equals(name))
-                  .findFirst()
-                  .orElse(reflectionEntityNamesResolver.resolve(name));
+            QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+            return name -> queryInterceptor.getKnownClasses().stream()
+                                           .filter(c -> c.getName().equals(name))
+                                           .findFirst()
+                                           .orElse(reflectionEntityNamesResolver.resolve(name));
          }
          return reflectionEntityNamesResolver;
       }

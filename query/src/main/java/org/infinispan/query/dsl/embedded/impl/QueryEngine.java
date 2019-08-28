@@ -18,11 +18,8 @@ import org.hibernate.search.spi.CustomTypeMetadata;
 import org.hibernate.search.spi.IndexedTypeMap;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.objectfilter.Matcher;
-import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.BaseMatcher;
 import org.infinispan.objectfilter.impl.RowMatcher;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.ql.AggregationFunction;
@@ -31,7 +28,6 @@ import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
@@ -46,7 +42,6 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.SyntaxTreePrinter;
 import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
@@ -60,42 +55,34 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
 import org.infinispan.query.impl.CacheQueryImpl;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.query.core.impl.AggregatingQuery;
+import org.infinispan.query.core.impl.EmbeddedQuery;
+import org.infinispan.query.core.impl.EmptyResultQuery;
+import org.infinispan.query.core.impl.HybridQuery;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 
 /**
+ * Adds indexing capability to LightQueryEngine.
+ *
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class QueryEngine<TypeMetadata> {
+public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.QueryEngine<TypeMetadata> {
 
    private static final Log log = LogFactory.getLog(QueryEngine.class, Log.class);
 
    private static final int MAX_EXPANSION_COFACTORS = 16;
-
-   protected final AdvancedCache<?, ?> cache;
 
    /**
     * Is the cache indexed?
     */
    protected final boolean isIndexed;
 
-   protected final Matcher matcher;
-
-   protected final Class<? extends Matcher> matcherImplClass;
-
-   protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
-
-   protected final LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider;
-
-   /**
-    * Optional cache for query objects.
-    */
-   private final QueryCache queryCache;
+   private final LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider;
 
    /**
     * Optional, lazily acquired. This is {@code null} if the cache is not indexed.
@@ -107,17 +94,15 @@ public class QueryEngine<TypeMetadata> {
     */
    private SearchIntegrator searchFactory;
 
-   private static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(QueryEngine.class);
 
-   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
+   public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
+      this(cache, isIndexed, ObjectReflectionMatcher.class, null);
+   }
 
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
-      this.cache = cache.getValueDataConversion().isStorageFormatFilterable() ? cache.withEncoding(IdentityEncoder.class) : cache;
+      super(cache, matcherImplClass);
       this.isIndexed = isIndexed;
-      this.matcherImplClass = matcherImplClass;
-      this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
-      this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
-      propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
       if (fieldBridgeAndAnalyzerProvider == null && propertyHelper instanceof HibernateSearchPropertyHelper) {
          this.fieldBridgeAndAnalyzerProvider = (LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata>) (((HibernateSearchPropertyHelper) propertyHelper).getDefaultFieldBridgeProvider());
       } else {
@@ -146,22 +131,16 @@ public class QueryEngine<TypeMetadata> {
       return matcherImplClass;
    }
 
-   protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   ObjectPropertyHelper<TypeMetadata> getPropertyHelper() {
+      return propertyHelper;
+   }
+
+   BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       return buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
    }
 
-   protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
-      if (log.isDebugEnabled()) {
-         log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
-      }
-      BaseQuery query = parsingResult.hasGroupingOrAggregations() ?
-            buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, queryMode) :
-            buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, queryMode);
-      query.validateNamedParameters();
-      return query;
-   }
-
-   private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
+   @Override
+   protected BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.getProjectedPaths() == null) {
          throw CONTAINER.groupingAndAggregationQueriesMustUseProjections();
       }
@@ -501,8 +480,9 @@ public class QueryEngine<TypeMetadata> {
             startOffset, maxResults, projectingAggregatingQuery);
    }
 
-   private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
-                                              long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
+   @Override
+   protected BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
+                                                long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw CONTAINER.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
@@ -674,34 +654,11 @@ public class QueryEngine<TypeMetadata> {
    }
 
    /**
-    * Apply some pos-processing to the result when we have projections.
+    * Apply some post-processing to the result when we have projections.
     */
    protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes, Object[] projectedNullMarkers) {
       // In embedded mode Hibernate Search is a real blessing as it does all the work for us already. Nothing to be done here.
       return null;
-   }
-
-   protected IckleParsingResult<TypeMetadata> parse(String queryString) {
-      return queryCache != null
-            ? queryCache.get(queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleParser.parse(qs, propertyHelper))
-            : IckleParser.parse(queryString, propertyHelper);
-   }
-
-   private ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> accumulators) {
-      ObjectFilter objectFilter = queryCache != null
-            ? queryCache.get(queryString, accumulators, matcher.getClass(), matcher::getObjectFilter)
-            : matcher.getObjectFilter(queryString, accumulators);
-      return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
-   }
-
-   protected final IckleFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
-      IckleFilterAndConverter filter = createFilter(queryString, namedParameters);
-      SecurityActions.getCacheComponentRegistry(cache).wireDependencies(filter);
-      return filter;
-   }
-
-   protected IckleFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
-      return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
    }
 
    public <E> CacheQuery<E> buildCacheQuery(org.apache.lucene.search.Query luceneQuery, IndexedQueryMode indexedQueryMode,
@@ -794,14 +751,14 @@ public class QueryEngine<TypeMetadata> {
       }
    }
 
-   protected <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       return buildLuceneQuery(ickleParsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
    }
 
    /**
     * Build a Lucene index query.
     */
-   protected <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
+   <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
       if (log.isDebugEnabled()) {
          log.debugf("Building Lucene query for : %s", ickleParsingResult.getQueryString());
       }
@@ -848,6 +805,11 @@ public class QueryEngine<TypeMetadata> {
             .transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
    }
 
+   @Override
+   public IckleParsingResult<TypeMetadata> parse(String queryString) {
+      return super.parse(queryString);    // TODO [anistor]  public just for org/infinispan/query/dsl/embedded/impl/EmbeddedQueryEngineTest.java
+   }
+
    /**
     * Enhances the give query with an extra condition to discriminate on entity type. This is a no-op in embedded mode
     * but other query engines could use it to discriminate if more types are stored in the same index. To be overridden
@@ -877,6 +839,7 @@ public class QueryEngine<TypeMetadata> {
     * equal or different size) can be created and returned. Some of the possible processing are type conversions and the
     * processing of null markers.
     */
+   @FunctionalInterface
    protected interface RowProcessor extends Function<Object[], Object[]> {
    }
 }
