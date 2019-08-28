@@ -15,19 +15,19 @@ public class DoubleStatTest {
    private static final double DELTA = 0.0000001d;
 
    @Test
-   public void testEmptySum() throws Exception {
+   public void testEmptySum() {
       DoubleStat sum = new DoubleStat();
       assertNull(sum.getSum());
    }
 
    @Test
-   public void testEmptyAvg() throws Exception {
+   public void testEmptyAvg() {
       DoubleStat avg = new DoubleStat();
       assertNull(avg.getAvg());
    }
 
    @Test
-   public void testSum() throws Exception {
+   public void testSum() {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(20);
@@ -37,7 +37,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testAvg() throws Exception {
+   public void testAvg() {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(20);
@@ -47,7 +47,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testSumWithNaN() throws Exception {
+   public void testSumWithNaN() {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.NaN);
@@ -57,7 +57,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testAvgWithNaN() throws Exception {
+   public void testAvgWithNaN() {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.NaN);
@@ -67,7 +67,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testSumWithPlusInf() throws Exception {
+   public void testSumWithPlusInf() {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.POSITIVE_INFINITY);
@@ -77,7 +77,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testAvgWithPlusInf() throws Exception {
+   public void testAvgWithPlusInf() {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.POSITIVE_INFINITY);
@@ -87,7 +87,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testSumWithMinusInf() throws Exception {
+   public void testSumWithMinusInf() {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.NEGATIVE_INFINITY);
@@ -97,7 +97,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testAvgWithMinusInf() throws Exception {
+   public void testAvgWithMinusInf() {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.NEGATIVE_INFINITY);
@@ -107,7 +107,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testSumWithMinusInfAndPlusInf() throws Exception {
+   public void testSumWithMinusInfAndPlusInf() {
       DoubleStat sum = new DoubleStat();
       sum.update(10);
       sum.update(Double.NEGATIVE_INFINITY);
@@ -118,7 +118,7 @@ public class DoubleStatTest {
    }
 
    @Test
-   public void testAvgWithMinusInfAndPlusInf() throws Exception {
+   public void testAvgWithMinusInfAndPlusInf() {
       DoubleStat avg = new DoubleStat();
       avg.update(10);
       avg.update(Double.NEGATIVE_INFINITY);

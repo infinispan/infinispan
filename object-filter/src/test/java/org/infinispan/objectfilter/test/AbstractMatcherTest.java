@@ -449,7 +449,7 @@ public abstract class AbstractMatcherTest {
       Query q = qf.from(Person.class)
             .having("name").eq("John").build();
 
-      boolean b[] = new boolean[1];
+      boolean[] b = new boolean[1];
       FilterSubscription filterSubscription = matcher.registerFilter(q, (userContext, eventType, instance, projection, sortProjection) -> b[0] = true);
 
       ObjectFilter objectFilter = matcher.getObjectFilter(filterSubscription);
@@ -461,7 +461,6 @@ public abstract class AbstractMatcherTest {
       matcher.match(null, null, person);
       assertTrue(b[0]);
    }
-
 
    @Test
    public void testObjectFilterWithDSL() throws Exception {
@@ -486,7 +485,7 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      int matchCount[] = {0};
+      int[] matchCount = {0};
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, eventType, instance, projection, sortProjection) -> matchCount[0]++);
 
       matcher.match(null, null, person);

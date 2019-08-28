@@ -11,8 +11,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
  * @author anistor@redhat.com
  * @since 9.0
  */
-final class RejectObjectFilter<TypeMetadata>
-      extends ObjectFilterBase<TypeMetadata> implements ObjectFilter {
+final class RejectObjectFilter<TypeMetadata> extends ObjectFilterBase<TypeMetadata> implements ObjectFilter {
 
    RejectObjectFilter(Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult) {
       super(parsingResult, namedParameters);

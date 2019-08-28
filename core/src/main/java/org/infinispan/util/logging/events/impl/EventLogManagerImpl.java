@@ -6,14 +6,14 @@ import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 
 /**
- * EventLogManagerImpl. The implementation of the EventLogManager.
- * By default this returns
+ * EventLogManagerImpl. The default implementation of the EventLogManager.
  *
  * @author Tristan Tarrant
  * @since 8.2
  */
 @Scope(Scopes.GLOBAL)
 public class EventLogManagerImpl implements EventLogManager {
+
    private EventLogger logger = new BasicEventLogger();
 
    @Override

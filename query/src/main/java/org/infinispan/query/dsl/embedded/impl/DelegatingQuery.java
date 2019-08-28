@@ -23,6 +23,7 @@ final class DelegatingQuery<TypeMetadata> extends BaseQuery {
    private static final Log log = Logger.getMessageLogger(Log.class, DelegatingQuery.class.getName());
 
    private final QueryEngine<TypeMetadata> queryEngine;
+
    private final IndexedQueryMode queryMode;
 
    private final IckleParsingResult<TypeMetadata> parsingResult;

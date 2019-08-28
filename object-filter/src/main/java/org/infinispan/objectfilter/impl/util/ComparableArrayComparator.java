@@ -6,11 +6,20 @@ import java.util.Comparator;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class ComparableArrayComparator implements Comparator<Comparable[]> {
+public final class ComparableArrayComparator implements Comparator<Comparable[]> {
 
    private final boolean[] direction;
 
+   /**
+    * Constructs a comparator based on a direction boolean array. The length of the array must match the {@link
+    * Comparable} arrays we are supposed to handle.
+    *
+    * @param direction an array of booleans indicating direction (true indicates ascending order)
+    */
    public ComparableArrayComparator(boolean[] direction) {
+      if (direction == null) {
+         throw new IllegalArgumentException("direction array cannot be null");
+      }
       this.direction = direction;
    }
 
@@ -20,25 +29,24 @@ public class ComparableArrayComparator implements Comparator<Comparable[]> {
          throw new IllegalArgumentException("arguments cannot be null");
       }
       if (array1.length != direction.length || array2.length != direction.length) {
-         throw new IllegalArgumentException("arrays must have the same size");
+         throw new IllegalArgumentException("argument arrays must have the same size as the direction array");
       }
 
-      for (int i = 0; i < array1.length; i++) {
-         int r = compareElements(array1[i], array2[i], direction[i]);
+      for (int i = 0; i < direction.length; i++) {
+         int r = compareElements(array1[i], array2[i]);
          if (r != 0) {
-            return r;
+            return direction[i] ? r : -r;
          }
       }
       return 0;
    }
 
-   private int compareElements(Comparable o1, Comparable o2, boolean isAsc) {
+   private static int compareElements(Comparable o1, Comparable o2) {
       if (o1 == null) {
-         return o2 == null ? 0 : isAsc ? -1 : 1;
+         return o2 == null ? 0 : -1;
       } else if (o2 == null) {
-         return isAsc ? 1 : -1;
+         return 1;
       }
-      int r = o1.compareTo(o2);
-      return isAsc ? r : -r;
+      return o1.compareTo(o2);
    }
 }

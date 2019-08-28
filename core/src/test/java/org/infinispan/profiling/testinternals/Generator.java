@@ -1,7 +1,5 @@
 package org.infinispan.profiling.testinternals;
 
-//import org.infinispan.tree.Fqn;
-
 import java.util.List;
 import java.util.Random;
 
@@ -10,6 +8,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.jgroups.util.UUID;
 
 public class Generator {
+
    private static final Random r = new Random();
 
    public static String getRandomString() {
@@ -18,10 +17,9 @@ public class Generator {
 
    public static String getRandomString(int maxKeySize) {
       StringBuilder sb = new StringBuilder();
-      int len = r.nextInt(maxKeySize);
-
+      int len = r.nextInt(maxKeySize) + 1;
       for (int i = 0; i < len; i++) {
-         sb.append((char) (63 + r.nextInt(26)));
+         sb.append((char) ('A' + r.nextInt(26)));
       }
       return sb.toString();
    }

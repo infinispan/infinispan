@@ -98,14 +98,11 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
 
    public void notifyMatchingSubscribers(final MatcherEvalContext<?, ?, ?> ctx, Object attributeValue) {
       if (orderedPredicates != null && attributeValue instanceof Comparable) {
-         orderedPredicates.stab((AttributeDomain) attributeValue, new IntervalTree.NodeCallback<AttributeDomain, Subscriptions>() {
-            @Override
-            public void handle(IntervalTree.Node<AttributeDomain, Subscriptions> node) {
-               Subscriptions subscriptions = node.value;
-               if (subscriptions.isActive(ctx)) {
-                  for (Subscription s : subscriptions.subscriptions) {
-                     s.handleValue(ctx, true);
-                  }
+         orderedPredicates.stab((AttributeDomain) attributeValue, node -> {
+            Subscriptions subscriptions = node.value;
+            if (subscriptions.isActive(ctx)) {
+               for (Subscription s : subscriptions.subscriptions) {
+                  s.handleValue(ctx, true);
                }
             }
          });
@@ -131,7 +128,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
       if (useIntervals && predicate instanceof IntervalPredicate) {
          if (orderedPredicates == null) {
             // in this case AttributeDomain extends Comparable for sure
-            orderedPredicates = new IntervalTree<AttributeDomain, Subscriptions>();
+            orderedPredicates = new IntervalTree<>();
          }
          IntervalTree.Node<AttributeDomain, Subscriptions> n = orderedPredicates.add(((IntervalPredicate) predicate).getInterval());
          if (n.value == null) {

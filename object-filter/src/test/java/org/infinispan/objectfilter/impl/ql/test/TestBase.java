@@ -32,6 +32,8 @@ import org.infinispan.objectfilter.impl.ql.parse.IckleLexer;
 import org.infinispan.objectfilter.impl.ql.parse.IckleParser;
 
 /**
+ * Common utilities for testing the parser and lexer.
+ *
  * @author anistor@redhat.com
  * @since 9.0
  */

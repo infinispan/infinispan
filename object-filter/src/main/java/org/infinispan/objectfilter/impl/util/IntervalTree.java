@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An Interval tree is an ordered tree data structure to hold Intervals. Specifically, it allows one to efficiently find
- * all Intervals that contain any given value in O(log n) time (see http://en.wikipedia.org/wiki/Interval_tree).
+ * An Interval tree is an ordered tree data structure to hold {@link Interval}s. Specifically, it allows one to
+ * efficiently find all {@link Interval}s that contain any given value in O(log n) time
+ * (http://en.wikipedia.org/wiki/Interval_tree).
  * <p/>
  * The implementation is based on red-black trees (http://en.wikipedia.org/wiki/Red–black_tree). Additions and removals
  * are efficient and require only minimal rebalancing of the tree as opposed to other implementation approaches that
@@ -71,7 +72,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    private Node<K, V> root;
 
    public IntervalTree() {
-      sentinel = new Node<K, V>();
+      sentinel = new Node<>();
       sentinel.left = sentinel;
       sentinel.right = sentinel;
       sentinel.parent = sentinel;
@@ -94,9 +95,9 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    }
 
    /**
-    * Compare two Intervals.
+    * Compare two {@link Interval}s.
     *
-    * @return a negative integer, zero, or a positive integer depending if Interval i1 is to the left of i2, overlaps
+    * @return a negative integer, zero, or a positive integer depending if {@link Interval} i1 is to the left of i2, overlaps
     * with it, or is to the right of i2.
     */
    private int compareIntervals(Interval<K> i1, Interval<K> i2) {
@@ -121,14 +122,14 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    }
 
    /**
-    * Add the {@code Interval} into this {@code IntervalTree} and return the Node. Possible duplicates are found and the
+    * Add the {@link Interval} into this {@link IntervalTree} and return the Node. Possible duplicates are found and the
     * existing Node is returned instead of adding a new one.
     *
-    * @param i an Interval to be inserted
+    * @param i an {@link Interval} to be inserted
     */
    public Node<K, V> add(Interval<K> i) {
       checkValidInterval(i);
-      return add(new Node<K, V>(i));
+      return add(new Node<>(i));
    }
 
    private Node<K, V> add(Node<K, V> n) {
@@ -138,7 +139,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
       Node<K, V> x = root != null ? root.left : null;
       while (x != sentinel) {
          y = x;
-         if (x.interval.equals(n.interval)) {
+         if (n.interval.equals(x.interval)) {
             return x;
          }
          if (compareLowerBound(n.interval, y.interval)) {
@@ -210,8 +211,9 @@ public final class IntervalTree<K extends Comparable<K>, V> {
       Node<K, V> y = x.right;
 
       x.right = y.left;
-      if (y.left != sentinel)
+      if (y.left != sentinel) {
          y.left.parent = x;
+      }
       y.parent = x.parent;
       if (x == x.parent.left) {
          x.parent.left = y;
@@ -252,7 +254,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    }
 
    /**
-    * Removes the Interval.
+    * Removes the {@link Interval}.
     *
     * @param i the interval to remove
     */
@@ -283,7 +285,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    }
 
    public void remove(Node<K, V> n) {
-      n.max = Interval.<K>getMinusInf();
+      n.max = Interval.getMinusInf();
       for (Node<K, V> i = n.parent; i != root; i = i.parent) {
          i.max = max(i.left.max, i.right.max);
          if (i.parent == root) {
@@ -409,34 +411,29 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    }
 
    /**
-    * Checks if this {@code IntervalTree} does not have any Intervals.
+    * Checks if this {@link IntervalTree} does not have any Intervals.
     *
-    * @return {@code true} if this {@code IntervalTree} is empty, {@code false} otherwise.
+    * @return {@code true} if this {@link IntervalTree} is empty, {@code false} otherwise.
     */
    public boolean isEmpty() {
       return root.left == sentinel;
    }
 
    /**
-    * Find all Intervals that contain a given value.
+    * Find all {@link Interval}s that contain a given value.
     *
     * @param k the value to search for
     * @return a non-null List of intervals that contain the value
     */
    public List<Node<K, V>> stab(K k) {
-      Interval<K> i = new Interval<K>(k, true, k, true);
-      final List<Node<K, V>> nodes = new ArrayList<Node<K, V>>();
-      findOverlap(root.left, i, new NodeCallback<K, V>() {
-         @Override
-         public void handle(Node<K, V> node) {
-            nodes.add(node);
-         }
-      });
+      Interval<K> i = new Interval<>(k, true, k, true);
+      final List<Node<K, V>> nodes = new ArrayList<>();
+      findOverlap(root.left, i, node -> nodes.add(node));
       return nodes;
    }
 
    public void stab(K k, NodeCallback<K, V> nodeCallback) {
-      Interval<K> i = new Interval<K>(k, true, k, true);
+      Interval<K> i = new Interval<>(k, true, k, true);
       findOverlap(root.left, i, nodeCallback);
    }
 
@@ -494,6 +491,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
       return null;
    }
 
+   @FunctionalInterface
    public interface NodeCallback<K extends Comparable<K>, V> {
       void handle(Node<K, V> node);
    }
@@ -512,18 +510,12 @@ public final class IntervalTree<K extends Comparable<K>, V> {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      inorderTraversal(new NodeCallback<K, V>() {
-         @Override
-         public void handle(Node<K, V> n) {
-            if (sb.length() > 0) {
-               sb.append(", ");
-            }
-            sb.append(n.interval);
-            sb.append("->{");
-            sb.append(n.value);
-            sb.append('}');
+      StringBuilder sb = new StringBuilder();
+      inorderTraversal(n -> {
+         if (sb.length() > 0) {
+            sb.append(", ");
          }
+         sb.append(n.interval).append("->{").append(n.value).append('}');
       });
       return sb.toString();
    }
