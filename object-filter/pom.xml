@@ -40,6 +40,8 @@
       <dependency>
          <groupId>org.antlr</groupId>
          <artifactId>antlr-runtime</artifactId>
+         <!--  This gets shaded, so we mark it optional in order not to propagate this dependency any further -->
+         <optional>true</optional>
       </dependency>
 
       <dependency>
@@ -54,11 +56,6 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
-
-   <properties>
-      <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
-      <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
-   </properties>
 
    <build>
       <plugins>
@@ -115,19 +112,21 @@
                      <goal>shade</goal>
                   </goals>
                   <configuration>
-                     <finalName>${intermediary_jar_name}</finalName>
+                     <finalName>${project.artifactId}-${project.version}</finalName>
                      <minimizeJar>true</minimizeJar>
                      <artifactSet>
                         <excludes>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>org.jboss.logging:jboss-logging:jar:</exclude>
+                           <exclude>org.infinispan:infinispan-query-dsl:jar:</exclude>
+                           <exclude>org.infinispan.protostream:protostream:jar:</exclude>
                         </excludes>
                      </artifactSet>
                      <relocations>
                         <relocation>
                            <pattern>org.antlr.runtime</pattern>
-                           <shadedPattern>org.infinipan.objectfilter.impl.antlr.runtime</shadedPattern>
+                           <shadedPattern>org.infinispan.objectfilter.impl.antlr.runtime</shadedPattern>
                         </relocation>
                      </relocations>
                   </configuration>
