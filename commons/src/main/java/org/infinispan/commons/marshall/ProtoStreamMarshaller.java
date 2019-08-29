@@ -10,14 +10,14 @@ import org.infinispan.protostream.SerializationContext;
 
 /**
  * Provides the starting point for implementing a {@link org.infinispan.commons.marshall.Marshaller} that uses Protobuf
- * encoding. Subclasses must implement just a single {@link #getSerializationContext} lookup method.
+ * encoding.
  *
  * @author anistor@redhat.com
  * @since 6.0
  */
 public class ProtoStreamMarshaller extends AbstractMarshaller {
 
-   protected final SerializationContext serializationContext;
+   private final SerializationContext serializationContext;
 
    public ProtoStreamMarshaller() {
       this(ProtobufUtil.newSerializationContext());
