@@ -26,17 +26,22 @@ public class ProtoStreamMarshaller extends BaseProtoStreamMarshaller {
    }
 
    /**
-    * Obtains the {@link SerializationContext} associated with the given remote cache manager.
+    * A convenience method to return the {@link SerializationContext} associated with the {@link ProtoStreamMarshaller}
+    * configured on the provided {@link RemoteCacheManager}.
     *
-    * @param remoteCacheManager the remote cache manager (must not be {@code null})
     * @return the associated {@link SerializationContext}
-    * @throws HotRodClientException if the cache manager is not configured to use a {@link ProtoStreamMarshaller}
+    * @throws HotRodClientException if the cache manager is not started or is not configured to use a {@link ProtoStreamMarshaller}
     */
    public static SerializationContext getSerializationContext(RemoteCacheManager remoteCacheManager) {
       Marshaller marshaller = remoteCacheManager.getMarshaller();
       if (marshaller instanceof ProtoStreamMarshaller) {
          return ((ProtoStreamMarshaller) marshaller).getSerializationContext();
       }
-      throw new HotRodClientException("The cache manager must be configured with a ProtoStreamMarshaller");
+
+      if (marshaller == null) {
+         throw new HotRodClientException("The cache manager must be configured with a ProtoStreamMarshaller and must be started before attempting to retrieve the ProtoStream SerializationContext");
+      }
+
+      throw new HotRodClientException("The cache manager is not configured with a ProtoStreamMarshaller");
    }
 }
