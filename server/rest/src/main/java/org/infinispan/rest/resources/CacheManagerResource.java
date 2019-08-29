@@ -6,6 +6,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
@@ -76,6 +77,7 @@ public class CacheManagerResource implements ResourceHandler {
       return new Invocations.Builder()
             // Health
             .invocation().methods(GET, HEAD).path("/v2/cache-managers/{name}/health").handleWith(this::getHealth)
+            .invocation().methods(GET, HEAD).anonymous(true).path("/v2/cache-managers/{name}/health/status").handleWith(this::getHealthStatus)
 
             // Config
             .invocation().methods(GET).path("/v2/cache-managers/{name}/cache-configs").handleWith(this::getAllCachesConfiguration)
@@ -150,17 +152,27 @@ public class CacheManagerResource implements ResourceHandler {
 
 
    private CompletionStage<RestResponse> getHealth(RestRequest restRequest) {
+      return getHealth(restRequest, false);
+   }
+
+   private CompletionStage<RestResponse> getHealthStatus(RestRequest restRequest) {
+      return getHealth(restRequest, true);
+   }
+
+   private CompletionStage<RestResponse> getHealth(RestRequest restRequest, boolean anon) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(restRequest);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       if (restRequest.method() == HEAD) return completedFuture(new NettyRestResponse.Builder().status(OK).build());
 
       try {
-         Health health = cacheManager.getHealth();
+         Health health = SecurityActions.getHealth(cacheManager);
          HealthInfo healthInfo = new HealthInfo(health.getClusterHealth(), health.getCacheHealth());
-         byte[] bytes = objectMapper.writeValueAsBytes(healthInfo);
-         responseBuilder.contentType(APPLICATION_JSON)
-               .entity(bytes)
+
+         MediaType contentType = anon ? TEXT_PLAIN : APPLICATION_JSON;
+         Object payload = anon ? healthInfo.clusterHealth.getHealthStatus().toString() : objectMapper.writeValueAsBytes(healthInfo);
+         responseBuilder.contentType(contentType)
+               .entity(payload)
                .status(OK);
       } catch (JsonProcessingException e) {
          responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);

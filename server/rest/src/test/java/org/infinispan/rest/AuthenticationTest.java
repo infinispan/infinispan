@@ -5,6 +5,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import java.util.Base64;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import javax.security.auth.Subject;
 
@@ -107,5 +109,24 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       //then
       ResponseAssertion.assertThat(response).isUnauthorized();
+   }
+
+   @Test
+   public void shouldAllowHealthAnonymously() throws InterruptedException, ExecutionException, TimeoutException {
+      SecurityDomain securityDomainMock = mock(SecurityDomain.class);
+      Subject user = TestingUtil.makeSubject("test");
+      doReturn(user).when(securityDomainMock).authenticate(eq("test"), eq("test"));
+      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
+
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
+
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/v2/cache-managers/DefaultCacheManager/health/status", restServer.getPort()))
+            .method(HttpMethod.GET)
+            .send();
+
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasContentType("text/plain");
+      ResponseAssertion.assertThat(response).hasReturnedText("HEALTHY");
    }
 }

@@ -27,13 +27,21 @@ public class RestDispatcherImpl implements RestDispatcher {
    }
 
    @Override
+   public LookupResult lookupInvocation(RestRequest restRequest) {
+      return manager.lookupResource(restRequest.method(), restRequest.path(), restRequest.getAction());
+   }
+
+   @Override
    public CompletionStage<RestResponse> dispatch(RestRequest restRequest) {
+      return dispatch(restRequest, lookupInvocation(restRequest));
+   }
+
+   @Override
+   public CompletionStage<RestResponse> dispatch(RestRequest restRequest, LookupResult lookupResult) {
       String action = restRequest.getAction();
       if (action != null && action.isEmpty()) {
          return CompletableFutures.completedExceptionFuture(new MalformedRequest("Invalid action"));
       }
-
-      LookupResult lookupResult = manager.lookupResource(restRequest.method(), restRequest.path(), restRequest.getAction());
 
       if (lookupResult == null) {
          return NOT_FOUND_RESPONSE;

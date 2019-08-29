@@ -5,8 +5,11 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.health.Health;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
+import org.infinispan.security.actions.GetCacheManagerHealthAction;
 
 /**
  * SecurityActions for the org.infinispan.rest.cachemanager package.
@@ -26,6 +29,11 @@ final class SecurityActions {
 
    static Configuration getCacheConfiguration(AdvancedCache<?, ?> cache) {
       GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
+      return doPrivileged(action);
+   }
+
+   static Health getHealth(final EmbeddedCacheManager cacheManager) {
+      GetCacheManagerHealthAction action = new GetCacheManagerHealthAction(cacheManager);
       return doPrivileged(action);
    }
 }

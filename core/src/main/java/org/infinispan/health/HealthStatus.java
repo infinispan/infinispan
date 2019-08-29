@@ -15,7 +15,7 @@ public enum HealthStatus {
      *    Please keep in mind that in the future additional rules might be added to reflect Unhealthy status of the cache.
      * </p>.
      */
-    UNHEALTHY,
+    DEGRADED,
 
     /**
      * Given entity is healthy.
@@ -25,5 +25,5 @@ public enum HealthStatus {
     /**
      * Given entity is healthy but a rebalance is in progress.
      */
-    REBALANCING
+    HEALTHY_REBALANCING
 }

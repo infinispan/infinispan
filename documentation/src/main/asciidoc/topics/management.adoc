@@ -69,7 +69,7 @@ include::code_examples/EnableJmxStatistics.java[]
 
 It is also possible to monitor {brandname} cluster health using JMX. On CacheManager there's an additional object called `CacheContainerHealth`. It contains the following attributes:
 
-* cacheHealth - a list of caches and corresponding statuses (HEALTHY, UNHEALTHY or REBALANCING)
+* cacheHealth - a list of caches and corresponding statuses (HEALTHY, DEGRADED or HEALTHY_REBALANCING)
 * clusterHealth - overall cluster health
 * clusterName - cluster name
 * freeMemoryKb - Free memory obtained from JVM runtime measured in KB

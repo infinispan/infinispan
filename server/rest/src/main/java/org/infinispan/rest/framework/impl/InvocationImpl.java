@@ -21,13 +21,15 @@ public class InvocationImpl implements Invocation {
    private final Function<RestRequest, CompletionStage<RestResponse>> handler;
    private final String action;
    private final String name;
+   private final boolean anonymous;
 
-   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, CompletionStage<RestResponse>> handler, String action, String name) {
+   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, CompletionStage<RestResponse>> handler, String action, String name, boolean anonymous) {
       this.methods = methods;
       this.paths = paths;
       this.handler = handler;
       this.action = action;
       this.name = name;
+      this.anonymous = anonymous;
    }
 
    public String getAction() {
@@ -55,6 +57,11 @@ public class InvocationImpl implements Invocation {
       return handler;
    }
 
+   @Override
+   public boolean anonymous() {
+      return anonymous;
+   }
+
    public static class Builder {
       private final Invocations.Builder parent;
       private Set<Method> methods = new HashSet<>();
@@ -62,6 +69,7 @@ public class InvocationImpl implements Invocation {
       private Function<RestRequest, CompletionStage<RestResponse>> handler;
       private String action = null;
       private String name = null;
+      private boolean anonymous = false;
 
       public Builder method(Method method) {
          this.methods.add(method);
@@ -88,6 +96,11 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      public Builder anonymous(boolean enable) {
+         this.anonymous = enable;
+         return this;
+      }
+
       public Builder withAction(String action) {
          this.action = action;
          return this;
@@ -106,7 +119,7 @@ public class InvocationImpl implements Invocation {
       }
 
       InvocationImpl build() {
-         return new InvocationImpl(methods, paths, handler, action, name);
+         return new InvocationImpl(methods, paths, handler, action, name, anonymous);
       }
    }
 

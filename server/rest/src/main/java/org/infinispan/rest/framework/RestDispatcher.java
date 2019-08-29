@@ -9,6 +9,10 @@ import java.util.concurrent.CompletionStage;
  */
 public interface RestDispatcher {
 
+   LookupResult lookupInvocation(RestRequest restRequest);
+
    CompletionStage<RestResponse> dispatch(RestRequest restRequest);
+
+   CompletionStage<RestResponse> dispatch(RestRequest restRequest, LookupResult lookupResult);
 
 }

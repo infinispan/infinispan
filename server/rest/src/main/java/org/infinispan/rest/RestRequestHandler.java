@@ -1,9 +1,16 @@
 package org.infinispan.rest;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
+import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import java.util.Objects;
+
+import javax.security.auth.Subject;
+
+import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -30,7 +37,9 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;
-   private AuthenticationHandler authenticationHandler;
+   private Subject subject;
+   private String authorization;
+   private final Authenticator authenticator;
 
    /**
     * Creates new {@link RestRequestHandler}.
@@ -40,22 +49,62 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    public RestRequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
-   }
-
-   @Override
-   public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-      authenticationHandler = ctx.pipeline().get(AuthenticationHandler.class);
-      super.channelRegistered(ctx);
+      this.authenticator = configuration.authentication().enabled() ? configuration.authentication().authenticator() : null;
    }
 
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
       restAccessLoggingHandler.preLog(request);
       NettyRestRequest restRequest = new NettyRestRequest(request);
-      if (authenticationHandler != null) {
-         restRequest.setSubject(authenticationHandler.getSubject());
+
+      LookupResult invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
+
+      if (authenticator == null || isAnon(invocationLookup)) {
+         handleRestRequest(ctx, restRequest, invocationLookup);
+         return;
       }
-      restServer.getRestDispatcher().dispatch(restRequest).whenComplete((restResponse, throwable) -> {
+      if (subject != null) {
+         // Ensure that the authorization header, if needed, has not changed
+         String authz = request.headers().get(HttpHeaderNames.AUTHORIZATION);
+         if (Objects.equals(authz, authorization)) {
+            handleRestRequest(ctx, restRequest, invocationLookup);
+            return;
+         } else {
+            // Invalidate and force re-authentication
+            subject = null;
+            authorization = null;
+         }
+      }
+      authenticator.challenge(restRequest, ctx).whenComplete((authResponse, authThrowable) -> {
+         boolean hasError = authThrowable != null;
+         boolean authorized = authResponse.getStatus() != UNAUTHORIZED.code();
+         if (!hasError && authorized) {
+            subject = restRequest.getSubject();
+            authorization = restRequest.getAuthorizationHeader();
+            restRequest.setSubject(subject);
+            handleRestRequest(ctx, restRequest, invocationLookup);
+         } else {
+            try {
+               if (hasError) {
+                  handleError(ctx, request, authThrowable);
+               } else {
+                  sendResponse(ctx, request, ((NettyRestResponse) authResponse).getResponse());
+               }
+            } finally {
+               request.release();
+            }
+         }
+      });
+   }
+
+   private boolean isAnon(LookupResult lookupResult) {
+      if (lookupResult == null || lookupResult.getInvocation() == null) return true;
+      return lookupResult.getInvocation().anonymous();
+   }
+
+   private void handleRestRequest(ChannelHandlerContext ctx, NettyRestRequest restRequest, LookupResult invocationLookup) {
+      restServer.getRestDispatcher().dispatch(restRequest, invocationLookup).whenComplete((restResponse, throwable) -> {
+         FullHttpRequest request = restRequest.getFullHttpRequest();
          try {
             if (throwable == null) {
                NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;

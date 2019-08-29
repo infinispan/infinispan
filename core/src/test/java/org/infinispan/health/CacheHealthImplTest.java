@@ -48,7 +48,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.UNHEALTHY);
+        assertEquals(status, HealthStatus.DEGRADED);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.UNHEALTHY);
+        assertEquals(status, HealthStatus.DEGRADED);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.UNHEALTHY);
+        assertEquals(status, HealthStatus.DEGRADED);
     }
 
     @Test
@@ -97,7 +97,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.UNHEALTHY);
+        assertEquals(status, HealthStatus.DEGRADED);
     }
 
     @Test
@@ -117,7 +117,7 @@ public class CacheHealthImplTest {
         HealthStatus status = cacheHealth.getStatus();
 
         //then
-        assertEquals(status, HealthStatus.REBALANCING);
+        assertEquals(status, HealthStatus.HEALTHY_REBALANCING);
     }
 
     @Test

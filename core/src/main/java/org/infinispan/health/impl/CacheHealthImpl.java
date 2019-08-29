@@ -22,11 +22,11 @@ public class CacheHealthImpl implements CacheHealth {
    @Override
    public HealthStatus getStatus() {
       if (!isComponentHealthy() || cache.getAdvancedCache().getAvailability() == AvailabilityMode.DEGRADED_MODE) {
-         return HealthStatus.UNHEALTHY;
+         return HealthStatus.DEGRADED;
       }
       DistributionManager distributionManager = SecurityActions.getDistributionManager(cache);
       if (distributionManager != null && distributionManager.isRehashInProgress()) {
-         return HealthStatus.REBALANCING;
+         return HealthStatus.HEALTHY_REBALANCING;
       }
       return HealthStatus.HEALTHY;
    }
