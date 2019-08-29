@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
-import java.beans.IntrospectionException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
             return propType;
          }
          return primitives.get(propType);
-      } catch (IntrospectionException e) {
+      } catch (ReflectiveOperationException e) {
          // ignored
       }
       return null;
@@ -50,7 +49,7 @@ public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
       try {
          Class<?> propType = getPropertyAccessor(entityType, propertyPath).getPropertyType();
          return propType != null && !propType.isEnum() && !primitives.containsKey(propType);
-      } catch (IntrospectionException e) {
+      } catch (ReflectiveOperationException e) {
          return false;
       }
    }
@@ -68,7 +67,7 @@ public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
                return true;
             }
          }
-      } catch (IntrospectionException e) {
+      } catch (ReflectiveOperationException e) {
          // ignored
       }
       return false;
@@ -79,12 +78,12 @@ public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
       try {
          Class<?> propType = getPropertyAccessor(entityType, propertyPath).getPropertyType();
          return propType != null;
-      } catch (IntrospectionException e) {
+      } catch (ReflectiveOperationException e) {
          return false;
       }
    }
 
-   private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> entityClass, String[] propertyPath) throws IntrospectionException {
+   private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> entityClass, String[] propertyPath) throws ReflectiveOperationException {
       if (propertyPath == null || propertyPath.length == 0) {
          throw new IllegalArgumentException("propertyPath name cannot be null or empty");
       }

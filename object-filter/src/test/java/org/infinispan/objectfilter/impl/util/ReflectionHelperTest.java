@@ -2,7 +2,6 @@ package org.infinispan.objectfilter.impl.util;
 
 import static org.junit.Assert.assertEquals;
 
-import java.beans.IntrospectionException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +74,7 @@ public class ReflectionHelperTest {
 
    @Test
    public void testPropertyNotFound() throws Exception {
-      expectedException.expect(IntrospectionException.class);
+      expectedException.expect(ReflectiveOperationException.class);
       expectedException.expectMessage("Property not found: unknown");
       ReflectionHelper.getAccessor(Base.class, "unknown");
    }

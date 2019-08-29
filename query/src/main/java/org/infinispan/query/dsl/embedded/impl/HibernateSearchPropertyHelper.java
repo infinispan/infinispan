@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import java.beans.IntrospectionException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -211,7 +210,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> type, String propertyName) {
       try {
          return ReflectionHelper.getAccessor(type, propertyName);
-      } catch (IntrospectionException e) {
+      } catch (ReflectiveOperationException e) {
          return null;
       }
    }

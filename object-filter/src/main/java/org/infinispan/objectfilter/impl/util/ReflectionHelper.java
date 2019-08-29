@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.util;
 
-import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
@@ -44,15 +43,15 @@ public final class ReflectionHelper {
        *
        * @param propName the name of the nested property
        * @return the accessor of the nested property
-       * @throws IntrospectionException if the nested property was not found
+       * @throws ReflectiveOperationException if the nested property was not found
        */
-      PropertyAccessor getAccessor(String propName) throws IntrospectionException;
+      PropertyAccessor getAccessor(String propName) throws ReflectiveOperationException;
    }
 
    private abstract static class BasePropertyAccessor implements PropertyAccessor {
 
       @Override
-      public PropertyAccessor getAccessor(String propName) throws IntrospectionException {
+      public PropertyAccessor getAccessor(String propName) throws ReflectiveOperationException {
          return ReflectionHelper.getAccessor(getPropertyType(), propName);
       }
    }
@@ -248,7 +247,7 @@ public final class ReflectionHelper {
    private ReflectionHelper() {
    }
 
-   public static PropertyAccessor getAccessor(Class<?> clazz, String propertyName) throws IntrospectionException {
+   public static PropertyAccessor getAccessor(Class<?> clazz, String propertyName) throws ReflectiveOperationException {
       if (propertyName == null || propertyName.length() == 0) {
          throw new IllegalArgumentException("Property name cannot be null or empty");
       }
@@ -266,7 +265,7 @@ public final class ReflectionHelper {
          c = c.getSuperclass();
       }
 
-      throw new IntrospectionException("Property not found: " + propertyName);
+      throw new ReflectiveOperationException("Property not found: " + propertyName);
    }
 
    private static PropertyAccessor getAccessor(Class<?> clazz, String propertyName, String propertyNameSuffix) {

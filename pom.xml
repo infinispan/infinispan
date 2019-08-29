@@ -5012,7 +5012,6 @@
                --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
                --add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
                --add-opens=java.base/java.text=ALL-UNNAMED
-               --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
                --add-opens=java.base/java.security=ALL-UNNAMED
                --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED
                --add-exports=java.base/sun.nio.ch=ALL-UNNAMED

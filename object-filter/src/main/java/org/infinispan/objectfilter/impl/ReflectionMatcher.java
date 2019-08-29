@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl;
 
-import java.beans.IntrospectionException;
 import java.util.List;
 
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
@@ -84,7 +83,7 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
          try {
             return parentAttributeMetadata == null ?
                   ReflectionHelper.getAccessor(clazz, attribute) : parentAttributeMetadata.getAccessor(attribute);
-         } catch (IntrospectionException e) {
+         } catch (ReflectiveOperationException e) {
             return null;
          }
       }

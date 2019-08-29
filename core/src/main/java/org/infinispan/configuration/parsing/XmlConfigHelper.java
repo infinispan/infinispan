@@ -1,12 +1,17 @@
 package org.infinispan.configuration.parsing;
 
-import java.beans.PropertyEditor;
-import java.beans.PropertyEditorManager;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
+
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -22,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.w3c.dom.Element;
 
 /**
- * A simple XML utility class for reading configuration elements
+ * A simple XML utility class for reading configuration elements.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @since 4.0
@@ -30,8 +35,17 @@ import org.w3c.dom.Element;
 public class XmlConfigHelper {
    private static final Log log = LogFactory.getLog(XmlConfigHelper.class);
 
-   public static Object valueConverter(@SuppressWarnings("rawtypes") Class klass, String value) {
-      if (klass == Integer.class) {
+   @SuppressWarnings({"rawtypes", "unchecked"})
+   public static Object valueConverter(Class klass, String value) {
+      if (klass == Character.class) {
+         if (value.length() == 1) {
+            return value.charAt(0);
+         }
+      } else if (klass == Byte.class) {
+         return Byte.valueOf(value);
+      } else if (klass == Short.class) {
+         return Short.valueOf(value);
+      } else if (klass == Integer.class) {
          return Integer.valueOf(value);
       } else if (klass == Long.class) {
          return Long.valueOf(value);
@@ -39,19 +53,35 @@ public class XmlConfigHelper {
          return Boolean.valueOf(value);
       } else if (klass == String.class) {
          return value;
+      } else if (klass == char[].class) {
+         return value.toCharArray();
       } else if (klass == Float.class) {
          return Float.valueOf(value);
       } else if (klass == Double.class) {
          return Double.valueOf(value);
-      } else if (klass .isEnum()) {
+      } else if (klass == BigDecimal.class) {
+         return new BigDecimal(value);
+      } else if (klass == BigInteger.class) {
+         return new BigInteger(value);
+      } else if (klass == File.class) {
+         return new File(value);
+      } else if (klass.isEnum()) {
          return Enum.valueOf(klass, value);
-      } else {
-         throw new CacheConfigurationException("Cannot convert "+ value + " to type " + klass.getName());
+      } else if (klass == Properties.class) {
+         try {
+            Properties props = new Properties();
+            props.load(new ByteArrayInputStream(value.getBytes()));
+            return props;
+         } catch (IOException e) {
+            throw new CacheConfigurationException("Failed to load Properties from: " + value, e);
+         }
       }
+
+      throw new CacheConfigurationException("Cannot convert " + value + " to type " + klass.getName());
    }
 
    public static Map<Object, Object> setAttributes(AttributeSet attributes, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingAttribute) {
-      Map<Object, Object> ignoredAttribs = new HashMap<Object, Object>();
+      Map<Object, Object> ignoredAttribs = new HashMap<>();
       for(Entry<?, ?> entry : attribs.entrySet()) {
          String name = (String) entry.getKey();
          if (attributes.contains(name)) {
@@ -68,7 +98,7 @@ public class XmlConfigHelper {
 
    public static Map<Object, Object> setValues(Object target, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingSetter) {
       Class<?> objectClass = target.getClass();
-      Map<Object, Object> ignoredAttribs = new HashMap<Object, Object>();
+      Map<Object, Object> ignoredAttribs = new HashMap<>();
       // go thru simple string setters first.
       for (Map.Entry<?, ?> entry : attribs.entrySet()) {
          String propName = (String) entry.getKey();
@@ -112,14 +142,8 @@ public class XmlConfigHelper {
                   log.tracef("Rejecting setter %s on class %s due to class parameter is type class", m, objectClass);
                    continue; // try another param with the same name.
                }
-               PropertyEditor editor = PropertyEditorManager.findEditor(parameterType);
-               if (editor == null) {
-                  throw new CacheConfigurationException("Couldn't find a property editor for parameter type " + parameterType);
-               }
 
-               editor.setAsText((String) attribs.get(propName));
-
-               Object parameter = editor.getValue();
+               Object parameter = valueConverter(parameterType, (String) attribs.get(propName));
                //if (log.isDebugEnabled()) log.debug("Invoking setter method: " + setter + " with parameter \"" + parameter + "\" of type " + parameter.getClass());
 
                try {
