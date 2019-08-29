@@ -167,7 +167,7 @@ public class HotRodCustomMarshallerIteratorIT {
       // Iteration with parametrised filter
       entryMap = iteratorToMap(remoteCache.retrieveEntries(PARAM_FILTER_CONVERTER_FACTORY_NAME, new Object[]{3}, null, 10));
       assertEquals(10, entryMap.size());
-      assertTrue(entryMap.get(2).equals("Use"));
+      assertEquals("Use", entryMap.get(2));
    }
 
    private Map<Object, Object> iteratorToMap(CloseableIterator<Entry<Object, Object>> iterator) {
