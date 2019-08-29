@@ -116,6 +116,10 @@ Almost as soon as GUARANTEED_DELIVERY was added, UNICAST3 and NAKACK2.resend_las
 It was always documented as experimental, so we removed it without deprecation and we also removed the RSVP protocol
 from the default JGroups stacks.
 
+=== Cache Health
+The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING and DEGRADED to better
+reflect the fact that `rebalancing` doesn't mean a cluster is unhealthy.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes

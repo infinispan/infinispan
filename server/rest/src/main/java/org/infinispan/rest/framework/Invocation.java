@@ -38,4 +38,9 @@ public interface Invocation {
     * Return the function to execute the invocation.
     */
    Function<RestRequest, CompletionStage<RestResponse>> handler();
+
+   /**
+    * @return true whether the invocation can be done anonymously (without auth)
+    */
+   boolean anonymous();
 }

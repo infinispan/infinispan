@@ -34,10 +34,10 @@ public class ClusterHealthImpl implements ClusterHealth {
             .map(CacheHealthImpl::getStatus)
             .collect(Collectors.toSet());
 
-      if (healthStatuses.contains(HealthStatus.UNHEALTHY)) {
-         globalHealthStatus = HealthStatus.UNHEALTHY;
-      } else if (healthStatuses.contains(HealthStatus.REBALANCING)) {
-         globalHealthStatus = HealthStatus.REBALANCING;
+      if (healthStatuses.contains(HealthStatus.DEGRADED)) {
+         globalHealthStatus = HealthStatus.DEGRADED;
+      } else if (healthStatuses.contains(HealthStatus.HEALTHY_REBALANCING)) {
+         globalHealthStatus = HealthStatus.HEALTHY_REBALANCING;
       }
       return globalHealthStatus;
    }

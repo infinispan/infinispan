@@ -211,6 +211,10 @@ public class NettyRestRequest implements RestRequest {
       }
    }
 
+   public FullHttpRequest getFullHttpRequest() {
+      return request;
+   }
+
    @Override
    public String toString() {
       return "NettyRestRequest{" +

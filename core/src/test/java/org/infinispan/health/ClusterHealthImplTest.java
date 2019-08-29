@@ -103,7 +103,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
       HealthStatus healthStatus = clusterHealth.getHealthStatus();
 
-      assertEquals(HealthStatus.UNHEALTHY, healthStatus);
+      assertEquals(HealthStatus.DEGRADED, healthStatus);
    }
 
    public void testRebalancingStatusWhenUserCacheIsRebalancing() throws Exception {
@@ -116,7 +116,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
       ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
 
-      assertEquals(HealthStatus.REBALANCING, clusterHealth.getHealthStatus());
+      assertEquals(HealthStatus.HEALTHY_REBALANCING, clusterHealth.getHealthStatus());
    }
 
    public void testHealthyStatusForInternalCaches() throws Exception {
@@ -129,7 +129,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       Cache internalCache = cacheManager.getCache(INTERNAL_CACHE_NAME, true);
       internalCache.stop();
 
-      assertEquals(HealthStatus.UNHEALTHY, clusterHealth.getHealthStatus());
+      assertEquals(HealthStatus.DEGRADED, clusterHealth.getHealthStatus());
    }
 
    public void testRebalancingStatusWhenInternalCacheIsRebalancing() throws Exception {
@@ -142,7 +142,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
       ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager);
 
-      assertEquals(HealthStatus.REBALANCING, clusterHealth.getHealthStatus());
+      assertEquals(HealthStatus.HEALTHY_REBALANCING, clusterHealth.getHealthStatus());
    }
 
    public void testGetNodeNames() throws Exception {

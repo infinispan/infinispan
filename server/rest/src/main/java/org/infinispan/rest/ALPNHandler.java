@@ -68,18 +68,11 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       throw new IllegalStateException("unknown protocol: " + protocol);
    }
 
-   private void configureAuthentication(ChannelPipeline pipeline) {
-      if (restServer.getConfiguration().authentication().enabled()) {
-         pipeline.addLast(new AuthenticationHandler(restServer.getConfiguration().authentication().authenticator()));
-      }
-   }
-
    /**
     * Configure pipeline for HTTP/2 after negotiated via ALPN
     */
    protected void configureHttp2(ChannelPipeline pipeline) {
       pipeline.addLast(getHttp11To2ConnectionHandler());
-      configureAuthentication(pipeline);
       pipeline.addLast("rest-handler-http2", new RestRequestHandler(restServer));
    }
 
@@ -114,7 +107,6 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
       List<CorsConfig> corsRules = restServer.getConfiguration().getCorsRules();
       if (!corsRules.isEmpty()) pipeline.addLast(new CorsHandler(corsRules, true));
-      configureAuthentication(pipeline);
       pipeline.addLast(new Http11RequestHandler(restServer));
    }
 
