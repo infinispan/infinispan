@@ -120,6 +120,11 @@ public class RestClientAHC implements RestClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> serverCacheManagers() {
+      return serverGet("cache-managers");
+   }
+
+   @Override
    public CompletionStage<RestResponse> serverInfo() {
       BoundRequestBuilder request = httpClient.prepareGet(baseServerURL);
       return execute(request);

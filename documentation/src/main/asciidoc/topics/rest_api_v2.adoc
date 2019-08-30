@@ -855,6 +855,18 @@ The response will contain the server name, codename and version:
 }
 ----
 
+[[rest_v2_server_cm]]
+=== Cache Managers
+
+To obtain the list of the server's cache managers:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/server/cache-managers
+----
+
+The response will contain an array with the names of the cache managers configured in the server.
+
 [[rest_v2_server_config]]
 === Obtaining Configuration
 

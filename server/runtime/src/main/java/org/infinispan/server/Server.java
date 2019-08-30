@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -303,6 +304,11 @@ public class Server implements ServerManagement {
 
    public void stop() {
       getExitHandler().exit(0);
+   }
+
+   @Override
+   public Set<String> cacheManagersNames() {
+      return cacheManagers.keySet();
    }
 
    public ConfigurationBuilderHolder getConfigurationBuilderHolder() {

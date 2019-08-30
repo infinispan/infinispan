@@ -100,6 +100,11 @@ public class RestClientNetty implements RestClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> serverCacheManagers() {
+      return serverGet("cache-managers");
+   }
+
+   @Override
    public CompletionStage<RestResponse> serverInfo() {
       DefaultFullHttpRequest request = new DefaultFullHttpRequest(version, HttpMethod.GET, baseServerURL);
       return execute(request);
