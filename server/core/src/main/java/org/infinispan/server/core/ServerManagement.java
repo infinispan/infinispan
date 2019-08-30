@@ -1,5 +1,7 @@
 package org.infinispan.server.core;
 
+import java.util.Set;
+
 import org.infinispan.commons.configuration.ConfigurationInfo;
 
 /**
@@ -10,5 +12,7 @@ public interface ServerManagement {
    ConfigurationInfo getConfiguration();
 
    void stop();
+
+   Set<String> cacheManagersNames();
 
 }

@@ -739,6 +739,18 @@ as in the following example:
 include::rest_examples/rest_server_response.json[]
 ----
 
+[[rest_v2_server_cm]]
+=== Cache Managers
+
+To obtain the list of the server's cache managers:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_server_cachemanagers.adoc[]
+----
+
+The response will contain an array with the names of the cache managers configured in the server.
+
 [[rest_v2_server_config]]
 === Obtaining Server Configuration
 

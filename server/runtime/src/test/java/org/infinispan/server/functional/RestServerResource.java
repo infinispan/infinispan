@@ -5,6 +5,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -14,9 +18,11 @@ import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.testcontainers.shaded.com.google.common.collect.Sets;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 /**
  * @since 10.0
@@ -86,5 +92,15 @@ public class RestServerResource {
       JsonNode infoNode = mapper.readTree(restResponse.getBody());
       JsonNode osVersion = infoNode.get("os.version");
       assertEquals(System.getProperty("os.version"), osVersion.asText());
+   }
+
+   @Test
+   public void testCacheManagersNames() throws Exception {
+      RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
+      RestResponse restResponse = sync(client.serverCacheManagers());
+      ArrayNode cacheManagers = (ArrayNode) mapper.readTree(restResponse.getBody());
+      Set<String> cmNames = StreamSupport.stream(cacheManagers.spliterator(), false).map(JsonNode::asText).collect(Collectors.toSet());
+
+      assertEquals(cmNames, Sets.newHashSet("DefaultCacheManager"));
    }
 }

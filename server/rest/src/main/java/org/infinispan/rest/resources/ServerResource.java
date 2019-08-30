@@ -46,7 +46,12 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/memory").handleWith(this::memory)
             .invocation().methods(GET).path("/v2/server/stop").handleWith(this::stop)
             .invocation().methods(GET).path("/v2/server/threads").handleWith(this::threads)
+            .invocation().methods(GET).path("/v2/server/cache-managers").handleWith(this::cacheManagers)
             .create();
+   }
+
+   private CompletionStage<RestResponse> cacheManagers(RestRequest restRequest) {
+      return serializeObject(invocationHelper.getServer().cacheManagersNames());
    }
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {

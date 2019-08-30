@@ -33,4 +33,6 @@ public interface RestClient extends Closeable {
    CompletionStage<RestResponse> serverMemory();
 
    CompletionStage<RestResponse> serverEnv();
+
+   CompletionStage<RestResponse> serverCacheManagers();
 }
