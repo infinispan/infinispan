@@ -18,6 +18,7 @@ import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
+import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -89,7 +90,10 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       try {
          Class<Marshaller> clazz = Util.loadClassStrict("org.infinispan.jboss.marshalling.core.JBossUserMarshaller", globalConfig.classLoader());
          try {
-            log.jbossMarshallingDetected();
+            PrivateGlobalConfiguration privateGlobalCfg = globalConfig.module(PrivateGlobalConfiguration.class);
+            if (privateGlobalCfg == null || !privateGlobalCfg.isServerMode()) {
+               log.jbossMarshallingDetected();
+            }
             return clazz.getConstructor(GlobalComponentRegistry.class).newInstance(gcr);
          } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new CacheException("Unable to start PersistenceMarshaller with JBossUserMarshaller", e);
