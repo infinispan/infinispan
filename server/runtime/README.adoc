@@ -41,13 +41,14 @@ concurrent use by multiple server instances.
 * `infinispan.server.configuration` defaults to `infinispan.xml`, which resides in the `conf` folder under `infinispan.server.root`.
 
 == Command Arguments
-Use the following command line arguments with the `server` startup script:
+Use these command line arguments with the `server.sh|bat` startup script:
 
-* `-b`, `--bind-address=<address>` Sets the default bind address for the public interface.
-* `-c`, `--server-config=<config>` Sets the `infinispan.server.configuration` path.
-* `-o`, `--port-offset=<offset>` Adds the specified offset to all ports.
-* `-s`, `--server-root=<path>` Sets the `infinispan.server.root` path.
-* `-v`, `--version` Displays the Infinispan server version.
+* `-b`, `--bind-address=<address>` sets the default bind address for the public interface.
+* `-c`, `--server-config=</full/path/to/infinispan.xml>` specifies the
+`infinispan.server.configuration` path.
+* `-o`, `--port-offset=<offset>` adds the specified offset to all ports.
+* `-s`, `--server-root=</full/path/to/server-root>` specifies the `infinispan.server.root` path.
+* `-v`, `--version` displays the Infinispan server version.
 
 == Configuration
 The server configuration extends the standard Infinispan configuration with the
