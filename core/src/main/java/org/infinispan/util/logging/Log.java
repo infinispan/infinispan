@@ -138,7 +138,7 @@ public interface Log extends BasicLogger {
 //   @Message(value = "DistributionManager not started after waiting up to 5 minutes! Not rehashing!", id = 15)
 //   void distributionManagerNotStarted();
 
-   @LogMessage(level = WARN)
+   @LogMessage(level = ERROR)
    @Message(value = "Problem %s encountered when applying state for key %s!", id = 16)
    void problemApplyingStateForKey(String msg, Object key, @Cause Throwable t);
 
@@ -1888,4 +1888,5 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to configure JGroups Stack '%s'", id = 557)
    CacheConfigurationException unableToAddJGroupsStack(String name, @Cause Exception e);
+
 }

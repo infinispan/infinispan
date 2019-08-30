@@ -11,7 +11,6 @@ import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
@@ -80,7 +79,7 @@ public class StateResponseCommand extends BaseRpcCommand implements Initializabl
    @Override
    public void init(ComponentRegistry componentRegistry, boolean isRemote) {
       this.stateConsumer = componentRegistry.getStateTransferManager().getStateConsumer();
-      this.stateReceiver = ((InternalConflictManager) componentRegistry.getConflictManager().running()).getStateReceiver();
+      this.stateReceiver = componentRegistry.getConflictManager().running().getStateReceiver();
    }
 
    @Override
@@ -89,7 +88,8 @@ public class StateResponseCommand extends BaseRpcCommand implements Initializabl
       LogFactory.pushNDC(cacheName, trace);
       try {
          if (applyState) {
-            stateConsumer.applyState(getOrigin(), topologyId, pushTransfer, stateChunks);
+            return (CompletableFuture) stateConsumer.applyState(getOrigin(), topologyId, pushTransfer, stateChunks)
+                                                    .toCompletableFuture();
          } else {
             stateReceiver.receiveState(getOrigin(), topologyId, stateChunks);
          }

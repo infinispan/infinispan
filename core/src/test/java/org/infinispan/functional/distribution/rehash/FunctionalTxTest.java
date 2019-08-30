@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -187,14 +188,14 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+      public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
          expectLatch.countDown();
          try {
             assertTrue(blockLatch.await(10, TimeUnit.SECONDS));
          } catch (InterruptedException e) {
             throw new RuntimeException(e);
          }
-         super.applyState(sender, topologyId, pushTransfer, stateChunks);
+         return super.applyState(sender, topologyId, pushTransfer, stateChunks);
       }
 
       public void await() {

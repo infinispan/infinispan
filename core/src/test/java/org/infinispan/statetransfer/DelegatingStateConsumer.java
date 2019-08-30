@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -35,8 +36,8 @@ public class DelegatingStateConsumer implements StateConsumer {
    }
 
    @Override
-   public void applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
-      delegate.applyState(sender, topologyId, pushTransfer, stateChunks);
+   public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+      return delegate.applyState(sender, topologyId, pushTransfer, stateChunks);
    }
 
    @Override

@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.scopes.Scope;
@@ -36,7 +37,7 @@ public interface StateConsumer {
     */
    CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
 
-   void applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks);
+   CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks);
 
    /**
     * Cancels all incoming state transfers. The already received data is not discarded.
