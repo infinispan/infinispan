@@ -1,0 +1,7 @@
+{
+    "weak-counter":{
+        "initial-value":5,
+        "storage":"PERSISTENT",
+        "concurrency-level":1
+    }
+}

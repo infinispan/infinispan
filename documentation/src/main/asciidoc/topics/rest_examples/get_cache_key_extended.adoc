@@ -1,0 +1,1 @@
+GET /cacheName/cacheKey?extended

@@ -1,0 +1,25 @@
+[
+  {
+      "name":"cache1",
+      "configuration":{
+          "distributed-cache":{
+              "mode":"SYNC",
+              "partition-handling":{
+                  "when-split":"DENY_READ_WRITES"
+              },
+              "statistics":true
+          }
+      }
+  },
+  {
+      "name":"cache2",
+      "configuration":{
+          "distributed-cache":{
+              "mode":"SYNC",
+              "transaction":{
+                  "mode":"NONE"
+              }
+          }
+      }
+  }
+]

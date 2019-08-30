@@ -1,0 +1,1 @@
+GET /v2/counters/{counterName}?action=increment
