@@ -27,6 +27,7 @@ import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -148,7 +149,10 @@ public class GlobalMarshaller implements StreamingMarshaller {
          try {
             external = clazz.getConstructor(GlobalMarshaller.class, GlobalConfiguration.class).newInstance(this, globalCfg);
             external.start();
-            log.jbossMarshallingDetected();
+            PrivateGlobalConfiguration privateGlobalCfg = globalCfg.module(PrivateGlobalConfiguration.class);
+            if (privateGlobalCfg == null || !privateGlobalCfg.isServerMode()) {
+               log.jbossMarshallingDetected();
+            }
          } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new CacheException("Unable to start GlobalMarshaller with ExternalJbossMarshaller", e);
          }
