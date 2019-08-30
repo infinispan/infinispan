@@ -1,0 +1,19 @@
+{
+  "total_results" : 150,
+  "hits" : [ {
+    "hit" : {
+      "name" : "user1",
+      "age" : 35
+    }
+  }, {
+    "hit" : {
+       "name" : "user2",
+       "age" : 42
+    }
+  }, {
+    "hit" : {
+       "name" : "user3",
+       "age" : 12
+    }
+  } ]
+}

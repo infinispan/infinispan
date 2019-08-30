@@ -1,0 +1,10 @@
+{
+  "distributed-cache": {
+    "mode": "SYNC",
+    "memory": {
+      "object": {
+        "size": 20
+      }
+    }
+  }
+}

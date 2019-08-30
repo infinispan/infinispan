@@ -1,7 +1,9 @@
 [[rest_v2_api]]
-= REST v2 API
+= REST v2 (version 2) API
 
-{brandname} provides a REST v2 (version 2) API that improves upon the REST v1 API. The REST v2 API gives you all the features of the v1 API in addition to support for resources beyond caching.
+The {brandname} REST v2 API improves on the REST v1 API, offering the same
+features and capabilities in addition to supporting resources beyond caching.
+//dnaro: is it recommended to use REST v2 only? is there any reason for users to go with REST v1 over REST v2?
 
 [[rest_v2_cache_operations]]
 == Working with Caches
@@ -11,18 +13,23 @@ Use the REST API to create and manage caches on your {brandname} cluster and int
 [[rest_v2_create_cache]]
 === Creating Caches
 
-To create a named cache across the {brandname} cluster, invoke a `POST` request.
+To create a named cache across the {brandname} cluster, invoke a `POST` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/caches/{cacheName}
+include::rest_examples/post_v2_create_cache.adoc[]
 ----
 
-To configure the cache, you supply the configuration in XML or JSON format as part of the payload.
+To configure the cache, you supply the configuration in `XML` or `JSON` format
+as part of the request payload.
 
 XML Configuration::
-If you supply the {brandname} configuration in XML format, it must conform to the schema and include the `<infinispan>` root element and a
-`<cache-container>` definition, as in the following example:
+A configuration in `XML` format must conform to the schema and include:
++
+* `<infinispan>` root element.
+* `<cache-container>` definition.
++
+The following example shows a valid `XML` configuration:
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -30,25 +37,18 @@ include::config_examples/infinispan_distributed_cache.xml[]
 ----
 
 JSON Configuration::
-If you supply the {brandname} configuration in a JSON payload, it requires only the cache definition.
-However, the JSON payload must follow the structure of an XML configuration.
-XML elements become JSON objects.
-XML attributes become JSON fields.
+A configuration in `JSON` format payload:
 +
-For example, the preceding XML configuration is represented in JSON as follows:
+* Requires the cache definition only.
+* Must follow the structure of an `XML` configuration.
+- `XML` elements become `JSON` objects.
+- `XML` attributes become `JSON` fields.
++
+The following example shows the previous `XML` configuration in `JSON` format:
 +
 [source,json,options="nowrap",subs=attributes+]
 ----
-{
-  "distributed-cache": {
-    "mode": "SYNC",
-    "memory": {
-      "object": {
-        "size": 20
-      }
-    }
-  }
-}
+include::config_examples/infinispan_distributed_cache.json[]
 ----
 
 .Headers
@@ -63,23 +63,24 @@ For example, the preceding XML configuration is represented in JSON as follows:
 |===
 
 [[rest_v2_create_cache_template]]
-==== Creating with Templates
+==== Creating Caches with Templates
 
-To create a cache across the {brandname} cluster based on a pre-defined template, invoke a `POST` request with no payload and an extra request parameter:
+To create caches across a {brandname} cluster with pre-defined templates,
+invoke a `POST` request with no payload and an extra request parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/caches/{cacheName}?template={templateName}
+include::rest_examples/post_v2_cache_template.adoc[]
 ----
 
 [[rest_v2_cache_configuration]]
 === Retrieving Cache Configuration
 
-To retrieve a {brandname} cache configuration, invoke a `GET` request.
+To retrieve the configuration of a {brandname} cache, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/configurations/{name}
+include::rest_examples/get_v2_configuration.adoc[]
 ----
 
 .Headers
@@ -94,21 +95,20 @@ GET /rest/v2/configurations/{name}
 [[rest_v2_add_entries]]
 === Adding Entries
 
-To add entries to a named cache, invoke a `POST` request.
+To add entries to a named cache, invoke a `POST` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/caches/{cacheName}/{cacheKey}
+include::rest_examples/post_v2_add_keys.adoc[]
 ----
 
 The preceding request places the payload, or request body, in the `cacheName`
-cache with the `cacheKey` key.
-The request replaces any data that already exists and updates the `Time-To-Live` and `Last-Modified` values, if they apply.
+cache with the `cacheKey` key. The request replaces any data that already
+exists and updates the `Time-To-Live` and `Last-Modified` values, if they apply.
 
-If the specified key has an existing value, the request returns an HTTP
-`CONFLICT` status and the value is not updated.
-In this case, you should use a `PUT` request.
-See link:#rest_v2_replace_entries[Replacing Entries].
+If a value already exists for the specified key, the `POST` request returns an
+HTTP `CONFLICT` status and does not modify the value. To update values, you
+should use `PUT` requests. See link:#rest_v2_replace_entries[Replacing Entries].
 
 .Headers
 |===
@@ -120,7 +120,7 @@ See link:#rest_v2_replace_entries[Replacing Entries].
 
 |`Content-Type`
 |OPTIONAL
-|Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] of the value for the key.
+|Sets the link:https://en.wikipedia.org/wiki/Media_type[MediaType] of the value for the key.
 
 |`timeToLiveSeconds`
 |OPTIONAL
@@ -149,34 +149,42 @@ If _only_ `timeToLiveSeconds` has a value of `0`, {brandname} uses:
 [[rest_v2_replace_entries]]
 === Replacing Entries
 
-To replace entries in a named cache, invoke a `PUT` request.
+To replace entries in a named cache, invoke a `PUT` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-PUT /rest/v2/caches/{cacheName}/{cacheKey}
+include::rest_examples/put_v2_replace_keys.adoc[]
 ----
 
-The preceding request is the same as a `POST` request to add entries to the cache.
-However, if the entry already exists, the `PUT` request replaces it instead of returning an HTTP `CONFLICT` status.
+If a value already exists for the specified key, the `PUT` request updates the
+value. If you do not want to modify existing values, use `POST` requests that
+return HTTP `CONFLICT` status instead of modifying values. See
+link:#rest_v2_add_entries[Adding Values].
 
 [[rest_v2_retrieve_cache]]
 === Retrieving Caches By Keys
 
-To retrieve data for a specific key in a cache, invoke a `GET` request.
+To retrieve data for a specific key in a cache, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/caches/{cacheName}/{cacheKey}
+include::rest_examples/get_v2_cache_keys.adoc[]
 ----
 
-The preceding request returns data from the given cache, `cacheName`, under the given key, `cacheKey`, as the response body.
-Responses contain a `Content-Type` headers that correspond to the MediaType negotiation.
+The server returns data from the given cache, `cacheName`, under the given key,
+`cacheKey`, in the response body. Responses contain `Content-Type` headers that
+correspond to the `MediaType` negotiation.
 
 [NOTE]
 ====
-Browsers can also access caches directly, for example as a content delivery network (CDN). {brandname} returns a unique link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] for each entry along with the `Last-Modified` and `Expires` header fields.
-These fields provide information about the state of the data that is returned in your request.
-ETags allow browsers and other clients to request only data that has changed, which conserves bandwidth.
+Browsers can also access caches directly, for example as a content delivery
+network (CDN). {brandname} returns a unique
+link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] for each entry along with the
+`Last-Modified` and `Expires` header fields.
+
+These fields provide information about the state of the data that is returned
+in your request. ETags allow browsers and other clients to request only data
+that has changed, which conserves bandwidth.
 ====
 
 .Headers
@@ -194,11 +202,11 @@ ETags allow browsers and other clients to request only data that has changed, wh
 
 [TIP]
 ====
-Append the `extended` parameter to the query string to get additional information.
+Append the `extended` parameter to the query string to get additional information:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /cacheName/cacheKey?extended
+include::rest_examples/get_cache_key_extended.adoc[]
 ----
 
 The preceding request returns custom headers:
@@ -211,18 +219,19 @@ The preceding request returns custom headers:
 [[rest_v2_check_entries]]
 === Checking if Entries Exist
 
-To check if a specific entry exists in a cache, invoke a `HEAD` request.
+To check if a specific entry exists in a cache, invoke a `HEAD` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /rest/v2/caches/{cacheName}/{cacheKey}
+include::rest_examples/head_v2_cache_keys.adoc[]
 ----
 
-The preceding request returns only the header fields and the same content that you stored with the entry.
-For example, if you stored a String, the request returns a String.
-If you stored binary, base64-encoded, blobs or serialized Java objects, {brandname} does not de-serialize the content in the request.
+The preceding request returns only the header fields and the same content that
+you stored with the entry. For example, if you stored a String, the request
+returns a String. If you stored binary, base64-encoded, blobs or serialized
+Java objects, {brandname} does not de-serialize the content in the request.
 
-As with `GET` requests, `HEAD` requests also support the `extended` parameter.
+`HEAD` requests also support the `extended` parameter.
 
 .Headers
 |===
@@ -236,14 +245,14 @@ As with `GET` requests, `HEAD` requests also support the `extended` parameter.
 [[rest_v2_delete_entries]]
 === Deleting Entries
 
-To delete entries from a cache, invoke a `DELETE` request.
+To delete entries from a cache, invoke a `DELETE` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /rest/v2/caches/{cacheName}/{cacheKey}
+include::rest_examples/delete_v2_cache_keys.adoc[]
 ----
 
-The preceding request removes the entry under `cacheKey` name from the cache.
+{brandname} removes the entry under `cacheKey` from the cache.
 
 .Headers
 |===
@@ -257,74 +266,60 @@ The preceding request removes the entry under `cacheKey` name from the cache.
 [[rest_v2_remove_cache]]
 === Removing Caches
 
-To remove caches, invoke a `DELETE` request.
+To remove caches, invoke a `DELETE` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /rest/v2/caches/{cacheName}
+include::rest_examples/delete_v2_caches.adoc[]
 ----
 
-The preceding request deletes all data and removes the cache named `cacheName` from the cluster.
+{brandname} deletes all data and removes the cache named `cacheName` from the
+cluster.
 
 [[rest_v2_clear_cache]]
 === Clearing Caches
 
-To delete all data from a cache, invoke a `GET` request with the `?action=clear` parameter.
+To delete all data from a cache, invoke a `GET` request with the
+`?action=clear` parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/caches/{cacheName}?action=clear
+include::rest_examples/get_v2_clear.adoc[]
 ----
 
 [[rest_v2_cache_size]]
-=== Getting the size of Caches
+=== Getting Cache Size
 
-To obtain the size of the cache across the entire cluster, invoke a `GET` request with the `?action=size` parameter.
+To obtain the size of a cache across the entire cluster, invoke a `GET`
+request with the `?action=size` parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/caches/{cacheName}?action=size
+include::rest_examples/get_v2_size.adoc[]
 ----
 
 [[rest_v2_query_cache]]
 === Querying Caches
 
-Invoke a `GET` request to perform and Ickle query on a given cache, as follows:
+Invoke a `GET` request to perform and Ickle query on a given cache:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
+include::rest_examples/get_v2_query.adoc[]
 ----
 
-The preceding request returns a `JSON` document that contains one or more query hits, for example:
+{brandname} returns one or more query hits in `JSON` format, for example:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-  "total_results" : 150,
-  "hits" : [ {
-    "hit" : {
-      "name" : "user1",
-      "age" : 35
-    }
-  }, {
-    "hit" : {
-       "name" : "user2",
-       "age" : 42
-    }
-  }, {
-    "hit" : {
-       "name" : "user3",
-       "age" : 12
-    }
-  } ]
-}
+include::rest_examples/rest_query_results.json[]
 ----
 
 * `total_results` displays the total number of results from the query.
 * `hits` is an array of matches from the query.
 * `hit` is an object that matches the query.
-Each hit can contain all fields or a subset of fields if you use a `Select` clause.
++
+Hits can contain all fields or a subset of fields if you use a `Select` clause.
 
 .Request Parameters
 |===
@@ -347,89 +342,42 @@ Each hit can contain all fields or a subset of fields if you use a `Select` clau
 |Specifies how the {brandname} server executes the query. Values are `FETCH` and `BROADCAST`. The default is `FETCH`.
 |===
 
-To use the body of the request instead of specifying query parameters, invoke a `POST` request.
+To use the body of the request instead of specifying query parameters, invoke a
+`POST` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/caches/{cacheName}?action=search
+include::rest_examples/post_v2_search.adoc[]
 ----
 
-The following is an example of a query in the request body:
+The following example shows a query in the request body:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
- "query":"from Entity where name:\"user1\"",
- "max_results":20,
- "offset":10
-}
+include::rest_examples/rest_query_request_body.json[]
 ----
 
 [[rest_v2_cache_manager_operations]]
-== Cache Manager
+== Interacting with Cache Managers
 
-Use the REST API to interact with the Cache Manager on your {brandname} and obtain cluster and usage statistics.
+The REST API lets you interact with {brandname} Cache Managers to cluster and
+usage statistics.
 
 [[rest_v2_cache_manager_info]]
-=== Basic Information
+=== Getting Basic Cache Manager Information
 
 To obtain information about a cache manager, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}
+include::rest_examples/get_v2_cache_managers.adoc[]
 ----
 
-The response will be a JSON document with the following information:
+{brandname} responds with a `JSON` document such as the following:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-    "version":"10.0.0-SNAPSHOT",
-    "name":"default",
-    "coordinator":true,
-    "cache_configuration_names":[
-        "___protobuf_metadata",
-        "cache2",
-        "CacheManagerResourceTest",
-        "cache1"
-    ],
-    "cluster_name":"ISPN",
-    "physical_addresses":"[127.0.0.1:35770]",
-    "coordinator_address":"CacheManagerResourceTest-NodeA-49696",
-    "cache_manager_status":"RUNNING",
-    "created_cache_count":"3",
-    "running_cache_count":"3",
-    "node_address":"CacheManagerResourceTest-NodeA-49696",
-    "cluster_members":[
-        "CacheManagerResourceTest-NodeA-49696",
-        "CacheManagerResourceTest-NodeB-28120"
-    ],
-    "cluster_members_physical_addresses":[
-        "127.0.0.1:35770",
-        "127.0.0.1:60031"
-    ],
-    "cluster_size":2,
-    "defined_caches":[
-        {
-            "name":"CacheManagerResourceTest",
-            "started":true
-        },
-        {
-            "name":"cache1",
-            "started":true
-        },
-        {
-            "name":"___protobuf_metadata",
-            "started":true
-        },
-        {
-            "name":"cache2",
-            "started":true
-        }
-    ]
-
-}
+include::rest_examples/rest_cache_manager_response.json[]
 ----
 
 * `version` contains the {brandname} version
@@ -449,49 +397,20 @@ For possible values, check the https://docs.jboss.org/infinispan/9.4/apidocs/org
 * `defined_caches` A list of all caches defined in the cache manager, excluding private caches but including internal caches that are accessible
 
 [[rest_v2_cache_manager_health]]
-=== Health
+=== Getting Cluster Health
 
-To retrieve information about the {brandname} cluster health, invoke a `GET` request.
+To review health information for a {brandname} cluster, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/health
+include::rest_examples/get_v2_cluster_health.adoc[]
 ----
 
-The response will be a JSON document with the following information:
+{brandname} responds with a `JSON` document such as the following:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-    "cluster_health":{
-        "cluster_name":"ISPN",
-        "health_status":"HEALTHY",
-        "number_of_nodes":2,
-        "node_names":[
-            "CacheManagerResourceTest-NodeA-36229",
-            "CacheManagerResourceTest-NodeB-28703"
-        ]
-    },
-    "cache_health":[
-        {
-            "status":"HEALTHY",
-            "cache_name":"___protobuf_metadata"
-        },
-        {
-            "status":"HEALTHY",
-            "cache_name":"cache2"
-        },
-        {
-            "status":"HEALTHY",
-            "cache_name":"CacheManagerResourceTest"
-        },
-        {
-            "status":"HEALTHY",
-            "cache_name":"cache1"
-        }
-    ]
-
-}
+include::rest_examples/rest_cache_health_response.json[]
 ----
 
 * `cluster_health` contains the health of the cluster
@@ -509,37 +428,45 @@ Empty for standalone servers.
 ** `cache_name` the name of the cache as defined in the configuration.
 
 [[rest_v2_cache_manager_health_status]]
-==== Health Status
+==== Getting Cache Manager Health Status
 
-To simply obtain the health status of the cache managers, without the need to go through authentication, do a `GET` request:
+To retrieve the health status of the cache managers, without the need for
+authentication, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/cache-managers/{cacheManagerName}/health/status
+include::rest_examples/get_v2_health_status.adoc[]
 ----
 
-The response will be in `text/plain` with `HEALTHY`,`HEALTHY_REBALANCING` or `DEGRADED`.
+{brandname} responds with one of the following in `text/plain`:
+
+* `HEALTHY`
+* `HEALTHY_REBALANCING`
+* `DEGRADED`
 
 [[rest_v2_cache_manager_availability]]
-=== Check Availability
+=== Checking REST Endpoint Availability
 
-To check that a {brandname} exists and is available, invoke a `HEAD` request in the health resource
+To check that a {brandname} server REST endpoint is available, invoke a `HEAD`
+request in the health resource:
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /rest/v2/cache-managers/{cacheManagerName}/health
+include::rest_examples/head_v2_health.adoc[]
 ----
 
-If the preceding request returns a successful response code then the {brandname} REST server is running and serving requests.
+If the preceding request returns a successful response code then the
+{brandname} REST server is running and serving requests.
 
 [[rest_v2_cache_manager_config]]
-=== Obtaining Configuration
+=== Obtaining Global Configuration for Cache Managers
 
-To obtain the https://docs.jboss.org/infinispan/9.4/apidocs/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] associated with the Cache Manager, invoke a `GET` request.
+To obtain the
+link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] associated with the Cache Manager, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/config
+include::rest_examples/get_v2_cache_manager_config.adoc[]
 ----
 
 .Headers
@@ -552,189 +479,124 @@ GET /rest/v2/cache-managers/{cacheManagerName}/config
 |===
 
 [[rest_v2_cache_manager_caches_config]]
-=== Obtaining Caches Configuration
+=== Obtaining Configuration for All Caches
 
-To obtain the configuration of all caches:
+To get the configuration for all caches, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/cache-configs
+include::rest_examples/get_v2_cache_configs.adoc[]
 ----
 
-The response will contain a JSON array with each cache and its configuration.
-Example:
+{brandname} responds with a `JSON` array that contains each cache and cache configuration:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-[
-  {
-      "name":"cache1",
-      "configuration":{
-          "distributed-cache":{
-              "mode":"SYNC",
-              "partition-handling":{
-                  "when-split":"DENY_READ_WRITES"
-              },
-              "statistics":true
-          }
-      }
-  },
-  {
-      "name":"cache2",
-      "configuration":{
-          "distributed-cache":{
-              "mode":"SYNC",
-              "transaction":{
-                  "mode":"NONE"
-              }
-          }
-      }
-  }
-]
+include::rest_examples/rest_cache_config_response.json[]
 ----
 
 [[rest_v2_cache_manager_stats]]
-=== Getting statistics
+=== Getting Cache Manager Statistics
 
-To obtain the statistics of the Cache Manager, invoke a `GET` request.
+To obtain the statistics of a Cache Manager, invoke a `GET` request.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/stats
+include::rest_examples/get_v2_cache_manager_stats.adoc[]
 ----
 
-The response will be a JSON document with the following information:
+{brandname} responds with a `JSON` document that contains the following
+information:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-    "statistics_enabled":true,
-    "read_write_ratio":0.0,
-    "time_since_start":1,
-    "time_since_reset":1,
-    "number_of_entries":0,
-    "total_number_of_entries":0,
-    "off_heap_memory_used":0,
-    "data_memory_used":0,
-    "misses":0,
-    "remove_hits":0,
-    "remove_misses":0,
-    "evictions":0,
-    "average_read_time":0,
-    "average_read_time_nanos":0,
-    "average_write_time":0,
-    "average_write_time_nanos":0,
-    "average_remove_time":0,
-    "average_remove_time_nanos":0,
-    "required_minimum_number_of_nodes":1,
-    "hits":0,
-    "stores":0,
-    "current_number_of_entries_in_memory":0,
-    "hit_ratio":0.0,
-    "retrievals":0
-}
+include::rest_examples/rest_cache_stats_response.json[]
 ----
 
-* `statistics_enabled` will show `true` if the statistics collection was enabled in the Cache Manager
-* `read_write_ratio` the read/write ratio across all caches
-* `time_since_start` time in seconds since the Cache Manager start
-* `time_since_reset` number of seconds since the Cache Manager statistics were last reset
-* `number_of_entries` total number of entries currently in all caches from the Cache Manager.
-It only returns the entries in the local cache instances
-* `total_number_of_entries` the number of store operations performed across all caches from the Cache Manager
-* `off_heap_memory_used` amount in bytes of off-heap memory used by this cache container
-* `data_memory_used` amount in bytes the current eviction algorithm estimates is in use for data across all caches.
-Returns 0 if memory eviction is not enabled
-* `misses` number of `get() misses across all caches
-* `remove_hits` number of removal hits across all caches
-* `remove_misses` number of removal misses across all caches
-* `evictions` number of evictions across all caches
-* `average_read_time` average number of milliseconds taken for `get()` operations across all caches
-* `average_read_time_nanos` same as above, but in nanoseconds
-* `average_remove_time` average number of milliseconds for `remove()` operations across all caches
-* `average_remove_time_nanos` same as above but in nanoseconds
-* `required_minimum_number_of_nodes` the required minimum number of nodes to guarantee data consistency
-* `hits` number of `get()` hits across all caches
-* `stores` number of `put()` operations across all caches
-* `current_number_of_entries_in_memory` total number of entries currently in all caches, excluding passivated entries
-* `hit_ratio` total percentage hit/(hit+miss) ratio for all caches
-* `retrievals` total number of `get()` operations
+* `statistics_enabled` is `true` if statistics collection is enabled for the Cache Manager.
+* `read_write_ratio` displays the read/write ratio across all caches.
+* `time_since_start` shows the time, in seconds, since the Cache Manager started.
+* `time_since_reset` shows the number of seconds since the Cache Manager statistics were last reset.
+* `number_of_entries` shows the total number of entries currently in all caches from the Cache Manager. This statistic returns entries in the local cache instances only.
+* `total_number_of_entries` shows the number of store operations performed across all caches for the Cache Manager.
+* `off_heap_memory_used` shows the amount, in `bytes[]`, of off-heap memory used by this cache container.
+* `data_memory_used` shows the amount, in `bytes[]`, that the current eviction algorithm estimates is in use for data across all caches. Returns `0` if eviction is not enabled.
+* `misses` shows the number of `get()` misses across all caches.
+* `remove_hits` shows the number of removal hits across all caches.
+* `remove_misses` shows the number of removal misses across all caches.
+* `evictions` shows the number of evictions across all caches.
+* `average_read_time` shows the average number of milliseconds taken for `get()` operations across all caches.
+* `average_read_time_nanos` same as `average_read_time` but in nanoseconds.
+* `average_remove_time` shows the average number of milliseconds for `remove()` operations across all caches.
+* `average_remove_time_nanos` same as `average_remove_time` but in nanoseconds.
+* `required_minimum_number_of_nodes` shows the required minimum number of nodes to guarantee data consistency.
+* `hits` provides the number of `get()` hits across all caches.
+* `stores` provides the number of `put()` operations across all caches.
+* `current_number_of_entries_in_memory` shows the total number of entries currently in all caches, excluding passivated entries.
+* `hit_ratio` provides the total percentage hit/(hit+miss) ratio for all caches.
+* `retrievals` shows the total number of `get()` operations.
 
 [[rest_server_counters]]
-== Counter
+== Working with Counters
 
-Use the REST API to work with counters.
+Use the REST API to create, delete, and modify counters.
 
 [[rest_server_counters_create]]
-=== Creating a Counter
+=== Creating Counters
 
-To create a counter, use a `POST` request with the configuration as payload.
+To create a counter, invoke a `POST` request with the configuration as payload:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/counters/{counterName}
+include::rest_examples/post_v2_counters.adoc[]
 ----
 
-The payload must contain a JSON configuration of the counter.
-Example:
+The payload must contain a configuration for the counter in `JSON` format, as in the following examples:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-    "weak-counter":{
-        "initial-value":5,
-        "storage":"PERSISTENT",
-        "concurrency-level":1
-    }
-}
+include::rest_examples/rest_weak_counter.json[]
 ----
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-    "strong-counter":{
-        "initial-value":3,
-        "storage":"PERSISTENT",
-        "upper-bound":{
-            "value":5
-        }
-    }
-}
+include::rest_examples/rest_strong_counter.json[]
 ----
 
 [[rest_server_counters_delete]]
-=== Deleting a Counter
+=== Deleting Counters
 
-To delete a counter, send a `DELETE` request with the counter name.
+To delete a counter, invoke a `DELETE` request with the counter name:
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /rest/v2/counters/{counterName}
+include::rest_examples/delete_v2_counter.adoc[]
 ----
 
 [[rest_server_counters_config]]
-=== Retrieving Counters Configuration
+=== Retrieving Counter Configuration
 
-The get the counter configuration, use a `GET` request with the counter name.
+The get the counter configuration, invoke a `GET` request with the counter name:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}/config
+include::rest_examples/get_v2_counter_config.adoc[]
 ----
 
-The result will be a JSON representation of the counter config.
+{brandname} responds with a `JSON` representation of the counter configuration.
 
 [[rest_server_counters_add]]
 === Adding Values to Counters
 
-To add a value to a named counter, invoke a `POST` request.
+To add a value to a named counter, invoke a `POST` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/counters/{counterName}
+include::rest_examples/post_v2_counter.adoc[]
 ----
 
-If the request payload is empty, the counter is incremented by one, otherwise the payload is interpreted as a signed long and added to the counter.
+If the request payload is empty, the counter is incremented by one, otherwise
+the payload is interpreted as a signed long and added to the counter.
 
 Request responses depend on the type of counter, as follows:
 
@@ -743,17 +605,17 @@ Request responses depend on the type of counter, as follows:
 
 [NOTE]
 ====
-This method processes only `plain/text` content.
+This method processes `plain/text` content only.
 ====
 
 [[rest_server_counters_get]]
-=== Getting a Counter Value
+=== Getting Counter Values
 
-To retrieve the value of a counter, invoke a `GET` request.
+To retrieve the value of a counter, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}
+include::rest_examples/get_v2_counter.adoc[]
 ----
 
 .Headers
@@ -766,38 +628,40 @@ GET /rest/v2/counters/{counterName}
 |===
 
 [[rest_server_counters_reset]]
-=== Reseting Counters
+=== Resetting Counters
 
-To reset counters, use a `GET` request with the `?action=reset` parameter.
+To reset counters, invoke a `GET` request with the `?action=reset` parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=reset
+include::rest_examples/get_v2_counter_reset.adoc[]
 ----
 
 [[rest_server_counters_inc_weak]]
 === Incrementing Counters
 
-To increment a Counter, use the `?action=increment` parameter.
+To increment a counter, invoke a `GET` request with the `?action=increment`
+parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=increment
+include::rest_examples/get_v2_counter_increment.adoc[]
 ----
 
-Request responses depend on the type of counter, as follows:
+Responses depend on the type of counter, as follows:
 
 * `WEAK` counters return empty responses.
 * `STRONG` counters return their values after the operation is applied.
 
 [[rest_server_counters_add_weak]]
-=== Adding a delta to Counters
+=== Adding Deltas to Counters
 
-To add an arbitrary amount to a Counter, use the params `?action=add` and `delta`.
+To add an arbitrary amount to a counter, invoke a `GET` request with the
+`?action=add` and `delta` parameters:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=add&delta={delta}
+include::rest_examples/get_v2_counter_add_delta.adoc[]
 ----
 
 Request responses depend on the type of counter, as follows:
@@ -808,11 +672,12 @@ Request responses depend on the type of counter, as follows:
 [[rest_server_counters_dec_strong]]
 === Decrementing Counters
 
-To increment a Counter, use the `?action=decrement` parameter.
+To decrement a counter, invoke a `GET` request with the `?action=decrement`
+parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=decrement
+include::rest_examples/get_v2_counter_decrement.adoc[]
 ----
 
 Request responses depend on the type of counter, as follows:
@@ -823,146 +688,128 @@ Request responses depend on the type of counter, as follows:
 [[rest_server_counters_cmpset]]
 === compareAndSet Strong Counters
 
+To atomically set the value of a strong counter with the `compareAndSet`
+method, invoke a `GET` request:
+
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
+include::rest_examples/get_v2_counter_compare_set.adoc[]
 ----
 
-Atomically sets the value to {update} if the current value is {expect}
-
-Returns _true_ if successful.
+{brandname} atomically sets the value to `{update}` if the current value is
+`{expect}`. If the operation is successful, {brandname} returns `_true_`.
 
 [[rest_server_counters_cmpswp]]
-=== compareAndSwap Strong Counter
+=== compareAndSwap Strong Counters
+
+To atomically set the value of a strong counter with the `compareAndSwap`
+method, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
+include::rest_examples/get_v2_counter_compare_swap.adoc[]
 ----
 
-Atomically sets the value to {update} if the current value is {expect}.
-Returns the previous value in the payload if the operation is successful.
+{brandname} atomically sets the value to `{update}` if the current value is
+`{expect}`. If the operation is successful, {brandname} returns the previous
+value in the payload.
 
 [[rest_v2_server]]
-== Server
+== Interacting with {brandname} Servers
 
-Use the REST API to interact with the {brandname} server including runtime information and operations.
+The REST API lets you interact with {brandname} servers to retrieve server
+configuration and information, Java Virtual Machine (JVM) memory usage and
+thread dumps. You can also perform operations to manage servers.
 
 [[rest_v2_server_info]]
-=== Basic Information
+=== Retrieving Basic Server Information
 
-To obtain basic info about a server, invoke a `GET`:
+To view basic information about a {brandname} server, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server
+include::rest_examples/get_v2_server.adoc[]
 ----
 
-The response will contain the server name, codename and version:
+The response contains the server name, codename, and version in `JSON` format,
+as in the following example:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-  "version":"Infinispan 'Codename' 10.0.0.Final"
-}
+include::rest_examples/rest_server_response.json[]
 ----
 
 [[rest_v2_server_config]]
-=== Obtaining Configuration
+=== Obtaining Server Configuration
+
+To get the configuration for a {brandname} server, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/config
+include::rest_examples/get_v2_server_config.adoc[]
 ----
 
-The response will be a JSON document whose structure follows the link:https://github.com/infinispan/infinispan/blob/master/server/runtime/src/main/resources/schema/infinispan-server-10.0.xsd[Server Schema].
+//dnaro: server schema docs should use the configdocroot attribute? should we point to the generated html or the xsd?
+//https://docs.jboss.org/infinispan/10.0/configdocs/infinispan-config-10.0.html
+The server responds with the configuration in `JSON` format. The structure
+follows the
+link:https://github.com/infinispan/infinispan/blob/master/server/runtime/src/main/resources/schema/infinispan-server-10.0.xsd[server schema], as in the
+following example:
 
-[source,json]
+[source,json,options="nowrap",subs=attributes+]
 ----
-{
-    "server":{
-        "interfaces":{
-            "interface":{
-                "name":"public",
-                "inet-address":{
-                    "value":"127.0.0.1"
-                }
-            }
-        },
-        "socket-bindings":{
-            "port-offset":0,
-            "default-interface":"public",
-            "socket-binding":[
-                {
-                    "name":"memcached",
-                    "port":11221,
-                    "interface":"memcached"
-                }
-            ]
-        },
-        "security":{
-            "security-realms":{
-                "security-realm":{
-                    "name":"default"
-                }
-            }
-        },
-        "endpoints":{
-            "socket-binding":"default",
-            "security-realm":"default",
-            "hotrod-connector":{
-                "name":"hotrod"
-            },
-            "rest-connector":{
-                "name":"rest"
-            }
-        }
-    }
-}
+include::rest_examples/rest_server_config_response.json[]
 ----
-
-[[rest_v2_server_memory]]
-=== Memory Info
-
-The server resource exposes basic information about the Java Virtual Machine memory usage:
-
-[source,options="nowrap",subs=attributes+]
-----
-GET /v2/server/memory
-----
-
-The output will be a JSON document exposing heap and non-heap memory statistics, direct memory usage, details about memory pools and garbage collection.
 
 [[rest_v2_server_env]]
-=== Environment
+=== Getting Environment Variables
 
-The obtain the environment variables used by the server, execute a `GET` request:
+To get environment variables that the server uses, invoke a `GET` request:
+//dnaro: is this all possible envs? or only envs the server currently has set?
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/env
+include::rest_examples/get_v2_server_env.adoc[]
 ----
+
+//dnaro: add example response
+
+[[rest_v2_server_memory]]
+=== Getting JVM Memory Details
+
+To get information about JVM memory usage, invoke a
+`GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_server_memory.adoc[]
+----
+
+The server responds with heap and non-heap memory statistics, direct memory
+usage, and information about memory pools and garbage collection in `JSON`
+format.
 
 [[rest_v2_server_threads]]
-=== Obtaining a thread dump
+=== Getting JVM Thread Dumps
+
+To get the current thread dump for the JVM, invoke a
+`GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/threads
+include::rest_examples/get_v2_server_threads.adoc[]
 ----
 
-The output will be a `text/plain` document with the JVM's current thread dump
+The response is the current thread dump in `text/plain` format.
 
 [rest_v2_server_stop]]
-=== Stopping the server
+=== Stopping {brandname} Servers
 
-To shutdown the server, invoke a `GET` request:
+To stop a {brandname} server, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/stop
+include::rest_examples/get_v2_server_stop.adoc[]
 ----
 
-A response with code `200(OK)` will be returned, and after a small delay, the server will be stopped.
-
-//-
+The server responds with `200(OK)` and then stops running.

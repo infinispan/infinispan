@@ -1,0 +1,1 @@
+GET /v2/caches/{cacheName}?action=search&query={ickle query}
