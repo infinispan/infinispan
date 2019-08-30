@@ -22,34 +22,40 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.tx.TransactionImpl;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TriangleOrderManager;
@@ -82,17 +88,18 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -112,9 +119,10 @@ public class StateConsumerImpl implements StateConsumer {
    private static final boolean trace = log.isTraceEnabled();
    protected static final int NO_STATE_TRANSFER_IN_PROGRESS = -1;
    protected static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
-                                                                      IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
-                                                                      SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
-                                                                      SKIP_XSITE_BACKUP);
+                                                                        IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
+                                                                        SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
+                                                                        SKIP_XSITE_BACKUP, SKIP_LOCKING);
+   public static final String NO_KEY = "N/A";
 
    @Inject protected ComponentRef<Cache<Object, Object>> cache;
    @Inject protected LocalTopologyManager localTopologyManager;
@@ -541,14 +549,15 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public void applyState(final Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+   public CompletionStage<?> applyState(final Address sender, int topologyId, boolean pushTransfer,
+                                        Collection<StateChunk> stateChunks) {
       ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       // Ignore responses received after we are no longer a member
       if (!wCh.getMembers().contains(rpcManager.getAddress())) {
          if (trace) {
             log.tracef("Ignoring received state because we are no longer a member of cache %s", cacheName);
          }
-         return;
+         return CompletableFutures.completedNull();
       }
 
       // Ignore segments that we requested for a previous rebalance
@@ -557,135 +566,169 @@ public class StateConsumerImpl implements StateConsumer {
       if (rebalanceTopologyId == NO_STATE_TRANSFER_IN_PROGRESS && !pushTransfer) {
          log.debugf("Discarding state response with topology id %d for cache %s, we don't have a state transfer in progress",
                topologyId, cacheName);
-         return;
+         return CompletableFutures.completedNull();
       }
       if (topologyId < rebalanceTopologyId) {
          log.debugf("Discarding state response with old topology id %d for cache %s, state transfer request topology was %b",
                topologyId, cacheName, waitingForState);
-         return;
+         return CompletableFutures.completedNull();
       }
 
       if (trace) {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName,
                     dataContainer.sizeIncludingExpired());
       }
-      final CountDownLatch countDownLatch = new CountDownLatch(stateChunks.size());
-      if (pushTransfer) {
-         // push-transfer is specific for scattered cache but this is the easiest way to integrate it
-         for (StateChunk stateChunk : stateChunks) {
-            if (stateChunk.getCacheEntries() != null) {
-               stateTransferExecutor.submit(() -> {
-                  doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries());
-                  countDownLatch.countDown();
-               });
+      IntSet mySegments = IntSets.from(wCh.getSegmentsForOwner(rpcManager.getAddress()));
+      Iterator<StateChunk> iterator = stateChunks.iterator();
+      return applyStateIteration(sender, pushTransfer, mySegments, iterator).whenComplete((v, t) -> {
+         if (trace) {
+            log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
+                       dataContainer.sizeIncludingExpired());
+            synchronized (transferMapsLock) {
+               log.tracef("Segments not received yet for cache %s: %s", cacheName, transfersBySource);
             }
          }
-      } else {
-         IntSet mySegments = IntSets.from(wCh.getSegmentsForOwner(rpcManager.getAddress()));
-         for (StateChunk stateChunk : stateChunks) {
-            stateTransferExecutor.submit(() -> {
-               try {
-                  applyChunk(sender, mySegments, stateChunk);
-               } catch (Throwable e) {
-                  log.error("Failed applying state", e);
-               }
-               countDownLatch.countDown();
-               log.tracef("Latch %d", countDownLatch.getCount());
-            });
-         }
-      }
-      try {
-         boolean await = countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
-         if (!await) {
-            throw new TimeoutException("Timed out applying state");
-         }
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException(e);
-      }
-
-      if (trace) {
-         log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
-                    dataContainer.sizeIncludingExpired());
-         synchronized (transferMapsLock) {
-            log.tracef("Segments not received yet for cache %s: %s", cacheName, transfersBySource);
-         }
-      }
+      });
    }
 
-   private void applyChunk(Address sender, IntSet mySegments, StateChunk stateChunk) {
+   private CompletionStage<?> applyStateIteration(Address sender, boolean pushTransfer, IntSet mySegments,
+                                                  Iterator<StateChunk> iterator) {
+      CompletionStage<?> chunkStage = CompletableFutures.completedNull();
+      // Replace recursion with iteration if the state was applied synchronously
+      while (iterator.hasNext() && CompletionStages.isCompletedSuccessfully(chunkStage)) {
+         StateChunk stateChunk = iterator.next();
+         if (pushTransfer) {
+            // push-transfer is specific for scattered cache but this is the easiest way to integrate it
+            chunkStage = doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries());
+         } else {
+            chunkStage = applyChunk(sender, mySegments, stateChunk);
+         }
+      }
+      if (!iterator.hasNext())
+         return chunkStage;
+
+      return chunkStage.thenCompose(v -> applyStateIteration(sender, pushTransfer, mySegments, iterator));
+   }
+
+   private CompletionStage<Void> applyChunk(Address sender, IntSet mySegments, StateChunk stateChunk) {
       if (!mySegments.contains(stateChunk.getSegmentId())) {
-         log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
-         return;
+         log.debugf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
+         return CompletableFutures.completedNull();
       }
 
       // Notify the inbound task that a chunk of cache entries was received
-      InboundTransferTask inboundTransfer = null;
+      InboundTransferTask inboundTransfer;
       synchronized (transferMapsLock) {
          List<InboundTransferTask> inboundTransfers = transfersBySegment.get(stateChunk.getSegmentId());
          if (inboundTransfers != null) {
             inboundTransfer = inboundTransfers.stream().filter(task -> task.getSource().equals(sender)).findFirst().orElse(null);
+         } else {
+            inboundTransfer = null;
          }
       }
       if (inboundTransfer != null) {
-         if (stateChunk.getCacheEntries() != null) {
-            doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries());
-         }
-
-         inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
+         return doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries())
+                   .thenAccept(
+                      v -> inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk()));
       } else {
          if (cache.wired().getStatus().allowInvocations()) {
             log.ignoringUnsolicitedState(sender, stateChunk.getSegmentId(), cacheName);
          }
       }
+      return CompletableFutures.completedNull();
    }
 
-   private void doApplyState(Address sender, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
+   private CompletionStage<?> doApplyState(Address sender, int segmentId,
+                                           Collection<InternalCacheEntry> cacheEntries) {
+      if (cacheEntries == null || cacheEntries.isEmpty())
+         return CompletableFutures.completedNull();
+
       if (trace) log.tracef("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",
-            segmentId, cacheName, sender, cacheEntries.size());
+                            segmentId, cacheName, sender, cacheEntries.size());
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
       boolean transactional = transactionManager != null;
-      for (InternalCacheEntry e : cacheEntries) {
+      if (transactional) {
+         Object key = NO_KEY;
+         Transaction transaction = new ApplyStateTransaction();
+         InvocationContext ctx = icf.createInvocationContext(transaction, false);
+         LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
          try {
-            InvocationContext ctx;
-            if (transactional) {
-               transactionManager.begin();
-               ctx = icf.createInvocationContext(transactionManager.getTransaction(), true);
-               ((TxInvocationContext) ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
-            } else {
-               // non-tx cache
-               ctx = icf.createSingleKeyNonTxInvocationContext();
-            }
-
-            // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
-            InternalMetadataImpl metadata = new InternalMetadataImpl(e);
-            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
-                                                                             metadata, STATE_TRANSFER_FLAGS);
-            ctx.setLockOwner(put.getKeyLockOwner());
-            interceptorChain.invoke(ctx, put);
-
-            if (transactionManager != null) {
-               transactionManager.commit();
-            }
-         } catch (Exception ex) {
-            if (!cache.wired().getStatus().allowInvocations()) {
-               log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
-               break;
-            } else {
-               log.problemApplyingStateForKey(ex.getMessage(), e.getKey(), ex);
-            }
-         } finally {
-            try {
-               if (transactional && transactionManager.getTransaction() != null) {
-                  transactionManager.rollback();
+            localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
+            for (InternalCacheEntry e : cacheEntries) {
+               // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
+               key = e.getKey();
+               CompletableFuture<?> future = invokePut(segmentId, ctx, e);
+               if (!future.isDone()) {
+                  throw new IllegalStateException("State transfer in-tx put should always be synchronous");
                }
-            } catch (SystemException e1) {
-               // Ignore
             }
+         } catch (Throwable t) {
+            logApplyException(t, key);
+            return invokeRollback(localTransaction).handle((rv, t1) -> {
+               transactionTable.removeLocalTransaction(localTransaction);
+               if (t1 != null) {
+                  t.addSuppressed(t1);
+               }
+               return null;
+            });
          }
+
+         return invoke1PCPrepare(localTransaction).whenComplete((rv, t) -> {
+            transactionTable.removeLocalTransaction(localTransaction);
+            if (t != null) {
+               logApplyException(t, NO_KEY);
+            }
+         });
+      } else {
+         // non-tx cache
+         AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
+         for (InternalCacheEntry e : cacheEntries) {
+            InvocationContext ctx = icf.createSingleKeyNonTxInvocationContext();
+            CompletionStage<?> putStage = invokePut(segmentId, ctx, e);
+            aggregateStage.dependsOn(putStage.exceptionally(t -> {
+               logApplyException(t, e.getKey());
+               return null;
+            }));
+         }
+         return aggregateStage.freeze();
       }
-      if (trace) log.tracef("Finished applying chunk of segment %d of cache %s", segmentId, cacheName);
+   }
+
+   private CompletionStage<?> invoke1PCPrepare(LocalTransaction localTransaction) {
+      PrepareCommand prepareCommand;
+      if (Configurations.isTxVersioned(configuration)) {
+         prepareCommand = commandsFactory.buildVersionedPrepareCommand(localTransaction.getGlobalTransaction(),
+                                                                       localTransaction.getModifications(), true);
+      } else {
+         prepareCommand = commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),
+                                                              localTransaction.getModifications(), true);
+      }
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext(localTransaction);
+      return interceptorChain.invokeAsync(ctx, prepareCommand);
+   }
+
+   private CompletionStage<?> invokeRollback(LocalTransaction localTransaction) {
+      RollbackCommand prepareCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext(localTransaction);
+      return interceptorChain.invokeAsync(ctx, prepareCommand);
+   }
+
+   private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, InternalCacheEntry e) {
+      // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
+      InternalMetadataImpl metadata = new InternalMetadataImpl(e);
+      PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
+                                                                       metadata, STATE_TRANSFER_FLAGS);
+      ctx.setLockOwner(put.getKeyLockOwner());
+      return interceptorChain.invokeAsync(ctx, put);
+   }
+
+   private void logApplyException(Throwable t, Object key) {
+      if (!cache.wired().getStatus().allowInvocations()) {
+         log.tracef("Cache %s is shutting down, stopping state transfer", cacheName);
+      } else {
+         log.problemApplyingStateForKey(t.getMessage(), key, t);
+      }
    }
 
    private void applyTransactions(Address sender, Collection<TransactionInfo> transactions, int topologyId) {
@@ -1146,5 +1189,33 @@ public class StateConsumerImpl implements StateConsumer {
 
    public interface KeyInvalidationListener {
       void beforeInvalidation(IntSet removedSegments, IntSet staleL1Segments);
+   }
+
+   private static class ApplyStateTransaction extends TransactionImpl {
+      // Make it different from embedded txs (1)
+      static final int FORMAT_ID = 2;
+      AtomicLong id = new AtomicLong(0);
+
+      ApplyStateTransaction() {
+         byte[] bytes = longToBytes(id.incrementAndGet());
+         setXid(new StateConsumerImpl.ApplyStateXid(bytes));
+      }
+
+      private static byte[] longToBytes(long val) {
+         byte[] array = new byte[8];
+         for (int i = 7; i > 0; i--) {
+            array[i] = (byte) val;
+            val >>>= 8;
+         }
+         array[0] = (byte) val;
+         return array;
+      }
+
+   }
+
+   private static class ApplyStateXid extends XidImpl {
+      ApplyStateXid(byte[] bytes) {
+         super(ApplyStateTransaction.FORMAT_ID, bytes, bytes);
+      }
    }
 }
