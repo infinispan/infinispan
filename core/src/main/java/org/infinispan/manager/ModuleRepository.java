@@ -18,26 +18,23 @@ import org.infinispan.util.DependencyGraph;
 
 /**
  * Store for component and module information.
- *
- * <p>Not public API: It exists in package {@code org.infinispan.manager}
- * so that only {@code DefaultCacheManager} can instantiate it.</p>
+ * <p>
+ * <b>NOTE:</b> Not public API: It exists in package {@code org.infinispan.manager}
+ * so that only {@code DefaultCacheManager} can instantiate it.
  *
  * @author Dan Berindei
  * @since 10.0
  */
 public final class ModuleRepository {
-   private final List<ModuleMetadataBuilder> modules;
    private final List<ModuleLifecycle> moduleLifecycles;
    private final Map<String, ComponentAccessor> components;
    private final Map<String, String> factoryNames;
    private final Map<String, MBeanMetadata> mbeans;
 
-   private ModuleRepository(List<ModuleMetadataBuilder> modules,
-                    List<ModuleLifecycle> moduleLifecycles,
+   private ModuleRepository(List<ModuleLifecycle> moduleLifecycles,
                     Map<String, ComponentAccessor> components,
                     Map<String, String> factoryNames,
                     Map<String, MBeanMetadata> mbeans) {
-      this.modules = modules;
       this.moduleLifecycles = moduleLifecycles;
       this.components = components;
       this.factoryNames = factoryNames;
@@ -60,16 +57,16 @@ public final class ModuleRepository {
       return moduleLifecycles;
    }
 
-   public static final class Builder {
+   /**
+    * Package-private
+    */
+   static final class Builder implements ModuleLifecycle.ModuleBuilder {
       private final List<ModuleMetadataBuilder> modules;
       private final List<ModuleLifecycle> moduleLifecycles = new ArrayList<>();
       private final Map<String, ComponentAccessor> components = new HashMap<>();
       private final Map<String, String> factoryNames = new HashMap<>();
       private final Map<String, MBeanMetadata> mbeans = new HashMap<>();
 
-      /**
-       * Package-private
-       */
       Builder(ClassLoader classLoader) {
          Collection<ModuleMetadataBuilder> serviceLoader =
             ServiceFinder.load(ModuleMetadataBuilder.class, ModuleRepository.class.getClassLoader(), classLoader);
@@ -91,7 +88,7 @@ public final class ModuleRepository {
             moduleLifecycles.add(moduleLifecycle);
             moduleLifecycle.addDynamicMetadata(this, globalConfiguration);
          }
-         return new ModuleRepository(modules, moduleLifecycles, components, factoryNames, mbeans);
+         return new ModuleRepository(moduleLifecycles, components, factoryNames, mbeans);
       }
 
       private static List<ModuleMetadataBuilder> sortModuleDependencies(Map<String, ModuleMetadataBuilder> modulesMap) {
@@ -125,6 +122,7 @@ public final class ModuleRepository {
          }
       }
 
+      @Override
       public void registerComponentAccessor(String componentClassName, List<String> factoryComponentNames,
                                             ComponentAccessor accessor) {
          components.put(componentClassName, accessor);
@@ -133,10 +131,12 @@ public final class ModuleRepository {
          }
       }
 
+      @Override
       public void registerMBeanMetadata(String componentClassName, MBeanMetadata mBeanMetadata) {
          mbeans.put(componentClassName, mBeanMetadata);
       }
 
+      @Override
       public String getFactoryName(String componentName) {
          return factoryNames.get(componentName);
       }

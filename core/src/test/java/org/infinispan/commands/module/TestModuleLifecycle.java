@@ -19,7 +19,6 @@ import org.infinispan.factories.impl.ComponentAccessor;
 import org.infinispan.factories.impl.WireContext;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.ModuleRepository;
 import org.testng.AssertJUnit;
 
 /**
@@ -33,7 +32,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
    private TestGlobalConfiguration testGlobalConfiguration;
 
    @Override
-   public void addDynamicMetadata(ModuleRepository.Builder moduleBuilder,
+   public void addDynamicMetadata(ModuleBuilder moduleBuilder,
                                   GlobalConfiguration globalConfiguration) {
       testGlobalConfiguration = globalConfiguration.module(TestGlobalConfiguration.class);
       HashMap<String, String> defaultFactoryNames = new HashMap<>();
