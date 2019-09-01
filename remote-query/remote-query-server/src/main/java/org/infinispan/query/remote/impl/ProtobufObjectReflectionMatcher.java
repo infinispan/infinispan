@@ -11,8 +11,8 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
 
 /**
- * A sub-class of ReflectionMatcher that is able to lookup classes by their protobuf type name and can work whit
- * object storage.
+ * A sub-class of ReflectionMatcher that is able to lookup classes by their protobuf type name and can work with object
+ * storage.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -21,9 +21,8 @@ public final class ProtobufObjectReflectionMatcher extends ReflectionMatcher {
 
    private final SerializationContext serializationContext;
 
-   ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext,
-                                   SearchIntegrator searchFactory, ClassLoader classLoader) {
-      super(new HibernateSearchPropertyHelper(searchFactory, entityNameResolver, classLoader));
+   ProtobufObjectReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext, SearchIntegrator searchFactory) {
+      super(new HibernateSearchPropertyHelper(searchFactory, entityNameResolver));
       this.serializationContext = serializationContext;
    }
 
@@ -32,10 +31,9 @@ public final class ProtobufObjectReflectionMatcher extends ReflectionMatcher {
       this.serializationContext = serializationContext;
    }
 
-   static ProtobufObjectReflectionMatcher create(EntityNameResolver entityNameResolver, SerializationContext ctx,
-                                                 SearchIntegrator searchIntegrator, ClassLoader classLoader) {
+   static ProtobufObjectReflectionMatcher create(EntityNameResolver entityNameResolver, SerializationContext ctx, SearchIntegrator searchIntegrator) {
       if (searchIntegrator == null) return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx);
-      return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx, searchIntegrator, classLoader);
+      return new ProtobufObjectReflectionMatcher(entityNameResolver, ctx, searchIntegrator);
    }
 
    /**
