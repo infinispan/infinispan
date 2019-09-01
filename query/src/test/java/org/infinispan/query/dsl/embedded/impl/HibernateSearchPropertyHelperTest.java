@@ -27,8 +27,7 @@ public class HibernateSearchPropertyHelperTest {
 
    @Before
    public void setup() {
-      propertyHelper = new HibernateSearchPropertyHelper(factoryHolder.getSearchFactory(), new ReflectionEntityNamesResolver(null),
-            HibernateSearchPropertyHelperTest.class.getClassLoader());
+      propertyHelper = new HibernateSearchPropertyHelper(factoryHolder.getSearchFactory(), new ReflectionEntityNamesResolver(null));
    }
 
    private Object convertToPropertyType(Class<?> type, String propertyName, String value) {

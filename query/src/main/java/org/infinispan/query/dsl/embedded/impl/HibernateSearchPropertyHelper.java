@@ -53,17 +53,13 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    private static final Log log = Logger.getMessageLogger(Log.class, HibernateSearchPropertyHelper.class.getName());
 
-   private final SearchIntegrator searchFactory;
-   private boolean elasticSearchAvailable = true;
+   private static final String ES_DATE_BRIDGE_CLASS_NAME = "org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge";
 
-   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver, ClassLoader classLoader) {
+   private final SearchIntegrator searchFactory;
+
+   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNameResolver entityNameResolver) {
       super(entityNameResolver);
       this.searchFactory = searchFactory;
-      try {
-         Class.forName("org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge", false, classLoader);
-      } catch (ClassNotFoundException e) {
-         this.elasticSearchAvailable = false;
-      }
    }
 
    @Override
@@ -138,8 +134,8 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(DateTools.stringToDate(value));
             return calendar;
-         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge ||
-               (elasticSearchAvailable && bridge instanceof org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge)) {
+         } else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge
+               || bridge.getClass().getName().equals(ES_DATE_BRIDGE_CLASS_NAME)) {
             return DateTools.stringToDate(value);
          } else {
             return value;

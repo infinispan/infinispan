@@ -746,8 +746,7 @@ public class LuceneTransformationTest {
 
    private LuceneQueryParsingResult<Class<?>> parseAndTransform(String queryString, Map<String, Object> namedParameters) {
       ExtendedSearchIntegrator searchFactory = factoryHolder.getSearchFactory();
-      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(searchFactory,
-            new ReflectionEntityNamesResolver(null), LuceneTransformationTest.class.getClassLoader());
+      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(searchFactory, new ReflectionEntityNamesResolver(null));
 
       IckleParsingResult<Class<?>> ickleParsingResult = IckleParser.parse(queryString, propertyHelper);
 
