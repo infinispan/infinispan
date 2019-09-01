@@ -23,13 +23,5 @@ public enum Scopes {
    /**
     * The component is not cached between requests, but a subclass may be either {@code GLOBAL} or {@code NAMED_CACHE}.
     */
-   NONE;
-
-   /**
-    * @deprecated Since 10.0, no longer used
-    */
-   @Deprecated
-   public static Scopes getDefaultScope() {
-      return NAMED_CACHE;
-   }
+   NONE
 }

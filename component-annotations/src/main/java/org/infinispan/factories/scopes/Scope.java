@@ -11,8 +11,6 @@ import java.lang.annotation.RetentionPolicy;
  * <p>Note: The {@code Scope} annotation is inherited so that the annotation processor can find subclasses.
  * Although annotating interfaces is allowed, it is preferable to annotate only classes.</p>
  *
- * TODO Remove ScopeDetector and change retention to CLASS
- *
  * @author Manik Surtani
  * @see Scopes
  * @since 4.0
