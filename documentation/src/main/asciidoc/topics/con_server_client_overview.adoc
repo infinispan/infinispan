@@ -1,0 +1,9 @@
+[[client_server]]
+= Client/Server
+{brandname} offers two alternative access methods: embedded mode and client-server mode.
+
+* In Embedded mode the {brandname} libraries co-exist with the user application in the same JVM as shown in the following diagram
+
+image::{images_dir}/server_modules_1.png[align="center", title="Peer-to-peer access"]
+
+* Client-server mode is when applications access the data stored in a remote {brandname} server using some kind of network protocol
