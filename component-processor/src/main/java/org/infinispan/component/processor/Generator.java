@@ -70,11 +70,11 @@ public class Generator {
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationMetadata;\n");
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationParameterMetadata;\n");
          writer.printf("import org.infinispan.factories.impl.WireContext;\n");
-         writer.printf("import org.infinispan.manager.ModuleRepository;\n");
+         writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;\n");
          writer.printf("\n");
          writer.printf("@Generated(value = \"%s\", date = \"%s\")\n", getClass().getName(), Instant.now().toString());
-         writer.printf("public class %sPackageImpl {\n", model.module.classPrefix);
-         writer.printf("   public static void registerMetadata(ModuleRepository.Builder builder) {\n");
+         writer.printf("public final class %sPackageImpl {\n", model.module.classPrefix);
+         writer.printf("   public static void registerMetadata(ModuleLifecycle.ModuleBuilder builder) {\n");
 
          for (Model.AnnotatedType c : p.annotatedTypes) {
             writer.printf("//start %s\n", c.typeElement.getQualifiedName());
@@ -278,7 +278,7 @@ public class Generator {
          writer.printf("import org.infinispan.modules.ModuleMetadataBuilder;\n");
          writer.printf("\n");
          writer.printf("@Generated(value = \"%s\", date = \"%s\")\n", getClass().getName(), Instant.now().toString());
-         writer.printf("public class %sModuleImpl implements ModuleMetadataBuilder {\n", module.classPrefix);
+         writer.printf("public final class %sModuleImpl implements ModuleMetadataBuilder {\n", module.classPrefix);
 
          writer.printf("//module %s\n", module.moduleClassName);
          writer.printf("   public String getModuleName() {\n");
@@ -301,7 +301,7 @@ public class Generator {
          writer.printf("   };\n");
          writer.printf("\n");
 
-         writer.printf("   public void registerMetadata(ModuleRepository.Builder builder) {\n");
+         writer.printf("   public void registerMetadata(ModuleLifecycle.ModuleBuilder builder) {\n");
          for (String packageName : model.packages.keySet()) {
             writer.printf("//package %s\n", packageName);
             writer.printf("      %s.%sPackageImpl.registerMetadata(builder);\n", packageName, module.classPrefix);

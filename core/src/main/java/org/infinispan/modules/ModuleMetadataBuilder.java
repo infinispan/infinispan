@@ -3,15 +3,17 @@ package org.infinispan.modules;
 import java.util.Collection;
 
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.ModuleRepository;
 
 /**
- * Module metadata
+ * Module metadata.
+ * <p>
+ * <b>NOTE:</b> Not public API: Internal use only!
  *
- * @since 10.0
  * @author Dan Berindei
+ * @since 10.0
  */
 public interface ModuleMetadataBuilder {
+
    String getModuleName();
 
    Collection<String> getRequiredDependencies();
@@ -20,5 +22,5 @@ public interface ModuleMetadataBuilder {
 
    ModuleLifecycle newModuleLifecycle();
 
-   void registerMetadata(ModuleRepository.Builder builder);
+   void registerMetadata(ModuleLifecycle.ModuleBuilder builder);
 }
