@@ -19,10 +19,10 @@ public interface Messages {
    @Message(value = "Invalid argument `%s`. The - prefix must be used only for single-character arguments.", id = 90003)
    String invalidShortArgument(String command);
 
-   @Message(value = "Username: ")
+   @Message(value = "Specify a username: ")
    String userToolUsername();
 
-   @Message(value = "Password: ")
+   @Message(value = "Set a password for the user: ")
    String userToolPassword();
 
    @Message(value = "User `%s` already exists. Overwrite (y/n) ? ")
@@ -31,31 +31,31 @@ public interface Messages {
    @Message(value = "Cannot add user `%s` without a password.")
    String userToolNoPassword(String username);
 
-   @Message(value = "Binds the server to the specified address.")
+   @Message(value = "Binds the server to a specific address.")
    String serverHelpBindAddress();
 
-   @Message(value = "Binds the server to the specified port. Defaults to `%d`.")
+   @Message(value = "Binds the server to a specific port. Defaults to `%d`.")
    String serverHelpBindPort(int defaultBindPort);
 
    @Message(value = "Displays usage information and exits.")
    String toolHelpHelp();
 
-   @Message("Uses the specified configuration file. Defaults to `%s`.")
+   @Message("Specifies a server configuration file. Defaults to `%s`.")
    String serverHelpServerConfig(String defaultConfiguration);
 
    @Message("Sets the name of the cluster. Defaults to `%s`.")
    String serverHelpClusterName(String defaultClusterName);
 
-   @Message("Sets the name of the JGroups stack used for clustering. Defaults to `%s`.")
+   @Message("Specifies the JGroups stack for clustering. Defaults to `%s`.")
    String serverHelpClusterStack(String defaultStack);
 
    @Message("Sets the name of this node. Must be unique across the cluster.")
    String serverHelpNodeName();
 
-   @Message("Adds the specified offset to all ports.")
+   @Message("Adds a numeric offset to all ports.")
    String serverHelpPortOffset();
 
-   @Message("Uses the specified path as root for the server. Defaults to `%s`.")
+   @Message("Specifies the root path for the server. Defaults to `%s`.")
    String toolHelpServerRoot(String defaultServerRoot);
 
    @Message("Displays version information and exits.")
@@ -67,21 +67,21 @@ public interface Messages {
    @Message("Do not ask for confirmation when overwriting existing users.")
    String userToolHelpBatchMode();
 
-   @Message("The name of the realm. Defaults to `%s`.")
+   @Message("Sets the name of the realm. Defaults to `%s`.")
    String userToolHelpRealm(String defaultRealmName);
 
-   @Message("The name of the groups properties file relative to the server configuration path. Defaults to `%s`.")
+   @Message("Sets the name of the groups properties file relative to the server configuration path. Defaults to `%s`.")
    String userToolHelpGroupsFile(String defaultGroupsPropertiesFile);
 
-   @Message("The name of the users properties file relative to the server configuration path. Defaults to `%s`.")
+   @Message("Sets the name of the users properties file relative to the server configuration path. Defaults to `%s`.")
    String userToolHelpUsersFile(String defaultUsersPropertiesFile);
 
-   @Message("Comma-separated list of groups to add to the user.")
+   @Message("Adds the user to a comma-separated list of groups.")
    String userToolHelpGroups();
 
-   @Message("The password of the user.")
+   @Message("Specifies the password for the user.")
    String userToolHelpPassword();
 
-   @Message("The name of the user to add.")
+   @Message("Specifies the name of the user to add.")
    String userToolHelpUser();
 }
