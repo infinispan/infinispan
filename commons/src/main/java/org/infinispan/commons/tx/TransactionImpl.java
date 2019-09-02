@@ -434,8 +434,14 @@ public class TransactionImpl implements Transaction {
                   heuristic = true;
                   break;
                case XAException.XAER_NOTA:
-                  //just ignore it...
-                  ok = true;
+                  if (commit) {
+                     //we are committing and the resource does not know the transaction
+                     //the resource rolled-back the transaction without waiting for us (most likely).
+                     heuristic = true;
+                  } else {
+                     //we are rolling-back the transaction. just ignore it...
+                     ok = true;
+                  }
                   break;
                default:
                   error = true;
