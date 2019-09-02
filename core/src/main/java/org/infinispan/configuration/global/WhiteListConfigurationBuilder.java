@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ClassWhiteList;
@@ -40,8 +41,9 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
    /**
     * Helper method that allows for registration of classes to the {@link ClassWhiteList}.
     */
-   public <T> WhiteListConfigurationBuilder addClasses(String... classes) {
-      this.classes.addAll(Arrays.asList(classes));
+   public <T> WhiteListConfigurationBuilder addClasses(Class... classes) {
+      List<String> classNames = Arrays.stream(classes).map(Class::getName).collect(Collectors.toList());
+      this.classes.addAll(classNames);
       return this;
    }
 
@@ -49,7 +51,7 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
    /**
     * Helper method that allows for registration of a regexp to the {@link ClassWhiteList}.
     */
-   public <T> WhiteListConfigurationBuilder addRegexps(String regex) {
+   public <T> WhiteListConfigurationBuilder addRegexp(String regex) {
       this.regexps.add(regex);
       return this;
    }
@@ -57,7 +59,7 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
    /**
     * Helper method that allows for registration of regexps to the {@link ClassWhiteList}.
     */
-   public <T> WhiteListConfigurationBuilder addRegexp(String... regexps) {
+   public <T> WhiteListConfigurationBuilder addRegexps(String... regexps) {
       this.regexps.addAll(Arrays.asList(regexps));
       return this;
    }
@@ -80,6 +82,8 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
    @Override
    public Builder<?> read(WhiteListConfiguration template) {
       this.attributes.read(template.attributes());
+      this.classes.addAll(template.getClasses());
+      this.regexps.addAll(template.getRegexps());
       return this;
    }
 }

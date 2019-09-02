@@ -2,19 +2,19 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.SerializationConfiguration.ADVANCED_EXTERNALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.CLASS_RESOLVER;
-import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZER;
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
+import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZER;
 import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Version;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
@@ -158,7 +158,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
       this.attributes.read(template.attributes());
       this.advancedExternalizers = template.advancedExternalizers();
-
+      this.whiteListBuilder.read(template.whiteList());
       return this;
    }
 
