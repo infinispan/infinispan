@@ -1,7 +1,5 @@
 package org.infinispan.marshall.persistence.impl;
 
-import java.lang.invoke.SerializedLambda;
-
 import org.infinispan.commons.configuration.ClassWhiteList;
 
 /**
@@ -13,6 +11,6 @@ import org.infinispan.commons.configuration.ClassWhiteList;
  */
 class UserMarshallerWhiteList {
    static void addInternalClassesToWhiteList(ClassWhiteList list) {
-      list.addClasses(Number.class, Object.class, Object[].class, SerializedLambda.class);
+      list.addClasses(Number.class);
    }
 }
