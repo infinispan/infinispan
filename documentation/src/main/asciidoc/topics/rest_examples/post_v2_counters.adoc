@@ -1,1 +1,1 @@
-POST /v2/counters/{counterName}
+POST /rest/v2/counters/{counterName}

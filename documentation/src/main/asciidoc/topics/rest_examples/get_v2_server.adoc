@@ -1,1 +1,1 @@
-GET /v2/server
+GET /rest/v2/server

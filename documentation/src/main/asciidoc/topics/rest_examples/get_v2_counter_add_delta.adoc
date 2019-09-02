@@ -1,1 +1,1 @@
-GET /v2/counters/{counterName}?action=add&delta={delta}
+GET /rest/v2/counters/{counterName}?action=add&delta={delta}

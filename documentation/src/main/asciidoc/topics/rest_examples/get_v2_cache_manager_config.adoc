@@ -1,1 +1,1 @@
-GET /v2/cache-managers/{cacheManagerName}/config
+GET /rest/v2/cache-managers/{cacheManagerName}/config

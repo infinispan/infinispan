@@ -1,1 +1,1 @@
-GET /v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
+GET /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}

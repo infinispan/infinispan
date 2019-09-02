@@ -1,1 +1,1 @@
-GET /v2/caches/{cacheName}/{cacheKey}
+GET /rest/v2/caches/{cacheName}/{cacheKey}

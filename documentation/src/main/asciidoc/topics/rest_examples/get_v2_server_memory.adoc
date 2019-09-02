@@ -1,1 +1,1 @@
-GET /v2/server/memory
+GET /rest/v2/server/memory

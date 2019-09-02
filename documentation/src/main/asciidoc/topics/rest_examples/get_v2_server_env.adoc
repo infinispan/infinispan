@@ -1,1 +1,1 @@
-GET /v2/server/env
+GET /rest/v2/server/env

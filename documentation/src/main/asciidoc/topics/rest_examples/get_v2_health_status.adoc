@@ -1,1 +1,1 @@
-GET /v2/cache-managers/{cacheManagerName}/health/status
+GET /rest/v2/cache-managers/{cacheManagerName}/health/status

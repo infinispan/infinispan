@@ -1,1 +1,1 @@
-DELETE /v2/caches/{cacheName}
+DELETE /rest/v2/caches/{cacheName}
