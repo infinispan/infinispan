@@ -1,1 +1,1 @@
-GET /v2/caches/{cacheName}?action=clear
+GET /rest/v2/caches/{cacheName}?action=clear

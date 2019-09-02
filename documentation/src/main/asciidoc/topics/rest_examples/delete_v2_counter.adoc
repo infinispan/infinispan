@@ -1,1 +1,1 @@
-DELETE /v2/counters/{counterName}
+DELETE /rest/v2/counters/{counterName}

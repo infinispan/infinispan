@@ -1,1 +1,1 @@
-HEAD /v2/caches/{cacheName}/{cacheKey}
+HEAD /rest/v2/caches/{cacheName}/{cacheKey}
