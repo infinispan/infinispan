@@ -43,7 +43,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
    }
 
    @AfterClass
