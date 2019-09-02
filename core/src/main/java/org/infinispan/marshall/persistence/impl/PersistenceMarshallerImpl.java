@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -99,9 +98,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
             throw new CacheException("Unable to start PersistenceMarshaller with JBossUserMarshaller", e);
          }
       } catch (ClassNotFoundException e) {
-         ClassWhiteList whiteList = gcr.getCacheManager().getClassWhiteList();
-         UserMarshallerWhiteList.addInternalClassesToWhiteList(whiteList);
-         return new JavaSerializationMarshaller(whiteList);
+         return new JavaSerializationMarshaller(gcr.getCacheManager().getClassWhiteList());
       }
    }
 
