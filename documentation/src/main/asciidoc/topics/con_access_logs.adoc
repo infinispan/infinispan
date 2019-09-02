@@ -1,0 +1,6 @@
+[[server_access_logs]]
+= Access Logs
+Hot Rod and REST endpoints can record all inbound client requests as log entries with the following categories:
+
+* `org.infinispan.HOTROD_ACCESS_LOG` logging category for the Hot Rod endpoint.
+* `org.infinispan.REST_ACCESS_LOG` logging category for the REST endpoint.

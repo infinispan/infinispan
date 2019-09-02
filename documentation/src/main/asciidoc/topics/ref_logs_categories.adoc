@@ -1,0 +1,17 @@
+= {brandname} Log Categories
+{brandname} provides categories for INFO, WARN, ERROR, FATAL level messages that organize logs by functional area.
+
+`org.infinispan.CLUSTER`::
+Messages specific to {brandname} clustering that include state transfer operations, rebalancing events, partitioning, and so on.
+`org.infinispan.CONFIG`::
+Messages specific to {brandname} configuration.
+`org.infinispan.CONTAINER`::
+Messages specific to the data container that include expiration and eviction operations, cache listener notifications, transactions, and so on.
+`org.infinispan.PERSISTENCE`::
+Messages specific to cache loaders and stores.
+`org.infinispan.SECURITY`::
+Messages specific to {brandname} security.
+`org.infinispan.SERVER`::
+Messages specific to {brandname} servers.
+`org.infinispan.XSITE`::
+Messages specific to cross-site replication operations.

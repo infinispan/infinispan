@@ -1,0 +1,19 @@
+= Log Formatters
+Log formatters:
+
+* Configure log handlers and define the appearance of log messages.
+* Are strings that use syntax based on the `java.util.logging.Formatter` class.
+
+An example is the default pattern for messages with the FILE log handler: +
+`%d{yyyy-MM-dd HH\:mm\:ss,SSS} %-5p [%c] (%t) %s%e%n`
+
+* `%d` adds the current time and date.
+* `%-5p` specifies the log level.
+* `%c` specifies the logging category.
+* `%t` adds the name of the current thread.
+* `%s` specifies the simple log message.
+* `%e` adds the exception stack trace.
+* `%n` adds a new line.
+
+.Reference
+link:https://docs.oracle.com/en/java/javase/11/docs/api/java.logging/java/util/logging/Formatter.html[java.util.logging.Formatter]

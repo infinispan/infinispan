@@ -1,0 +1,2 @@
+= Root Logger
+The root logger is `org.infinispan` and is always configured. This logger captures all messages for {brandname} log categories.
