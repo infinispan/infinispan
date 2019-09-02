@@ -198,11 +198,11 @@ public class Parser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CLASS: {
-               builder.addClasses(reader.getElementText());
+               builder.addClass(reader.getElementText());
                break;
             }
             case REGEX: {
-               builder.addRegexps(reader.getElementText());
+               builder.addRegexp(reader.getElementText());
                break;
             }
             default: {

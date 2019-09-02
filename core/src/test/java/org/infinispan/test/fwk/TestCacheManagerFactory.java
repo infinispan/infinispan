@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.UUID;
 
-import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
@@ -465,29 +464,30 @@ public class TestCacheManagerFactory {
          amendDefaultCache(gc);
       }
       setNodeName(gc);
+      addTestClassesToWhiteList(gc);
       GlobalConfiguration globalConfiguration = gc.build();
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
-      addTestClassesToWhiteList(defaultCacheManager);
       return defaultCacheManager;
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
+      addTestClassesToWhiteList(holder.getGlobalConfigurationBuilder());
       amendDefaultCache(holder.getGlobalConfigurationBuilder());
       setNodeName(holder.getGlobalConfigurationBuilder());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
-      addTestClassesToWhiteList(defaultCacheManager);
       return defaultCacheManager;
    }
 
-   private static void addTestClassesToWhiteList(EmbeddedCacheManager cm) {
-      ClassWhiteList whiteList = cm.getClassWhiteList();
-      whiteList.addClasses(MagicKey.class);
-      whiteList.addRegexps(
-            "org.infinispan.*Test*",
-            "org.infinispan.marshall.CustomClasses*",
-            "org.infinispan.test.data.*"
-      );
+   private static void addTestClassesToWhiteList(GlobalConfigurationBuilder globalCfg) {
+      globalCfg.serialization().whiteList()
+            .addClasses(MagicKey.class)
+            .addRegexps(
+                  "org.infinispan.*Test*",
+                  "org.infinispan.marshall.CustomClasses*",
+                  "org.infinispan.test.data.*",
+                  "org.infinispan.stream.*"
+            );
    }
 }
