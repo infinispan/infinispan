@@ -1,0 +1,26 @@
+= Log Levels
+Log levels indicate the nature and severity of messages.
+
+[%header,cols=2*]
+|===
+|Log level
+|Description
+
+|TRACE
+|Provides detailed information about running state of applications. This is the most verbose log level.
+
+|DEBUG
+|Indicates the progress of individual requests or activities.
+
+|INFO
+|Indicates overall progress of applications, including lifecycle events.
+
+|WARN
+|Indicates circumstances that can lead to error or degrade performance.
+
+|ERROR
+|Indicates error conditions that might prevent operations or activites from being successful but do not prevent applications from running.
+
+|FATAL
+|Indicates events that could cause critical service failure and application shutdown.
+|===

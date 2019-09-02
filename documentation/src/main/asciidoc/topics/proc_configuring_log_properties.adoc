@@ -1,0 +1,8 @@
+= Configuring {brandname} Log Properties
+You configure {brandname} logs with `logging.properties`, which is a
+standard Java properties file with the `property=value` format.
+
+.Procedure
+. Open `{server_home}/${infinispan.server.root}/conf/logging.properties` with any text editor.
+. Configure logging properties as appropriate.
+. Save and close `logging.properties`.

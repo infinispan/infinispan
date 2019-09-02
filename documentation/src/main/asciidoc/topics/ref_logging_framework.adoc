@@ -1,0 +1,7 @@
+= Logging Framework
+{brandname} uses the JBoss Logging Framework and delegates to logging providers in the following order:
+
+. JBoss Logging, if you are running {brandname} servers.
+. Apache Log4j, if `org.apache.log4j.LogManager` and `org.apache.log4j.Hierarchy` are on the classpath.
+. LogBack, if `ch.qos.logback.classic.Logger` is on the classpath.
+. JDK logging (`java.util.logging`), if no other logging provider is available.

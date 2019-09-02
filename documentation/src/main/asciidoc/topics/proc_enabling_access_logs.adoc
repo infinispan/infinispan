@@ -1,0 +1,8 @@
+= Enabling Access Logs
+Access logs for Hot Rod and REST endpoints are disabled by default. To enable
+either logging category, set the level to `TRACE` in the {brandname} server configuration, as in the following example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/enable_access_logs.xml[]
+----
