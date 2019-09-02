@@ -41,14 +41,17 @@ concurrent use by multiple server instances.
 * `infinispan.server.configuration` defaults to `infinispan.xml`, which resides in the `conf` folder under `infinispan.server.root`.
 
 == Command Arguments
-Use these command line arguments with the `server.sh|bat` startup script:
+The `server.sh|bat` startup script includes arguments that you can use to get
+information and configure the server runtime environment.
 
-* `-b`, `--bind-address=<address>` sets the default bind address for the public interface.
-* `-c`, `--server-config=</full/path/to/infinispan.xml>` specifies the
-`infinispan.server.configuration` path.
-* `-o`, `--port-offset=<offset>` adds the specified offset to all ports.
-* `-s`, `--server-root=</full/path/to/server-root>` specifies the `infinispan.server.root` path.
-* `-v`, `--version` displays the Infinispan server version.
+To view the available command arguments, include the `--help` option as follows:
+
+----
+$ bin/server.sh -h
+----
+
+== Logging Configuration
+You configure logging with `logging.properties` in the `server/conf` directory.
 
 == Configuration
 The server configuration extends the standard Infinispan configuration with the
@@ -124,17 +127,6 @@ The following is an example server configuration:
       </endpoints>
    </server>
 </infinispan>
-----
-
-== Logging Configuration
-You configure server logging with `logging.properties` in the
-`server/configuration` directory.
-
-JBoss Log Manager is the root logger but you can configure additional loggers:
-
-[source,options="nowrap"]
-----
-loggers=com.arjuna
 ----
 
 == Additional Details
