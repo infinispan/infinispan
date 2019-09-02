@@ -1,11 +1,17 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.Exceptions.expectException;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
@@ -22,7 +28,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -105,19 +110,19 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
    }
 
    public void testCommitFailFirstXa() throws Exception {
-      doCommitWithHeuristicExceptionTest(Arrays.asList(
+      doCommitWithExceptionTest(Arrays.asList(
             new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_COMMIT),
             new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME))
-      ));
+      ), HeuristicMixedException.class, true);
    }
 
    public void testCommitFailSecondXa() throws Exception {
-      doCommitWithHeuristicExceptionTest(Arrays.asList(
+      doCommitWithExceptionTest(Arrays.asList(
             new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
             new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME)),
             new RegisterFailXaResource(FailMode.XA_COMMIT)
-      ));
+      ), HeuristicMixedException.class, true);
    }
 
    public void testRollbackFailFirstXa() throws Exception {
@@ -166,6 +171,19 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       assertNull(transactionManager.getTransaction());
    }
 
+   public void testNoTransactionAtCommitAlone() throws Exception {
+      doCommitWithExceptionTest(Collections.singletonList(new RegisterFailXaResource(FailMode.XA_COMMIT_WITH_NOTX)),
+            HeuristicRollbackException.class, false);
+   }
+
+   public void testNoTransactionAtCommitWithOtherResources() throws Exception {
+      doCommitWithExceptionTest(Arrays.asList(
+            new RegisterCacheTransaction(cacheManager.getCache(SYNC_CACHE_NAME)),
+            new RegisterCacheTransaction(cacheManager.getCache(XA_CACHE_NAME)),
+            new RegisterFailXaResource(FailMode.XA_COMMIT_WITH_NOTX)
+      ), HeuristicMixedException.class, true);
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(true));
@@ -190,7 +208,7 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
       try {
          transactionManager.commit();
-         AssertJUnit.fail("RollbackException expected!");
+         fail("RollbackException expected!");
       } catch (RollbackException e) {
          //expected
       }
@@ -200,20 +218,20 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       assertNull(transactionManager.getTransaction());
    }
 
-   private void doCommitWithHeuristicExceptionTest(Collection<RegisterTransaction> registerTransactionCollection) throws Exception {
+   private void doCommitWithExceptionTest(Collection<RegisterTransaction> registerTransactionCollection,
+         Class<? extends Exception> exceptionClass, boolean checkData) throws Exception {
       EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
       transactionManager.begin();
       for (RegisterTransaction registerTransaction : registerTransactionCollection) {
          registerTransaction.register(transactionManager);
       }
-      try {
-         transactionManager.commit();
-         AssertJUnit.fail("HeuristicMixedException expected!");
-      } catch (HeuristicMixedException e) {
-         //expected
-      }
+      expectException(exceptionClass, transactionManager::commit);
 
-      assertData();
+      if (checkData) {
+         assertData();
+      } else {
+         assertEmpty();
+      }
       assertNoTxInAllCaches();
       assertNull(transactionManager.getTransaction());
    }
@@ -226,7 +244,7 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
       try {
          transactionManager.rollback();
-         AssertJUnit.fail("SystemException expected!");
+         fail("SystemException expected!");
       } catch (SystemException e) {
          //expected
       }
@@ -250,13 +268,13 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
    }
 
    private void assertEmpty() {
-      AssertJUnit.assertTrue(cacheManager.getCache(SYNC_CACHE_NAME).isEmpty());
-      AssertJUnit.assertTrue(cacheManager.getCache(XA_CACHE_NAME).isEmpty());
+      assertTrue(cacheManager.getCache(SYNC_CACHE_NAME).isEmpty());
+      assertTrue(cacheManager.getCache(XA_CACHE_NAME).isEmpty());
    }
 
    private void assertData() {
-      AssertJUnit.assertEquals(VALUE, cacheManager.getCache(SYNC_CACHE_NAME).get(KEY));
-      AssertJUnit.assertEquals(VALUE, cacheManager.getCache(XA_CACHE_NAME).get(KEY));
+      assertEquals(VALUE, cacheManager.getCache(SYNC_CACHE_NAME).get(KEY));
+      assertEquals(VALUE, cacheManager.getCache(XA_CACHE_NAME).get(KEY));
    }
 
    private void assertNoTxInAllCaches() {
@@ -265,8 +283,14 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
    }
 
    private enum FailMode {
-      BEFORE_MARK_ROLLBACK, BEFORE_THROW_EXCEPTION, AFTER_THROW_EXCEPTION,
-      XA_PREPARE, XA_COMMIT, XA_ROLLBACK, XA_END
+      BEFORE_MARK_ROLLBACK,
+      BEFORE_THROW_EXCEPTION,
+      AFTER_THROW_EXCEPTION,
+      XA_PREPARE,
+      XA_COMMIT,
+      XA_COMMIT_WITH_NOTX,
+      XA_ROLLBACK,
+      XA_END
    }
 
    private interface RegisterTransaction {
@@ -283,9 +307,9 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public int prepare(Xid xid) throws XAException {
+      public int prepare(Xid xid) {
          finished = true;
-         return XA_OK;
+         return XA_RDONLY;
       }
 
       @Override
@@ -313,8 +337,11 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
 
       @Override
       public void commit(Xid xid, boolean b) throws XAException {
-         if (failMode == FailMode.XA_COMMIT) {
-            throw new XAException(XAException.XA_HEURCOM);
+         switch (failMode) {
+            case XA_COMMIT:
+               throw new XAException(XAException.XA_HEURCOM);
+            case XA_COMMIT_WITH_NOTX:
+               throw new XAException(XAException.XAER_NOTA);
          }
       }
 
@@ -326,15 +353,15 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public void forget(Xid xid) throws XAException {/*no-op*/}
+      public void forget(Xid xid) {/*no-op*/}
 
       @Override
-      public int getTransactionTimeout() throws XAException {
+      public int getTransactionTimeout() {
          return 0;
       }
 
       @Override
-      public boolean isSameRM(XAResource xaResource) throws XAException {
+      public boolean isSameRM(XAResource xaResource) {
          return xaResource instanceof FailSynchronization && ((FailSynchronization) xaResource).failMode == failMode;
       }
 
@@ -347,7 +374,7 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public Xid[] recover(int i) throws XAException {
+      public Xid[] recover(int i) {
          return new Xid[0];
       }
 
@@ -359,7 +386,7 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public boolean setTransactionTimeout(int i) throws XAException {
+      public boolean setTransactionTimeout(int i) {
          return false;
       }
 
@@ -409,7 +436,7 @@ public class EmbeddedTransactionTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public void register(TransactionManager transactionManager) throws Exception {
+      public void register(TransactionManager transactionManager) {
          cache.put(KEY, VALUE);
       }
    }
