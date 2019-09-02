@@ -51,6 +51,7 @@ public final class ClassWhiteList {
       SYS_ALLOWED_CLASSES.add(Long.class.getName());
       SYS_ALLOWED_CLASSES.add(Float.class.getName());
       SYS_ALLOWED_CLASSES.add(Double.class.getName());
+      SYS_ALLOWED_CLASSES.add(Number.class.getName());
       SYS_ALLOWED_CLASSES.add(Character.class.getName());
       SYS_ALLOWED_CLASSES.add(String.class.getName());
       SYS_ALLOWED_CLASSES.add(HashSet.class.getName());
