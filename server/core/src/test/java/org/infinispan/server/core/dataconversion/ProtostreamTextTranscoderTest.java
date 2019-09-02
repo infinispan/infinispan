@@ -4,8 +4,6 @@ package org.infinispan.server.core.dataconversion;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
-
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
@@ -18,7 +16,7 @@ public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
    protected String dataSrc;
 
    @BeforeClass(alwaysRun = true)
-   public void setUp() throws IOException {
+   public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
       transcoder = new ProtostreamTextTranscoder(ProtobufUtil.newSerializationContext());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
@@ -26,7 +24,7 @@ public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
 
    @Test
    @Override
-   public void testTranscoderTranscode() throws Exception {
+   public void testTranscoderTranscode() {
       Object transcoded = transcoder.transcode(dataSrc, MediaType.TEXT_PLAIN, MediaType.APPLICATION_PROTOSTREAM);
       assertTrue(transcoded instanceof byte[], "Must be byte[]");
 

@@ -3,7 +3,6 @@ package org.infinispan.server.core.dataconversion;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -35,12 +34,10 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
                "    optional Address address = 3;\n" +
                "}";
 
-
    protected String dataSrc;
 
    @BeforeClass(alwaysRun = true)
-   public void setUp() throws IOException {
-
+   public void setUp() {
       dataSrc = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", PROTO_DEFINITIONS));
@@ -50,7 +47,7 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
 
    @Test
    @Override
-   public void testTranscoderTranscode() throws Exception {
+   public void testTranscoderTranscode() {
       Object transcoded = transcoder.transcode(dataSrc.getBytes(StandardCharsets.UTF_8), MediaType.APPLICATION_JSON, MediaType.APPLICATION_PROTOSTREAM);
       assertTrue(transcoded instanceof byte[], "Must be byte[]");
 
