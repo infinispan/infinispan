@@ -843,7 +843,7 @@ To obtain basic info about a server, invoke a `GET`:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server
+GET /rest/v2/server
 ----
 
 The response will contain the server name, codename and version:
@@ -862,7 +862,7 @@ To obtain the list of the server's cache managers:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/cache-managers
+GET /rest/v2/server/cache-managers
 ----
 
 The response will contain an array with the names of the cache managers configured in the server.
@@ -872,7 +872,7 @@ The response will contain an array with the names of the cache managers configur
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/config
+GET /rest/v2/server/config
 ----
 
 The response will be a JSON document whose structure follows the link:https://github.com/infinispan/infinispan/blob/master/server/runtime/src/main/resources/schema/infinispan-server-10.0.xsd[Server Schema].
@@ -928,7 +928,7 @@ The server resource exposes basic information about the Java Virtual Machine mem
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/memory
+GET /rest/v2/server/memory
 ----
 
 The output will be a JSON document exposing heap and non-heap memory statistics, direct memory usage, details about memory pools and garbage collection.
@@ -940,7 +940,7 @@ The obtain the environment variables used by the server, execute a `GET` request
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/env
+GET /rest/v2/server/env
 ----
 
 [[rest_v2_server_threads]]
@@ -948,7 +948,7 @@ GET /v2/server/env
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/threads
+GET /rest/v2/server/threads
 ----
 
 The output will be a `text/plain` document with the JVM's current thread dump
@@ -960,7 +960,7 @@ To shutdown the server, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/stop
+GET /rest/v2/server/stop
 ----
 
 A response with code `200(OK)` will be returned, and after a small delay, the server will be stopped.
