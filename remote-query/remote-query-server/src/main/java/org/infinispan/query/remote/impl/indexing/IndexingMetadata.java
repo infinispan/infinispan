@@ -56,14 +56,11 @@ import org.infinispan.protostream.descriptors.Option;
  * that precedes the element to be annotated (a message type definition or a field definition).
  * The syntax for defining these pseudo-annotations is identical to the one use by the Java language.
  * <p>
- * The '{@literal @}Indexed' annotation applies to message types only, has a boolean value that defaults to 'true', so
- * '{@literal @}Indexed' is equivalent to '{@literal @}Indexed(true)'. The presence of this annotation indicates the
+ * The '{@literal @}Indexed' annotation applies to message types only. The presence of this annotation indicates the
  * type is to be indexed and we intend to selectively specify which of the fields of this message type are to be indexed.
- * '@Indexed(false)' turns off indexing for this type so the eventual '@Field' annotations present at field level
- * will be ignored. The usage of '@Indexed(false)' is temporarily allowed, it is currently deprecated, and will no
- * longer be supported in Infinispan 10.0 in which the only official way to turn off indexing for a type will be to not
- * annotate it at all. The {@literal @}Indexed annotation also has an optional 'index' attribute which allow you to
- * specify the name of the index for this message type. If left unspecified it defaults to the fully qualified type name.
+ * To turn off indexing for a type just do not add '{@literal @}Indexed to its definition.
+ * The {@literal @}Indexed annotation has an optional 'index' attribute which allow you to specify the name of the index
+ * for this message type. If left unspecified it defaults to the fully qualified type name.
  * <p>
  * The '{@literal @}Field' annotation applies to fields only and has three attributes, 'index', 'store' and 'analyze',
  * which default to {@literal @}Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO). The 'index' attribute
@@ -116,27 +113,6 @@ public final class IndexingMetadata {
     */
    public static final String INDEXED_ANNOTATION = "Indexed";
    public static final String INDEXED_INDEX_ATTRIBUTE = "index";
-
-   //TODO [anistor] remove in Infinispan 10.0
-   /**
-    * Deprecated since 9.0. Replaced by @Field.
-    * This annotation does not have a plural.
-    * @deprecated
-    */
-   @Deprecated
-   public static final String INDEXED_FIELD_ANNOTATION = "IndexedField";
-
-   /**
-    * @deprecated
-    */
-   @Deprecated
-   public static final String INDEXED_FIELD_INDEX_ATTRIBUTE = "index";
-
-   /**
-    * @deprecated
-    */
-   @Deprecated
-   public static final String INDEXED_FIELD_STORE_ATTRIBUTE = "store";
 
    /**
     * Similar to org.hibernate.search.annotations.Fields/Field.
@@ -292,10 +268,6 @@ public final class IndexingMetadata {
    public static void configure(Configuration.Builder builder) {
       builder.annotationsConfig()
             .annotation(INDEXED_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
-               // TODO [anistor] the 'value' attribute is deprecated and should be removed in next major version (10.0)
-               .attribute(AnnotationElement.Annotation.VALUE_DEFAULT_ATTRIBUTE)
-                  .type(AnnotationElement.AttributeType.BOOLEAN)
-                  .defaultValue(true)
                .attribute(INDEXED_INDEX_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
@@ -304,13 +276,6 @@ public final class IndexingMetadata {
                .attribute(ANALYZER_DEFINITION_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
-            .annotation(INDEXED_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
-               .attribute(INDEXED_FIELD_INDEX_ATTRIBUTE)
-                  .type(AnnotationElement.AttributeType.BOOLEAN)
-                  .defaultValue(true)
-               .attribute(INDEXED_FIELD_STORE_ATTRIBUTE)
-                  .type(AnnotationElement.AttributeType.BOOLEAN)
-                  .defaultValue(true)
             .annotation(FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .repeatable(FIELDS_ANNOTATION)
                .attribute(FIELD_NAME_ATTRIBUTE)
@@ -326,7 +291,7 @@ public final class IndexingMetadata {
                .attribute(FIELD_ANALYZE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
                   .allowedValues(ANALYZE_YES, ANALYZE_NO)
-                  .defaultValue(ANALYZE_NO)  //todo [anistor] this differs from Hibernate Search default which is Analyze.YES !
+                  .defaultValue(ANALYZE_NO)  //NOTE: this differs from Hibernate Search's default which is Analyze.YES !
                .attribute(FIELD_STORE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
                   .allowedValues(STORE_YES, STORE_NO)

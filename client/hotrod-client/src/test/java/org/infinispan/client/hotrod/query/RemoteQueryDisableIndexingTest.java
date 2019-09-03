@@ -39,8 +39,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Test the disabling of indexing for message types that are annotated {@code @Indexed(false)}. Non-indexed querying
- * should still work.
+ * Test query for message types that are not annotated with {@code @Indexed}. Non-indexed querying must always work.
  *
  * @author anistor@redhat.com
  * @since 9.3
@@ -49,7 +48,6 @@ import org.testng.annotations.Test;
 public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
 
    private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "/** @Indexed(false) */\n" +
          "message NotIndexed {\n" +
          "\toptional string notIndexedField = 1;\n" +
          "}\n";

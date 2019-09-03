@@ -99,8 +99,6 @@ public final class FieldMapping {
 
    private final FieldDescriptor fieldDescriptor;
 
-   private final boolean isLegacy;
-
    /**
     * Indicates if lazy initialization of {@link #indexNullAsObj} and {@link #fieldBridge} fields was performed or not.
     */
@@ -113,8 +111,7 @@ public final class FieldMapping {
    FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable, String analyzer,
                 String indexNullAs,
                 LuceneOptions luceneOptions,
-                FieldDescriptor fieldDescriptor,
-                boolean isLegacy) {
+                FieldDescriptor fieldDescriptor) {
       if (name == null) {
          throw new IllegalArgumentException("name argument cannot be null");
       }
@@ -134,7 +131,6 @@ public final class FieldMapping {
       this.indexNullAs = indexNullAs;
       this.fieldDescriptor = fieldDescriptor;
       this.luceneOptions = luceneOptions;
-      this.isLegacy = isLegacy;
    }
 
    public String name() {
@@ -179,10 +175,6 @@ public final class FieldMapping {
       return fieldBridge;
    }
 
-   public boolean isLegacy() {
-      return isLegacy;
-   }
-
    private void init() {
       if (!isInitialized) {
          if (fieldDescriptor.getType() == null) {
@@ -196,8 +188,7 @@ public final class FieldMapping {
    }
 
    private Object parseIndexNullAs() {
-      // a legacy @IndexedField is handled differently to maintain backward compatibility: the value is never parsed so only string null tokens are supported.
-      if (indexNullAs != null && !isLegacy) {
+      if (indexNullAs != null) {
          switch (fieldDescriptor.getType()) {
             case DOUBLE:
                return Double.parseDouble(indexNullAs);
@@ -229,10 +220,6 @@ public final class FieldMapping {
    }
 
    private FieldBridge makeFieldBridge() {
-      if (isLegacy) {
-         return getDefaultFieldBridge(fieldDescriptor.getType());
-      }
-
       switch (fieldDescriptor.getType()) {
          case DOUBLE:
             return indexNullAsObj == null ?
@@ -312,7 +299,6 @@ public final class FieldMapping {
             ", analyzer='" + analyzer + '\'' +
             ", indexNullAs=" + indexNullAs +
             ", luceneOptions=" + luceneOptions +
-            ", isLegacy=" + isLegacy +
             '}';
    }
 }
