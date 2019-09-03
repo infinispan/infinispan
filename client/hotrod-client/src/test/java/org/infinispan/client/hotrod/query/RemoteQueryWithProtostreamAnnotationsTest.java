@@ -66,7 +66,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
          this.id = id;
       }
 
-      @ProtoDoc("@IndexedField")
+      @ProtoDoc("@Field(store = Store.YES)")
       @ProtoField(number = 20)
       public String getText() {
          return text;
@@ -76,7 +76,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
          this.text = text;
       }
 
-      @ProtoDoc("@IndexedField")
+      @ProtoDoc("@Field(store = Store.YES)")
       @ProtoField(number = 30)
       public Author getAuthor() {
          return author;
@@ -152,7 +152,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       String authorSchemaFile = "/* @Indexed */\n" +
             "message Author {\n" +
             "   required int32 id = 1;\n" +
-            "   /* @IndexedField */\n" +
+            "   /* @Field(store = Store.YES) */\n" +
             "   required string name = 2;\n" +
             "}";
       SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);

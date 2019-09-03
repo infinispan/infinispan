@@ -27,19 +27,19 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    private static final String PROTO_DEFINITIONS =
          "/** @Indexed */ message User {\n" +
                "\n" +
-               "   /** @IndexedField */ required string name = 1;\n" +
+               "   /** @Field(store = Store.YES) */ required string name = 1;\n" +
                "\n" +
                "   required string surname = 2;\n" +
                "\n" +
-               "   /** @Indexed(true) */" +
+               "   /** @Indexed */" +
                "   message Address {\n" +
-               "      /** @IndexedField */ required string street = 10;\n" +
+               "      /** @Field(store = Store.YES) */ required string street = 10;\n" +
                "      required string postCode = 20;\n" +
                "   }\n" +
                "\n" +
-               "   /** @IndexedField */ repeated Address indexedAddresses = 3;\n" +
+               "   /** @Field(store = Store.YES) */ repeated Address indexedAddresses = 3;\n" +
                "\n" +
-               "   /** @IndexedField(index=false, store=false) */ repeated Address unindexedAddresses = 4;\n" +
+               "   /** @Field(index = Index.NO) */ repeated Address unindexedAddresses = 4;\n" +
                "}";
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -68,43 +68,6 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"indexedAddresses", "postCode"}));
       assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses", "street"}));
       assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses", "postCode"}));
-   }
-
-   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'Field' on field test.User.age")
-   public void testIndexedFieldAndField() {
-      String testProto = "package test;\n" +
-            "/* @Indexed */ message User {\n" +
-            "   /* @IndexedField(index=false, store=false) @Field(store=Store.NO, index=Index.NO) */ " +
-            "   required int32 age = 1;\n" +
-            "}";
-
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test.proto", testProto));
-   }
-
-   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'SortableField' on field test.User1.age")
-   public void testIndexedFieldAndSortableField() {
-      String testProto = "package test;\n" +
-            "/* @Indexed */ message User1 {\n" +
-            "   /* @IndexedField(index=false, store=false) @SortableField */ " +
-            "   required int32 age = 1;\n" +
-            "}";
-
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", testProto));
-   }
-
-   @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'Analyzer' on field test.User2.name")
-   public void testIndexedFieldAndAnalyzer() {
-      String testProto = "package test;\n" +
-            "/* @Indexed */" +
-            "message User2 {\n" +
-            "   /* @IndexedField(index=false, store=false) @Analyzer(definition=\"standard\") */" +
-            "   required string name = 1;\n" +
-            "}";
-
-      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("test1.proto", testProto));
    }
 
    @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Cannot specify an analyzer for field test.User3.name unless the field is analyzed.")

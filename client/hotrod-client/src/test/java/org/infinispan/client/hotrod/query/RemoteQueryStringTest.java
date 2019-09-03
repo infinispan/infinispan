@@ -49,7 +49,6 @@ import org.testng.annotations.Test;
 public class RemoteQueryStringTest extends QueryStringTest {
 
    private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "/* @Indexed(false) */\n" +
          "message NotIndexed {\n" +
          "\toptional string notIndexedField = 1;\n" +
          "}\n";
