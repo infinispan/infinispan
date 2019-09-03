@@ -4,6 +4,7 @@
    <subsystems>
       <subsystem>logging.xml</subsystem>
       <subsystem>io.xml</subsystem>
+      <subsystem>ee.xml</subsystem>
       <subsystem>jdr.xml</subsystem>
       <subsystem>infinispan-jgroups.xml</subsystem>
       <subsystem supplement="indexing">infinispan-core.xml</subsystem>
