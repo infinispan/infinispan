@@ -204,7 +204,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    @Test(dataProvider = "HttpMethodProvider")
-   public void testOffSet(HttpMethod method) throws Exception {
+   public void testOffset(HttpMethod method) throws Exception {
       String q = "select p.name from org.infinispan.rest.search.entity.Person p order by p.name desc";
       JsonNode results = query(q, method, 2, 2, CACHE_NAME);
 
@@ -360,12 +360,11 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          queryReq.put(QUERY_MODE, mode);
          request = client.newRequest(searchUrl).method(POST).content(new StringContentProvider(queryReq.toString()));
       } else {
-         StringBuilder queryReq = new StringBuilder(searchUrl);
-         queryReq.append("&query=").append(URLEncoder.encode(q, "UTF-8"));
-         queryReq.append("&offset=").append(offset);
-         queryReq.append("&max_results=").append(maxResults);
-         queryReq.append("&").append(QUERY_MODE).append("=").append(mode);
-         request = client.newRequest(queryReq.toString()).method(GET);
+         String queryReq = searchUrl + "&query=" + URLEncoder.encode(q, "UTF-8") +
+               "&offset=" + offset +
+               "&max_results=" + maxResults +
+               "&" + QUERY_MODE + "=" + mode;
+         request = client.newRequest(queryReq).method(GET);
       }
       return request.send();
    }
@@ -386,5 +385,4 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    IndexedQueryMode getQueryMode() {
       return IndexedQueryMode.FETCH;
    }
-
 }

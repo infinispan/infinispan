@@ -294,7 +294,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private void registerSchema() throws Exception {
       String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata/sample.proto", restServer().getPort());
-      String proto = "message Entity { required int32 value=1; }";
+      String proto = "/* @Indexed */ message Entity { /* @Field */ required int32 value=1; }";
       ContentResponse response = client.newRequest(url).method(HttpMethod.PUT).content(new StringContentProvider(proto)).send();
       ResponseAssertion.assertThat(response).isOk();
    }

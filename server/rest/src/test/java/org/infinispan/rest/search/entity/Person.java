@@ -9,6 +9,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.NumericField;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
 
 /**
  * @since 9.2
@@ -106,7 +107,7 @@ public class Person implements Serializable {
       this.phoneNumbers = phoneNumbers;
    }
 
-   @ProtoField(number = 7)
+   @ProtoField(number = 7, type = Type.UINT32)
    public Integer getAge() {
       return age;
    }

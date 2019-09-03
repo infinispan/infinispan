@@ -43,7 +43,6 @@ public final class ProtobufValueWrapperIndexingInterceptor implements EntityInde
          return false;
       }
       IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-      return indexingMetadata == null && IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor)
-            || indexingMetadata != null && indexingMetadata.isIndexed();
+      return indexingMetadata != null && indexingMetadata.isIndexed();
    }
 }

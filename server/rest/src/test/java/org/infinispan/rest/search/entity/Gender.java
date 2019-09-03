@@ -7,7 +7,6 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
 /**
  * @since 9.2
  */
-@SuppressWarnings("unused")
 public enum Gender implements Serializable {
    @ProtoEnumValue(number = 1)
    MALE,
