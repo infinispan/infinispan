@@ -2,9 +2,72 @@
 // This file contains attributes for building community documentation.
 // Global community attributes are defined in the pom.xml.
 //
-:plusplus: ++
 
 //
-//Pull in topic-specific attributes
+// Conditional statements
+//
+:server:
+:library:
+
+//
+// Include topic-specific attributes
 //
 include::transaction-attributes.adoc[]
+
+//
+// Special characters
+//
+:plusplus: ++
+:underscores: ___
+
+//Doc Home
+:doc_home: https://infinispan.org/documentation/
+
+//
+// Server artifacts
+//
+:server_home: $ISPN_HOME
+:server_root: ${infinispan.server.root}
+:server_config: ${infinispan.server.configuration}
+:runtime_readme: https://github.com/infinispan/infinispan/blob/master/server/runtime/README.md
+
+//
+// Operator
+//
+:ispn_operator: Infinispan Operator
+:k8s: Kubernetes
+:okd: OKD
+
+//
+// OpenShift
+//
+:openshift: Red Hat OpenShift
+:openshiftshort: OpenShift
+:openshiftplatform: Red Hat OpenShift Container Platform
+:ocp: OpenShift Container Platform
+:osweb: OpenShift Web Console
+
+//
+// Community attributes
+// In the main Infinispan repo, these attributes are defined in
+// documentation/pom.xml
+// In other Infinispan repos, uncomment these attributes to include them
+// in the source content.
+//
+//:brandname: Infinispan
+//:fullbrandname: Infinispan
+//:wildflybrandname: WildFly
+
+//:infinispanversion: 10.0
+//:infinispancomponentversion: 10.0.0-SNAPSHOT
+
+//:brandcli: cli
+//:moduleprefix: ispn
+//:infinispanslot: ispn-10.0
+
+//:download_url: https://infinispan.org/download/
+//:javadocroot: https://docs.jboss.org/infinispan/10.0/apidocs
+//:configdocroot: https://docs.jboss.org/infinispan/10.0/configdocs/
+//:wildflydocroot: https://docs.jboss.org/author/display/WFLY11
+//:jdkdocroot: https://docs.oracle.com/javase/8/docs/api
+//:javaeedocroot: https://docs.oracle.com/javaee/7/api

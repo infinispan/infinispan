@@ -16,6 +16,7 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
+        <download.url>https://infinispan.org/download/</download.url>
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
@@ -166,7 +167,9 @@
                                 <docinfo>true</docinfo>
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
+                                <infinispancomponentversion>${version.component.infinispan}</infinispancomponentversion>
                                 <brandname>${infinispan.brand.name}</brandname>
+                                <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                 <wildflybrandname>${wildfly.brand.name}</wildflybrandname>
                                 <moduleprefix>${infinispan.module.slot.prefix}</moduleprefix>
                                 <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
@@ -177,6 +180,7 @@
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                 <brandcli>${infinispan.brand.cli}</brandcli>
+                                <download_url>${download.url}</download_url>
                             </attributes>
                         </configuration>
                     </execution>
@@ -234,6 +238,9 @@
                                         <docinfo>true</docinfo>
                                         <experimental>true</experimental>
                                         <infinispanversion>${infinispan.base.version}</infinispanversion>
+                                        <infinispancomponentversion>${version.component.infinispan}</infinispancomponentversion>
+                                        <brandname>${infinispan.brand.name}</brandname>
+                                        <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                         <defaults>${defaults.file}</defaults>
                                         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
                                         <javadocroot>${javadoc.root}</javadocroot>
@@ -242,6 +249,7 @@
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                         <brandcli>${infinispan.brand.cli}</brandcli>
+                                        <download_url>${download.url}</download_url>
                                     </attributes>
                                 </configuration>
                             </execution>
