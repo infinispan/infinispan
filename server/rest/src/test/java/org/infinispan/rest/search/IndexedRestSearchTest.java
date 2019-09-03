@@ -1,6 +1,6 @@
 package org.infinispan.rest.search;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpHeader;
@@ -57,5 +57,4 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
       ResponseAssertion.assertThat(preFlight).hasNoContent();
       ResponseAssertion.assertThat(preFlight).containsAllHeaders("access-control-allow-origin", "access-control-allow-methods");
    }
-
 }

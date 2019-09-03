@@ -32,7 +32,7 @@ public class NonIndexedPojoQueryTest extends BaseRestSearchTest {
    }
 
    @Override
-   protected void registerProtobuf(String protoFileName, String protoFileContents) throws Exception {
+   protected void registerProtobuf(String protoFileName, String protoFileContents) {
       // Not needed
    }
 

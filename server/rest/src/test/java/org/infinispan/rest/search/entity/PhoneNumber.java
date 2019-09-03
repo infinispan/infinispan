@@ -7,7 +7,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 /**
  * @since 9.2
  */
-@SuppressWarnings("unused")
 public class PhoneNumber implements Serializable {
 
    private String number;

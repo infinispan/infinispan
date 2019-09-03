@@ -18,29 +18,26 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    private final Descriptor messageDescriptor;
 
-   private final boolean isLegacyIndexingEnabled;
-
    ProtobufFieldIndexingMetadata(Descriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("argument cannot be null");
       }
       this.messageDescriptor = messageDescriptor;
-      this.isLegacyIndexingEnabled = IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor);
    }
 
    @Override
    public boolean isIndexed(String[] propertyPath) {
-      return getFlag(propertyPath, IndexingMetadata::isFieldIndexed, isLegacyIndexingEnabled);
+      return getFlag(propertyPath, IndexingMetadata::isFieldIndexed);
    }
 
    @Override
    public boolean isAnalyzed(String[] propertyPath) {
-      return getFlag(propertyPath, IndexingMetadata::isFieldAnalyzed, false);
+      return getFlag(propertyPath, IndexingMetadata::isFieldAnalyzed);
    }
 
    @Override
    public boolean isStored(String[] propertyPath) {
-      return getFlag(propertyPath, IndexingMetadata::isFieldStored, isLegacyIndexingEnabled);
+      return getFlag(propertyPath, IndexingMetadata::isFieldStored);
    }
 
    @Override
@@ -65,7 +62,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
       return null;
    }
 
-   private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun, boolean defVal) {
+   private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
@@ -75,7 +72,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
             break;
          }
          IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         boolean res = indexingMetadata == null ? defVal : metadataFun.apply(indexingMetadata, field.getName());
+         boolean res = indexingMetadata == null ? false : metadataFun.apply(indexingMetadata, field.getName());
          if (!res) {
             break;
          }

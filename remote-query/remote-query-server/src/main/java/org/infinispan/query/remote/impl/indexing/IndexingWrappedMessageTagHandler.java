@@ -8,7 +8,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.jboss.logging.Logger;
 
 /**
  * Protostream tag handler for {@code org.infinispan.protostream.WrappedMessage} protobuf type defined in
@@ -38,13 +37,7 @@ final class IndexingWrappedMessageTagHandler extends WrappedMessageTagHandler {
          // we are dealing with a message
          Descriptor descriptor = valueWrapper.getMessageDescriptor();
          IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         // if the message definition is not annotated at all we consider all fields indexed and stored (but not analyzed), just to be backwards compatible
-         if (indexingMetadata == null && IndexingMetadata.isLegacyIndexingEnabled(descriptor) || indexingMetadata != null && indexingMetadata.isIndexed()) {
-            if (indexingMetadata == null) {
-               if (log.isEnabled(Logger.Level.WARN)) {
-                  log.legacyIndexingIsDeprecated(descriptor.getFullName(), descriptor.getFileDescriptor().getName());
-               }
-            }
+         if (indexingMetadata != null && indexingMetadata.isIndexed()) {
             try {
                ProtobufParser.INSTANCE.parse(new IndexingTagHandler(descriptor, document), descriptor, messageBytes);
             } catch (IOException e) {
@@ -54,10 +47,10 @@ final class IndexingWrappedMessageTagHandler extends WrappedMessageTagHandler {
       } else if (numericValue != null) {
          // we are dealing with a numeric scalar
          //todo [anistor] how do we index a scalar value?
-         luceneOptions.addNumericFieldToDocument("theValue", numericValue, document);
+         luceneOptions.addNumericFieldToDocument("$$value$$", numericValue, document);
       } else if (stringValue != null) {
          // we are dealing with a string
-         luceneOptions.addFieldToDocument("theValue", stringValue, document);
+         luceneOptions.addFieldToDocument("$$value$$", stringValue, document);
       }
    }
 }

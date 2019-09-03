@@ -15,7 +15,6 @@ import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
-import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.QueryFacadeImpl;
 
 /**
@@ -44,12 +43,9 @@ final class IndexingTagHandler implements TagHandler {
 
    private MessageContext<? extends MessageContext> messageContext;
 
-   private final boolean isLegacyIndexingEnabled;
-
    IndexingTagHandler(Descriptor messageDescriptor, Document document) {
       this.document = document;
       this.messageContext = new MessageContext<>(null, null, messageDescriptor);
-      isLegacyIndexingEnabled = IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor);
    }
 
    @Override
@@ -66,7 +62,7 @@ final class IndexingTagHandler implements TagHandler {
       if (fieldDescriptor != null) {
          IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
-         if (indexingMetadata == null && isLegacyIndexingEnabled || fieldMapping != null && fieldMapping.index()) {
+         if (fieldMapping != null && fieldMapping.index()) {
             //TODO [anistor] should we still store if isStore==true but isIndexed==false?
             addFieldToDocument(fieldDescriptor, tagValue, fieldMapping);
          }
@@ -74,39 +70,20 @@ final class IndexingTagHandler implements TagHandler {
    }
 
    private void addFieldToDocument(FieldDescriptor fieldDescriptor, Object value, FieldMapping fieldMapping) {
-      Type type = fieldDescriptor.getType();
-      LuceneOptions luceneOptions;
-      boolean isSortable = false;
-      if (fieldMapping == null) {
-         // TODO [anistor] this behaviour is deprecated and will be removed in Infinispan 10.0
-         // WE DO NOT HAVE A FIELD MAPPING!
-         // This comes from a message definition that does not have any annotations and is treated as if
-         // everything is indexed, stored, and not analyzed for compatibility reasons with first version of remote query.
-         // All null values (regardless of type) are indexed as a string as if indexNullAs == "_null_" (see IndexingMetadata.DEFAULT_NULL_TOKEN)
-         if (value == null) {
-            value = IndexingMetadata.DEFAULT_NULL_TOKEN;
-            type = Type.STRING;  // we add a string to the index even if the field is numeric!
-            luceneOptions = NOT_STORED_NOT_ANALYZED;
-         } else {
-            luceneOptions = STORED_NOT_ANALYZED;
+      if (value == null) {
+         //TODO [anistor] does HS allow definition of null token for analyzed fields ?
+         if (fieldMapping.indexNullAs() == null || fieldMapping.analyze()) {
+            // a missing or null field will never get indexed as the 'null token' if it is analyzed
+            return;
          }
-      } else {
-         luceneOptions = fieldMapping.luceneOptions();
-         isSortable = fieldMapping.sortable();
-         if (value == null) {
-            if (fieldMapping.indexNullAs() == null || fieldMapping.analyze()) {
-               // a missing or null field will never get indexed as the 'null token' if it is analyzed
-               return;
-            }
-            value = fieldMapping.indexNullAs();
-         }
+         value = fieldMapping.indexNullAs();
       }
-
+      LuceneOptions luceneOptions = fieldMapping.luceneOptions();
       // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
       // different entity types to have different field types or different indexing options in the same index.
       String fullFieldName = messageContext.getFullFieldName();
       fullFieldName = fullFieldName != null ? fullFieldName + "." + fieldDescriptor.getName() : fieldDescriptor.getName();
-      switch (type) {
+      switch (fieldDescriptor.getType()) {
          case DOUBLE:
          case FLOAT:
          case INT64:
@@ -120,14 +97,14 @@ final class IndexingTagHandler implements TagHandler {
          case SINT32:
          case SINT64:
          case ENUM:
-            if (isSortable) {
+            if (fieldMapping.sortable()) {
                luceneOptions.addNumericDocValuesFieldToDocument(fullFieldName, (Number) value, document);
             }
             luceneOptions.addNumericFieldToDocument(fullFieldName, value, document);
             break;
          default:
             String indexedString = String.valueOf(value);
-            if (isSortable) {
+            if (fieldMapping.sortable()) {
                luceneOptions.addSortedDocValuesFieldToDocument(fullFieldName, indexedString, document);
             }
             luceneOptions.addFieldToDocument(fullFieldName, indexedString, document);
@@ -170,7 +147,7 @@ final class IndexingTagHandler implements TagHandler {
             Object defaultValue = fieldDescriptor.hasDefaultValue() ? fieldDescriptor.getDefaultValue() : null;
             IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
             FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
-            if (indexingMetadata == null && isLegacyIndexingEnabled || fieldMapping != null && fieldMapping.index()) {
+            if (fieldMapping != null && fieldMapping.index()) {
                addFieldToDocument(fieldDescriptor, defaultValue, fieldMapping);
             }
          }

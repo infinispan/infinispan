@@ -1537,18 +1537,9 @@ or the _ProtobufMetadataManager_ MBean via JMX.
 Be aware that, when security is enabled, access to the schema cache via the remote protocols requires
 that the user belongs to the pass:['___schema_manager'] role.
 
-NOTE: Once indexing is enabled for a cache all fields of Protobuf encoded entries will be fully indexed unless you use
-the _@Indexed_ and _@Field_ protobuf schema pseudo-annotations in order to control precisely what fields need to get
-indexed. The default behaviour can be very inefficient when dealing with types having many or very larger fields so we
-encourage you to always specify what fields should be indexed instead of relying on the default indexing behaviour.
-The indexing behaviour for protobuf message types that are not annotated can also be modified per each schema file by
-setting the protobuf schema option _'indexed_by_default'_ to _false_ (its default value is considered _true_) at
-the beginning of your schema file.
-
-[source,protobuf]
-----
-option indexed_by_default = false;  // This disables indexing of types that are not annotated for indexing
-----
+NOTE: Even if indexing is enabled for a cache no fields of Protobuf encoded entries will be indexed unless you use
+the _@Indexed_ and _@Field_ protobuf schema documentation annotations in order to specify what fields need to get
+indexed.
 
 === A remote query example
 In this example, we will show you how to configure the client to utilise the example <<protostream_usage,LibraryInitializerImpl>>,
