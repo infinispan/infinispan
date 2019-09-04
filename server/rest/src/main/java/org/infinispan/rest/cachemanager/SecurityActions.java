@@ -6,6 +6,7 @@ import java.security.PrivilegedAction;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -18,6 +19,7 @@ import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheEntryAction;
+import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAction;
 
@@ -67,5 +69,9 @@ final class SecurityActions {
    }
    static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
+   }
+
+   public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 }
