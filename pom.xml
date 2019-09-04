@@ -225,7 +225,7 @@
       <versionx.com.fasterxml.classmate>1.3.4</versionx.com.fasterxml.classmate>
       <versionx.com.fasterxml.jackson.core.jackson-annotations>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-annotations>
       <versionx.com.fasterxml.jackson.core.jackson-core>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-core>
-      <versionx.com.fasterxml.jackson.core.jackson-databind>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-databind>
+      <versionx.com.fasterxml.jackson.core.jackson-databind>${version.jackson.databind}</versionx.com.fasterxml.jackson.core.jackson-databind>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-cbor>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-cbor>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-smile>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-smile>
       <versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>${version.jackson.dataformat}</versionx.com.fasterxml.jackson.dataformat.jackson-dataformat-yaml>
