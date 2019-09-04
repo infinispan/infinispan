@@ -1,4 +1,4 @@
-package org.infinispan.stats.topK;
+package org.infinispan.extendedstats.topK;
 
 import java.util.Map;
 
@@ -10,6 +10,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.extendedstats.logging.Log;
+import org.infinispan.extendedstats.wrappers.TopKeyLockManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -18,8 +20,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.stats.logging.Log;
-import org.infinispan.stats.wrappers.TopKeyLockManager;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.LogFactory;

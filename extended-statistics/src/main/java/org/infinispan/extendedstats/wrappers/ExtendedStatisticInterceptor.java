@@ -1,72 +1,10 @@
-package org.infinispan.stats.wrappers;
+package org.infinispan.extendedstats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.ABORT_RATE;
-import static org.infinispan.stats.container.ExtendedStatistic.ALL_GET_EXECUTION;
-import static org.infinispan.stats.container.ExtendedStatistic.ARRIVAL_RATE;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_COMMIT_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_EXEC_NO_CONT;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_GET_EXECUTION;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_PREPARE_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCAL_ROLLBACK_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_LOCAL;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_REMOTE;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMIT_COMMAND;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_GET;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_RO_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_GETS_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS_SUCCESS_LOCAL_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCAL_COMMITTED_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_FAILED_DEADLOCK;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_FAILED_TIMEOUT;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_PER_LOCAL_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_PER_REMOTE_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMMIT;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_GET;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_ROLLBACK;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_PREPARE_COMMAND;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUT;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_PUTS_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GET;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_RO_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_GETS_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUT;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_REMOTE_PUTS_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ROLLBACK_COMMAND;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_WRITE_SKEW;
-import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_COMMIT_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_GET_EXECUTION;
-import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_PREPARE_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_PUT_EXECUTION;
-import static org.infinispan.stats.container.ExtendedStatistic.REMOTE_ROLLBACK_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.RESPONSE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.ROLLBACK_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SUCCESSFUL_WRITE_TX_PERCENTAGE;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_COMMIT_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_GET_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_ROLLBACK_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.THROUGHPUT;
-import static org.infinispan.stats.container.ExtendedStatistic.WRITE_SKEW_PROBABILITY;
-import static org.infinispan.stats.container.ExtendedStatistic.WRITE_TX_PERCENTAGE;
-import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
-import static org.infinispan.stats.percentiles.PercentileStatistic.RO_LOCAL_EXECUTION;
-import static org.infinispan.stats.percentiles.PercentileStatistic.RO_REMOTE_EXECUTION;
-import static org.infinispan.stats.percentiles.PercentileStatistic.WR_LOCAL_EXECUTION;
-import static org.infinispan.stats.percentiles.PercentileStatistic.WR_REMOTE_EXECUTION;
+import static org.infinispan.extendedstats.percentiles.PercentileStatistic.RO_LOCAL_EXECUTION;
+import static org.infinispan.extendedstats.percentiles.PercentileStatistic.RO_REMOTE_EXECUTION;
+import static org.infinispan.extendedstats.percentiles.PercentileStatistic.WR_LOCAL_EXECUTION;
+import static org.infinispan.extendedstats.percentiles.PercentileStatistic.WR_REMOTE_EXECUTION;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,6 +30,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -102,10 +41,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.stats.CacheStatisticManager;
-import org.infinispan.stats.ExtendedStatisticNotFoundException;
-import org.infinispan.stats.container.ExtendedStatistic;
-import org.infinispan.stats.logging.Log;
+import org.infinispan.extendedstats.CacheStatisticManager;
+import org.infinispan.extendedstats.ExtendedStatisticNotFoundException;
+import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -182,13 +120,13 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
          initStatsIfNecessary(rCtx);
          Object key = ((GetKeyValueCommand) rCommand).getKey();
          if (isRemote(key)) {
-            cacheStatisticManager.increment(NUM_REMOTE_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
-            cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+            cacheStatisticManager.increment(ExtendedStatistic.NUM_REMOTE_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+            cacheStatisticManager.add(ExtendedStatistic.REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                   getGlobalTransaction(rCtx), rCtx.isOriginLocal());
          }
-         cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+         cacheStatisticManager.add(ExtendedStatistic.ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                getGlobalTransaction(rCtx), rCtx.isOriginLocal());
-         cacheStatisticManager.increment(NUM_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+         cacheStatisticManager.increment(ExtendedStatistic.NUM_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
       });
    }
 
@@ -215,13 +153,13 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
          // one will have the duration of all the time for all gets...  Maybe do an average
          // instead ?  Either way this isn't very indicative
          if (numRemote > 0) {
-            cacheStatisticManager.add(NUM_REMOTE_GET, numRemote, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
-            cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+            cacheStatisticManager.add(ExtendedStatistic.NUM_REMOTE_GET, numRemote, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+            cacheStatisticManager.add(ExtendedStatistic.REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                   getGlobalTransaction(rCtx), rCtx.isOriginLocal());
          }
-         cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+         cacheStatisticManager.add(ExtendedStatistic.ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                getGlobalTransaction(rCtx), rCtx.isOriginLocal());
-         cacheStatisticManager.add(NUM_GET, keys.size(), getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+         cacheStatisticManager.add(ExtendedStatistic.NUM_GET, keys.size(), getGlobalTransaction(rCtx), rCtx.isOriginLocal());
       });
    }
 
@@ -244,7 +182,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
             processWriteException(rCtx, globalTransaction, t);
          } else {
             long end = timeService.time();
-            updateTime(PREPARE_EXECUTION_TIME, NUM_PREPARE_COMMAND, start, end, globalTransaction, rCtx
+            updateTime(ExtendedStatistic.PREPARE_EXECUTION_TIME, ExtendedStatistic.NUM_PREPARE_COMMAND, start, end, globalTransaction, rCtx
                   .isOriginLocal());
          }
 
@@ -265,23 +203,23 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
       ExtendedStatistic stat = null;
       if (throwable instanceof TimeoutException) {
          if (isLockTimeout(((TimeoutException) throwable))) {
-            stat = NUM_LOCK_FAILED_TIMEOUT;
+            stat = ExtendedStatistic.NUM_LOCK_FAILED_TIMEOUT;
          }
       } else if (throwable instanceof DeadlockDetectedException) {
-         stat = NUM_LOCK_FAILED_DEADLOCK;
+         stat = ExtendedStatistic.NUM_LOCK_FAILED_DEADLOCK;
       } else if (throwable instanceof WriteSkewException) {
-         stat = NUM_WRITE_SKEW;
+         stat = ExtendedStatistic.NUM_WRITE_SKEW;
       } else if (throwable instanceof RemoteException) {
          Throwable cause = throwable.getCause();
          while (cause != null) {
             if (cause instanceof TimeoutException) {
-               stat = NUM_LOCK_FAILED_TIMEOUT;
+               stat = ExtendedStatistic.NUM_LOCK_FAILED_TIMEOUT;
                break;
             } else if (cause instanceof DeadlockDetectedException) {
-               stat = NUM_LOCK_FAILED_DEADLOCK;
+               stat = ExtendedStatistic.NUM_LOCK_FAILED_DEADLOCK;
                break;
             } else if (cause instanceof WriteSkewException) {
-               stat = NUM_WRITE_SKEW;
+               stat = ExtendedStatistic.NUM_WRITE_SKEW;
                break;
             }
             cause = cause.getCause();
@@ -294,66 +232,66 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return visitSecondPhaseCommand(ctx, command, true, COMMIT_EXECUTION_TIME, NUM_COMMIT_COMMAND);
+      return visitSecondPhaseCommand(ctx, command, true, ExtendedStatistic.COMMIT_EXECUTION_TIME, ExtendedStatistic.NUM_COMMIT_COMMAND);
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return visitSecondPhaseCommand(ctx, command, false, ROLLBACK_EXECUTION_TIME, NUM_ROLLBACK_COMMAND);
+      return visitSecondPhaseCommand(ctx, command, false, ExtendedStatistic.ROLLBACK_EXECUTION_TIME, ExtendedStatistic.NUM_ROLLBACK_COMMAND);
    }
 
    @ManagedAttribute(description = "Average Prepare Round-Trip Time duration (in microseconds)",
                      displayName = "Average Prepare RTT")
    public double getAvgPrepareRtt() {
-      return getAttribute(SYNC_PREPARE_TIME);
+      return getAttribute(ExtendedStatistic.SYNC_PREPARE_TIME);
    }
 
    @ManagedAttribute(description = "Average Commit Round-Trip Time duration (in microseconds)",
                      displayName = "Average Commit RTT")
    public double getAvgCommitRtt() {
-      return getAttribute(SYNC_COMMIT_TIME);
+      return getAttribute(ExtendedStatistic.SYNC_COMMIT_TIME);
    }
 
    @ManagedAttribute(description = "Average Remote Get Round-Trip Time duration (in microseconds)",
                      displayName = "Average Remote Get RTT")
    public double getAvgRemoteGetRtt() {
-      return getAttribute(SYNC_GET_TIME);
+      return getAttribute(ExtendedStatistic.SYNC_GET_TIME);
    }
 
    @ManagedAttribute(description = "Average Rollback Round-Trip Time duration (in microseconds)",
                      displayName = "Average Rollback RTT")
    public double getAvgRollbackRtt() {
-      return getAttribute(SYNC_ROLLBACK_TIME);
+      return getAttribute(ExtendedStatistic.SYNC_ROLLBACK_TIME);
    }
 
    @ManagedAttribute(description = "Average asynchronous Complete Notification duration (in microseconds)",
                      displayName = "Average Complete Notification Async")
    public double getAvgCompleteNotificationAsync() {
-      return getAttribute(ASYNC_COMPLETE_NOTIFY_TIME);
+      return getAttribute(ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME);
    }
 
    @ManagedAttribute(description = "Average number of nodes in Commit destination set",
                      displayName = "Average Number of Nodes in Commit Destination Set")
    public double getAvgNumNodesCommit() {
-      return getAttribute(NUM_NODES_COMMIT);
+      return getAttribute(ExtendedStatistic.NUM_NODES_COMMIT);
    }
 
    @ManagedAttribute(description = "Average number of nodes in Complete Notification destination set",
                      displayName = "Average Number of Nodes in Complete Notification Destination Set")
    public double getAvgNumNodesCompleteNotification() {
-      return getAttribute(NUM_NODES_COMPLETE_NOTIFY);
+      return getAttribute(ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY);
    }
 
    @ManagedAttribute(description = "Average number of nodes in Remote Get destination set",
                      displayName = "Average Number of Nodes in Remote Get Destination Set")
    public double getAvgNumNodesRemoteGet() {
-      return getAttribute(NUM_NODES_GET);
+      return getAttribute(ExtendedStatistic.NUM_NODES_GET);
    }
 
    @ManagedAttribute(description = "Average number of nodes in Prepare destination set",
                      displayName = "Average Number of Nodes in Prepare Destination Set")
    public double getAvgNumNodesPrepare() {
-      return getAttribute(NUM_NODES_PREPARE);
+      return getAttribute(ExtendedStatistic.NUM_NODES_PREPARE);
    }
 
    //JMX exposed methods
@@ -361,273 +299,273 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    @ManagedAttribute(description = "Average number of nodes in Rollback destination set",
                      displayName = "Average Number of Nodes in Rollback Destination Set")
    public double getAvgNumNodesRollback() {
-      return getAttribute(NUM_NODES_ROLLBACK);
+      return getAttribute(ExtendedStatistic.NUM_NODES_ROLLBACK);
    }
 
    @ManagedAttribute(description = "Local execution time of a transaction without the time waiting for lock acquisition",
                      displayName = "Local Execution Time Without Locking Time")
    public double getLocalExecutionTimeWithoutLock() {
-      return getAttribute(LOCAL_EXEC_NO_CONT);
+      return getAttribute(ExtendedStatistic.LOCAL_EXEC_NO_CONT);
    }
 
    @ManagedAttribute(description = "Average lock holding time (in microseconds)",
                      displayName = "Average Lock Holding Time")
    public double getAvgLockHoldTime() {
-      return getAttribute(LOCK_HOLD_TIME);
+      return getAttribute(ExtendedStatistic.LOCK_HOLD_TIME);
    }
 
    @ManagedAttribute(description = "Average lock local holding time (in microseconds)",
                      displayName = "Average Lock Local Holding Time")
    public double getAvgLocalLockHoldTime() {
-      return getAttribute(LOCK_HOLD_TIME_LOCAL);
+      return getAttribute(ExtendedStatistic.LOCK_HOLD_TIME_LOCAL);
    }
 
    @ManagedAttribute(description = "Average lock remote holding time (in microseconds)",
                      displayName = "Average Lock Remote Holding Time")
    public double getAvgRemoteLockHoldTime() {
-      return getAttribute(LOCK_HOLD_TIME_REMOTE);
+      return getAttribute(ExtendedStatistic.LOCK_HOLD_TIME_REMOTE);
    }
 
    @ManagedAttribute(description = "Average local commit duration time (2nd phase only) (in microseconds)",
                      displayName = "Average Commit Time")
    public double getAvgCommitTime() {
-      return getAttribute(COMMIT_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.COMMIT_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average local rollback duration time (2nd phase only) (in microseconds)",
                      displayName = "Average Rollback Time")
    public double getAvgRollbackTime() {
-      return getAttribute(ROLLBACK_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.ROLLBACK_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average prepare command size (in bytes)",
                      displayName = "Average Prepare Command Size")
    public double getAvgPrepareCommandSize() {
-      return getAttribute(PREPARE_COMMAND_SIZE);
+      return getAttribute(ExtendedStatistic.PREPARE_COMMAND_SIZE);
    }
 
    @ManagedAttribute(description = "Average commit command size (in bytes)",
                      displayName = "Average Commit Command Size")
    public double getAvgCommitCommandSize() {
-      return getAttribute(COMMIT_COMMAND_SIZE);
+      return getAttribute(ExtendedStatistic.COMMIT_COMMAND_SIZE);
    }
 
    @ManagedAttribute(description = "Average clustered get command size (in bytes)",
                      displayName = "Average Clustered Get Command Size")
    public double getAvgClusteredGetCommandSize() {
-      return getAttribute(CLUSTERED_GET_COMMAND_SIZE);
+      return getAttribute(ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE);
    }
 
    @ManagedAttribute(description = "Average time waiting for the lock acquisition (in microseconds)",
                      displayName = "Average Lock Waiting Time")
    public double getAvgLockWaitingTime() {
-      return getAttribute(LOCK_WAITING_TIME);
+      return getAttribute(ExtendedStatistic.LOCK_WAITING_TIME);
    }
 
    @ManagedAttribute(description = "Average transaction arrival rate, originated locally and remotely (in transaction " +
          "per second)",
                      displayName = "Average Transaction Arrival Rate")
    public double getAvgTxArrivalRate() {
-      return getAttribute(ARRIVAL_RATE);
+      return getAttribute(ExtendedStatistic.ARRIVAL_RATE);
    }
 
    @ManagedAttribute(description = "Percentage of Write transaction executed locally (committed and aborted)",
                      displayName = "Percentage of Write Transactions")
    public double getPercentageWriteTransactions() {
-      return getAttribute(WRITE_TX_PERCENTAGE);
+      return getAttribute(ExtendedStatistic.WRITE_TX_PERCENTAGE);
    }
 
    @ManagedAttribute(description = "Percentage of Write transaction executed in all successfully executed " +
          "transactions (local transaction only)",
                      displayName = "Percentage of Successfully Write Transactions")
    public double getPercentageSuccessWriteTransactions() {
-      return getAttribute(SUCCESSFUL_WRITE_TX_PERCENTAGE);
+      return getAttribute(ExtendedStatistic.SUCCESSFUL_WRITE_TX_PERCENTAGE);
    }
 
    @ManagedAttribute(description = "The number of aborted transactions due to timeout in lock acquisition",
                      displayName = "Number of Aborted Transaction due to Lock Acquisition Timeout")
    public double getNumAbortedTxDueTimeout() {
-      return getAttribute(NUM_LOCK_FAILED_TIMEOUT);
+      return getAttribute(ExtendedStatistic.NUM_LOCK_FAILED_TIMEOUT);
    }
 
    @ManagedAttribute(description = "The number of aborted transactions due to deadlock",
                      displayName = "Number of Aborted Transaction due to Deadlock")
    public double getNumAbortedTxDueDeadlock() {
-      return getAttribute(NUM_LOCK_FAILED_DEADLOCK);
+      return getAttribute(ExtendedStatistic.NUM_LOCK_FAILED_DEADLOCK);
    }
 
    @ManagedAttribute(description = "Average successful read-only transaction duration (in microseconds)",
                      displayName = "Average Read-Only Transaction Duration")
    public double getAvgReadOnlyTxDuration() {
-      return getAttribute(RO_TX_SUCCESSFUL_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average successful write transaction duration (in microseconds)",
                      displayName = "Average Write Transaction Duration")
    public double getAvgWriteTxDuration() {
-      return getAttribute(WR_TX_SUCCESSFUL_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average aborted write transaction duration (in microseconds)",
                      displayName = "Average Aborted Write Transaction Duration")
    public double getAvgAbortedWriteTxDuration() {
-      return getAttribute(WR_TX_ABORTED_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average number of locks per write local transaction",
                      displayName = "Average Number of Lock per Local Transaction")
    public double getAvgNumOfLockLocalTx() {
-      return getAttribute(NUM_LOCK_PER_LOCAL_TX);
+      return getAttribute(ExtendedStatistic.NUM_LOCK_PER_LOCAL_TX);
    }
 
    @ManagedAttribute(description = "Average number of locks per write remote transaction",
                      displayName = "Average Number of Lock per Remote Transaction")
    public double getAvgNumOfLockRemoteTx() {
-      return getAttribute(NUM_LOCK_PER_REMOTE_TX);
+      return getAttribute(ExtendedStatistic.NUM_LOCK_PER_REMOTE_TX);
    }
 
    @ManagedAttribute(description = "Average number of locks per successfully write local transaction",
                      displayName = "Average Number of Lock per Successfully Local Transaction")
    public double getAvgNumOfLockSuccessLocalTx() {
-      return getAttribute(NUM_HELD_LOCKS_SUCCESS_LOCAL_TX);
+      return getAttribute(ExtendedStatistic.NUM_HELD_LOCKS_SUCCESS_LOCAL_TX);
    }
 
    @ManagedAttribute(description = "Average time it takes to execute the prepare command locally (in microseconds)",
                      displayName = "Average Local Prepare Execution Time")
    public double getAvgLocalPrepareTime() {
-      return getAttribute(LOCAL_PREPARE_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.LOCAL_PREPARE_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average time it takes to execute the prepare command remotely (in microseconds)",
                      displayName = "Average Remote Prepare Execution Time")
    public double getAvgRemotePrepareTime() {
-      return getAttribute(REMOTE_PREPARE_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.REMOTE_PREPARE_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average time it takes to execute the commit command locally (in microseconds)",
                      displayName = "Average Local Commit Execution Time")
    public double getAvgLocalCommitTime() {
-      return getAttribute(LOCAL_COMMIT_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.LOCAL_COMMIT_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average time it takes to execute the commit command remotely (in microseconds)",
                      displayName = "Average Remote Commit Execution Time")
    public double getAvgRemoteCommitTime() {
-      return getAttribute(REMOTE_COMMIT_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.REMOTE_COMMIT_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average time it takes to execute the rollback command locally (in microseconds)",
                      displayName = "Average Local Rollback Execution Time")
    public double getAvgLocalRollbackTime() {
-      return getAttribute(LOCAL_ROLLBACK_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.LOCAL_ROLLBACK_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Average time it takes to execute the rollback command remotely (in microseconds)",
                      displayName = "Average Remote Rollback Execution Time")
    public double getAvgRemoteRollbackTime() {
-      return getAttribute(REMOTE_ROLLBACK_EXECUTION_TIME);
+      return getAttribute(ExtendedStatistic.REMOTE_ROLLBACK_EXECUTION_TIME);
    }
 
    @ManagedAttribute(description = "Abort Rate",
                      displayName = "Abort Rate")
    public double getAbortRate() {
-      return getAttribute(ABORT_RATE);
+      return getAttribute(ExtendedStatistic.ABORT_RATE);
    }
 
    @ManagedAttribute(description = "Throughput (in transactions per second)",
                      displayName = "Throughput")
    public double getThroughput() {
-      return getAttribute(THROUGHPUT);
+      return getAttribute(ExtendedStatistic.THROUGHPUT);
    }
 
    @ManagedAttribute(description = "Average number of get operations per (local) read-only transaction",
                      displayName = "Average number of get operations per (local) read-only transaction")
    public double getAvgGetsPerROTransaction() {
-      return getAttribute(NUM_GETS_RO_TX);
+      return getAttribute(ExtendedStatistic.NUM_GETS_RO_TX);
    }
 
    @ManagedAttribute(description = "Average number of get operations per (local) read-write transaction",
                      displayName = "Average number of get operations per (local) read-write transaction")
    public double getAvgGetsPerWrTransaction() {
-      return getAttribute(NUM_GETS_WR_TX);
+      return getAttribute(ExtendedStatistic.NUM_GETS_WR_TX);
    }
 
    @ManagedAttribute(description = "Average number of remote get operations per (local) read-write transaction",
                      displayName = "Average number of remote get operations per (local) read-write transaction")
    public double getAvgRemoteGetsPerWrTransaction() {
-      return getAttribute(NUM_REMOTE_GETS_WR_TX);
+      return getAttribute(ExtendedStatistic.NUM_REMOTE_GETS_WR_TX);
    }
 
    @ManagedAttribute(description = "Average number of remote get operations per (local) read-only transaction",
                      displayName = "Average number of remote get operations per (local) read-only transaction")
    public double getAvgRemoteGetsPerROTransaction() {
-      return getAttribute(NUM_REMOTE_GETS_RO_TX);
+      return getAttribute(ExtendedStatistic.NUM_REMOTE_GETS_RO_TX);
    }
 
    @ManagedAttribute(description = "Average cost of a remote get",
                      displayName = "Remote get cost")
    public double getRemoteGetExecutionTime() {
-      return getAttribute(REMOTE_GET_EXECUTION);
+      return getAttribute(ExtendedStatistic.REMOTE_GET_EXECUTION);
    }
 
    @ManagedAttribute(description = "Average number of put operations per (local) read-write transaction",
                      displayName = "Average number of put operations per (local) read-write transaction")
    public double getAvgPutsPerWrTransaction() {
-      return getAttribute(NUM_PUTS_WR_TX);
+      return getAttribute(ExtendedStatistic.NUM_PUTS_WR_TX);
    }
 
    @ManagedAttribute(description = "Average number of remote put operations per (local) read-write transaction",
                      displayName = "Average number of remote put operations per (local) read-write transaction")
    public double getAvgRemotePutsPerWrTransaction() {
-      return getAttribute(NUM_REMOTE_PUTS_WR_TX);
+      return getAttribute(ExtendedStatistic.NUM_REMOTE_PUTS_WR_TX);
    }
 
    @ManagedAttribute(description = "Average cost of a remote put",
                      displayName = "Remote put cost")
    public double getRemotePutExecutionTime() {
-      return getAttribute(REMOTE_PUT_EXECUTION);
+      return getAttribute(ExtendedStatistic.REMOTE_PUT_EXECUTION);
    }
 
    @ManagedAttribute(description = "Number of gets performed since last reset",
                      displayName = "Number of Gets")
    public double getNumberOfGets() {
-      return getAttribute(NUM_GET);
+      return getAttribute(ExtendedStatistic.NUM_GET);
    }
 
    @ManagedAttribute(description = "Number of remote gets performed since last reset",
                      displayName = "Number of Remote Gets")
    public double getNumberOfRemoteGets() {
-      return getAttribute(NUM_REMOTE_GET);
+      return getAttribute(ExtendedStatistic.NUM_REMOTE_GET);
    }
 
    @ManagedAttribute(description = "Number of puts performed since last reset",
                      displayName = "Number of Puts")
    public double getNumberOfPuts() {
-      return getAttribute(NUM_PUT);
+      return getAttribute(ExtendedStatistic.NUM_PUT);
    }
 
    @ManagedAttribute(description = "Number of remote puts performed since last reset",
                      displayName = "Number of Remote Puts")
    public double getNumberOfRemotePuts() {
-      return getAttribute(NUM_REMOTE_PUT);
+      return getAttribute(ExtendedStatistic.NUM_REMOTE_PUT);
    }
 
    @ManagedAttribute(description = "Number of committed transactions since last reset",
                      displayName = "Number Of Commits")
    public double getNumberOfCommits() {
-      return getAttribute(NUM_COMMITTED_TX);
+      return getAttribute(ExtendedStatistic.NUM_COMMITTED_TX);
    }
 
    @ManagedAttribute(description = "Number of local committed transactions since last reset",
                      displayName = "Number Of Local Commits")
    public double getNumberOfLocalCommits() {
-      return getAttribute(NUM_LOCAL_COMMITTED_TX);
+      return getAttribute(ExtendedStatistic.NUM_LOCAL_COMMITTED_TX);
    }
 
    @ManagedAttribute(description = "Write skew probability",
                      displayName = "Write Skew Probability")
    public double getWriteSkewProbability() {
-      return getAttribute(WRITE_SKEW_PROBABILITY);
+      return getAttribute(ExtendedStatistic.WRITE_SKEW_PROBABILITY);
    }
 
    @ManagedOperation(description = "K-th percentile of local read-only transactions execution time",
@@ -663,7 +601,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    @ManagedAttribute(description = "Average Local processing Get time (in microseconds)",
                      displayName = "Average Local Get time")
    public double getAvgLocalGetTime() {
-      return getAttribute(LOCAL_GET_EXECUTION);
+      return getAttribute(ExtendedStatistic.LOCAL_GET_EXECUTION);
    }
 
    @ManagedAttribute(description = "Number of nodes in the cluster",
@@ -702,7 +640,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    @ManagedAttribute(description = "Average Response Time",
                      displayName = "Average Response Time")
    public double getAvgResponseTime() {
-      return getAttribute(RESPONSE_TIME);
+      return getAttribute(ExtendedStatistic.RESPONSE_TIME);
    }
 
    @ManagedOperation(description = "Returns the raw value for the statistic",
@@ -808,13 +746,13 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
          } else {
             if (isRemote(key)) {
                cacheStatisticManager
-                     .add(REMOTE_PUT_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+                     .add(ExtendedStatistic.REMOTE_PUT_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                            getGlobalTransaction(rCtx), rCtx.isOriginLocal());
-               cacheStatisticManager.increment(NUM_REMOTE_PUT, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+               cacheStatisticManager.increment(ExtendedStatistic.NUM_REMOTE_PUT, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
             }
          }
 
-         cacheStatisticManager.increment(NUM_PUT, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
+         cacheStatisticManager.increment(ExtendedStatistic.NUM_PUT, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
          cacheStatisticManager.markAsWriteTransaction(getGlobalTransaction(rCtx), rCtx.isOriginLocal());
       });
    }

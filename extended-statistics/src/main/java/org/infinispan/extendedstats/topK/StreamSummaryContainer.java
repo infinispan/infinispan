@@ -1,4 +1,4 @@
-package org.infinispan.stats.topK;
+package org.infinispan.extendedstats.topK;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -167,7 +167,7 @@ public class StreamSummaryContainer {
    }
 
    /**
-    * Same as {@link #getTopKFrom(org.infinispan.stats.topK.StreamSummaryContainer.Stat)} but the keys are returned in
+    * Same as {@link #getTopKFrom(StreamSummaryContainer.Stat)} but the keys are returned in
     * their String format.
     */
    public Map<String, Long> getTopKFromAsKeyString(Stat stat) {
@@ -175,7 +175,7 @@ public class StreamSummaryContainer {
    }
 
    /**
-    * Same as {@link #getTopKFrom(org.infinispan.stats.topK.StreamSummaryContainer.Stat, int)} but the keys are returned
+    * Same as {@link #getTopKFrom(StreamSummaryContainer.Stat, int)} but the keys are returned
     * in their String format.
     */
    public Map<String, Long> getTopKFromAsKeyString(Stat stat, int topK) {

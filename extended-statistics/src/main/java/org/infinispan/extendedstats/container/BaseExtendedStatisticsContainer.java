@@ -1,6 +1,6 @@
-package org.infinispan.stats.container;
+package org.infinispan.extendedstats.container;
 
-import org.infinispan.stats.ExtendedStatisticNotFoundException;
+import org.infinispan.extendedstats.ExtendedStatisticNotFoundException;
 
 /**
  * Common logic for the {@link ExtendedStatisticsContainer}

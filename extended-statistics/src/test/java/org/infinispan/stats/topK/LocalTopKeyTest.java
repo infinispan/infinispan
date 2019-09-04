@@ -14,6 +14,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.extendedstats.topK.CacheUsageInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.AbstractTopKeyTest;
 import org.infinispan.test.TestingUtil;

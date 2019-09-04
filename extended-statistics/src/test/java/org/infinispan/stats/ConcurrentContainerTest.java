@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.infinispan.stats.container.ConcurrentGlobalContainer;
-import org.infinispan.stats.container.ExtendedStatistic;
-import org.infinispan.stats.container.StatisticsSnapshot;
+import org.infinispan.extendedstats.LocalTransactionStatistics;
+import org.infinispan.extendedstats.RemoteTransactionStatistics;
+import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
+import org.infinispan.extendedstats.container.StatisticsSnapshot;
 import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.testng.Assert;

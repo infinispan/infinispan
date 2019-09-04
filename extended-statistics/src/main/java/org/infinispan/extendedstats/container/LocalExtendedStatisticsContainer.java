@@ -1,4 +1,4 @@
-package org.infinispan.stats.container;
+package org.infinispan.extendedstats.container;
 
 /**
  * Container for the statistics corresponding to local originated transactions. It only knows how to merge from others

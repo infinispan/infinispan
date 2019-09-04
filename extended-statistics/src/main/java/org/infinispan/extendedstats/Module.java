@@ -1,4 +1,4 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
 import org.infinispan.factories.annotations.InfinispanModule;
 

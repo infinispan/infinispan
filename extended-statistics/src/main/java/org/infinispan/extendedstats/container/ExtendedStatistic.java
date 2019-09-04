@@ -1,4 +1,4 @@
-package org.infinispan.stats.container;
+package org.infinispan.extendedstats.container;
 
 /**
  * The available extended statistics

@@ -1,9 +1,9 @@
-package org.infinispan.stats.container;
+package org.infinispan.extendedstats.container;
 
 
-import static org.infinispan.stats.container.ExtendedStatistic.NO_INDEX;
-import static org.infinispan.stats.container.ExtendedStatistic.getLocalStatsSize;
-import static org.infinispan.stats.container.ExtendedStatistic.getRemoteStatsSize;
+import static org.infinispan.extendedstats.container.ExtendedStatistic.NO_INDEX;
+import static org.infinispan.extendedstats.container.ExtendedStatistic.getLocalStatsSize;
+import static org.infinispan.extendedstats.container.ExtendedStatistic.getRemoteStatsSize;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;

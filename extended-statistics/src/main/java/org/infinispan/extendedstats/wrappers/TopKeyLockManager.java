@@ -1,4 +1,4 @@
-package org.infinispan.stats.wrappers;
+package org.infinispan.extendedstats.wrappers;
 
 import java.util.Collection;
 import java.util.Set;
@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.stats.topK.StreamSummaryContainer;
+import org.infinispan.extendedstats.topK.StreamSummaryContainer;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockState;

@@ -43,7 +43,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
+import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;

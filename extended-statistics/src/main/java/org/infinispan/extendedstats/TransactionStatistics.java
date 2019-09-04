@@ -1,21 +1,13 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_RO_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ABORTED_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_RO_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_COMMITTED_WR_TX;
-import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_ABORTED_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
 
 import java.lang.invoke.MethodHandles;
 
-import org.infinispan.stats.container.ConcurrentGlobalContainer;
-import org.infinispan.stats.container.ExtendedStatistic;
-import org.infinispan.stats.container.ExtendedStatisticsContainer;
-import org.infinispan.stats.logging.Log;
+import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
+import org.infinispan.extendedstats.container.ExtendedStatisticsContainer;
+import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
@@ -123,19 +115,19 @@ public abstract class TransactionStatistics {
       long execTime = timeService.timeDuration(initTime, NANOSECONDS);
       if (readOnly) {
          if (committed) {
-            incrementValue(NUM_COMMITTED_RO_TX);
-            addValue(RO_TX_SUCCESSFUL_EXECUTION_TIME, execTime);
+            incrementValue(ExtendedStatistic.NUM_COMMITTED_RO_TX);
+            addValue(ExtendedStatistic.RO_TX_SUCCESSFUL_EXECUTION_TIME, execTime);
          } else {
-            incrementValue(NUM_ABORTED_RO_TX);
-            addValue(RO_TX_ABORTED_EXECUTION_TIME, execTime);
+            incrementValue(ExtendedStatistic.NUM_ABORTED_RO_TX);
+            addValue(ExtendedStatistic.RO_TX_ABORTED_EXECUTION_TIME, execTime);
          }
       } else {
          if (committed) {
-            incrementValue(NUM_COMMITTED_WR_TX);
-            addValue(WR_TX_SUCCESSFUL_EXECUTION_TIME, execTime);
+            incrementValue(ExtendedStatistic.NUM_COMMITTED_WR_TX);
+            addValue(ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME, execTime);
          } else {
-            incrementValue(NUM_ABORTED_WR_TX);
-            addValue(WR_TX_ABORTED_EXECUTION_TIME, execTime);
+            incrementValue(ExtendedStatistic.NUM_ABORTED_WR_TX);
+            addValue(ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME, execTime);
          }
       }
 

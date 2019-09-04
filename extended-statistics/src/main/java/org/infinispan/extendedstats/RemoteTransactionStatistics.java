@@ -1,6 +1,6 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
-import org.infinispan.stats.container.RemoteExtendedStatisticsContainer;
+import org.infinispan.extendedstats.container.RemoteExtendedStatisticsContainer;
 import org.infinispan.commons.time.TimeService;
 
 /**

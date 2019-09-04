@@ -1,10 +1,10 @@
-package org.infinispan.stats.logging;
+package org.infinispan.extendedstats.logging;
 
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
-import org.infinispan.stats.container.ExtendedStatistic;
-import org.infinispan.stats.percentiles.PercentileStatistic;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
+import org.infinispan.extendedstats.percentiles.PercentileStatistic;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
