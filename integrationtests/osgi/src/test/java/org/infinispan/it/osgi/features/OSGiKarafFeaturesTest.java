@@ -71,8 +71,6 @@ public class OSGiKarafFeaturesTest {
 
       checkInstall(service, "infinispan-commons", "infinispan-commons", version);
       checkInstall(service, "infinispan-core", "infinispan-core", version);
-      checkInstall(service, "infinispan-client-hotrod", /* deprecated */ "hotrod-client", version);
-      checkInstall(service, "infinispan-client-hotrod", /* deprecated */ "hotrod-client-with-query", version);
       checkInstall(service, "infinispan-client-hotrod", "infinispan-client-hotrod", version);
       checkInstall(service, "infinispan-client-hotrod", "infinispan-client-hotrod-with-query", version);
       checkInstall(service, "infinispan-cachestore-jdbc", "infinispan-cachestore-jdbc", version);
@@ -80,8 +78,6 @@ public class OSGiKarafFeaturesTest {
       checkInstall(service, "infinispan-cachestore-rocksdb", "infinispan-cachestore-rocksdb", version);
       checkInstall(service, "infinispan-cachestore-jpa", "infinispan-cachestore-jpa", version);
       checkInstall(service, "infinispan-osgi", "infinispan-osgi", version);
-      checkInstall(service, "infinispan-embedded", "infinispan-embedded", version);
-      checkInstall(service, "infinispan-remote", "infinispan-remote", version);
       checkInstall(service, "infinispan-multimap", "infinispan-multimap", version);
       checkInstall(service, "infinispan-clustered-counter", "infinispan-clustered-counter", version);
       checkInstall(service, "infinispan-clustered-lock", "infinispan-clustered-lock", version);
