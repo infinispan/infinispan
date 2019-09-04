@@ -138,7 +138,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    };
 
    protected void registerServerMBeans() {
-      GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
       mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
       String groupName = String.format("type=Server,name=%s", getQualifiedName());

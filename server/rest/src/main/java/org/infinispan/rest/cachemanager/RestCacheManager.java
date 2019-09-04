@@ -47,7 +47,7 @@ public class RestCacheManager<V> {
       this.instance = instance;
       this.isCacheIgnored = isCacheIgnored;
       this.icr = SecurityActions.getGlobalComponentRegistry(instance).getComponent(InternalCacheRegistry.class);
-      this.allowInternalCacheAccess = instance.getCacheManagerConfiguration().security().authorization().enabled();
+      this.allowInternalCacheAccess = SecurityActions.getCacheManagerConfiguration(instance).security().authorization().enabled();
       removeCacheListener = new RemoveCacheListener();
       SecurityActions.addListener(instance, removeCacheListener);
    }
