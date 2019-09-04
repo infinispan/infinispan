@@ -1,7 +1,9 @@
 package org.infinispan.lucene;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Header for Lucene files. Store only basic info about file. File data is divided into byte[]
@@ -11,6 +13,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Lukasz Moren
  * @see org.infinispan.lucene.FileCacheKey
  */
+@ProtoTypeId(ProtoStreamTypeIds.FILE_METADATA)
 public final class FileMetadata {
 
    private final int bufferSize;

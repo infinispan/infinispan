@@ -4,9 +4,11 @@ import java.util.Arrays;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.Descriptor;
 
 /**
@@ -16,6 +18,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
  * @author anistor@redhat.com
  * @since 6.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.PROTOBUF_VALUE_WRAPPER)
 public final class ProtobufValueWrapper implements WrappedBytes {
 
    public static final IndexedTypeIdentifier INDEXING_TYPE = PojoIndexedTypeIdentifier.convertFromLegacy(ProtobufValueWrapper.class);

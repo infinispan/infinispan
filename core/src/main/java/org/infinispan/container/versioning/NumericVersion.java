@@ -7,9 +7,11 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Numeric version
@@ -17,6 +19,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.NUMERIC_VERSION)
 public class NumericVersion implements IncrementableEntryVersion {
 
    private final long version;

@@ -1,6 +1,8 @@
 package org.infinispan.util.logging.events;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.jboss.logging.Logger.Level;
 
 /**
@@ -9,6 +11,7 @@ import org.jboss.logging.Logger.Level;
  * @author Tristan Tarrant
  * @since 8.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.EVENT_LOG_LEVEL)
 public enum EventLogLevel {
 
    @ProtoEnumValue(number = 1)

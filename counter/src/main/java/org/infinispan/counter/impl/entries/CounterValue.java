@@ -2,11 +2,13 @@ package org.infinispan.counter.impl.entries;
 
 import static org.infinispan.counter.impl.Utils.calculateState;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 import net.jcip.annotations.Immutable;
 
@@ -19,6 +21,7 @@ import net.jcip.annotations.Immutable;
  * @since 9.0
  */
 @Immutable
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_VALUE)
 public class CounterValue {
 
    //A valid zero value

@@ -2,6 +2,7 @@ package org.infinispan.server.memcached;
 
 import java.util.Objects;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -9,6 +10,7 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Memcached metadata information.
@@ -16,6 +18,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.MEMCACHED_METADATA)
 class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetadata {
 
    @ProtoField(number = 5, defaultValue = "0")

@@ -8,9 +8,11 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 import net.jcip.annotations.Immutable;
 
@@ -21,6 +23,7 @@ import net.jcip.annotations.Immutable;
  * @since 5.1
  */
 @Immutable
+@ProtoTypeId(ProtoStreamTypeIds.SIMPLE_CLUSTERED_VERSION)
 public class SimpleClusteredVersion implements IncrementableEntryVersion {
    /**
     * The cache topology id in which it was first created.

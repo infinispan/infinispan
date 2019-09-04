@@ -1,7 +1,9 @@
 package org.infinispan.lucene;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Lucene's index segment files are chunked, for safe deletion of elements a read lock is
@@ -12,6 +14,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Sanne Grinovero
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.FILE_READ_LOCK_KEY)
 public final class FileReadLockKey extends AbstractIndexScopedKey {
 
    private final String fileName;

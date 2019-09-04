@@ -1,6 +1,8 @@
 package org.infinispan.util.logging.events;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * EventLogCategory.
@@ -8,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
  * @author Tristan Tarrant
  * @since 8.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.EVENT_LOG_CATEGORY)
 public enum EventLogCategory {
 
    @ProtoEnumValue(number = 1)

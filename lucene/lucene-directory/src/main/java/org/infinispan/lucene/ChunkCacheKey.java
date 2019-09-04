@@ -1,7 +1,9 @@
 package org.infinispan.lucene;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Used as a key to distinguish file chunk in cache.
@@ -10,6 +12,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
+@ProtoTypeId(ProtoStreamTypeIds.CHUNK_CACHE_KEY)
 public final class ChunkCacheKey extends AbstractIndexScopedKey {
 
    private final int chunkId;
