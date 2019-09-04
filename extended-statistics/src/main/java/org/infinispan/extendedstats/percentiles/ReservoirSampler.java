@@ -1,4 +1,4 @@
-package org.infinispan.stats.percentiles;
+package org.infinispan.extendedstats.percentiles;
 
 import java.util.Arrays;
 import java.util.Random;

@@ -10,7 +10,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.stats.topK.CacheUsageInterceptor;
+import org.infinispan.extendedstats.topK.CacheUsageInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 
 /**

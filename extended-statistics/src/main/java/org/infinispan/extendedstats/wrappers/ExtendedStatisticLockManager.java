@@ -1,10 +1,6 @@
-package org.infinispan.stats.wrappers;
+package org.infinispan.extendedstats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LOCKS;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,7 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.stats.CacheStatisticManager;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
+import org.infinispan.extendedstats.CacheStatisticManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -209,13 +206,13 @@ public class ExtendedStatisticLockManager implements LockManager {
       public final void updateStats(Long releaseTimeStamp) {
          boolean locked = releaseTimeStamp != null;
          long holdTime = !locked ? 0 : timeService.timeDuration(lockTimeStamp, releaseTimeStamp, NANOSECONDS);
-         cacheStatisticManager.add(LOCK_HOLD_TIME, holdTime, owner, local);
+         cacheStatisticManager.add(ExtendedStatistic.LOCK_HOLD_TIME, holdTime, owner, local);
          if (lockWaiting != -1) {
-            cacheStatisticManager.add(LOCK_WAITING_TIME, lockWaiting, owner, local);
-            cacheStatisticManager.increment(NUM_WAITED_FOR_LOCKS, owner, local);
+            cacheStatisticManager.add(ExtendedStatistic.LOCK_WAITING_TIME, lockWaiting, owner, local);
+            cacheStatisticManager.increment(ExtendedStatistic.NUM_WAITED_FOR_LOCKS, owner, local);
          }
          if (locked) {
-            cacheStatisticManager.increment(NUM_HELD_LOCKS, owner, local);
+            cacheStatisticManager.increment(ExtendedStatistic.NUM_HELD_LOCKS, owner, local);
          }
       }
    }

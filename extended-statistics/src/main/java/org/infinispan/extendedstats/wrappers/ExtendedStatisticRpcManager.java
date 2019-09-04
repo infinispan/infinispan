@@ -1,24 +1,6 @@
-package org.infinispan.stats.wrappers;
+package org.infinispan.extendedstats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMMIT;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_GET;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_ROLLBACK;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_COMMIT;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_GET;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_PREPARE;
-import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_ROLLBACK;
-import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_COMMAND_SIZE;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_COMMIT_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_GET_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_PREPARE_TIME;
-import static org.infinispan.stats.container.ExtendedStatistic.SYNC_ROLLBACK_TIME;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -39,6 +21,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -49,9 +32,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.stats.CacheStatisticManager;
-import org.infinispan.stats.container.ExtendedStatistic;
-import org.infinispan.stats.logging.Log;
+import org.infinispan.extendedstats.CacheStatisticManager;
+import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
@@ -257,32 +239,32 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       GlobalTransaction globalTransaction;
 
       if (command instanceof PrepareCommand) {
-         durationStat = SYNC_PREPARE_TIME;
-         counterStat = NUM_SYNC_PREPARE;
-         recipientSizeStat = NUM_NODES_PREPARE;
-         commandSizeStat = PREPARE_COMMAND_SIZE;
+         durationStat = ExtendedStatistic.SYNC_PREPARE_TIME;
+         counterStat = ExtendedStatistic.NUM_SYNC_PREPARE;
+         recipientSizeStat = ExtendedStatistic.NUM_NODES_PREPARE;
+         commandSizeStat = ExtendedStatistic.PREPARE_COMMAND_SIZE;
          globalTransaction = ((PrepareCommand) command).getGlobalTransaction();
       } else if (command instanceof RollbackCommand) {
-         durationStat = SYNC_ROLLBACK_TIME;
-         counterStat =  NUM_SYNC_ROLLBACK;
-         recipientSizeStat = NUM_NODES_ROLLBACK;
+         durationStat = ExtendedStatistic.SYNC_ROLLBACK_TIME;
+         counterStat =  ExtendedStatistic.NUM_SYNC_ROLLBACK;
+         recipientSizeStat = ExtendedStatistic.NUM_NODES_ROLLBACK;
          globalTransaction = ((RollbackCommand) command).getGlobalTransaction();
       } else if (command instanceof CommitCommand) {
-         durationStat = SYNC_COMMIT_TIME;
-         counterStat = NUM_SYNC_COMMIT;
-         recipientSizeStat = NUM_NODES_COMMIT;
-         commandSizeStat = COMMIT_COMMAND_SIZE;
+         durationStat = ExtendedStatistic.SYNC_COMMIT_TIME;
+         counterStat = ExtendedStatistic.NUM_SYNC_COMMIT;
+         recipientSizeStat = ExtendedStatistic.NUM_NODES_COMMIT;
+         commandSizeStat = ExtendedStatistic.COMMIT_COMMAND_SIZE;
          globalTransaction = ((CommitCommand) command).getGlobalTransaction();
       } else if (command instanceof TxCompletionNotificationCommand) {
-         durationStat = ASYNC_COMPLETE_NOTIFY_TIME;
-         counterStat = NUM_ASYNC_COMPLETE_NOTIFY;
-         recipientSizeStat = NUM_NODES_COMPLETE_NOTIFY;
+         durationStat = ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
+         counterStat = ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
+         recipientSizeStat = ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
          globalTransaction = ((TxCompletionNotificationCommand) command).getGlobalTransaction();
       } else if (command instanceof ClusteredGetCommand && !((ClusteredGetCommand) command).isWrite()) {
-         durationStat = SYNC_GET_TIME;
-         counterStat = NUM_SYNC_GET;
-         recipientSizeStat = NUM_NODES_GET;
-         commandSizeStat = CLUSTERED_GET_COMMAND_SIZE;
+         durationStat = ExtendedStatistic.SYNC_GET_TIME;
+         counterStat = ExtendedStatistic.NUM_SYNC_GET;
+         recipientSizeStat = ExtendedStatistic.NUM_NODES_GET;
+         commandSizeStat = ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
          globalTransaction = null;
       } else {
          if (trace) {

@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
+import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;

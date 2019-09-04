@@ -1,4 +1,4 @@
-package org.infinispan.stats.percentiles;
+package org.infinispan.extendedstats.percentiles;
 
 /**
  * Percentile statistic for the transaction execution time.
