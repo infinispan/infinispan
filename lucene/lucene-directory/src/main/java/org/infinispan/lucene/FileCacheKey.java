@@ -1,7 +1,9 @@
 package org.infinispan.lucene;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Used as a key for file headers in a cache
@@ -10,6 +12,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
+@ProtoTypeId(ProtoStreamTypeIds.FILE_CACHE_KEY)
 public final class FileCacheKey extends AbstractIndexScopedKey {
 
    private final String fileName;

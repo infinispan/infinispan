@@ -10,12 +10,14 @@ import java.util.Set;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Simple wrapper around a byte[] to provide equals and hashCode semantics
  * @author wburns
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.WRAPPED_BYTE_ARRAY)
 public class WrappedByteArray implements WrappedBytes {
    public static final WrappedByteArray EMPTY_BYTES = new WrappedByteArray(Util.EMPTY_BYTE_ARRAY);
    private final byte[] bytes;

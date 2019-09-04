@@ -3,6 +3,7 @@ package org.infinispan.functional.impl;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
@@ -17,6 +18,7 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Metadata parameters backed internal metadata representation.
@@ -24,6 +26,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @since 8.0
  */
 @Experimental
+@ProtoTypeId(ProtoStreamTypeIds.META_PARAMS_INTERNAL_METADATA)
 public final class MetaParamsInternalMetadata implements InternalMetadata, MetaParam.Lookup {
 
    final MetaParams params;

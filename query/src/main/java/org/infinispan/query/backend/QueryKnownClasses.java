@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -22,10 +22,13 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.ThreadSafe;
 
 // TODO [anistor] This class must be removed in 10.0 after we remove autodetection.
 
@@ -243,6 +246,7 @@ public final class QueryKnownClasses {
             + ", localCache=" + (localCache != null ? localCache.get() : null) + '}';
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.KNOWN_CLASS_KEY)
    public static final class KnownClassKey {
 
       @ProtoField(number = 1)

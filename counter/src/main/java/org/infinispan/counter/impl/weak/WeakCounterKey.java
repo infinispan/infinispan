@@ -2,10 +2,12 @@ package org.infinispan.counter.impl.weak;
 
 import java.util.Objects;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -16,6 +18,7 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.WEAK_COUNTER_KEY)
 public class WeakCounterKey implements CounterKey {
 
    private final ByteString counterName;

@@ -1,6 +1,8 @@
 package org.infinispan.lucene;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Cache key for a list with current files in cache.
@@ -9,6 +11,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
+@ProtoTypeId(ProtoStreamTypeIds.FILE_LIST_CACHE_KEY)
 public final class FileListCacheKey extends AbstractIndexScopedKey {
 
    @ProtoFactory

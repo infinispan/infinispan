@@ -10,11 +10,13 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * ScriptMetadata. Holds meta information about a script obtained either implicitly by the script name and extension, or
@@ -23,6 +25,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Tristan Tarrant
  * @since 7.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.SCRIPT_METADATA)
 public class ScriptMetadata implements Metadata {
 
    private final static Set<String> TEXT_BASED_MEDIA = Util.asSet(TEXT_PLAIN_TYPE, APPLICATION_JSON_TYPE, APPLICATION_XML_TYPE);

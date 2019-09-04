@@ -8,8 +8,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -21,6 +23,7 @@ import net.jcip.annotations.ThreadSafe;
  * @since 7.0
  */
 @ThreadSafe
+@ProtoTypeId(ProtoStreamTypeIds.FILE_LIST_CACHE_VALUE)
 public final class FileListCacheValue {
 
    private final Set<String> fileNames;

@@ -7,9 +7,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A simple class which encapsulates a byte[] representation of a String using a predefined encoding (currently UTF-8).
@@ -18,6 +20,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Tristan Tarrant
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.BYTE_STRING)
 public final class ByteString {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);

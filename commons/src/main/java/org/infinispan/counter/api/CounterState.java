@@ -1,6 +1,8 @@
 package org.infinispan.counter.api;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * The possible states for a counter value.
@@ -8,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_STATE)
 public enum CounterState {
 
    /**

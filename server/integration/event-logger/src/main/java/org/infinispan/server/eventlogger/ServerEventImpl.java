@@ -3,8 +3,10 @@ package org.infinispan.server.eventlogger;
 import java.time.Instant;
 import java.util.Optional;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -15,6 +17,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
  * @author Tristan Tarrant
  * @since 8.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_EVENT_IMPL)
 public final class ServerEventImpl implements EventLog {
 
    private final Instant when;

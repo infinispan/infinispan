@@ -5,10 +5,12 @@ import java.util.Objects;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A marshallable object that can be used by our internal store implementations to store values, metadata and timestamps.
@@ -16,6 +18,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Ryan Emerson
  * @since 10.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MARSHALLED_VALUE_IMPL)
 public class MarshalledValueImpl implements MarshalledValue {
 
    static final MarshalledValue EMPTY = new MarshalledValueImpl((ByteBuffer) null, null, -1, -1);

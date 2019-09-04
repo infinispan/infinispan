@@ -11,12 +11,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Metadata class for embedded caches.
@@ -24,6 +26,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.EMBEDDED_METADATA)
 public class EmbeddedMetadata implements Metadata {
    public static final EmbeddedMetadata EMPTY = new EmbeddedMetadata(null, null);
 
@@ -166,6 +169,7 @@ public class EmbeddedMetadata implements Metadata {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.EMBEDDED_EXPIRABLE_METADATA)
    public static class EmbeddedExpirableMetadata extends EmbeddedMetadata {
 
       private final long lifespan;
@@ -226,6 +230,7 @@ public class EmbeddedMetadata implements Metadata {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.EMBEDDED_LIFESPAN_METADATA)
    public static class EmbeddedLifespanExpirableMetadata extends EmbeddedMetadata {
 
       private final long lifespan;
@@ -274,6 +279,7 @@ public class EmbeddedMetadata implements Metadata {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.EMBEDDED_MAX_IDLE_METADATA)
    public static class EmbeddedMaxIdleExpirableMetadata extends EmbeddedMetadata {
 
       private final long maxIdle;

@@ -24,11 +24,10 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.marshall.protostream.impl.UserMarshallerBytes;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -224,9 +223,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    }
 
    private Object unwrapAndInit(Object o) {
-      if (o instanceof UserBytes) {
-         UserBytes userBytes = (UserBytes) o;
-         return unmarshallUserBytes(userBytes.bytes);
+      if (o instanceof UserMarshallerBytes) {
+         UserMarshallerBytes wrapper = (UserMarshallerBytes) o;
+         return unmarshallUserBytes(wrapper.getBytes());
       }
       return o;
    }
@@ -242,23 +241,21 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    }
 
    private Object wrapUserObject(Object o) {
-      return new UserBytes(marshallUserObject(o));
+      return new UserMarshallerBytes(marshallUserObject(o));
    }
 
    private int sizeEstimate(Object o, boolean persistenceClass) {
-      // hardcoded for now in order to avoid requiring a dependency on com.google.protobuf.CodedOutputStream
-      // Dynamic estimates will be provided in future protostream version
-      int wrapperEstimate = 40;
       if (persistenceClass) {
-         if (o instanceof UserBytes) {
-            byte[] user = ((UserBytes) o).bytes;
-            return wrapperEstimate + user.length;
+         if (o instanceof UserMarshallerBytes) {
+            byte[] user = ((UserMarshallerBytes) o).getBytes();
+            return UserMarshallerBytes.size(user.length);
          }
          // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
+         // Dynamic estimates will be provided in a future protostream version IPROTO-89
          return 4096;
       }
       int userBytesEstimate = userMarshaller.getBufferSizePredictor(o.getClass()).nextSize(o);
-      return wrapperEstimate + userBytesEstimate;
+      return UserMarshallerBytes.size(userBytesEstimate);
    }
 
    private boolean isPersistenceClass(Object o) {
@@ -270,17 +267,6 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          return userMarshaller.isMarshallable(o);
       } catch (Exception ignore) {
          return false;
-      }
-   }
-
-   static class UserBytes {
-
-      @ProtoField(number = 1)
-      final byte[] bytes;
-
-      @ProtoFactory
-      UserBytes(byte[] bytes) {
-         this.bytes = bytes;
       }
    }
 }
