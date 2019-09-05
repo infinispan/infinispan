@@ -34,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
 
    public static final int DEFAULT_TOP_KEY = 10;
+
    private static final Log log = LogFactory.getLog(CacheUsageInterceptor.class, Log.class);
 
    @Inject BasicComponentRegistry componentRegistry;
@@ -43,8 +44,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
 
    private final InvocationFinallyAction writeSkewReturnHandler = new InvocationFinallyAction() {
       @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
-            Throwable throwable) throws Throwable {
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
          if (throwable instanceof WriteSkewException) {
             WriteSkewException wse = (WriteSkewException) throwable;
             Object key = wse.getKey();
@@ -57,7 +57,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    };
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addGet(command.getKey(), isRemote(command.getKey()));
       }
@@ -65,7 +65,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
             streamSummaryContainer.addGet(key, isRemote(key));
@@ -77,7 +77,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    // TODO: implement visitPutMapCommand
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addPut(command.getKey(), isRemote(command.getKey()));
       }
@@ -85,7 +85,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       return invokeNextAndFinally(ctx, command, writeSkewReturnHandler);
    }
 

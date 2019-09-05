@@ -30,7 +30,10 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.extendedstats.CacheStatisticManager;
+import org.infinispan.extendedstats.ExtendedStatisticNotFoundException;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
+import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -41,9 +44,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.extendedstats.CacheStatisticManager;
-import org.infinispan.extendedstats.ExtendedStatisticNotFoundException;
-import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -164,7 +164,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Visit Prepare command %s. Is it local?. Transaction is %s", command,

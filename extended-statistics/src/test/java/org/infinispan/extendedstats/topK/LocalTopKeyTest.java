@@ -1,4 +1,4 @@
-package org.infinispan.stats.topK;
+package org.infinispan.extendedstats.topK;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.fail;
@@ -14,9 +14,8 @@ import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.extendedstats.topK.CacheUsageInterceptor;
+import org.infinispan.extendedstats.AbstractTopKeyTest;
 import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.stats.AbstractTopKeyTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -28,7 +27,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "stats.topK.LocalTopKeyTest")
+@Test(groups = "functional", testName = "extendedstats.topK.LocalTopKeyTest")
 @CleanupAfterTest
 public class LocalTopKeyTest extends AbstractTopKeyTest {
 

@@ -1,8 +1,8 @@
 package org.infinispan.extendedstats;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.container.LocalExtendedStatisticsContainer;
-import org.infinispan.commons.time.TimeService;
 
 /**
  * Represents the statistics collected for a local transaction

@@ -1,18 +1,17 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
 import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.extendedstats.LocalTransactionStatistics;
-import org.infinispan.extendedstats.RemoteTransactionStatistics;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.container.StatisticsSnapshot;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -20,14 +19,14 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 5.2
  */
-@Test(groups = "functional", testName = "stats.ConcurrentContainerTest")
+@Test(groups = "functional", testName = "extendedstats.ConcurrentContainerTest")
 public class ConcurrentContainerTest {
 
    private static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    public void testIsolationWithTransactionMerge() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);
-      final List<StatisticsSnapshot> snapshots = new ArrayList<StatisticsSnapshot>(4);
+      final List<StatisticsSnapshot> snapshots = new ArrayList<>(4);
 
       snapshots.add(globalContainer.getSnapshot());
       int localIndex;
@@ -49,11 +48,11 @@ public class ConcurrentContainerTest {
       localIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) localIndex), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) localIndex), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), stats, false);
          }
       }
 
@@ -74,11 +73,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) localIndex, (double) localIndex), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) localIndex, (double) localIndex), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D, (double) remoteIndex), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, (double) remoteIndex), stats, false);
             remoteIndex++;
          }
       }
@@ -88,7 +87,7 @@ public class ConcurrentContainerTest {
 
    public void testIsolationWithSingleActionMerge() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);
-      final List<StatisticsSnapshot> snapshots = new ArrayList<StatisticsSnapshot>(4);
+      final List<StatisticsSnapshot> snapshots = new ArrayList<>(4);
       snapshots.add(globalContainer.getSnapshot());
 
       //two random stats, one local and one remote
@@ -128,7 +127,7 @@ public class ConcurrentContainerTest {
 
    public void testIsolationWithReset() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);
-      final List<StatisticsSnapshot> snapshots = new ArrayList<StatisticsSnapshot>(4);
+      final List<StatisticsSnapshot> snapshots = new ArrayList<>(4);
 
       snapshots.add(globalContainer.getSnapshot());
       int localIndex;
@@ -157,11 +156,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) localIndex), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) localIndex), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) remoteIndex), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) remoteIndex), stats, false);
             remoteIndex++;
          }
       }
@@ -174,11 +173,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) localIndex, 0D), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) localIndex, 0D), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) remoteIndex, 0D), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) remoteIndex, 0D), stats, false);
             remoteIndex++;
          }
       }
@@ -192,11 +191,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) localIndex, 0D, (double) localIndex), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) localIndex, 0D, (double) localIndex), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, (double) remoteIndex, 0D, (double) remoteIndex), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, (double) remoteIndex, 0D, (double) remoteIndex), stats, false);
             remoteIndex++;
          }
       }
@@ -206,7 +205,7 @@ public class ConcurrentContainerTest {
 
    public void testIsolationWithResetMerge() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);
-      final List<StatisticsSnapshot> snapshots = new ArrayList<StatisticsSnapshot>(4);
+      final List<StatisticsSnapshot> snapshots = new ArrayList<>(4);
       snapshots.add(globalContainer.getSnapshot());
 
       //two random stats, one local and one remote
@@ -243,7 +242,7 @@ public class ConcurrentContainerTest {
 
    public void testIsolationWithEnqueueAndResetTransaction() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);
-      final List<StatisticsSnapshot> snapshots = new ArrayList<StatisticsSnapshot>(4);
+      final List<StatisticsSnapshot> snapshots = new ArrayList<>(4);
 
       snapshots.add(globalContainer.getSnapshot());
       int localIndex;
@@ -281,11 +280,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), stats, false);
             remoteIndex++;
          }
       }
@@ -299,11 +298,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D, 3D * localIndex), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, 3D * localIndex), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D, 3D * remoteIndex), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, 3D * remoteIndex), stats, false);
             remoteIndex++;
          }
       }
@@ -316,11 +315,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D), stats, true);
+            assertSnapshotValues(snapshots, Collections.singletonList(0D), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D), stats, false);
+            assertSnapshotValues(snapshots, Collections.singletonList(0D), stats, false);
             remoteIndex++;
          }
       }
@@ -346,11 +345,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D), stats, false);
             remoteIndex++;
          }
       }
@@ -363,11 +362,11 @@ public class ConcurrentContainerTest {
       remoteIndex = 0;
       for (ExtendedStatistic stats : ExtendedStatistic.values()) {
          if (stats.isLocal()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D, 0D), stats, true);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, 0D), stats, true);
             localIndex++;
          }
          if (stats.isRemote()) {
-            assertSnapshotValues(snapshots, Arrays.<Double>asList(0D, 0D, 0D), stats, false);
+            assertSnapshotValues(snapshots, Arrays.asList(0D, 0D, 0D), stats, false);
             remoteIndex++;
          }
       }
@@ -377,7 +376,7 @@ public class ConcurrentContainerTest {
 
    public void testIsolationWithEnqueueAndResetSingleAction() {
       final ConcurrentGlobalContainer globalContainer = new ConcurrentGlobalContainer(TIME_SERVICE);
-      final List<StatisticsSnapshot> snapshots = new ArrayList<StatisticsSnapshot>(4);
+      final List<StatisticsSnapshot> snapshots = new ArrayList<>(4);
       snapshots.add(globalContainer.getSnapshot());
 
       //two random stats, one local and one remote
@@ -409,8 +408,8 @@ public class ConcurrentContainerTest {
       snapshots.clear();
       snapshots.add(globalContainer.getSnapshot());
 
-      assertSnapshotValues(snapshots, Arrays.asList(0D), localStat, true);
-      assertSnapshotValues(snapshots, Arrays.asList(0D), remoteStat, false);
+      assertSnapshotValues(snapshots, Collections.singletonList(0D), localStat, true);
+      assertSnapshotValues(snapshots, Collections.singletonList(0D), remoteStat, false);
 
       globalContainer.flushing().set(true);
 

@@ -11,13 +11,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.EnumMap;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.container.StatisticsSnapshot;
 import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.extendedstats.percentiles.PercentileStatistic;
 import org.infinispan.extendedstats.percentiles.ReservoirSampler;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 

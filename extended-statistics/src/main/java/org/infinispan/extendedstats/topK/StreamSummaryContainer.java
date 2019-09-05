@@ -41,7 +41,7 @@ public class StreamSummaryContainer {
       this.cacheName = cacheName;
       this.address = address;
       flushing = new AtomicBoolean(false);
-      topKeyWrapper = new EnumMap<Stat, TopKeyWrapper>(Stat.class);
+      topKeyWrapper = new EnumMap<>(Stat.class);
       for (Stat stat : Stat.values()) {
          topKeyWrapper.put(stat, new TopKeyWrapper());
       }
@@ -218,7 +218,6 @@ public class StreamSummaryContainer {
       StreamSummaryContainer that = (StreamSummaryContainer) o;
 
       return !(address != null ? !address.equals(that.address) : that.address != null) && !(cacheName != null ? !cacheName.equals(that.cacheName) : that.cacheName != null);
-
    }
 
    @Override
@@ -237,7 +236,7 @@ public class StreamSummaryContainer {
    }
 
    private StreamSummary<Object> createNewStreamSummary(int customCapacity) {
-      return new StreamSummary<Object>(Math.min(MAX_CAPACITY, customCapacity));
+      return new StreamSummary<>(Math.min(MAX_CAPACITY, customCapacity));
    }
 
    private void syncOffer(final Stat stat, Object key) {
@@ -260,8 +259,9 @@ public class StreamSummaryContainer {
       MOST_WRITE_SKEW_FAILED_KEYS
    }
 
-   private class TopKeyWrapper {
-      private final BlockingQueue<Object> pendingOffers = new LinkedBlockingQueue<Object>();
+   private static class TopKeyWrapper {
+
+      private final BlockingQueue<Object> pendingOffers = new LinkedBlockingQueue<>();
       private volatile StreamSummary<Object> streamSummary;
 
       private void offer(final Object element) {
@@ -274,7 +274,7 @@ public class StreamSummaryContainer {
       }
 
       private void flush() {
-         List<Object> keys = new ArrayList<Object>();
+         List<Object> keys = new ArrayList<>();
          pendingOffers.drainTo(keys);
          final StreamSummary<Object> summary = streamSummary;
          for (Object key : keys) {
@@ -289,7 +289,7 @@ public class StreamSummaryContainer {
          synchronized (this) {
             counterList = streamSummary.topK(k);
          }
-         Map<Object, Long> map = new LinkedHashMap<Object, Long>();
+         Map<Object, Long> map = new LinkedHashMap<>();
          for (Counter<Object> counter : counterList) {
             map.put(counter.getItem(), counter.getCount());
          }
@@ -304,7 +304,7 @@ public class StreamSummaryContainer {
          synchronized (this) {
             counterList = streamSummary.topK(k);
          }
-         Map<String, Long> map = new LinkedHashMap<String, Long>();
+         Map<String, Long> map = new LinkedHashMap<>();
          for (Counter<Object> counter : counterList) {
             map.put(String.valueOf(counter.getItem()), counter.getCount());
          }

@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.CacheStatisticManager;
+import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;

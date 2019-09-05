@@ -1,4 +1,4 @@
-package org.infinispan.stats.simple;
+package org.infinispan.extendedstats.simple;
 
 import static org.testng.Assert.assertNull;
 
@@ -9,9 +9,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "stats.simple.LocalExtendedStatisticTest")
+@Test(groups = "functional", testName = "extendedstats.simple.LocalExtendedStatisticTest")
 public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
 
    private static final String KEY_1 = "key_1";
@@ -41,7 +41,7 @@ public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
 
       assertCacheValue(KEY_1, VALUE_1);
 
-      Map<Object, Object> map = new HashMap<Object, Object>();
+      Map<Object, Object> map = new HashMap<>();
       map.put(KEY_2, VALUE_2);
       map.put(KEY_3, VALUE_3);
 
@@ -244,7 +244,7 @@ public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.transaction().recovery().disable();

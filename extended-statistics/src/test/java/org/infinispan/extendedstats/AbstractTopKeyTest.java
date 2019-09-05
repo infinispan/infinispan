@@ -1,4 +1,4 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
 import static java.lang.String.format;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
@@ -7,10 +7,10 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.extendedstats.topK.CacheUsageInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.extendedstats.topK.CacheUsageInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 
 /**

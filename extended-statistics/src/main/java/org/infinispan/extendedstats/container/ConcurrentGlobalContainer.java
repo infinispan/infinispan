@@ -163,7 +163,7 @@ public final class ConcurrentGlobalContainer {
       void mergeTo(double[] values);
    }
 
-   private class Transaction implements Mergeable {
+   private static class Transaction implements Mergeable {
 
       private final double[] toMerge;
       private final int offset;
@@ -181,7 +181,7 @@ public final class ConcurrentGlobalContainer {
       }
    }
 
-   private class SingleOperation implements Mergeable {
+   private static class SingleOperation implements Mergeable {
 
       private final int index;
       private final double value;
