@@ -436,12 +436,21 @@
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
+         <properties>
+            <container.argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dserver.output.dir=${server.output.dir} -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER</container.argLine>
+         </properties>
          <build>
             <plugins>
                <plugin>
                   <artifactId>maven-failsafe-plugin</artifactId>
                   <configuration>
-                     <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dserver.output.dir=${server.output.dir} -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER</argLine>
+                     <argLine>${container.argLine}</argLine>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <argLine>${container.argLine}</argLine>
                   </configuration>
                </plugin>
             </plugins>

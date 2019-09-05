@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 import javax.management.MBeanServerConnection;
 import javax.security.auth.x500.X500Principal;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -345,4 +346,6 @@ public abstract class InfinispanServerDriver {
     * @param server the index of the server
     */
    public abstract MBeanServerConnection getJmxConnection(int server);
+
+   public abstract RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder);
 }

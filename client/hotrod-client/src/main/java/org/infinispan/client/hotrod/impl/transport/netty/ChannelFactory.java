@@ -339,7 +339,7 @@ public class ChannelFactory {
    }
 
    @GuardedBy("lock")
-   private Collection<SocketAddress> updateTopologyInfo(byte[] cacheName, Collection<SocketAddress> newServers, boolean quiet) {
+   protected Collection<SocketAddress> updateTopologyInfo(byte[] cacheName, Collection<SocketAddress> newServers, boolean quiet) {
       Collection<SocketAddress> servers = topologyInfo.getServers(new WrappedByteArray(cacheName));
       Set<SocketAddress> addedServers = new HashSet<>(newServers);
       addedServers.removeAll(servers);

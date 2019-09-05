@@ -15,6 +15,11 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.Network;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.util.Version;
 import org.infinispan.test.Exceptions;
@@ -29,10 +34,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.ContainerNetwork;
-import com.github.dockerjava.api.model.Network;
+import static org.infinispan.server.test.ContainerUtil.getIpAddressFromContainer;
 
 /**
  * WARNING: Work in progress. Does not work yet.
@@ -50,6 +52,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
    private File rootDir;
+   private final boolean preferContainerExposedPorts = Boolean.getBoolean("org.infinispan.test.server.container.preferContainerExposedPorts");
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
@@ -200,11 +203,9 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    @Override
    public InetAddress getServerAddress(int server) {
       GenericContainer container = containers.get(server);
-      InspectContainerResponse containerInfo = container.getContainerInfo();
-      ContainerNetwork network = containerInfo.getNetworkSettings().getNetworks().values().iterator().next();
       // We talk directly to the container, and not through forwarded addresses on localhost because of
       // https://github.com/testcontainers/testcontainers-java/issues/452
-      return Exceptions.unchecked(() -> InetAddress.getByName(network.getIpAddress()));
+      return Exceptions.unchecked(() -> InetAddress.getByName(getIpAddressFromContainer(container)));
    }
 
    @Override
@@ -263,5 +264,14 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          JMXConnector jmxConnector = JMXConnectorFactory.connect(url);
          return jmxConnector.getMBeanServerConnection();
       });
+   }
+
+   @Override
+   public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
+      if (preferContainerExposedPorts) {
+         return new ContainerRemoteCacheManager(containers).wrap(builder);
+      } else {
+         return new RemoteCacheManager(builder.build());
+      }
    }
 }
