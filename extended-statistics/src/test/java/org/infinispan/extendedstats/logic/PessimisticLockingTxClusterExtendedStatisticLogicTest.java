@@ -1,4 +1,4 @@
-package org.infinispan.stats.logic;
+package org.infinispan.extendedstats.logic;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.extendedstats.CacheStatisticCollector.convertNanosToMicro;
@@ -26,20 +26,14 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.util.EnumSet;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.transaction.RollbackException;
+
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.extendedstats.CacheStatisticCollector;
 import org.infinispan.extendedstats.CacheStatisticManager;
 import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
@@ -47,7 +41,8 @@ import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticRpcManager;
-import org.infinispan.test.Exceptions;
+import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -59,7 +54,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -67,10 +61,11 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "stats.logic.OptimisticLockingTxClusterExtendedStatisticLogicTest")
-public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "extendedstats.logic.PessimisticLockingTxClusterExtendedStatisticLogicTest")
+public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends MultipleCacheManagersTest {
 
    private static final Object KEY_1 = "KEY_1";
+   private static final Object KEY_2 = "KEY_2";
    private static final Object VALUE_1 = "VALUE_1";
    private static final Object VALUE_2 = "VALUE_2";
    private static final Object VALUE_3 = "VALUE_3";
@@ -120,24 +115,16 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       doTimeoutTest(false, true);
    }
 
-   public void testWriteSkewOnOwner() throws Exception {
-      doWriteSkewTest(true);
-   }
-
-   public void testWriteSkewOnNonOwner() throws Exception {
-      doWriteSkewTest(false);
-   }
-
    @Override
    protected void createCacheManagers() {
       for (int i = 0; i < NUM_NODES; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-         builder.clustering().hash().numSegments(1)
-               .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
-         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
-               .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
+         builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)//
+               .lockAcquisitionTimeout(60000); //the timeout are triggered by the TimeService!
          builder.transaction().recovery().disable();
-         builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
+         builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+         //builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
          extendedStatisticInterceptors[i] = new ExtendedStatisticInterceptor();
          builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i])
                .after(TxInterceptor.class);
@@ -179,110 +166,56 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
             transactionTrackInterceptors[i].reset();
          }
       }
-      assertNoLocks();
-   }
-
-   private void assertNoLocks() {
       for (LockManager lockManager : lockManagers) {
          eventuallyEquals(0, lockManager::getNumberOfLocksHeld);
       }
    }
 
-   private void doWriteSkewTest(boolean executeOnOwner) throws Exception {
-      controlledRpcManager[0].excludeCommands(PrepareCommand.class, CommitCommand.class, RollbackCommand.class, TxCompletionNotificationCommand.class);
-      controlledRpcManager[1].excludeCommands(PrepareCommand.class, CommitCommand.class, RollbackCommand.class, TxCompletionNotificationCommand.class);
-      final int txExecutor = executeOnOwner ? 0 : 1;
-      cache(0).put(KEY_1, VALUE_1);
-      assertTxSeen(0, 1, 1, true);
-      resetStats();
-      tm(txExecutor).begin();
-      assertEquals(cache(txExecutor).get(KEY_1), VALUE_1);
-      Transaction tx1 = tm(txExecutor).suspend();
-
-      tm(txExecutor).begin();
-      assertEquals(cache(txExecutor).get(KEY_1), VALUE_1);
-      Transaction tx2 = tm(txExecutor).suspend();
-
-      tm(txExecutor).begin();
-      cache(txExecutor).put(KEY_1, VALUE_2);
-      tm(txExecutor).commit();
-
-      //ensures no lock waiting time.
-      assertNoLocks();
-
-      tm(txExecutor).resume(tx1);
-      cache(txExecutor).put(KEY_1, VALUE_3);
-      try {
-         tm(txExecutor).commit();
-         fail("Rollback Exception expected!");
-      } catch (RollbackException expected) {
-         //expected
-      }
-
-      //ensures no lock waiting time.
-      assertNoLocks();
-
-      tm(txExecutor).resume(tx2);
-      cache(txExecutor).put(KEY_1, VALUE_3);
-      try {
-         tm(txExecutor).commit();
-         fail("Rollback Exception expected!");
-      } catch (RollbackException expected) {
-         //expected
-      }
-
-      assertTxSeen(txExecutor, 3, executeOnOwner ? 0 : 3, true);
-      EnumSet<ExtendedStatistic> statsToValidate = getStatsToValidate();
-      assertLockingValues(statsToValidate, executeOnOwner ? 1 : 0, executeOnOwner ? 2 : 0, executeOnOwner ? 0 : 3, executeOnOwner ? 1 : 0, executeOnOwner ? 2 : 0, executeOnOwner ? 0 : 1, executeOnOwner ? 0 : 2, 0, 0, executeOnOwner);
-      assertWriteSkewValues(statsToValidate, 2, 3, txExecutor);
-      assertAllStatsValidated(statsToValidate);
-      resetStats();
-   }
-
    private void doTimeoutTest(boolean executeOnOwner, boolean remoteContention) throws Exception {
       final int txExecutor = executeOnOwner ? 0 : 1;
       final int successTxExecutor = remoteContention ? 1 : 0;
-      controlledRpcManager[successTxExecutor].excludeCommands(PrepareCommand.class, CommitCommand.class, TxCompletionNotificationCommand.class);
       cache(successTxExecutor).put(KEY_1, VALUE_1);
-      controlledRpcManager[successTxExecutor].excludeCommands(PrepareCommand.class, TxCompletionNotificationCommand.class);
       assertTxSeen(successTxExecutor, 1, 1, true);
       resetStats();
 
       tm(successTxExecutor).begin();
+      //lock on key 1 acquired in the lock owner.
       cache(successTxExecutor).put(KEY_1, VALUE_2);
       final Transaction transaction = tm(successTxExecutor).suspend();
 
-      Future future = fork(() -> {
-         tm(successTxExecutor).resume(transaction);
-         tm(successTxExecutor).commit();
-         return null;
-      });
-
-      ControlledRpcManager.BlockedRequest blockedCommit =
-         controlledRpcManager[successTxExecutor].expectCommand(CommitCommand.class);
-
       lockManagerTimeService.triggerTimeout = true;
 
-      controlledRpcManager[txExecutor].excludeCommands(PrepareCommand.class, RollbackCommand.class, TxCompletionNotificationCommand.class);
       tm(txExecutor).begin();
-      cache(txExecutor).put(KEY_1, VALUE_3);
-      Exceptions.expectException(RollbackException.class, () -> tm(txExecutor).commit());
+      try {
+         cache(txExecutor).put(KEY_1, VALUE_3);
+         fail("Expected timeout exception");
+      } catch (Exception expected) {
+         //expected timeout exception
+      } finally {
+         safeRollback(txExecutor);
+      }
 
       tm(txExecutor).begin();
-      cache(txExecutor).put(KEY_1, VALUE_3);
-      Exceptions.expectException(RollbackException.class, () -> tm(txExecutor).commit());
+      try {
+         cache(txExecutor).put(KEY_1, VALUE_3);
+         fail("Expected timeout exception");
+      } catch (Exception expected) {
+         //expected timeout exception
+      } finally {
+         safeRollback(txExecutor);
+      }
 
-      blockedCommit.send().receiveAll();
-      future.get();
+      tm(successTxExecutor).resume(transaction);
+      tm(successTxExecutor).commit();
 
       if (txExecutor == successTxExecutor) {
-         assertTxSeen(successTxExecutor, 3, executeOnOwner ? 0 : 3, true);
+         assertTxSeen(successTxExecutor, 3, 1, true);
       } else {
          assertTxSeen(successTxExecutor, 1, 1, false);
-         assertTxSeen(txExecutor, 2, executeOnOwner ? 0 : 2, true);
+         assertTxSeen(txExecutor, 2, 0, true);
       }
       EnumSet<ExtendedStatistic> statsToValidate = getStatsToValidate();
-      assertLockingValues(statsToValidate, remoteContention ? 0 : 1, 0, remoteContention ? 1 : 0, remoteContention ? 0 : 1, executeOnOwner ? 2 : 0, remoteContention ? 1 : 0, executeOnOwner ? 0 : 2, remoteContention ? 0 : 2, remoteContention ? 2 : 0, executeOnOwner);
+      assertLockingValues(statsToValidate, remoteContention ? 0 : 1, 0, remoteContention ? 1 : 0, remoteContention ? 0 : 1, executeOnOwner ? 2 : 0, remoteContention ? 1 : 0, 0, remoteContention ? 0 : 2, remoteContention ? 2 : 0, 0, 0, 2, executeOnOwner);
       assertWriteSkewValues(statsToValidate, 0, 0, txExecutor);
       assertAllStatsValidated(statsToValidate);
       resetStats();
@@ -307,9 +240,6 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
                   " is not zero after reset");
          }
       }
-      for (TransactionTrackInterceptor interceptor : transactionTrackInterceptors) {
-         interceptor.reset();
-      }
    }
 
    private void assertLockingValue(ExtendedStatistic attr, EnumSet<ExtendedStatistic> statsToValidate,
@@ -320,6 +250,14 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
                       "Attribute " + attr + " has wrong value for cache " + i + ".");
       }
       statsToValidate.remove(attr);
+   }
+
+   private void safeRollback(int index) {
+      try {
+         tm(index).rollback();
+      } catch (SystemException e) {
+         //ignored!
+      }
    }
 
    private void assertAttributeValue(ExtendedStatistic attr, EnumSet<ExtendedStatistic> statsToValidate,
@@ -333,7 +271,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    }
 
    private void assertLockingValues(EnumSet<ExtendedStatistic> statsToValidate, int localHeldLocks, int failLocalHeldLocks, int remoteHeldLocks,
-                                    int successLocalTx, int failLocalTx, int successRemoteTx, int failRemoteTx, int timeoutLocalLocks, int timeoutRemoteLocks, boolean executeOnLockOnwer) {
+                                    int successLocalTx, int failLocalTx, int successRemoteTx, int failRemoteTx, int timeoutLocalLocks, int timeoutRemoteLocks, int localDeadLock, int remoteDeadLock, int waitingForLocks, boolean executeOnLockOnwer) {
       log.infof("Check Locking value. localHeldLocks=%s, failLocalHeldLocks=%s, remoteHeldLocks=%s, successLocalTx=%s, " +
                       "failLocalTx=%s, successRemoteTx=%s, failRemoteTx=%s, timeoutLocalLocks=%s, timeoutRemoteLocks=%s",
                 localHeldLocks, failLocalHeldLocks, remoteHeldLocks, successLocalTx, failLocalTx, successRemoteTx, failRemoteTx,
@@ -347,10 +285,10 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       assertLockingValue(NUM_HELD_LOCKS_SUCCESS_LOCAL_TX, statsToValidate, successLocalTx != 0 ? localHeldLocks * 1.0 / successLocalTx : 0, 0);
       assertLockingValue(LOCK_HOLD_TIME, statsToValidate, totalLocalLocks != 0 || remoteHeldLocks != 0 ? MICROSECONDS : 0, 0);
       assertLockingValue(NUM_HELD_LOCKS, statsToValidate, totalLocalLocks + remoteHeldLocks, 0);
-      assertLockingValue(NUM_WAITED_FOR_LOCKS, statsToValidate, timeoutLocalLocks + timeoutRemoteLocks, 0);
-      assertLockingValue(LOCK_WAITING_TIME, statsToValidate, timeoutLocalLocks != 0 || timeoutRemoteLocks != 0 ? MICROSECONDS : 0, 0);
+      assertLockingValue(NUM_WAITED_FOR_LOCKS, statsToValidate, waitingForLocks, 0);
+      assertLockingValue(LOCK_WAITING_TIME, statsToValidate, waitingForLocks != 0 ? MICROSECONDS : 0, 0);
       assertLockingValue(NUM_LOCK_FAILED_TIMEOUT, statsToValidate, executeOnLockOnwer ? timeoutLocalLocks + timeoutRemoteLocks : 0, executeOnLockOnwer ? 0 : timeoutLocalLocks + timeoutRemoteLocks);
-      assertLockingValue(NUM_LOCK_FAILED_DEADLOCK, statsToValidate, 0, 0);
+      assertLockingValue(NUM_LOCK_FAILED_DEADLOCK, statsToValidate, localDeadLock, remoteDeadLock);
    }
 
    private void assertWriteSkewValues(EnumSet<ExtendedStatistic> statsToValidate, int numOfWriteSkew, int numOfTx, int txExecutor) {
@@ -361,14 +299,13 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    }
 
    @BeforeMethod(alwaysRun = true)
-   void resetState() {
-      lockManagerTimeService.triggerTimeout = false;
-   }
-
-   @AfterClass
-   void stopBlockingRpcs() {
+   private void resetState() {
       for (ControlledRpcManager rpcManager : controlledRpcManager) {
          rpcManager.stopBlocking();
+      }
+      lockManagerTimeService.triggerTimeout = false;
+      for (TransactionTrackInterceptor interceptor : transactionTrackInterceptors) {
+         interceptor.reset();
       }
    }
 

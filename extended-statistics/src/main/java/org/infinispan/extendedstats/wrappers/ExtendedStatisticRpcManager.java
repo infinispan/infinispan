@@ -2,7 +2,6 @@ package org.infinispan.extendedstats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -21,7 +20,10 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.extendedstats.CacheStatisticManager;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
+import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -32,10 +34,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.extendedstats.CacheStatisticManager;
-import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -301,40 +300,35 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       }
    }
 
-   private static class CountingDataOutput extends OutputStream {
-      private int count;
+   private static final class CountingDataOutput extends OutputStream {
 
-      private CountingDataOutput() {
-         this.count = 0;
-      }
+      private int count = 0;
 
       public int getCount() {
          return count;
       }
 
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
          count++;
       }
 
       @Override
-      public void write(byte[] b) throws IOException {
+      public void write(byte[] b) {
          count += b.length;
       }
 
       @Override
-      public void write(byte[] b, int off, int len) throws IOException {
+      public void write(byte[] b, int off, int len) {
          count += len;
       }
 
       @Override
-      public void flush() throws IOException {
-
+      public void flush() {
       }
 
       @Override
-      public void close() throws IOException {
-
+      public void close() {
       }
    }
 }

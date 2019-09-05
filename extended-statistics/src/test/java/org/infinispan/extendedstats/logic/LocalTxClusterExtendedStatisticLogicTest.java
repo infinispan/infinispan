@@ -1,4 +1,4 @@
-package org.infinispan.stats.logic;
+package org.infinispan.extendedstats.logic;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.extendedstats.CacheStatisticCollector.convertNanosToMicro;
@@ -92,20 +92,20 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.extendedstats.CacheStatisticCollector;
 import org.infinispan.extendedstats.CacheStatisticManager;
 import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticLockManager;
+import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -113,7 +113,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "stats.logic.LocalTxClusterExtendedStatisticLogicTest")
+@Test(groups = "functional", testName = "extendedstats.logic.LocalTxClusterExtendedStatisticLogicTest")
 public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManagerTest {
 
    private static final int SLEEP_TIME = 500;
@@ -206,7 +206,7 @@ public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManager
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .lockAcquisitionTimeout(0);

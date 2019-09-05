@@ -4,11 +4,11 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import java.lang.invoke.MethodHandles;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.container.ExtendedStatisticsContainer;
 import org.infinispan.extendedstats.logging.Log;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
 

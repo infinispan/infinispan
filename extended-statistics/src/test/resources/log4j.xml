@@ -35,6 +35,10 @@
       <priority value="TRACE"/>
    </category>
 
+   <category name="org.infinispan.extendedstats">
+      <priority value="TRACE"/>
+   </category>
+
    <!-- ======================= -->
    <!-- Setup the Root category -->
    <!-- ======================= -->

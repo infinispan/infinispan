@@ -1,4 +1,4 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
 import java.util.Collection;
 import java.util.function.BiFunction;
@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.1
  */
-@Test(groups = "functional", testName = "stats.BaseTotalOrderClusteredExtendedStatisticsTest")
+@Test(groups = "functional", testName = "extendedstats.BaseTotalOrderClusteredExtendedStatisticsTest")
 public abstract class BaseTotalOrderClusteredExtendedStatisticsTest extends BaseClusteredExtendedStatisticTest {
 
    protected BaseTotalOrderClusteredExtendedStatisticsTest(CacheMode mode) {

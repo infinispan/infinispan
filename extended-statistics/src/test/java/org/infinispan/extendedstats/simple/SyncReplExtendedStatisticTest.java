@@ -1,16 +1,16 @@
-package org.infinispan.stats.simple;
+package org.infinispan.extendedstats.simple;
 
 import java.lang.reflect.Method;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.stats.BaseNonTotalOrderClusteredExtendedStatisticsTest;
+import org.infinispan.extendedstats.BaseNonTotalOrderClusteredExtendedStatisticsTest;
 import org.testng.annotations.Test;
 
 /**
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "stats.simple.SyncReplExtendedStatisticTest")
+@Test(groups = "functional", testName = "extendedstats.simple.SyncReplExtendedStatisticTest")
 public class SyncReplExtendedStatisticTest extends BaseNonTotalOrderClusteredExtendedStatisticsTest {
 
    public SyncReplExtendedStatisticTest() {

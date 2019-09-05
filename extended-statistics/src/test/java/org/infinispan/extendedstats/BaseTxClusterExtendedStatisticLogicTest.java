@@ -1,4 +1,4 @@
-package org.infinispan.stats;
+package org.infinispan.extendedstats;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.extendedstats.CacheStatisticCollector.convertNanosToMicro;
@@ -98,15 +98,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.extendedstats.CacheStatisticCollector;
-import org.infinispan.extendedstats.CacheStatisticManager;
-import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.extendedstats.container.ConcurrentGlobalContainer;
 import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticRpcManager;
+import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
