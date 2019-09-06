@@ -15,7 +15,7 @@ include::{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Hot Rod Protocol Reference Guide
+= {brandname} Hot Rod Protocol Reference
 
 //User stories
 include::stories.adoc[]

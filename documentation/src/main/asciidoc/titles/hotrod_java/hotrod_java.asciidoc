@@ -15,7 +15,7 @@ include::{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Configuring Hot Rod Java Clients for {brandname} {infinispanversion}
+= Using the {brandname} Hot Rod Endpoint with Java Clients
 
 //User stories
 include::stories.adoc[]
