@@ -13,33 +13,12 @@ import org.infinispan.commons.util.Util;
  */
 public class StripedLock {
    private final ReadWriteLock[] locks;
-   private final OffsetCalculator offSetCalculator;
 
-   public StripedLock(int lockCount, OffsetCalculator offSetCalculator) {
+   public StripedLock(int lockCount) {
       locks = new ReadWriteLock[Util.findNextHighestPowerOfTwo(lockCount)];
       for (int i = 0; i< locks.length; ++i) {
          locks[i] = new ReentrantReadWriteLock();
       }
-      this.offSetCalculator = offSetCalculator;
-   }
-
-   /**
-    * Retrieves the read write lock attributed to the given object using its hashCode for lookup.
-    * @param obj the object to use to find the lock
-    * @return the lock associated with the object
-    */
-   public ReadWriteLock getLock(Object obj) {
-      return getLockFromHashCode(obj.hashCode());
-   }
-
-   /**
-    * Retrieves the lock associated with the given hashCode
-    * @param hashCode the hashCode to retrieve the lock for
-    * @return the lock associated with the given hashCode
-    */
-   public ReadWriteLock getLockFromHashCode(int hashCode) {
-      int offset = offSetCalculator.calculateOffsetUsingHashCode(hashCode);
-      return locks[offset];
    }
 
    /**

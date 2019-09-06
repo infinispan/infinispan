@@ -9,8 +9,6 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.ProcessorInfo;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
@@ -25,29 +23,17 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    @Inject protected OffHeapMemoryAllocator allocator;
    @Inject protected OffHeapEntryFactory offHeapEntryFactory;
 
-   private final int desiredSize;
-
    private OffHeapConcurrentMap map;
-
-   public OffHeapDataContainer(int desiredSize) {
-      this.desiredSize = desiredSize;
-   }
-
-   public static int getActualAddressCount(int desiredSize) {
-      return OffHeapConcurrentMap.getActualAddressCount(desiredSize,
-            Util.findNextHighestPowerOfTwo(ProcessorInfo.availableProcessors() << 1));
-   }
 
    public void start() {
       super.start();
-      map = new OffHeapConcurrentMap(desiredSize, allocator, offHeapEntryFactory, null);
-      map.start();
+      map = new OffHeapConcurrentMap(allocator, offHeapEntryFactory, null);
    }
 
    @Stop
    public void stop() {
       clear();
-      map.stop();
+      map.close();
    }
 
    @Override

@@ -56,6 +56,7 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
       return attributes.attribute(EVICTION_STRATEGY).get();
    }
 
+   @Deprecated
    public int addressCount() {
       return attributes.attribute(ADDRESS_COUNT).get();
    }
@@ -81,6 +82,9 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
 
    @Override
    public String toString() {
-      return "MemoryStorageConfiguration[attributes=" + attributes + "]";
+      return "MemoryStorageConfiguration{" +
+            "attributes=" + attributes +
+            ", storageType=" + storageType +
+            '}';
    }
 }

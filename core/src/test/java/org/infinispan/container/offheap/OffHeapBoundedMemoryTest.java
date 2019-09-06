@@ -7,10 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.MemoryUnit;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.MemoryStorageConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
@@ -31,8 +29,8 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testTooSmallToInsert() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            // Only allocate enough for address count - oops
-            .size(16 + MemoryStorageConfiguration.ADDRESS_COUNT.getDefaultValue() * 8)
+            // Only allocate enough for address count and 1 byte
+            .size(UnpooledOffHeapMemoryAllocator.estimateSizeOverhead((OffHeapConcurrentMap.INITIAL_SIZE << 3)) + 1)
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
@@ -149,19 +147,5 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       cache.clear();
 
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testAddressCountTooLargeAfterRounding() {
-      int addressCount = 3;
-      // 30 is more than 3 * 8, but addressCount has to be rounded up so this will not be enough
-      long bytes = 30;
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory()
-            .size(bytes)
-            .evictionType(EvictionType.MEMORY)
-            .storageType(StorageType.OFF_HEAP)
-            .addressCount(addressCount);
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
    }
 }

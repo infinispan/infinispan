@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 public class LocalStreamOffHeapTest extends LocalStreamTest {
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
+      builder.expiration().disableReaper();
       builder.memory().storageType(StorageType.OFF_HEAP);
    }
 

@@ -125,6 +125,10 @@ reflect the fact that `rebalancing` doesn't mean a cluster is unhealthy.
 
 When using multi-tenancy in the Wildfly based server, it's necessary to specify the `content-path` for each of the REST connectors, to match the `prefix` element under `multi-tenancy\rest\prefix`.
 
+=== OffHeap Automatic Resizing
+Off Heap memory containers now will dynamically resize based on number of entries in the container. Due to this the
+address count configuration value  is now deprecated for APIs and has been removed from the xml parser.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes
