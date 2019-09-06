@@ -164,6 +164,8 @@ public class Server implements ServerManagement {
       properties.putIfAbsent(INFINISPAN_CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
       properties.putIfAbsent(INFINISPAN_CLUSTER_STACK, DEFAULT_CLUSTER_STACK);
 
+      System.setProperties(properties);
+
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 
       //SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
