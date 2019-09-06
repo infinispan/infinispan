@@ -17,10 +17,12 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -38,7 +40,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -152,12 +153,11 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + 16);
             break;
          case OFF_HEAP:
-            memoryConfigurationBuilder.addressCount(1 << 7);
             // Each entry takes up 63 bytes total for our tests, however tests that add expiration require 16 more
             memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(24 +
                   // If we are running optimistic transactions we have to store version so it is larger than pessimistic
                   convertAmountForStorage(SIZE) +
-                  UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(memoryConfigurationBuilder.addressCount() << 3));
+                  UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3));
             break;
       }
       configurationBuilder
@@ -194,8 +194,8 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
 
       for (Cache cache : caches()) {
          // Have to use eventually as depending on which node but the transaction completion can be fired async
-         eventually(() -> 0 == cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(
-               TransactionalExceptionEvictionInterceptor.class).pendingTransactionCount());
+         eventuallyEquals(0l, () -> TestingUtil.extractComponent(cache, TransactionalExceptionEvictionInterceptor.class)
+               .pendingTransactionCount());
       }
    }
 
@@ -239,8 +239,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          // We use eventually as waitForNoRebalance does not wait until old entries are removed - causing random failures
          eventually(() -> {
             long expectedCount = convertAmountForStorage(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-            TransactionalExceptionEvictionInterceptor interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
-                  .findInterceptorWithClass(TransactionalExceptionEvictionInterceptor.class);
+            TransactionalExceptionEvictionInterceptor interceptor = TestingUtil.extractComponent(cache, TransactionalExceptionEvictionInterceptor.class);
             long size = interceptor.getCurrentSize();
             log.debugf("Exception eviction size for cache: %s is: %d", cache.getCacheManager().getAddress(), size);
             expectedCount += interceptor.getMinSize();

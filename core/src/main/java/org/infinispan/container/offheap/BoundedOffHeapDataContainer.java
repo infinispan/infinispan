@@ -30,8 +30,8 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    protected final List<Consumer<Iterable<InternalCacheEntry<WrappedBytes, WrappedBytes>>>> listeners =
       new CopyOnWriteArrayList<>();
 
-   public BoundedOffHeapDataContainer(int addressCount, long maxSize, EvictionType type) {
-      super(addressCount, 1, maxSize, type);
+   public BoundedOffHeapDataContainer(long maxSize, EvictionType type) {
+      super(1, maxSize, type);
    }
 
    @Override

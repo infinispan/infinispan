@@ -8,6 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
@@ -66,7 +67,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
             // Off heap key/value size is 64 bytes
             size = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(size * 64);
             // Have to also include address count overhead
-            size += UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(cfg.memory().addressCount() << 3);
+            size += UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3);
          }
       }
 

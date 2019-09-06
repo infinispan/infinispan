@@ -52,16 +52,15 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       //handle case when < 0 value signifies unbounded container or when we are not removal based
       if (strategy.isExceptionBased() || !strategy.isEnabled()) {
          if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
-            int addressCount = memoryConfiguration.addressCount();
             if (shouldSegment) {
                int segments = clusteringConfiguration.hash().numSegments();
-               Supplier mapSupplier = () -> createAndStartOffHeapConcurrentMap(addressCount, segments);
+               Supplier mapSupplier = this::createAndStartOffHeapConcurrentMap;
                if (clusteringConfiguration.l1().enabled()) {
                   return new L1SegmentedDataContainer<>(mapSupplier, segments);
                }
                return new DefaultSegmentedDataContainer<>(mapSupplier, segments);
             } else {
-               return new OffHeapDataContainer(addressCount);
+               return new OffHeapDataContainer();
             }
          } else if (shouldSegment) {
             Supplier mapSupplier = ConcurrentHashMap::new;
@@ -79,14 +78,12 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
       DataContainer dataContainer;
       if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
-         int addressCount = memoryConfiguration.addressCount();
          if (shouldSegment) {
             int segments = clusteringConfiguration.hash().numSegments();
-            dataContainer = new SegmentedBoundedOffHeapDataContainer(addressCount, segments, thresholdSize,
+            dataContainer = new SegmentedBoundedOffHeapDataContainer(segments, thresholdSize,
                   memoryConfiguration.evictionType());
          } else {
-            dataContainer = new BoundedOffHeapDataContainer(addressCount, thresholdSize,
-                  memoryConfiguration.evictionType());
+            dataContainer = new BoundedOffHeapDataContainer(thresholdSize, memoryConfiguration.evictionType());
          }
       } else if (shouldSegment) {
          int segments = clusteringConfiguration.hash().numSegments();
@@ -102,12 +99,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    }
 
    /* visible for testing */
-   OffHeapConcurrentMap createAndStartOffHeapConcurrentMap(int addressCount, int segments) {
+   OffHeapConcurrentMap createAndStartOffHeapConcurrentMap() {
       OffHeapEntryFactory entryFactory = componentRegistry.getOrCreateComponent(OffHeapEntryFactory.class);
       OffHeapMemoryAllocator memoryAllocator = componentRegistry.getOrCreateComponent(OffHeapMemoryAllocator.class);
-      // TODO: find better way to handle size here or is it okay? internally it will round to next power of 2
-      OffHeapConcurrentMap offHeapMap = new OffHeapConcurrentMap(addressCount / segments, memoryAllocator, entryFactory, null);
-      offHeapMap.start();
-      return offHeapMap;
+      return new OffHeapConcurrentMap(memoryAllocator, entryFactory, null);
    }
 }

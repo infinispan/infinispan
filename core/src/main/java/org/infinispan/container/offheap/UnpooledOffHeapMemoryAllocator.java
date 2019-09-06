@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
 import sun.misc.Unsafe;
 
 /**

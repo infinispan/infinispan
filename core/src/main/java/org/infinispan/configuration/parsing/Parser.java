@@ -1568,7 +1568,11 @@ public class Parser implements ConfigurationParser {
                memoryBuilder.evictionType(EvictionType.valueOf(value));
                break;
             case ADDRESS_COUNT:
-               memoryBuilder.addressCount(Integer.parseInt(value));
+               if (reader.getSchema().since(10, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  ignoreAttribute(reader, attribute);
+               }
                break;
             case STRATEGY:
                memoryBuilder.evictionStrategy(EvictionStrategy.valueOf(value));

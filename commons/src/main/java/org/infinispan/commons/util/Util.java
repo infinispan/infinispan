@@ -895,7 +895,8 @@ public final class Util {
 
    /**
     * Returns a number such that the number is a power of two that is equal to, or greater than, the number passed in as
-    * an argument.  The smallest number returned will be 1, not 0.
+    * an argument.  The smallest number returned will be 1. Due to having to be a power of two, the highest int
+    * this can return is 2<sup>31 since int is signed.
     */
    public static int findNextHighestPowerOfTwo(int num) {
       if (num <= 1) {

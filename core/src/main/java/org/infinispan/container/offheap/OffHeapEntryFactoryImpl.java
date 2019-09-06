@@ -62,15 +62,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       this.evictionEnabled = configuration.memory().isEvictionEnabled();
    }
 
-   /**
-    * Create an entry off-heap.  The first 8 bytes will always be 0, reserved for a future reference to another entry
-    * @param key the key to use
-    * @param value the value to use
-    * @param metadata the metadata to use
-    * @return the address of the entry created off heap
-    */
    @Override
-   public long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
+   public long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata) {
       byte type;
       boolean shouldWriteMetadataSize = false;
       byte[] metadataBytes;
@@ -146,7 +139,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
       MEMORY.putByte(memoryAddress, offset, type);
       offset += 1;
-      MEMORY.putInt(memoryAddress, offset, key.hashCode());
+      MEMORY.putInt(memoryAddress, offset, hashCode);
       offset += 4;
       MEMORY.putInt(memoryAddress, offset, key.getLength());
       offset += 4;
@@ -362,21 +355,14 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
    }
 
-   /**
-    * Assumes the address points to the entry excluding the pointer reference at the beginning
-    * @param address the address of an entry to read
-    * @param wrappedBytes the key to check if it equals
-    * @return whether the key and address are equal
-    */
    @Override
-   public boolean equalsKey(long address, WrappedBytes wrappedBytes) {
+   public boolean equalsKey(long address, WrappedBytes wrappedBytes, int hashCode) {
       // 16 bytes for eviction if needed (optional)
       // 8 bytes for linked pointer
       int headerOffset = evictionEnabled ? 24 : 8;
       byte type = MEMORY.getByte(address, headerOffset);
       headerOffset++;
       // First if hashCode doesn't match then the key can't be equal
-      int hashCode = wrappedBytes.hashCode();
       if (hashCode != MEMORY.getInt(address, headerOffset)) {
          return false;
       }

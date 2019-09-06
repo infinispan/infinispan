@@ -9,8 +9,6 @@ import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.container.offheap.OffHeapDataContainer;
-import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.util.logging.Log;
@@ -143,7 +141,9 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * {@link MemoryConfigurationBuilder#storageType(StorageType)}.
     * @param addressCount
     * @return this
+    * @deprecated since 10.0
     */
+   @Deprecated
    public MemoryConfigurationBuilder addressCount(int addressCount) {
       memoryStorageConfigurationBuilder.addressCount(addressCount);
       return this;
@@ -153,7 +153,9 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * How many address pointers are configured for the off heap storage. See
     * {@link MemoryConfigurationBuilder#addressCount(int)} for more information.
     * @return the configured amount of address pointers
+    * @deprecated since 10.0
     */
+   @Deprecated
    public int addressCount() {
       return memoryStorageConfigurationBuilder.addressCount();
    }
@@ -173,14 +175,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
          switch (type) {
             case OBJECT:
                throw log.offHeapMemoryEvictionNotSupportedWithObject();
-            case OFF_HEAP:
-               int addressCount = memoryStorageConfigurationBuilder.addressCount();
-               // Note this is cast to long as we have to multiply by 8 below which could overflow
-               long actualAddressCount = OffHeapDataContainer.getActualAddressCount(addressCount << 3);
-               actualAddressCount = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(actualAddressCount);
-               if (size < actualAddressCount) {
-                  throw log.offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(size, actualAddressCount, addressCount);
-               }
          }
       }
 

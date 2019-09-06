@@ -1,7 +1,6 @@
 package org.infinispan.factories;
 
 
-import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -71,7 +70,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
       dataContainerFactory = spy(new DataContainerFactory());
       doReturn(mock(OffHeapConcurrentMap.class))
             .when(dataContainerFactory)
-            .createAndStartOffHeapConcurrentMap(anyInt(), anyInt());
+            .createAndStartOffHeapConcurrentMap();
 
       dataContainerFactory.globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()

@@ -201,7 +201,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             MemoryConfiguration mc = getConfiguration(holder, "off-heap-memory").memory();
             assertEquals(StorageType.OFF_HEAP, mc.storageType());
             assertEquals(10000000, mc.size());
-            assertEquals(4, mc.addressCount());
             assertEquals(EvictionType.MEMORY, mc.evictionType());
 
             mc = getConfiguration(holder, "binary-memory").memory();
@@ -242,7 +241,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             MemoryConfiguration mc = getConfiguration(holder, "off-heap-memory").memory();
             assertEquals(StorageType.OFF_HEAP, mc.storageType());
             assertEquals(10000000, mc.size());
-            assertEquals(4, mc.addressCount());
             assertEquals(EvictionType.MEMORY, mc.evictionType());
 
             mc = getConfiguration(holder, "binary-memory").memory();

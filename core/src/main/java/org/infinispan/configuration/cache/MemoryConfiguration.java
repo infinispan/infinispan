@@ -86,7 +86,9 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
    /**
     * The address pointer count
     * @return
+    * @deprecated since 10.0
     */
+   @Deprecated
    public int addressCount() {
       return memoryStorageConfiguration.addressCount();
    }

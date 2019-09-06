@@ -19,7 +19,19 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
     * @param metadata the metadata to use
     * @return the address of where the entry was created
     */
-   long create(WrappedBytes key, WrappedBytes value, Metadata metadata);
+   default long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
+      return create(key, key.hashCode(), value, metadata);
+   }
+
+   /**
+    * Creates an off heap entry using the provided key value and metadata
+    * @param key the key to use
+    * @param hashCode the hashCode of the key
+    * @param value the value to use
+    * @param metadata the metadata to use
+    * @return the address of where the entry was created
+    */
+   long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata);
 
    /**
     * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}.
@@ -72,7 +84,18 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
     * @param wrappedBytes the key to check equality with
     * @return whether or not the keys are equal
     */
-   boolean equalsKey(long address, WrappedBytes wrappedBytes);
+   default boolean equalsKey(long address, WrappedBytes wrappedBytes) {
+      return equalsKey(address, wrappedBytes, wrappedBytes.hashCode());
+   }
+
+   /**
+    * Returns whether the given key as bytes is the same key as the key stored in the entry for the given address.
+    * @param address the address of the entry's key to check
+    * @param wrappedBytes the key to check equality with
+    * @param hashCode the hashCode of the key
+    * @return whether or not the keys are equal
+    */
+   boolean equalsKey(long address, WrappedBytes wrappedBytes, int hashCode);
 
 
    /**

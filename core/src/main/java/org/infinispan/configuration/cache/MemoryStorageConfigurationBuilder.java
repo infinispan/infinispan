@@ -11,8 +11,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.container.offheap.OffHeapDataContainer;
-import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.util.logging.Log;
@@ -78,11 +76,13 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
       return attributes.attribute(EVICTION_STRATEGY).get();
    }
 
+   @Deprecated
    public MemoryStorageConfigurationBuilder addressCount(int addressCount) {
       attributes.attribute(ADDRESS_COUNT).set(addressCount);
       return this;
    }
 
+   @Deprecated
    public int addressCount() {
       return attributes.attribute(ADDRESS_COUNT).get();
    }
@@ -98,17 +98,8 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
       long size = attributes.attribute(SIZE).get();
       EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
       if (evictionType == EvictionType.MEMORY) {
-         switch (storageType) {
-            case OBJECT:
-               throw log.offHeapMemoryEvictionNotSupportedWithObject();
-            case OFF_HEAP:
-               int addressCount = attributes.attribute(ADDRESS_COUNT).get();
-               // Note this is cast to long as we have to multiply by 8 below which could overflow
-               long actualAddressCount = OffHeapDataContainer.getActualAddressCount(addressCount << 3);
-               actualAddressCount = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(actualAddressCount);
-               if (size < actualAddressCount) {
-                  throw log.offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(size, actualAddressCount, addressCount);
-               }
+         if (storageType == StorageType.OBJECT) {
+            throw log.offHeapMemoryEvictionNotSupportedWithObject();
          }
       }
 
