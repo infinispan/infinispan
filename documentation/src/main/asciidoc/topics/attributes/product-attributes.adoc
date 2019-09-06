@@ -8,9 +8,9 @@
 :productized:
 
 //Directory attributes
-:images_dir: images
 :stories: stories
 :topics: topics
+:images_dir: {topics}/images
 
 //
 //Pull in topic-specific attributes
