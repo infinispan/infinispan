@@ -134,7 +134,11 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       lockCount = Util.findNextHighestPowerOfTwo(ProcessorInfo.availableProcessors() << 1);
       memoryAddressCount = getActualAddressCount(desiredSize, lockCount);
       // Unfortunately desired size directly correlates to lock size
-      locks = new StripedLock(lockCount, new ContiguousOffsetCalculator(lockCount));
+      locks = new StripedLock(lockCount, offsetCalculatorWithNumberOfBlocks(lockCount));
+   }
+
+   private OffsetCalculator offsetCalculatorWithNumberOfBlocks(int numBlocks) {
+      return new ContiguousOffsetCalculator(numBlocks);
    }
 
    private void checkDeallocation() {
@@ -159,7 +163,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    public void start() {
       locks.lockAll();
       try {
-         memoryLookup = new MemoryAddressHash(memoryAddressCount, new ContiguousOffsetCalculator(memoryAddressCount),
+         memoryLookup = new MemoryAddressHash(memoryAddressCount, offsetCalculatorWithNumberOfBlocks(memoryAddressCount),
                allocator);
          dellocated = false;
       } finally {
@@ -668,8 +672,11 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    }
 
    private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStreamIncludingExpired() {
+      if (size.get() == 0) {
+         return Stream.empty();
+      }
       int blockSize = memoryAddressCount / lockCount;
-      // We only create a stream at a time with this many address lookups - this should be low enough to not cause OOM,
+      // We only create a stream at a time with this many buckets - this should be low enough to not cause OOM,
       // but higher as to not cause additional GC pressure from extra streams created
       int blockBatchSize = 256;
       // If we have less than the block size don't do batching and instead just lock entire memory regions at a time
@@ -681,24 +688,27 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
                   lock.lock();
                   try {
                      checkDeallocation();
-                     Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = Stream.builder();
+                     Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = null;
                      for (int offset = 0; offset < blockSize; ++offset) {
                         long address = memoryLookup.getMemoryAddressOffsetNoTraceIfAbsent(blockSize * lockNum + offset);
                         if (address != 0) {
                            long nextAddress;
                            do {
                               nextAddress = offHeapEntryFactory.getNext(address);
+                              if (builder == null) {
+                                 builder = Stream.builder();
+                              }
                               builder.accept(offHeapEntryFactory.fromMemory(address));
                            } while ((address = nextAddress) != 0);
                         }
                      }
-                     return builder.build();
+                     return builder != null ? builder.build() : Stream.<InternalCacheEntry<WrappedBytes, WrappedBytes>>empty();
                   } finally {
                      lock.unlock();
                   }
                }).flatMap(Function.identity());
       } else {
-         // This branch creates a stream lazily per blockBatchSize worth of address counters - this is useful
+         // This branch creates a stream lazily per blockBatchSize worth of buckets - this is useful
          // when address regions is significantly larger than the number of locks in the system
 
          // The blockSize has to be divisible by the batchSize - this should be guaranteed since memoryAddressCount and
@@ -715,18 +725,21 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
                   lock.lock();
                   try {
                      checkDeallocation();
-                     Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = Stream.builder();
+                     Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = null;
                      for (int offset = 0; offset < blockBatchSize; ++offset) {
                         long address = memoryLookup.getMemoryAddressOffsetNoTraceIfAbsent(blockBatchNum * blockBatchSize + offset);
                         if (address != 0) {
                            long nextAddress;
                            do {
                               nextAddress = offHeapEntryFactory.getNext(address);
+                              if (builder == null) {
+                                 builder = Stream.builder();
+                              }
                               builder.accept(offHeapEntryFactory.fromMemory(address));
                            } while ((address = nextAddress) != 0);
                         }
                      }
-                     return builder.build();
+                     return builder != null ? builder.build() : Stream.<InternalCacheEntry<WrappedBytes, WrappedBytes>>empty();
                   } finally {
                      lock.unlock();
                   }

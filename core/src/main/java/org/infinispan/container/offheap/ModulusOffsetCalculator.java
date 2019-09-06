@@ -11,21 +11,21 @@ class ModulusOffsetCalculator implements OffsetCalculator {
    // usable bits of normal node hash (only allow positive numbers)
    private static final int HASH_BITS = 0x7fffffff;
 
-   private final int offsetModulus;
+   private final int blocksMinusOne;
 
    public ModulusOffsetCalculator(int numBlocks) {
+      int blocksMinusOne = numBlocks - 1;
       // We need a positive offset count
       // And it has to be a power of 2
-      if (numBlocks <= 0 && (numBlocks & (numBlocks - 1)) == 0) {
+      if (numBlocks <= 0 || (numBlocks & blocksMinusOne) != 0) {
          throw new IllegalArgumentException("maxOffset " + numBlocks + " must be greater than 0 and a power of 2");
       }
-      // Max capacity is negative (unsigned 2^32)
-      this.offsetModulus = numBlocks;
+      this.blocksMinusOne = blocksMinusOne;
    }
 
    @Override
    public int calculateOffsetUsingHashCode(int hashCode) {
-      return spread(hashCode) % offsetModulus;
+      return spread(hashCode) & blocksMinusOne;
    }
 
    private static int spread(int h) {

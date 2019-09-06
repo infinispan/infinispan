@@ -1,8 +1,5 @@
 package org.infinispan.container.offheap;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
-
 /**
  * OffsetCalculator that provides an offset where it is calculated by dividing the positive int values into contiguous
  * blocks. As an example if the int hash spectrum was 8 and the numBlocks provided was 2, then the blocks would contain
@@ -11,16 +8,10 @@ import org.infinispan.commons.hash.MurmurHash3;
  * @since 9.4
  */
 class ContiguousOffsetCalculator implements OffsetCalculator {
-   // This is the max capacity when unsigned (thus any number must be this less 1)
-   private static final int MAXIMUM_CAPACITY = 1 << 31;
    // usable bits of normal node hash (only allow positive numbers)
    private static final int HASH_BITS = 0x7fffffff;
 
-   private final int offsetDivisor;
-
-   // We use murmur hash as simple spread doesn't work well with contiguous blocks (similar hash codes end up in the
-   // same block otherwise)
-   private final static Hash hash = MurmurHash3.getInstance();
+   private final int offsetShift;
 
    /**
     * Creates a new contiguous offset calculator using the provided offset segment the entire positive int spectrum
@@ -30,20 +21,24 @@ class ContiguousOffsetCalculator implements OffsetCalculator {
    ContiguousOffsetCalculator(int numBlocks) {
       // We need a positive offset count
       // And it has to be a power of 2
-      if (numBlocks <= 0 && (numBlocks & (numBlocks - 1)) == 0) {
-         throw new IllegalArgumentException("maxOffset " + numBlocks + " must be greater than 0 and a power of 2");
+      if (numBlocks <= 0 || (numBlocks & (numBlocks - 1)) != 0) {
+         throw new IllegalArgumentException("numBlocks " + numBlocks + " must be greater than 0 and a power of 2");
       }
-      // Max capacity is negative (unsigned 2^32)
-      offsetDivisor = MAXIMUM_CAPACITY >>> Integer.numberOfTrailingZeros(numBlocks);
+      // Max capacity is 2^31 (thus find the bit position that would be like dividing evenly into that)
+      offsetShift = 31 - Integer.numberOfTrailingZeros(numBlocks);
    }
 
    @Override
    public int calculateOffsetUsingHashCode(int hashCode) {
-      return spread(hashCode) / offsetDivisor;
+      // Since divisor is power of 2, we can just right shift
+      return spread(hashCode) >>> offsetShift;
    }
 
    private static int spread(int h) {
-      // Spread using murmur hash then ensure it is positive before finding block to use
-      return hash.hash(h) & HASH_BITS;
+      // Spread using fibonacci hash (using golden ratio)
+      // This number is ((2^31 -1) / 1.61803398875) - then rounded to nearest odd number
+      // We want something that will prevent hashCodes that are near each other being in the same bucket but still fast
+      // We then force the number to be positive by throwing out the first bit
+      return (h * 1327217885) & HASH_BITS;
    }
 }
