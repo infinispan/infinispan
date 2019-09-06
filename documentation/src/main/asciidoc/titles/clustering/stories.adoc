@@ -1,5 +1,0 @@
-//Reference user stories or topics.
-//Please review authoring guidelines in the Contributors Guide.
-
-include::{stories}/assembly_jgroups_transport.adoc[leveloffset=+1]
-include::{stories}/assembly_cloud_discovery.adoc[leveloffset=+1]

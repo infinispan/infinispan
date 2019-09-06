@@ -1,0 +1,9 @@
+[id='partition_handling-{context}']
+:context: network
+= Setting Up Partition Handling
+
+include::{topics}/con_partition_handling.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

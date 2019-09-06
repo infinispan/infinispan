@@ -12,8 +12,6 @@ dealing with either an `EmbeddedCacheManager` or a `RemoteCacheManager`. While t
 be aware that there are semantic differences between them. The following chapters focus mostly on the _embedded_
 implementation.
 
-//old_link: For details on the _remote_ implementation refer to link:#hotrod_java_client[Hot Rod Java Client].
-
 CacheManagers are heavyweight objects, and we foresee no more than one CacheManager being used per JVM
 (unless specific setups require more than one; but either way, this would be a minimal and finite
 number of instances).
