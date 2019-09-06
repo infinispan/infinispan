@@ -1,5 +1,5 @@
-[[simple_cache]]
-= Simple Cache
+[id='simple_cache-{context}']
+= Simple Caches
 
 Traditional local caches use the same architecture as clustered caches, i.e. they use the interceptor stack.
 That way a lot of the implementation can be reused. However, if the advanced features
@@ -30,15 +30,15 @@ So, what's left?
 * JMX access
 * statistics (though for max performance it is recommended to switch this off using statistics-available=false)
 
-== Declarative configuration
-
+Declarative configuration::
++
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::config_examples/simple_cache.xml[]
 ----
 
-== Programmatic configuration
-
+Programmatic configuration::
++
 [source,java]
 ----
 CacheManager cm = getCacheManager();
@@ -47,5 +47,5 @@ cm.defineConfiguration("mySimpleCache", builder.build());
 Cache cache = cm.getCache("mySimpleCache");
 ----
 
-Simple cache checks against features it does not support, if you configure it to use e.g. transactions,
-configuration validation will throw an exception.
+Simple cache checks against features it does not support, if you configure it
+to use e.g. transactions, configuration validation will throw an exception.

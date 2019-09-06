@@ -1,0 +1,39 @@
+[id='replicated-{context}']
+= Replicated Caches
+Entries written to a replicated cache on any node will be replicated to all other nodes
+in the cluster, and can be retrieved locally from any node.
+Replicated mode provides a quick and easy way to share state across a cluster,
+however replication practically only performs well in small clusters (under 10 nodes),
+due to the number of messages needed for a write scaling linearly with the cluster size.
+{brandname} can be configured to use UDP multicast, which mitigates this problem to some
+degree.
+
+Each key has a primary owner, which serializes data container updates in order to
+provide consistency.
+To find more about how primary owners are assigned, please read the
+link:#key_ownership[Key Ownership] section.
+
+.Replicated mode
+image::{images_dir}/clustering-replicated.svg[align="center", title="Replicated mode"]
+
+Replicated mode can be synchronous or asynchronous.
+
+* Synchronous replication blocks the caller (e.g. on a `cache.put(key, value)`) until
+the modifications have been replicated successfully to all the nodes in the cluster.
+* Asynchronous replication performs replication in the background, and write operations
+return immediately.
+Asynchronous replication is not recommended, because communication errors, or errors
+that happen on remote nodes are not reported to the caller.
+
+If transactions are enabled, write operations are not replicated through the primary
+owner.
+
+* With pessimistic locking, each write triggers a lock message, which is
+broadcast to all the nodes.
+During transaction commit, the originator broadcasts a one-phase prepare message and an
+unlock message (optional).
+Either the one-phase prepare or the unlock message is fire-and-forget.
+
+* With optimistic locking, the originator broadcasts a prepare message, a commit message,
+and an unlock message (optional).
+Again, either the one-phase prepare or the unlock message is fire-and-forget.

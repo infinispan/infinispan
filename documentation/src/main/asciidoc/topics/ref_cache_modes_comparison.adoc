@@ -1,0 +1,94 @@
+[id='cache_mode_comparison-{context}']
+= Cache Mode Comparison
+The cache mode that you should choose depends on the qualities and guarantees you need for your data.
+
+The following table summarizes the primary differences between cache modes:
+
+//Community
+ifndef::productized[]
+[cols="20,^15,^15,^15,^15,^15,^15",options="header"]
+|============================================================
+|                  | Simple      | Local       | Invalidation | Replicated | Distributed | Scattered
+| Clustered        | [red]*No*    | [red]*No*    | [green]*Yes*   | [green]*Yes* | [green]*Yes* | [green]*Yes*
+| Read performance | [green]*Highest* +
+(local) | [green]*High* +
+(local) | [green]*High* +
+(local) | [green]*High* +
+(local) | [yellow]*Medium* +
+(owners) | [yellow]*Medium* +
+(primary)
+| Write performance| [green]*Highest* +
+(local) | [green]*High* +
+(local) | [red]*Low* +
+(all nodes, no data)| [red]*Lowest* +
+(all nodes)| [yellow]*Medium* +
+(owner nodes) | [yellow]*Higher* +
+(single RPC)
+| Capacity         | [red]*Single node*| [red]*Single node*| [red]*Single node*| [red]*Smallest node*| [green]*Cluster* +
+stem:[(sum_(i=1)^"nodes""node_capacity")/"owners"] | [green]*Cluster* +
+stem:[(sum_(i=1)^"nodes""node_capacity")/"2"]
+| Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes* | [yellow]*Owner nodes*
+| Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* | [yellow]*No TX*
+|============================================================
+endif::productized[]
+
+//Product
+ifdef::productized[]
+[cols="20,^15,^15,^15,^15,^15,^15",options="header"]
+|===
+
+| Cache mode
+| Clustered?
+| Read performance
+| Write performance
+| Capacity
+| Availability
+| Capabilities
+
+| Local
+| _No_
+| *High* (local)
+| *High* (local)
+| _Single node_
+| _Single node_
+| *Complete*
+
+| Simple
+| _No_
+| *Highest* (local)
+| *Highest* (local)
+| _Single node_
+| _Single node_
+| _Partial:_ no transactions, persistence, or indexing.
+
+| Invalidation
+| *Yes*
+| *High* (local)
+| _Low_ (all nodes, no data)
+| _Single node_
+| _Single node_
+| *Complete*
+
+| Replicated
+| *Yes*
+| *High* (local)
+| _Lowest_ (all nodes)
+| _Smallest node_
+| *All nodes*
+| *Complete*
+
+| Distributed
+| *Yes*
+| _Medium_ (owners)
+| _Medium_ (owner nodes)
+| Cluster capacity^1^
+| _Owner nodes_
+| *Complete*
+
+|===
+
+^1^ Cluster capacity::
+Calculate cluster capacity for distributed caches as follows:
++
+image::{images}/node_capacity_owners.png[]
+endif::productized[]
