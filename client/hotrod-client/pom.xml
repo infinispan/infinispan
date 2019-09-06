@@ -603,7 +603,8 @@
             <artifactId>karaf-maven-plugin</artifactId>
             <configuration>
                <features>
-                  <feature>infinispan-client-hotrod,infinispan-client-hotrod-with-query,hotrod-client,hotrod-client-with-query</feature>
+                  <feature>infinispan-client-hotrod</feature>
+                  <feature>infinispan-client-hotrod-with-query</feature>
                </features>
             </configuration>
          </plugin>
