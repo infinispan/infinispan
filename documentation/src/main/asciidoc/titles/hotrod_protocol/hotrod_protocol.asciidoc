@@ -2,6 +2,7 @@
 :images_dir: images
 :stories: ../../stories
 :topics: ../../topics
+:images_dir: {topics}/images
 
 //Community doc attributes
 include::{topics}/attributes/community-attributes.adoc[]
