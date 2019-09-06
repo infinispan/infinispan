@@ -4,24 +4,45 @@ Written and maintained by the {brandname} community
 
 Get answers and find help in the {brandname} {infinispanversion} titles:
 
+Getting Started::
++
 * link:titles/overview/overview.html[Technical Overview]
 * link:titles/getting_started/getting_started.html[Get Up and Running with Infinispan]
+
+Configuring Infinispan::
++
 * link:titles/configuring/configuring.html[Configuring Infinispan]
-* link:titles/developing/developing.html[Developing with Infinispan]
-* link:titles/embedding/embedding.html[Embedding Infinispan]
-* link:titles/server/server.html[Running Infinispan Servers]
-* link:titles/clustering/clustering.html[Creating Infinispan Clusters]
-* link:titles/monitoring/monitoring.html[Administration and Monitoring]
-* link:titles/managing/managing.html[Managing Data]
-* link:titles/querying/querying.html[Indexing and Querying]
-* link:titles/tuning/tuning.html[Performance Tuning]
-* link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
-* link:titles/security/security.html[Security Guide]
+* link:titles/managing/managing.html[Managing Data in the Grid]
 * link:titles/extending/extending.html[Extending Infinispan]
-* link:titles/integrating/integrating.html[Integrating with Infinispan]
+
+Developing::
++
+* link:titles/embedding/embedding.html[Embedding Infinispan]
+* link:titles/developing/developing.html[Programming with Infinispan]
+* link:titles/integrating/integrating.html[Integrating Infinispan]
+* link:titles/querying/querying.html[Indexing and Querying]
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
 
-See the link:http://www.infinispan.org/documentation[Documentation] home for other versions.
+Running Infinispan::
++
+* link:titles/server/server.html[Running Infinispan Servers]
+* link:titles/clustering/clustering.html[Creating Infinispan Clusters]
+* link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
+* link:titles/security/security.html[Security Guide]
+
+Using Remote Infinispan Endpoints::
++
+* link:titles/connecting_clients/connecting_clients.html[Connecting to Infinispan Server with Remote Clients]
+* link:titles/hotrod_java/hotrod_java.html[Using the Hot Rod Endpoint]
+* link:titles/rest/rest.html[Using the REST Endpoint]
+* link:titles/memcached/memcached.html[Using the Memcached Endpoint]
+
+Monitoring::
++
+* link:titles/monitoring/monitoring.html[Administration and Monitoring]
+* link:titles/tuning/tuning.html[Performance Tuning]
+
+See link:http://www.infinispan.org/documentation[Infinispan Documentation] home for other versions.
 
 Come and join the link:http://www.infinispan.org/community[Infinispan community] to submit feedback or ask questions.
 

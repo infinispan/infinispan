@@ -15,7 +15,7 @@ include::{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Configuring REST Clients for {brandname} {infinispanversion}
+= Using the {brandname} Memcached Endpoint
 
 //User stories
 include::stories.adoc[]
