@@ -13,7 +13,6 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -24,6 +23,7 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -65,6 +65,7 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -426,13 +427,13 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       AttributeSet attributes = serialization.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.SERIALIZATION);
-         attributes.write(writer, SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZER, Attribute.SERIALIZATION_CONTEXT_INITIALIZER);
          attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER_CLASS);
          if (attributes.attribute(SerializationConfiguration.VERSION).isModified()) {
             writer.writeAttribute(Attribute.VERSION, Version.decodeVersion(serialization.version()));
          }
          SerializationConfiguration config = globalConfiguration.serialization();
          writeAdvancedSerializers(writer, config);
+         writeSerializationContextInitializers(writer,config);
          writeClassWhiteList(writer, config.whiteList());
          writer.writeEndElement();
       }
@@ -445,6 +446,17 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeAttribute(Attribute.ID, Integer.toString(externalizer.getKey()));
          writer.writeAttribute(Attribute.CLASS, externalizer.getValue().getClass().getName());
          writer.writeEndElement();
+      }
+   }
+
+   private void writeSerializationContextInitializers(XMLExtendedStreamWriter writer, SerializationConfiguration config) throws XMLStreamException {
+      Collection<SerializationContextInitializer> scis = config.contextInitializers();
+      if (scis != null) {
+         for (SerializationContextInitializer sci : config.contextInitializers()) {
+            writer.writeStartElement(Element.SERIALIZATION_CONTEXT_INITIALIZER);
+            writer.writeAttribute(Attribute.CLASS, sci.getClass().getName());
+            writer.writeEndElement();
+         }
       }
    }
 

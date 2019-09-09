@@ -1,5 +1,6 @@
 package org.infinispan.configuration.global;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,20 +38,20 @@ public class SerializationConfiguration implements ConfigurationInfo {
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashMap::new).immutable().build();
 
-   public static final AttributeDefinition<SerializationContextInitializer> SERIALIZATION_CONTEXT_INITIALIZER =
-         AttributeDefinition.builder("contextInitializer", null, SerializationContextInitializer.class).immutable().build();
+   public static final AttributeDefinition<Collection<SerializationContextInitializer>> SERIALIZATION_CONTEXT_INITIALIZERS =
+         AttributeDefinition.builder("contextInitializers", null, (Class<Collection<SerializationContextInitializer>>) (Class<?>) Collection.class).immutable().build();
 
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERIALIZATION.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SerializationConfiguration.class, MARSHALLER, VERSION, CLASS_RESOLVER, ADVANCED_EXTERNALIZERS, SERIALIZATION_CONTEXT_INITIALIZER);
+      return new AttributeSet(SerializationConfiguration.class, MARSHALLER, VERSION, CLASS_RESOLVER, ADVANCED_EXTERNALIZERS, SERIALIZATION_CONTEXT_INITIALIZERS);
    }
 
    private final Attribute<Map<Integer, AdvancedExternalizer<?>>> advancedExternalizers;
    private final Attribute<Object> classResolver;
    private final Attribute<Marshaller> marshaller;
    private final Attribute<Short> version;
-   private final Attribute<SerializationContextInitializer> contextInitializer;
+   private final Attribute<Collection<SerializationContextInitializer>> contextInitializers;
    private final AttributeSet attributes;
    private final WhiteListConfiguration whiteListConfig;
    private final List<ConfigurationInfo> subElements;
@@ -61,7 +62,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
       this.version = attributes.attribute(VERSION);
       this.classResolver = attributes.attribute(CLASS_RESOLVER);
       this.advancedExternalizers = attributes.attribute(ADVANCED_EXTERNALIZERS);
-      this.contextInitializer = attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZER);
+      this.contextInitializers = attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS);
       this.whiteListConfig = whiteListConfig;
       this.subElements = Collections.singletonList(whiteListConfig);
    }
@@ -93,8 +94,8 @@ public class SerializationConfiguration implements ConfigurationInfo {
       return classResolver.get();
    }
 
-   public SerializationContextInitializer contextInitializer() {
-      return contextInitializer.get();
+   public Collection<SerializationContextInitializer> contextInitializers() {
+      return contextInitializers.get();
    }
 
    @Override

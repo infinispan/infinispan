@@ -1,5 +1,7 @@
 package org.infinispan.marshall;
 
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -26,14 +28,23 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.serialization().contextInitializer(new UserSCIImpl());
+      globalBuilder.serialization().addContextInitializers(new UserSCIImpl(), new AnotherUserSCIImpl());
       createCluster(globalBuilder, new ConfigurationBuilder(), 2);
    }
 
    public void testProtostreamMarshallerLoaded() {
       PersistenceMarshallerImpl pm = (PersistenceMarshallerImpl) TestingUtil.extractPersistenceMarshaller(manager(0));
-      assertTrue(pm.isMarshallable(new ExampleUserPojo("Blah")));
-      cache(0).put(1, new ExampleUserPojo("Blah"));
+      testIsMarshallableAndPut(pm, new ExampleUserPojo("A Pojo!"), new AnotherExampleUserPojo("And another one!"));
+      assertNull(pm.getUserMarshaller());
+   }
+
+   private void testIsMarshallableAndPut(PersistenceMarshallerImpl pm, Object... pojos) {
+      for (Object o : pojos) {
+         assertTrue(pm.isMarshallable(o));
+         String key = o.getClass().getSimpleName();
+         cache(0).put(key, o);
+         assertNotNull(cache(0).get(key));
+      }
    }
 
    static class ExampleUserPojo {
@@ -47,11 +58,30 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       }
    }
 
+   static class AnotherExampleUserPojo {
+
+      @ProtoField(number = 1)
+      final String anotherString;
+
+      @ProtoFactory
+      AnotherExampleUserPojo(String anotherString) {
+         this.anotherString = anotherString;
+      }
+   }
+
    @AutoProtoSchemaBuilder(
          includeClasses = ExampleUserPojo.class,
          schemaFileName = "test.core.protostream-user-marshall.proto",
          schemaFilePath = "proto/generated",
          schemaPackageName = "org.infinispan.test.marshall")
    interface UserSCI extends SerializationContextInitializer {
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = AnotherExampleUserPojo.class,
+         schemaFileName = "test.core.protostream-another-user-marshall.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.marshall")
+   interface AnotherUserSCI extends SerializationContextInitializer {
    }
 }
