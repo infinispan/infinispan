@@ -151,7 +151,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
    private final ClassWhiteList classWhiteList;
-   private CacheManagerInfo cacheManagerInfo;
+   private final CacheManagerInfo cacheManagerInfo;
 
    // Keep the transport around so async view listeners can still see the address after stop
    private volatile Transport transport;

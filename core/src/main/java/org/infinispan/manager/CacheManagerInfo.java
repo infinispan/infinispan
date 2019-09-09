@@ -22,7 +22,7 @@ public class CacheManagerInfo {
    public static final List<String> LOCAL_NODE = Collections.singletonList("local");
    private final DefaultCacheManager cacheManager;
    private final ConfigurationManager configurationManager;
-   private InternalCacheRegistry internalCacheRegistry;
+   private final InternalCacheRegistry internalCacheRegistry;
 
    public CacheManagerInfo(DefaultCacheManager cacheManager,
                            ConfigurationManager configurationManager, InternalCacheRegistry internalCacheRegistry) {
@@ -44,7 +44,6 @@ public class CacheManagerInfo {
    public String getCacheManagerStatus() {
       return cacheManager.getStatus().toString();
    }
-
 
    public Set<BasicCacheInfo> getDefinedCaches() {
       return cacheManager.getCacheNames().stream().map(c -> {
@@ -131,23 +130,4 @@ public class CacheManagerInfo {
          return started;
       }
    }
-
-   static class ClusterMember {
-      String name;
-      String address;
-
-      public ClusterMember(String name, String address) {
-         this.name = name;
-         this.address = address;
-      }
-
-      public String getName() {
-         return name;
-      }
-
-      public String getAddress() {
-         return address;
-      }
-   }
-
 }

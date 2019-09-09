@@ -1,15 +1,11 @@
 package org.infinispan.health.jmx;
 
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-
 /**
  * A Contract for exposing Health API over the JMX.
  *
  * @author Sebastian Łaskawiec
  * @since 9.0
  */
-@Scope(Scopes.GLOBAL)
 public interface HealthJMXExposer {
 
     /**

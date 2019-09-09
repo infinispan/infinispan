@@ -8,7 +8,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 
-class SecurityActions {
+final class SecurityActions {
 
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
@@ -22,5 +22,4 @@ class SecurityActions {
       GetCacheDistributionManagerAction action = new GetCacheDistributionManagerAction(cache.getAdvancedCache());
       return doPrivileged(action);
    }
-
 }
