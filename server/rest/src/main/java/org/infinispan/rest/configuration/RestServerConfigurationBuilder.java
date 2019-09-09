@@ -5,7 +5,9 @@ import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_
 import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
 import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.rest.logging.Log;
@@ -25,12 +27,13 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       Builder<RestServerConfiguration> {
 
    final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+   public static final int CROSS_ORIGIN_PORT = 80;
+   public static final int CROSS_ORIGIN_ALT_PORT = 9000;
 
    private final AuthenticationConfigurationBuilder authentication;
    private final CorsConfigurationBuilder cors;
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
-   public static final String DEFAULT_CONTEXT_PATH = "rest";
    public static final int DEFAULT_PORT = 8080;
    public static final String DEFAULT_NAME = "rest";
 
@@ -61,8 +64,8 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
-   public RestServerConfigurationBuilder corsAllowForLocalhost(String scheme, int port) {
-      cors.corsAllowForLocalhost(scheme, port);
+   public RestServerConfigurationBuilder corsAllowForLocalhost(Set<String> schemes, int... ports) {
+      cors.corsAllowForLocalhost(schemes, ports);
       return this;
    }
 
@@ -95,6 +98,10 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
+      Set<String> schemes = new HashSet<>();
+      schemes.add("http");
+      schemes.add("https");
+      corsAllowForLocalhost(schemes, DEFAULT_PORT, CROSS_ORIGIN_PORT, CROSS_ORIGIN_ALT_PORT);
       return new RestServerConfiguration(attributes.protect(), ssl.create(), authentication.create(), cors.create(), encryption.create());
    }
 

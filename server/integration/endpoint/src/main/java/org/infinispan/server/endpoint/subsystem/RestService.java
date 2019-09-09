@@ -18,6 +18,7 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import static java.util.Collections.singleton;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
@@ -113,13 +114,11 @@ public class RestService implements Service<RestServer>, EncryptableService {
 
          SocketBinding mgmtPlain = getSocketBindingManagementPlain().getOptionalValue();
          if (mgmtPlain != null) {
-            builder.corsAllowForLocalhost("http", mgmtPlain.getAbsolutePort());
-            builder.corsAllowForLocalhost("http", CROSS_ORIGIN_CONSOLE_PORT);
+            builder.corsAllowForLocalhost(singleton("http"), mgmtPlain.getAbsolutePort(), CROSS_ORIGIN_CONSOLE_PORT);
          }
          SocketBinding mgmtSecured = getSocketBindingManagementSecured().getOptionalValue();
          if (mgmtSecured != null) {
-            builder.corsAllowForLocalhost("https", mgmtSecured.getAbsolutePort());
-            builder.corsAllowForLocalhost("https", CROSS_ORIGIN_CONSOLE_PORT);
+            builder.corsAllowForLocalhost(singleton("https"), mgmtSecured.getAbsolutePort(), CROSS_ORIGIN_CONSOLE_PORT);
          }
          builder.addAll(corsConfigList);
 
