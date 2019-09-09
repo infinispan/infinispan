@@ -30,6 +30,11 @@ public class RestServerHelper {
       return defaultRestServer(new ConfigurationBuilder(), cachesDefined);
    }
 
+   public RestServerHelper withConfiguration(RestServerConfiguration configuration) {
+      restServerConfigurationBuilder.read(configuration);
+      return this;
+   }
+
    public static RestServerHelper defaultRestServer(ConfigurationBuilder configuration, String... cachesDefined) {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(configuration);
       cacheManager.getClassWhiteList().addClasses(TestClass.class);

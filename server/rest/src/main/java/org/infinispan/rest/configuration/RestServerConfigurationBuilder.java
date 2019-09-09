@@ -108,7 +108,10 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    @Override
    public Builder<?> read(RestServerConfiguration template) {
       super.read(template);
-      //TODO:[gustavo] read other attributes
+      this.attributes.read(template.attributes());
+      this.authentication.read(template.authentication());
+      this.cors.read(template.cors());
+      this.encryption.read(template.encryption());
       return this;
    }
 

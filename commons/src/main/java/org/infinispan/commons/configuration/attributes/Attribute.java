@@ -1,6 +1,7 @@
 package org.infinispan.commons.configuration.attributes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -166,7 +167,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       int result = 1;
       result = prime * result + ((definition == null) ? 0 : definition.hashCode());
       result = prime * result + (modified ? 1231 : 1237);
-      result = prime * result + ((value == null) ? 0 : value.hashCode());
+      result = prime * result + ((value == null) ? 0 : value.getClass().isArray() ? Arrays.deepHashCode((Object[]) value) : value.hashCode());
       return result;
    }
 
@@ -185,11 +186,8 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
       } else if (!definition.equals(other.definition))
          return false;
       if (value == null) {
-         if (other.value != null)
-            return false;
-      } else if (!value.equals(other.value))
-         return false;
-      return true;
+         return other.value == null;
+      } else return Objects.deepEquals(value, other.value);
    }
 
    /**
@@ -207,7 +205,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
          return false;
       if (this.definition.isGlobal()) {
          if (Matchable.class.isAssignableFrom(this.definition.getType())) {
-            return ((Matchable)value).matches(other.value);
+            return ((Matchable) value).matches(other.value);
          } else {
             return Objects.equals(value, other.value);
          }
@@ -234,7 +232,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
          if (klass == Class.class) {
             writer.writeAttribute(name, ((Class) value).getName());
          } else if (klass.isEnum()) {
-            writer.writeAttribute(name, ((Enum) value).toString());
+            writer.writeAttribute(name, value.toString());
          } else if (Util.isBasicType(klass)) {
             writer.writeAttribute(name, value.toString());
          } else {
