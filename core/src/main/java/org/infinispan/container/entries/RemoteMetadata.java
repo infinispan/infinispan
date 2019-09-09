@@ -7,11 +7,16 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * This is a metadata type used by scattered cache during state transfer. The address points to node which has last
@@ -21,24 +26,22 @@ import org.infinispan.remoting.transport.Address;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_METADATA)
 public class RemoteMetadata implements Metadata {
-   private final Address address;
-   private final int topologyId;
-   private final long version;
+   private final JGroupsAddress address;
+   private final SimpleClusteredVersion version;
 
    public RemoteMetadata(Address address, EntryVersion version) {
-      this.address = address;
-      SimpleClusteredVersion scv = (SimpleClusteredVersion) version;
-      this.topologyId = scv.getTopologyId();
-      this.version = scv.getVersion();
+      this((JGroupsAddress) address, (SimpleClusteredVersion) version);
    }
 
-   private RemoteMetadata(Address address, int topologyId, long version) {
+   @ProtoFactory
+   RemoteMetadata(JGroupsAddress address, SimpleClusteredVersion version) {
       this.address = address;
-      this.topologyId = topologyId;
       this.version = version;
    }
 
+   @ProtoField(number = 1, javaType = JGroupsAddress.class)
    public Address getAddress() {
       return address;
    }
@@ -54,8 +57,9 @@ public class RemoteMetadata implements Metadata {
    }
 
    @Override
+   @ProtoField(number = 2, javaType = SimpleClusteredVersion.class)
    public EntryVersion version() {
-      return new SimpleClusteredVersion(topologyId, version);
+      return version;
    }
 
    @Override
@@ -86,16 +90,16 @@ public class RemoteMetadata implements Metadata {
       @Override
       public void writeObject(ObjectOutput output, RemoteMetadata entry) throws IOException {
          output.writeObject(entry.getAddress());
-         output.writeInt(entry.topologyId);
-         output.writeLong(entry.version);
+         output.writeInt(entry.version.getTopologyId());
+         output.writeLong(entry.version.getVersion());
       }
 
       @Override
       public RemoteMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Address address = (Address) input.readObject();
+         JGroupsAddress address = (JGroupsAddress) input.readObject();
          int topologyId = input.readInt();
          long version = input.readLong();
-         return new RemoteMetadata(address, topologyId, version);
+         return new RemoteMetadata(address, new SimpleClusteredVersion(topologyId, version));
       }
    }
 }
