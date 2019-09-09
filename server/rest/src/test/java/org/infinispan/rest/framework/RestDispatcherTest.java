@@ -28,12 +28,13 @@ import org.testng.annotations.Test;
 public class RestDispatcherTest {
 
    @Test
-   public void testDispatch() throws Exception {
+   public void testDispatch() {
       ResourceManagerImpl manager = new ResourceManagerImpl("ctx");
       manager.registerResource(new RootResource());
       manager.registerResource(new CounterResource());
       manager.registerResource(new MemoryResource());
       manager.registerResource(new EchoResource());
+      manager.registerResource(new FileResource());
 
       RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager);
 
@@ -58,15 +59,15 @@ public class RestDispatcherTest {
 
       restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/jvm/memory").build();
       response = restDispatcher.dispatch(restRequest);
-      assertTrue(Long.valueOf(join(response).getEntity().toString()) > 0);
+      assertTrue(Long.parseLong(join(response).getEntity().toString()) > 0);
 
       restRequest = new SimpleRequest.Builder().setMethod(HEAD).setPath("/ctx/jvm/memory").build();
       response = restDispatcher.dispatch(restRequest);
-      assertTrue(Long.valueOf(join(response).getEntity().toString()) > 0);
+      assertTrue(Long.parseLong(join(response).getEntity().toString()) > 0);
 
       restRequest = new SimpleRequest.Builder().setMethod(HEAD).setPath("/ctx/v2/java-memory").build();
       response = restDispatcher.dispatch(restRequest);
-      assertTrue(Long.valueOf(join(response).getEntity().toString()) > 0);
+      assertTrue(Long.parseLong(join(response).getEntity().toString()) > 0);
 
       restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/var1/var2").build();
       response = restDispatcher.dispatch(restRequest);
@@ -78,6 +79,22 @@ public class RestDispatcherTest {
 
       restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/var1/var2/var3?action=invalid").build();
       assertNoResource(restDispatcher, restRequest);
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/web/").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("/ctx/web/index.html", join(response).getEntity().toString());
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/web/file.txt").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("/ctx/web/file.txt", join(response).getEntity().toString());
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/web/dir/file.txt").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("/ctx/web/dir/file.txt", join(response).getEntity().toString());
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/web/dir1/dir2/file.txt").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("/ctx/web/dir1/dir2/file.txt", join(response).getEntity().toString());
    }
 
    private void assertNoResource(RestDispatcher dispatcher, RestRequest restRequest) {
@@ -164,7 +181,7 @@ public class RestDispatcherTest {
 
    }
 
-   class MemoryResource implements ResourceHandler {
+   static class MemoryResource implements ResourceHandler {
 
       @Override
       public Invocations getInvocations() {
@@ -178,7 +195,7 @@ public class RestDispatcherTest {
       }
    }
 
-   class RootResource implements ResourceHandler {
+   static class RootResource implements ResourceHandler {
 
       @Override
       public Invocations getInvocations() {
@@ -189,6 +206,25 @@ public class RestDispatcherTest {
 
       private CompletionStage<RestResponse> serveStaticResource(RestRequest restRequest) {
          return completedFuture(new SimpleRestResponse.Builder().entity("Hello World!").build());
+      }
+
+   }
+
+   static class FileResource implements ResourceHandler {
+
+      @Override
+      public Invocations getInvocations() {
+         return new Invocations.Builder()
+               .invocation().method(GET).path("/web").path("/web/*").handleWith(this::handleGet)
+               .create();
+      }
+
+      private CompletionStage<RestResponse> handleGet(RestRequest restRequest) {
+         String path = restRequest.path();
+         if (path.endsWith("web/")) {
+            path = path.concat("index.html");
+         }
+         return completedFuture(new SimpleRestResponse.Builder().entity(path).build());
       }
 
    }

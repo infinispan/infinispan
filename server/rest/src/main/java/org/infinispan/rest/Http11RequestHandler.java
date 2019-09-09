@@ -3,11 +3,9 @@ package org.infinispan.rest;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 
 /**
@@ -36,14 +34,7 @@ public class Http11RequestHandler extends RestRequestHandler {
    }
 
    @Override
-   protected void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
-      ctx.executor().execute(() -> {
-         restAccessLoggingHandler.log(ctx, request, response);
-         if (HttpUtil.isKeepAlive(response)) {
-            ctx.writeAndFlush(response);
-         } else {
-            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-         }
-      });
+   protected boolean checkKeepAlive() {
+      return true;
    }
 }

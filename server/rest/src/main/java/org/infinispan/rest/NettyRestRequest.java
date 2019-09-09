@@ -1,5 +1,9 @@
 package org.infinispan.rest;
 
+import static java.net.URLDecoder.decode;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -43,9 +47,10 @@ public class NettyRestRequest implements RestRequest {
    private Subject subject;
    private Map<String, String> variables;
 
-   NettyRestRequest(FullHttpRequest request) {
+   NettyRestRequest(FullHttpRequest request) throws UnsupportedEncodingException, IllegalArgumentException {
       this.request = request;
-      QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
+      String uri = decode(request.uri(), StandardCharsets.UTF_8.name());
+      QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
       this.parameters = queryStringDecoder.parameters();
       this.path = queryStringDecoder.path();
       this.context = getContext(path);
@@ -153,7 +158,7 @@ public class NettyRestRequest implements RestRequest {
    }
 
    @Override
-   public String getEtagIfModifiedSinceHeader() {
+   public String getIfModifiedSinceHeader() {
       return request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
    }
 
@@ -163,7 +168,7 @@ public class NettyRestRequest implements RestRequest {
    }
 
    @Override
-   public String getEtagIfUnmodifiedSinceHeader() {
+   public String getIfUnmodifiedSinceHeader() {
       return request.headers().get(HttpHeaderNames.IF_UNMODIFIED_SINCE);
    }
 

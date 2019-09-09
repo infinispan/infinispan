@@ -1,5 +1,8 @@
 package org.infinispan.rest.helper;
 
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -23,7 +26,11 @@ public class RestServerHelper {
 
    public RestServerHelper(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
-      restServerConfigurationBuilder.host("localhost").port(0).maxContentLength(1_000_000);
+      try {
+         restServerConfigurationBuilder.host("localhost").port(0).maxContentLength(1_000_000)
+               .staticResources(Paths.get(this.getClass().getResource("/static-test").toURI()));
+      } catch (URISyntaxException ignored) {
+      }
    }
 
    public static RestServerHelper defaultRestServer(String... cachesDefined) {

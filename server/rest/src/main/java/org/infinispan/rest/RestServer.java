@@ -1,6 +1,7 @@
 package org.infinispan.rest;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
@@ -18,6 +19,7 @@ import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.SplashResource;
+import org.infinispan.rest.resources.StaticFileResource;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -111,6 +113,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(new SplashResource());
       resourceManager.registerResource(new CounterResource(invocationHelper));
       resourceManager.registerResource(new CacheManagerResource(invocationHelper));
+      Path staticResources = configuration.staticResources();
+      if (staticResources != null) {
+         resourceManager.registerResource(new StaticFileResource(staticResources, "static"));
+      }
       if (server != null) {
          resourceManager.registerResource(new ServerResource(invocationHelper));
       }

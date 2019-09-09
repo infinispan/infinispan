@@ -18,7 +18,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -478,15 +477,4 @@ public abstract class AbstractRESTClientIT {
       assertTrue(correct);
    }
 
-   //the following property is passed to the server at startup so that this test passes:
-   //-Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
-   @Test
-   public void testKeyIncludingSlashURLEncoded() throws Exception {
-      String encodedSlashKey = URLEncoder.encode("x/y", "UTF-8");
-      rest.post(rest.fullPathKey(encodedSlashKey), "data", "text/plain");
-      HttpResponse get = rest.get(rest.fullPathKey(encodedSlashKey), "data");
-      assertNotNull(get.getHeaders("ETag")[0].getValue());
-      assertNotNull(get.getHeaders("Last-Modified")[0].getValue());
-      assertEquals(APPLICATION_OCTET_STREAM_TYPE, get.getHeaders("Content-Type")[0].getValue());
-   }
 }

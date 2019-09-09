@@ -40,11 +40,11 @@ public interface RestRequest {
 
    String getEtagIfMatchHeader();
 
-   String getEtagIfModifiedSinceHeader();
+   String getIfModifiedSinceHeader();
 
    String getEtagIfNoneMatchHeader();
 
-   String getEtagIfUnmodifiedSinceHeader();
+   String getIfUnmodifiedSinceHeader();
 
    Long getMaxIdleTimeSecondsHeader();
 

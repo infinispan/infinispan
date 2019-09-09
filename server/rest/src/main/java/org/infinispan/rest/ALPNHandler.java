@@ -32,6 +32,7 @@ import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapterBuilder;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.AsciiString;
 
 /**
@@ -86,6 +87,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             ChannelPipeline p = channel.pipeline();
             p.addLast(new Http2StreamFrameToHttpObjectCodec(true));
             p.addLast(new HttpObjectAggregator(maxContentLength()));
+            p.addLast(new ChunkedWriteHandler());
             p.addLast(new RestRequestHandler(restServer));
          }
       }).initialSettings(Http2Settings.defaultSettings()).build();
@@ -107,6 +109,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
       List<CorsConfig> corsRules = restServer.getConfiguration().getCorsRules();
       if (!corsRules.isEmpty()) pipeline.addLast(new CorsHandler(corsRules, true));
+      pipeline.addLast(new ChunkedWriteHandler());
       pipeline.addLast(new Http11RequestHandler(restServer));
    }
 

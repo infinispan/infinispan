@@ -1,9 +1,5 @@
 package org.infinispan.rest.operations;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.OptionalInt;
@@ -15,7 +11,6 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.configuration.RestServerConfiguration;
-import org.infinispan.rest.operations.exceptions.WrongDateFormatException;
 
 public class CacheOperationsHelper {
 
@@ -98,33 +93,9 @@ public class CacheOperationsHelper {
             .orElse(OptionalInt.empty());
    }
 
-   public static <K, V> Date lastModified(InternalCacheEntry<K, V> ice) {
-      return new Date(ice.getCreated() / 1000 * 1000);
+   public static <K, V> long lastModified(InternalCacheEntry<K, V> ice) {
+      long created = ice.getCreated();
+      return created == -1 ? 0 : ice.getCreated();
    }
 
-   public static boolean ifUnmodifiedIsBeforeEntryModificationDate(String ifUnmodifiedSince, Date lastMod) throws WrongDateFormatException {
-      if (ifUnmodifiedSince != null) {
-         try {
-            ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(ifUnmodifiedSince));
-            ZonedDateTime modificationTime = ZonedDateTime.ofInstant(lastMod.toInstant(), ZoneId.systemDefault());
-            return modificationTime.isAfter(clientTime);
-         } catch (DateTimeParseException e) {
-            throw new WrongDateFormatException("Could not parse date " + ifUnmodifiedSince);
-         }
-      }
-      return false;
-   }
-
-   public static boolean ifModifiedIsAfterEntryModificationDate(String etagIfModifiedSince, Date lastMod) throws WrongDateFormatException {
-      if (etagIfModifiedSince != null) {
-         try {
-            ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(etagIfModifiedSince));
-            ZonedDateTime modificationTime = ZonedDateTime.ofInstant(lastMod.toInstant(), ZoneId.systemDefault());
-            return clientTime.isAfter(modificationTime) || clientTime.isEqual(modificationTime);
-         } catch (DateTimeParseException e) {
-            throw new WrongDateFormatException("Could not parse date " + etagIfModifiedSince);
-         }
-      }
-      return false;
-   }
 }

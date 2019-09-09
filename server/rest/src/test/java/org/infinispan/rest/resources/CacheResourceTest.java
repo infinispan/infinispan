@@ -18,6 +18,9 @@ import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -32,6 +35,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -328,6 +332,36 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       } finally {
          if (restServerHelper != null) restServerHelper.stop();
       }
+   }
+
+   @Test
+   public void testIfModifiedHeader() throws Exception {
+      testIfModifiedHeaderForCache("expiration");
+      testIfModifiedHeaderForCache("default");
+   }
+
+   private void testIfModifiedHeaderForCache(String cache) throws Exception {
+      putStringValueInCache(cache, "test", "test");
+
+      String url = String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cache, "test");
+      ContentResponse resp = client.newRequest(url).send();
+      String dateLast = resp.getHeaders().get("Last-Modified");
+
+      ContentResponse sameLastModAndIfModified = client.newRequest(url).header("If-Modified-Since", dateLast).send();
+      assertThat(sameLastModAndIfModified).isNotModified();
+
+      putStringValueInCache(cache, "test", "test-new");
+      ContentResponse lastmodAfterIfModified = client.newRequest(url).send();
+      dateLast = lastmodAfterIfModified.getHeaders().get("Last-Modified");
+      assertThat(lastmodAfterIfModified).isOk();
+
+      ContentResponse lastmodBeforeIfModified = client.newRequest(url).header("If-Modified-Since", plus1Day(dateLast)).send();
+      assertThat(lastmodBeforeIfModified).isNotModified();
+   }
+
+   private String plus1Day(String rfc1123Date) {
+      ZonedDateTime plus = DateUtils.parseRFC1123(rfc1123Date).plus(1, ChronoUnit.DAYS);
+      return DateUtils.toRFC1123(plus.toEpochSecond() * 1000);
    }
 
    @Test
