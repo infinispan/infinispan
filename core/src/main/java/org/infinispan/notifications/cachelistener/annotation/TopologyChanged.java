@@ -13,8 +13,8 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 
 /**
  * This annotation should be used on methods that need to be notified when the {@link ConsistentHash} implementation
- * in use by the {@link DistributionManager} changes due to a change in cluster topology.  This is only fired
- * in a {@link org.infinispan.configuration.cache.CacheMode#DIST_SYNC} or {@link org.infinispan.configuration.cache.CacheMode#DIST_ASYNC} configured cache.
+ * in use by the {@link DistributionManager} changes due to a change in cluster topology.
+ * This is not fired for {@link org.infinispan.configuration.cache.CacheMode#LOCAL} caches.
  * <p/>
  * Methods annotated with this annotation should accept a single parameter, a {@link TopologyChangedEvent} otherwise a
  * {@link IncorrectListenerException} will be thrown when registering your listener.
