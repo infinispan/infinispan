@@ -221,7 +221,9 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          throw log.containerFull(maxSize);
       }
 
-      pendingSize.put(ctx.getGlobalTransaction(), changeAmount);
+      if (!command.isOnePhaseCommit()) {
+         pendingSize.put(ctx.getGlobalTransaction(), changeAmount);
+      }
 
       return super.visitPrepareCommand(ctx, command);
    }
