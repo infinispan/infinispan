@@ -1,7 +1,7 @@
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd
-                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd"
+                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd"
       xmlns="urn:infinispan:config:10.0"
       xmlns:ispn="urn:infinispan:config:10.0">
    <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">

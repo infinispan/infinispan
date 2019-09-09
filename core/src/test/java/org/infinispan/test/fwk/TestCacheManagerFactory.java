@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
+import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -152,7 +153,7 @@ public class TestCacheManagerFactory {
       }
    }
 
-   public static EmbeddedCacheManager fromString(String config) throws IOException {
+   public static EmbeddedCacheManager fromString(String config) {
       return fromStream(new ByteArrayInputStream(config.getBytes()));
    }
 
@@ -454,6 +455,15 @@ public class TestCacheManagerFactory {
 
       GlobalConfiguration gc = builder.build();
       if (!flags.isPreserveConfig() && gc.transport().transport() != null) {
+         if (flags.isRelayRequired()) {
+            // Respect siteName transport flag
+            builder.transport().clusterName(flags.siteName() + "-" + testName);
+         } else if (gc.transport().attributes().attribute(TransportConfiguration.CLUSTER_NAME).isModified()) {
+            // Respect custom cluster name (e.g. from TestCluster)
+            builder.transport().clusterName(gc.transport().clusterName() + "-" + testName);
+         } else {
+            builder.transport().clusterName(testName);
+         }
          // Remove any configuration file that might have been set.
          builder.transport().removeProperty(JGroupsTransport.CONFIGURATION_FILE);
          builder.transport().removeProperty(JGroupsTransport.CHANNEL_CONFIGURATOR);
