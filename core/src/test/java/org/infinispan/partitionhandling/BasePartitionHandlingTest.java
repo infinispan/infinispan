@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.context.Flag;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -36,7 +37,6 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TEST_PING;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,6 +45,7 @@ import org.jgroups.JChannel;
 import org.jgroups.MergeView;
 import org.jgroups.View;
 import org.jgroups.protocols.DISCARD;
+import org.jgroups.protocols.Discovery;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.pbcast.STABLE;
@@ -159,12 +160,12 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    protected void disableDiscoveryProtocol(JChannel c) {
-      ((TEST_PING)c.getProtocolStack().findProtocol(TEST_PING.class)).suspend();
+      ((Discovery)c.getProtocolStack().findProtocol(Discovery.class)).setClusterName(c.getAddressAsString());
    }
 
    protected void enableDiscoveryProtocol(JChannel c) {
       try {
-         c.getProtocolStack().findProtocol(TEST_PING.class).start();
+         c.getProtocolStack().findProtocol(Discovery.class).start();
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -488,11 +489,16 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
 
    private JChannel channel(int i) {
-      return channel(cache(i));
+      return channel(manager(i));
    }
 
    protected JChannel channel(Cache<?, ?> cache) {
-      return extractJGroupsTransport(cache.getAdvancedCache().getRpcManager().getTransport()).getChannel();
+      Transport transport = cache.getAdvancedCache().getRpcManager().getTransport();
+      return channel(cache.getCacheManager());
+   }
+
+   private JChannel channel(EmbeddedCacheManager manager) {
+      return extractJGroupsTransport(manager.getTransport()).getChannel();
    }
 
    protected Partition partition(int i) {

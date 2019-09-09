@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd">
    <!-- Disable the regular thread pool queue for tests so we can set a lower min_threads -->
    <TCP_NIO2
          bind_addr="${jgroups.tcp.address:127.0.0.1}"
@@ -18,7 +18,7 @@
          thread_pool.keep_alive_time="60000"
          />
 
-   <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
+   <LOCAL_PING/>
 
    <!-- Ergonomics, new in JGroups 2.11, are disabled by default until JGRP-1253 is resolved -->
    <!--<TCPPING timeout="3000"-->

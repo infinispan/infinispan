@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
+      xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd">
 
     <TCP bind_addr="127.0.0.1"
          bind_port="7200"
@@ -21,7 +21,7 @@
              port_range="3"
              ergonomics="false"
             /-->
-    <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
+    <LOCAL_PING/>
 
 
     <!--<MPING timeout="1000"-->

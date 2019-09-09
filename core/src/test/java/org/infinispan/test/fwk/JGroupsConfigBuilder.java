@@ -8,7 +8,6 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2;
-import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_RELAY2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
@@ -90,7 +89,6 @@ public class JGroupsConfigBuilder {
       if (!flags.withMerge())
          removeMerge(jgroupsCfg);
 
-      configureTestPing(fullTestName, jgroupsCfg);
       replaceTcpStartPort(jgroupsCfg, flags);
       replaceMCastAddressAndPort(jgroupsCfg, fullTestName);
       return jgroupsCfg.toString();
@@ -121,16 +119,6 @@ public class JGroupsConfigBuilder {
 
    private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {
       jgroupsCfg.removeProtocol(TEST_RELAY2);
-   }
-
-   private static void configureTestPing(String fullTestName, JGroupsProtocolCfg jgroupsCfg) {
-      ProtocolConfiguration testPing = jgroupsCfg.getProtocol(TEST_PING);
-      if (testPing == null || fullTestName == null)
-         return;
-
-      Map<String, String> props = testPing.getProperties();
-      props.put("testName", fullTestName);
-      replaceProperties(jgroupsCfg, props, TEST_PING);
    }
 
    private static void replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg, String fullTestName) {
@@ -272,7 +260,7 @@ public class JGroupsConfigBuilder {
 
    enum ProtocolType {
       TCP, TCP_NIO2, UDP, SHARED_LOOPBACK,
-      MPING, PING, TCPPING, TEST_PING, SHARED_LOOPBACK_PING,
+      MPING, PING, TCPPING, LOCAL_PING, SHARED_LOOPBACK_PING,
       MERGE2, MERGE3,
       FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2,
       BARRIER,

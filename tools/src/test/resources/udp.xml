@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.1.xsd">
    <UDP
          bind_addr="${jgroups.udp.address:SITE_LOCAL}"
          bind_port="${jgroups.udp.port:0}"
@@ -23,8 +23,8 @@
          thread_pool.keep_alive_time="60000"
    />
 
-   <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
    <!--<PING timeout="3000" num_initial_members="3"/>-->
+   <LOCAL_PING/>
 
    <MERGE3 min_interval="1000" max_interval="5000"/>
    <FD_SOCK sock_conn_timeout="3000"/>

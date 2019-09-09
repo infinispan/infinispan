@@ -282,6 +282,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       cm4.defineConfiguration(CACHE_NAME, defaultConfig.build());
       cm4.defineConfiguration(OTHER_CACHE_NAME, defaultConfig.build());
       cm4.getCache(OTHER_CACHE_NAME);
+      TestingUtil.blockUntilViewsReceived(30000, manager(mergeCoordIndex), cm4);
       Future<Cache<Object,Object>> cacheFuture = fork(() -> cm4.getCache(CACHE_NAME));
 
       log.debugf("Waiting for the REBALANCE_START command to reach the merge coordinator");
