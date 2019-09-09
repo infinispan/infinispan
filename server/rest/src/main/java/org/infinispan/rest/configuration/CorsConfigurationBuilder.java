@@ -2,6 +2,7 @@ package org.infinispan.rest.configuration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
@@ -22,14 +23,18 @@ public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
       return builder;
    }
 
-   CorsConfigurationBuilder corsAllowForLocalhost(String scheme, int port) {
-      String local1 = scheme + "://" + "127.0.0.1" + ":" + port;
-      String local2 = scheme + "://" + "localhost" + ":" + port;
-      String local3 = scheme + "://" + "[::1]" + ":" + port;
-      addNewRule().allowOrigins(new String[]{local1, local2, local3})
-            .allowCredentials(true)
-            .allowMethods(new String[]{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"})
-            .allowHeaders(new String[]{HttpHeaderNames.CONTENT_TYPE.toString()});
+   CorsConfigurationBuilder corsAllowForLocalhost(Set<String> schemes, int[] ports) {
+      for (String scheme : schemes) {
+         for (int port : ports) {
+            String localIpv4 = scheme + "://" + "127.0.0.1" + ":" + port;
+            String localDomain = scheme + "://" + "localhost" + ":" + port;
+            String localIpv6 = scheme + "://" + "[::1]" + ":" + port;
+            addNewRule().allowOrigins(new String[]{localIpv4, localDomain, localIpv6})
+                  .allowCredentials(true)
+                  .allowMethods(new String[]{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"})
+                  .allowHeaders(new String[]{HttpHeaderNames.CONTENT_TYPE.toString()});
+         }
+      }
       return this;
    }
 
