@@ -16,8 +16,7 @@ public class HealthImpl implements Health {
     private final InternalCacheRegistry internalCacheRegistry;
     private final HostInfo hostInfoImpl = new HostInfoImpl();
 
-   public HealthImpl(EmbeddedCacheManager embeddedCacheManager,
-                     InternalCacheRegistry internalCacheRegistry) {
+   public HealthImpl(EmbeddedCacheManager embeddedCacheManager, InternalCacheRegistry internalCacheRegistry) {
         this.embeddedCacheManager = embeddedCacheManager;
         this.internalCacheRegistry = internalCacheRegistry;
     }
