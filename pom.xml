@@ -243,7 +243,6 @@
 
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
-      <versionx.antlr.antlr>${version.antlr2}</versionx.antlr.antlr>
       <versionx.aopalliance.aopalliance>1.0</versionx.aopalliance.aopalliance>
       <versionx.asm.asm>${version.asm}</versionx.asm.asm>
       <versionx.asm.asm-commons>${version.asm}</versionx.asm.asm-commons>
@@ -805,11 +804,6 @@
             <artifactId>ant-contrib</artifactId>
             <version>${versionx.ant-contrib.ant-contrib}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>antlr</groupId>
-            <artifactId>antlr</artifactId>
-            <version>${versionx.antlr.antlr}</version>
          </dependency>
          <dependency>
             <groupId>aopalliance</groupId>
@@ -4162,7 +4156,7 @@
                   <dependency>
                      <groupId>org.antlr</groupId>
                      <artifactId>antlr</artifactId>
-                     <version>${version.antlr}</version>
+                     <version>${version.antlr3}</version>
                   </dependency>
                </dependencies>
             </plugin>

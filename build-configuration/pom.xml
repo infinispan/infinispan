@@ -126,9 +126,7 @@
       <version.ant>1.10.1</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
-      <version.antlr2>2.7.7</version.antlr2>
       <version.antlr3>3.5.2</version.antlr3>
-      <version.antlr>${version.antlr3}</version.antlr>
       <version.apache.maven>3.5.4</version.apache.maven>
       <version.apache.maven.resolver>1.1.0</version.apache.maven.resolver>
       <version.apache.maven.wagon>2.6</version.apache.maven.wagon>
