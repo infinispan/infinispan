@@ -75,4 +75,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot enable authentication without an authenticator", id = 12017)
    CacheConfigurationException authenticationWithoutAuthenticator();
+
+   @Message(value = "Cannot register invocation with path '%s': '*' is only allowed at the end", id = 12018)
+   RegistrationException invalidPath(String path);
 }

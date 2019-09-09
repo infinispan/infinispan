@@ -25,6 +25,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
+import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
@@ -198,7 +199,7 @@ public class CacheResource implements ResourceHandler {
 
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
-            Date lastMod = CacheOperationsHelper.lastModified(ice);
+            long lastMod = CacheOperationsHelper.lastModified(ice);
             Date expires = ice.canExpire() ? new Date(ice.getExpiryTime()) : null;
             OptionalInt minFreshSeconds = CacheOperationsHelper.minFresh(cacheControl);
             if (CacheOperationsHelper.entryFreshEnough(expires, minFreshSeconds)) {
@@ -206,18 +207,18 @@ public class CacheResource implements ResourceHandler {
                String etag = calcETAG(ice.getValue());
                String ifNoneMatch = request.getEtagIfNoneMatchHeader();
                String ifMatch = request.getEtagIfMatchHeader();
-               String ifUnmodifiedSince = request.getEtagIfUnmodifiedSinceHeader();
-               String ifModifiedSince = request.getEtagIfModifiedSinceHeader();
+               String ifUnmodifiedSince = request.getIfUnmodifiedSinceHeader();
+               String ifModifiedSince = request.getIfModifiedSinceHeader();
                if (ifNoneMatch != null && ifNoneMatch.equals(etag)) {
                   return responseBuilder.status(HttpResponseStatus.NOT_MODIFIED).build();
                }
                if (ifMatch != null && !ifMatch.equals(etag)) {
                   return responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED).build();
                }
-               if (CacheOperationsHelper.ifUnmodifiedIsBeforeEntryModificationDate(ifUnmodifiedSince, lastMod)) {
+               if (DateUtils.ifUnmodifiedIsBeforeModificationDate(ifUnmodifiedSince, lastMod)) {
                   return responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED).build();
                }
-               if (CacheOperationsHelper.ifModifiedIsAfterEntryModificationDate(ifModifiedSince, lastMod)) {
+               if (DateUtils.isNotModifiedSince(ifModifiedSince, lastMod)) {
                   return responseBuilder.status(HttpResponseStatus.NOT_MODIFIED).build();
                }
                Object value = ice.getValue();

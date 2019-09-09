@@ -5,6 +5,8 @@ import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_
 import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
 import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,13 +34,18 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    private final AuthenticationConfigurationBuilder authentication;
    private final CorsConfigurationBuilder cors;
+   private Path staticResources;
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
    public static final int DEFAULT_PORT = 8080;
    public static final String DEFAULT_NAME = "rest";
+   public static final String SERVER_HOME = "infinispan.server.home.path";
+   public static final String STATIC_RESOURCES_PATH = "static";
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
+      String serverHome = System.getProperty(SERVER_HOME);
+      if (serverHome != null) staticResources = Paths.get(serverHome, STATIC_RESOURCES_PATH);
       name(DEFAULT_NAME);
       this.authentication = new AuthenticationConfigurationBuilder(this);
       this.cors = new CorsConfigurationBuilder();
@@ -78,6 +85,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   public RestServerConfigurationBuilder staticResources(Path dir) {
+      this.staticResources = dir;
+      return this;
+   }
+
    public AuthenticationConfigurationBuilder authentication() {
       return authentication;
    }
@@ -102,7 +114,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       schemes.add("http");
       schemes.add("https");
       corsAllowForLocalhost(schemes, DEFAULT_PORT, CROSS_ORIGIN_PORT, CROSS_ORIGIN_ALT_PORT);
-      return new RestServerConfiguration(attributes.protect(), ssl.create(), authentication.create(), cors.create(), encryption.create());
+      return new RestServerConfiguration(attributes.protect(), ssl.create(), staticResources, authentication.create(), cors.create(), encryption.create());
    }
 
    @Override

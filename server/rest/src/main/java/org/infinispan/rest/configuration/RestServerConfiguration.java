@@ -1,5 +1,6 @@
 package org.infinispan.rest.configuration;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +32,7 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final Attribute<String> contextPath;
    private final Attribute<Integer> maxContentLength;
    private final Attribute<Integer> compressionLevel;
+   private final Path staticResources;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RestServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
@@ -46,10 +48,11 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final List<ConfigurationInfo> elements;
 
    RestServerConfiguration(AttributeSet attributes, SslConfiguration ssl,
-                           AuthenticationConfiguration authentication,
+                           Path staticResources, AuthenticationConfiguration authentication,
                            CorsConfiguration cors,
                            EncryptionConfiguration encryption) {
       super(attributes, ssl);
+      this.staticResources = staticResources;
       this.authentication = authentication;
       this.extendedHeaders = attributes.attribute(EXTENDED_HEADERS);
       this.contextPath = attributes.attribute(CONTEXT_PATH);
@@ -80,6 +83,10 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
 
    public ExtendedHeaders extendedHeaders() {
       return extendedHeaders.get();
+   }
+
+   public Path staticResources() {
+      return staticResources;
    }
 
    /**

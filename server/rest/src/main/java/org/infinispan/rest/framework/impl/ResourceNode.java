@@ -77,7 +77,7 @@ class ResourceNode {
    private void insertPathInternal(ResourceNode node, Invocation invocation, List<PathItem> path) {
       if (path.size() == 1) {
          PathItem next = path.iterator().next();
-         if(next.getPath().isEmpty()) {
+         if (next.getPath().isEmpty()) {
             updateTable(invocation);
             return;
          }
@@ -118,9 +118,14 @@ class ResourceNode {
       Map<String, String> variables = new HashMap<>();
       for (PathItem pathItem : path) {
          ResourceNode resourceNode = current.children.get(pathItem);
+         ResourceNode matchAll = current.children.get(new StringPathItem("*"));
          if (resourceNode != null) {
             current = resourceNode;
          } else {
+            if (matchAll != null) {
+               current = matchAll;
+               break;
+            }
             ResourceNode variableMatch = current.findMatch(pathItem.getPath(), variables);
             if (variableMatch == null) return null;
             current = variableMatch;

@@ -119,7 +119,7 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
-   public String getEtagIfModifiedSinceHeader() {
+   public String getIfModifiedSinceHeader() {
       return null;
    }
 
@@ -129,7 +129,7 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
-   public String getEtagIfUnmodifiedSinceHeader() {
+   public String getIfUnmodifiedSinceHeader() {
       return null;
    }
 

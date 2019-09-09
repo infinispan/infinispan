@@ -9,7 +9,8 @@ import org.jboss.logging.MDC;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponse;
 
 /**
  * Logging filter that can be used to output requests in a similar fashion to HTTPD log output
@@ -34,12 +35,12 @@ public class RestAccessLoggingHandler {
       }
    }
 
-   public void log(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
+   public void log(ChannelHandlerContext ctx, FullHttpRequest request, HttpResponse response) {
       if (isEnabled()) {
          // IP
          String remoteAddress = request.headers().getAsString(X_FORWARDED_FOR);
          if (remoteAddress == null)
-            remoteAddress = ((InetSocketAddress)ctx.channel().remoteAddress()).getHostString();
+            remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress()).getHostString();
          // User
          String who = request.headers().get(X_PRINCIPAL);
          if (who == null)
@@ -57,11 +58,12 @@ public class RestAccessLoggingHandler {
          // Body request size
          int requestSize = request.content().readableBytes();
          // Body response Size - usually -1 so we calculate below
-         int responseSize = response.content().readableBytes();
+         String contentLength = response.headers().get(HttpHeaderNames.CONTENT_LENGTH.toString());
+         int responseSize = contentLength == null ? 0 : Integer.parseInt(contentLength);
          // Response time
          long duration = now - requestTime;
          MDC.clear();
-         for(Map.Entry<String, String> s : request.headers().entries()) {
+         for (Map.Entry<String, String> s : request.headers().entries()) {
             MDC.put("h:" + s.getKey(), s.getValue());
          }
          MDC.put("address", remoteAddress);

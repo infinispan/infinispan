@@ -1,10 +1,13 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Objects;
 
 import javax.security.auth.Subject;
@@ -12,6 +15,7 @@ import javax.security.auth.Subject;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.LookupResult;
+import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,9 +25,9 @@ import io.netty.channel.unix.Errors;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http2.HttpConversionUtil;
@@ -48,7 +52,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
     *
     * @param restServer Rest Server.
     */
-   public RestRequestHandler(RestServer restServer) {
+   RestRequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
       this.authenticator = configuration.authentication().enabled() ? configuration.authentication().authenticator() : null;
@@ -58,10 +62,23 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
       restAccessLoggingHandler.preLog(request);
-      NettyRestRequest restRequest = new NettyRestRequest(request);
+      if (!Method.contains(request.getMethod().name())) {
+         NettyRestResponse restResponse = new NettyRestResponse.Builder().status(FORBIDDEN).build();
+         sendResponse(ctx, request, restResponse);
+         return;
+      }
+
+      NettyRestRequest restRequest;
+      try {
+         restRequest = new NettyRestRequest(request);
+      } catch (UnsupportedEncodingException | IllegalArgumentException e) {
+         NettyRestResponse restResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).build();
+         sendResponse(ctx, request, restResponse);
+         return;
+      }
 
       if (!restRequest.getContext().equals(this.context)) {
-         sendResponse(ctx, request, new NettyRestResponse.Builder().status(NOT_FOUND).build().getResponse());
+         sendResponse(ctx, request, new NettyRestResponse.Builder().status(NOT_FOUND).build());
       }
 
       LookupResult invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
@@ -95,7 +112,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
                if (hasError) {
                   handleError(ctx, request, authThrowable);
                } else {
-                  sendResponse(ctx, request, ((NettyRestResponse) authResponse).getResponse());
+                  sendResponse(ctx, request, ((NettyRestResponse) authResponse));
                }
             } finally {
                request.release();
@@ -116,7 +133,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
             if (throwable == null) {
                NettyRestResponse nettyRestResponse = (NettyRestResponse) restResponse;
                addCorrelatedHeaders(request, nettyRestResponse.getResponse());
-               sendResponse(ctx, request, nettyRestResponse.getResponse());
+               sendResponse(ctx, request, nettyRestResponse);
             } else {
                handleError(ctx, request, throwable);
             }
@@ -126,7 +143,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       });
    }
 
-   private void addCorrelatedHeaders(FullHttpRequest request, FullHttpResponse response) {
+   private void addCorrelatedHeaders(FullHttpRequest request, HttpResponse response) {
       String streamId = request.headers().get(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text());
       if (streamId != null) {
          response.headers().add(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text(), streamId);

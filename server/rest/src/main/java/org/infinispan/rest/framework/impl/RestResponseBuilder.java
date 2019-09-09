@@ -23,9 +23,15 @@ public interface RestResponseBuilder<B extends RestResponseBuilder<B>> {
 
    B contentType(MediaType type);
 
+   B contentType(String type);
+
+   B contentLength(long length);
+
    B expires(Date expires);
 
-   B lastModified(Date lastModified);
+   B lastModified(long epoch);
+
+   B addProcessedDate(Date d);
 
    B eTag(String tag);
 

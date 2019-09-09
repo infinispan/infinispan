@@ -9,11 +9,16 @@ import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.ResourceManager;
+import org.infinispan.rest.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @since 10.0
  */
 public class ResourceManagerImpl implements ResourceManager {
+
+   private final static Log logger = LogFactory.getLog(ResourceManagerImpl.class, Log.class);
+
 
    private final ResourceNode resourceTree;
    private final String rootPath;
@@ -29,10 +34,17 @@ public class ResourceManagerImpl implements ResourceManager {
       handler.getInvocations().forEach(invocation -> {
          Set<String> paths = invocation.paths();
          paths.stream().map(this::removeLeadSlash).forEach(path -> {
+            validate(path);
             List<PathItem> p = Arrays.stream(path.split("/")).map(PathItem::fromString).collect(Collectors.toList());
             resourceTree.insertPath(invocation, p);
          });
       });
+   }
+
+   private void validate(String path) {
+      if (path.contains("*") && !path.endsWith("*")) {
+         throw logger.invalidPath(path);
+      }
    }
 
    private String removeLeadSlash(String path) {

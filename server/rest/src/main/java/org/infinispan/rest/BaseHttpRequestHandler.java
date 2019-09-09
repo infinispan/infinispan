@@ -12,7 +12,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -40,14 +39,15 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
       } else {
          errorResponse = new NettyRestResponse.Builder().status(INTERNAL_SERVER_ERROR).entity(cause.getMessage()).build();
       }
-      sendResponse(ctx, request, errorResponse.getResponse());
+      sendResponse(ctx, request, errorResponse);
    }
 
-   protected void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
-      ctx.executor().execute(() -> {
-         restAccessLoggingHandler.log(ctx, request, response);
-         ctx.writeAndFlush(response);
-      });
+   void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
+      ctx.executor().execute(() -> ResponseWriter.forContent(response.getEntity()).writeResponse(ctx, request, response, checkKeepAlive()));
+   }
+
+   protected boolean checkKeepAlive() {
+      return false;
    }
 
    protected abstract Log getLogger();

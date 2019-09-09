@@ -34,11 +34,6 @@ public class SimpleRestResponse implements RestResponse {
       private Map<String, Object> headers = new HashMap<>();
       private int status;
       private Object entity;
-      private CacheControl cacheControl;
-      private MediaType type;
-      private Date expires;
-      private Date lastModified;
-      private String tag;
 
       @Override
       public SimpleRestResponse build() {
@@ -59,7 +54,6 @@ public class SimpleRestResponse implements RestResponse {
 
       @Override
       public Builder cacheControl(CacheControl cacheControl) {
-         this.cacheControl = cacheControl;
          return this;
       }
 
@@ -71,25 +65,37 @@ public class SimpleRestResponse implements RestResponse {
 
       @Override
       public Builder contentType(MediaType type) {
-         this.type = type;
+         contentType(type.toString());
+         return this;
+      }
+
+      @Override
+      public Builder contentType(String type) {
+         return this;
+      }
+
+      @Override
+      public Builder contentLength(long length) {
          return this;
       }
 
       @Override
       public Builder expires(Date expires) {
-         this.expires = expires;
          return this;
       }
 
       @Override
-      public Builder lastModified(Date lastModified) {
-         this.lastModified = lastModified;
+      public Builder lastModified(long epoch) {
+         return this;
+      }
+
+      @Override
+      public Builder addProcessedDate(Date d) {
          return this;
       }
 
       @Override
       public Builder eTag(String tag) {
-         this.tag = tag;
          return this;
       }
 

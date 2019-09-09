@@ -3,12 +3,23 @@ package org.infinispan.rest.assertion;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
 
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.rest.DateUtils;
+
+import io.netty.handler.codec.http.HttpHeaderNames;
 
 public class ResponseAssertion {
 
@@ -89,6 +100,11 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion hasContentLength(Long value) {
+      Assertions.assertThat(response.getHeaders().get("Content-Length")).isEqualTo(value.toString());
+      return this;
+   }
+
    public ResponseAssertion hasGzipContentEncoding() {
       Assertions.assertThat(response.getHeaders().get("Content-Encoding")).isEqualTo("gzip");
       return this;
@@ -101,6 +117,12 @@ public class ResponseAssertion {
 
    public ResponseAssertion containsAllHeaders(String... headers) {
       Assertions.assertThat(response.getHeaders().stream().map(HttpField::getName)).contains(headers);
+      return this;
+   }
+
+   public ResponseAssertion hasCacheControlHeaders(String... directives) {
+      List<String> valueList = response.getHeaders().getValuesList(HttpHeader.CACHE_CONTROL);
+      Assertions.assertThat(valueList).isEqualTo(Arrays.asList(directives));
       return this;
    }
 
@@ -176,5 +198,41 @@ public class ResponseAssertion {
    public ResponseAssertion isServiceUnavailable() {
       Assertions.assertThat(response.getStatus()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE_503);
       return this;
+   }
+
+   public ResponseAssertion hasMediaType(MediaType[] mediaType) {
+      boolean hasMatches = Arrays.stream(mediaType).anyMatch(m -> MediaType.fromString(response.getMediaType()).match(m));
+      Assertions.assertThat(hasMatches).isTrue();
+      return this;
+   }
+
+   public ResponseAssertion hasValidDate() {
+      String dateHeader = response.getHeaders().get("date");
+      ZonedDateTime zonedDateTime = DateUtils.parseRFC1123(dateHeader);
+      Assertions.assertThat(zonedDateTime).isNotNull();
+      return this;
+
+   }
+
+   public ResponseAssertion hasLastModified(long timestamp) {
+      String dateHeader = response.getHeaders().get(HttpHeaderNames.LAST_MODIFIED.toString());
+      Assertions.assertThat(dateHeader).isNotNull();
+      ZonedDateTime zonedDateTime = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault());
+      String value = DateTimeFormatter.RFC_1123_DATE_TIME.format(zonedDateTime);
+      Assertions.assertThat(value).isEqualTo(dateHeader);
+      return this;
+   }
+
+   public ResponseAssertion expiresAfter(int expireDuration) {
+      String dateHeader = response.getHeaders().get(HttpHeaderNames.DATE.toString());
+      String expiresHeader = response.getHeaders().get(HttpHeaderNames.EXPIRES.toString());
+
+      ZonedDateTime date = DateUtils.parseRFC1123(dateHeader);
+      ZonedDateTime expires = DateUtils.parseRFC1123(expiresHeader);
+
+      ZonedDateTime diff = expires.minus(expireDuration, ChronoUnit.SECONDS);
+      Assertions.assertThat(diff).isEqualTo(date);
+      return this;
+
    }
 }
