@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Objects;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -78,8 +80,10 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          return marshaller;
 
       // The user has specified a SerializationContextInitializer, so jboss-marshalling is ignored and serializationContext updated
-      if (serializationConfig.contextInitializer() != null) {
-         register(serializationContext, serializationConfig.contextInitializer());
+      Collection<SerializationContextInitializer> scis = serializationConfig.contextInitializers();
+      if (scis != null) {
+         for (SerializationContextInitializer sci : scis)
+            register(serializationContext, sci);
          return null;
       }
 
@@ -101,16 +105,19 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       }
    }
 
+   public Marshaller getUserMarshaller() {
+      return userMarshaller;
+   }
+
    @Override
    public void register(SerializationContextInitializer initializer) {
+      Objects.requireNonNull(initializer);
       register(serializationContext, initializer);
    }
 
    private void register(SerializationContext ctx, SerializationContextInitializer initializer) {
-      if (initializer != null) {
-         initializer.registerSchema(ctx);
-         initializer.registerMarshallers(ctx);
-      }
+      initializer.registerSchema(ctx);
+      initializer.registerMarshallers(ctx);
    }
 
    @Override

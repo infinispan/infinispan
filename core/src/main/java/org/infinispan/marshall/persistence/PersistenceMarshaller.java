@@ -19,6 +19,7 @@ public interface PersistenceMarshaller extends Marshaller, StreamAwareMarshaller
     *
     * @param initializer whose schemas and marshallers' will be registered with the {@link PersistenceMarshaller} {@link
     *                    SerializationContext}
+    * @throws NullPointerException if initializer is null.
     */
    void register(SerializationContextInitializer initializer);
 }

@@ -554,10 +554,21 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="context-initializer" type="xs:string">
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:sequence>
+      <xs:element name="context-initializer" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            SerializationContextInitializer implementation which is used to initialize a Protostream based marshaller for user types.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="class" type="xs:string">
             <xs:annotation>
               <xs:documentation>
-                The FQN of a SerializationContextInitializer implementation which is used to initialize a Protostream based marshaller for user types.
+                Class of the SerializationContextInitializer implementation
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -572,20 +583,20 @@
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
-          <xs:attribute name="class" type="xs:string">
+          <xs:element name="class" type="xs:string">
             <xs:annotation>
               <xs:documentation>
                 FQN of the class to be added to the whitelist.
               </xs:documentation>
             </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="regex" type="xs:string">
+          </xs:element>
+          <xs:element name="regex" type="xs:string">
             <xs:annotation>
               <xs:documentation>
                 Regex pattern used to determine if a class is a member of the whitelist.
               </xs:documentation>
             </xs:annotation>
-          </xs:attribute>
+          </xs:element>
         </xs:complexType>
       </xs:element>
     </xs:sequence>

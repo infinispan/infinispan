@@ -3,9 +3,12 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.SerializationConfiguration.ADVANCED_EXTERNALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.CLASS_RESOLVER;
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
-import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZER;
+import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -132,8 +135,17 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
-   public SerializationConfigurationBuilder contextInitializer(SerializationContextInitializer initializer) {
-      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZER).set(initializer);
+   public SerializationConfigurationBuilder addContextInitializer(SerializationContextInitializer sci) {
+      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).computeIfAbsent(ArrayList::new).add(sci);
+      return this;
+   }
+
+   public SerializationConfigurationBuilder addContextInitializers(SerializationContextInitializer... scis) {
+      return addContextInitializers(Arrays.asList(scis));
+   }
+
+   public SerializationConfigurationBuilder addContextInitializers(Collection<SerializationContextInitializer> scis) {
+      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).set(scis);
       return this;
    }
 

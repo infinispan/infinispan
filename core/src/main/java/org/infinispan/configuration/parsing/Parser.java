@@ -153,10 +153,6 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
 
          switch (attribute) {
-            case SERIALIZATION_CONTEXT_INITIALIZER: {
-               builder.serialization().contextInitializer(Util.getInstance(value, holder.getClassLoader()));
-               break;
-            }
             case MARSHALLER_CLASS: {
                builder.serialization().marshaller(Util.getInstance(value, holder.getClassLoader()));
                break;
@@ -178,6 +174,10 @@ public class Parser implements ConfigurationParser {
                parseAdvancedExternalizer(reader, holder.getClassLoader(), builder.serialization());
                break;
             }
+            case SERIALIZATION_CONTEXT_INITIALIZER: {
+               parseSerializationContextInitializer(reader, holder.getClassLoader(), builder.serialization());
+               break;
+            }
             case WHITE_LIST: {
                if (reader.getSchema().since(10, 0)) {
                   parseWhiteList(reader, builder.serialization().whiteList());
@@ -191,6 +191,26 @@ public class Parser implements ConfigurationParser {
             }
          }
       }
+   }
+
+   private void parseSerializationContextInitializer(final XMLExtendedStreamReader reader, final ClassLoader classLoader,
+                                                     final SerializationConfigurationBuilder builder) throws XMLStreamException {
+      int attributes = reader.getAttributeCount();
+      ParseUtils.requireAttributes(reader, Attribute.CLASS.getLocalName());
+      for (int i = 0; i < attributes; i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case CLASS: {
+               builder.addContextInitializer(Util.getInstance(value, classLoader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseWhiteList(final XMLExtendedStreamReader reader, final WhiteListConfigurationBuilder builder) throws XMLStreamException {
