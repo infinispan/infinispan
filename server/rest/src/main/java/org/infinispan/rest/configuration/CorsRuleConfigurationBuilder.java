@@ -14,6 +14,8 @@ import io.netty.handler.codec.http.cors.CorsConfigBuilder;
  * @since 10.0
  */
 public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfiguration> {
+   private static final String[] ALLOW_ALL_ORIGINS = {"*"};
+
    private final AttributeSet attributes;
 
    private final Attribute<String> name;
@@ -81,7 +83,11 @@ public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfigurati
    }
 
    private CorsConfig createCors() {
-      CorsConfigBuilder builder = allowedOrigins.isModified() ? CorsConfigBuilder.forOrigins(allowedOrigins.get()) : CorsConfigBuilder.forAnyOrigin();
+      boolean isAllowAll = Arrays.equals(allowedOrigins.get(), ALLOW_ALL_ORIGINS);
+      CorsConfigBuilder builder = CorsConfigBuilder.forAnyOrigin();
+      if (allowedOrigins.isModified() && !isAllowAll) {
+         builder = CorsConfigBuilder.forOrigins(allowedOrigins.get());
+      }
 
       if (allowCredentials.isModified() && allowCredentials.get() != null) {
          if (allowCredentials.get()) builder.allowCredentials();
@@ -111,5 +117,20 @@ public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfigurati
    public CorsRuleConfigurationBuilder read(CorsRuleConfiguration template) {
       attributes.read(template.attributes());
       return this;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CorsRuleConfigurationBuilder that = (CorsRuleConfigurationBuilder) o;
+
+      return attributes.equals(that.attributes);
+   }
+
+   @Override
+   public int hashCode() {
+      return attributes.hashCode();
    }
 }

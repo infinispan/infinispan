@@ -29,10 +29,13 @@ import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.TestClass;
+import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.search.entity.Person;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
 import org.infinispan.server.core.dataconversion.XMLTranscoder;
@@ -301,6 +304,30 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       assertThat(response).isOk();
       assertThat(response).containsAllHeaders("access-control-allow-origin");
+   }
+
+   @Test
+   public void testCORSAllOrigins() throws Exception {
+      RestServerHelper restServerHelper = null;
+      try {
+         RestServerConfigurationBuilder restBuilder = new RestServerConfigurationBuilder();
+         restBuilder.cors().addNewRule().allowOrigins(new String[]{"*"});
+         restBuilder.host("localhost").port(0);
+         restServerHelper = RestServerHelper.defaultRestServer();
+
+         RestServerConfiguration build = restBuilder.build();
+
+         restServerHelper.withConfiguration(build).start("test");
+
+         ContentResponse response = client
+               .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServerHelper.getPort(), "default", "test"))
+               .header(HttpHeader.ORIGIN, "http://host.example.com:5576")
+               .send();
+
+         assertThat(response).containsAllHeaders("access-control-allow-origin");
+      } finally {
+         if (restServerHelper != null) restServerHelper.stop();
+      }
    }
 
    @Test

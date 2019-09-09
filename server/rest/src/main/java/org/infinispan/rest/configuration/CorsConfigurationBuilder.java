@@ -45,7 +45,7 @@ public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
 
    @Override
    public CorsConfiguration create() {
-      List<CorsRuleConfiguration> cors = corsRules.stream().map(CorsRuleConfigurationBuilder::create).collect(Collectors.toList());
+      List<CorsRuleConfiguration> cors = corsRules.stream().distinct().map(CorsRuleConfigurationBuilder::create).collect(Collectors.toList());
       return new CorsConfiguration(cors, extraConfigs);
    }
 
@@ -58,5 +58,23 @@ public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
 
    @Override
    public void validate() {
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CorsConfigurationBuilder that = (CorsConfigurationBuilder) o;
+
+      if (!corsRules.equals(that.corsRules)) return false;
+      return extraConfigs.equals(that.extraConfigs);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = corsRules.hashCode();
+      result = 31 * result + extraConfigs.hashCode();
+      return result;
    }
 }

@@ -102,6 +102,10 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
       return cors.corsConfigs();
    }
 
+   public CorsConfiguration cors() {
+      return cors;
+   }
+
    public int getCompressionLevel() {
       return compressionLevel.get();
    }
