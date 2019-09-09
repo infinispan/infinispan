@@ -2,7 +2,6 @@
 .svn
 # ignore Maven generated target folders
 target
-*.protobin
 # ignore Maven shade generated files
 dependency-reduced-pom.xml
 # ignore eclipse files
