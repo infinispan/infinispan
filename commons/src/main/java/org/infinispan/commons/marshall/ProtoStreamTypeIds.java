@@ -28,6 +28,7 @@ public interface ProtoStreamTypeIds {
    int EMBEDDED_MAX_IDLE_METADATA = 6;
    int NUMERIC_VERSION = 7;
    int SIMPLE_CLUSTERED_VERSION = 8;
+   int JGROUPS_ADDRESS = 9;
 
    // Priority counter values
    int COUNTER_VALUE = 125;
@@ -45,6 +46,7 @@ public interface ProtoStreamTypeIds {
    int EVENT_LOG_LEVEL = CORE_START + 2;
    int MARSHALLED_VALUE_IMPL = CORE_START + 3;
    int META_PARAMS_INTERNAL_METADATA = CORE_START + 4;
+   int REMOTE_METADATA = CORE_START + 5;
 
    // Counter range 4000 -> 4199
    int COUNTERS_START = CORE_START + 3000;

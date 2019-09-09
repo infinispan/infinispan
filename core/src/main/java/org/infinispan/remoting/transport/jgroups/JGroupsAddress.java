@@ -1,13 +1,22 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallingException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -16,6 +25,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.JGROUPS_ADDRESS)
 public class JGroupsAddress implements Address {
 
    protected final org.jgroups.Address address;
@@ -26,6 +36,25 @@ public class JGroupsAddress implements Address {
          throw new IllegalArgumentException("Address shall not be null");
       this.address = address;
       this.hashCode = address.hashCode();
+   }
+
+   @ProtoFactory
+   JGroupsAddress(byte[] bytes) throws IOException {
+      try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
+         this.address = org.jgroups.util.Util.readAddress(in);
+         this.hashCode = address.hashCode();
+      } catch (ClassNotFoundException e) {
+         throw new MarshallingException(e);
+      }
+   }
+
+   @ProtoField(number = 1)
+   byte[] getBytes() throws IOException {
+      try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+           DataOutputStream out = new DataOutputStream(baos)) {
+         org.jgroups.util.Util.writeAddress(address, out);
+         return baos.toByteArray();
+      }
    }
 
    @Override
