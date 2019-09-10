@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
@@ -53,18 +54,18 @@ public class RestOperations {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
       RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
-      String cache = SERVER_TEST.getMethodName();
-      RestResponse response = sync(client.cachePut(cache, "k1", "v1"));
+      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      RestResponse response = sync(cache.put("k1", "v1"));
       assertEquals(200, response.getStatus());
       assertEquals(protocol, response.getProtocol());
-      response = sync(client.cacheGet(cache, "k1"));
+      response = sync(cache.get("k1"));
       assertEquals(200, response.getStatus());
       assertEquals(protocol, response.getProtocol());
       assertEquals("v1", response.getBody());
-      response = sync(client.cacheDelete(cache, "k1"));
+      response = sync(cache.remove("k1"));
       assertEquals(200, response.getStatus());
       assertEquals(protocol, response.getProtocol());
-      response = sync(client.cacheGet(cache, "k1"));
+      response = sync(cache.get("k1"));
       assertEquals(404, response.getStatus());
       assertEquals(protocol, response.getProtocol());
    }

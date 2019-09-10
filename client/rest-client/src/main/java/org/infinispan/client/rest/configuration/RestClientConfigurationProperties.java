@@ -256,7 +256,7 @@ public class RestClientConfigurationProperties {
       props.setProperty(AUTH_SERVER_NAME, authServerName);
    }
 
-   public String getServerList(){
+   public String getServerList() {
       return props.getProperty(SERVER_LIST);
    }
 }

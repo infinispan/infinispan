@@ -37,15 +37,15 @@ public class RestRouter {
            RestClient invalidCtx = RestClient.forConfiguration(cfgFromCtx.apply("/invalid"));
            RestClient emptyCtx = RestClient.forConfiguration(cfgFromCtx.apply("/"))) {
 
-         RestResponse response = sync(restCtx.serverInfo());
+         RestResponse response = sync(restCtx.server().info());
          assertEquals(200, response.getStatus());
          assertTrue(response.getBody().contains("version"));
 
-         response = sync(emptyCtx.serverInfo());
+         response = sync(emptyCtx.server().info());
          assertEquals(404, response.getStatus());
          assertFalse(response.getBody().contains("cache"));
 
-         response = sync(invalidCtx.serverInfo());
+         response = sync(invalidCtx.server().info());
          assertEquals(404, response.getStatus());
 
       } catch (IOException ignored) {

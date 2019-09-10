@@ -30,10 +30,10 @@ public class ShutdownRestIT {
    @Test
    public void testShutDown() {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      sync(client.serverStop());
+      sync(client.server().stop());
       eventually(() -> {
          try {
-            sync(client.serverConfig());
+            sync(client.server().configuration());
          } catch (RuntimeException r) {
             return (Util.getRootCause(r) instanceof ConnectException);
          }

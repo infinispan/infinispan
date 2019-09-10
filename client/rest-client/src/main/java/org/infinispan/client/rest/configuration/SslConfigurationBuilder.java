@@ -9,7 +9,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
- *
  * SSLConfigurationBuilder.
  *
  * @author Tristan Tarrant
@@ -59,9 +58,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the filename of a keystore to use to create the {@link SSLContext} You also need to
-    * specify a {@link #keyStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Specifies the filename of a keystore to use to create the {@link SSLContext} You also need to specify a {@link
+    * #keyStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}. Setting this
+    * property also implicitly enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder keyStoreFileName(String keyStoreFileName) {
       this.keyStoreFileName = keyStoreFileName;
@@ -69,8 +68,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the type of the keystore, such as JKS or JCEKS. Defaults to JKS.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Specifies the type of the keystore, such as JKS or JCEKS. Defaults to JKS. Setting this property also implicitly
+    * enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder keyStoreType(String keyStoreType) {
       this.keyStoreType = keyStoreType;
@@ -78,9 +77,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the password needed to open the keystore You also need to specify a
-    * {@link #keyStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Specifies the password needed to open the keystore You also need to specify a {@link #keyStoreFileName(String)}.
+    * Alternatively specify an initialized {@link #sslContext(SSLContext)}. Setting this property also implicitly
+    * enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
       this.keyStorePassword = keyStorePassword;
@@ -88,10 +87,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the password needed to access private key associated with certificate stored in specified
-    * {@link #keyStoreFileName(String)}. If password is not specified, password provided in
-    * {@link #keyStorePassword(char[])} will be used.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}<br>
+    * Specifies the password needed to access private key associated with certificate stored in specified {@link
+    * #keyStoreFileName(String)}. If password is not specified, password provided in {@link #keyStorePassword(char[])}
+    * will be used. Setting this property also implicitly enables SSL/TLS (see {@link #enable()}<br>
     * <b>Note:</b> this only works with some keystore types
     *
     * @deprecated since 9.3
@@ -103,8 +101,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Sets the alias of the key to use, in case the keyStore contains multiple certificates.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Sets the alias of the key to use, in case the keyStore contains multiple certificates. Setting this property also
+    * implicitly enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder keyAlias(String keyAlias) {
       this.keyAlias = keyAlias;
@@ -117,9 +115,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the filename of a truststore to use to create the {@link SSLContext} You also need
-    * to specify a {@link #trustStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Specifies the filename of a truststore to use to create the {@link SSLContext} You also need to specify a {@link
+    * #trustStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}. Setting this
+    * property also implicitly enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder trustStoreFileName(String trustStoreFileName) {
       this.trustStoreFileName = trustStoreFileName;
@@ -137,8 +135,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the type of the truststore, such as JKS or JCEKS. Defaults to JKS.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Specifies the type of the truststore, such as JKS or JCEKS. Defaults to JKS. Setting this property also implicitly
+    * enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder trustStoreType(String trustStoreType) {
       this.trustStoreType = trustStoreType;
@@ -146,9 +144,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the password needed to open the truststore You also need to specify a
-    * {@link #trustStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Specifies the password needed to open the truststore You also need to specify a {@link
+    * #trustStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}. Setting this
+    * property also implicitly enables SSL/TLS (see {@link #enable()}
     */
    public SslConfigurationBuilder trustStorePassword(char[] trustStorePassword) {
       this.trustStorePassword = trustStorePassword;
@@ -157,20 +155,21 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    /**
     * Specifies the TLS SNI hostname for the connection
-    * @see javax.net.ssl.SSLParameters#setServerNames(List).
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
-     */
+    *
+    * @see javax.net.ssl.SSLParameters#setServerNames(List). Setting this property also implicitly enables SSL/TLS (see
+    * {@link #enable()}
+    */
    public SslConfigurationBuilder sniHostName(String sniHostName) {
       this.sniHostName = sniHostName;
       return enable();
    }
 
    /**
-    * Configures the secure socket protocol.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    * Configures the secure socket protocol. Setting this property also implicitly enables SSL/TLS (see {@link
+    * #enable()}
     *
-    * @see SSLContext#getInstance(String)
     * @param protocol The standard name of the requested protocol, e.g TLSv1.2
+    * @see SSLContext#getInstance(String)
     */
    public SslConfigurationBuilder protocol(String protocol) {
       this.protocol = protocol;
@@ -259,7 +258,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       if (typed.containsKey(RestClientConfigurationProperties.TRUST_STORE_PASSWORD))
          this.trustStorePassword(typed.getProperty(RestClientConfigurationProperties.TRUST_STORE_PASSWORD, null, true).toCharArray());
 
-      if(typed.containsKey(RestClientConfigurationProperties.SSL_PROTOCOL))
+      if (typed.containsKey(RestClientConfigurationProperties.SSL_PROTOCOL))
          this.protocol(typed.getProperty(RestClientConfigurationProperties.SSL_PROTOCOL, null, true));
 
       if (typed.containsKey(RestClientConfigurationProperties.SNI_HOST_NAME))

@@ -40,7 +40,7 @@ public class RestServerResource {
    @Test
    public void testConfig() throws Exception {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      RestResponse restResponse = sync(client.serverConfig());
+      RestResponse restResponse = sync(client.server().configuration());
       JsonNode configNode = mapper.readTree(restResponse.getBody());
 
       JsonNode server = configNode.get("server");
@@ -57,7 +57,7 @@ public class RestServerResource {
    @Test
    public void testThreads() {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      RestResponse restResponse = sync(client.serverThreads());
+      RestResponse restResponse = sync(client.server().threads());
       String dump = restResponse.getBody();
 
       assertEquals(MediaType.TEXT_PLAIN, restResponse.contentType());
@@ -67,7 +67,7 @@ public class RestServerResource {
    @Test
    public void testInfo() throws Exception {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      RestResponse restResponse = sync(client.serverInfo());
+      RestResponse restResponse = sync(client.server().info());
       String body = restResponse.getBody();
       JsonNode infoNode = mapper.readTree(body);
 
@@ -77,7 +77,7 @@ public class RestServerResource {
    @Test
    public void testMemory() throws Exception {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      RestResponse restResponse = sync(client.serverMemory());
+      RestResponse restResponse = sync(client.server().memory());
       JsonNode infoNode = mapper.readTree(restResponse.getBody());
       JsonNode memory = infoNode.get("heap");
       assertTrue(memory.get("init").asInt() > 0);
@@ -88,7 +88,7 @@ public class RestServerResource {
    @Test
    public void testEnv() throws Exception {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      RestResponse restResponse = sync(client.serverEnv());
+      RestResponse restResponse = sync(client.server().env());
       JsonNode infoNode = mapper.readTree(restResponse.getBody());
       JsonNode osVersion = infoNode.get("os.version");
       assertEquals(System.getProperty("os.version"), osVersion.asText());
@@ -97,7 +97,7 @@ public class RestServerResource {
    @Test
    public void testCacheManagerNames() throws Exception {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
-      RestResponse restResponse = sync(client.serverCacheManagers());
+      RestResponse restResponse = sync(client.cacheManagers());
       ArrayNode cacheManagers = (ArrayNode) mapper.readTree(restResponse.getBody());
       Set<String> cmNames = StreamSupport.stream(cacheManagers.spliterator(), false).map(JsonNode::asText).collect(Collectors.toSet());
 

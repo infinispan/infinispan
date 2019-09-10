@@ -14,7 +14,6 @@ import org.infinispan.commons.util.TypedProperties;
  * @since 10.0
  */
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
-   public static final String DEFAULT_REALM = "ApplicationRealm";
    private boolean enabled = false;
    private String mechanism;
    private Subject clientSubject;
@@ -51,8 +50,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Selects the authentication mechanism to use for the connection to the server.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Selects the authentication mechanism to use for the connection to the server. Setting this property also
+    * implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder mechanism(String mechanism) {
       this.mechanism = mechanism;
@@ -60,8 +59,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Sets the client subject, necessary for those mechanisms which require it to access client credentials (i.e. SPNEGO).
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Sets the client subject, necessary for those mechanisms which require it to access client credentials (i.e.
+    * SPNEGO). Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder clientSubject(Subject clientSubject) {
       this.clientSubject = clientSubject;
@@ -69,9 +68,9 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the username to be used for authentication. This will use a simple CallbackHandler.
-    * This is mutually exclusive with explicitly providing the CallbackHandler.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the username to be used for authentication. This will use a simple CallbackHandler. This is mutually
+    * exclusive with explicitly providing the CallbackHandler. Setting this property also implicitly enables
+    * authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder username(String username) {
       this.username = username;
@@ -79,8 +78,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the password to be used for authentication. A username is also required.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the password to be used for authentication. A username is also required. Setting this property also
+    * implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder password(String password) {
       this.password = password != null ? password.toCharArray() : null;
@@ -88,8 +87,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the password to be used for authentication. A username is also required.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the password to be used for authentication. A username is also required. Setting this property also
+    * implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder password(char[] password) {
       this.password = password;
@@ -97,9 +96,9 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the realm to be used for authentication. Username and password also need to be supplied. If none
-    * is specified, this defaults to 'ApplicationRealm'.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the realm to be used for authentication. Username and password also need to be supplied. If none is
+    * specified, this defaults to 'ApplicationRealm'. Setting this property also implicitly enables authentication (see
+    * {@link #enable()}
     */
    public AuthenticationConfigurationBuilder realm(String realm) {
       this.realm = realm;
@@ -108,7 +107,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
    @Override
    public AuthenticationConfiguration create() {
-      String mech = mechanism == null ? "BASIC" : mechanism;
+      String mech = mechanism == null ? "AUTO" : mechanism;
       return new AuthenticationConfiguration(clientSubject, enabled, mech, realm, username, password);
    }
 
@@ -129,7 +128,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
       if (typed.containsKey(RestClientConfigurationProperties.AUTH_MECHANISM))
-        mechanism(typed.getProperty(RestClientConfigurationProperties.AUTH_MECHANISM, mechanism, true));
+         mechanism(typed.getProperty(RestClientConfigurationProperties.AUTH_MECHANISM, mechanism, true));
 
       if (typed.containsKey(RestClientConfigurationProperties.AUTH_USERNAME))
          username(typed.getProperty(RestClientConfigurationProperties.AUTH_USERNAME, username, true));

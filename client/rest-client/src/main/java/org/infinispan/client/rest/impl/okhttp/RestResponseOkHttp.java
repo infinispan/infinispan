@@ -1,6 +1,7 @@
 package org.infinispan.client.rest.impl.okhttp;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
@@ -34,8 +35,14 @@ public class RestResponseOkHttp implements RestResponse {
    }
 
    @Override
+   public InputStream getBodyAsStream() {
+      return response.body().byteStream();
+   }
+
+   @Override
    public MediaType contentType() {
-      return MediaType.fromString(response.body().contentType().toString());
+      okhttp3.MediaType mediaType = response.body().contentType();
+      return mediaType == null ? null : MediaType.fromString(mediaType.toString());
    }
 
    @Override

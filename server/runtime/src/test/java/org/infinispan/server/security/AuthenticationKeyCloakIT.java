@@ -69,10 +69,10 @@ public class AuthenticationKeyCloakIT {
                .mechanism("BEARER_TOKEN")
                .username(token);
       RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
-      RestResponse response = sync(client.cachePost(SERVER_TEST.getMethodName(), "k1", "v1"));
+      RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
 
       assertEquals(200, response.getStatus());
-      response = sync(client.cacheGet(SERVER_TEST.getMethodName(), "k1"));
+      response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"));
       assertEquals(200, response.getStatus());
       assertEquals("v1", response.getBody());
    }

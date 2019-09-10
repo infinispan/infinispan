@@ -98,7 +98,7 @@ public class InfinispanServerTestMethodRule implements TestRule {
 
    public RestClient getRestClient(RestClientConfigurationBuilder clientConfigurationBuilder, CacheMode mode) {
       RestClient restClient = registerResource(infinispanServerRule.newRestClient(clientConfigurationBuilder));
-      RestResponse response = Exceptions.unchecked(() -> restClient.cacheCreateFromTemplate(methodName, "org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
+      RestResponse response = Exceptions.unchecked(() -> restClient.cache(methodName).createWithTemplate("org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
       if (response.getStatus() != 200) {
          throw new RuntimeException("Could not create cache " + methodName + ", status = " + response.getStatus());
       }

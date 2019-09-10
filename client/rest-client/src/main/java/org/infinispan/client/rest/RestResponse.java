@@ -1,6 +1,7 @@
 package org.infinispan.client.rest;
 
-import org.infinispan.commons.dataconversion.MediaType;
+import java.io.InputStream;
+
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.util.Experimental;
 
@@ -9,12 +10,10 @@ import org.infinispan.commons.util.Experimental;
  * @since 10.0
  **/
 @Experimental
-public interface RestResponse {
+public interface RestResponse extends RestEntity {
    int getStatus();
 
-   String getBody();
-
-   MediaType contentType();
+   InputStream getBodyAsStream();
 
    Protocol getProtocol();
 }

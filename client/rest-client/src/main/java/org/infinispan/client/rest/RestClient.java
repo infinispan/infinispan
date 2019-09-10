@@ -2,7 +2,6 @@ package org.infinispan.client.rest;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
@@ -10,6 +9,8 @@ import org.infinispan.client.rest.impl.okhttp.RestClientOkHttp;
 import org.infinispan.commons.util.Experimental;
 
 /**
+ * An experimental client for interacting with an Infinispan REST server.
+ *
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
@@ -18,34 +19,54 @@ public interface RestClient extends Closeable {
    @Override
    void close() throws IOException;
 
-   CompletionStage<RestResponse> post(String url, Map<String, String> headers, Map<String, String> formParameters);
+   RestServerClient server();
 
-   CompletionStage<RestResponse> cachePost(String cache, String key, String value);
+   /**
+    * Returns a list of available cache manager names
+    */
+   CompletionStage<RestResponse> cacheManagers();
 
-   CompletionStage<RestResponse> cachePut(String cache, String key, String value);
+   /**
+    * Operations on the specified cache manager
+    */
+   RestCacheManagerClient cacheManager(String name);
 
-   CompletionStage<RestResponse> cacheGet(String cache, String key);
+   /**
+    * Returns a list of available caches
+    */
+   CompletionStage<RestResponse> caches();
 
-   CompletionStage<RestResponse> cacheDelete(String cache, String key);
+   /**
+    * Operations on the specified cache
+    */
+   RestCacheClient cache(String name);
 
-   CompletionStage<RestResponse> cacheQuery(String cache, String query);
+   /**
+    * Returns a list of available counters
+    */
+   CompletionStage<RestResponse> counters();
 
-   CompletionStage<RestResponse> cacheCreateFromTemplate(String cacheName, String template);
+   /**
+    * Operations on the specified counter
+    */
+   RestCounterClient counter(String name);
 
-   CompletionStage<RestResponse> serverConfig();
+   /**
+    * Raw HTTP operations
+    */
+   RestRawClient raw();
 
-   CompletionStage<RestResponse> serverStop();
+   /**
+    * Returns the configuration of this {@link RestClient}
+    */
+   RestClientConfiguration getConfiguration();
 
-   CompletionStage<RestResponse> serverThreads();
-
-   CompletionStage<RestResponse> serverInfo();
-
-   CompletionStage<RestResponse> serverMemory();
-
-   CompletionStage<RestResponse> serverEnv();
-
-   CompletionStage<RestResponse> serverCacheManagers();
-
+   /**
+    * Creates a {@link RestClient} instance based on the supplied configuration
+    *
+    * @param configuration a {@link RestClientConfiguration}
+    * @return a {@link RestClient} instance
+    */
    static RestClient forConfiguration(RestClientConfiguration configuration) {
       return new RestClientOkHttp(configuration);
    }
