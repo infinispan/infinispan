@@ -35,6 +35,20 @@
                         <updatePolicy>never</updatePolicy>
                     </snapshots>
                 </repository>
+                <repository>
+                   <id>redhat</id>
+                   <name>Red Hat Maven Repository</name>
+                   <url>https://maven.repository.redhat.com/ga/</url>
+                   <layout>default</layout>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </snapshots>
+                </repository>
             </repositories>
             <pluginRepositories>
                 <!-- Use Central first -->

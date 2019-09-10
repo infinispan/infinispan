@@ -668,6 +668,7 @@
       <versionx.org.picketbox.picketbox>${version.picketbox}</versionx.org.picketbox.picketbox>
       <versionx.org.picketbox.picketbox-commons>1.0.0.final</versionx.org.picketbox.picketbox-commons>
       <versionx.org.picketbox.picketbox-infinispan>${version.picketbox}</versionx.org.picketbox.picketbox-infinispan>
+      <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
       <versionx.org.projectodd.vdx.vdx-core>${version.projectodd}</versionx.org.projectodd.vdx.vdx-core>
       <versionx.org.projectodd.vdx.vdx-wildfly>${version.projectodd}</versionx.org.projectodd.vdx.vdx-wildfly>
       <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>

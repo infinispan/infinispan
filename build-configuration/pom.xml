@@ -105,7 +105,7 @@
 
       <!-- org.wildfly / org.jboss.eap -->
       <appserver.groupId>org.wildfly</appserver.groupId>
-      <appserver.version>17.0.1.Final</appserver.version>
+      <appserver.version>18.0.0.Beta1</appserver.version>
 
       <!-- === Component Versions === -->
       <version.component.console>10.0.0.Alpha2</version.component.console>
@@ -123,13 +123,13 @@
       <version.java>11</version.java>
 
       <!-- Dependency versions -->
-      <version.ant>1.10.1</version.ant>
+      <version.ant>1.10.7</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.antlr3>3.5.2</version.antlr3>
       <version.apache.maven>3.5.4</version.apache.maven>
-      <version.apache.maven.resolver>1.1.0</version.apache.maven.resolver>
-      <version.apache.maven.wagon>2.6</version.apache.maven.wagon>
+      <version.apache.maven.resolver>1.4.1</version.apache.maven.resolver>
+      <version.apache.maven.wagon>3.3.3</version.apache.maven.wagon>
       <version.arquillian>1.4.1.Final</version.arquillian>
       <version.asm>2.2.3</version.asm>
       <version.asm.ow2>6.1.1</version.asm.ow2>
@@ -145,7 +145,7 @@
       <version.groovy>2.4.8</version.groovy>
       <version.gson>2.8.5</version.gson>
       <version.hamcrest>1.3</version.hamcrest>
-      <version.hibernate.core>5.3.10.Final</version.hibernate.core>
+      <version.hibernate.core>5.3.12.Final</version.hibernate.core>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>1.3.4</version.hibernate_dep.classmate>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
@@ -153,7 +153,7 @@
       <version.hibernate_dep.jandex>2.0.5.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javassist>3.23.2-GA</version.hibernate_dep.javassist>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
-      <version.hibernate.search>5.10.3.Final</version.hibernate.search>
+      <version.hibernate.search>5.10.7.Final</version.hibernate.search>
       <version.hibernate.search.module.slot>5.10</version.hibernate.search.module.slot>
       <version.infinispan>${project.version}</version.infinispan>
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
@@ -167,24 +167,24 @@
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.javax.persistence>2.2</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jaxb>2.3.0</version.jaxb>
-      <version.jboss.logging>3.4.0.Final</version.jboss.logging>
-      <version.jboss.metadata>11.0.0.Final</version.jboss.metadata>
-      <version.jboss.marshalling>2.0.7.Final</version.jboss.marshalling>
+      <version.jaxb>2.3.1</version.jaxb>
+      <version.jboss.logging>3.4.1.Final</version.jboss.logging>
+      <version.jboss.metadata>13.0.0.Final</version.jboss.metadata>
+      <version.jboss.marshalling>2.0.9.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
-      <version.jboss.narayana>5.9.5.Final</version.jboss.narayana>
-      <version.jboss.security>3.0.4.Final</version.jboss.security>
+      <version.jboss.narayana>5.9.8.Final</version.jboss.narayana>
+      <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0-alpha-10</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>2.2.4</version.jboss.shrinkwrap.resolver>
-      <version.jboss.xnio>3.7.1.Final</version.jboss.xnio>
+      <version.jboss.xnio>3.7.3.Final</version.jboss.xnio>
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jetty>9.4.5.v20170502</version.jetty>
       <version.jgroups>4.1.4.Final</version.jgroups>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.12</version.junit>
       <version.karaf>4.2.3</version.karaf>
-      <version.log4j>2.11.2</version.log4j>
+      <version.log4j>2.12.1</version.log4j>
       <version.logback>1.1.7</version.logback>
       <version.lucene>5.5.5</version.lucene>
       <version.lucene.module.slot>5.5.5</version.lucene.module.slot>
@@ -206,11 +206,12 @@
       <version.ops4j.pax.url>2.5.2</version.ops4j.pax.url>
       <version.org.wildfly>${appserver.version}</version.org.wildfly>
       <version.org.wildfly.arquillian>2.2.0.Final</version.org.wildfly.arquillian>
-      <version.org.wildfly.core>9.0.2.Final</version.org.wildfly.core>
-      <version.org.wildfly.elytron>1.10.1.Final</version.org.wildfly.elytron>
+      <version.org.wildfly.core>10.0.0.Final</version.org.wildfly.core>
+      <version.org.wildfly.elytron>1.10.3.Final</version.org.wildfly.elytron>
       <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.picketbox>5.0.3.Final</version.picketbox>
+      <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.projectodd>1.1.6</version.projectodd>
       <version.protostream>4.3.0.Alpha12</version.protostream>
       <version.protostuff>1.6.0</version.protostuff>
@@ -225,7 +226,7 @@
       <version.spring.session>2.1.6.RELEASE</version.spring.session>
       <version.tomcat>9.0.13</version.tomcat>
       <version.xalan>2.7.1.jbossorg-2</version.xalan>
-      <version.xerces>2.11.0.SP5</version.xerces>
+      <version.xerces>2.12.0.SP02</version.xerces>
       <version.xpp3>1.1.4c</version.xpp3>
 
       <!-- Versions of feature packs we consume: must match expected versions manually for the time being
