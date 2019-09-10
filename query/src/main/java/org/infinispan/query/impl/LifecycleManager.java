@@ -262,7 +262,8 @@ public class LifecycleManager implements ModuleLifecycle {
    private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchIntegrator) {
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       // Resolve MBean server instance
-      GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
+      GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
+      GlobalJmxStatisticsConfiguration jmxConfig = globalConfig.globalJmxStatistics();
       if (!jmxConfig.enabled())
          return;
       if (mbeanServer == null) {
@@ -270,7 +271,7 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       // Resolve jmx domain to use for query MBeans
-      String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cache.getName());
+      String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cache.getName());
       String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, queryGroupName);
 
       // Register query statistics MBean, but only enable it if Infinispan config says so
@@ -405,8 +406,8 @@ public class LifecycleManager implements ModuleLifecycle {
          try {
             InfinispanQueryStatisticsInfo stats = cr.getComponent(InfinispanQueryStatisticsInfo.class);
             if (stats != null) {
-               GlobalJmxStatisticsConfiguration jmxConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics();
-               String queryGroupName = getQueryGroupName(jmxConfig.cacheManagerName(), cacheName);
+               GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
+               String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cacheName);
                String queryMBeanFilter = stats.getObjectName().getDomain() + ":" + queryGroupName + ",*";
                JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
             }

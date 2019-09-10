@@ -35,8 +35,6 @@ public class ComponentsJmxRegistration {
     * @param mBeanServer the server where mbeans are being registered
     * @param groupName   name of jmx group name
     * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
-    * @see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/mxbeans.html#mbean_server">platform
-    *      MBeanServer</a>
     */
    public ComponentsJmxRegistration(MBeanServer mBeanServer, String groupName) {
       this.mBeanServer = mBeanServer;

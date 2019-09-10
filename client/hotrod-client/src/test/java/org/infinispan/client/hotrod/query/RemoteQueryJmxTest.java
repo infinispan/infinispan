@@ -163,13 +163,13 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
    }
 
    private ObjectName getQueryStatsObjectName(String cacheName) throws MalformedObjectNameException {
-      String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
+      String cacheManagerName = cacheManager.getCacheManagerConfiguration().cacheManagerName();
       return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
             + ",cache=" + ObjectName.quote(cacheName) + ",component=Statistics");
    }
 
    private ObjectName getProtobufMetadataManagerObjectName() throws MalformedObjectNameException {
-      String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
+      String cacheManagerName = cacheManager.getCacheManagerConfiguration().cacheManagerName();
       return new ObjectName(jmxDomain + ":type=RemoteQuery,name="
             + ObjectName.quote(cacheManagerName)
             + ",component=" + ProtobufMetadataManagerMBean.OBJECT_NAME);

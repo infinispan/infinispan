@@ -123,19 +123,19 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
 
         @Override
         public int hashCode() {
-            return this.container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName().hashCode() ^ this.cacheName.hashCode();
+            return container.getCacheManagerConfiguration().cacheManagerName().hashCode() ^ cacheName.hashCode();
         }
 
         @Override
         public boolean equals(Object object) {
-            if ((object == null) || !(object instanceof InfinispanXAResourceRecovery)) return false;
+            if (!(object instanceof InfinispanXAResourceRecovery)) return false;
             InfinispanXAResourceRecovery recovery = (InfinispanXAResourceRecovery) object;
-            return this.container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName().equals(recovery.container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName()) && this.cacheName.equals(recovery.cacheName);
+            return container.getCacheManagerConfiguration().cacheManagerName().equals(recovery.container.getCacheManagerConfiguration().cacheManagerName()) && cacheName.equals(recovery.cacheName);
         }
 
         @Override
         public String toString() {
-            return container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName() + "." + this.cacheName;
+            return container.getCacheManagerConfiguration().cacheManagerName() + "." + this.cacheName;
         }
     }
 }

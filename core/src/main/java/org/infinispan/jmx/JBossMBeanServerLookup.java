@@ -1,12 +1,5 @@
 package org.infinispan.jmx;
 
-import java.util.Properties;
-
-import javax.management.MBeanServer;
-
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.Util;
-
 /**
  * MBeanServer lookup implementation to locate the JBoss MBeanServer.
  *
@@ -15,16 +8,5 @@ import org.infinispan.commons.util.Util;
  * @deprecated since 9.4, use {@link org.infinispan.commons.jmx.JBossMBeanServerLookup} instead
  */
 @Deprecated
-public class JBossMBeanServerLookup implements MBeanServerLookup {
-
-   @Override
-   public MBeanServer getMBeanServer(Properties properties) {
-      Class<?> mbsLocator = Util.loadClass("org.jboss.mx.util.MBeanServerLocator", null);
-      try {
-         return (MBeanServer) mbsLocator.getMethod("locateJBoss").invoke(null);
-      } catch (Exception e) {
-         throw new CacheException("Unable to locate JBoss MBean server", e);
-      }
-   }
-
+public class JBossMBeanServerLookup extends org.infinispan.commons.jmx.JBossMBeanServerLookup implements MBeanServerLookup {
 }

@@ -199,7 +199,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeStartElement(Element.CACHE_CONTAINER);
       GlobalConfiguration globalConfiguration = holder.getGlobalConfiguration();
       if (globalConfiguration != null) {
-         writer.writeAttribute(Attribute.NAME, globalConfiguration.globalJmxStatistics().cacheManagerName());
+         writer.writeAttribute(Attribute.NAME, globalConfiguration.cacheManagerName());
          if (globalConfiguration.shutdown().hookBehavior() != ShutdownHookBehavior.DEFAULT) {
             writer.writeAttribute(Attribute.SHUTDOWN_HOOK, globalConfiguration.shutdown().hookBehavior().name());
          }

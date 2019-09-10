@@ -47,7 +47,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ResourceDMBean implements DynamicMBean {
 
-   private static final String MBEAN_DESCRITION = "Dynamic MBean Description";
+   private static final String MBEAN_DESCRIPTION = "Dynamic MBean Description";
 
    private static final Log log = LogFactory.getLog(ResourceDMBean.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -272,12 +272,11 @@ public class ResourceDMBean implements DynamicMBean {
             if (log.isDebugEnabled())
                log.debugf("Argument value before transformation: %s and its class: %s. " +
                                 "For method.invoke we need it to be class: %s", args[i], args[i].getClass(), sig[i]);
-            if (sig[i].equals(int.class.getCanonicalName()) || sig[i].equals(Integer.class.getCanonicalName())) {
-               if ((args[i].getClass() != Integer.class) && (args[i].getClass() != int.class))
+            if (sig[i].equals(int.class.getName()) || sig[i].equals(Integer.class.getName())) {
+               if (args[i].getClass() != Integer.class && args[i].getClass() != int.class)
                   args[i] = Integer.parseInt((String) args[i]);
-            }
-            if (sig[i].equals(Long.class.getCanonicalName()) || sig[i].equals(long.class.getCanonicalName())) {
-               if ((args[i].getClass() != Long.class) && (args[i].getClass() != long.class))
+            } else if (sig[i].equals(Long.class.getName()) || sig[i].equals(long.class.getName())) {
+               if (args[i].getClass() != Long.class && args[i].getClass() != long.class)
                   args[i] = Long.parseLong((String) args[i]);
             }
          }
@@ -295,7 +294,7 @@ public class ResourceDMBean implements DynamicMBean {
       }
    }
 
-   public Throwable getRootCause(Throwable throwable) {
+   private Throwable getRootCause(Throwable throwable) {
       Throwable cause;
       while ((cause = throwable.getCause()) != null) {
          throwable = cause;
@@ -303,11 +302,10 @@ public class ResourceDMBean implements DynamicMBean {
       return throwable;
    }
 
-
    private Attribute getNamedAttribute(String name) {
       Attribute result = null;
-      if (name.equals(MBEAN_DESCRITION)) {
-         result = new Attribute(MBEAN_DESCRITION, description);
+      if (name.equals(MBEAN_DESCRIPTION)) {
+         result = new Attribute(MBEAN_DESCRIPTION, description);
       } else {
          InvokableMBeanAttributeInfo i = atts.get(name);
          if (i == null && name.length() > 0) {

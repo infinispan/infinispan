@@ -202,7 +202,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    }
 
    private ObjectName getQueryStatsObjectName(String jmxDomain, String cacheName) {
-      String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
+      String cacheManagerName = cacheManager.getCacheManagerConfiguration().cacheManagerName();
       try {
          return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
                                      + ",cache=" + ObjectName.quote(cacheName)
