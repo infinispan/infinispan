@@ -1,10 +1,5 @@
 package org.infinispan.jmx;
 
-import java.lang.management.ManagementFactory;
-import java.util.Properties;
-
-import javax.management.MBeanServer;
-
 /**
  * Default implementation for {@link MBeanServerLookup}, will return the platform MBean server.
  * <p/>
@@ -16,11 +11,5 @@ import javax.management.MBeanServer;
  * @deprecated Use {@link org.infinispan.commons.jmx.PlatformMBeanServerLookup} instead
  */
 @Deprecated
-public class PlatformMBeanServerLookup implements MBeanServerLookup {
-
-   @Override
-   public MBeanServer getMBeanServer(Properties properties) {
-      return ManagementFactory.getPlatformMBeanServer();
-   }
-
+public class PlatformMBeanServerLookup extends org.infinispan.commons.jmx.PlatformMBeanServerLookup implements MBeanServerLookup {
 }

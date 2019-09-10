@@ -2,6 +2,7 @@ package org.infinispan.jmx;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -26,7 +27,6 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
- * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -36,7 +36,9 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    public static final String CACHE_JMX_GROUP = "type=Cache";
 
    @Inject Configuration cacheConfiguration;
-   @Inject public CacheManagerJmxRegistration globalJmxRegistration;
+
+   @Inject CacheManagerJmxRegistration globalJmxRegistration;
+
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject String cacheName;
 
@@ -95,7 +97,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    protected ComponentsJmxRegistration buildRegistrar() {
       // Quote group name, to handle invalid ObjectName characters
       String groupName = CACHE_JMX_GROUP + "," + globalJmxRegistration.getCacheJmxName(cacheName,
-                                                                                       cacheConfiguration.clustering().cacheModeString()) + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+                                                                                       cacheConfiguration.clustering().cacheModeString()) + ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
       ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, groupName);
       updateDomain(registrar, mBeanServer, groupName, globalJmxRegistration);
       return registrar;

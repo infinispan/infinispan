@@ -162,7 +162,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public String toString() {
-        return this.cm.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
+        return cm.getCacheManagerConfiguration().cacheManagerName();
     }
 
    public String getDefinedCacheNames() {

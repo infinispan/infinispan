@@ -69,7 +69,7 @@ public class InjectedCacheResolver implements CacheResolver {
 
    private JCacheManager toJCacheManager(final EmbeddedCacheManager cacheManager) {
       final GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
-      final String name = globalCfg.globalJmxStatistics().cacheManagerName();
+      final String name = globalCfg.cacheManagerName();
       return new JCacheManager(URI.create(name), cacheManager, Caching.getCachingProvider());
    }
 

@@ -268,7 +268,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
 
-      this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+      this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName());
       this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
       this.stats = new CacheContainerStatsImpl(this);
@@ -370,10 +370,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
 
          health = new HealthImpl(this, internalCacheRegistry);
-         cacheManagerInfo = new CacheManagerInfo(this, this.getConfigurationManager(), internalCacheRegistry);
+         cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
-         authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+         authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName());
          globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
@@ -666,7 +666,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          throw ((CacheException) ce.getCause());
       }
 
-      Cache<K, V> cache = null;
+      Cache<K, V> cache;
       try {
          log.tracef("About to wire and start cache %s", cacheName);
          cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);

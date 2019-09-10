@@ -145,12 +145,13 @@ public final class LifecycleManager implements ModuleLifecycle {
    }
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManagerImpl protobufMetadataManager, GlobalComponentRegistry gcr) {
-      GlobalJmxStatisticsConfiguration jmxConfig = gcr.getGlobalConfiguration().globalJmxStatistics();
+      GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
+      GlobalJmxStatisticsConfiguration jmxConfig = globalConfig.globalJmxStatistics();
       if (mbeanServer == null) {
          mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
       }
 
-      String groupName = "type=RemoteQuery,name=" + ObjectName.quote(jmxConfig.cacheManagerName());
+      String groupName = "type=RemoteQuery,name=" + ObjectName.quote(globalConfig.cacheManagerName());
       String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
       BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
       MBeanMetadata metadata = basicComponentRegistry.getMBeanMetadata(ProtobufMetadataManagerImpl.class.getName());

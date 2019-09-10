@@ -19,13 +19,13 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
@@ -347,7 +347,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       INFINISPAN_70(7, 0) {
          public void check(ConfigurationBuilderHolder holder) {
             GlobalConfiguration g = getGlobalConfiguration(holder);
-            assertEquals("maximal", g.globalJmxStatistics().cacheManagerName());
+            assertEquals("maximal", g.cacheManagerName());
             assertTrue(g.globalJmxStatistics().enabled());
             assertEquals("my-domain", g.globalJmxStatistics().domain());
             assertTrue(g.globalJmxStatistics().mbeanServerLookup() instanceof CustomMBeanServerPropertiesTest.TestLookup);

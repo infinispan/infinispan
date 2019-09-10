@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
@@ -73,7 +74,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
       // Quote group name, to handle invalid ObjectName characters
       String groupName = CACHE_MANAGER_JMX_GROUP
             + "," + ComponentsJmxRegistration.NAME_KEY
-            + "=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+            + "=" + ObjectName.quote(globalConfig.cacheManagerName());
       ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, groupName);
       updateDomain(registrar, mBeanServer, groupName);
       return registrar;
@@ -93,7 +94,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    public void unregisterCacheMBean(String cacheName, String cacheModeString) {
       if (mBeanServer != null) {
          String groupName = CacheJmxRegistration.CACHE_JMX_GROUP + "," + getCacheJmxName(cacheName, cacheModeString) +
-                            ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+                            ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
          String pattern = jmxDomain + ":" + groupName + ",*";
          try {
             Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(pattern), null, mBeanServer);

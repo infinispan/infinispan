@@ -76,7 +76,7 @@ public class CacheManagerInfo {
    }
 
    public String getName() {
-      return configurationManager.getGlobalConfiguration().globalJmxStatistics().cacheManagerName();
+      return configurationManager.getGlobalConfiguration().cacheManagerName();
    }
 
    public String getNodeAddress() {
