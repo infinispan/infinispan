@@ -29,6 +29,7 @@ Running Infinispan::
 * link:titles/clustering/clustering.html[Creating Infinispan Clusters]
 * link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
 * link:titles/security/security.html[Security Guide]
+* link:titles/rolling_up_k8s/rolling.html[Rolling Upgrades on Kubernetes and Red Hat OpenShift]
 
 Using Remote Infinispan Endpoints::
 +

@@ -1,0 +1,17 @@
+[id='jgroups_jchannels-{context}']
+= Using Custom JChannels
+Construct custom JGroups JChannels as in the following example:
+
+[source,java]
+----
+include::code_examples/CustomJChannel.java[]
+----
+
+[NOTE]
+====
+{brandname} cannot use custom JChannels that are already connected.
+====
+
+.Reference
+
+link:http://www.jgroups.org/manual4/index.html#JChannel[JGroups JChannel]

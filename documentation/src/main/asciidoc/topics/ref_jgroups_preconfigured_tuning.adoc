@@ -1,0 +1,127 @@
+[id='jgroups_system_props-{context}']
+= System Properties for Default JGroups Stacks
+
+`default-jgroups-udp.xml`::
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.udp.mcast_addr`
+| IP address for multicast, both discovery and inter-cluster communication. The IP address must be a valid "class D" address that is suitable for IP multicast.
+| `228.6.7.8`
+| Optional
+
+| `jgroups.udp.mcast_port`
+| Port for the multicast socket.
+| `46655`
+| Optional
+
+| `jgroups.udp.ip_ttl`
+| Specifies the time-to-live (TTL) for IP multicast packets. The value defines the number of network hops a packet can make before it is dropped.
+| 2
+| Optional
+
+|===
+
+
+`default-jgroups-tcp.xml`::
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.tcp.address`
+| IP address for TCP transport.
+| `127.0.0.1`
+| Optional
+
+| `jgroups.tcp.port`
+| Port for the TCP socket.
+| `7800`
+| Optional
+
+| `jgroups.udp.mcast_addr`
+| IP address for multicast discovery. The IP address must be a valid "class D" address that is suitable for IP multicast.
+| `228.6.7.8`
+| Optional
+
+| `jgroups.udp.mcast_port`
+| Port for the multicast socket.
+| `46655`
+| Optional
+
+| `jgroups.udp.ip_ttl`
+| Specifies the time-to-live (TTL) for IP multicast packets. The value defines the number of network hops a packet can make before it is dropped.
+| 2
+| Optional
+
+|===
+
+`default-jgroups-ec2.xml`::
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.tcp.address`
+| IP address for TCP transport.
+| `127.0.0.1`
+| Optional
+
+| `jgroups.tcp.port`
+| Port for the TCP socket.
+| `7800`
+| Optional
+
+| `jgroups.s3.access_key`
+| Amazon S3 access key for an S3 bucket.
+| No default value.
+| Optional
+
+| `jgroups.s3.secret_access_key`
+| Amazon S3 secret key used for an S3 bucket.
+| No default value.
+| Optional
+
+| `jgroups.s3.bucket`
+| Name of the Amazon S3 bucket. The name must already exist and be unique.
+| No default value.
+| Optional
+
+|===
+
+`default-jgroups-kubernetes.xml`::
+[%header,cols="1,3,2,1"]
+|===
+
+| System Property
+| Description
+| Default Value
+| Required/Optional
+
+| `jgroups.tcp.address`
+| IP address for TCP transport.
+| `eth0`
+| Optional
+
+| `jgroups.tcp.port`
+| Port for the TCP socket.
+| `7800`
+| Optional
+
+|===
+
+.Reference
+
+* link:http://www.jgroups.org/manual4/index.html#SystemProperties[JGroups System Properties]
+* link:http://jgroups.org/manual/html/protlist.html[JGroups Protocol List]

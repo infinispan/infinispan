@@ -1,0 +1,40 @@
+[id='preconfigured_jgroups_stacks-{context}']
+= Default JGroups Stacks
+
+[%header,cols="2,1,3"]
+|===
+| File name
+| Stack name
+| Description
+
+| `default-jgroups-udp.xml`
+| `udp`
+| Uses UDP for transport and UDP multicast for discovery. Suitable for larger clusters (over 100 nodes) or if you are using replicated caches or invalidation mode. Minimises the number of open sockets.
+
+| `default-jgroups-tcp.xml`
+| `tcp`
+| Uses TCP for transport and UDP multicast for discovery. Suitable for smaller clusters (under 100 nodes) _only if_ you are using distributed caches because TCP is more efficient than UDP as a point-to-point protocol.
+
+| `default-jgroups-ec2.xml`
+| `ec2`
+| Uses TCP for transport and `S3_PING` for discovery. Suitable for Amazon EC2 nodes where UDP multicast is not available.
+
+| `default-jgroups-kubernetes.xml`
+| `kubernetes`
+| Uses TCP for transport and `DNS_PING` for discovery. Suitable for Kubernetes and Red Hat OpenShift nodes where UDP multicast is not always available.
+
+| `default-jgroups-google.xml`
+| `google`
+| Uses TCP for transport and `GOOGLE_PING2` for discovery. Suitable for Google Cloud Platform nodes where UDP multicast is not available.
+
+| `default-jgroups-azure.xml`
+| `azure`
+| Uses TCP for transport and `AZURE_PING` for discovery. Suitable for Microsoft Azure nodes where UDP multicast is not available.
+
+|===
+
+.Next Steps
+
+After you get up and running with the default JGroups stacks, use inheritance
+to combine, extend, remove, and replace stack properties. See
+link:#jgroups_inline-{context}[Adjusting and Tuning JGroups Stacks].

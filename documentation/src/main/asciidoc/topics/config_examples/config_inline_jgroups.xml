@@ -1,5 +1,7 @@
 <infinispan>
+  <!-- jgroups is the parent for stack declarations. -->
   <jgroups>
+    <!-- Add JGroups stacks for {brandname} clustering. -->
     <stack name="prod">
       <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
       <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
@@ -22,9 +24,8 @@
     </stack>
   </jgroups>
   <cache-container default-cache="replicatedCache">
-    <transport stack="mystack" />
-
+    <!-- Add JGroups stacks to clustered caches. -->
+    <transport stack="prod" />
     ...
-
   </cache-container>
 </infinispan>

@@ -1,0 +1,24 @@
+[id='jgroups_inline-{context}']
+= Using Inline JGroups Stacks
+Use inline JGroups stack definitions to customize cluster transport for optimal
+network performance.
+
+[TIP]
+====
+Use inheritance with inline JGroups stacks to tune and customize specific
+transport properties.
+====
+
+.Procedure
+
+* Embed your custom JGroups stack definitions in `infinispan.xml` as in the
+following example:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_inline_jgroups.xml[]
+----
+
+.Reference
+
+link:{configdocroot}[{brandname} Configuration Schema]

@@ -1,12 +1,12 @@
 <infinispan>
   <jgroups>
-     <stack-file name="external-file" path="jgroups.xml"/>
+     <!-- Add custom JGroups stacks in external files. -->
+     <stack-file name="prod-tcp" path="prod-jgroups-tcp.xml"/>
   </jgroups>
   <cache-container default-cache="replicatedCache">
-    <transport stack="external-file" />
+    <!-- Add custom JGroups stacks to clustered caches. -->
+    <transport stack="prod-tcp" />
     <replicated-cache name="replicatedCache"/>
   </cache-container>
-
   ...
-
 </infinispan>
