@@ -1,8 +1,7 @@
 <infinispan>
   <cache-container default-cache="replicatedCache">
+    <!-- Add default JGroups stacks to clustered caches. -->
     <transport stack="tcp" />
-
     ...
-
   </cache-container>
 </infinispan>

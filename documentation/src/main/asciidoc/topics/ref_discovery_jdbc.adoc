@@ -1,0 +1,7 @@
+= JDBC_PING
+`JDBC_PING` uses JDBC connections to shared databases, such as Amazon RDS on
+EC2, to store information about {brandname} nodes.
+
+.Reference
+
+link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki]

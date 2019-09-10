@@ -1,0 +1,21 @@
+[id='jgroups_inheritance-{context}']
+= Adjusting and Tuning JGroups Stacks
+Use inheritance to combine, extend, remove, and replace specific properties in
+the default JGroups stacks or custom configurations.
+
+.Procedure
+
+. Add a new JGroups stack declaration.
+. Name a parent stack with the `extends` attribute.
+. Modify transport properties with the `stack.combine` attribute.
+
+For example, you want to evaluate using a Gossip router for cluster discovery using a `TCP` stack configuration named `prod`.
+
+You can create a new stack named `gossip-prod` that inherits from `prod` and
+use `stack.combine` to change properties for the Gossip router configuration,
+as in the following example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_jgroups_extends.xml[]
+----

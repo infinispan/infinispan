@@ -1,0 +1,23 @@
+[id='jgroups_stackcombine-{context}']
+= Stack Combine Attribute
+`stack.combine` lets you override and modify inherited JGroups properties.
+
+[%header,cols="1,2"]
+|===
+
+| Value
+| Description
+
+| `COMBINE`
+| Overrides existing protocol attributes.
+
+| `REPLACE`
+| Replaces existing protocols that you identify with the `stack.position` attribute. If you do not specify `stack.position`, {brandname} defaults to the same protocol as the inherited configuration, which resets all non-specified attributes to the default values.
+
+| `INSERT_AFTER`
+| Inserts protocols after any protocols that you identify with the `stack.position` attribute.
+
+| `REMOVE`
+| Removes protocols from the inherited configuration.
+
+|===

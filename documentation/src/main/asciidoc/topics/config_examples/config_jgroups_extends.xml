@@ -1,16 +1,19 @@
-...
-
 <jgroups>
+  ...
+  <!-- "gossip-prod" inherits properties from "prod" -->
   <stack name="gossip-prod" extends="prod">
+    <!-- Use TCPGOSSIP discovery instead of MPING. -->
     <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
              stack.combine="REPLACE" stack.position="MPING" />
+    <!-- Remove FD_SOCK. -->
     <FD_SOCK stack.combine="REMOVE"/>
+    <!-- Increase VERIFY_SUSPECT. -->
     <VERIFY_SUSPECT timeout="2000"/>
+    <!-- Add SYM_ENCRYPT. -->
     <SYM_ENCRYPT sym_algorithm="AES"
                  key_store_name="defaultStore.keystore"
                  store_password="changeit"
                  alias="myKey" stack.combine="INSERT_AFTER" stack.position="pbcast.NAKACK2" />
   </stack>
+  ...
 </jgroups>
- 
-...

@@ -1,0 +1,33 @@
+[id='jgroups_external-{context}']
+= Using JGroups Stacks in External Files
+Use JGroups transport configuration from external files.
+
+[NOTE]
+====
+{brandname} looks for JGroups configuration files on your classpath first and
+then for absolute path names.
+====
+
+.Programmatic procedure
+
+* Specify your JGroups transport configuration with the `addProperty()` method.
++
+[source,java]
+----
+include::code_examples/ConfigureTransport.java[]
+----
+
+.Declarative procedure
+
+* Add your JGroups stack file and then configure the {brandname} cluster to use
+it.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_external_jgroups.xml[]
+----
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfigurationBuilder.html#transport()[GlobalConfigurationBuilder.transport()]
+* link:{javadocroot}/org/infinispan/configuration/global/TransportConfigurationBuilder.html[TransportConfigurationBuilder]

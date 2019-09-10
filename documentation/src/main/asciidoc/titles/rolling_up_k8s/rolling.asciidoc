@@ -2,7 +2,6 @@
 :images_dir: images
 :stories: ../../stories
 :topics: ../topics
-:images_dir: {topics}/images
 
 //Community doc attributes
 include::../{topics}/attributes/community-attributes.adoc[]
@@ -13,10 +12,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :toclevels: 3
 :numbered:
 :stem: asciimath
-:context: clustering
 
 //Title
-= Configuring {brandname} Cluster Transport
+= Upgrading and Updating {brandname} {infinispanversion} for Kubernetes
 
 //User stories
 include::stories.adoc[]

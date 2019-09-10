@@ -1,0 +1,17 @@
+= Gossip Router
+Gossip routers provide a centralized location on the network from which your
+{brandname} cluster can retrieve addresses of other nodes.
+
+You inject the address (`IP:PORT`) of the Gossip router into {brandname} nodes as follows:
+
+. Pass the address as a system property to the JVM; for example, `-DGossipRouterAddress="10.10.2.4[12001]"`.
+. Reference that system property in the JGroups configuration file.
+
+.Gossip router configuration example
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/tcpgossip.xml[]
+----
+
+.Reference
+link:http://community.jboss.org/docs/DOC-10890[JGroups Gossip Router]
