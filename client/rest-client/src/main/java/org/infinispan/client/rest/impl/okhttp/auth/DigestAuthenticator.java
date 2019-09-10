@@ -1,4 +1,4 @@
-package org.infinispan.client.rest.impl.okhttp;
+package org.infinispan.client.rest.impl.okhttp.auth;
 
 
 import java.io.IOException;
@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 
+import okhttp3.Authenticator;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -29,7 +30,7 @@ import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.http.RequestLine;
 
-public class DigestAuthenticator implements StatefulAuthenticator {
+public class DigestAuthenticator implements CachingAuthenticator {
    private static final Pattern HEADER_REGEX = Pattern.compile("(?:\\s)([a-z]+)=(?:\"?)([\\p{Alnum}/=+]+)(?:\"?)");
    public static final String WWW_AUTH = "WWW-Authenticate";
    public static final String WWW_AUTH_RESP = "Authorization";
@@ -148,6 +149,7 @@ public class DigestAuthenticator implements StatefulAuthenticator {
       }
       return request.newBuilder()
             .header(WWW_AUTH_RESP, createDigestHeader(request, parameters))
+            .tag(Authenticator.class, this)
             .build();
    }
 
@@ -205,7 +207,7 @@ public class DigestAuthenticator implements StatefulAuthenticator {
 
       String charset = parameters.get("charset");
       if (charset == null) {
-         charset = "ISO-8859-1";
+         charset = StandardCharsets.ISO_8859_1.name();
       }
 
       String digAlg = algorithm;
@@ -280,8 +282,6 @@ public class DigestAuthenticator implements StatefulAuthenticator {
       }
 
       final String h2 = encode(digester.digest(getBytes(s2, charset)));
-
-      // 3.2.2.1
 
       final String digestValue;
       if (qop == QOP_MISSING) {

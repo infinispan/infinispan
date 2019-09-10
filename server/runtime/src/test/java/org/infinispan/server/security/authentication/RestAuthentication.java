@@ -76,10 +76,10 @@ public class RestAuthentication {
          Exceptions.expectException(RuntimeException.class, () -> SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC));
       } else {
          RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
-         RestResponse response = sync(client.cachePost(SERVER_TEST.getMethodName(), "k1", "v1"));
+         RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
          assertEquals(200, response.getStatus());
          assertEquals(protocol, response.getProtocol());
-         response = sync(client.cacheGet(SERVER_TEST.getMethodName(), "k1"));
+         response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"));
          assertEquals(200, response.getStatus());
          assertEquals(protocol, response.getProtocol());
          assertEquals("v1", response.getBody());

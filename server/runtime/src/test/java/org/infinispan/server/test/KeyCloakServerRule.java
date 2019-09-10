@@ -87,7 +87,7 @@ public class KeyCloakServerRule implements TestRule {
          form.put("username", username);
          form.put("password", password);
          form.put("grant_type", "password");
-         RestResponse response = c.post(url, Collections.singletonMap("Content-Type", "application/x-www-form-urlencoded"), form).toCompletableFuture().get(5, TimeUnit.SECONDS);
+         RestResponse response = c.raw().postForm(url, Collections.singletonMap("Content-Type", "application/x-www-form-urlencoded"), form).toCompletableFuture().get(5, TimeUnit.SECONDS);
          ObjectMapper mapper = new ObjectMapper();
          Map<String, String> map = mapper.readValue(response.getBody(), Map.class);
          return map.get("access_token");

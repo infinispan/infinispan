@@ -27,19 +27,17 @@ public interface RestClientConfigurationChildBuilder {
 
    /**
     * Configure the client to use <a href="https://http2.github.io/http2-spec/#known-http">Prior Knowledge</a>
-    *
     */
    RestClientConfigurationBuilder priorKnowledge(boolean enabled);
 
    /**
-    * This property defines the maximum socket connect timeout before giving up connecting to the
-    * server.
+    * This property defines the maximum socket connect timeout before giving up connecting to the server.
     */
    RestClientConfigurationBuilder connectionTimeout(int connectionTimeout);
 
    /**
-    * This property defines the maximum socket read timeout in milliseconds before giving up waiting
-    * for bytes from the server. Defaults to 60000 (1 minute)
+    * This property defines the maximum socket read timeout in milliseconds before giving up waiting for bytes from the
+    * server. Defaults to 60000 (1 minute)
     */
    RestClientConfigurationBuilder socketTimeout(int socketTimeout);
 

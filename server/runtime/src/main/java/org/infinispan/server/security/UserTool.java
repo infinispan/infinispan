@@ -190,5 +190,7 @@ public class UserTool extends Main {
    @Override
    public void version(PrintStream out) {
       out.printf("%s User Tool %s (%s)\n", Version.getBrandName(), Version.getVersion(), Version.getCodename());
+      out.println("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors");
+      out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
    }
 }

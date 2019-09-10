@@ -201,7 +201,7 @@ public class HotRodCacheQueries {
 
       RestClient restClient = SERVER_TEST.registerResource(SERVERS.newRestClient(new RestClientConfigurationBuilder()));
 
-      RestResponse response = sync(restClient.cacheQuery(SERVER_TEST.getMethodName(), query));
+      RestResponse response = sync(restClient.cache(SERVER_TEST.getMethodName()).query(query));
 
       JsonNode results = new ObjectMapper().readTree(response.getBody());
       assertEquals(1, results.get("total_results").asInt());
