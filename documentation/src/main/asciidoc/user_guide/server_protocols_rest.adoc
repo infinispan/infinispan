@@ -642,3 +642,91 @@ public class RestExample {
 }
 
 ----
+
+[[rest_server_client_java]]
+===== Java11+ example
+
+[source,java]
+----
+package org.infinispan;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Base64;
+
+/**
+ * Rest example accessing a cache.
+ *
+ * @author Gustavo Lira (glira@redhat.com)
+ */
+public class RestExample {
+   private static final String SERVER_ADDRESS = "http://localhost:8080";
+
+   /**
+    * Method that puts a String value in cache.
+    * @param httpClient HTTP client that is used to send requests and receive responses
+    * @param builder    Encapsulates an HTTP request
+    * @param value      Text to insert
+    * @throws IOException
+    * @throws InterruptedException
+    */
+   public void putMethod(HttpClient httpClient, HttpRequest.Builder builder, String value) throws IOException, InterruptedException {
+      System.out.println("----------------------------------------");
+      System.out.println("Executing PUT");
+      System.out.println("----------------------------------------");
+
+      HttpRequest request = builder.PUT(HttpRequest.BodyPublishers.ofString(value)).build();
+      HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+
+      System.out.println("----------------------------------------");
+      System.out.println(response.statusCode());
+      System.out.println("----------------------------------------");
+   }
+
+   /**
+    * Method that gets a value by a key in url as param value.
+    * @param httpClient HTTP client that is used to send requests and receive responses
+    * @param builder    Encapsulates an HTTP request
+    * @return           String value
+    * @throws IOException
+    */
+   public String getMethod(HttpClient httpClient, HttpRequest.Builder builder) throws IOException, InterruptedException {
+      System.out.println("----------------------------------------");
+      System.out.println("Executing GET");
+      System.out.println("----------------------------------------");
+
+      HttpRequest request = builder.GET().build();
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      System.out.println("Executing get method of value: " + response.body());
+
+      System.out.println("----------------------------------------");
+      System.out.println(response.statusCode());
+      System.out.println("----------------------------------------");
+      return response.body();
+   }
+
+   public static void main(String[] args) throws IOException, InterruptedException {
+      RestExample restExample = new RestExample();
+
+      String url = String.format("%s%s", SERVER_ADDRESS, "/rest/default/1");
+      HttpRequest.Builder builder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "text/plain")
+            .header("Authorization", basicAuth("user", "pass"));
+
+       HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+
+      restExample.putMethod(httpClient, builder, "Infinispan REST Test");
+      restExample.getMethod(httpClient, builder);
+   }
+
+   private static String basicAuth(String username, String password) {
+      return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+   }
+}
+
+----
