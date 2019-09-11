@@ -154,10 +154,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          return null;
 
       try {
-         boolean requiresWrapping = !isPersistenceClass(o);
-         if (requiresWrapping)
+         if (requiresWrapping(o))
             o = wrapUserObject(o);
-         int size = estimatedSize < 0 ? sizeEstimate(o, true) : estimatedSize;
+         int size = estimatedSize < 0 ? protoSizeEstimate(o) : estimatedSize;
          ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
          ProtobufUtil.toWrappedStream(serializationContext, baos, o, size);
          byte[] bytes = baos.toByteArray();
@@ -198,10 +197,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public void writeObject(Object o, OutputStream out) throws IOException {
-      boolean requiresWrapping = !isPersistenceClass(o);
-      if (requiresWrapping)
+      if (requiresWrapping(o))
          o = wrapUserObject(o);
-      int size = sizeEstimate(o, true);
+      int size = protoSizeEstimate(0);
       ProtobufUtil.toWrappedStream(serializationContext, out, o, size);
    }
 
@@ -239,39 +237,62 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
-      return isPersistenceClass(o) || isUserMarshallable(o);
+      return isMarshallableWithProtoStream(o) || isUserMarshallable(o);
    }
 
    @Override
    public int sizeEstimate(Object o) {
-      return sizeEstimate(o, isPersistenceClass(o));
+      if (isMarshallableWithProtoStream(o))
+         return protoSizeEstimate(o);
+
+      if (userMarshaller == null)
+         return 0;
+
+      int userBytesEstimate = userMarshaller.getBufferSizePredictor(o.getClass()).nextSize(o);
+      return UserMarshallerBytes.size(userBytesEstimate);
    }
 
    private Object wrapUserObject(Object o) {
       return new UserMarshallerBytes(marshallUserObject(o));
    }
 
-   private int sizeEstimate(Object o, boolean persistenceClass) {
-      if (persistenceClass) {
-         if (o instanceof UserMarshallerBytes) {
-            byte[] user = ((UserMarshallerBytes) o).getBytes();
-            return UserMarshallerBytes.size(user.length);
-         }
-         // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
-         // Dynamic estimates will be provided in a future protostream version IPROTO-89
-         return 4096;
+   private int protoSizeEstimate(Object o) {
+      if (o instanceof UserMarshallerBytes) {
+         byte[] user = ((UserMarshallerBytes) o).getBytes();
+         return UserMarshallerBytes.size(user.length);
       }
-      int userBytesEstimate = userMarshaller.getBufferSizePredictor(o.getClass()).nextSize(o);
-      return UserMarshallerBytes.size(userBytesEstimate);
+      // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
+      // Dynamic estimates will be provided in a future protostream version IPROTO-89
+      return 4096;
    }
 
-   private boolean isPersistenceClass(Object o) {
+   private boolean requiresWrapping(Object o) {
+      return !isMarshallableWithProtoStream(o) && userMarshaller != null;
+   }
+
+   private boolean isMarshallableWithProtoStream(Object o) {
+      // If the user marshaller is null, then we rely on ProtoStream for all marshalling
+      if (userMarshaller == null) {
+         return o instanceof String ||
+               o instanceof Long ||
+               o instanceof Integer ||
+               o instanceof Double ||
+               o instanceof Float ||
+               o instanceof Boolean ||
+               o instanceof byte[] ||
+               o instanceof Byte ||
+               o instanceof Short ||
+               o instanceof Character ||
+               o instanceof java.util.Date ||
+               o instanceof java.time.Instant ||
+               serializationContext.canMarshall(o.getClass());
+      }
       return serializationContext.canMarshall(o.getClass());
    }
 
    private boolean isUserMarshallable(Object o) {
       try {
-         return userMarshaller.isMarshallable(o);
+         return userMarshaller != null && userMarshaller.isMarshallable(o);
       } catch (Exception ignore) {
          return false;
       }
