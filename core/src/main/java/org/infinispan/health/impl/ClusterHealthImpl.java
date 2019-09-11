@@ -13,12 +13,12 @@ import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 
-public class ClusterHealthImpl implements ClusterHealth {
+class ClusterHealthImpl implements ClusterHealth {
 
    private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
 
-   public ClusterHealthImpl(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
+   ClusterHealthImpl(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
       this.internalCacheRegistry = internalCacheRegistry;
    }

@@ -12,29 +12,29 @@ import org.infinispan.registry.InternalCacheRegistry;
 
 public class HealthImpl implements Health {
 
-    private final EmbeddedCacheManager embeddedCacheManager;
-    private final InternalCacheRegistry internalCacheRegistry;
-    private final HostInfo hostInfoImpl = new HostInfoImpl();
+   private final EmbeddedCacheManager embeddedCacheManager;
+   private final InternalCacheRegistry internalCacheRegistry;
+   private final HostInfo hostInfoImpl = new HostInfoImpl();
 
    public HealthImpl(EmbeddedCacheManager embeddedCacheManager, InternalCacheRegistry internalCacheRegistry) {
-        this.embeddedCacheManager = embeddedCacheManager;
-        this.internalCacheRegistry = internalCacheRegistry;
-    }
+      this.embeddedCacheManager = embeddedCacheManager;
+      this.internalCacheRegistry = internalCacheRegistry;
+   }
 
-    @Override
-    public ClusterHealth getClusterHealth() {
-       return new ClusterHealthImpl(embeddedCacheManager, internalCacheRegistry);
-    }
+   @Override
+   public ClusterHealth getClusterHealth() {
+      return new ClusterHealthImpl(embeddedCacheManager, internalCacheRegistry);
+   }
 
-    @Override
-    public List<CacheHealth> getCacheHealth() {
-        return embeddedCacheManager.getCacheNames().stream()
-                .map(cacheName -> new CacheHealthImpl(embeddedCacheManager.getCache(cacheName)))
-                .collect(Collectors.toList());
-    }
+   @Override
+   public List<CacheHealth> getCacheHealth() {
+      return embeddedCacheManager.getCacheNames().stream()
+            .map(cacheName -> new CacheHealthImpl(embeddedCacheManager.getCache(cacheName)))
+            .collect(Collectors.toList());
+   }
 
-    @Override
-    public HostInfo getHostInfo() {
-        return hostInfoImpl;
-    }
+   @Override
+   public HostInfo getHostInfo() {
+      return hostInfoImpl;
+   }
 }

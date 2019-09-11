@@ -6,11 +6,11 @@ import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.partitionhandling.AvailabilityMode;
 
-public class CacheHealthImpl implements CacheHealth {
+class CacheHealthImpl implements CacheHealth {
 
    private final Cache<?, ?> cache;
 
-   public CacheHealthImpl(Cache<?, ?> cache) {
+   CacheHealthImpl(Cache<?, ?> cache) {
       this.cache = cache;
    }
 

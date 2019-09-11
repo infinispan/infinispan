@@ -1,15 +1,15 @@
-package org.infinispan.health;
+package org.infinispan.health.impl;
 
 import static org.testng.Assert.assertTrue;
 
-import org.infinispan.health.impl.HostInfoImpl;
+import org.infinispan.health.HostInfo;
 import org.testng.annotations.Test;
 
-@Test(testName = "health.HostInfoImplTest", groups = "functional")
+@Test(testName = "health.impl.HostInfoImplTest", groups = "functional")
 public class HostInfoImplTest {
 
     @Test
-    public void testReturningValuesFromHostInfo() throws Exception {
+    public void testReturningValuesFromHostInfo() {
         //given
         HostInfo hostInfo = new HostInfoImpl();
 
@@ -23,5 +23,4 @@ public class HostInfoImplTest {
         assertTrue(freeMemoryInKb > 0);
         assertTrue(totalMemoryKb > 0);
     }
-
 }
