@@ -4,6 +4,12 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
@@ -30,6 +36,35 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().addContextInitializers(new UserSCIImpl(), new AnotherUserSCIImpl());
       createCluster(globalBuilder, new ConfigurationBuilder(), 2);
+   }
+
+   @Test(expectedExceptions = MarshallingException.class,
+         expectedExceptionsMessageRegExp = "No marshaller registered for Java type org\\.infinispan\\.marshall\\.ProtostreamUserMarshallerTest\\$NonMarshallablePojo")
+   public void testMarshallingException() {
+      PersistenceMarshallerImpl pm = (PersistenceMarshallerImpl) TestingUtil.extractPersistenceMarshaller(manager(0));
+      pm.objectToBuffer(new NonMarshallablePojo());
+   }
+
+   public void testPrimitivesAreMarshallable() {
+      List<Object> objectsToTest = new ArrayList<>();
+      objectsToTest.add("String");
+      objectsToTest.add(Integer.MAX_VALUE);
+      objectsToTest.add(Long.MAX_VALUE);
+      objectsToTest.add(Double.MAX_VALUE);
+      objectsToTest.add(Float.MAX_VALUE);
+      objectsToTest.add(true);
+      objectsToTest.add(new byte[0]);
+      objectsToTest.add(Byte.MAX_VALUE);
+      objectsToTest.add(Short.MAX_VALUE);
+      objectsToTest.add('c');
+      objectsToTest.add(new Date());
+      objectsToTest.add(Instant.now());
+
+      PersistenceMarshallerImpl pm = (PersistenceMarshallerImpl) TestingUtil.extractPersistenceMarshaller(manager(0));
+      for (Object o : objectsToTest) {
+         assertTrue(pm.isMarshallable(o));
+         assertNotNull(pm.objectToBuffer(o));
+      }
    }
 
    public void testProtostreamMarshallerLoaded() {
@@ -67,6 +102,10 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       AnotherExampleUserPojo(String anotherString) {
          this.anotherString = anotherString;
       }
+   }
+
+   static class NonMarshallablePojo {
+      int x;
    }
 
    @AutoProtoSchemaBuilder(
