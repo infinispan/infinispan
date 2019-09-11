@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -37,6 +38,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;
+   private final String context;
    private Subject subject;
    private String authorization;
    private final Authenticator authenticator;
@@ -50,12 +52,17 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
       this.authenticator = configuration.authentication().enabled() ? configuration.authentication().authenticator() : null;
+      this.context = configuration.contextPath();
    }
 
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
       restAccessLoggingHandler.preLog(request);
       NettyRestRequest restRequest = new NettyRestRequest(request);
+
+      if (!restRequest.getContext().equals(this.context)) {
+         sendResponse(ctx, request, new NettyRestResponse.Builder().status(NOT_FOUND).build().getResponse());
+      }
 
       LookupResult invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
 

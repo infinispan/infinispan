@@ -142,10 +142,9 @@
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
             <xs:sequence>
-               <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0"
-                           maxOccurs="unbounded"/>
+               <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0"/>
+               <xs:element type="tns:rest-connector" name="rest-connector"/>
+               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0"/>
             </xs:sequence>
             <xs:attribute name="socket-binding" type="xs:string">
                <xs:annotation>

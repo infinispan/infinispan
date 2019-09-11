@@ -38,6 +38,7 @@ public class NettyRestRequest implements RestRequest {
    private final Map<String, List<String>> parameters;
    private final String path;
    private final ContentSource contentSource;
+   private final String context;
    private String action;
    private Subject subject;
    private Map<String, String> variables;
@@ -47,11 +48,22 @@ public class NettyRestRequest implements RestRequest {
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
       this.parameters = queryStringDecoder.parameters();
       this.path = queryStringDecoder.path();
+      this.context = getContext(path);
       List<String> action = queryStringDecoder.parameters().get("action");
       if (action != null) {
          this.action = action.iterator().next();
       }
       this.contentSource = new ByteBufContentSource(request.content());
+   }
+
+   private String getContext(String path) {
+      if (path == null || path.isEmpty() || !path.startsWith("/") || path.length() == 1) return "";
+      int endIndex = path.indexOf("/", 1);
+      return path.substring(1, endIndex == -1 ? path.length() : endIndex);
+   }
+
+   public String getContext() {
+      return context;
    }
 
    @Override

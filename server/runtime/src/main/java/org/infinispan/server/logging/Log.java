@@ -100,4 +100,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid URL", id = 80024)
    CacheConfigurationException invalidUrl();
 
+   @Message(value = "Cannot have multiple connectors of the same type: found [%s]", id = 80025)
+   CacheConfigurationException multipleEndpointsSameTypeFound(String names);
+
 }
