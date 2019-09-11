@@ -4196,7 +4196,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>versions-maven-plugin</artifactId>
-               <version>2.5</version>
+               <version>${versionx.org.codehaus.mojo.versions-maven-plugin}</version>
                <configuration>
                   <generateBackupPoms>false</generateBackupPoms>
                   <processAllModules>true</processAllModules>

@@ -1,6 +1,7 @@
 package org.infinispan.commons.marshall;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.counter.api.CounterState;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
@@ -14,7 +15,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 @AutoProtoSchemaBuilder(
       includeClasses = {
             MediaType.class,
-            WrappedByteArray.class
+            WrappedByteArray.class,
+            CounterState.class,
       },
       schemaFileName = "persistence.commons.proto",
       schemaFilePath = "proto/generated",
