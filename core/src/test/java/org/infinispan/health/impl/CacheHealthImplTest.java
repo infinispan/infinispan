@@ -1,4 +1,4 @@
-package org.infinispan.health;
+package org.infinispan.health.impl;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -7,16 +7,17 @@ import static org.testng.Assert.assertEquals;
 
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.health.impl.CacheHealthImpl;
+import org.infinispan.health.CacheHealth;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.testng.annotations.Test;
 
-@Test(testName = "health.CacheHealthImplTest", groups = "functional")
+@Test(testName = "health.impl.CacheHealthImplTest", groups = "functional")
 public class CacheHealthImplTest {
 
     @Test
-    public void testHealthyStatus() throws Exception {
+    public void testHealthyStatus() {
         //given
         CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
         DistributionManager distributionManagerMock = mock(DistributionManager.class);
@@ -36,7 +37,7 @@ public class CacheHealthImplTest {
     }
 
     @Test
-    public void testUnhealthyStatusWithFailedComponent() throws Exception {
+    public void testUnhealthyStatusWithFailedComponent() {
         //given
         CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
 
@@ -52,7 +53,7 @@ public class CacheHealthImplTest {
     }
 
     @Test
-    public void testUnhealthyStatusWithTerminatedComponent() throws Exception {
+    public void testUnhealthyStatusWithTerminatedComponent() {
         //given
         CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
 
@@ -68,7 +69,7 @@ public class CacheHealthImplTest {
     }
 
     @Test
-    public void testUnhealthyStatusWithStoppingComponent() throws Exception {
+    public void testUnhealthyStatusWithStoppingComponent() {
         //given
         CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
 
@@ -84,7 +85,7 @@ public class CacheHealthImplTest {
     }
 
     @Test
-    public void testUnhealthyStatusWithDegradedPartition() throws Exception {
+    public void testUnhealthyStatusWithDegradedPartition() {
         //given
         CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
 
@@ -101,7 +102,7 @@ public class CacheHealthImplTest {
     }
 
     @Test
-    public void testRebalancingStatusOnRebalance() throws Exception {
+    public void testRebalancingStatusOnRebalance() {
         //given
         CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
         DistributionManager distributionManagerMock = mock(DistributionManager.class);
@@ -121,7 +122,7 @@ public class CacheHealthImplTest {
     }
 
     @Test
-    public void testReturningName() throws Exception {
+    public void testReturningName() {
         //given
         CacheImpl<Object, Object> cache = new CacheImpl<>("test");
 

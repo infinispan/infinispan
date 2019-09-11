@@ -1,4 +1,4 @@
-package org.infinispan.health;
+package org.infinispan.health.impl;
 
 import static org.infinispan.lifecycle.ComponentStatus.INSTANTIATED;
 import static org.mockito.Mockito.mock;
@@ -15,7 +15,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.health.impl.ClusterHealthImpl;
+import org.infinispan.health.ClusterHealth;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -27,7 +28,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "health.ClusterHealthImplTest", groups = "functional")
+@Test(testName = "health.impl.ClusterHealthImplTest", groups = "functional")
 public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
    private static final String INTERNAL_CACHE_NAME = "internal_cache";
@@ -74,22 +75,22 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testGetClusterName() throws Exception {
+   public void testGetClusterName() {
       assertEquals(cacheManager.getClusterName(), clusterHealth.getClusterName());
    }
 
-   public void testCallingGetHealthStatusDoesNotCreateAnyCache() throws Exception {
+   public void testCallingGetHealthStatusDoesNotCreateAnyCache() {
       clusterHealth.getHealthStatus();
 
       assertFalse(cacheManager.cacheExists(CACHE_NAME));
       assertFalse(cacheManager.cacheExists(INTERNAL_CACHE_NAME));
    }
 
-   public void testHealthyStatusWithoutAnyUserCreatedCache() throws Exception {
+   public void testHealthyStatusWithoutAnyUserCreatedCache() {
       assertEquals(HealthStatus.HEALTHY, clusterHealth.getHealthStatus());
    }
 
-   public void testHealthyStatusWhenUserCacheIsHealthy() throws Exception {
+   public void testHealthyStatusWhenUserCacheIsHealthy() {
       cacheManager.getCache(CACHE_NAME, true);
 
       HealthStatus healthStatus = clusterHealth.getHealthStatus();
@@ -97,7 +98,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       assertEquals(HealthStatus.HEALTHY, healthStatus);
    }
 
-   public void testUnhealthyStatusWhenUserCacheIsStopped() throws Exception {
+   public void testUnhealthyStatusWhenUserCacheIsStopped() {
       Cache testCache = cacheManager.getCache(CACHE_NAME, true);
       testCache.stop();
 
@@ -106,7 +107,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       assertEquals(HealthStatus.DEGRADED, healthStatus);
    }
 
-   public void testRebalancingStatusWhenUserCacheIsRebalancing() throws Exception {
+   public void testRebalancingStatusWhenUserCacheIsRebalancing() {
       Cache mockedCache = mock(Cache.class);
       AdvancedCache mockedAdvancedCache = mock(AdvancedCache.class);
       DistributionManager mockedDistributionManager = mock(DistributionManager.class);
@@ -119,20 +120,20 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       assertEquals(HealthStatus.HEALTHY_REBALANCING, clusterHealth.getHealthStatus());
    }
 
-   public void testHealthyStatusForInternalCaches() throws Exception {
+   public void testHealthyStatusForInternalCaches() {
       cacheManager.getCache(INTERNAL_CACHE_NAME, true);
 
       assertEquals(HealthStatus.HEALTHY, clusterHealth.getHealthStatus());
    }
 
-   public void testUnhealthyStatusWhenInternalCacheIsStopped() throws Exception {
+   public void testUnhealthyStatusWhenInternalCacheIsStopped() {
       Cache internalCache = cacheManager.getCache(INTERNAL_CACHE_NAME, true);
       internalCache.stop();
 
       assertEquals(HealthStatus.DEGRADED, clusterHealth.getHealthStatus());
    }
 
-   public void testRebalancingStatusWhenInternalCacheIsRebalancing() throws Exception {
+   public void testRebalancingStatusWhenInternalCacheIsRebalancing() {
       Cache mockedCache = mock(Cache.class);
       AdvancedCache mockedAdvancedCache = mock(AdvancedCache.class);
       DistributionManager mockedDistributionManager = mock(DistributionManager.class);
@@ -145,21 +146,21 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       assertEquals(HealthStatus.HEALTHY_REBALANCING, clusterHealth.getHealthStatus());
    }
 
-   public void testGetNodeNames() throws Exception {
+   public void testGetNodeNames() {
       assertEquals(cacheManager.getAddress().toString(), clusterHealth.getNodeNames().get(0));
    }
 
-   public void testGetNumberOfNodes() throws Exception {
+   public void testGetNumberOfNodes() {
       assertEquals(1, clusterHealth.getNumberOfNodes());
    }
 
-   public void testGetNumberOfNodesWithNullTransport() throws Exception {
+   public void testGetNumberOfNodesWithNullTransport() {
       ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager, mockedCacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
 
       assertEquals(0, clusterHealth.getNumberOfNodes());
    }
 
-   public void testGetNodeNamesWithNullTransport() throws Exception {
+   public void testGetNodeNamesWithNullTransport() {
       ClusterHealth clusterHealth = new ClusterHealthImpl(mockedCacheManager, mockedCacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
 
       assertTrue(clusterHealth.getNodeNames().isEmpty());
@@ -172,5 +173,4 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
       when(mockedAdvancedCache.getDistributionManager()).thenReturn(mockedDistributionManager);
       when(mockedDistributionManager.isRehashInProgress()).thenReturn(true);
    }
-
 }
