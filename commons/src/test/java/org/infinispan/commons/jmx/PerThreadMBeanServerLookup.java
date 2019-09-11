@@ -13,7 +13,7 @@ import javax.management.MBeanServerFactory;
  */
 public class PerThreadMBeanServerLookup implements MBeanServerLookup {
 
-   static ThreadLocal<MBeanServer> threadMBeanServer = new ThreadLocal<>();
+   private static ThreadLocal<MBeanServer> threadMBeanServer = new ThreadLocal<>();
 
    public MBeanServer getMBeanServer(Properties properties) {
       return getThreadMBeanServer();

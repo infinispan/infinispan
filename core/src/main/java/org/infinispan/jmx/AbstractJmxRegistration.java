@@ -2,6 +2,7 @@ package org.infinispan.jmx;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
 import javax.management.MBeanServer;
 
 import org.infinispan.commons.jmx.JmxUtil;
@@ -60,27 +61,20 @@ public abstract class AbstractJmxRegistration {
       Collection<ResourceDMBean> resourceDMBeans = new ArrayList<>(components.size());
       for (ComponentRef<?> component : components) {
          Object instance = component.wired();
-
-         ResourceDMBean resourceDMBean = getResourceDMBean(instance, component.getName());
-         if (resourceDMBean != null) {
-            resourceDMBeans.add(resourceDMBean);
+         if (instance != null) {
+            ResourceDMBean resourceDMBean = getResourceDMBean(instance, component.getName());
+            if (resourceDMBean != null) {
+               resourceDMBeans.add(resourceDMBean);
+            }
          }
       }
       return resourceDMBeans;
    }
 
-   protected ResourceDMBean getResourceDMBean(Object instance) {
-      return getResourceDMBean(instance, null);
-   }
-
    protected ResourceDMBean getResourceDMBean(Object instance, String componentName) {
-      if (instance == null)
-         return null;
-
       MBeanMetadata md = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
       if (md == null)
          return null;
-
       return new ResourceDMBean(instance, md, componentName);
    }
 }
