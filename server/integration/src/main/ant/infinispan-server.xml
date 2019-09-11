@@ -16,6 +16,7 @@
         <copy todir="${server.dist}">
             <fileset dir="${server.build.dist}"/>
         </copy>
+        <copy file="${ispn.config.file}" todir="${server.dist}/server/conf" if:set="ispn.config.file" />
         <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
              then the IBM jdk transformation is adding empty namespace there - not possible to influence this
              behaviour by any environmental property - this is a bit workaround for it -->
@@ -36,18 +37,18 @@
         <exec dir="${server.dist}/bin" executable="chmod" osfamily="unix">
             <arg value="+x"/>
             <arg value="../bin"/>
-            <arg value="standalone.sh"/>
+            <arg value="server.sh"/>
         </exec>
         <exec executable="sh" osfamily="unix" spawn="true">
             <arg value="-c"/>
-            <arg value="${server.dist}/bin/standalone.sh -c ${jboss.config.file} > ${server.dist}/console.log"/>
+            <arg value="${server.dist}/bin/server.sh -c ${jboss.config.file} > ${server.dist}/console.log"/>
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
             <env key="JAVA" value="${server.jvm}/bin/java"/>
         </exec>
         <exec executable="cmd" osfamily="windows" spawn="true">
             <arg value="/c"/>
-            <arg value="${server.dist}/bin/standalone.bat -c ${jboss.config.file} > ${server.dist}/console.log"/>
+            <arg value="${server.dist}/bin/server.bat -c ${jboss.config.file} > ${server.dist}/console.log"/>
             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=${port.offset} -Djboss.node.name=${jboss.node.name}"/>
             <env key="JBOSS_HOME" value="${server.dist}"/>
             <env key="JAVA" value="${server.jvm}/bin/java"/>
@@ -56,7 +57,6 @@
         <echo>Waiting for Infinispan server to start</echo>
         <waitfor timeoutproperty="server.timeout" maxwait="30" maxwaitunit="second" checkevery="1" checkeveryunit="second">
             <and>
-                <socket server="127.0.0.1" port="${management.port}"/>
                 <socket server="127.0.0.1" port="${hotrod.port}"/>
             </and>
         </waitfor>
@@ -104,8 +104,7 @@
 
         <exec executable="bash" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
             <arg value="-c"/>
-            <!-- Sometimes the server opens the management port but not the hotrod port -->
-            <arg value="lsof -t -i TCP:${management.port} -i TCP:${hotrod.port}"/>
+            <arg value="lsof -t -i TCP:${hotrod.port}"/>
             <redirector>
                 <outputfilterchain>
                     <prefixlines prefix=" "/>
