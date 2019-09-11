@@ -120,6 +120,10 @@ from the default JGroups stacks.
 The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING and DEGRADED to better
 reflect the fact that `rebalancing` doesn't mean a cluster is unhealthy.
 
+=== Multi-tenancy
+
+When using multi-tenancy in the Wildfly based server, it's necessary to specify the `content-path` for each of the REST connectors, to match the `prefix` element under `multi-tenancy\rest\prefix`.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes
@@ -779,3 +783,4 @@ The above pattern has always been the intention of this API anyway.
 
 Since upgrading to JGroups 3.x, `-Dbind.address` is ignored. This should be replaced with `-Djgroups.bind_addr`.
 endif::productized[]
+

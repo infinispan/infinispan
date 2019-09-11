@@ -17,12 +17,13 @@ public class RestTestingUtil {
         return builder;
     }
 
-    public static RestServer createDefaultRestServer(String... definedCaches) {
-        return createRest(createDefaultRestConfiguration(), new GlobalConfigurationBuilder(),
+    public static RestServer createDefaultRestServer(String ctx, String... definedCaches) {
+        return createRest(ctx, createDefaultRestConfiguration(), new GlobalConfigurationBuilder(),
               new ConfigurationBuilder(), definedCaches);
     }
 
-    public static RestServer createRest(RestServerConfigurationBuilder configuration, GlobalConfigurationBuilder globalConfigurationBuilder, ConfigurationBuilder cacheConfigurationBuilder, String... definedCaches) {
+    public static RestServer createRest(String ctx, RestServerConfigurationBuilder configuration, GlobalConfigurationBuilder globalConfigurationBuilder, ConfigurationBuilder cacheConfigurationBuilder, String... definedCaches) {
+      configuration.contextPath(ctx);
         RestServer nettyRestServer = new RestServer();
         Configuration cacheConfiguration = cacheConfigurationBuilder.build();
         DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfigurationBuilder.build());

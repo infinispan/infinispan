@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.net.ssl.SSLContext;
@@ -56,6 +57,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
 
    @Override
    public void validate() {
+      Arrays.asList(interfaces, socketBindings, security, endpoints).forEach(Builder::validate);
    }
 
    @Override

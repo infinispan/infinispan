@@ -92,7 +92,7 @@ public class SinglePortTest {
     @Test
     public void shouldUpgradeThroughHTTP11UpgradeHeaders() throws Exception {
         //given
-        restServer = RestTestingUtil.createDefaultRestServer("default");
+        restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
 
         RestServerRouteDestination restDestination = new RestServerRouteDestination("rest1", restServer);
         SinglePortRouteSource singlePortSource = new SinglePortRouteSource();
@@ -188,9 +188,9 @@ public class SinglePortTest {
         }
 
         //given
-        restServer = RestTestingUtil.createDefaultRestServer("default");
+        restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
 
-        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest1", restServer);
+        RestServerRouteDestination restDestination = new RestServerRouteDestination("rest", restServer);
         SinglePortRouteSource singlePortSource = new SinglePortRouteSource();
         Route<SinglePortRouteSource, RestServerRouteDestination> routeToRest = new Route<>(singlePortSource, restDestination);
 
@@ -231,7 +231,7 @@ public class SinglePortTest {
 
         //given
         hotrodServer = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
-        restServer = RestTestingUtil.createDefaultRestServer("default");
+        restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
 
         HotRodServerRouteDestination hotrodDestination = new HotRodServerRouteDestination("hotrod", hotrodServer);
 

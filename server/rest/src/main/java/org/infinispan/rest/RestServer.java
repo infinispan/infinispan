@@ -104,8 +104,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
             (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),
             configuration, server, getExecutor());
 
-      String rootContext = configuration.startTransport() ? configuration.contextPath() : "*";
-      ResourceManager resourceManager = new ResourceManagerImpl(rootContext);
+      ResourceManager resourceManager = new ResourceManagerImpl(configuration.contextPath());
 
       resourceManager.registerResource(new CacheResource(invocationHelper));
       resourceManager.registerResource(new CacheResourceV2(invocationHelper));

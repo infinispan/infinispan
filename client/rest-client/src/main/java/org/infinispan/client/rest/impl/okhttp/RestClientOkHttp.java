@@ -84,8 +84,8 @@ public class RestClientOkHttp implements RestClient {
       httpClient = builder.build();
       ServerConfiguration server = configuration.servers().get(0);
       baseURL = String.format("%s://%s:%d", sslContext == null ? "http" : "https", server.host(), server.port());
-      baseCacheURL = String.format("%s%s/v2/caches", baseURL, configuration.contextPath());
-      baseServerURL = String.format("%s%s/v2/server", baseURL, configuration.contextPath());
+      baseCacheURL = String.format("%s%s/v2/caches", baseURL, configuration.contextPath()).replaceAll("//", "/");
+      baseServerURL = String.format("%s%s/v2/server", baseURL, configuration.contextPath()).replaceAll("//", "/");
    }
 
    @Override

@@ -124,10 +124,9 @@
                <sni host-name="sni-host-4" security-realm="default"/>
             </encryption>
          </rest-connector>
-         <memcached-connector name="memcached-1" socket-binding="memcached" io-threads="1" worker-threads="160"
+         <memcached-connector name="memcached" socket-binding="memcached" io-threads="1" worker-threads="160"
                               idle-timeout="1" tcp-nodelay="true" tcp-keepalive="true" send-buffer-size="3"
                               receive-buffer-size="3" cache="string" client-encoding="application/json"/>
-         <memcached-connector name="memcached-2" socket-binding="memcached-2"/>
       </endpoints>
    </server>
 </infinispan>

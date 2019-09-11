@@ -2,6 +2,9 @@ package org.infinispan.server.configuration.endpoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
@@ -11,6 +14,9 @@ import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 
+/**
+ * @since 10.0
+ */
 public class EndpointsConfigurationBuilder implements Builder<EndpointsConfiguration> {
    private final AttributeSet attributes;
    private final ServerConfigurationBuilder serverConfigurationBuilder;
@@ -55,6 +61,16 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
 
    @Override
    public void validate() {
+      Map<Class<?>, List<ProtocolServerConfigurationBuilder<?, ?>>> buildersPerClass = connectors.stream()
+            .collect(Collectors.groupingBy(ProtocolServerConfigurationBuilder::getClass));
+
+      Optional<Entry<Class<?>, List<ProtocolServerConfigurationBuilder<?, ?>>>> repeated = buildersPerClass.entrySet()
+            .stream().filter(e -> e.getValue().size() > 1).findFirst();
+
+      repeated.ifPresent(e -> {
+         String names = e.getValue().stream().map(ProtocolServerConfigurationBuilder::name).collect(Collectors.joining(","));
+         throw Server.log.multipleEndpointsSameTypeFound(names);
+      });
    }
 
    @Override

@@ -186,11 +186,10 @@ public class JsonSerializationTest {
 
       JsonNode hotrodConnector = endpoints.get("hotrod-connector");
       JsonNode restConnector = endpoints.get("rest-connector");
-      JsonNode memcachedConnectors = endpoints.get("memcached-connector");
+      JsonNode memcachedConnector = endpoints.get("memcached-connector");
       assertHotRodConnector(hotrodConnector);
       assertRestConnector(restConnector);
-      assertMemcachedConnector1(memcachedConnectors.get(0));
-      assertMemcachedConnector2(memcachedConnectors.get(1));
+      assertMemcachedConnector(memcachedConnector);
    }
 
    private void assertHotRodConnector(JsonNode hotrodConnector) {
@@ -313,8 +312,8 @@ public class JsonSerializationTest {
       assertEquals("default", sni2.get("security-realm").asText());
    }
 
-   private void assertMemcachedConnector1(JsonNode memcachedConnector) {
-      assertEquals("memcached-1", memcachedConnector.get("name").asText());
+   private void assertMemcachedConnector(JsonNode memcachedConnector) {
+      assertEquals("memcached", memcachedConnector.get("name").asText());
       assertEquals("memcached", memcachedConnector.get("socket-binding").asText());
       assertEquals(1, memcachedConnector.get("io-threads").asInt());
       assertEquals(160, memcachedConnector.get("worker-threads").asInt());

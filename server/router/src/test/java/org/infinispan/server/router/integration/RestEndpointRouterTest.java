@@ -54,8 +54,8 @@ public class RestEndpointRouterTest {
     @Test
     public void shouldRouteToProperRestServerBasedOnPath() {
         //given
-        restServer1 = RestTestingUtil.createDefaultRestServer("default");
-        restServer2 = RestTestingUtil.createDefaultRestServer("default");
+        restServer1 = RestTestingUtil.createDefaultRestServer("rest1", "default");
+        restServer2 = RestTestingUtil.createDefaultRestServer("rest2", "default");
 
         RestServerRouteDestination rest1Destination = new RestServerRouteDestination("rest1", restServer1);
         RestRouteSource rest1Source = new RestRouteSource("rest1");

@@ -73,11 +73,10 @@ public class ServerConfigurationParserTest {
 
       // Connectors
       List<ProtocolServerConfiguration> connectors = server.endpoints().connectors();
-      assertEquals(4, connectors.size());
+      assertEquals(3, connectors.size());
       assertTrue(connectors.get(0) instanceof HotRodServerConfiguration);
       assertTrue(connectors.get(1) instanceof RestServerConfiguration);
       assertTrue(connectors.get(2) instanceof MemcachedServerConfiguration);
-      assertTrue(connectors.get(3) instanceof MemcachedServerConfiguration);
 
       // Ensure endpoints are bound to the interfaces
       SinglePortRouterConfiguration singlePortRouter = server.endpoints().singlePortRouter();
