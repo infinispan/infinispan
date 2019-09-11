@@ -1,6 +1,5 @@
 package org.infinispan.counter.impl.persistence;
 
-import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
@@ -16,9 +15,11 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @since 10.0
  */
 @AutoProtoSchemaBuilder(
-      dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
+      dependsOn = {
+         org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
+         org.infinispan.commons.marshall.PersistenceContextInitializer.class,
+      },
       includeClasses = {
-            CounterState.class,
             CounterValue.class,
             StrongCounterKey.class,
             WeakCounterKey.class
