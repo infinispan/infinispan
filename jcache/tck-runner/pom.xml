@@ -31,8 +31,8 @@
       <remote.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</remote.CacheEntryImpl>
       <remote.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</remote.CacheInvocationContextImpl>
 
-      <ispnserver.project.dir>${basedir}/../../server/integration/build</ispnserver.project.dir>
-      <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
+      <ispnserver.project.dir>${basedir}/../../server/runtime</ispnserver.project.dir>
+      <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
       <server.dir.parent>${project.build.directory}</server.dir.parent>
       <server.dir.name>infinispan-${wildfly.brand.prefix}-server-${project.version}</server.dir.name>
@@ -175,10 +175,9 @@
                         <ant antfile="${basedir}/../../server/integration/src/main/ant/infinispan-server.xml" target="start-server">
                            <property name="server.dist" value="${ispnserver.dist}" />
                            <property name="port.offset" value="0" />
-                           <property name="management.port" value="9990" />
                            <property name="hotrod.port" value="11222" />
                            <property name="jboss.node.name" value="ispn-server" />
-                           <property name="jboss.config.file" value="standalone.xml" />
+                           <property name="jboss.config.file" value="infinispan.xml" />
                            <property name="server.jvm.args" value="${server.jvm.args}" />
                         </ant>
                      </target>
