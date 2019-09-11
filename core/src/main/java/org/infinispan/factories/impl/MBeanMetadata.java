@@ -42,7 +42,7 @@ public class MBeanMetadata {
 
    public MBeanMetadata(String jmxObjectName, String description, String superMBeanClassName,
                         Collection<JmxAttributeMetadata> attributes, Collection<JmxOperationMetadata> operations) {
-      this.jmxObjectName = jmxObjectName;
+      this.jmxObjectName = jmxObjectName != null ? (jmxObjectName.trim().length() == 0 ? null : jmxObjectName) : jmxObjectName;
       this.description = description;
       this.superMBeanClassName = superMBeanClassName;
       this.attributes = attributes;

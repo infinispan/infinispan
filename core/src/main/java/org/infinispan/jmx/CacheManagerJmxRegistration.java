@@ -120,7 +120,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    }
 
    public void registerMBean(Object managedComponent) {
-      ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent);
+      ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
       registrar.registerMBeans(Collections.singleton(resourceDMBean));
       resourceDMBeans.add(resourceDMBean);
    }
