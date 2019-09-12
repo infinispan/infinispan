@@ -11,9 +11,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Version;
 import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -96,7 +96,7 @@ public class ServerResource implements ResourceHandler {
    }
 
    static class ServerInfo {
-      String version = Version.printVersion();
+      final String version = Version.printVersion();
 
       public String getVersion() {
          return version;
