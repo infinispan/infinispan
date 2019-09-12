@@ -6,16 +6,15 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.notifications.cachelistener.cluster.impl.BatchingClusterEventManagerImpl;
 
 /**
- * Constructs the data container
+ * Constructs the data container.
  *
  * @author William Burns
  * @since 7.1
  */
 @DefaultFactoryFor(classes = ClusterEventManager.class)
-public class ClusterEventManagerFactory extends AbstractNamedCacheComponentFactory implements
-         AutoInstantiableFactory {
+public class ClusterEventManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
    @Override
-   @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
       return new BatchingClusterEventManagerImpl();
    }
