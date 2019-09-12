@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,9 +21,6 @@ import javax.management.MBeanParameterInfo;
 import javax.management.ServiceNotFoundException;
 
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.factories.components.JmxAttributeMetadata;
-import org.infinispan.factories.components.JmxOperationMetadata;
-import org.infinispan.factories.components.JmxOperationParameter;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -57,33 +53,29 @@ public final class ResourceDMBean implements DynamicMBean {
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<>(2);
    private final String jmxObjectName;
    private final String description;
-   private final String componentName;
 
    private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>(64);
    private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<>(64);
 
    public ResourceDMBean(Object instance, MBeanMetadata mBeanMetadata, String componentName) {
-      this(instance, componentName, mBeanMetadata.getJmxObjectName(), mBeanMetadata.getDescription(),
-           mBeanMetadata.getAttributes(), mBeanMetadata.getOperations());
-   }
-
-   private ResourceDMBean(Object instance, String componentName,
-                         String jmxObjectName, String description, Collection<JmxAttributeMetadata> attributes,
-                         Collection<JmxOperationMetadata> operations) {
       if (instance == null) {
          throw new NullPointerException("Cannot make an MBean wrapper for null instance");
       }
-
       this.obj = instance;
       this.objectClass = instance.getClass();
-      this.jmxObjectName = jmxObjectName;
-      this.description = description;
-      this.componentName = componentName;
+      if (mBeanMetadata.getJmxObjectName() != null) {
+         jmxObjectName = mBeanMetadata.getJmxObjectName();
+      } else if (componentName != null) {
+         jmxObjectName = componentName;
+      } else {
+         jmxObjectName = objectClass.getSimpleName();
+      }
+      this.description = mBeanMetadata.getDescription();
 
       // Load up all fields.
       int i = 0;
-      attInfos = new MBeanAttributeInfo[attributes.size()];
-      for (JmxAttributeMetadata attributeMetadata : attributes) {
+      attInfos = new MBeanAttributeInfo[mBeanMetadata.getAttributes().size()];
+      for (MBeanMetadata.AttributeMetadata attributeMetadata : mBeanMetadata.getAttributes()) {
          String attributeName = attributeMetadata.getName();
          InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          if (atts.containsKey(attributeName)) {
@@ -91,18 +83,18 @@ public final class ResourceDMBean implements DynamicMBean {
                                                + " metadata has a duplicate attribute: " + attributeName);
          }
          atts.put(attributeName, info);
-         attInfos[i++] = info.getMBeanAttributeInfo();
+         attInfos[i++] = info.attributeInfo;
          if (trace)
             log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]", attributeName,
-                       info.getMBeanAttributeInfo().isReadable(), info.getMBeanAttributeInfo().isWritable(),
-                       info.getMBeanAttributeInfo().isIs(), info.getMBeanAttributeInfo().getType());
+                  info.attributeInfo.isReadable(), info.attributeInfo.isWritable(),
+                  info.attributeInfo.isIs(), info.attributeInfo.getType());
       }
 
       // And operations
-      opInfos = new MBeanOperationInfo[operations.size()];
-      opNames = new String[operations.size()];
+      opInfos = new MBeanOperationInfo[mBeanMetadata.getOperations().size()];
+      opNames = new String[opInfos.length];
       i = 0;
-      for (JmxOperationMetadata operation : operations) {
+      for (MBeanMetadata.OperationMetadata operation : mBeanMetadata.getOperations()) {
          opNames[i] = operation.getOperationName();
          MBeanOperationInfo op = toJmxInfo(operation);
          opInfos[i++] = op;
@@ -140,7 +132,7 @@ public final class ResourceDMBean implements DynamicMBean {
       return m;
    }
 
-   private InvokableMBeanAttributeInfo toJmxInfo(JmxAttributeMetadata attributeMetadata) {
+   private InvokableMBeanAttributeInfo toJmxInfo(MBeanMetadata.AttributeMetadata attributeMetadata) {
       if (!attributeMetadata.isUseSetter()) {
          Field field = findField(objectClass, attributeMetadata.getName());
          if (field != null) {
@@ -157,8 +149,8 @@ public final class ResourceDMBean implements DynamicMBean {
                                                         attributeMetadata.isIs(), getter, setter);
    }
 
-   private MBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) {
-      JmxOperationParameter[] parameters = operationMetadata.getMethodParameters();
+   private MBeanOperationInfo toJmxInfo(MBeanMetadata.OperationMetadata operationMetadata) {
+      MBeanMetadata.OperationParameterMetadata[] parameters = operationMetadata.getMethodParameters();
       MBeanParameterInfo[] params = new MBeanParameterInfo[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
          params[i] = new MBeanParameterInfo(parameters[i].getName(), parameters[i].getType(), parameters[i].getDescription());
@@ -297,7 +289,7 @@ public final class ResourceDMBean implements DynamicMBean {
             result = new Attribute(name, i.invoke(null));
             if (trace)
                log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
-                          name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
+                          name, i.attributeInfo.isReadable(), i.attributeInfo.isWritable(), i.attributeInfo.isIs(), result.getValue());
          } catch (Exception e) {
             log.debugf(e, "Exception while reading value of attribute %s", name);
          }
@@ -340,20 +332,16 @@ public final class ResourceDMBean implements DynamicMBean {
 
    private static abstract class InvokableMBeanAttributeInfo {
 
-      private final MBeanAttributeInfo attributeInfo;
+      final MBeanAttributeInfo attributeInfo;
 
       InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs) {
          attributeInfo = new MBeanAttributeInfo(name, type, description, isReadable, isWritable, isIs);
       }
 
-      MBeanAttributeInfo getMBeanAttributeInfo() {
-         return attributeInfo;
-      }
-
       abstract Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException;
    }
 
-   private class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+   private final class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
       private final Field field;
 
       InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field) {
@@ -373,7 +361,7 @@ public final class ResourceDMBean implements DynamicMBean {
       }
    }
 
-   private class InvokableSetterBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+   private final class InvokableSetterBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
       private final Method setter;
       private final Method getter;
 
@@ -396,12 +384,6 @@ public final class ResourceDMBean implements DynamicMBean {
    }
 
    public String getObjectName() {
-      if (jmxObjectName != null && jmxObjectName.trim().length() > 0) {
-         return jmxObjectName;
-      } else if (componentName != null) {
-         return componentName;
-      } else {
-          return objectClass.getSimpleName();
-      }
+      return jmxObjectName;
    }
 }

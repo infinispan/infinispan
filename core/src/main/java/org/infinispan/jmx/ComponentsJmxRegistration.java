@@ -6,9 +6,9 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.commons.jmx.JmxUtil;
 
 /**
  * Registers a set of components on an MBean server.
@@ -17,14 +17,13 @@ import org.infinispan.commons.jmx.JmxUtil;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ComponentsJmxRegistration {
+public final class ComponentsJmxRegistration {
 
    private static final Log log = LogFactory.getLog(ComponentsJmxRegistration.class);
 
-   private MBeanServer mBeanServer;
-
-   private String jmxDomain;
-   private String groupName;
+   private final MBeanServer mBeanServer;
+   private final String jmxDomain;
+   private final String groupName;
 
    public static String COMPONENT_KEY = "component";
    public static String NAME_KEY = "name";
@@ -33,50 +32,45 @@ public class ComponentsJmxRegistration {
     * C-tor.
     *
     * @param mBeanServer the server where mbeans are being registered
-    * @param groupName   name of jmx group name
+    * @param jmxDomain   name jmx domain
+    * @param groupName   name of jmx group
     * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
     */
-   public ComponentsJmxRegistration(MBeanServer mBeanServer, String groupName) {
+   public ComponentsJmxRegistration(MBeanServer mBeanServer, String jmxDomain, String groupName) {
       this.mBeanServer = mBeanServer;
-      this.groupName = groupName;
-   }
-
-   public void setJmxDomain(String jmxDomain) {
       this.jmxDomain = jmxDomain;
+      this.groupName = groupName;
    }
 
    /**
     * Performs the MBean registration.
+    *
     * @param resourceDMBeans
     */
    public void registerMBeans(Collection<ResourceDMBean> resourceDMBeans) throws CacheException {
       try {
-         for (ResourceDMBean resource : resourceDMBeans)
-            JmxUtil.registerMBean(resource, getObjectName(resource), mBeanServer);
-      }
-      catch (Exception e) {
+         for (ResourceDMBean resource : resourceDMBeans) {
+            JmxUtil.registerMBean(resource, getObjectName(resource.getObjectName()), mBeanServer);
+         }
+      } catch (Exception e) {
          throw new CacheException("Failure while registering mbeans", e);
       }
    }
 
    /**
     * Unregisters all the MBeans registered through {@link #registerMBeans(Collection)}.
+    *
     * @param resourceDMBeans
     */
    public void unregisterMBeans(Collection<ResourceDMBean> resourceDMBeans) throws CacheException {
       log.trace("Unregistering jmx resources..");
       try {
          for (ResourceDMBean resource : resourceDMBeans) {
-            JmxUtil.unregisterMBean(getObjectName(resource), mBeanServer);
+            JmxUtil.unregisterMBean(getObjectName(resource.getObjectName()), mBeanServer);
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new CacheException("Failure while unregistering mbeans", e);
       }
-   }
-
-   ObjectName getObjectName(ResourceDMBean resource) throws Exception {
-      return getObjectName(resource.getObjectName());
    }
 
    protected ObjectName getObjectName(String resourceName) throws Exception {

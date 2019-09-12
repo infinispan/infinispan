@@ -28,7 +28,9 @@ public abstract class AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(AbstractJmxRegistration.class);
 
    protected ComponentsJmxRegistration registrar;
+
    @Inject GlobalConfiguration globalConfig;
+
    @Inject BasicComponentRegistry basicComponentRegistry;
 
    String jmxDomain;

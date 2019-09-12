@@ -6,7 +6,6 @@ import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
@@ -29,7 +28,9 @@ import org.infinispan.util.logging.LogFactory;
 @SurvivesRestarts
 @Scope(Scopes.GLOBAL)
 public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
+
    private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
+
    public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
 
    private boolean needToUnregister = false;
@@ -75,12 +76,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
       String groupName = CACHE_MANAGER_JMX_GROUP
             + "," + ComponentsJmxRegistration.NAME_KEY
             + "=" + ObjectName.quote(globalConfig.cacheManagerName());
-      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, groupName);
-      updateDomain(registrar, mBeanServer, groupName);
-      return registrar;
-   }
 
-   protected void updateDomain(ComponentsJmxRegistration registrar, MBeanServer mBeanServer, String groupName) {
       if (jmxDomain == null) {
          jmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
          String configJmxDomain = globalConfig.globalJmxStatistics().domain();
@@ -88,13 +84,14 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
             throw log.jmxMBeanAlreadyRegistered(groupName, configJmxDomain);
          }
       }
-      registrar.setJmxDomain(jmxDomain);
+
+      return new ComponentsJmxRegistration(mBeanServer, jmxDomain, groupName);
    }
 
    public void unregisterCacheMBean(String cacheName, String cacheModeString) {
       if (mBeanServer != null) {
          String groupName = CacheJmxRegistration.CACHE_JMX_GROUP + "," + getCacheJmxName(cacheName, cacheModeString) +
-                            ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
+               ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
          String pattern = jmxDomain + ":" + groupName + ",*";
          try {
             Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(pattern), null, mBeanServer);
@@ -115,8 +112,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    }
 
    String getCacheJmxName(String cacheName, String cacheModeString) {
-      return ComponentsJmxRegistration.NAME_KEY + "=" + ObjectName.quote(
-         cacheName + "(" + cacheModeString.toLowerCase() + ")");
+      return ComponentsJmxRegistration.NAME_KEY + "=" + ObjectName.quote(cacheName + "(" + cacheModeString.toLowerCase() + ")");
    }
 
    public void registerMBean(Object managedComponent) {
@@ -125,8 +121,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
       resourceDMBeans.add(resourceDMBean);
    }
 
-   public ObjectName registerExternalMBean(Object managedComponent, String jmxDomain, String groupName, String name)
-      throws Exception {
+   public ObjectName registerExternalMBean(Object managedComponent, String jmxDomain, String groupName, String name) throws Exception {
       ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, name);
       String fullName = ComponentsJmxRegistration.getObjectName(jmxDomain, groupName, resourceDMBean.getObjectName());
       ObjectName objectName = new ObjectName(fullName);

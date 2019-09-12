@@ -3,7 +3,6 @@ package org.infinispan.jmx;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.cache.impl.CacheImpl;
@@ -32,7 +31,9 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 public class CacheJmxRegistration extends AbstractJmxRegistration {
+
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
+
    public static final String CACHE_JMX_GROUP = "type=Cache";
 
    @Inject Configuration cacheConfiguration;
@@ -82,9 +83,9 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       }
 
       // If removing cache, also remove cache MBean
-      if (unregisterCacheMBean)
-         globalJmxRegistration.unregisterCacheMBean(this.cacheName, this.cacheConfiguration
-            .clustering().cacheModeString());
+      if (unregisterCacheMBean) {
+         globalJmxRegistration.unregisterCacheMBean(cacheName, cacheConfiguration.clustering().cacheModeString());
+      }
 
       // make sure we don't set cache to null, in case it needs to be restarted via JMX.
    }
@@ -97,15 +98,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    protected ComponentsJmxRegistration buildRegistrar() {
       // Quote group name, to handle invalid ObjectName characters
       String groupName = CACHE_JMX_GROUP + "," + globalJmxRegistration.getCacheJmxName(cacheName,
-                                                                                       cacheConfiguration.clustering().cacheModeString()) + ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
-      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, groupName);
-      updateDomain(registrar, mBeanServer, groupName, globalJmxRegistration);
-      return registrar;
-   }
+            cacheConfiguration.clustering().cacheModeString()) + ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
 
-   protected void updateDomain(ComponentsJmxRegistration registrar,
-                               MBeanServer mBeanServer, String groupName,
-                               CacheManagerJmxRegistration globalJmxRegistration) {
       if (!globalConfig.globalJmxStatistics().enabled() && jmxDomain == null) {
          String tmpJmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
          synchronized (globalJmxRegistration) {
@@ -126,10 +120,11 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          // when cache manager was started, so no need for synchronization here.
          jmxDomain = globalJmxRegistration.jmxDomain == null ? globalConfig.globalJmxStatistics().domain() : globalJmxRegistration.jmxDomain;
       }
-      registrar.setJmxDomain(jmxDomain);
+
+      return new ComponentsJmxRegistration(mBeanServer, jmxDomain, groupName);
    }
 
-   protected Collection<ResourceDMBean> getNonCacheComponents(Collection<ResourceDMBean> components) {
+   private Collection<ResourceDMBean> getNonCacheComponents(Collection<ResourceDMBean> components) {
       Collection<ResourceDMBean> componentsExceptCache = new ArrayList<>(64);
       for (ResourceDMBean component : components) {
          if (!CacheImpl.OBJECT_NAME.equals(component.getObjectName())) {
@@ -138,5 +133,4 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       }
       return componentsExceptCache;
    }
-
 }

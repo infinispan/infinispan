@@ -125,7 +125,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @SuppressWarnings("unchecked")
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
@@ -521,7 +521,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.PERCENTAGE,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public double getHitRatio() {
       long hitsL = counters.get(StripeB.hitsFieldUpdater);
       double total = hitsL + counters.get(StripeB.missesFieldUpdater);
@@ -538,7 +537,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.PERCENTAGE,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public double getReadWriteRatio() {
       long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
@@ -552,7 +550,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageReadTime() {
       long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
       if (total == 0)
@@ -567,7 +564,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageReadTimeNanos() {
       long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
       if (total == 0)
@@ -581,7 +577,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageWriteTime() {
       long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
@@ -595,7 +590,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageWriteTimeNanos() {
       long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
@@ -609,7 +603,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageRemoveTime() {
       long removes = getRemoveHits();
       if (removes == 0)
@@ -623,7 +616,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageRemoveTimeNanos() {
       long removes = getRemoveHits();
       if (removes == 0)
@@ -762,7 +754,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          units = Units.SECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getTimeSinceReset() {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
    }
@@ -799,7 +790,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
    }
 
-   @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
+   @SuppressWarnings("VolatileLongOrDoubleField")
    private static class StripeB extends StripeA {
       static final AtomicLongFieldUpdater<StripeB> hitTimesFieldUpdater =
             AtomicLongFieldUpdater.newUpdater(StripeB.class, "hitTimes");

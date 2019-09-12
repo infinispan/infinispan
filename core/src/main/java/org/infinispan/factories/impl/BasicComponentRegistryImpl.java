@@ -12,17 +12,16 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.ComponentFactory;
-import org.infinispan.factories.components.JmxAttributeMetadata;
-import org.infinispan.factories.components.JmxOperationMetadata;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ModuleRepository;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Dan Berindei
@@ -71,18 +70,18 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       if (moduleRepository.getMBeanMetadata(className) == null)
          return null;
 
-      Map<String, JmxAttributeMetadata> attributes = new HashMap<>();
-      Map<String, JmxOperationMetadata> operations = new HashMap<>();
+      Map<String, MBeanMetadata.AttributeMetadata> attributes = new HashMap<>();
+      Map<String, MBeanMetadata.OperationMetadata> operations = new HashMap<>();
       String currentClass = className;
       while (currentClass != null) {
          MBeanMetadata metadata = moduleRepository.getMBeanMetadata(currentClass);
          if (metadata == null) {
             throw new CacheConfigurationException("Missing MBean metadata for class " + currentClass);
          }
-         for (JmxAttributeMetadata attribute : metadata.getAttributes()) {
+         for (MBeanMetadata.AttributeMetadata attribute : metadata.getAttributes()) {
             attributes.put(attribute.getName(), attribute);
          }
-         for (JmxOperationMetadata operation : metadata.getOperations()) {
+         for (MBeanMetadata.OperationMetadata operation : metadata.getOperations()) {
             operations.put(operation.getMethodName(), operation);
          }
          currentClass = metadata.getSuperMBeanClassName();
