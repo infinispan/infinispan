@@ -83,9 +83,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
 
    private ComponentsJmxRegistration buildRegistrator(Cache cache) {
       String groupName = "name=" + ObjectName.quote(cache.getName());
-      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, groupName);
-      registrator.setJmxDomain(JMX_DOMAIN);
-      return registrator;
+      return new ComponentsJmxRegistration(mBeanServer, JMX_DOMAIN, groupName);
    }
 
    public void testRegisterReplicatedCache() throws Exception {

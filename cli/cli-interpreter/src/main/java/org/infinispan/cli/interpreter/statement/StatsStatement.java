@@ -13,7 +13,6 @@ import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
-import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -31,7 +30,7 @@ public class StatsStatement implements Statement {
 
    private enum Options {
       CONTAINER
-   };
+   }
 
    final String cacheName;
    final private List<Option> options;
@@ -103,15 +102,15 @@ public class StatsStatement implements Statement {
          return;
       }
       pw.printf("%s: {\n", mBeanMetadata.getJmxObjectName());
-      List<JmxAttributeMetadata> attrs = new ArrayList<>(mBeanMetadata.getAttributes());
-      attrs.sort(Comparator.comparing(JmxAttributeMetadata::getName));
-      for (JmxAttributeMetadata s : attrs) {
+      List<MBeanMetadata.AttributeMetadata> attrs = new ArrayList<>(mBeanMetadata.getAttributes());
+      attrs.sort(Comparator.comparing(MBeanMetadata.AttributeMetadata::getName));
+      for (MBeanMetadata.AttributeMetadata s : attrs) {
          pw.printf("  %s: %s\n", s.getName(), getAttributeValue(component, s));
       }
       pw.println("}");
    }
 
-   private Object getAttributeValue(Object o, JmxAttributeMetadata attr) {
+   private Object getAttributeValue(Object o, MBeanMetadata.AttributeMetadata attr) {
       String name = attr.getName();
       String methodName = (attr.isIs() ? "is" : "get") + name.substring(0, 1).toUpperCase() + name.substring(1);
       try {
@@ -121,5 +120,4 @@ public class StatsStatement implements Statement {
          return "N/A";
       }
    }
-
 }

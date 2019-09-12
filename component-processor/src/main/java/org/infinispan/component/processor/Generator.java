@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.TypeElement;
 import javax.tools.FileObject;
@@ -64,10 +65,10 @@ public class Generator {
          writer.printf("import javax.annotation.Generated;\n");
          writer.printf("\n");
          writer.printf("import org.infinispan.factories.impl.ComponentAccessor;\n");
-         writer.printf("import org.infinispan.factories.components.JmxAttributeMetadata;\n");
-         writer.printf("import org.infinispan.factories.components.JmxOperationMetadata;\n");
-         writer.printf("import org.infinispan.factories.components.JmxOperationParameter;\n");
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata;\n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;\n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationMetadata;\n");
+         writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationParameterMetadata;\n");
          writer.printf("import org.infinispan.factories.impl.WireContext;\n");
          writer.printf("import org.infinispan.manager.ModuleRepository;\n");
          writer.printf("\n");
@@ -214,7 +215,6 @@ public class Generator {
       return eagerDependencies;
    }
 
-
    private void writeMBeanMetadata(PrintWriter writer, Model.AnnotatedType c) {
       CharSequence binaryName = c.binaryName;
       Model.MComponent m = c.mComponent;
@@ -236,16 +236,16 @@ public class Generator {
       }
       for (Model.MOperation method : operations) {
          ManagedOperation operation = method.operation;
-         // JmxOperationMetadata(String methodName, String operationName, String description, String returnType,
-         //    JmxOperationParameter... methodParameters)
+         // OperationMetadata(String methodName, String operationName, String description, String returnType,
+         //    OperationParameterMetadata... methodParameters)
          List<Model.MParameter> parameters = method.parameters;
-         writer.printf("            new JmxOperationMetadata(\"%s\", \"%s\", \"%s\", \"%s\"%s\n",
+         writer.printf("            new OperationMetadata(\"%s\", \"%s\", \"%s\", \"%s\"%s\n",
                        method.name, operation.name(), operation.description(),
                        method.returnType, optionalComma(-1, parameters.size()));
          for (int j = 0; j < parameters.size(); j++) {
             Model.MParameter parameter = parameters.get(j);
-            // JmxOperationParameter(String name, String type, String description)
-            writer.printf("               new JmxOperationParameter(\"%s\", \"%s\", \"%s\")%s\n",
+            // OperationParameterMetadata(String name, String type, String description)
+            writer.printf("               new OperationParameterMetadata(\"%s\", \"%s\", \"%s\")%s\n",
                           parameter.name, parameter.type, parameter.description,
                           optionalComma(j, parameters.size()));
          }
@@ -256,8 +256,8 @@ public class Generator {
 
    private void writeManagedAttribute(PrintWriter writer, CharSequence name, ManagedAttribute attribute,
                                       boolean useSetter, String type, boolean is, String comma) {
-      // JmxAttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is)
-      writer.printf("            new JmxAttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s)%s\n",
+      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is)
+      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s)%s\n",
                     name, attribute.description(), attribute.writable(), useSetter, type, is, comma);
    }
 
@@ -270,7 +270,6 @@ public class Generator {
          writer.printf("package %s;\n\n", module.packageName);
          writer.printf("import java.util.Arrays;\n");
          writer.printf("import java.util.Collection;\n");
-         writer.printf("import java.util.Collections;\n");
          writer.printf("import java.util.Collections;\n");
          writer.printf("import javax.annotation.Generated;\n");
          writer.printf("\n");
@@ -398,10 +397,8 @@ public class Generator {
       }
    }
 
-
    private CharSequence stringLiteral(String value) {
       return value == null ? null : "\"" + value + '"';
-
    }
 
    private CharSequence listLiteral(List<? extends CharSequence> list) {
@@ -425,5 +422,4 @@ public class Generator {
    private String optionalComma(int index, int size) {
       return index + 1 < size ? "," : "";
    }
-
 }
