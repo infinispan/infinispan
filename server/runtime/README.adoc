@@ -44,7 +44,7 @@ concurrent use by multiple server instances.
 The `server.sh|bat` startup script includes arguments that you can use to get
 information and configure the server runtime environment.
 
-To view the available command arguments, include the `--help` option as follows:
+To view the available command arguments, include the `--help` or `-h` option as follows:
 
 ----
 $ bin/server.sh -h
