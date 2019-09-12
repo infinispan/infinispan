@@ -635,6 +635,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
 
       @Override
+      public CompletionStage<Void> passivateAllAsync() {
+         return delegate.passivateAllAsync();
+      }
+
+      @Override
       public void skipPassivationOnStop(boolean skip) {
          delegate.skipPassivationOnStop(skip);
       }

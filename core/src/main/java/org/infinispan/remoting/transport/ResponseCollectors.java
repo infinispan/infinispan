@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.partitionhandling.AvailabilityException;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 
@@ -30,9 +29,5 @@ public class ResponseCollectors {
 
    public static SuspectException remoteNodeSuspected(Address sender) {
       return CLUSTER.remoteNodeSuspected(sender);
-   }
-
-   public static RuntimeException unexpectedResponse(Response response) {
-      return new IllegalArgumentException("Unexpected response " + response);
    }
 }

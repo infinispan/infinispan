@@ -60,8 +60,9 @@ abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalC
       if (resp != null) {
          if (resp instanceof ExceptionResponse) {
             Exception exception = ((ExceptionResponse) resp).getException();
-            // We extract exception as it is always wrapped remotely
-            throwableEater.accept(exception.getCause());
+            // Non-exceptions are wrapped in CacheExceptions on the remote node,
+            // but we don't treat them specially here
+            throwableEater.accept(exception);
          } else if (resp instanceof SuccessfulResponse) {
             resultsEater.accept(((SuccessfulResponse) resp).getResponseValue());
          } else if (resp instanceof CacheNotFoundResponse) {

@@ -811,8 +811,7 @@ public class JGroupsTransport implements Transport {
          return CompletableFutures.completedNull();
 
       if (trace)
-         log.tracef("Waiting for transaction data for view %d, current view is %d", expectedViewId,
-                    view.getViewId());
+         log.tracef("Waiting for view %d, current view is %d", expectedViewId, view.getViewId());
       viewUpdateLock.lock();
       try {
          view = this.clusterView;
@@ -833,11 +832,11 @@ public class JGroupsTransport implements Transport {
       if (channel == null)
          return;
 
-      log.tracef("Waiting on view %d being accepted", viewId);
       long remainingNanos = Long.MAX_VALUE;
       viewUpdateLock.lock();
       try {
          while (channel != null && getViewId() < viewId && remainingNanos > 0) {
+            log.tracef("Waiting for view %d, current view is %d", viewId, clusterView.getViewId());
             remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
          }
       } finally {
@@ -1235,7 +1234,7 @@ public class JGroupsTransport implements Transport {
    private void siteUnreachable(String site) {
       requests.forEach(request -> {
          if (request instanceof SingleSiteRequest) {
-            ((SingleSiteRequest) request).sitesUnreachable(site);
+            ((SingleSiteRequest<?>) request).sitesUnreachable(site);
          }
       });
    }

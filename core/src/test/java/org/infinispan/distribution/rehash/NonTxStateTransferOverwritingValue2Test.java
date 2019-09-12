@@ -2,11 +2,12 @@ package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -39,6 +40,8 @@ import org.infinispan.test.fwk.ClusteringDependentLogicDelegator;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledRpcManager;
+import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -192,7 +195,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
    }
 
    private void blockEntryCommit(final CheckPoint checkPoint, AdvancedCache<Object, Object> cache) {
-      ClusteringDependentLogic cdl1 = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+      ClusteringDependentLogic cdl1 = TestingUtil.extractComponent(cache, ClusteringDependentLogic.class);
       ClusteringDependentLogic replaceCdl = new ClusteringDependentLogicDelegator(cdl1) {
          @Override
          public CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command,
@@ -225,7 +228,8 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
    private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
-      ClusterTopologyManager spyManager = spy(ctm);
+      Answer<?> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
+      ClusterTopologyManager mock = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[1];
@@ -234,8 +238,8 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
             checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
             checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
          }
-         return invocation.callRealMethod();
-      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
+         return forwardedAnswer.answer(invocation);
+      }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mock, true);
    }
 }

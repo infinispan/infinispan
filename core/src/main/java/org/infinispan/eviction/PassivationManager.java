@@ -43,6 +43,15 @@ public interface PassivationManager extends JmxStatisticsExposer {
    void passivateAll() throws PersistenceException;
 
    /**
+    * Start passivating all entries that are in memory.
+    *
+    * This method does not notify listeners of passivation.
+    *
+    * @since 10.1
+    */
+   CompletionStage<Void> passivateAllAsync();
+
+   /**
     * Skips the passivation when the cache is stopped.
     */
    void skipPassivationOnStop(boolean skip);

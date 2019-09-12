@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -72,8 +73,9 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    private volatile boolean stopped = false;
    private final Set<Class<? extends ReplicableCommand>> excludedCommands =
       Collections.synchronizedSet(new HashSet<>());
-   private final BlockingQueue<CompletableFuture<ControlledRequest>> waiters = new LinkedBlockingDeque<>();
-   private Deque<ControlledRequest> requests = new ConcurrentLinkedDeque<>();
+   private final BlockingQueue<CompletableFuture<ControlledRequest<?>>> waiters = new LinkedBlockingDeque<>();
+   // Holds all the requests for debuggind
+   private Deque<ControlledRequest<?>> allRequests = new ConcurrentLinkedDeque<>();
    private final ScheduledExecutorService executor;
    private RuntimeException globalError;
 
@@ -115,6 +117,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       stopped = true;
       executor.shutdownNow();
       throwGlobalError();
+      allRequests.clear();
       if (!waiters.isEmpty()) {
          fail("Stopped intercepting RPCs, but there are " + waiters.size() + " waiters in the queue");
       }
@@ -123,7 +126,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    /**
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
-   public <T extends ReplicableCommand> BlockedRequest expectCommand(Class<T> expectedCommandClass) {
+   public <T extends ReplicableCommand> BlockedRequest<T> expectCommand(Class<T> expectedCommandClass) {
       return uncheckedGet(expectCommandAsync(expectedCommandClass));
    }
 
@@ -131,43 +134,43 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
    public <T extends ReplicableCommand>
-   BlockedRequest expectCommand(Class<T> expectedCommandClass, Consumer<T> checker) {
-      BlockedRequest blockedRequest = uncheckedGet(expectCommandAsync(expectedCommandClass));
+   BlockedRequest<T> expectCommand(Class<T> expectedCommandClass, Consumer<T> checker) {
+      BlockedRequest<T> blockedRequest = uncheckedGet(expectCommandAsync(expectedCommandClass));
       T command = expectedCommandClass.cast(blockedRequest.request.getCommand());
       checker.accept(command);
       return blockedRequest;
    }
 
    public <T extends ReplicableCommand>
-   BlockedRequests expectCommands(Class<T> expectedCommandClass, Address... targets) {
+   BlockedRequests<T> expectCommands(Class<T> expectedCommandClass, Address... targets) {
       return expectCommands(expectedCommandClass, Arrays.asList(targets));
    }
 
    public <T extends ReplicableCommand>
-   BlockedRequests expectCommands(Class<T> expectedCommandClass, Collection<Address> targets) {
+   BlockedRequests<T> expectCommands(Class<T> expectedCommandClass, Collection<Address> targets) {
       Map<Address, BlockedRequest<T>> requests = new HashMap<>();
       for (int i = 0; i < targets.size(); i++) {
-         BlockedRequest request = expectCommand(expectedCommandClass);
+         BlockedRequest<T> request = expectCommand(expectedCommandClass);
          requests.put(request.getTarget(), request);
       }
       assertEquals(new HashSet<>(targets), requests.keySet());
-      return new BlockedRequests(requests);
+      return new BlockedRequests<>(requests);
    }
 
    /**
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
    public <T extends ReplicableCommand>
-   CompletableFuture<BlockedRequest> expectCommandAsync(Class<T> expectedCommandClass) {
+   CompletableFuture<BlockedRequest<T>> expectCommandAsync(Class<T> expectedCommandClass) {
       throwGlobalError();
       log.tracef("Waiting for command %s", expectedCommandClass);
-      CompletableFuture<ControlledRequest> future = new CompletableFuture<>();
+      CompletableFuture<ControlledRequest<?>> future = new CompletableFuture<>();
       waiters.add(future);
       return future.thenApply(request -> {
          log.tracef("Blocked command %s", request.command);
          assertTrue("Expecting a " + expectedCommandClass.getName() + ", got " + request.getCommand(),
                     expectedCommandClass.isInstance(request.getCommand()));
-         return new BlockedRequest<T>(request);
+         return new BlockedRequest<>(request);
       });
    }
 
@@ -199,9 +202,9 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          (rpcOptions != null && rpcOptions.deliverOrder() != DeliverOrder.TOTAL) ? realOne.getAddress() : null;
       ControlledRequest<T> controlledRequest =
          new ControlledRequest<>(command, targets, collector, invoker, executor, excluded);
-      requests.add(controlledRequest);
+      allRequests.add(controlledRequest);
       try {
-         CompletableFuture<ControlledRequest> waiter = waiters.poll(TIMEOUT_SECONDS, SECONDS);
+         CompletableFuture<ControlledRequest<?>> waiter = waiters.poll(TIMEOUT_SECONDS, SECONDS);
          if (waiter == null) {
             TimeoutException t = new TimeoutException("Found no waiters for command " + command);
             addGlobalError(t);
@@ -215,13 +218,13 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          throw new TestException(e);
       }
       if (collector != null) {
-         executor.schedule(
-            () -> {
-               TimeoutException e = new TimeoutException("Timed out waiting for test to unblock command " +
-                                                         controlledRequest.getCommand());
-               addGlobalError(e);
-               controlledRequest.fail(e);
-            }, TIMEOUT_SECONDS * 2, SECONDS);
+         ScheduledFuture<?> cancelTask = executor.schedule(() -> {
+            TimeoutException e = new TimeoutException("Timed out waiting for test to unblock command " +
+                                                      controlledRequest.getCommand());
+            addGlobalError(e);
+            controlledRequest.fail(e);
+         }, TIMEOUT_SECONDS * 2, SECONDS);
+         controlledRequest.resultFuture.whenComplete((ignored, throwable) -> cancelTask.cancel(false));
       }
       // resultFuture is completed from a test thread, and we don't want to run the interceptor callbacks there
       return controlledRequest.resultFuture.whenCompleteAsync((r, t) -> {}, executor);
@@ -463,7 +466,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
     * <p>
     * For example, {@code request.send().expectResponse(a1, r1).replace(r2).receiveAll()}.
     */
-   public static class BlockedRequest<T extends ReplicableCommand> {
+   public static class BlockedRequest<C extends ReplicableCommand> {
       private final ControlledRequest<?> request;
 
       public BlockedRequest(ControlledRequest<?> request) {
@@ -508,8 +511,8 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          request.fail(e);
       }
 
-      public T getCommand() {
-         return (T) request.getCommand();
+      public C getCommand() {
+         return (C) request.getCommand();
       }
 
       public Collection<Address> getTargets() {
@@ -692,10 +695,10 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    public static class BlockedResponseMap {
-      private final ControlledRequest request;
+      private final ControlledRequest<?> request;
       private Map<Address, Response> responseMap;
 
-      private BlockedResponseMap(ControlledRequest request,
+      private BlockedResponseMap(ControlledRequest<?> request,
                                  Map<Address, Response> responseMap) {
          this.request = request;
          this.responseMap = responseMap;
@@ -819,7 +822,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
     * Multiple requests sent to individual targets in parallel, e.g. with
     * {@link RpcManager#invokeCommands(Collection, Function, ResponseCollector, RpcOptions)}.
     */
-   public class BlockedRequests<T extends ReplicableCommand> {
+   public static class BlockedRequests<T extends ReplicableCommand> {
       private Map<Address, BlockedRequest<T>> requests;
 
       public BlockedRequests(Map<Address, BlockedRequest<T>> requests) {

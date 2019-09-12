@@ -79,10 +79,10 @@ public abstract class AbstractInfinispanTest {
    protected final Log log = LogFactory.getLog(getClass());
 
    private final ThreadFactory defaultThreadFactory = getTestThreadFactory("ForkThread");
-   private final ThreadPoolExecutor defaultExecutorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                                                                                 60L, TimeUnit.SECONDS,
-                                                                                    new SynchronousQueue<>(),
-                                                                                 defaultThreadFactory);
+   private final ThreadPoolExecutor testExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                                                          60L, TimeUnit.SECONDS,
+                                                                          new SynchronousQueue<>(),
+                                                                          defaultThreadFactory);
 
    public static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
@@ -150,7 +150,7 @@ public abstract class AbstractInfinispanTest {
    }
 
    protected void killSpawnedThreads() {
-      List<Runnable> runnables = defaultExecutorService.shutdownNow();
+      List<Runnable> runnables = testExecutor.shutdownNow();
       if (!runnables.isEmpty()) {
          log.errorf("There were runnables %s left uncompleted in test %s", runnables, getClass().getSimpleName());
       }
@@ -158,7 +158,7 @@ public abstract class AbstractInfinispanTest {
 
    @AfterMethod
    protected void checkThreads() {
-      int activeTasks = defaultExecutorService.getActiveCount();
+      int activeTasks = testExecutor.getActiveCount();
       if (activeTasks != 0) {
          log.errorf("There were %d active tasks found in the test executor service for class %s", activeTasks,
                     getClass().getSimpleName());
@@ -269,14 +269,14 @@ public abstract class AbstractInfinispanTest {
    }
 
    protected Future<Void> fork(ExceptionRunnable r) {
-      return defaultExecutorService.submit(new CallableWrapper<Void>(() -> {
+      return testExecutor.submit(new CallableWrapper<>(() -> {
          r.run();
          return null;
       }));
    }
 
    protected <T> Future<T> fork(Callable<T> c) {
-      return defaultExecutorService.submit(new CallableWrapper<>(c));
+      return testExecutor.submit(new CallableWrapper<>(c));
    }
 
    /**
@@ -327,7 +327,7 @@ public abstract class AbstractInfinispanTest {
       List<Future<Void>> futures = new ArrayList<>(tasks.length);
       CyclicBarrier barrier = new CyclicBarrier(tasks.length);
       for (ExceptionRunnable task : tasks) {
-         futures.add(defaultExecutorService.submit(new ConcurrentCallable(task, barrier)));
+         futures.add(testExecutor.submit(new ConcurrentCallable(task, barrier)));
       }
 
       List<Exception> exceptions = new ArrayList<>();
@@ -429,9 +429,9 @@ public abstract class AbstractInfinispanTest {
          ParameterizedType collectionType = (ParameterizedType) field.getGenericType();
          Type elementType = collectionType.getActualTypeArguments()[0];
          if (elementType instanceof ParameterizedType) {
-            return clazz.isAssignableFrom(((Class) ((ParameterizedType) elementType).getRawType()));
+            return clazz.isAssignableFrom(((Class<?>) ((ParameterizedType) elementType).getRawType()));
          } else if (elementType instanceof Class<?>) {
-            return clazz.isAssignableFrom(((Class) elementType));
+            return clazz.isAssignableFrom(((Class<?>) elementType));
          } else {
             return false;
          }
@@ -450,8 +450,8 @@ public abstract class AbstractInfinispanTest {
       return fields;
    }
 
-   protected ExecutorService getDefaultExecutorService() {
-      return defaultExecutorService;
+   protected ExecutorService testExecutor() {
+      return testExecutor;
    }
 
    private class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {

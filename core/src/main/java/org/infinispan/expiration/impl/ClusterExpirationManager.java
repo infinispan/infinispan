@@ -292,7 +292,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       if (expiredMortal) {
          CompletableFuture<Void> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, hasLock);
          if (waitOnLifespanExpiration(hasLock)) {
-            return future.thenCompose(CompletableFutures.composeTrue());
+            return future.thenApply(ignored -> true);
          }
          // We don't want to block the user while the remove expired is happening for lifespan
          return CompletableFutures.completedTrue();

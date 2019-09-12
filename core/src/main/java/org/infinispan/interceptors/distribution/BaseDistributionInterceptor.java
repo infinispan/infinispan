@@ -748,7 +748,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             dataWriteCommand.fail();
             // FIXME A response cannot be successful and not valid
          } else if (!(response instanceof ValidResponse)) {
-            throw unexpected(response);
+            throw unexpected(primaryOwner, response);
          }
          // We expect only successful/unsuccessful responses, not unsure
          return ((ValidResponse) response).getResponseValue();
@@ -968,7 +968,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                if (response instanceof ExceptionResponse) {
                   throw CompletableFutures.asCompletionException(((ExceptionResponse) response).getException());
                } else {
-                  throw unexpected(response);
+                  throw unexpected(sender, response);
                }
             }
          }

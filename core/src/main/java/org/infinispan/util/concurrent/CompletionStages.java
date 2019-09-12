@@ -1,13 +1,18 @@
 package org.infinispan.util.concurrent;
 
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -18,6 +23,9 @@ import org.infinispan.util.logging.LogFactory;
  * @since 10.0
  */
 public class CompletionStages {
+
+   public static final Runnable NO_OP_RUNNABLE = () -> {};
+
    private CompletionStages() { }
 
    private static final Log log = LogFactory.getLog(CompletionStages.class);
@@ -153,6 +161,52 @@ public class CompletionStages {
             log.tracef("Continuing execution of id %s", traceId);
          }
       }, continuationExecutor);
+   }
+
+   /**
+    * Extend {@link CompletionStage#thenCompose(Function)} to also handle exceptions.
+    */
+   public static <T, U> CompletionStage<U> handleAndCompose(CompletionStage<T> stage,
+                                                            BiFunction<T, Throwable, CompletionStage<U>> handleFunction) {
+      return stage.handle(handleFunction).thenCompose(Function.identity());
+   }
+
+   public static CompletionStage<Void> schedule(Runnable command, ScheduledExecutorService executor,
+                                                  long delay, TimeUnit timeUnit) {
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      executor.schedule(() -> {
+         try {
+            command.run();
+            future.complete(null);
+         } catch (Throwable t) {
+            future.completeExceptionally(t);
+         }
+      }, delay, timeUnit);
+      return future;
+   }
+
+   public static <T> CompletionStage<T> schedule(Callable<T> command, ScheduledExecutorService executor,
+                                                   long delay, TimeUnit timeUnit) {
+      CompletableFuture<T> future = new CompletableFuture<>();
+      executor.schedule(() -> {
+         try {
+            T value = command.call();
+            future.complete(value);
+         } catch (Throwable t) {
+            future.completeExceptionally(t);
+         }
+      }, delay, timeUnit);
+      return future;
+   }
+
+   public static <T> CompletionStage<T> scheduleNonBlocking(Callable<? extends CompletionStage<T>> command,
+                                                            ScheduledExecutorService executor,
+                                                            long delay, TimeUnit timeUnit) {
+      return schedule(command, executor, delay, timeUnit).thenCompose(Function.identity());
+   }
+
+   public static CompletionStage<Void> ignoreValue(CompletionStage<?> stage) {
+      return stage.thenRun(NO_OP_RUNNABLE);
    }
 
    private static class VoidAggregateCompletionStage extends AbstractAggregateCompletionStage<Void> {

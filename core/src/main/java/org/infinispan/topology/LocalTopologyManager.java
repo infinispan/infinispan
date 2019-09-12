@@ -1,5 +1,7 @@
 package org.infinispan.topology;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -19,7 +21,7 @@ public interface LocalTopologyManager {
     * Forwards the join request to the coordinator.
     * @return The current consistent hash.
     */
-   CacheTopology join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm, PartitionHandlingManager phm) throws Exception;
+   CompletionStage<CacheTopology> join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm, PartitionHandlingManager phm) throws Exception;
 
    /**
     * Forwards the leave request to the coordinator.
@@ -33,37 +35,38 @@ public interface LocalTopologyManager {
     * <p>The coordinator can change during the state transfer, so we make the rebalance RPC async
     * and we send the response as a different command.
     *  @param cacheName the name of the cache
-    * @param topologyId the current topology id of the node at the time the rebalance is completed. This must be >= than the one when rebalance starts.
-    * @param rebalanceId
+    * @param topologyId the current topology id of the node at the time the rebalance is completed.
+    * @param rebalanceId the id of the current rebalance
     * @param throwable {@code null} unless local rebalance ended because of an error.
     */
    void confirmRebalancePhase(String cacheName, int topologyId, int rebalanceId, Throwable throwable);
 
    /**
     * Recovers the current topology information for all running caches and returns it to the coordinator.
-    * @param viewId
+    *
+    * @param viewId The coordinator's view id
     */
    // TODO Add a new class to hold the CacheJoinInfo and the CacheTopology
-   ManagerStatusResponse handleStatusRequest(int viewId);
+   CompletionStage<ManagerStatusResponse> handleStatusRequest(int viewId);
 
    /**
     * Updates the current and/or pending consistent hash, without transferring any state.
     */
-   void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
-                             int viewId, Address sender) throws InterruptedException;
+   CompletionStage<Void> handleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
+                                              AvailabilityMode availabilityMode, int viewId, Address sender);
 
    /**
     * Update the stable cache topology.
-    *
+    * <p>
     * Mostly needed for backup, so that a new coordinator can recover the stable topology of the cluster.
     */
-   void handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, final Address sender,
-         int viewId);
+   CompletionStage<Void> handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, final Address sender,
+                                                    int viewId);
 
    /**
     * Performs the state transfer.
     */
-   void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender) throws InterruptedException;
+   CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender);
 
    /**
     * @return the current topology for a cache.
@@ -127,13 +130,12 @@ public interface LocalTopologyManager {
 
    /**
     * Initiates a cluster-wide cache shutdown for the specified cache
-    * @throws Exception
     */
-   void cacheShutdown(String name) throws Exception;
+   void cacheShutdown(String name);
 
    /**
     * Handles the local operations related to gracefully shutting down a cache
     */
-   void handleCacheShutdown(String cacheName);
+   CompletionStage<Void> handleCacheShutdown(String cacheName);
 
 }

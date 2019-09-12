@@ -37,18 +37,19 @@ public abstract class AbstractDelegatingTransport implements Transport {
       this.actual = actual;
    }
 
+   @Deprecated
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
-      return afterInvokeRemotely(rpcCommand, result);
+      return actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
    }
 
+   @Deprecated
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
    }
 
+   @Deprecated
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, responseFilter, deliverOrder, anycast);
@@ -81,17 +82,12 @@ public abstract class AbstractDelegatingTransport implements Transport {
 
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
-      beforeBackupRemotely(rpcCommand);
-      BackupResponse response = actual.backupRemotely(backups, rpcCommand);
-      return afterBackupRemotely(rpcCommand, response);
+      return actual.backupRemotely(backups, rpcCommand);
    }
 
    @Override
    public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
-      beforeBackupRemotely(rpcCommand);
-      XSiteResponse cs = actual.backupRemotely(backup, rpcCommand);
-      cs.whenComplete((aVoid, throwable) -> afterBackupRemotely(rpcCommand, throwable));
-      return cs;
+      return actual.backupRemotely(backup, rpcCommand);
    }
 
    @Override
@@ -151,6 +147,7 @@ public abstract class AbstractDelegatingTransport implements Transport {
       return actual.withView(expectedViewId);
    }
 
+   @Deprecated
    @Override
    public void waitForView(int viewId) throws InterruptedException {
       actual.waitForView(viewId);
@@ -168,58 +165,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
 
    public Transport getDelegate() {
       return actual;
-   }
-
-   /**
-    * method invoked before a remote invocation.
-    *
-    * @param command the command to be invoked remotely
-    */
-   protected void beforeInvokeRemotely(ReplicableCommand command) {
-      //no-op by default
-   }
-
-   /**
-    * method invoked after a successful remote invocation.
-    *
-    * @param command     the command invoked remotely.
-    * @param responseMap can be null if not response is expected.
-    * @return the new response map
-    */
-   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
-      return responseMap;
-   }
-
-   /**
-    * method invoked before a backup remote invocation.
-    *
-    * @param command the command to be invoked remotely
-    */
-   protected void beforeBackupRemotely(XSiteReplicateCommand command) {
-      //no-op by default
-   }
-
-   /**
-    * method invoked after a successful backup remote invocation.
-    *
-    * @param command  the command invoked remotely.
-    * @param response can be null if not response is expected.
-    * @return the new response map
-    * @deprecated since 10.0. Use {@link #afterBackupRemotely(ReplicableCommand, Throwable)}
-    */
-   @Deprecated
-   protected BackupResponse afterBackupRemotely(ReplicableCommand command, BackupResponse response) {
-      return response;
-   }
-
-   /**
-    * Method invoked after a cross-site request.
-    *
-    * @param command The command sent.
-    * @param throwable The {@link Throwable} if the request failed, or {@code null} if successful.
-    */
-   protected void afterBackupRemotely(ReplicableCommand command, Throwable throwable) {
-      //no-op
    }
 
    @Override

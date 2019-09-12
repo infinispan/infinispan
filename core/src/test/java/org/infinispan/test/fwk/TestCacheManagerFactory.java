@@ -387,6 +387,9 @@ public class TestCacheManagerFactory {
    }
 
    public static void setNodeName(GlobalConfigurationBuilder builder) {
+      if (builder.build().transport().nodeName() != null)
+         return;
+
       String nextNodeName = TestResourceTracker.getNextNodeName();
 
       // Set the node name even for local managers in order to set the name of the worker threads
@@ -408,7 +411,8 @@ public class TestCacheManagerFactory {
 
       builder.persistenceThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.asyncThreadPool().threadPoolFactory(nonBlockingExecutorFactoryWithQueue);
-      builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
+      // Listener thread pool already has a single thread
+      // builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.transport().transportThreadPool().threadPoolFactory(executorFactoryWithQueue);
       // TODO Scheduled thread pools don't have a threads limit
       // Timeout thread pool is not configurable at all

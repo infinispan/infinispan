@@ -92,26 +92,20 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       ControlledTransport transport0 = ControlledTransport.replace(cache(0));
       ControlledTransport transport1 = ControlledTransport.replace(cache(1));
       // Block sending REBALANCE_START until the CH_UPDATE is delivered to make the test deterministic
-      transport0.blockBefore(cmd -> {
-         if (cmd instanceof CacheTopologyControlCommand) {
-            CacheTopologyControlCommand command = (CacheTopologyControlCommand) cmd;
-            if (command.getCacheName().equals(cacheName) &&
-                  command.getTopologyId() == stableTopologyId + 2 &&
-                  command.getType() == CacheTopologyControlCommand.Type.REBALANCE_START) {
-               return true;
-            }
+      transport0.blockBefore(CacheTopologyControlCommand.class, command -> {
+         if (command.getCacheName().equals(cacheName) &&
+               command.getTopologyId() == stableTopologyId + 2 &&
+               command.getType() == CacheTopologyControlCommand.Type.REBALANCE_START) {
+            return true;
          }
          return false;
       });
       // Also block rebalance initiated by the new coord until we test with topology + 3
-      transport1.blockBefore(cmd -> {
-         if (cmd instanceof CacheTopologyControlCommand) {
-            CacheTopologyControlCommand command = (CacheTopologyControlCommand) cmd;
-            if (command.getCacheName().equals(cacheName) &&
-                  command.getTopologyId() == stableTopologyId + 4 &&
-                  command.getType() == CacheTopologyControlCommand.Type.REBALANCE_START) {
-               return true;
-            }
+      transport1.blockBefore(CacheTopologyControlCommand.class, command -> {
+         if (command.getCacheName().equals(cacheName) &&
+               command.getTopologyId() == stableTopologyId + 4 &&
+               command.getType() == CacheTopologyControlCommand.Type.REBALANCE_START) {
+            return true;
          }
          return false;
       });

@@ -3,11 +3,12 @@ package org.infinispan.distribution.rehash;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.util.ControlledRpcManager.replaceRpcManager;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -28,7 +29,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
-import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -40,6 +41,8 @@ import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -151,29 +154,32 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Start the joiner
       log.tracef("Starting the cache on the joiner");
       ConfigurationBuilder c = getConfigurationBuilder();
-      c.clustering().stateTransfer().awaitInitialTransfer(false);
+      c.clustering().stateTransfer().awaitInitialTransfer(false).timeout(30, SECONDS);
       addClusterEnabledCacheManager(c);
 
-      final AdvancedCache<Object,Object> cache1 = advancedCache(1);
+      final AdvancedCache<Object, Object> cache1 = advancedCache(1);
 
       // Wait for the write CH to contain the joiner everywhere
       eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
-            cache1.getRpcManager().getMembers().size() == 2);
+                       cache1.getRpcManager().getMembers().size() == 2);
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       // Scattered cache mode uses only PKVC or RemoveCommands for backup
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-            true, false, cacheMode.isScattered() ? t -> t instanceof PutKeyValueCommand || t instanceof RemoveCommand
-            : t -> t.getClass().equals(op.getCommandClass()));
+      BlockingInterceptor<?> blockingInterceptor1 =
+            new BlockingInterceptor<>(beforeCommitCache1Barrier, true, false,
+                                      cacheMode.isScattered() ?
+                                      t -> t instanceof PutKeyValueCommand || t instanceof RemoveCommand :
+                                      t -> t.getClass().equals(op.getCommandClass()));
 
-      Class<? extends AsyncInterceptor> ewi = cache1.getAsyncInterceptorChain().getInterceptors().stream()
-            .filter(i -> i instanceof EntryWrappingInterceptor).findFirst().orElseThrow(IllegalStateException::new).getClass();
-      assertTrue(cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, ewi));
+      AsyncInterceptorChain interceptorChain1 = TestingUtil.extractInterceptorChain(cache1);
+      Class<? extends EntryWrappingInterceptor> ewi =
+            interceptorChain1.findInterceptorExtending(EntryWrappingInterceptor.class).getClass();
+      assertTrue(interceptorChain1.addInterceptorAfter(blockingInterceptor1, ewi));
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).
-      ControlledRpcManager.BlockedRequest blockedStateResponse =
-         blockingRpcManager0.expectCommand(StateResponseCommand.class);
+      ControlledRpcManager.BlockedRequest<?> blockedStateResponse =
+            blockingRpcManager0.expectCommand(StateResponseCommand.class);
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
       // The put command will be blocked on cache1 just before committing the entry.
@@ -214,10 +220,12 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       blockingRpcManager0.stopBlocking();
    }
 
-   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)
+   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint,
+                                           int rebalanceTopologyId)
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
-      ClusterTopologyManager spyManager = spy(ctm);
+      Answer<?> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
+      ClusterTopologyManager mock = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[1];
@@ -226,8 +234,8 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
             checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
             checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
          }
-         return invocation.callRealMethod();
-      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
+         return forwardedAnswer.answer(invocation);
+      }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mock, true);
    }
 }

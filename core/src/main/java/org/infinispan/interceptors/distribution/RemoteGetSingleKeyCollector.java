@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -38,7 +40,7 @@ public class RemoteGetSingleKeyCollector implements ResponseCollector<Successful
          hasSuspectResponse = true;
          return null;
       }
-      throw ResponseCollectors.unexpectedResponse(response);
+      throw CLUSTER.unexpectedResponse(sender, response);
    }
 
    @Override

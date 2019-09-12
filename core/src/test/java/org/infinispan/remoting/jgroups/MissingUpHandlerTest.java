@@ -1,5 +1,7 @@
 package org.infinispan.remoting.jgroups;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.util.Properties;
 
@@ -21,7 +23,7 @@ import org.testng.annotations.Test;
 /**
  * When the JGroups channel is started externally and injected via {@code ChannelLookup},
  * there is a small window where incoming messages will be silently discarded:
- * between the time the channel is started externally and the time JGroupsTransport attaches the RpcDispatcher.
+ * between the time the channel is started externally and the time JGroupsTransport attaches the UpHandler.
  *
  * In replication mode a put operation would wait for a success response from all the members
  * of the cluster, and if the RPC was initiated during this time window it would never get a response.
@@ -31,10 +33,9 @@ import org.testng.annotations.Test;
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  * @since 5.1
  */
-@Test(groups = "unstable", testName = "remoting.jgroups.MissingRpcDispatcherTest",
-      description = "See ISPN-4034. Disabled because I removed the cache members filter in 5.2 -- original group: functional")
+@Test(groups = "functional", testName = "remoting.jgroups.MissingUpHandlerTest")
 @CleanupAfterMethod
-public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
+public class MissingUpHandlerTest extends MultipleCacheManagersTest {
    protected String cacheName = "replSync";
    protected CacheMode cacheMode = CacheMode.REPL_SYNC;
 
@@ -49,15 +50,14 @@ public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
       // start with a single cache
       Cache<String, String> cache1 = cache(0, cacheName);
       cache1.put("k1", "v1");
-      assert "v1".equals(cache1.get("k1"));
+      assertEquals("v1", cache1.get("k1"));
 
       // create a new jgroups channel that will join the cluster
-      // but without attaching the Infinispan RpcDispatcher
-      JChannel channel2 = createJGroupsChannel(manager(0).getCacheManagerConfiguration());
-      try {
+      // but without attaching the Infinispan UpHandler
+      try (JChannel channel2 = createJGroupsChannel(manager(0).getCacheManagerConfiguration())) {
          // try the put operation again
          cache1.put("k2", "v2");
-         assert "v2".equals(cache1.get("k2"));
+         assertEquals("v2", cache1.get("k2"));
 
          // create a new cache, make sure it joins properly
          ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, false);
@@ -65,16 +65,14 @@ public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(new TransportFlags());
          cm.defineConfiguration(cacheName, c.build());
          Cache<String, String> cache2 = cm.getCache(cacheName);
-         assert cache2.getAdvancedCache().getRpcManager().getTransport().getMembers().size() == 3;
+         assertEquals(2, cache2.getAdvancedCache().getRpcManager().getTransport().getMembers().size());
 
-         assert "v1".equals(cache1.get("k1"));
-         assert "v2".equals(cache1.get("k2"));
+         assertEquals("v1", cache1.get("k1"));
+         assertEquals("v2", cache1.get("k2"));
          cache1.put("k1", "v1_2");
          cache2.put("k2", "v2_2");
-         assert "v1_2".equals(cache1.get("k1"));
-         assert "v2_2".equals(cache1.get("k2"));
-      } finally {
-         channel2.close();
+         assertEquals("v1_2", cache1.get("k1"));
+         assertEquals("v2_2", cache1.get("k2"));
       }
    }
 

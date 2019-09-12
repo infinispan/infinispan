@@ -1,43 +1,37 @@
 package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.Exceptions.expectException;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
+import static org.infinispan.topology.CacheTopologyControlCommand.Type.CH_UPDATE;
+import static org.infinispan.topology.CacheTopologyControlCommand.Type.REBALANCE_PHASE_CONFIRM;
+import static org.infinispan.topology.CacheTopologyControlCommand.Type.REBALANCE_START;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopologyControlCommand;
-import org.infinispan.util.BlockingClusterTopologyManager;
 import org.jgroups.protocols.DISCARD;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest")
 public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
-
-   private Transport oldTransportCoord;
-   private Transport oldTransportA1;
-   private BlockingClusterTopologyManager bctm;
 
    {
       cacheMode = CacheMode.SCATTERED_SYNC;
@@ -93,7 +87,6 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       // we have to wait until timeout to release the lock. The MERGE view won't be handled until this returns
       // due to the lock. Therefore setting to 5 seconds.
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-//      gcb.transport().distributedSyncTimeout(1, TimeUnit.MINUTES);
       gcb.transport().distributedSyncTimeout(5, TimeUnit.SECONDS);
       return addClusterEnabledCacheManager(gcb, builder, flags);
    }
@@ -106,37 +99,45 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       }).toArray(MagicKey[]::new);
 
 
-      StateSequencer ss = new StateSequencer().logicalThread("main", "st_begin", "check", "new_topology", /* "st_end",*/ "degraded");
-
       DISCARD discard1 = TestingUtil.getDiscardForCache(manager(c1));
       DISCARD discard2 = TestingUtil.getDiscardForCache(manager(c2));
 
-      Cache coordinator = c1 == 0 ? cache(1) : cache(0);
-      // This doesn't go through RpcManager, so we can't mock this and we can't mock ClusterTopologyManager either
-      // as ClusterCacheStatus does not get rewired.
-      oldTransportCoord = advanceOnGlobalComponentMethod(ss, coordinator.getCacheManager(), Transport.class,
-         matchMethodCall("invokeRemotely")
-            .withMatcher(1, new CacheTopologyControlCommandMatcher(CacheTopologyControlCommand.Type.REBALANCE_START))
-            .matchCount(0).build()
-      ).after("st_begin").getOriginalComponent();
+      Cache<?, ?> coordinator = c1 == 0 ? cache(1) : cache(0);
 
-      // We need to mock the other transport before replacing ClusterTopologyManager in case that coord == a1
-      oldTransportA1 = advanceOnGlobalComponentMethod(ss, cache(a1).getCacheManager(), Transport.class,
-         matchMethodCall("invokeRemotely")
-            .withMatcher(1, new CacheTopologyControlCommandMatcher(CacheTopologyControlCommand.Type.CH_UPDATE))
-            .afterState(ss, "check").matchCount(0).build()
-      ).before("new_topology").getOriginalComponent();
+      // Block rebalance phase confirmations on the coordinator
+      // Must replace the IIH first so it's updated in the transport
+      BlockingInboundInvocationHandler blockedRebalanceConfirmations =
+            TestingUtil.wrapGlobalComponent(coordinator.getCacheManager(), InboundInvocationHandler.class,
+                                            iih -> new BlockingInboundInvocationHandler(iih, address(coordinator)),
+                                            true);
+      blockedRebalanceConfirmations.blockBefore(CacheTopologyControlCommand.class,
+                                                c -> matchTopologyCommand(c, REBALANCE_PHASE_CONFIRM));
 
-      bctm = BlockingClusterTopologyManager.replace(coordinator.getCacheManager());
-      BlockingClusterTopologyManager.Handle<Integer> blockingSTE = bctm.startBlockingTopologyConfirmations(topologyId -> true);
+      // Block rebalance start commands from the coordinator
+      ControlledTransport blockedRebalanceStart = ControlledTransport.replace(coordinator);
+      blockedRebalanceStart.blockAfter(CacheTopologyControlCommand.class,
+                                       c -> matchTopologyCommand(c, REBALANCE_START));
+
+      // Block topology updates from a1, but when the flag is set
+      ControlledTransport blockedTopologyUpdatesA1 = ControlledTransport.replace(cache(a1));
+      AtomicBoolean shouldBlockTopologyUpdatesOnA1 = new AtomicBoolean(false);
+      blockedTopologyUpdatesA1.blockBefore(CacheTopologyControlCommand.class,
+                                           c -> matchTopologyCommand(c, CH_UPDATE) &&
+                                                shouldBlockTopologyUpdatesOnA1.get());
+
       try {
+         // Isolate c1, install view [c2, a1, a2] on the other nodes
+         // The new view will trigger a rebalance
          discard1.setDiscardAll(true);
-         Stream<Address> newMembers1 = manager(c2).getTransport().getMembers().stream().filter(
-            n -> !n.equals(manager(c1).getAddress()));
+         Stream<Address> newMembers1 = manager(c2).getTransport().getMembers().stream()
+                                                  .filter(n -> !n.equals(manager(c1).getAddress()));
          TestingUtil.installNewView(newMembers1, manager(c2), manager(a1), manager(a2));
          TestingUtil.installNewView(manager(c1));
 
-         ss.enter("check");
+         // Wait for rebalance to start (confirmations are blocked)
+         blockedRebalanceStart.waitForCommandToBlock();
+         blockedRebalanceStart.stopBlocking();
+
          assertKeysAvailableForRead(cache(c2), keys);
          assertKeysAvailableForRead(cache(a1), keys);
          assertKeysAvailableForRead(cache(a2), keys);
@@ -145,21 +146,27 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
          // topology and it did not install new one/became degraded, it's still serving the old value
          eventuallyDegraded(cache(c1));
          assertKeysNotAvailableForRead(cache(c1), keys);
-         ss.exit("check");
 
+         // Isolate c2, install view [a1, a2] on the remaining nodes
+         // That will make a1 send out a topology update, but we block it
+         shouldBlockTopologyUpdatesOnA1.set(true);
          discard2.setDiscardAll(true);
          Stream<Address> newMembers2 = manager(a1).getTransport().getMembers().stream().filter(
-            n -> !n.equals(manager(c2).getAddress()));
+               n -> !n.equals(manager(c2).getAddress()));
          TestingUtil.installNewView(newMembers2, manager(a1), manager(a2));
          TestingUtil.installNewView(manager(c2));
 
-         ss.advance("degraded");
+         blockedTopologyUpdatesA1.waitForCommandToBlock();
+         blockedTopologyUpdatesA1.stopBlocking();
 
          eventuallyDegraded(cache(a1));
          eventuallyDegraded(cache(a2));
          eventuallyDegraded(cache(c2));
       } finally {
-         blockingSTE.stopBlocking();
+         blockedRebalanceConfirmations.stopBlocking();
+
+         blockedRebalanceStart.stopBlocking();
+         blockedTopologyUpdatesA1.stopBlocking();
       }
       assertKeysNotAvailableForRead(cache(a1), keys);
       assertKeysNotAvailableForRead(cache(a2), keys);
@@ -192,20 +199,12 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       assertKeysAvailableForRead(cache(a2), keys);
    }
 
-   @AfterMethod
-   @Override
-   protected void clearContent() throws Throwable {
-      // The transport won't be stopped automatically on test shutdown as the component registry won't invoke
-      // stop methods on proxified instance.
-      if (oldTransportCoord != null) oldTransportCoord.stop();
-      oldTransportCoord = null;
-      // in testSplit2 the oldTransportA1 could be just another proxy layer to oldTransportCoord
-      if (oldTransportA1 != null && !Proxy.isProxyClass(oldTransportA1.getClass())) oldTransportA1.stop();
-      oldTransportA1 = null;
-      super.clearContent();
+   private boolean matchTopologyCommand(CacheTopologyControlCommand command,
+                                        CacheTopologyControlCommand.Type type) {
+      return command.getType() == type && command.getCacheName().equals(getDefaultCacheName());
    }
 
-   private void eventuallyDegraded(Cache c) {
+   private void eventuallyDegraded(Cache<?, ?> c) {
       eventually(() -> {
          AvailabilityMode currentMode = partitionHandlingManager(c).getAvailabilityMode();
          log.tracef("Current availability mode: %s", currentMode);
@@ -213,7 +212,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       });
    }
 
-   private void eventuallyAvailable(Cache c) {
+   private void eventuallyAvailable(Cache<?, ?> c) {
       eventually(() -> {
          AvailabilityMode currentMode = partitionHandlingManager(c).getAvailabilityMode();
          log.tracef("Current availability mode: %s", currentMode);
@@ -221,35 +220,18 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       });
    }
 
-   private void assertKeysAvailableForRead(Cache cache, Object... keys) {
+   private void assertKeysAvailableForRead(Cache<?, ?> cache, Object... keys) {
       for (Object key : keys) {
          assertNotNull(cache.get(key), key.toString());
       }
       assertEquals(cache.getAdvancedCache().getAll(new HashSet<>(Arrays.asList(keys))).size(), keys.length);
    }
 
-   private void assertKeysNotAvailableForRead(Cache cache, Object... keys) {
+   private void assertKeysNotAvailableForRead(Cache<?, ?> cache, Object... keys) {
       for (Object key : keys) {
          expectException(AvailabilityException.class, () -> cache.get(key));
       }
-      expectException(AvailabilityException.class, () -> cache.getAdvancedCache().getAll(new HashSet<>(Arrays.asList(keys))));
-   }
-
-   private static class CacheTopologyControlCommandMatcher extends BaseMatcher<Object> {
-      private final CacheTopologyControlCommand.Type type;
-
-      private CacheTopologyControlCommandMatcher(CacheTopologyControlCommand.Type type) {
-         this.type = type;
-      }
-
-      @Override
-      public boolean matches(Object item) {
-         return item instanceof CacheTopologyControlCommand && ((CacheTopologyControlCommand) item).getType() == type;
-      }
-
-      @Override
-      public void describeTo(Description description) {
-         description.appendText("is CacheTopologyControlCommand." + type);
-      }
+      expectException(AvailabilityException.class,
+                      () -> cache.getAdvancedCache().getAll(new HashSet<>(Arrays.asList(keys))));
    }
 }
