@@ -34,7 +34,7 @@ final class SecurityActions {
       return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
    }
 
-   public static ComponentRegistry getComponentRegistry(AdvancedCache<?, ?> cache) {
+   static ComponentRegistry getComponentRegistry(AdvancedCache<?, ?> cache) {
       return doPrivileged(new GetCacheComponentRegistryAction(cache));
    }
 }

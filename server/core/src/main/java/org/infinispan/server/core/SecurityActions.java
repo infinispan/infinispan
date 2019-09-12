@@ -31,7 +31,7 @@ final class SecurityActions {
       return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
    }
 
-   public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
+   static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 }
