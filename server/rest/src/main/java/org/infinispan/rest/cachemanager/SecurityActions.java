@@ -44,9 +44,9 @@ final class SecurityActions {
       doPrivileged(new AddCacheManagerListenerAction(cacheManager, listener));
    }
 
-   static Void removeListener(Listenable listenable, Object listener) {
+   static void removeListener(Listenable listenable, Object listener) {
       RemoveListenerAction action = new RemoveListenerAction(listenable, listener);
-      return doPrivileged(action);
+      doPrivileged(action);
    }
 
    static DistributionManager getDistributionManager(final Cache<?, ?> cache) {
@@ -68,11 +68,12 @@ final class SecurityActions {
       GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
       return doPrivileged(action);
    }
+
    static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
    }
 
-   public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
+   static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 }
