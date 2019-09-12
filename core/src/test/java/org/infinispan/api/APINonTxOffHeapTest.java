@@ -5,7 +5,6 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,6 +19,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.Key;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -165,7 +165,7 @@ public class APINonTxOffHeapTest extends APINonTxTest {
    }
 
    public void testCustomObjectKey() {
-      CustomObjectKey ck = new APINonTxOffHeapTest.CustomObjectKey("a", 1);
+      Key ck = new Key("a");
       assertNull(cache.get(ck));
       cache.put(ck, "blah");
       assertEquals("blah", cache.get(ck));
@@ -216,17 +216,5 @@ public class APINonTxOffHeapTest extends APINonTxTest {
 
    private void assertCacheIsEmpty() {
       assertCacheSize(0);
-   }
-
-   static class CustomObjectKey implements Serializable {
-      private static final long serialVersionUID = 1L;
-
-      final String name;
-      final int value;
-
-      CustomObjectKey(String name, int value) {
-         this.name = name;
-         this.value = value;
-      }
    }
 }

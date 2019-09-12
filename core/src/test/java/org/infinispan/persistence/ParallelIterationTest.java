@@ -22,7 +22,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -53,6 +55,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       configurePersistence(cb);
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      global.serialization().addContextInitializer(getSerializationContextInitializer());
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(global, cb);
       loader = TestingUtil.getFirstLoader(manager.getCache());
       writer = TestingUtil.getFirstWriter(manager.getCache());
@@ -71,6 +74,10 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    }
 
    protected abstract void configurePersistence(ConfigurationBuilder cb);
+
+   protected SerializationContextInitializer getSerializationContextInitializer() {
+      return TestDataSCI.INSTANCE;
+   }
 
    public void testParallelIterationWithValueAndMetadata() {
       runIterationTest(executor, true, true);

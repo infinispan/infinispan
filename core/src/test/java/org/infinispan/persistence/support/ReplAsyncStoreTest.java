@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -92,7 +93,7 @@ public class ReplAsyncStoreTest extends MultipleCacheManagersTest {
                .shared(shared)
                .async().enable();
 
-      createClusteredCaches(3, CACHE_NAME, cfg);
+      createClusteredCaches(3, CACHE_NAME, TestDataSCI.INSTANCE, cfg);
       waitForClusterToForm(CACHE_NAME);
    }
 

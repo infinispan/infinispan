@@ -1,6 +1,5 @@
 package org.infinispan.distribution.groups;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Group;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 
@@ -138,11 +141,15 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       public abstract TestCache create(String groupName, List<Cache<GroupKey, String>> cacheList);
    }
 
-   public static class GroupKey implements Serializable {
+   public static class GroupKey {
 
-      private final String group;
-      private final int key;
+      @ProtoField(number = 1)
+      final String group;
 
+      @ProtoField(number = 2, defaultValue = "0")
+      final int key;
+
+      @ProtoFactory
       GroupKey(String group, int key) {
          this.group = group;
          this.key = key;
@@ -191,5 +198,18 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
          this.primaryOwner = primaryOwner;
          this.testCache = testCache;
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               GroupKey.class,
+               CacheMode.class,
+               StateTransferGetGroupKeysTest.CustomConsistentHashFactory.class
+         },
+         schemaFileName = "test.core.GroupTestsSCI.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.GroupTestsSCI")
+   interface GroupTestsSCI extends SerializationContextInitializer {
+      GroupTestsSCI INSTANCE = new GroupTestsSCIImpl();
    }
 }

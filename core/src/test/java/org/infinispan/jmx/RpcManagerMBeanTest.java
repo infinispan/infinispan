@@ -4,7 +4,6 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.replaceField;
-import static org.infinispan.test.TestingUtil.sleepThread;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -13,11 +12,6 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,6 +39,7 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsBackupResponse;
 import org.infinispan.test.Exceptions;
+import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.XSiteBackup;
@@ -109,7 +104,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
-      Cache<MagicKey, Serializable> cache1 = manager(0).getCache();
+      Cache<MagicKey, Object> cache1 = manager(0).getCache();
       Cache cache2 = manager(1).getCache();
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
@@ -119,8 +114,8 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
       assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "N/A");
 
-      cache1.put(new MagicKey("a1", cache1), new SlowToSerialize("b1", 50));
-      cache1.put(new MagicKey("a2", cache2), new SlowToSerialize("b2", 50));
+      cache1.put(new MagicKey("a1", cache1), new DelayedMarshallingPojo(50, 0));
+      cache1.put(new MagicKey("a2", cache2), new DelayedMarshallingPojo(50, 0));
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 2);
       assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "100%");
       Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
@@ -241,48 +236,6 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "MinimumAsyncXSiteReplicationTime"), (long) -1);
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "MaximumAsyncXSiteReplicationTime"), (long) -1);
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "AverageAsyncXSiteReplicationTime"), (long) -1);
-   }
-
-   public static class SlowToSerialize implements Externalizable {
-      String val;
-      transient long delay;
-
-      public SlowToSerialize() {
-      }
-
-      private SlowToSerialize(String val, long delay) {
-         this.val = val;
-         this.delay = delay;
-      }
-
-      @Override
-      public void writeExternal(ObjectOutput out) throws IOException {
-         out.writeObject(val);
-         sleepThread(delay);
-      }
-
-      @Override
-      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-         val = (String) in.readObject();
-         sleepThread(delay);
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         SlowToSerialize that = (SlowToSerialize) o;
-
-         if (val != null ? !val.equals(that.val) : that.val != null) return false;
-
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         return val != null ? val.hashCode() : 0;
-      }
    }
 
    private static XSiteBackup newBackup(String name, boolean sync) {

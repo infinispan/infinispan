@@ -13,7 +13,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.BufferSizePredictor;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.Util;
@@ -51,6 +50,18 @@ import org.infinispan.util.logging.LogFactory;
 public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    private static final Log log = LogFactory.getLog(PersistenceMarshallerImpl.class, Log.class);
+   private static final int PROTOSTREAM_DEFAULT_BUFFER_SIZE = 4096;
+   private static final BufferSizePredictor BUFFER_SIZE_PREDICTOR = new BufferSizePredictor() {
+      @Override
+      public int nextSize(Object obj) {
+         // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
+         return PROTOSTREAM_DEFAULT_BUFFER_SIZE;
+      }
+
+      @Override
+      public void recordSize(int previousSize) {
+      }
+   };
 
    @Inject GlobalComponentRegistry gcr;
    private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
@@ -76,15 +87,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
       SerializationConfiguration serializationConfig = globalConfig.serialization();
       Marshaller marshaller = serializationConfig.marshaller();
-      if (marshaller != null)
+      if (marshaller != null) {
+         // TODO add a inject method to make initialisation of whitelist possible?
          return marshaller;
-
-      // The user has specified a SerializationContextInitializer, so jboss-marshalling is ignored and serializationContext updated
-      Collection<SerializationContextInitializer> scis = serializationConfig.contextInitializers();
-      if (scis != null) {
-         for (SerializationContextInitializer sci : scis)
-            register(serializationContext, sci);
-         return null;
       }
 
       // If no marshaller or SerializationContextInitializer specified, then we attempt to load `infinispan-jboss-marshalling`
@@ -100,9 +105,16 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new CacheException("Unable to start PersistenceMarshaller with JBossUserMarshaller", e);
          }
-      } catch (ClassNotFoundException e) {
-         return new JavaSerializationMarshaller(gcr.getCacheManager().getClassWhiteList());
+      } catch (ClassNotFoundException ignore) {
       }
+
+      // The user has specified a SerializationContextInitializer, so jboss-marshalling is ignored and serializationContext updated
+      Collection<SerializationContextInitializer> scis = serializationConfig.contextInitializers();
+      if (scis != null) {
+         for (SerializationContextInitializer sci : scis)
+            register(serializationContext, sci);
+      }
+      return null;
    }
 
    public Marshaller getUserMarshaller() {
@@ -182,17 +194,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       // TODO if persistenceClass, i.e. protobuf based, return estimate based upon schema
-      return userMarshaller != null ? userMarshaller.getBufferSizePredictor(o) : new BufferSizePredictor() {
-         @Override
-         public int nextSize(Object obj) {
-            // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
-            return 4096;
-         }
-
-         @Override
-         public void recordSize(int previousSize) {
-         }
-      };
+      return userMarshaller != null ? userMarshaller.getBufferSizePredictor(o) : BUFFER_SIZE_PREDICTOR;
    }
 
    @Override
@@ -263,7 +265,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       }
       // Return the CodedOutputStream.DEFAULT_BUFFER_SIZE as this is equivalent to passing no estimate
       // Dynamic estimates will be provided in a future protostream version IPROTO-89
-      return 4096;
+      return PROTOSTREAM_DEFAULT_BUFFER_SIZE;
    }
 
    private boolean requiresWrapping(Object o) {

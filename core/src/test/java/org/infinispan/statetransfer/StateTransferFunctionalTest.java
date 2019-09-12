@@ -3,10 +3,6 @@ package org.infinispan.statetransfer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -18,9 +14,13 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
@@ -42,6 +42,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    public static final Integer TWENTY = 20;
    public static final Integer FORTY = 40;
 
+   protected SerializationContextInitializer sci;
    protected ConfigurationBuilder configurationBuilder;
    protected final String cacheName;
 
@@ -59,6 +60,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void createCacheManagers() throws Throwable {
+      sci = new StateTransferFunctionalSCIImpl();
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       configurationBuilder.transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
@@ -70,37 +72,30 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected EmbeddedCacheManager createCacheManager(String cacheName) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(configurationBuilder, new TransportFlags().withMerge(true));
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(sci, configurationBuilder, new TransportFlags().withMerge(true));
       cm.defineConfiguration(cacheName, configurationBuilder.build());
       return cm;
    }
 
-   public static class DelayTransfer implements Serializable {
+   public static class DelayTransfer {
 
-      private static final long serialVersionUID = 6361429803359702822L;
+      volatile boolean doDelay = false;
 
-      private volatile boolean doDelay = false;
+      DelayTransfer() {}
 
-      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-         in.defaultReadObject();
-      }
-
-      private void writeObject(ObjectOutputStream out) throws IOException {
-         out.defaultWriteObject();
-
-         if (doDelay) {
-            try {
-               // Delay state transfer
-               Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            }
-         }
-      }
-
-      public void enableDelay() {
+      void enableDelay() {
          doDelay = true;
+      }
+
+      // Should only be called by protostream when marshalling
+      @ProtoField(number = 1, defaultValue = "false")
+      public boolean isIgnore() {
+         if (doDelay)
+            TestingUtil.sleepThread(1000);
+         return false;
+      }
+
+      public void setIgnore(boolean ignore) {
       }
    }
 
@@ -357,5 +352,16 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       for (int c = 0; c < count; c++) {
          assertEquals(c, cache2.get("test" + c));
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               DelayedMarshallingPojo.class,
+               DelayTransfer.class
+         },
+         schemaFileName = "test.core.StateTransferFunctionalTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.StateTransferFunctionalTest")
+   interface StateTransferFunctionalSCI extends SerializationContextInitializer {
    }
 }

@@ -8,9 +8,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +22,6 @@ import java.util.function.Consumer;
 import org.infinispan.Cache;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -38,6 +34,9 @@ import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
@@ -742,7 +741,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(2, configuration());
+      createClusteredCaches(2, RemoteGetDuringStateTransferSCI.INSTANCE, configuration());
    }
 
    @Override
@@ -776,7 +775,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       if (modifyConfiguration != null) {
          modifyConfiguration.accept(configurationBuilder);
       }
-      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(configurationBuilder);
+      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(RemoteGetDuringStateTransferSCI.INSTANCE, configurationBuilder);
       newNode.topologyManager = replaceTopologyManager(embeddedCacheManager);
       newNode.joinerFuture = fork(() -> {
          waitForClusterToForm();
@@ -821,7 +820,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       return controlledRpcManager;
    }
 
-   @SerializeWith(SingleKeyConsistentHashFactory.Externalizer.class)
+   @ProtoName("RemoteGetSingleKeyConsistentHashFactory")
    public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
 
       SingleKeyConsistentHashFactory() {
@@ -832,17 +831,6 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
          assertEquals("Wrong number of owners.", 1, numOwners);
          return new int[][]{{members.size() - 1}};
-      }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<SingleKeyConsistentHashFactory> {
-         @Override
-         public void writeObject(ObjectOutput output, SingleKeyConsistentHashFactory object) throws IOException {
-         }
-
-         @Override
-         public SingleKeyConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new SingleKeyConsistentHashFactory();
-         }
       }
    }
 
@@ -907,4 +895,12 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       BlockingLocalTopologyManager topologyManager;
    }
 
+   @AutoProtoSchemaBuilder(
+         includeClasses = SingleKeyConsistentHashFactory.class,
+         schemaFileName = "test.core.RemoteGetDuringStateTransferTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.RemoteGetDuringStateTransferTest")
+   interface RemoteGetDuringStateTransferSCI extends SerializationContextInitializer {
+      RemoteGetDuringStateTransferSCI INSTANCE = new RemoteGetDuringStateTransferSCIImpl();
+   }
 }

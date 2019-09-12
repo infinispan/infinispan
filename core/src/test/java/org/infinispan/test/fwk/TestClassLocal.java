@@ -1,18 +1,22 @@
 package org.infinispan.test.fwk;
 
-import java.io.ObjectStreamException;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.test.AbstractInfinispanTest;
 
 /**
  * @author Dan Berindei
  * @since 9.1
  */
+@SerializeWith(TestClassLocal.Externalizer.class)
 public class TestClassLocal<T> implements Serializable {
    private static final Map<String, TestClassLocal> values = new ConcurrentHashMap<>();
 
@@ -61,18 +65,16 @@ public class TestClassLocal<T> implements Serializable {
       return id();
    }
 
-   Object writeReplace() throws ObjectStreamException {
-      return new Token(id());
-   }
+   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<TestClassLocal> {
 
-   static class Token implements Serializable {
-      private String id;
-
-      Token(String id) {
-         this.id = id;
+      @Override
+      public void writeObject(ObjectOutput output, TestClassLocal object) throws IOException {
+         output.writeUTF(object.id());
       }
 
-      Object readResolve() throws ObjectStreamException {
+      @Override
+      public TestClassLocal readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         String id = input.readUTF();
          return values.get(id);
       }
    }

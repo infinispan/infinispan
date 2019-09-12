@@ -11,13 +11,12 @@ import org.testng.annotations.Test;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "remoting.RemoteExceptionHandlingWithStateTransferTest")
-public class RemoteExceptionHandlingWithStateTransferTest
-      extends TransportSenderExceptionHandlingTest {
+public class RemoteExceptionHandlingWithStateTransferTest extends TransportSenderExceptionHandlingTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       config.clustering().stateTransfer().fetchInMemoryState(true);
-      createClusteredCaches(2, "replSync", config);
+      createClusteredCaches(2, "replSync", FailureTypeSCI.INSTANCE, config);
    }
 }

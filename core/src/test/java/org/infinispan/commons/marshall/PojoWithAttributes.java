@@ -28,7 +28,7 @@ public class PojoWithAttributes {
       this.age = age;
       this.entry = TestInternalCacheEntryFactory.create(
             "internalkey-" + key, "internalvalue-" + age, (age * 17));
-      this.key = new Key(key, false);
+      this.key = new Key(key);
       this.uuid = UUID.randomUUID();
    }
 

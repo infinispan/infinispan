@@ -12,11 +12,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionCoordinator;
@@ -35,11 +34,9 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       cb.clustering().cacheMode(CacheMode.DIST_SYNC)
             .remoteTimeout(5000)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).cacheStopTimeout(100);
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cb);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cb);
-      registerCacheManager(cm1, cm2);
-      c1 = cm1.getCache();
-      c2 = cm2.getCache();
+      createCluster(TestDataSCI.INSTANCE, cb, 2);
+      c1 = cache(0);
+      c2 = cache(1);
       waitForClusterToForm();
    }
 

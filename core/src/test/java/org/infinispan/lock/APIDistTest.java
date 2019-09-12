@@ -13,11 +13,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -25,18 +24,13 @@ import org.testng.annotations.Test;
 @Test(testName = "lock.APIDistTest", groups = "functional")
 @CleanupAfterMethod
 public class APIDistTest extends MultipleCacheManagersTest {
-   EmbeddedCacheManager cm1, cm2;
    MagicKey key; // guaranteed to be mapped to cache2
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = createConfig();
-      cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      registerCacheManager(cm1, cm2);
-      cm1.getCache();
+      createCluster(TestDataSCI.INSTANCE, createConfig(), 2);
       waitForClusterToForm();
-      key = new MagicKey("Key mapped to Cache2", cm2.getCache());
+      key = new MagicKey("Key mapped to Cache2", cache(1));
    }
 
    protected ConfigurationBuilder createConfig() {

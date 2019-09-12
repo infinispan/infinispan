@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -185,7 +186,7 @@ public abstract class AbstractRepeatableReadIsolationTest extends MultipleCacheM
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.transaction().lockingMode(lockingMode);
       builder.clustering().hash().numOwners(1);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, builder);
    }
 
    private void doIsolationTest(boolean executeOnOwner, boolean initialized, Operation operation) throws Exception {

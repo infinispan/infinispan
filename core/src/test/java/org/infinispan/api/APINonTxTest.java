@@ -42,6 +42,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -78,7 +79,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       // start a single cache instance
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
       configure(c);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false, TestDataSCI.INSTANCE);
       cm.defineConfiguration("test", c.build());
       cache = cm.getCache("test");
       return cm;

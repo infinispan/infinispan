@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.UnnecessaryLoadingTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -38,7 +39,7 @@ public class NonTxFlagsEnabledTest extends FlagsEnabledTest {
    }
 
    public void testCacheLocalInNonOwner() {
-      addClusterEnabledCacheManager(getConfigurationBuilder());
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, getConfigurationBuilder());
       waitForClusterToForm(cacheName);
       final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
       final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);
@@ -55,9 +56,8 @@ public class NonTxFlagsEnabledTest extends FlagsEnabledTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      builder
-            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      createClusteredCaches(2, cacheName, builder);
+      builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      createClusteredCaches(2, cacheName, TestDataSCI.INSTANCE, builder);
    }
 
    private ConfigurationBuilder getConfigurationBuilder() {

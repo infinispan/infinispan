@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
@@ -14,7 +15,7 @@ public class GetOnRemovedKeyTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(getDefaultClusteredCacheConfig(cacheMode, true), 2);
+      createCluster(TestDataSCI.INSTANCE, getDefaultClusteredCacheConfig(cacheMode, true), 2);
       waitForClusterToForm();
    }
 

@@ -42,9 +42,9 @@ public class TestUtil {
    static final Map<String, Object> TEST_MAP_UNSUPPORTED = new HashMap<>();
    static {
       TEST_MAP.put("List", Arrays.asList(new Person("Alan Shearer"), new Person("Nolberto Solano")));
-      TEST_MAP.put("SingletonList", Collections.singletonList(new Key("Key", false)));
+      TEST_MAP.put("SingletonList", Collections.singletonList(new Key("Key")));
       TEST_MAP.put("SingletonMap", Collections.singletonMap("Key", "Value"));
-      TEST_MAP.put("SingletonSet", Collections.singleton(new Key("Key", false)));
+      TEST_MAP.put("SingletonSet", Collections.singleton(new Key("Key")));
 
       Metadata metadata = new EmbeddedMetadata.Builder().version(new NumericVersion(1)).build();
       TEST_MAP.put("EmbeddedMetadata", metadata);

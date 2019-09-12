@@ -106,6 +106,7 @@ import org.infinispan.extendedstats.wrappers.ExtendedStatisticRpcManager;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.EmbeddedTimeService;
@@ -270,7 +271,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
          extendedStatisticInterceptors[i] = new ExtendedStatisticInterceptor();
          builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i])
                .after(TxInterceptor.class);
-         addClusterEnabledCacheManager(builder);
+         addClusterEnabledCacheManager(TestDataSCI.INSTANCE, builder);
       }
       waitForClusterToForm();
       for (int i = 0; i < NUM_NODES; ++i) {

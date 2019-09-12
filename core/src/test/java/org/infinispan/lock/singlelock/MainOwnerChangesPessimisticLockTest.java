@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -41,7 +42,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
             .clustering().hash().numOwners(1).numSegments(3)
             .l1().disable()
             .stateTransfer().fetchInMemoryState(true);
-      createCluster(dccc, 2);
+      createCluster(TestDataSCI.INSTANCE, dccc, 2);
       waitForClusterToForm();
    }
 
@@ -83,7 +84,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
       log.trace("Lock transfer happens here");
 
       // add a third node hoping that some of the previously created keys will be migrated to it
-      addClusterEnabledCacheManager(dccc);
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, dccc);
       waitForClusterToForm();
 
       // search for a key that was migrated to third node and the suspended TX that locked it

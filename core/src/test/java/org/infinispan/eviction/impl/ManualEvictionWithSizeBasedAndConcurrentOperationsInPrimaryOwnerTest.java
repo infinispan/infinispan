@@ -3,7 +3,6 @@ package org.infinispan.eviction.impl;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -326,7 +325,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
             .hash().numOwners(2).numSegments(2);
       configurePersistence(builder);
       configureEviction(builder);
-      return TestCacheManagerFactory.createClusteredCacheManager(builder);
+      return TestCacheManagerFactory.createClusteredCacheManager(new EvictionWithConcurrentOperationsSCIImpl(), builder);
    }
 
    protected Object createSameHashCodeKey(String name) {
@@ -370,38 +369,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
          }
       };
       TestingUtil.replaceComponent(cache, InternalDataContainer.class, controlledDataContainer, true);
-   }
-
-   public static class SameHashCodeKey implements Serializable {
-
-      private final String name;
-      private final int hashCode;
-
-      public SameHashCodeKey(String name, int hashCode) {
-         this.name = name;
-         this.hashCode = hashCode;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         SameHashCodeKey that = (SameHashCodeKey) o;
-
-         return name.equals(that.name);
-
-      }
-
-      @Override
-      public int hashCode() {
-         return hashCode;
-      }
-
-      @Override
-      public String toString() {
-         return name;
-      }
    }
 
    class AfterPassivationOrCacheWriter extends ControlledCommandInterceptor {

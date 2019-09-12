@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.MixedModeTest")
@@ -21,13 +22,11 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       ConfigurationBuilder invalAsync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_ASYNC, false);
       ConfigurationBuilder local = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
 
-      createClusteredCaches(2, "replSync", replSync);
+      createClusteredCaches(2, "replSync", TestDataSCI.INSTANCE, replSync);
       defineConfigurationOnAllManagers("replAsync", replAsync);
-      waitForClusterToForm("replAsync");
       defineConfigurationOnAllManagers("invalSync", invalSync);
-      waitForClusterToForm("invalSync");
       defineConfigurationOnAllManagers("invalAsync", invalAsync);
-      waitForClusterToForm("invalAsync");
+      waitForClusterToForm("replAsync", "invalSync", "invalAsync");
       defineConfigurationOnAllManagers("local", local);
    }
 

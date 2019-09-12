@@ -75,6 +75,10 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
@@ -84,6 +88,8 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.BrokenMarshallingPojo;
+import org.infinispan.test.data.Key;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -118,6 +124,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalAndInternal.Externalizer());
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalizer.Externalizer());
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithMultiExternalizer.Externalizer());
+      globalBuilder.serialization().serialization().addContextInitializer(new VersionAwareMarshallerSCIImpl());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
@@ -187,14 +194,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       marshallAndAssertEquality(s1);
       marshallAndAssertEquality(s2);
-   }
-
-   public void testTreeSetWithComparator() throws Exception {
-      Set<Human> treeSet = new TreeSet<>(new HumanComparator());
-      for (int i = 0; i < 10; i++) {
-         treeSet.add(new Human().age(i));
-      }
-      marshallAndAssertEquality(treeSet);
    }
 
    public void testSingletonListMarshalling() throws Exception {
@@ -356,12 +355,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert rer.getException().getClass().equals(er.getException().getClass()) : "Writen[" + er.getException().getClass() + "] and read[" + rer.getException().getClass() + "] objects should be the same";
    }
 
-   public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {
-      CustomClasses.ObjectThatContainsACustomReadObjectMethod obj = new CustomClasses.ObjectThatContainsACustomReadObjectMethod();
-      obj.anObjectWithCustomReadObjectMethod = new CustomClasses.CustomReadObjectMethod();
-      marshallAndAssertEquality(obj);
-   }
-
    public void testMIMECacheEntryMarshalling() throws Exception {
       MIMECacheEntry entry = new MIMECacheEntry("rm", new byte[] {1, 2, 3});
       byte[] bytes = marshaller.objectToByteBuffer(entry);
@@ -371,14 +364,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = MarshallingException.class)
-   public void testNestedNonSerializable() throws Exception {
+   public void testNestedNonMarshallable() throws Exception {
       PutKeyValueCommand cmd = new PutKeyValueCommand("k", new Object(), false, new EmbeddedMetadata.Builder().build(), 0,
             EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(null));
       marshaller.objectToByteBuffer(cmd);
    }
 
    @Test(expectedExceptions = MarshallingException.class)
-   public void testNonSerializable() throws Exception {
+   public void testNonMarshallable() throws Exception {
       marshaller.objectToByteBuffer(new Object());
    }
 
@@ -406,28 +399,9 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = MarshallingException.class)
    public void testErrorUnmarshalling() throws Exception {
-      Pojo pojo = new PojoWhichFailsOnUnmarshalling();
-      byte[] bytes = marshaller.objectToByteBuffer(pojo);
+      BrokenMarshallingPojo bmp = new BrokenMarshallingPojo(false);
+      byte[] bytes = marshaller.objectToByteBuffer(bmp);
       marshaller.objectFromByteBuffer(bytes);
-   }
-
-   public void testMarshallingSerializableSubclass() throws Exception {
-      Child1 child1Obj = new Child1(1234, "1234");
-      byte[] bytes = marshaller.objectToByteBuffer(child1Obj);
-      Child1 readChild1 = (Child1) marshaller.objectFromByteBuffer(bytes);
-      assertEquals(1234, readChild1.someInt);
-      assertEquals("1234", readChild1.getId());
-   }
-
-   public void testMarshallingNestedSerializableSubclass() throws Exception {
-      Child1 child1Obj = new Child1(1234, "1234");
-      Child2 child2Obj = new Child2(2345, "2345", child1Obj);
-      byte[] bytes = marshaller.objectToByteBuffer(child2Obj);
-      Child2 readChild2 = (Child2) marshaller.objectFromByteBuffer(bytes);
-      assertEquals(2345, readChild2.someInt);
-      assertEquals("2345", readChild2.getId());
-      assertEquals(1234, readChild2.getChild1Obj().someInt);
-      assertEquals("1234", readChild2.getChild1Obj().getId());
    }
 
    public void testErrorUnmarshallInputStreamAvailable() throws Exception {
@@ -571,10 +545,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public static class Pojo implements I, Externalizable {
-      int i;
-      boolean b;
-      static int serializationCount, deserializationCount;
       private static final long serialVersionUID = 9032309454840083326L;
+
+      @ProtoField(number = 1, defaultValue = "0")
+      int i;
+
+      @ProtoField(number = 2, defaultValue = "false")
+      boolean b;
 
       public Pojo() {}
 
@@ -616,14 +593,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       public void writeExternal(ObjectOutput out) throws IOException {
          out.writeInt(i);
          out.writeBoolean(b);
-         serializationCount++;
       }
 
       @Override
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
          i = in.readInt();
          b = in.readBoolean();
-         deserializationCount++;
       }
    }
 
@@ -716,47 +691,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class Parent implements Serializable {
-       private final String id;
-       private final Child1 child1Obj;
+   public static class Human implements Serializable {
 
-       public Parent(String id, Child1 child1Obj) {
-           this.id = id;
-           this.child1Obj = child1Obj;
-       }
-
-       public String getId() {
-           return id;
-       }
-       public Child1 getChild1Obj() {
-           return child1Obj;
-       }
-   }
-
-   static class Child1 extends Parent {
-       private final int someInt;
-
-       public Child1(int someInt, String parentStr) {
-           super(parentStr, null);
-           this.someInt = someInt;
-       }
-
-   }
-
-   static class Child2 extends Parent {
-       private final int someInt;
-
-       public Child2(int someInt, String parentStr, Child1 child1Obj) {
-           super(parentStr, child1Obj);
-           this.someInt = someInt;
-       }
-   }
-
-   static class Human implements Serializable {
-
+      @ProtoField(number = 1, defaultValue = "0")
       int age;
 
-      Human age(int age) {
+      public Human() {}
+
+      public Human age(int age) {
          this.age = age;
          return this;
       }
@@ -778,7 +720,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
-   static class HumanComparator implements Comparator<Human>, Serializable {
+   public static class HumanComparator implements Comparator<Human>, Serializable {
 
       @Override
       public int compare(Human o1, Human o2) {
@@ -789,10 +731,15 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    }
 
-   static class PojoWithExternalAndInternal {
+   public static class PojoWithExternalAndInternal {
+
+      @ProtoField(number = 1)
       final Human human;
+
+      @ProtoField(number = 2)
       final String value;
 
+      @ProtoFactory
       PojoWithExternalAndInternal(Human human, String value) {
          this.human = human;
          this.value = value;
@@ -844,4 +791,17 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
    }
 
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               Key.class,
+               VersionAwareMarshallerTest.Human.class,
+               VersionAwareMarshallerTest.Pojo.class,
+               VersionAwareMarshallerTest.PojoExtended.class,
+               VersionAwareMarshallerTest.PojoWithExternalAndInternal.class
+         },
+         schemaFileName = "test.core.VersionAwareMarshallerTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.VersionAwareMarshallerTest")
+   interface VersionAwareMarshallerSCI extends SerializationContextInitializer {
+   }
 }

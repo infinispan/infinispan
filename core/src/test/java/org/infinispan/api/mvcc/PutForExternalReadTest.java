@@ -31,6 +31,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
@@ -68,7 +69,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder c = createCacheConfigBuilder();
-      createClusteredCaches(2, CACHE_NAME, c);
+      createClusteredCaches(2, CACHE_NAME, TestDataSCI.INSTANCE, c);
    }
 
    protected ConfigurationBuilder createCacheConfigBuilder() {

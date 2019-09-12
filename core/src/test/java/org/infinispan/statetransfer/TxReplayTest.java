@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.transaction.Status;
 
 import org.infinispan.Cache;
@@ -21,6 +22,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -80,7 +82,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       builder.clustering()
             .hash().numOwners(2)
             .stateTransfer().fetchInMemoryState(true);
-      createClusteredCaches(3, builder);
+      createClusteredCaches(3, TestDataSCI.INSTANCE, builder);
    }
 
    private void checkKeyInDataContainer(Object key) {

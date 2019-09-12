@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.ControlledRpcManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -70,7 +71,7 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
          builder.clustering().biasAcquisition(biasAcquisition);
       }
       builder.clustering().hash().numSegments(60);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, builder);
    }
 
    private void performTestOn(final Operation operation) throws Exception {

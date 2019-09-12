@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest")
@@ -15,7 +15,7 @@ public class SingleJoinTest extends RehashTestBase {
    Cache<Object, String> joiner;
 
    void performRehashEvent(boolean offline) {
-      joinerManager = addClusterEnabledCacheManager(new TransportFlags());
+      joinerManager = addClusterEnabledCacheManager(TestDataSCI.INSTANCE);
       joinerManager.defineConfiguration(cacheName, configuration.build());
       joiner = joinerManager.getCache(cacheName);
    }

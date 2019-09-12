@@ -12,7 +12,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.Value;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -30,11 +32,11 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(StateTransferLargeObjectTest.class);
 
-   private Cache<Integer, BigObject> c0;
-   private Cache<Integer, BigObject> c1;
-   private Cache<Integer, BigObject> c2;
-   private Cache<Integer, BigObject> c3;
-   private Map<Integer, BigObject> expected;
+   private Cache<Integer, Object> c0;
+   private Cache<Integer, Object> c1;
+   private Cache<Integer, Object> c2;
+   private Cache<Integer, Object> c3;
+   private Map<Integer, Object> expected;
 
    private final Random rnd = new Random();
 
@@ -47,7 +49,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(3).numSegments(60)
             .stateTransfer().chunkSize(50);
-      createCluster(builder, 4);
+      createCluster(TestDataSCI.INSTANCE, builder, 4);
 
       c0 = cache(0);
       c1 = cache(1);
@@ -55,14 +57,13 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       c3 = cache(3);
       waitForClusterToForm();
       log.debug("Rehash is complete!");
-      expected = new HashMap<Integer, BigObject>();
-      cacheManagers.forEach(cm -> cm.getClassWhiteList().addClasses(BigObject.class));
+      expected = new HashMap<>();
    }
 
    public void testForFailure() {
       final int num = 500;
       for (int i = 0; i < num; i++) {
-         BigObject bigObject = createBigObject(i, "prefix");
+         Object bigObject = createBigObject(i, "prefix");
          expected.put(i, bigObject);
          c0.put(i, bigObject);
       }
@@ -89,15 +90,12 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
 
    private void assertValue(int i, Object o) {
       assertNotNull(o);
-      assertTrue(o instanceof BigObject);
+      assertTrue(o instanceof Value);
       assertEquals(o, expected.get(i));
    }
 
-   private BigObject createBigObject(int num, String prefix) {
-      BigObject obj = new BigObject();
-      obj.setName("[" + num + "|" + prefix + "|" +  (num*3) + "|" + (num*7) + "]");
-      obj.setValue(generateLargeString());
-      return obj;
+   private Object createBigObject(int num, String prefix) {
+      return new Value("[" + num + "|" + prefix + "|" +  (num*3) + "|" + (num*7) + "]", generateLargeString());
    }
 
    private String generateLargeString() {

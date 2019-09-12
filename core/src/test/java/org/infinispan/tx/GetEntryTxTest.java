@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -22,7 +23,7 @@ public class GetEntryTxTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.clustering().hash().numOwners(1);
-      createCluster(builder, 2);
+      createCluster(TestDataSCI.INSTANCE, builder, 2);
       waitForClusterToForm();
    }
 

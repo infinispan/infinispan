@@ -20,6 +20,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.logging.Log;
@@ -62,7 +63,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       builder.clustering().cacheMode(cacheMode);
       builder.transaction().transactionMode(transactionMode());
       builder.expiration().disableReaper();
-      createCluster(builder, 3);
+      createCluster(TestDataSCI.INSTANCE, builder, 3);
       waitForClusterToForm();
       injectTimeServices();
 

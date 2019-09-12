@@ -16,6 +16,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.transport.DelayedViewJGroupsTransport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -156,9 +157,8 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
       viewLatch = new CountDownLatch(1);
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.transport().transport(new DelayedViewJGroupsTransport(viewLatch));
+      global.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       addClusterEnabledCacheManager(global, configuration);
-      addClusterEnabledCacheManager(configuration);
-      addClusterEnabledCacheManager(configuration);
+      createCluster(TestDataSCI.INSTANCE, configuration, 2);
    }
-
 }

@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -66,12 +67,12 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
    public void testDistributedAndNoTwoWay() {
       ConfigurationBuilder config = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), false);
       config.clustering().cacheMode(CacheMode.DIST_SYNC);
-      withCacheManager(() -> TestCacheManagerFactory.createClusteredCacheManager(config), EmbeddedCacheManager::getCache);
+      withCacheManager(() -> TestCacheManagerFactory.createClusteredCacheManager(TestDataSCI.INSTANCE, config), EmbeddedCacheManager::getCache);
    }
 
    private EmbeddedCacheManager createCacheManager(boolean preload, CacheMode cacheMode) {
       ConfigurationBuilder config = NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(), preload);
       config.clustering().cacheMode(cacheMode);
-      return TestCacheManagerFactory.createClusteredCacheManager(config);
+      return TestCacheManagerFactory.createClusteredCacheManager(TestDataSCI.INSTANCE, config);
    }
 }

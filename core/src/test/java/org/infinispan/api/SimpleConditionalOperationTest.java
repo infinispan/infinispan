@@ -6,6 +6,7 @@ import static org.testng.Assert.assertNull;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.SimpleConditionalOperationTest")
@@ -13,8 +14,7 @@ public class SimpleConditionalOperationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getConfig();
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, getConfig(), 2);
       waitForClusterToForm();
    }
 

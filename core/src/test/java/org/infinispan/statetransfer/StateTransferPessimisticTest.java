@@ -18,6 +18,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -50,7 +51,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
             .lockingMode(LockingMode.PESSIMISTIC);
       dccc.clustering().hash().numOwners(1).l1().disable();
       dccc.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      createCluster(dccc, CLUSTER_SIZE);
+      createCluster(TestDataSCI.INSTANCE, dccc, CLUSTER_SIZE);
       waitForClusterToForm();
    }
 
@@ -69,7 +70,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
 
       log.trace("State transfer happens here");
       // add a third node
-      addClusterEnabledCacheManager(dccc);
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, dccc);
       waitForClusterToForm();
 
       // Wait for the stale entries invalidation to block
