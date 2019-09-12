@@ -109,7 +109,7 @@ public class RestDispatcherTest {
       }
    }
 
-   class EchoResource implements ResourceHandler {
+   static class EchoResource implements ResourceHandler {
 
       @Override
       public Invocations getInvocations() {
@@ -136,7 +136,7 @@ public class RestDispatcherTest {
       }
    }
 
-   class CounterResource implements ResourceHandler {
+   static class CounterResource implements ResourceHandler {
 
       private final Map<String, AtomicInteger> counters = new HashMap<>();
 
@@ -182,7 +182,6 @@ public class RestDispatcherTest {
          counters.get(name).incrementAndGet();
          return completedFuture(responseBuilder.status(200).build());
       }
-
    }
 
    static class MemoryResource implements ResourceHandler {
@@ -211,7 +210,6 @@ public class RestDispatcherTest {
       private CompletionStage<RestResponse> serveStaticResource(RestRequest restRequest) {
          return completedFuture(new SimpleRestResponse.Builder().entity("Hello World!").build());
       }
-
    }
 
    static class FileResource implements ResourceHandler {
