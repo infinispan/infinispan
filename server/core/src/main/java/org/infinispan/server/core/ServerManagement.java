@@ -13,6 +13,5 @@ public interface ServerManagement {
 
    void stop();
 
-   Set<String> cacheManagersNames();
-
+   Set<String> cacheManagerNames();
 }

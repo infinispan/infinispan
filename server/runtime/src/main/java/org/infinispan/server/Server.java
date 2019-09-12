@@ -313,7 +313,7 @@ public class Server implements ServerManagement {
    }
 
    @Override
-   public Set<String> cacheManagersNames() {
+   public Set<String> cacheManagerNames() {
       return cacheManagers.keySet();
    }
 
