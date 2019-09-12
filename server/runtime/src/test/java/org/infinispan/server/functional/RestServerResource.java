@@ -95,7 +95,7 @@ public class RestServerResource {
    }
 
    @Test
-   public void testCacheManagersNames() throws Exception {
+   public void testCacheManagerNames() throws Exception {
       RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
       RestResponse restResponse = sync(client.serverCacheManagers());
       ArrayNode cacheManagers = (ArrayNode) mapper.readTree(restResponse.getBody());

@@ -180,7 +180,6 @@ public class CacheManagerResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
-
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
@@ -209,9 +208,9 @@ public class CacheManagerResource implements ResourceHandler {
       String acceptHeader = restRequest.getAcceptHeader();
       if (acceptHeader == null || acceptHeader.equals(MediaType.MATCH_ALL_TYPE)) return MediaType.APPLICATION_JSON;
 
-      MediaType accept = MediaType.parse(acceptHeader);
+      MediaType accept = MediaType.fromString(acceptHeader);
       if (!MediaType.APPLICATION_XML.match(accept) && !MediaType.APPLICATION_JSON.match(accept)) {
-         throw new UnacceptableDataFormatException("Only json and xml are supported");
+         throw new UnacceptableDataFormatException("Only JSON and xml are supported");
       }
       return accept;
    }

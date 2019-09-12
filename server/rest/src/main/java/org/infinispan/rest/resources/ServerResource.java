@@ -51,7 +51,7 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> cacheManagers(RestRequest restRequest) {
-      return serializeObject(invocationHelper.getServer().cacheManagersNames());
+      return serializeObject(invocationHelper.getServer().cacheManagerNames());
    }
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {
