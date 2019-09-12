@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +19,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
+import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.NotifierLatch;
@@ -346,7 +349,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
 
       public BlockingTransport(Transport actual) {
          super(actual);
-         notifierLatch = new NotifierLatch();
+         notifierLatch = new NotifierLatch(toString());
          notifierLatch.stopBlocking();
       }
 
@@ -364,10 +367,27 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       }
 
       @Override
-      protected void beforeBackupRemotely(XSiteReplicateCommand command) {
-         if (command instanceof XSiteStatePushCommand) {
+      public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+         if (rpcCommand instanceof XSiteStatePushCommand) {
             notifierLatch.blockIfNeeded();
          }
+         return super.backupRemotely(backup, rpcCommand);
+      }
+
+      @Override
+      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand)
+            throws Exception {
+         if (rpcCommand instanceof XSiteStatePushCommand) {
+            notifierLatch.blockIfNeeded();
+         }
+         return super.backupRemotely(backups, rpcCommand);
+      }
+
+      @Override
+      public String toString() {
+         return "BlockingTransport{" +
+                "actual=" + actual +
+                '}';
       }
    }
 }

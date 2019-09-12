@@ -1,8 +1,10 @@
 package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.Exceptions.expectException;
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
+import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractJChannel;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.testng.Assert.assertEquals;
 
 import java.lang.invoke.MethodHandles;
@@ -78,7 +80,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
-      createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc, new TransportFlags().withFD(true).withMerge(true));
+      createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc,
+                            new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
 

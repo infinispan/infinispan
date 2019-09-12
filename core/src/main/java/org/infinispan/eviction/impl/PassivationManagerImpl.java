@@ -121,8 +121,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
                   .thenCompose(v -> doPassivate(key, entry))
                   .thenCompose(v -> notifier.notifyCacheEntryPassivated(key, null, false, ImmutableContext.INSTANCE, null));
          } else {
-            return doPassivate(key, entry)
-                  .thenCompose(CompletableFutures.composeNull());
+            return CompletionStages.ignoreValue(doPassivate(key, entry));
          }
       }
       return CompletableFutures.completedNull();
@@ -140,6 +139,26 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
          CompletionStages.join(persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0));
          CONTAINER.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
+   }
+
+   @Override
+   public CompletionStage<Void> passivateAllAsync() throws PersistenceException {
+      if (!enabled || skipOnStop)
+         return CompletableFutures.completedNull();
+
+      long start = timeService.time();
+      CONTAINER.passivatingAllEntries();
+
+      int count = container.sizeIncludingExpired();
+      Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e -> {
+         return marshalledEntryFactory.create(e.getKey(), e.getValue(), e.getMetadata(), e.getExpiryTime(),
+                                              e.getLastUsed());
+      });
+      return persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0)
+                               .thenRun(() -> {
+                                  long durationMillis = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+                                  CONTAINER.passivatedEntries(count, Util.prettyPrintTime(durationMillis));
+                               });
    }
 
    @Override

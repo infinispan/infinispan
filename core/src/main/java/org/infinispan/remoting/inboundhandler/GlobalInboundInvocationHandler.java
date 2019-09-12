@@ -63,7 +63,11 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    private static ExceptionResponse exceptionHandlingCommand(Throwable throwable) {
-      return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+      if (throwable instanceof Exception) {
+         return new ExceptionResponse(((Exception) throwable));
+      } else {
+         return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+      }
    }
 
    @Override
@@ -182,7 +186,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          if (throwable != null) {
             throwable = CompletableFutures.extractException(throwable);
             if (throwable instanceof InterruptedException || throwable instanceof IllegalLifecycleStateException) {
-               CLUSTER.shutdownHandlingCommand(command);
+               CLUSTER.debugf("Shutdown while handling command %s", command);
                return shuttingDownResponse();
             } else {
                CLUSTER.exceptionHandlingCommand(command, throwable);

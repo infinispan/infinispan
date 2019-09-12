@@ -3,14 +3,11 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.orTimeout;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,6 +17,7 @@ import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -80,12 +78,9 @@ public class LockingTest extends SingleCacheManagerTest {
       final RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(cacheName.name());
       CheckPoint checkPoint = injectBlockingCommandInterceptor(cacheName.name());
 
-      Future<Void> op = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            remoteCache.put("key", "value1");
-            return null;
-         }
+      Future<Void> op = fork(() -> {
+         remoteCache.put("key", "value1");
+         return null;
       });
 
       checkPoint.awaitStrict("before-block", 30, TimeUnit.SECONDS);
@@ -113,17 +108,18 @@ public class LockingTest extends SingleCacheManagerTest {
    }
 
    private CheckPoint injectBlockingCommandInterceptor(String cacheName) {
-      AdvancedCache<?, ?> advancedCache = cache(cacheName).getAdvancedCache();
       final CheckPoint checkPoint = new CheckPoint();
-      advancedCache.getAsyncInterceptorChain().addInterceptorBefore(new BaseCustomAsyncInterceptor() {
+      TestingUtil.extractInterceptorChain(cache(cacheName))
+                 .addInterceptorBefore(new BaseCustomAsyncInterceptor() {
 
          private final AtomicBoolean first = new AtomicBoolean(false);
 
          @Override
-         public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
             if (first.compareAndSet(false, true)) {
                checkPoint.trigger("before-block");
-               return asyncInvokeNext(ctx, command, orTimeout(checkPoint.future("block"), 30, TimeUnit.SECONDS));
+               return asyncInvokeNext(ctx, command,
+                                      checkPoint.future("block", 30, TimeUnit.SECONDS, testExecutor()));
             }
             return invokeNext(ctx, command);
          }

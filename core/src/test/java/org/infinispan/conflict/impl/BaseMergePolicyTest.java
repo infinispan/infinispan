@@ -27,6 +27,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -170,7 +171,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    private CacheStatusResponse getCacheStatus(AdvancedCache cache) {
       LocalTopologyManager localTopologyManager = cache.getComponentRegistry().getComponent(LocalTopologyManager.class);
       int viewId = cache.getRpcManager().getTransport().getViewId();
-      ManagerStatusResponse statusResponse = localTopologyManager.handleStatusRequest(viewId);
+      ManagerStatusResponse statusResponse = CompletionStages.join(localTopologyManager.handleStatusRequest(viewId));
       return statusResponse.getCaches().get(cache.getName());
    }
 

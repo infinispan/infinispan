@@ -32,6 +32,11 @@ public class PassivationManagerStub extends AbstractPassivationManager {
    }
 
    @Override
+   public CompletionStage<Void> passivateAllAsync() {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
    public void skipPassivationOnStop(boolean skip) {
       /*no-op*/
    }

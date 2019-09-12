@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -15,7 +17,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
@@ -34,19 +35,21 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected DistributionManager distributionManager;
 
    protected static SuccessfulResponse getSuccessfulResponseOrFail(Map<Address, Response> responseMap, CompletableFuture<?> future, Consumer<Response> cacheNotFound) {
-      Iterator<Response> it = responseMap.values().iterator();
+      Iterator<Map.Entry<Address, Response>> it = responseMap.entrySet().iterator();
       if (!it.hasNext()) {
          future.completeExceptionally(AllOwnersLostException.INSTANCE);
          return null;
       }
-      Response response = it.next();
+      Map.Entry<Address, Response> e = it.next();
+      Address sender = e.getKey();
+      Response response = e.getValue();
       if (it.hasNext()) {
          future.completeExceptionally(new IllegalStateException("Too many responses " + responseMap));
       } else if (response instanceof SuccessfulResponse) {
          return (SuccessfulResponse) response;
       } else if (response instanceof CacheNotFoundResponse || response instanceof UnsureResponse) {
          if (cacheNotFound == null) {
-            future.completeExceptionally(unexpected(response));
+            future.completeExceptionally(unexpected(sender, response));
          } else {
             try {
                cacheNotFound.accept(response);
@@ -55,13 +58,13 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
             }
          }
       } else {
-         future.completeExceptionally(unexpected(response));
+         future.completeExceptionally(unexpected(sender, response));
       }
       return null;
    }
 
-   protected static RuntimeException unexpected(Response response) {
-      return ResponseCollectors.unexpectedResponse(response);
+   protected static RuntimeException unexpected(Address sender, Response response) {
+      return CLUSTER.unexpectedResponse(sender, response);
    }
 
    /**

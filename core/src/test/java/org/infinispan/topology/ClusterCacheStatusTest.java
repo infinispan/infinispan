@@ -41,7 +41,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final Address C = new TestAddress(3, "C");
 
    private ClusterCacheStatus status;
-   private ClusterTopologyManager topologyManager;
+   private ClusterTopologyManagerImpl topologyManager;
    private MockitoSession mockitoSession;
    private Transport transport;
 
@@ -52,7 +52,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
       EventLogManager eventLogManager = new EventLogManagerImpl();
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
-      topologyManager = mock(ClusterTopologyManager.class);
+      topologyManager = mock(ClusterTopologyManagerImpl.class);
       transport = mock(Transport.class);
       PreferAvailabilityStrategy availabilityStrategy =
          new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
@@ -101,20 +101,17 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
 
    private void verifyRebalanceStart() {
       verify(topologyManager).broadcastRebalanceStart(CACHE_NAME, status.getCurrentTopology(),
-                                                      JOIN_INFO.isTotalOrder(),
-                                                      JOIN_INFO.getCacheMode().isDistributed());
+                                                      JOIN_INFO.isTotalOrder());
    }
 
    private void verifyStableTopologyUpdate() {
       verify(topologyManager).broadcastStableTopologyUpdate(CACHE_NAME, status.getStableTopology(),
-                                                            JOIN_INFO.isTotalOrder(),
-                                                            JOIN_INFO.getCacheMode().isDistributed());
+                                                            JOIN_INFO.isTotalOrder());
    }
 
    private void verifyTopologyUpdate() {
       verify(topologyManager).broadcastTopologyUpdate(CACHE_NAME, status.getCurrentTopology(),
-                                                      AvailabilityMode.AVAILABLE, JOIN_INFO.isTotalOrder(),
-                                                      JOIN_INFO.getCacheMode().isDistributed());
+                                                      AvailabilityMode.AVAILABLE, JOIN_INFO.isTotalOrder());
    }
 
    private void completeRebalance(ClusterCacheStatus status) throws Exception {

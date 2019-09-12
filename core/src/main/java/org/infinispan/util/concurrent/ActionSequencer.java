@@ -30,9 +30,16 @@ public class ActionSequencer {
    private final Map<Object, SequenceEntry<?>> sequencer = new ConcurrentHashMap<>();
    private final LongAdder pendingActions = new LongAdder();
    private final ExecutorService executor;
+   private final boolean forceExecutor;
 
-   public ActionSequencer(ExecutorService executor) {
+   /**
+    * @param executor Executor to run submitted actions.
+    * @param forceExecutor If {@code false}, run submitted actions on the submitter thread if possible.
+    *                      If {@code true}, always run submitted actions on the executor.
+    */
+   public ActionSequencer(ExecutorService executor, boolean forceExecutor) {
       this.executor = executor;
+      this.forceExecutor = forceExecutor;
    }
 
    private static <T> CompletionStage<T> safeNonBlockingCall(Callable<? extends CompletionStage<T>> action) {
@@ -64,9 +71,9 @@ public class ActionSequencer {
       }
       SequenceEntry<T> entry;
       if (dKeys.length == 1) {
-         entry = new SingleKeyNonBlockingSequenceEntry<>(action, executor, dKeys[0]);
+         entry = new SingleKeyNonBlockingSequenceEntry<>(action, dKeys[0]);
       } else {
-         entry = new MultiKeyNonBlockingSequenceEntry<>(action, executor, dKeys);
+         entry = new MultiKeyNonBlockingSequenceEntry<>(action, dKeys);
       }
 
       registerAction(entry);
@@ -75,7 +82,7 @@ public class ActionSequencer {
 
    public <T> CompletionStage<T> orderOnKey(Object key, Callable<? extends CompletionStage<T>> action) {
       checkAction(action);
-      SequenceEntry<T> entry = new SingleKeyNonBlockingSequenceEntry<>(action, executor, checkKey(key));
+      SequenceEntry<T> entry = new SingleKeyNonBlockingSequenceEntry<>(action, checkKey(key));
       registerAction(entry);
       return entry;
    }
@@ -118,22 +125,22 @@ public class ActionSequencer {
       pendingActions.decrement();
    }
 
-   private abstract static class SequenceEntry<T> extends CompletableFuture<T>
+   private abstract class SequenceEntry<T> extends CompletableFuture<T>
          implements BiFunction<Object, Throwable, Void>, //for handleAsync (to chain on the previous entry)
          BiConsumer<T, Throwable> { //for whenComplete (to chain on the action result)
 
       final Callable<? extends CompletionStage<T>> action;
-      final ExecutorService executor;
 
-      SequenceEntry(Callable<? extends CompletionStage<T>> action, ExecutorService executor) {
+      SequenceEntry(Callable<? extends CompletionStage<T>> action) {
          this.action = action;
-         this.executor = executor;
       }
 
       public void register() {
          CompletionStage<?> previousStage = putInMap();
          if (previousStage != null) {
             previousStage.handleAsync(this, executor);
+         } else if (forceExecutor) {
+            CompletableFutures.completedNull().handleAsync(this, executor);
          } else {
             apply(null, null);
          }
@@ -176,9 +183,8 @@ public class ActionSequencer {
    private class SingleKeyNonBlockingSequenceEntry<T> extends SequenceEntry<T> {
       private final Object key;
 
-      SingleKeyNonBlockingSequenceEntry(Callable<? extends CompletionStage<T>> action, ExecutorService executor,
-            Object key) {
-         super(action, executor);
+      SingleKeyNonBlockingSequenceEntry(Callable<? extends CompletionStage<T>> action, Object key) {
+         super(action);
          this.key = key;
       }
 
@@ -197,9 +203,8 @@ public class ActionSequencer {
 
       private final Object[] keys;
 
-      MultiKeyNonBlockingSequenceEntry(Callable<? extends CompletionStage<T>> action, ExecutorService executor,
-            Object[] keys) {
-         super(action, executor);
+      MultiKeyNonBlockingSequenceEntry(Callable<? extends CompletionStage<T>> action, Object[] keys) {
+         super(action);
          this.keys = keys;
       }
 

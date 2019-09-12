@@ -184,7 +184,7 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
 
       private AsyncBackupHandler(TransactionHandler txHandler, ExecutorService executor) {
          super(txHandler, executor);
-         sequencer = new ActionSequencer(executor);
+         sequencer = new ActionSequencer(executor, false);
       }
 
       @Override

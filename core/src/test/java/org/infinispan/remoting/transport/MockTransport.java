@@ -145,6 +145,7 @@ public class MockTransport implements Transport {
                  blockedRequests.isEmpty());
    }
 
+   @Deprecated
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
                                                 ResponseMode mode, long timeout, ResponseFilter responseFilter,
@@ -185,16 +186,18 @@ public class MockTransport implements Transport {
    }
 
    @Override
-   public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+   public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
       blockRequest(members, rpcCommand, null);
    }
 
+   @Deprecated
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long
       timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) {
       throw new UnsupportedOperationException();
    }
 
+   @Deprecated
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long
       timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) {
@@ -356,8 +359,7 @@ public class MockTransport implements Transport {
       private final ResponseCollector<?> collector;
       private final CompletableFuture<Object> resultFuture = new CompletableFuture<>();
 
-      private BlockedRequest(
-         ReplicableCommand command, ResponseCollector collector) {
+      private BlockedRequest(ReplicableCommand command, ResponseCollector<?> collector) {
          this.command = command;
          this.collector = collector;
       }
@@ -382,6 +384,11 @@ public class MockTransport implements Transport {
       }
 
       public void finish() {
+         if (collector == null) {
+            log.debugf("sendToX methods do not need a finish() call, ignoring it");
+            return;
+         }
+
          Object result = collector.finish();
          complete(result);
       }

@@ -18,6 +18,8 @@ import org.infinispan.topology.CacheTopology;
  *
  * Also allows {@link AvailabilityStrategy} to proceed with a rebalance, a membership update, or an availability mode change.
  *
+ * Implementations should not use blocking calls.
+ *
  * @author Mircea Markus
  * @author Dan Berindei
  */

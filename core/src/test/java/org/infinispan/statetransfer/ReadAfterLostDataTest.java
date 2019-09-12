@@ -2,9 +2,11 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.crashCacheManagers;
 import static org.infinispan.test.TestingUtil.installNewView;
+import static org.infinispan.topology.CacheTopologyControlCommand.Type.CH_UPDATE;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +19,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
@@ -26,15 +27,16 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.util.BlockingClusterTopologyManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -51,7 +53,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(cacheMode)
-            .partitionHandling().enabled(false);
+            .partitionHandling().whenSplit(PartitionHandling.ALLOW_READ_WRITES);
       createClusteredCaches(4, TestDataSCI.INSTANCE, cb, new TransportFlags().withFD(true).withMerge(true));
    }
 
@@ -143,19 +145,18 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
          cache(0).put(keys.get(i), "value" + i);
       }
 
-      for (Cache c : caches()) {
-         ComponentRegistry cr = c.getAdvancedCache().getComponentRegistry();
-         ClusterTopologyManager clusterTopologyManager = cr.getComponent(ClusterTopologyManager.class);
+      for (Cache<?, ?> c : Arrays.asList(cache(0), cache(1))) {
+         ClusterTopologyManager clusterTopologyManager = TestingUtil.extractComponent(c, ClusterTopologyManager.class);
          clusterTopologyManager.setRebalancingEnabled(false);
          if (blockUpdates) {
-            BlockingClusterTopologyManager bctm = BlockingClusterTopologyManager.replace(c.getCacheManager());
-            BlockingClusterTopologyManager.Handle<CacheTopology> handle = bctm.startBlockingTopologyUpdate(topology -> true);
-            int currentTopology = cr.getDistributionManager().getCacheTopology().getTopologyId();
-            cleanup.add(handle::stopBlocking);
+            ControlledTransport blockedTopologyUpdates = ControlledTransport.replace(c);
+            blockedTopologyUpdates.blockBefore(CacheTopologyControlCommand.class, cc -> cc.getType() == CH_UPDATE);
+            int currentTopology = c.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
+            cleanup.add(blockedTopologyUpdates::stopBlocking);
             // Because all responses are CacheNotFoundResponses, retries will block to wait for a new topology
             // Even reads block, because in general the values might have been copied to the write-only owners
             TestingUtil.wrapComponent(cache(0), StateTransferLock.class,
-                  stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, handle::stopBlocking));
+                  stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, blockedTopologyUpdates::stopBlocking));
          }
       }
       crashCacheManagers(manager(2), manager(3));
@@ -215,7 +216,6 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
 
    private static Map<?, ?> remove(Cache<Object, Object> cache, Collection<?> keys) {
       Map<Object, Object> map = new HashMap<>();
-      int i = 0;
       for (Object key : keys) {
          Object value = cache.remove(key);
          if (value != null) {

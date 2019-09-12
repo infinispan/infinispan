@@ -7,7 +7,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.CountMarshallingPojo;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -21,7 +20,6 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cfg.memory().storageType(StorageType.BINARY);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, cfg);
       cache = cm.getCache();
-      TestingUtil.initJbossMarshallerTypeHints(cm, new CountMarshallingPojo());
       return cm;
    }
 

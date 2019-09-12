@@ -24,7 +24,9 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
@@ -449,7 +451,6 @@ public interface Transport extends Lifecycle {
                                                  Function<Address, ReplicableCommand> commandGenerator,
                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                  long timeout, TimeUnit timeUnit) {
-      // Implement the new methods on top of invokeRemotelyAsync to support custom implementations
       AtomicReference<Object> result = new AtomicReference<>(null);
       ResponseCollector<T> partCollector = new ResponseCollector<T>() {
          @Override
@@ -469,13 +470,13 @@ public interface Transport extends Lifecycle {
             return null;
          }
       };
-      List<CompletableFuture<T>> futures = new ArrayList<>(targets.size());
+
+      AggregateCompletionStage<Void> allStage = CompletionStages.aggregateCompletionStage();
       for (Address target : targets) {
-         futures.add(
-            invokeCommand(target, commandGenerator.apply(target), partCollector, deliverOrder, timeout, timeUnit)
-               .toCompletableFuture());
+         allStage.dependsOn(invokeCommand(target, commandGenerator.apply(target), partCollector, deliverOrder,
+                                          timeout, timeUnit));
       }
-      return CompletableFuture.allOf(futures.toArray(new CompletableFuture[targets.size()])).thenApply(v -> {
+      return allStage.freeze().thenApply(v -> {
          synchronized (partCollector) {
             if (result.get() != null) {
                return (T) result.get();
@@ -484,6 +485,5 @@ public interface Transport extends Lifecycle {
             }
          }
       });
-
    }
 }

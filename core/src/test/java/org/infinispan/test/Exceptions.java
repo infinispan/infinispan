@@ -1,5 +1,6 @@
 package org.infinispan.test;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +21,7 @@ public class Exceptions {
       if (t.getClass() != exceptionClass) {
          throw new AssertionError(
                "Wrong exception thrown: expected:<" + exceptionClass.getName() + ">, actual:<" + t.getClass().getName() + ">", t);
+
       }
    }
 
@@ -201,7 +203,20 @@ public class Exceptions {
       }
    }
 
-   public static <T> T unchecked(ThrowableSupplier<T> supplier) {
+   public static <T> T unchecked(Callable<T> callable) {
+      try {
+         return callable.call();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new RuntimeException(e);
+      } catch (RuntimeException e) {
+         throw e;
+      } catch (Throwable t) {
+         throw new RuntimeException(t);
+      }
+   }
+
+   public static <T> T uncheckedThrowable(ThrowableSupplier<T> supplier) {
       try {
          return supplier.get();
       } catch (InterruptedException e) {

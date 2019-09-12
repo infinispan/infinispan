@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
@@ -21,7 +22,6 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.conflict.ConflictManagerFactory;
-import org.infinispan.conflict.impl.DefaultConflictManager;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -35,6 +35,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -60,7 +61,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private final EmbeddedCacheManager cacheManager;
    private final String cacheName;
    private final AvailabilityStrategy availabilityStrategy;
-   private final ClusterTopologyManager clusterTopologyManager;
+   private final ClusterTopologyManagerImpl clusterTopologyManager;
    private final PersistentUUIDManager persistentUUIDManager;
    private EventLogger eventLogger;
    private final boolean resolveConflictsOnMerge;
@@ -93,7 +94,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    public ClusterCacheStatus(EmbeddedCacheManager cacheManager, String cacheName,
                              AvailabilityStrategy availabilityStrategy,
-                             RebalanceType rebalanceType, ClusterTopologyManager clusterTopologyManager,
+                             RebalanceType rebalanceType, ClusterTopologyManagerImpl clusterTopologyManager,
                              Transport transport,
                              PersistentUUIDManager persistentUUIDManager, EventLogManager eventLogManager,
                              Optional<ScopedPersistentState> state, boolean resolveConflictsOnMerge) {
@@ -137,16 +138,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (newMembers != null && !newMembers.isEmpty()) {
          log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
          queuedRebalanceMembers = newMembers;
+
          startQueuedRebalance();
       }
    }
 
    public boolean isTotalOrder() {
       return joinInfo.isTotalOrder();
-   }
-
-   public boolean isDistributed() {
-      return joinInfo.getCacheMode().isDistributed();
    }
 
    public Map<Address, Float> getCapacityFactors() {
@@ -189,8 +187,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.updatingAvailabilityMode(cacheName, oldAvailabilityMode, newAvailabilityMode, newTopology);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheAvailabilityModeChange(
             newAvailabilityMode, newTopology.getTopologyId()));
-         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode,
-               isTotalOrder(), isDistributed());
+         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode, isTotalOrder());
       }
    }
 
@@ -203,14 +200,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
 
-      if (currentTopology != null) {
-         clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode, isTotalOrder(), isDistributed());
-      }
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode, isTotalOrder());
 
       if (stableTopology != null) {
          log.updatingStableTopology(cacheName, stableTopology);
-         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(),
-               isDistributed());
+         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder());
       }
    }
 
@@ -400,7 +394,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   @GuardedBy("this") // called from doHandleClusterView/doLeave/confirmRebalancePhase
+   @GuardedBy("this")
    private void endRebalance() {
       CacheTopology newTopology;
       rebalanceInProgress = false;
@@ -445,8 +439,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalancePhaseChange(
          newTopology.getPhase(), newTopology.getTopologyId()));
       // TODO: to members only?
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
-            isTotalOrder(), isDistributed());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
 
       if (newTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
          startQueuedRebalance();
@@ -473,7 +466,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalancePhaseChange(
          newTopology.getPhase(), newTopology.getTopologyId()));
       // TODO: to members only?
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder(), isDistributed());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
    }
 
    @GuardedBy("this") // called from doHandleClusterView/doLeave/confirmRebalancePhase
@@ -494,7 +487,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       CLUSTER.finishedRebalance(cacheName, newTopology);
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.rebalanceFinished(
          newTopology.getMembers(), newTopology.getTopologyId()));
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder(), isDistributed());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
       startQueuedRebalance();
    }
 
@@ -568,8 +561,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       CLUSTER.updatingTopology(cacheName, newTopology, availabilityMode);
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
          actualMembers, newTopology.getTopologyId()));
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
-            isTotalOrder(), isDistributed());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
    }
 
    private boolean setAvailabilityMode(AvailabilityMode newAvailabilityMode) {
@@ -692,7 +684,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return cacheName;
    }
 
-   public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) throws Exception {
+   public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) {
       boolean isFirstMember = getCurrentTopology() == null;
       boolean memberJoined = addMember(joiner, joinInfo);
       if (!isFirstMember && !memberJoined) {
@@ -711,8 +703,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                CLUSTER.updatingTopology(cacheName, topology, availabilityMode);
                eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
                   topology.getMembers(), topology.getTopologyId()));
-               clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode, isTotalOrder(), isDistributed());
-               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology, isTotalOrder(), isDistributed());
+               clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode, isTotalOrder());
+               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology, isTotalOrder());
                return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
             }
          } else {
@@ -725,7 +717,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
                // Don't need to broadcast the initial CH update, just return the cache topology to the joiner
                // But we do need to broadcast the initial topology as the stable topology
-               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology, isTotalOrder(), isDistributed());
+               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology, isTotalOrder());
             }
          }
       }
@@ -776,19 +768,22 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return initialTopology;
    }
 
-   public synchronized boolean doLeave(Address leaver) throws Exception {
+   public synchronized CompletionStage<Void> doLeave(Address leaver) throws Exception {
       if (currentTopology == null)
-         return false;
+         return CompletableFutures.completedNull();
 
       boolean actualLeaver = removeMember(leaver);
       if (!actualLeaver)
-         return false;
+         return CompletableFutures.completedNull();
 
       availabilityStrategy.onGracefulLeave(this, leaver);
 
       updateMembers();
 
-      return expectedMembers.isEmpty();
+      if (expectedMembers.isEmpty()) {
+         clusterTopologyManager.removeCacheStatus(cacheName);
+      }
+      return CompletableFutures.completedNull();
    }
 
    public synchronized void startQueuedRebalance() {
@@ -803,7 +798,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (stableTopology == null || stableTopology.getTopologyId() < currentTopology.getTopologyId()) {
             stableTopology = currentTopology;
             log.updatingStableTopology(cacheName, stableTopology);
-            clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(), isDistributed());
+            clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder());
          }
          return;
       }
@@ -879,7 +874,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.updatingTopology(cacheName, newTopology, availabilityMode);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
             newTopology.getMembers(), newTopology.getTopologyId()));
-         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, getAvailabilityMode(), isTotalOrder(), isDistributed());
+         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, getAvailabilityMode(), isTotalOrder());
       } else if (rebalance) {
          CacheTopology.Phase newPhase;
          switch (rebalanceType) {
@@ -905,10 +900,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.startingRebalancePhase(cacheName, newTopology);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalanceStart(
             newTopology.getMembers(), newTopology.getPhase(), newTopology.getTopologyId()));
-         clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology, isTotalOrder(), isDistributed());
+         clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology, isTotalOrder());
       } else if (updateStableTopology) {
          stableTopology = currentTopology;
-         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(), isDistributed());
+         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder());
       }
    }
 
@@ -927,7 +922,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return rebalancingEnabled && clusterTopologyManager.isRebalancingEnabled();
    }
 
-   public synchronized void setRebalanceEnabled(boolean enabled) {
+   public synchronized CompletionStage<Void> setRebalanceEnabled(boolean enabled) {
       rebalancingEnabled = enabled;
       if (rebalancingEnabled) {
          log.debugf("Rebalancing is now enabled for cache %s", cacheName);
@@ -935,26 +930,28 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       } else {
          log.debugf("Rebalancing is now disabled for cache %s", cacheName);
       }
+      return CompletableFutures.completedNull();
    }
 
    public void forceRebalance() {
       queueRebalance(getCurrentTopology().getMembers());
-      startQueuedRebalance();
    }
 
-   public synchronized void forceAvailabilityMode(AvailabilityMode newAvailabilityMode) {
+   public synchronized CompletionStage<Void> forceAvailabilityMode(AvailabilityMode newAvailabilityMode) {
       if (currentTopology != null && newAvailabilityMode != availabilityMode) {
          availabilityStrategy.onManualAvailabilityChange(this, newAvailabilityMode);
       }
+      return CompletableFutures.completedNull();
    }
 
-   public synchronized void shutdownCache() throws Exception {
+   public synchronized CompletionStage<Void> shutdownCache() throws Exception {
       if (status == ComponentStatus.RUNNING) {
          status = ComponentStatus.STOPPING;
          clusterTopologyManager.setRebalancingEnabled(cacheName, false);
-         clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology(), this.isTotalOrder(), this.isDistributed());
-         status = ComponentStatus.TERMINATED;
+         return clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology(), this.isTotalOrder())
+               .thenRun(() -> status = ComponentStatus.TERMINATED);
       }
+      return CompletableFutures.completedNull();
    }
 
    public synchronized void setInitialTopologyId(int initialTopologyId) {
@@ -1004,7 +1001,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       conflictResolution = null;
       setCurrentTopology(newTopology);
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder(), isDistributed());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
 
       List<Address> actualMembers = conflictTopology.getActualMembers();
       List<Address> newMembers = getExpectedMembers();
@@ -1045,7 +1042,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       currentTopology = conflictTopology;
 
       log.debugf("Cache %s restarting conflict resolution with topology %s", cacheName, currentTopology);
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, conflictTopology, availabilityMode, isTotalOrder(), isDistributed());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, conflictTopology, availabilityMode, isTotalOrder());
 
       queueConflictResolution(conflictTopology, conflictResolution.preferredNodes);
       return true;
@@ -1085,8 +1082,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionStarting(
                currentTopology.getMembers(), currentTopology.getTopologyId()));
 
-         AdvancedCache<?, ?> cache = cacheManager.getCache(cacheName).getAdvancedCache();
-         DefaultConflictManager<?, ?> conflictManager = (DefaultConflictManager) ConflictManagerFactory.get(cache);
          manager.resolveConflicts(topology, preferredNodes).whenComplete((Void, t) -> {
             if (t == null) {
                Log.CLUSTER.finishedConflictResolution(cacheName, currentTopology);

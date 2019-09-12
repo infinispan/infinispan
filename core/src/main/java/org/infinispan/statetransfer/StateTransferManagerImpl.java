@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -116,7 +117,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             localTopologyManager.getPersistentUUID(),
             persistentStateChecksum);
 
-      CacheTopology initialTopology = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
+      CompletionStage<CacheTopology> stage = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override
          public void updateConsistentHash(CacheTopology cacheTopology) {
             doTopologyUpdate(cacheTopology, false);
@@ -128,6 +129,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
       }, partitionHandlingManager);
 
+      CacheTopology initialTopology = CompletionStages.join(stage);
       if (trace) {
          log.tracef("StateTransferManager of cache %s on node %s received initial topology %s", cacheName, rpcManager.getAddress(), initialTopology);
       }

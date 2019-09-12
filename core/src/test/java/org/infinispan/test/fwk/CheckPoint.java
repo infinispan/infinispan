@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -30,7 +32,7 @@ public class CheckPoint {
    public static final int INFINITE = 999999999;
    private final Lock lock = new ReentrantLock();
    private final Condition unblockCondition = lock.newCondition();
-   private final Map<String, EventStatus> events = new HashMap<String, EventStatus>();
+   private final Map<String, EventStatus> events = new HashMap<>();
    private boolean released = false;
 
    public void awaitStrict(String event, long timeout, TimeUnit unit)
@@ -53,17 +55,12 @@ public class CheckPoint {
       log.tracef("Waiting for event %s * %d", event, count);
       lock.lock();
       try {
-         EventStatus status = null;
+         EventStatus status = events.computeIfAbsent(event, k -> new EventStatus());
          long waitNanos = unit.toNanos(timeout);
          while (waitNanos > 0) {
             if (released) {
                log.trace("Unblocked all events.");
                return true;
-            }
-            status = events.get(event);
-            if (status == null) {
-               status = new EventStatus();
-               events.put(event, status);
             }
             if (status.available >= count) {
                status.available -= count;
@@ -73,8 +70,8 @@ public class CheckPoint {
          }
 
          if (waitNanos <= 0) {
-            log.errorf("Timed out waiting for event %s * %d (available = %d, total = %d", event, count,
-                  status.available, status.total);
+            log.errorf("Timed out waiting for event %s * %d (available = %d, total = %d)",
+                       event, count, status.available, status.total);
             // let the triggering thread know that we timed out
             status.available = -1;
             return false;
@@ -124,11 +121,16 @@ public class CheckPoint {
       }
    }
 
-   public CompletableFuture<Void> future(String event) {
-      return future(event, 1);
+   public CompletableFuture<Void> future(String event, long timeout, TimeUnit unit, Executor executor) {
+      return future(event, 1, timeout, unit, executor);
    }
 
-   public CompletableFuture<Void> future(String event, int count) {
+   public CompletableFuture<Void> future(String event, int count, long timeout, TimeUnit unit, Executor executor) {
+      return TestingUtil.orTimeout(future0(event, count), timeout, unit, executor)
+                        .thenRunAsync(() -> log.tracef("Received event %s * %d", event, count), executor);
+   }
+
+   public CompletableFuture<Void> future0(String event, int count) {
       log.tracef("Waiting for event %s * %d", event, count);
       lock.lock();
       try {
@@ -221,7 +223,7 @@ public class CheckPoint {
       return "CheckPoint" + events;
    }
 
-   private class EventStatus {
+   private static class EventStatus {
       int available;
       int total;
       public ArrayList<Request> requests;
@@ -233,10 +235,10 @@ public class CheckPoint {
    }
 
    private static class Request {
-      final CompletableFuture future;
+      final CompletableFuture<Void> future;
       final int count;
 
-      private Request(CompletableFuture future, int count) {
+      private Request(CompletableFuture<Void> future, int count) {
          this.future = future;
          this.count = count;
       }

@@ -1,5 +1,7 @@
 package org.infinispan.topology;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -37,23 +39,17 @@ public interface ClusterTopologyManager {
     * If the node is the first to join the cache, the returned topology does include the joiner,
     * and it is never {@code null}.
     */
-   CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
+   CompletionStage<CacheStatusResponse> handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
 
    /**
     * Signals that a member is leaving the cache.
     */
-   void handleLeave(String cacheName, Address leaver, int viewId) throws Exception;
+   CompletionStage<Void> handleLeave(String cacheName, Address leaver, int viewId) throws Exception;
 
    /**
     * Marks the rebalance as complete on the sender.
     */
-   void handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
-
-   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
-
-   void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed);
-
-   void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
+   CompletionStage<Void> handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
 
    boolean isRebalancingEnabled();
 
@@ -65,25 +61,23 @@ public interface ClusterTopologyManager {
    /**
     * Globally enables or disables whether automatic rebalancing should occur.
     */
-   void setRebalancingEnabled(boolean enabled);
+   CompletionStage<Void> setRebalancingEnabled(boolean enabled);
 
    /**
     * Enables or disables rebalancing for the specified cache
     */
-   void setRebalancingEnabled(String cacheName, boolean enabled);
+   CompletionStage<Void> setRebalancingEnabled(String cacheName, boolean enabled);
 
    /**
     * Retrieves the rebalancing status of a cache
     */
    RebalancingStatus getRebalancingStatus(String cacheName);
 
-   void forceRebalance(String cacheName);
+   CompletionStage<Void> forceRebalance(String cacheName);
 
-   void forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode);
+   CompletionStage<Void> forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode);
 
-   void handleShutdownRequest(String cacheName) throws Exception;
-
-   void broadcastShutdownCache(String cacheName, CacheTopology currentTopology, boolean totalOrder, boolean distributed) throws Exception;
+   CompletionStage<Void> handleShutdownRequest(String cacheName) throws Exception;
 
    /**
     * Sets the id of the initial topology in given cache. This is necessary when using entry versions

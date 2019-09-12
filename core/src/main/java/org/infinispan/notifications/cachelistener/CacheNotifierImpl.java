@@ -802,7 +802,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, ConsistentHash unionCH,
          int newTopologyId, boolean pre) {
       if (!dataRehashedListeners.isEmpty()) {
-         return resumeOnCPU(doNotifyDataRehashed(oldCH, newCH, unionCH, newTopologyId, pre), newCH);
+         return resumeOnCPU(doNotifyDataRehashed(oldCH, newCH, unionCH, newTopologyId, pre), newTopologyId);
       }
       return CompletableFutures.completedNull();
    }
@@ -828,7 +828,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public CompletionStage<Void> notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology,
          int newTopologyId, boolean pre) {
       if (!topologyChangedListeners.isEmpty()) {
-         return resumeOnCPU(doNotifyTopologyChanged(oldTopology, newTopology, newTopologyId, pre), newTopology);
+         return resumeOnCPU(doNotifyTopologyChanged(oldTopology, newTopology, newTopologyId, pre), newTopology.getTopologyId());
       }
       return CompletableFutures.completedNull();
    }

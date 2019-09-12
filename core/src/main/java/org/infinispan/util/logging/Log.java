@@ -739,8 +739,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error during rebalance for cache %s on node %s, topology id = %d", id = 195)
    void rebalanceError(String cacheName, Address node, int topologyId, @Cause Throwable cause);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge)", id = 196)
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge), will retry", id = 196)
    void failedToRecoverClusterState(@Cause Throwable cause);
 
    @LogMessage(level = WARN)
@@ -821,10 +821,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Timeout while waiting for the transaction validation. The command will not be processed. " +
          "Transaction is %s", id = 218)
    void timeoutWaitingUntilTransactionPrepared(String globalTx);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Shutdown while handling command %s", id = 219)
-   void shutdownHandlingCommand(ReplicableCommand command);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Problems un-marshalling remote command from byte buffer", id = 220)
@@ -980,7 +976,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Problems creating interceptor %s", id = 267)
-   void unableToCreateInterceptor(Class type, @Cause Exception e);
+   void unableToCreateInterceptor(Class<?> type, @Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to broadcast invalidations as a part of the prepare phase. Rolling back.", id = 268)
@@ -1165,7 +1161,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
-   void errorReadingRebalancingStatus(Address coordinator, @Cause Exception e);
+   void errorReadingRebalancingStatus(Address coordinator, @Cause Throwable t);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Distributed task failed at %s. The task is failing over to be executed at %s", id = 330)
@@ -1939,4 +1935,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to persist Infinispan internal caches as no global state enabled", id = 569)
    @Once
    void warnUnableToPersistInternalCaches();
+
+   @Message(value = "Unexpected response from %s: %s", id = 570)
+   IllegalArgumentException unexpectedResponse(Address target, Response response);
 }

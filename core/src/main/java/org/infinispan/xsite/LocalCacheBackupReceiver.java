@@ -1,7 +1,5 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.util.concurrent.CompletableFutures.toNullFunction;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -9,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.remoting.LocalInvocation;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteState;
@@ -38,7 +37,7 @@ public class LocalCacheBackupReceiver extends BaseBackupReceiver {
          invokeCommand = command.copyForCache(cacheName);
       }
       invokeCommand.setSiteName(command.getOriginSite());
-      return LocalInvocation.newInstanceFromCache(cache, invokeCommand).callAsync().thenApply(toNullFunction());
+      return CompletionStages.ignoreValue(LocalInvocation.newInstanceFromCache(cache, invokeCommand).callAsync());
    }
 
    @Override

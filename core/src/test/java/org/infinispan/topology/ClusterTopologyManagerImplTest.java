@@ -36,6 +36,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -98,11 +99,12 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // CTMI becomes coordinator and fetches the cluster status
       transport.expectTopologyCommand(CacheTopologyControlCommand.Type.GET_STATUS).finish();
 
-      // CTMI fetches rebalance status/confirm members are available
-      transport.expectHeartBeatCommand().finish();
+      // No caches, so no topology update is expected here
+      Thread.sleep(1);
+      transport.verifyNoErrors();
 
       // First node joins the cache
-      CacheStatusResponse joinResponseA = ctm.handleJoin(CACHE_NAME, A, joinInfoA, 1);
+      CacheStatusResponse joinResponseA = CompletionStages.join(ctm.handleJoin(CACHE_NAME, A, joinInfoA, 1));
       assertEquals(1, joinResponseA.getCacheTopology().getTopologyId());
       assertCHMembers(joinResponseA.getCacheTopology().getCurrentCH(), A);
       assertNull(joinResponseA.getCacheTopology().getPendingCH());
@@ -125,7 +127,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       transport.expectHeartBeatCommand().finish();
 
       // Second node joins the cache, receives the initial topology
-      CacheStatusResponse joinResponseB = ctm.handleJoin(CACHE_NAME, B, joinInfoB, 2);
+      CacheStatusResponse joinResponseB = CompletionStages.join(ctm.handleJoin(CACHE_NAME, B, joinInfoB, 2));
       assertEquals(1, joinResponseB.getCacheTopology().getTopologyId());
       assertCHMembers(joinResponseB.getCacheTopology().getCurrentCH(), A);
       assertNull(joinResponseB.getCacheTopology().getPendingCH());
@@ -229,9 +231,6 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
          assertCHMembers(c.getCurrentCH(), B);
          assertNull(c.getPendingCH());
       });
-
-      // CTMI confirms members are available in case it needs to starts a rebalance
-      transport.expectHeartBeatCommand().finish();
 
       // Shouldn't send any more commands here
       Thread.sleep(1);

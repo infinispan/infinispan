@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
@@ -15,10 +16,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -157,75 +157,53 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      final boolean trace = log.isTraceEnabled();
-      LogFactory.pushNDC(cacheName, trace);
-      try {
-         Object responseValue = doPerform();
-         return CompletableFuture.completedFuture(SuccessfulResponse.create(responseValue));
-      } catch (InterruptedException e) {
-         log.tracef("Command execution %s was interrupted because the cache manager is shutting down", this);
-         return CompletableFuture.completedFuture(UnsuccessfulResponse.EMPTY);
-      } catch (Exception t) {
-         log.exceptionHandlingCommand(this, t);
-         // todo [anistor] CommandAwareRequestDispatcher does not wrap our exceptions so we have to do it instead
-         return CompletableFuture.completedFuture(new ExceptionResponse(t));
-      } finally {
-         LogFactory.popNDC(trace);
-      }
+      return doPerform().thenApply(v -> (Object) SuccessfulResponse.create(v))
+                        .toCompletableFuture();
    }
 
-   private Object doPerform() throws Exception {
+   private CompletionStage<?> doPerform() throws Exception {
       switch (type) {
          // member to coordinator
          case JOIN:
             return clusterTopologyManager.handleJoin(cacheName, sender, joinInfo, viewId);
          case LEAVE:
-            clusterTopologyManager.handleLeave(cacheName, sender, viewId);
-            return null;
+            return clusterTopologyManager.handleLeave(cacheName, sender, viewId);
          case REBALANCE_PHASE_CONFIRM:
-            clusterTopologyManager.handleRebalancePhaseConfirm(cacheName, sender, topologyId, throwable, viewId);
-            return null;
+            return clusterTopologyManager.handleRebalancePhaseConfirm(cacheName, sender, topologyId, throwable, viewId);
          case SHUTDOWN_REQUEST:
-            clusterTopologyManager.handleShutdownRequest(cacheName);
-            return null;
+            return clusterTopologyManager.handleShutdownRequest(cacheName);
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
+            return localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
                   pendingCH, phase, actualMembers, persistentUUIDs), availabilityMode, viewId, sender);
-            return null;
          case STABLE_TOPOLOGY_UPDATE:
-            localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId,
+            return localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId,
                   currentCH, pendingCH, CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDs), sender, viewId);
-            return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
+            return localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
                   pendingCH, phase, actualMembers, persistentUUIDs), viewId, sender);
-            return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
          case SHUTDOWN_PERFORM:
-            localTopologyManager.handleCacheShutdown(cacheName);
-            return null;
+            return localTopologyManager.handleCacheShutdown(cacheName);
 
          // rebalance policy control
          case POLICY_GET_STATUS:
-            return clusterTopologyManager.isRebalancingEnabled(cacheName);
+            return CompletableFutures.booleanStage(clusterTopologyManager.isRebalancingEnabled(cacheName));
          case POLICY_ENABLE:
-            clusterTopologyManager.setRebalancingEnabled(cacheName, true);
-            return true;
+            return clusterTopologyManager.setRebalancingEnabled(cacheName, true);
+
          case POLICY_DISABLE:
-            clusterTopologyManager.setRebalancingEnabled(cacheName, false);
-            return true;
+            return clusterTopologyManager.setRebalancingEnabled(cacheName, false);
 
          // availability mode
          case AVAILABILITY_MODE_CHANGE:
-            clusterTopologyManager.forceAvailabilityMode(cacheName, availabilityMode);
-            return true;
+            return clusterTopologyManager.forceAvailabilityMode(cacheName, availabilityMode);
 
          // rebalancing status
          case REBALANCING_GET_STATUS:
-            return clusterTopologyManager.getRebalancingStatus(cacheName);
+            return CompletableFuture.completedFuture(clusterTopologyManager.getRebalancingStatus(cacheName));
          default:
             throw new CacheException("Unknown cache topology control command type " + type);
       }

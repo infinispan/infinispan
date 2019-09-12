@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -67,14 +67,19 @@ public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
       Exceptions.expectException(TransportException.class, SocketTimeoutException.class, () -> cache.put("FailFailFail", 2));
       cache.put("dos", 2);
       assertEquals(2, cache.get("dos").intValue());
+
+      TestingUtil.extractInterceptorChain(this.cache)
+                 .findInterceptorWithClass(TimeoutInducingInterceptor.class)
+                 .stopBlocking();
    }
 
    public static class TimeoutInducingInterceptor extends BaseCustomAsyncInterceptor {
+      public final CompletableFuture<Void> delay = new CompletableFuture<>();
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (unmarshall(command.getKey()).equals("FailFailFail")) {
-            return asyncValue(TestingUtil.delayed(null, 6000, TimeUnit.MILLISECONDS));
+            return asyncValue(delay);
          }
 
          return super.visitPutKeyValueCommand(ctx, command);
@@ -82,6 +87,10 @@ public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
 
       private String unmarshall(Object key) throws Exception {
          return (String) new ProtoStreamMarshaller().objectFromByteBuffer(((WrappedByteArray) key).getBytes());
+      }
+
+      private void stopBlocking() {
+         delay.complete(null);
       }
    }
 }

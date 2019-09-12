@@ -36,6 +36,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -75,6 +77,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -113,6 +116,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -122,6 +126,7 @@ import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -148,30 +153,38 @@ public class TestingUtil {
          "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
          "   </jgroups>";
    private static final int SHORT_TIMEOUT_MILLIS = Integer.getInteger("infinispan.test.shortTimeoutMillis", 500);
-   private static ScheduledExecutorService timeoutExecutor = new ScheduledThreadPoolExecutor(1, r -> {
-      Thread t = new Thread(r);
-      t.setDaemon(true);
-      t.setName("test-timeout-thread");
-      return t;
-   });
+   private static ScheduledExecutorService timeoutExecutor;
 
-   // Temporarily replaces Java 9's CompletableFuture.orTimeout
-   public static <T> CompletableFuture<T> orTimeout(CompletableFuture<T> f, long timeout, TimeUnit timeUnit) {
-      ScheduledFuture<Boolean> scheduled = timeoutExecutor.schedule(() -> f.completeExceptionally(new TimeoutException("Timed out!")), timeout, timeUnit);
+   static {
+      ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, r -> {
+         Thread t = new Thread(r);
+         t.setDaemon(true);
+         t.setName("test-timeout-thread");
+         return t;
+      });
+      executor.setRemoveOnCancelPolicy(true);
+      timeoutExecutor = executor;
+   }
+
+   public static <T> CompletableFuture<T> orTimeout(CompletableFuture<T> f, long timeout, TimeUnit timeUnit, Executor executor) {
+      ScheduledFuture<?> scheduled = timeoutExecutor.schedule(() -> {
+         // Don't run anything on the timeout thread
+         executor.execute(() -> f.completeExceptionally(new TimeoutException("Timed out!")));
+      }, timeout, timeUnit);
       f.whenComplete((v, t) -> scheduled.cancel(false));
       return f;
    }
 
-   public static <T> CompletableFuture<T> delayed(T value, long timeout, TimeUnit timeUnit) {
-      CompletableFuture<T> future = new CompletableFuture<>();
-      timeoutExecutor.schedule(() -> future.complete(value), timeout, timeUnit);
-      return future;
+   public static <T> CompletionStage<T> startAsync(Callable<CompletionStage<T>> action, Executor executor) {
+      return CompletableFutures.completedNull().thenComposeAsync(ignored -> Exceptions.unchecked(action), executor);
    }
 
-   public static <T> CompletableFuture<T> delayed(Supplier<T> value, long timeout, TimeUnit timeUnit) {
-      CompletableFuture<T> future = new CompletableFuture<>();
-      timeoutExecutor.schedule(() -> future.complete(value.get()), timeout, timeUnit);
-      return future;
+   public static <T> CompletionStage<T> sequence(CompletionStage<?> first, Callable<CompletionStage<T>> second) {
+      return first.thenCompose(ignored -> Exceptions.unchecked(second));
+   }
+
+   public static <T> CompletionStage<T> sequenceAsync(CompletionStage<?> first, Callable<CompletionStage<T>> second, Executor executor) {
+      return first.thenComposeAsync(ignored -> Exceptions.unchecked(second), executor);
    }
 
    /**
@@ -188,8 +201,7 @@ public class TestingUtil {
     */
    public static void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
       for (EmbeddedCacheManager cm : cacheManagers) {
-         JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
-         JChannel channel = t.getChannel();
+         JChannel channel = extractJChannel(cm);
          try {
             DISCARD discard = new DISCARD();
             discard.setDiscardAll(true);
@@ -213,14 +225,22 @@ public class TestingUtil {
    }
 
    public static void installNewView(Stream<Address> members, EmbeddedCacheManager... where) {
-      installNewView(members, ecm -> {
-         Transport transport = ecm.getGlobalComponentRegistry().getComponent(Transport.class);
-         while (Proxy.isProxyClass(transport.getClass())) {
+      installNewView(members, TestingUtil::extractJChannel, where);
+   }
+
+   public static JChannel extractJChannel(EmbeddedCacheManager ecm) {
+      Transport transport = extractGlobalComponent(ecm, Transport.class);
+      while (!(transport instanceof JGroupsTransport)) {
+         if (Proxy.isProxyClass(transport.getClass())) {
             // Unwrap proxies created by the StateSequencer
             transport = extractField(extractField(transport, "h"), "wrappedInstance");
+         } else if (transport instanceof AbstractDelegatingTransport) {
+            transport = ((AbstractDelegatingTransport) transport).getDelegate();
+         } else {
+            throw new IllegalStateException("Unable to obtain a JGroupsTransport instance from " + transport + " on " + ecm.getAddress());
          }
-         return ((JGroupsTransport) transport).getChannel();
-      }, where);
+      }
+      return ((JGroupsTransport) transport).getChannel();
    }
 
    public static void installNewView(Stream<Address> members, Function<EmbeddedCacheManager, JChannel> channelRetriever, EmbeddedCacheManager... where) {
@@ -234,7 +254,7 @@ public class TestingUtil {
       long viewId = previousViews.stream().mapToLong(view -> view.getViewId().getId()).max().orElse(0) + 1;
       View newView;
       if (previousViews.stream().allMatch(view -> view.getMembers().containsAll(viewMembers))) {
-         newView = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
+         newView = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[0]));
       } else {
          newView = new MergeView(new ViewId(viewMembers.get(0), viewId), viewMembers, previousViews);
       }
@@ -287,7 +307,7 @@ public class TestingUtil {
       return (T) extractField(target.getClass(), target, fieldName);
    }
 
-   public static void replaceField(Object newValue, String fieldName, Object owner, Class baseType) {
+   public static void replaceField(Object newValue, String fieldName, Object owner, Class<?> baseType) {
       Field field;
       try {
          field = baseType.getDeclaredField(fieldName);
@@ -303,7 +323,7 @@ public class TestingUtil {
       replaceField(owner.getClass(), owner, fieldName, func);
    }
 
-   public static <T> void replaceField(Class baseType, Object owner, String fieldName, Function<T, T> func) {
+   public static <T> void replaceField(Class<?> baseType, Object owner, String fieldName, Function<T, T> func) {
       Field field;
       try {
          field = baseType.getDeclaredField(fieldName);
@@ -317,7 +337,7 @@ public class TestingUtil {
       }
    }
 
-   public static Object extractField(Class type, Object target, String fieldName) {
+   public static Object extractField(Class<?> type, Object target, String fieldName) {
       while (true) {
          Field field;
          try {
@@ -338,11 +358,10 @@ public class TestingUtil {
 
    public static <T extends AsyncInterceptor> T findInterceptor(Cache<?, ?> cache,
          Class<T> interceptorToFind) {
-      return cache.getAdvancedCache().getAsyncInterceptorChain()
-            .findInterceptorExtending(interceptorToFind);
+      return extractInterceptorChain(cache).findInterceptorExtending(interceptorToFind);
    }
 
-   public static int getSegmentForKey(Object key, Cache cache) {
+   public static int getSegmentForKey(Object key, Cache<?, ?> cache) {
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       return keyPartitioner.getSegment(key);
    }
@@ -350,15 +369,12 @@ public class TestingUtil {
    /**
     * Waits until pendingCH() is null on all caches, currentCH.getMembers() contains all caches provided as the param
     * and all segments have numOwners owners.
-    * @param caches
     */
    public static void waitForNoRebalance(Cache... caches) {
       final int REBALANCE_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REBALANCE_TIMEOUT_SECONDS);
-      for (Cache c : caches) {
-         if (c instanceof SecureCacheImpl) {
-            c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
-         }
+      for (Cache<?, ?> c : caches) {
+         c = unwrapSecureCache(c);
          DistributionManager distributionManager = c.getAdvancedCache().getDistributionManager();
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          CacheTopology cacheTopology;
@@ -432,7 +448,7 @@ public class TestingUtil {
       log.debugf("waitForNoRebalance with managers %s, for caches %s", Arrays.toString(managers), testCaches);
 
       for (String cacheName : testCaches) {
-         Cache[] caches = new Cache[numberOfManagers];
+         Cache<?, ?>[] caches = new Cache[numberOfManagers];
          for (int i = 0; i < numberOfManagers; i++)
             caches[i] = managers[i].getCache(cacheName);
 
@@ -450,13 +466,12 @@ public class TestingUtil {
       return extractGlobalComponentRegistry(container).getComponent(InternalCacheRegistry.class).getInternalCacheNames();
    }
 
-   public static void waitForTopologyPhase(List<Address> expectedMembers, CacheTopology.Phase phase, Cache... caches) {
+   public static void waitForTopologyPhase(List<Address> expectedMembers, CacheTopology.Phase phase,
+                                           Cache<?, ?>... caches) {
       final int TOPOLOGY_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(TOPOLOGY_TIMEOUT_SECONDS);
-      for (Cache c : caches) {
-         if (c instanceof SecureCacheImpl) {
-            c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
-         }
+      for (Cache<?, ?> c : caches) {
+         c = unwrapSecureCache(c);
          DistributionManager distributionManager = c.getAdvancedCache().getDistributionManager();
          while (true) {
             CacheTopology cacheTopology = distributionManager.getCacheTopology();
@@ -476,8 +491,15 @@ public class TestingUtil {
       }
    }
 
+   private static Cache<?, ?> unwrapSecureCache(Cache<?, ?> c) {
+      if (c instanceof SecureCacheImpl) {
+         c = (Cache<?, ?>) extractField(SecureCacheImpl.class, c, "delegate");
+      }
+      return c;
+   }
+
    public static void waitForNoRebalance(Collection<? extends Cache> caches) {
-      waitForNoRebalance(caches.toArray(new Cache[caches.size()]));
+      waitForNoRebalance(caches.toArray(new Cache[0]));
    }
 
    /**
@@ -490,7 +512,7 @@ public class TestingUtil {
     * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
     *                          members.
     */
-   public static void blockUntilViewsReceived(Cache[] caches, long timeout) {
+   public static void blockUntilViewsReceived(Cache<?, ?>[] caches, long timeout) {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
@@ -503,7 +525,7 @@ public class TestingUtil {
       viewsTimedOut(caches);
    }
 
-   private static void viewsTimedOut(Cache[] caches) {
+   private static void viewsTimedOut(Cache<?, ?>[] caches) {
       CacheContainer[] cacheContainers = new CacheContainer[caches.length];
       for (int i = 0; i < caches.length; i++) {
          cacheContainers[i] = caches[i].getCacheManager();
@@ -517,7 +539,7 @@ public class TestingUtil {
       for (CacheContainer cacheContainer : cacheContainers) {
          EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainer;
          if (cm.getMembers().size() != cacheContainers.length) {
-            incompleteViews.add(((JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class)).getChannel().getView());
+            incompleteViews.add(extractJChannel(cm).getView());
             log.warnf("Manager %s has an incomplete view: %s", cm.getAddress(), cm.getMembers());
          }
       }
@@ -527,7 +549,7 @@ public class TestingUtil {
          cacheContainers.length, incompleteViews));
    }
 
-   public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
+   public static void blockUntilViewsReceivedInt(Cache<?, ?>[] caches, long timeout) throws InterruptedException {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
@@ -543,14 +565,14 @@ public class TestingUtil {
    /**
     * Version of blockUntilViewsReceived that uses varargs
     */
-   public static void blockUntilViewsReceived(long timeout, Cache... caches) {
+   public static void blockUntilViewsReceived(long timeout, Cache<?, ?>... caches) {
       blockUntilViewsReceived(caches, timeout);
    }
 
    /**
     * Version of blockUntilViewsReceived that throws back any interruption
     */
-   public static void blockUntilViewsReceivedInt(long timeout, Cache... caches) throws InterruptedException {
+   public static void blockUntilViewsReceivedInt(long timeout, Cache<?, ?>... caches) throws InterruptedException {
       blockUntilViewsReceivedInt(caches, timeout);
    }
 
@@ -591,12 +613,8 @@ public class TestingUtil {
     * I.e., the usual method barfs if there are more members than expected.  This one takes a param
     * (barfIfTooManyMembers) which, if false, will NOT barf but will wait until the cluster 'shrinks' to the desired
     * size.  Useful if in tests, you kill a member and want to wait until this fact is known across the cluster.
-    *
-    * @param timeout
-    * @param barfIfTooManyMembers
-    * @param caches
     */
-   public static void blockUntilViewsReceived(long timeout, boolean barfIfTooManyMembers, Cache... caches) {
+   public static void blockUntilViewsReceived(long timeout, boolean barfIfTooManyMembers, Cache<?, ?>... caches) {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
@@ -619,7 +637,7 @@ public class TestingUtil {
     * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
     *                          members.
     */
-   public static void blockUntilViewReceived(Cache cache, int groupSize, long timeout) {
+   public static void blockUntilViewReceived(Cache<?, ?> cache, int groupSize, long timeout) {
       blockUntilViewReceived(cache, groupSize, timeout, true);
    }
 
@@ -629,12 +647,12 @@ public class TestingUtil {
     *
     * @param groupSize number of caches expected in the group
     */
-   public static void blockUntilViewReceived(Cache cache, int groupSize) {
+   public static void blockUntilViewReceived(Cache<?, ?> cache, int groupSize) {
       // Default 10 seconds
       blockUntilViewReceived(cache, groupSize, 10000, true);
    }
 
-   public static void blockUntilViewReceived(Cache cache, int groupSize, long timeout, boolean barfIfTooManyMembersInView) {
+   public static void blockUntilViewReceived(Cache<?, ?> cache, int groupSize, long timeout, boolean barfIfTooManyMembersInView) {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
@@ -660,14 +678,14 @@ public class TestingUtil {
     *
     * @throws IllegalStateException if any of the caches have MORE view members than caches.length
     */
-   public static boolean areCacheViewsComplete(Cache[] caches) {
+   public static boolean areCacheViewsComplete(Cache<?, ?>[] caches) {
       return areCacheViewsComplete(caches, true);
    }
 
-   public static boolean areCacheViewsComplete(Cache[] caches, boolean barfIfTooManyMembers) {
+   public static boolean areCacheViewsComplete(Cache<?, ?>[] caches, boolean barfIfTooManyMembers) {
       int memberCount = caches.length;
 
-      for (Cache cache : caches) {
+      for (Cache<?, ?> cache : caches) {
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
@@ -691,16 +709,12 @@ public class TestingUtil {
       return true;
    }
 
-   /**
-    * @param c
-    * @param memberCount
-    */
-   public static boolean isCacheViewComplete(Cache c, int memberCount) {
+   public static boolean isCacheViewComplete(Cache<?, ?> c, int memberCount) {
       EmbeddedCacheManager cacheManager = c.getCacheManager();
       return isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, true);
    }
 
-   public static boolean isCacheViewComplete(List members, Address address, int memberCount, boolean barfIfTooManyMembers) {
+   public static boolean isCacheViewComplete(List<Address> members, Address address, int memberCount, boolean barfIfTooManyMembers) {
       if (members == null || memberCount > members.size()) {
          return false;
       } else if (memberCount < members.size()) {
@@ -738,11 +752,11 @@ public class TestingUtil {
     * @param finalViewSize desired final view size
     * @param caches caches representing current, or expected members in the cluster.
     */
-   public static void blockUntilViewsChanged(long timeout, int finalViewSize, Cache... caches) {
+   public static void blockUntilViewsChanged(long timeout, int finalViewSize, Cache<?, ?>... caches) {
       blockUntilViewsChanged(caches, timeout, finalViewSize);
    }
 
-   private static void blockUntilViewsChanged(Cache[] caches, long timeout, int finalViewSize) {
+   private static void blockUntilViewsChanged(Cache<?, ?>[] caches, long timeout, int finalViewSize) {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
@@ -753,7 +767,7 @@ public class TestingUtil {
       }
 
       List<List<Address>> allViews = new ArrayList<>(caches.length);
-      for (Cache cache : caches) {
+      for (Cache<?, ?> cache : caches) {
          allViews.add(cache.getCacheManager().getMembers());
       }
 
@@ -762,10 +776,8 @@ public class TestingUtil {
             allViews, finalViewSize));
    }
 
-   private static boolean areCacheViewsChanged(Cache[] caches, int finalViewSize) {
-      int memberCount = caches.length;
-
-      for (Cache cache : caches) {
+   private static boolean areCacheViewsChanged(Cache<?, ?>[] caches, int finalViewSize) {
+      for (Cache<?, ?> cache : caches) {
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          if (!isCacheViewChanged(cacheManager.getMembers(), finalViewSize)) {
             return false;
@@ -775,7 +787,7 @@ public class TestingUtil {
       return true;
    }
 
-   private static boolean isCacheViewChanged(List members, int finalViewSize) {
+   private static boolean isCacheViewChanged(List<Address> members, int finalViewSize) {
       return !(members == null || finalViewSize != members.size());
    }
 
@@ -854,14 +866,14 @@ public class TestingUtil {
 
    public static void clearContent(EmbeddedCacheManager cacheContainer) {
       if (cacheContainer != null && cacheContainer.getStatus().allowInvocations()) {
-         Set<Cache> runningCaches = getRunningCaches(cacheContainer);
-         for (Cache cache : runningCaches) {
+         Set<Cache<?, ?>> runningCaches = getRunningCaches(cacheContainer);
+         for (Cache<?, ?> cache : runningCaches) {
             clearRunningTx(cache);
          }
 
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
-         for (Cache cache : runningCaches) {
+         for (Cache<?, ?> cache : runningCaches) {
             try {
                clearCacheLoader(cache);
                removeInMemoryData(cache);
@@ -876,22 +888,22 @@ public class TestingUtil {
       Set<String> caches = new LinkedHashSet<>();
       try {
          DependencyGraph<String> graph =
-            TestingUtil.extractGlobalComponentRegistry(cacheContainer)
-                       .getComponent(DependencyGraph.class, KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
+            TestingUtil.extractGlobalComponent(cacheContainer, DependencyGraph.class,
+                                               KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
          caches.addAll(graph.topologicalSort());
       } catch (Exception ignored) {
       }
       return caches;
    }
 
-   private static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
+   private static Set<Cache<?, ?>> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
          return Collections.emptySet();
 
       Set<String> running = new LinkedHashSet<>(getOrderedCacheNames(cacheContainer));
       extractGlobalComponent(cacheContainer, InternalCacheRegistry.class).filterPrivateCaches(running);
       running.addAll(cacheContainer.getCacheNames());
-      extractGlobalConfiguration(cacheContainer).defaultCacheName().ifPresent(n -> running.add(n));
+      extractGlobalConfiguration(cacheContainer).defaultCacheName().ifPresent(running::add);
 
       return running.stream()
               .map(s -> cacheContainer.getCache(s, false))
@@ -904,14 +916,14 @@ public class TestingUtil {
       return SecurityActions.getCacheManagerConfiguration(cacheContainer);
    }
 
-   private static void clearRunningTx(Cache cache) {
+   private static void clearRunningTx(Cache<?, ?> cache) {
       if (cache != null) {
          TransactionManager txm = TestingUtil.getTransactionManager(cache);
          killTransaction(txm);
       }
    }
 
-   public static void clearCacheLoader(Cache cache) {
+   public static void clearCacheLoader(Cache<?, ?> cache) {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       CompletionStages.join(persistenceManager.clearAllStores(BOTH));
    }
@@ -923,9 +935,9 @@ public class TestingUtil {
       return l;
    }
 
-   private static void removeInMemoryData(Cache cache) {
+   private static void removeInMemoryData(Cache<?, ?> cache) {
       log.debugf("Cleaning data for cache %s", cache);
-      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
+      InternalDataContainer<?, ?> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.sizeIncludingExpired());
       dataContainer.clear();
    }
@@ -933,15 +945,15 @@ public class TestingUtil {
    /**
     * Kills a cache - stops it, clears any data in any stores, and rolls back any associated txs
     */
-   public static void killCaches(Cache... caches) {
+   public static void killCaches(Cache<?, ?>... caches) {
       killCaches(Arrays.asList(caches));
    }
 
    /**
     * Kills a cache - stops it and rolls back any associated txs
     */
-   public static void killCaches(Collection<Cache> caches) {
-      for (Cache c : caches) {
+   public static void killCaches(Collection<? extends Cache<?, ?>> caches) {
+      for (Cache<?, ?> c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
                TransactionManager tm = c.getAdvancedCache().getTransactionManager();
@@ -991,8 +1003,8 @@ public class TestingUtil {
    /**
     * Clears any associated transactions with the current thread in the caches' transaction managers.
     */
-   public static void killTransactions(Cache... caches) {
-      for (Cache c : caches) {
+   public static void killTransactions(Cache<?, ?>... caches) {
+      for (Cache<?, ?> c : caches) {
          if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
             TransactionManager tm = getTransactionManager(c);
             if (tm != null) {
@@ -1014,7 +1026,7 @@ public class TestingUtil {
     *
     * @return component registry
     */
-   public static ComponentRegistry extractComponentRegistry(Cache cache) {
+   public static ComponentRegistry extractComponentRegistry(Cache<?, ?> cache) {
       return SecurityActions.getComponentRegistry(cache);
    }
 
@@ -1022,7 +1034,7 @@ public class TestingUtil {
       return SecurityActions.getGlobalComponentRegistry((EmbeddedCacheManager) cacheContainer);
    }
 
-   public static LockManager extractLockManager(Cache cache) {
+   public static LockManager extractLockManager(Cache<?, ?> cache) {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
@@ -1032,10 +1044,10 @@ public class TestingUtil {
    }
 
    public static PersistenceMarshallerImpl extractPersistenceMarshaller(EmbeddedCacheManager cm) {
-      return cm.getGlobalComponentRegistry().getComponent(PersistenceMarshallerImpl.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+      return extractGlobalComponentRegistry(cm).getComponent(PersistenceMarshallerImpl.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
    }
 
-   public static AsyncInterceptorChain extractInterceptorChain(Cache cache) {
+   public static AsyncInterceptorChain extractInterceptorChain(Cache<?, ?> cache) {
       return extractComponent(cache, AsyncInterceptorChain.class);
    }
 
@@ -1066,7 +1078,7 @@ public class TestingUtil {
     * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
     * @return true if the interceptor was replaced
     */
-   public static boolean replaceInterceptor(Cache cache, AsyncInterceptor replacingInterceptor, Class<? extends AsyncInterceptor> toBeReplacedInterceptorType) {
+   public static boolean replaceInterceptor(Cache<?, ?> cache, AsyncInterceptor replacingInterceptor, Class<? extends AsyncInterceptor> toBeReplacedInterceptorType) {
       ComponentRegistry cr = extractComponentRegistry(cache);
       // make sure all interceptors here are wired.
       cr.wireDependencies(replacingInterceptor);
@@ -1081,8 +1093,8 @@ public class TestingUtil {
     * @param cacheStatus status to wait for
     * @param timeout     timeout to wait for
     */
-   public static void blockUntilCacheStatusAchieved(Cache cache, ComponentStatus cacheStatus, long timeout) {
-      AdvancedCache spi = cache.getAdvancedCache();
+   public static void blockUntilCacheStatusAchieved(Cache<?, ?> cache, ComponentStatus cacheStatus, long timeout) {
+      AdvancedCache<?, ?> spi = cache.getAdvancedCache();
       long killTime = System.currentTimeMillis() + timeout;
       while (System.currentTimeMillis() < killTime) {
          if (spi.getStatus() == cacheStatus) return;
@@ -1091,21 +1103,21 @@ public class TestingUtil {
       throw new RuntimeException("Timed out waiting for condition");
    }
 
-   public static void blockUntilViewsReceived(int timeout, Collection caches) {
+   public static void blockUntilViewsReceived(int timeout, Collection<?> caches) {
       Object first = caches.iterator().next();
       if (first instanceof Cache) {
-         blockUntilViewsReceived(timeout, (Cache[]) caches.toArray(new Cache[]{}));
+         blockUntilViewsReceived(timeout, caches.toArray(new Cache[0]));
       } else {
-         blockUntilViewsReceived(timeout, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+         blockUntilViewsReceived(timeout, caches.toArray(new CacheContainer[0]));
       }
    }
 
-   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection caches) {
+   public static void blockUntilViewsReceived(int timeout, boolean barfIfTooManyMembers, Collection<?> caches) {
       Object first = caches.iterator().next();
       if (first instanceof Cache) {
-         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (Cache[]) caches.toArray(new Cache[]{}));
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, caches.toArray(new Cache[]{}));
       } else {
-         blockUntilViewsReceived(timeout, barfIfTooManyMembers, (CacheContainer[]) caches.toArray(new CacheContainer[]{}));
+         blockUntilViewsReceived(timeout, barfIfTooManyMembers, caches.toArray(new CacheContainer[]{}));
       }
    }
 
@@ -1117,11 +1129,10 @@ public class TestingUtil {
       return (CommandsFactory) extractField(cache, "commandsFactory");
    }
 
-   public static void dumpCacheContents(List caches) {
+   public static void dumpCacheContents(List<Cache<?, ?>> caches) {
       System.out.println("**** START: Cache Contents ****");
       int count = 1;
-      for (Object o : caches) {
-         Cache c = (Cache) o;
+      for (Cache<?, ?> c : caches) {
          if (c == null) {
             System.out.println("  ** Cache " + count + " is null!");
          } else {
@@ -1133,14 +1144,14 @@ public class TestingUtil {
       System.out.println("**** END: Cache Contents ****");
    }
 
-   public static void dumpCacheContents(Cache... caches) {
+   public static void dumpCacheContents(Cache<?, ?>... caches) {
       dumpCacheContents(Arrays.asList(caches));
    }
 
    /**
     * Extracts a component of a given type from the cache's internal component registry
     */
-   public static <T> T extractComponent(Cache cache, Class<T> componentType) {
+   public static <T> T extractComponent(Cache<?, ?> cache, Class<T> componentType) {
       if (componentType.equals(DataContainer.class)) {
          throw new UnsupportedOperationException("Should extract InternalDataContainer");
       }
@@ -1161,7 +1172,7 @@ public class TestingUtil {
       return gcr.getComponent(componentType, componentName);
    }
 
-   public static TransactionManager getTransactionManager(Cache cache) {
+   public static TransactionManager getTransactionManager(Cache<?, ?> cache) {
       return cache == null ? null : cache.getAdvancedCache().getTransactionManager();
    }
 
@@ -1254,12 +1265,12 @@ public class TestingUtil {
       }
    }
 
-   public static String printCache(Cache cache) {
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
-      Iterator it = dataContainer.iterator();
+   public static String printCache(Cache<?, ?> cache) {
+      DataContainer<?, ?> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
+      Iterator<? extends InternalCacheEntry<?, ?>> it = dataContainer.iterator();
       StringBuilder builder = new StringBuilder(cache.getName() + "[");
       while (it.hasNext()) {
-         CacheEntry ce = (CacheEntry) it.next();
+         InternalCacheEntry<?, ?> ce = it.next();
          builder.append(ce.getKey() ).append("=").append( ce.getValue() ).append( ",l=" ).append( ce.getLifespan() )
                 .append( "; ");
       }
@@ -1299,11 +1310,10 @@ public class TestingUtil {
     * Inserts a DELAY protocol in the JGroups stack used by the cache, and returns it.
     * The DELAY protocol can then be used to inject delays in milliseconds both at receiver
     * and sending side.
-    * @param cache
-    * @param in_delay_millis
-    * @param out_delay_millis
+    * @param cache cache to inject
+    * @param in_delay_millis inbound delay in millis
+    * @param out_delay_millis outbound delay in millis
     * @return a reference to the DELAY instance being used by the JGroups stack
-    * @throws Exception
     */
    public static DELAY setDelayForCache(Cache<?, ?> cache, int in_delay_millis, int out_delay_millis) throws Exception {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(cache, Transport.class);
@@ -1370,7 +1380,7 @@ public class TestingUtil {
    }
 
    public static TransactionTable getTransactionTable(Cache<?, ?> cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
+      return extractComponent(cache, TransactionTable.class);
    }
 
    public static ObjectName getCacheManagerObjectName(String jmxDomain) {
@@ -1443,7 +1453,6 @@ public class TestingUtil {
 
    /**
     * Verifies the cache doesn't contain any lock
-    * @param cache
     */
    public static void assertNoLocks(Cache<?,?> cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
@@ -1461,7 +1470,6 @@ public class TestingUtil {
     * @param c callable instance to run within a transaction
     * @param <T> type returned from the callable
     * @return returns whatever the callable returns
-    * @throws Exception
     */
    public static <T> T withTx(TransactionManager tm, Callable<T> c) throws Exception {
       return withTxCallable(tm, c).call();
@@ -1658,15 +1666,13 @@ public class TestingUtil {
    }
 
    public static <K, V> void writeToAllStores(K key, V value, Cache<K, V> cache) {
-      AdvancedCache<K, V> advCache = cache.getAdvancedCache();
-      PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
+      PersistenceManager pm = extractComponent(cache, PersistenceManager.class);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       CompletionStages.join(pm.writeToAllNonTxStores(MarshalledEntryUtil.create(key, value, cache), keyPartitioner.getSegment(key), BOTH));
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {
-      AdvancedCache<K, V> advCache = cache.getAdvancedCache();
-      PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
+      PersistenceManager pm = extractComponent(cache, PersistenceManager.class);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       return CompletionStages.join(pm.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH));
    }
@@ -1784,7 +1790,8 @@ public class TestingUtil {
       return wrap;
    }
 
-   public static <T extends PerCacheInboundInvocationHandler> T wrapInboundInvocationHandler(Cache cache, Function<PerCacheInboundInvocationHandler, T> ctor) {
+   public static <T extends PerCacheInboundInvocationHandler>
+   T wrapInboundInvocationHandler(Cache<?, ?> cache, Function<PerCacheInboundInvocationHandler, T> ctor) {
       PerCacheInboundInvocationHandler current = extractComponent(cache, PerCacheInboundInvocationHandler.class);
       T wrap = ctor.apply(current);
       replaceComponent(cache, PerCacheInboundInvocationHandler.class, wrap, true);
@@ -1795,7 +1802,7 @@ public class TestingUtil {
       W wrap(C wrapOn, T current);
    }
 
-   public static void expectCause(Throwable t, Class<? extends Throwable> c, String messageRegex) throws Exception {
+   public static void expectCause(Throwable t, Class<? extends Throwable> c, String messageRegex) {
       for (;;) {
          if (c.isAssignableFrom(t.getClass())) {
             if (messageRegex != null && !Pattern.matches(messageRegex, t.getMessage())) {
@@ -1862,14 +1869,14 @@ public class TestingUtil {
    }
 
    public static void cleanUpDataContainerForCache(Cache<?, ?> cache) {
-      InternalDataContainer dataContainer = extractComponent(cache, InternalDataContainer.class);
+      InternalDataContainer<?, ?> dataContainer = extractComponent(cache, InternalDataContainer.class);
       dataContainer.cleanUp();
    }
 
    // The first call to JbossMarshall::isMarshallable results in an object actually being serialized, the additional
    // call to PersistenceMarshaller::isMarshallable in the GlobalMarshaller may break stats on test Externalizer implementations
    // this is simply a convenience method to initialise MarshallableTypeHints
-   public static void initJbossMarshallerTypeHints(EmbeddedCacheManager cm, Object... objects) throws Exception {
+   public static void initJbossMarshallerTypeHints(EmbeddedCacheManager cm, Object... objects) {
       StreamAwareMarshaller marshaller = extractPersistenceMarshaller(cm);
       for (Object o : objects)
          marshaller.isMarshallable(o);

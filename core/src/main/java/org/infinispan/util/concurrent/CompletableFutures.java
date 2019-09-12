@@ -29,9 +29,6 @@ public class CompletableFutures {
    private static final CompletableFuture<Boolean> completedFalseFuture = CompletableFuture.completedFuture(Boolean.FALSE);
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
    private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
-   private static final Function<?, CompletionStage<Boolean>> composeTrue = obj -> completedTrueFuture;
-   private static final Function<?, CompletionStage<Boolean>> composeFalse = obj -> completedFalseFuture;
-   private static final Function composeNull = obj -> completedNullFuture;
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
    private static final Function<?, ?> TO_NULL = o -> null;
 
@@ -51,18 +48,6 @@ public class CompletableFutures {
 
    public static CompletableFuture<Boolean> completedFalse() {
       return completedFalseFuture;
-   }
-
-   public static <T> Function<T, CompletionStage<Boolean>> composeTrue() {
-      return (Function<T, CompletionStage<Boolean>>) composeTrue;
-   }
-
-   public static <T> Function<T, CompletionStage<Boolean>> composeFalse() {
-      return (Function<T, CompletionStage<Boolean>>) composeFalse;
-   }
-
-   public static <T, R> Function<T, CompletionStage<R>> composeNull() {
-      return composeNull;
    }
 
    public static CompletionStage<Boolean> booleanStage(boolean trueOrFalse) {
@@ -184,7 +169,7 @@ public class CompletableFutures {
       return t;
    }
 
-   public static  <T, R> Function<T, R> toNullFunction() {
+   public static <T, R> Function<T, R> toNullFunction() {
       //noinspection unchecked
       return (Function<T, R>) TO_NULL;
    }

@@ -7,13 +7,17 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,8 +67,8 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    }
 
    @Override
-   public CacheTopology join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm,
-                             PartitionHandlingManager phm) {
+   public CompletionStage<CacheTopology> join(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler stm,
+                                              PartitionHandlingManager phm) {
       throw new UnsupportedOperationException();
    }
 
@@ -79,30 +83,35 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    }
 
    @Override
-   public ManagerStatusResponse handleStatusRequest(int viewId) {
-      return new ManagerStatusResponse(
-         status.getCacheJoinInfo() != null ? singletonMap(cacheName, status) : Collections.emptyMap(), true);
+   public CompletionStage<ManagerStatusResponse> handleStatusRequest(int viewId) {
+      Map<String, CacheStatusResponse> caches = status.getCacheJoinInfo() != null ?
+                                                singletonMap(cacheName, status) :
+                                                Collections.emptyMap();
+      return CompletableFuture.completedFuture(new ManagerStatusResponse(caches, true));
    }
 
    @Override
-   public void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
-                                    int viewId, Address sender) {
+   public CompletionStage<Void> handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
+                                                     int viewId, Address sender) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), cacheTopology,
                                        status.getStableTopology(), availabilityMode);
       topologies.add(cacheTopology);
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, Address sender, int viewId) {
+   public CompletionStage<Void> handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, Address sender, int viewId) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), status.getCacheTopology(),
                                        cacheTopology, status.getAvailabilityMode());
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender) {
+   public CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), cacheTopology,
                                        status.getStableTopology(), status.getAvailabilityMode());
       topologies.add(cacheTopology);
+      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -165,8 +174,8 @@ class MockLocalTopologyManager implements LocalTopologyManager {
       throw new UnsupportedOperationException();
    }
 
-   @Override
-   public void handleCacheShutdown(String cacheName) {
+    @Override
+   public CompletionStage<Void> handleCacheShutdown(String cacheName) {
       throw new UnsupportedOperationException();
    }
 }

@@ -3,8 +3,9 @@ package org.infinispan.client.hotrod.retry;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -17,7 +18,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.testng.annotations.Test;
@@ -48,7 +48,8 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
 
    protected void addInterceptors(Cache<?, ?> cache) {
       super.addInterceptors(cache);
-      cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(new DelayingInterceptor(), EntryWrappingInterceptor.class);
+      TestingUtil.extractInterceptorChain(cache)
+                 .addInterceptorAfter(new DelayingInterceptor(), EntryWrappingInterceptor.class);
    }
 
    public void testRetrySocketTimeout() {
@@ -57,28 +58,30 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
       assertEquals("v1", remoteCache.get(1));
 
       AdvancedCache<?, ?> nextCache = cacheToHit(key);
-      DelayingInterceptor interceptor = nextCache.getAsyncInterceptorChain().findInterceptorExtending(DelayingInterceptor.class);
-      interceptor.delayNextRequest();
+      DelayingInterceptor interceptor = TestingUtil.extractInterceptorChain(nextCache)
+                                                   .findInterceptorExtending(DelayingInterceptor.class);
+      CompletableFuture<Void> delay = new CompletableFuture<>();
+      interceptor.delayNextRequest(delay);
 
       assertEquals(0, remoteCacheManager.getChannelFactory().getRetries());
       assertEquals("v1", remoteCache.get(key));
       assertEquals(1, remoteCacheManager.getChannelFactory().getRetries());
+
+      delay.complete(null);
    }
 
    public static class DelayingInterceptor extends BaseCustomAsyncInterceptor {
-      static AtomicBoolean delayNextRequest = new AtomicBoolean();
+      static volatile AtomicReference<CompletionStage<Void>> delayNextRequest = new AtomicReference<>();
 
-      public void delayNextRequest() {
-         delayNextRequest.set(true);
+      public void delayNextRequest(CompletionStage<Void> delayStage) {
+         delayNextRequest.set(delayStage);
       }
 
       @Override
-      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-         if (delayNextRequest.compareAndSet(true, false)) {
-            return asyncValue(TestingUtil.delayed(() -> Exceptions.unchecked(() -> super.visitGetCacheEntryCommand(ctx, command)), 6_000, TimeUnit.MILLISECONDS));
-         } else {
-            return super.visitGetCacheEntryCommand(ctx, command);
-         }
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+         // Delay just one invocation, then reset to null
+         CompletionStage<Void> delay = delayNextRequest.getAndSet(null);
+         return asyncInvokeNext(ctx, command, delay);
       }
    }
 }

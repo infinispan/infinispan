@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -33,18 +34,6 @@ import io.reactivex.Flowable;
  */
 public class Mocks {
    private Mocks() { }
-   /**
-    * Delegates a Mockito invocation to a target object, and returns the mock instead of the target object.
-    *
-    * Useful when {@code Mockito.spy(object)} doesn't work and the mocked class has a fluent interface.
-    */
-   public static <T, R> R invokeAndReturnMock(InvocationOnMock i, T target)
-         throws IllegalAccessException, InvocationTargetException {
-      Object returnValue = i.getMethod().invoke(target, i.getArguments());
-      // If necessary, replace the return value with the mock
-      return (returnValue == target) ? (R) i.getMock() : (R) returnValue;
-   }
-
    /**
     * Checkpoint name that is triggered to tell the test that the code has reached a spot just before invocation. This
     * thread will not proceed with the invocation until {@link Mocks#BEFORE_RELEASE} is released.
@@ -68,6 +57,34 @@ public class Mocks {
     * triggering per invocation if there are more than one.
     */
    public static final String AFTER_RELEASE = "post_released";
+
+   /**
+    * Delegates a Mockito invocation to a target object, and returns the mock instead of the target object.
+    *
+    * Useful when {@code Mockito.spy(object)} doesn't work and the mocked class has a fluent interface.
+    */
+   public static <T, R> R invokeAndReturnMock(InvocationOnMock i, T target)
+         throws IllegalAccessException, InvocationTargetException {
+      Object returnValue = i.getMethod().invoke(target, i.getArguments());
+      // If necessary, replace the return value with the mock
+      return (returnValue == target) ? (R) i.getMock() : (R) returnValue;
+   }
+
+   public static <T> T callRealMethod(InvocationOnMock invocation) {
+      try {
+         return (T) invocation.callRealMethod();
+      } catch (Throwable throwable) {
+         throw CompletableFutures.asCompletionException(throwable);
+      }
+   }
+
+   public static <T> T callAnotherAnswer(Answer<?> answer, InvocationOnMock invocation) {
+      try {
+         return (T) answer.answer(invocation);
+      } catch (Throwable throwable) {
+         throw CompletableFutures.asCompletionException(throwable);
+      }
+   }
 
    /**
     * Helper that provides the ability to replace a component from the cache and automatically mocks around it, returning

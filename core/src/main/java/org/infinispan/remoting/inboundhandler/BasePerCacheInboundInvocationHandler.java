@@ -2,6 +2,7 @@ package org.infinispan.remoting.inboundhandler;
 
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.MBEAN_COMPONENT_NAME;
+import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.LongAdder;
@@ -146,7 +147,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
-      getLog().exceptionHandlingCommand(command, throwable);
+      CLUSTER.exceptionHandlingCommand(command, throwable);
       if (throwable instanceof Exception) {
          return new ExceptionResponse(((Exception) throwable));
       } else {
@@ -160,7 +161,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final Response interruptedException(CacheRpcCommand command) {
-      getLog().shutdownHandlingCommand(command);
+      CLUSTER.debugf("Shutdown while handling command %s", command);
       return CacheNotFoundResponse.INSTANCE;
    }
 

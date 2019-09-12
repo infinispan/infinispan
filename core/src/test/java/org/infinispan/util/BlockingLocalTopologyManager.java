@@ -1,10 +1,11 @@
 package org.infinispan.util;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNotSame;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +16,7 @@ import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -90,8 +92,8 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    public BlockedTopology expectTopologyUpdate(CacheTopology.Phase phase) throws InterruptedException {
       BlockedTopology blockedTopology = expectTopologyUpdate();
-      assertTrue("Expected a CH_UPDATE or REBALANCE_START, but got a CONFIRMATION",
-                 blockedTopology.getType() != Type.CONFIRMATION);
+      assertNotSame("Expected a CH_UPDATE or REBALANCE_START, but got a CONFIRMATION",
+                    blockedTopology.getType(), Type.CONFIRMATION);
       assertEquals(phase, blockedTopology.getCacheTopology().getPhase());
       return blockedTopology;
    }
@@ -180,29 +182,31 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    @Override
-   protected final void beforeHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+   protected final CompletionStage<Void> beforeHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
       if (!enabled || !expectedCacheName.equals(cacheName))
-         return;
+         return CompletableFutures.completedNull();
 
       Event event = new Event(cacheTopology, cacheTopology.getTopologyId(), viewId,
                               Type.CH_UPDATE);
       queuedTopologies.add(event);
       log.debugf("Blocking topology update for cache %s: %s", cacheName, cacheTopology);
-      event.awaitUnblock();
-      log.debugf("Continue consistent hash update for cache %s: %s", cacheName, cacheTopology);
+      return event.whenUnblocked().thenRun(() -> {
+         log.debugf("Continue consistent hash update for cache %s: %s", cacheName, cacheTopology);
+      });
    }
 
    @Override
-   protected final void beforeHandleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) {
+   protected final CompletionStage<Void> beforeHandleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) {
       if (!enabled || !expectedCacheName.equals(cacheName))
-         return;
+         return CompletableFutures.completedNull();
 
       Event event = new Event(cacheTopology, cacheTopology.getTopologyId(), viewId,
                               Type.REBALANCE_START);
       queuedTopologies.add(event);
       log.debugf("Blocking rebalance start for cache %s: %s", cacheName, cacheTopology);
-      event.awaitUnblock();
-      log.debugf("Continue rebalance start for cache %s: %s", cacheName, cacheTopology);
+      return event.whenUnblocked().thenRun(() -> {
+         log.debugf("Continue rebalance start for cache %s: %s", cacheName, cacheTopology);
+      });
    }
 
    @Override
@@ -253,6 +257,10 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
          } catch (java.util.concurrent.TimeoutException e) {
             fail(e);
          }
+      }
+
+      CompletionStage<Void> whenUnblocked() {
+         return latch;
       }
 
       void unblock() {
