@@ -2,20 +2,15 @@ package org.infinispan.factories;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.components.ComponentMetadata;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.factories.impl.ComponentRef;
@@ -54,22 +49,16 @@ import org.infinispan.util.logging.Log;
  * @deprecated Since 9.4, please use {@link BasicComponentRegistry} instead.
  */
 @Deprecated
-public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable {
-   // Not used
-   public static final boolean DEBUG_DEPENDENCIES = false;
+public abstract class AbstractComponentRegistry implements Lifecycle {
 
-   final ComponentMetadataRepo componentMetadataRepo;
    final ModuleRepository moduleRepository;
    final BasicComponentRegistry basicComponentRegistry;
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
-   protected AbstractComponentRegistry(ComponentMetadataRepo componentMetadataRepo,
-                                       ModuleRepository moduleRepository,
-                                       boolean isGlobal, BasicComponentRegistry nextBasicComponentRegistry) {
-      this.componentMetadataRepo = componentMetadataRepo;
+   AbstractComponentRegistry(ModuleRepository moduleRepository,
+                             boolean isGlobal, BasicComponentRegistry nextBasicComponentRegistry) {
       this.moduleRepository = moduleRepository;
-      this.basicComponentRegistry =
-         new BasicComponentRegistryImpl(moduleRepository, isGlobal, nextBasicComponentRegistry);
+      this.basicComponentRegistry = new BasicComponentRegistryImpl(moduleRepository, isGlobal, nextBasicComponentRegistry);
    }
 
    /**
@@ -84,8 +73,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    protected abstract ClassLoader getClassLoader();
 
    protected abstract Log getLog();
-
-   public abstract ComponentMetadataRepo getComponentMetadataRepo();
 
    /**
     * Wires an object instance with dependencies annotated with the {@link Inject} annotation, creating more components
@@ -125,10 +112,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    protected final void registerNonVolatileComponent(Object component, String name) {
       registerComponentInternal(component, name, false);
-   }
-
-   protected final void registerNonVolatileComponent(Object component, Class<?> type) {
-      registerComponentInternal(component, type.getName(), true);
    }
 
    protected void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
@@ -172,40 +155,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Retrieves a component factory instance capable of constructing components of a specified type.  If the factory
-    * doesn't exist in the registry, one is created.
-    *
-    * @param componentClass type of component to construct
-    * @return component factory capable of constructing such components
-    */
-   protected AbstractComponentFactory getFactory(Class<?> componentClass) {
-      String cfClass = moduleRepository.getFactoryName(componentClass.getName());
-      if (cfClass == null) {
-         throw new CacheConfigurationException("No registered default factory for component '" + componentClass + "' found!");
-      }
-      return basicComponentRegistry.getComponent(cfClass, AbstractComponentFactory.class).wired();
-   }
-
-   protected AbstractComponentFactory createComponentFactoryInternal(Class<?> componentClass, String cfClass) {
-      return basicComponentRegistry.getComponent(cfClass, AbstractComponentFactory.class).wired();
-   }
-
-   protected Component lookupComponent(String componentClassName, String componentName, boolean nameIsFQCN) {
-      Class<Object> componentType = Util.loadClass(componentClassName, getClassLoader());
-      ComponentRef<Object> component = basicComponentRegistry.getComponent(componentName, componentType);
-      return new Component(component, null);
-   }
-
-   /**
-    * registers a special "null" component that has no dependencies.
-    *
-    * @param name name of component to register as a null
-    */
-   protected final void registerNullComponent(String name) {
-      registerComponent(null, name, false);
-   }
-
-   /**
     * Retrieves a component of a specified type from the registry, or null if it cannot be found.
     *
     * @param type type to find
@@ -243,13 +192,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Get the component from a wrapper, properly handling <code>null</code> components.
-    */
-   private Object unwrapComponent(Component wrapper) {
-      return wrapper.getInstance();
-   }
-
-   /**
     * @deprecated Since 9.4, not used
     */
    protected ClassLoader registerDefaultClassLoader(ClassLoader loader) {
@@ -266,22 +208,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    public void rewire() {
       basicComponentRegistry.rewire();
-   }
-
-   /**
-    * Scans each registered component for lifecycle methods, and adds them to the appropriate lists, and then sorts them
-    * by priority.
-    */
-   private void populateLifecycleMethods() {
-      // Do nothing, the metadata repo now populates the lifecycle methods automatically
-   }
-
-
-   /**
-    * Removes any components not annotated as @SurvivesRestarts.
-    */
-   public void resetVolatileComponents() {
-      // Volatile components are now removed automatically on stop
    }
 
    // ------------------------------ START: Publicly available lifecycle methods -----------------------------
@@ -437,73 +363,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       basicComponentRegistry.stop();
    }
-   /**
-    * Returns an immutable set containing all the components that exists in the repository at this moment.
-    *
-    * @return a set of components
-    */
-   public Set<Component> getRegisteredComponents() {
-      Set<Component> set = new HashSet<>();
-      for (ComponentRef<?> c : basicComponentRegistry.getRegisteredComponents()) {
-         Component component = new Component(c, null);
-         set.add(component);
-      }
-      return set;
-   }
-
-   @Override
-   public AbstractComponentRegistry clone() throws CloneNotSupportedException {
-      throw new CloneNotSupportedException();
-   }
 
    public abstract TimeService getTimeService();
-
-   protected void throwStackAwareConfigurationException(String message) {
-      throw new CacheConfigurationException(message);
-   }
-
-   /**
-    * A wrapper representing a component in the registry
-    */
-   public class Component {
-      private final ComponentRef ref;
-      private final ComponentMetadata metadata;
-
-      Component(ComponentRef ref, ComponentMetadata metadata) {
-         this.ref = ref;
-         this.metadata = metadata;
-      }
-
-      /**
-       * Injects dependencies into this component.
-       */
-      public void injectDependencies() {
-         // Do nothing, the ComponentRef should already have its dependencies injected
-      }
-
-      public Object getInstance() {
-         return ref.wired();
-      }
-
-      public String getName() {
-         return ref.getName();
-      }
-
-      public ComponentMetadata getMetadata() {
-         return metadata;
-      }
-
-      public void buildInjectionMethodsList() throws ClassNotFoundException {
-         // Do nothing, the ComponentRef should already have its dependencies injected
-      }
-
-      public void buildInjectionFieldsList() throws ClassNotFoundException {
-         // Do nothing, the ComponentRef should already have its dependencies injected
-      }
-
-      @Override
-      public String toString() {
-         return ref.toString();
-      }
-   }
 }

@@ -25,17 +25,14 @@ import org.infinispan.util.DependencyGraph;
  * @author Dan Berindei
  * @since 10.0
  */
-public class ModuleRepository {
+public final class ModuleRepository {
    private final List<ModuleMetadataBuilder> modules;
    private final List<ModuleLifecycle> moduleLifecycles;
    private final Map<String, ComponentAccessor> components;
    private final Map<String, String> factoryNames;
    private final Map<String, MBeanMetadata> mbeans;
 
-   /**
-    * Package-private
-    */
-   ModuleRepository(List<ModuleMetadataBuilder> modules,
+   private ModuleRepository(List<ModuleMetadataBuilder> modules,
                     List<ModuleLifecycle> moduleLifecycles,
                     Map<String, ComponentAccessor> components,
                     Map<String, String> factoryNames,

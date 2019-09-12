@@ -23,7 +23,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
@@ -63,7 +62,9 @@ import net.jcip.annotations.ThreadSafe;
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private static final Log log = LogFactory.getLog(GlobalComponentRegistry.class);
+
    private static final AtomicBoolean versionLogged = new AtomicBoolean(false);
+
    /**
     * Hook to shut down the cache when the JVM exits.
     */
@@ -86,7 +87,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    final Collection<ModuleLifecycle> moduleLifecycles;
 
-   final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
+   private final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
 
    protected final ClassLoader classLoader;
 
@@ -100,7 +101,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches, ModuleRepository moduleRepository,
                                   ConfigurationManager configurationManager) {
-      super(new ComponentMetadataRepo(), moduleRepository, true, null);
+      super(moduleRepository, true, null);
 
       ClassLoader configuredClassLoader = configuration.classLoader();
       moduleLifecycles = moduleRepository.getModuleLifecycles();
@@ -111,7 +112,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          // this order is important ...
          globalConfiguration = configuration;
 
-         registerComponent(componentMetadataRepo, ComponentMetadataRepo.class);
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(cacheManager, EmbeddedCacheManager.class);
@@ -174,15 +174,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   /**
-    * @deprecated Since 10.0, the component metadata repository is empty and no longer used.
-    */
-   @Deprecated
-   @Override
-   public ComponentMetadataRepo getComponentMetadataRepo() {
-      return componentMetadataRepo;
    }
 
    @Override
@@ -251,11 +242,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public synchronized final void rewireNamedRegistries() {
       for (ComponentRegistry cr : namedComponents.values())
          cr.rewire();
-   }
-
-   public Map<Byte,ModuleCommandInitializer> getModuleCommandInitializers() {
-      //moduleProperties is final so we don't need to synchronize this method for safe-publishing
-      return Collections.unmodifiableMap(moduleProperties.moduleCommandInitializers());
    }
 
    @Override

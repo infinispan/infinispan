@@ -39,7 +39,7 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
    public void setUp() throws InterruptedException, ExecutionException {
       GlobalConfiguration gc = new GlobalConfigurationBuilder().build();
       Configuration c = new ConfigurationBuilder().build();
-      Set<String> cachesSet = new HashSet<String>();
+      Set<String> cachesSet = new HashSet<>();
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       AdvancedCache cache = mock(AdvancedCache.class);
 
@@ -52,7 +52,7 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       gcr.registerComponent(control, TestDelayFactory.Control.class);
    }
 
-   public void testSingleThreadLookup() throws InterruptedException, ExecutionException {
+   public void testSingleThreadLookup() {
       control.unblock();
 
       TestDelayFactory.Component c1 = cr1.getOrCreateComponent(TestDelayFactory.Component.class);

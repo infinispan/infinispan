@@ -25,7 +25,6 @@ import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.JmxOperationMetadata;
 import org.infinispan.factories.components.JmxOperationParameter;
-import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -62,17 +61,6 @@ public final class ResourceDMBean implements DynamicMBean {
 
    private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>(64);
    private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<>(64);
-
-   @Deprecated
-   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) {
-      this(instance, mBeanMetadata, null);
-   }
-
-   @Deprecated
-   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata, String componentName) {
-      this(instance, componentName, mBeanMetadata.getJmxObjectName(), mBeanMetadata.getDescription(),
-           mBeanMetadata.getAttributeMetadata(), mBeanMetadata.getOperationMetadata());
-   }
 
    public ResourceDMBean(Object instance, MBeanMetadata mBeanMetadata, String componentName) {
       this(instance, componentName, mBeanMetadata.getJmxObjectName(), mBeanMetadata.getDescription(),
@@ -322,9 +310,9 @@ public final class ResourceDMBean implements DynamicMBean {
    }
 
    private void setNamedAttribute(Attribute attribute) throws MBeanException, AttributeNotFoundException {
-      if (log.isDebugEnabled())
-         log.debugf("Invoking set on attribute %s with value %s",
-                    attribute.getName(), attribute.getValue());
+      if (log.isDebugEnabled()) {
+         log.debugf("Invoking set on attribute %s with value %s", attribute.getName(), attribute.getValue());
+      }
 
       String name = attribute.getName();
       InvokableMBeanAttributeInfo i = atts.get(name);
