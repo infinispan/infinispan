@@ -7,7 +7,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
- * Factory for ClusterTopologyManager implementations
+ * Factory for ClusterTopologyManager implementations.
  *
  * @author Dan Berindei
  * @since 5.2
@@ -17,12 +17,10 @@ import org.infinispan.factories.scopes.Scopes;
 public class ClusterTopologyManagerFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
       if (globalConfiguration.transport().transport() == null)
          return null;
 
       return new ClusterTopologyManagerImpl();
    }
-
 }

@@ -11,7 +11,7 @@ import org.infinispan.stats.ClusterContainerStats;
  */
 @DefaultFactoryFor(classes = ClusterContainerStats.class)
 public class ClusterContainerStatsFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
-   @SuppressWarnings("unchecked")
+
    @Override
    public Object construct(String componentName) {
       return new ClusterContainerStatsImpl();
