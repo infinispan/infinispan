@@ -7,7 +7,7 @@ package org.infinispan.factories.impl;
  * @since 10.0
  */
 public class WireContext {
-   private BasicComponentRegistryImpl registry;
+   private final BasicComponentRegistryImpl registry;
 
    /**
     * Package-private

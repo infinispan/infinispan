@@ -1,67 +1,27 @@
 package org.infinispan.factories.components;
 
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-
 /**
- * Persistable and cacheable metadata for JMX attributes
+ * Metadata for JMX attributes.
  *
  * @author Manik Surtani
  * @since 5.1
  */
-public class JmxAttributeMetadata implements Serializable {
-   private static final long serialVersionUID = 0x1114A77121B07EL;
-   private String name;
-   private String description;
-   private boolean writable;
-   private boolean useSetter;
-   private String type;
-   private boolean is;
+public final class JmxAttributeMetadata {
 
-   public JmxAttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
-                               boolean is) {
+   private final String name;
+   private final String description;
+   private final boolean writable;
+   private final boolean useSetter;
+   private final String type;
+   private final boolean is;
+
+   public JmxAttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is) {
       this.name = name;
       this.description = description;
       this.writable = writable;
       this.useSetter = useSetter;
       this.type = type;
       this.is = is;
-   }
-
-   /**
-    * @deprecated Since 10.0, will be removed in 11 as the annotation is not available at runtime
-    */
-   @Deprecated
-   private JmxAttributeMetadata(ManagedAttribute annotation) {
-      description = annotation.description();
-      writable = annotation.writable();
-   }
-
-   /**
-    * @deprecated Since 10.0, will be removed in 11 as the annotation is not available at runtime
-    */
-   @Deprecated
-   public JmxAttributeMetadata(Field field) {
-      this(field.getAnnotation(ManagedAttribute.class));
-      name = field.getName();
-      type = field.getType().toString();
-   }
-
-   public JmxAttributeMetadata(Method method) {
-      this(method.getAnnotation(ManagedAttribute.class));
-      useSetter = true;
-      String methodName = method.getName();
-      name = ReflectionUtil.extractFieldName(methodName);
-      is = methodName.startsWith("is");
-      if (methodName.startsWith("set")) {
-         type = method.getParameterTypes()[0].getName();
-      } else if (methodName.startsWith("get") || is) {
-         type = method.getReturnType().getName();
-      }
    }
 
    public String getName() {

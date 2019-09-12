@@ -20,7 +20,6 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentAccessor;
 import org.infinispan.factories.impl.ComponentRef;
@@ -116,7 +115,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      super(globalComponents.componentMetadataRepo, globalComponents.moduleRepository,
+      super(globalComponents.moduleRepository,
             false, globalComponents.getComponent(BasicComponentRegistry.class));
 
       if (cacheName == null) throw new CacheConfigurationException("Cache name cannot be null!");
@@ -172,10 +171,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    public final <T> T getLocalComponent(Class<T> componentType) {
       String componentTypeName = componentType.getName();
       return (T) getLocalComponent(componentTypeName, componentTypeName, true);
-   }
-
-   protected final Component lookupLocalComponent(String componentClassName, String name, boolean nameIsFQCN) {
-      throw new UnsupportedOperationException("The component metadata is no longer exposed");
    }
 
    public final GlobalComponentRegistry getGlobalComponentRegistry() {
@@ -392,11 +387,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       basicComponentRegistry.getComponent(InternalConflictManager.class);
       basicComponentRegistry.getComponent(ClusterPublisherManager.class);
       basicComponentRegistry.getComponent(PreloadManager.class);
-   }
-
-   @Override
-   public ComponentMetadataRepo getComponentMetadataRepo() {
-      return globalComponents.getComponentMetadataRepo();
    }
 
    public final TransactionTable getTransactionTable() {
