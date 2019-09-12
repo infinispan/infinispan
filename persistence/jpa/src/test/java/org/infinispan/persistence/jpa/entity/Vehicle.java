@@ -5,6 +5,8 @@ import java.io.Serializable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -12,16 +14,13 @@ import javax.persistence.Entity;
  */
 @Entity
 public class Vehicle implements Serializable {
-   /**
-    *
-    */
-   private static final long serialVersionUID = 3726691096915715402L;
 
    @EmbeddedId
    private VehicleId id;
 
    private String color;
 
+   @ProtoField(number = 1)
    public VehicleId getId() {
       return id;
    }
@@ -30,6 +29,7 @@ public class Vehicle implements Serializable {
       this.id = id;
    }
 
+   @ProtoField(number = 2)
    public String getColor() {
       return color;
    }

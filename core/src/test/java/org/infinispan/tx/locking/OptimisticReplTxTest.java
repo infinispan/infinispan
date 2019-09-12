@@ -7,6 +7,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -52,7 +53,7 @@ public class OptimisticReplTxTest extends AbstractClusteredTxTest {
             .lockingMode(LockingMode.OPTIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       conf.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      createCluster(conf, 2);
+      createCluster(TestDataSCI.INSTANCE, conf, 2);
       waitForClusterToForm();
       k = getKeyForCache(0);
    }

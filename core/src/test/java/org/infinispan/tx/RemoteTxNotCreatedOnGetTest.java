@@ -5,6 +5,7 @@ import static org.testng.Assert.assertEquals;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
@@ -20,7 +21,7 @@ public class RemoteTxNotCreatedOnGetTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.clustering().l1().disable().hash().numOwners(1);
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 

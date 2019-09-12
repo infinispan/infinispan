@@ -20,6 +20,7 @@ import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -61,7 +62,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
-      marshaller = new TestObjectStreamMarshaller();
+      marshaller = new TestObjectStreamMarshaller(TestDataSCI.INSTANCE);
       cacheStore.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));
       cacheStore.start();
       tableManager = (TableManager) ReflectionUtil.getValue(cacheStore, "tableManager");

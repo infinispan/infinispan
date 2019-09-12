@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -36,8 +37,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManager();
-      addClusterEnabledCacheManager();
+      createCluster(TestDataSCI.INSTANCE, new ConfigurationBuilder(), 2);
       waitForClusterToForm();
    }
 

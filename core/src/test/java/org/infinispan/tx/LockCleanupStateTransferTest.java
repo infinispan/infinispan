@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -48,7 +49,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       dcc.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       dcc.clustering().hash().numOwners(1);
       dcc.clustering().stateTransfer().fetchInMemoryState(true);
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 
@@ -94,7 +95,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       log.trace("Before state transfer");
 
       //now add a one new member
-      addClusterEnabledCacheManager(dcc);
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, dcc);
       waitForClusterToForm();
       log.trace("After state transfer");
 

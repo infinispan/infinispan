@@ -9,6 +9,7 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.rehash.RehashCompletedOnJoinTest")
@@ -29,7 +30,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest<Object, St
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
       log.infof("Initialized with keys %s", keys);
 
-      EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager();
+      EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(TestDataSCI.INSTANCE);
       joinerManager.defineConfiguration(cacheName, configuration.build());
       Cache joiner = joinerManager.getCache(cacheName);
       DistributionManager dmi = joiner.getAdvancedCache().getDistributionManager();

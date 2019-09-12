@@ -22,6 +22,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -50,7 +51,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       builder
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      createClusteredCaches(2, cacheName, builder);
+      createClusteredCaches(2, cacheName, TestDataSCI.INSTANCE, builder);
    }
 
    DummyInMemoryStore getCacheStore(Cache cache) {

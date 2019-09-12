@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -100,7 +101,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
-      createCluster(dcc, nodes);
+      createCluster(TestDataSCI.INSTANCE, dcc, nodes);
       waitForClusterToForm();
    }
 

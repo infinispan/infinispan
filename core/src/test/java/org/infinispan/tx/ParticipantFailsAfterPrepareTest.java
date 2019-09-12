@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -41,7 +42,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
                .fetchInMemoryState(false)
             .hash()
                .numOwners(3);
-      createCluster(configuration, 4);
+      createCluster(TestDataSCI.INSTANCE, configuration, 4);
       waitForClusterToForm();
    }
 

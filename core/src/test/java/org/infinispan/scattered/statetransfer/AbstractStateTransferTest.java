@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TransportFlags;
 
 public abstract class AbstractStateTransferTest extends MultipleCacheManagersTest {
@@ -65,7 +66,7 @@ public abstract class AbstractStateTransferTest extends MultipleCacheManagersTes
       defaultConfig.clustering().hash().numSegments(16);
       defaultConfig.clustering().biasAcquisition(biasAcquisition);
       defaultConfig.clustering().stateTransfer().fetchInMemoryState(true).chunkSize(3);
-      createClusteredCaches(3, defaultConfig, TRANSPORT_FLAGS, CACHE_NAME);
+      createClusteredCaches(3, TestDataSCI.INSTANCE, defaultConfig, TRANSPORT_FLAGS, CACHE_NAME);
 
       c1 = cache(0, CACHE_NAME);
       c2 = cache(1, CACHE_NAME);

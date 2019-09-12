@@ -16,7 +16,9 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -31,6 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "stream.BaseStreamIteratorWithLoaderTest")
 public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheManagersTest {
    protected ConfigurationBuilder builderUsed;
+   protected SerializationContextInitializer sci;
    protected final boolean tx;
    protected final CacheMode cacheMode;
 
@@ -41,6 +44,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      sci = TestDataSCI.INSTANCE;
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(1);
@@ -49,11 +53,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
       if (tx) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
-      if (cacheMode.isClustered()) {
-         createClusteredCaches(3, builderUsed);
-      } else {
-         createClusteredCaches(1, builderUsed);
-      }
+      createClusteredCaches(cacheMode.isClustered() ? 3 : 1, sci, builderUsed);
    }
 
    private Map<Object, String> insertDefaultValues(boolean includeLoaderEntry) {
@@ -79,7 +79,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
       DummyInMemoryStore store = persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
 
-      TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
+      TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller(sci);
       try {
          String loaderValue = "loader-value";
          store.write(MarshalledEntryUtil.create(loaderKey, loaderValue, sm));

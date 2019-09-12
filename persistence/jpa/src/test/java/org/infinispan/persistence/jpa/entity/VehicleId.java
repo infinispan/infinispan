@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import javax.persistence.Embeddable;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -11,13 +13,12 @@ import javax.persistence.Embeddable;
  */
 @Embeddable
 public class VehicleId implements Serializable {
-   /**
-    *
-    */
-   private static final long serialVersionUID = 3684882454815768434L;
 
-   private String state;
-   private String licensePlate;
+   @ProtoField(number = 1)
+   String state;
+
+   @ProtoField(number = 2)
+   String licensePlate;
 
    public VehicleId() {
    }

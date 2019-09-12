@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,8 +18,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
@@ -36,8 +35,14 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.Key;
+import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.PersistenceMockUtil;
@@ -69,7 +74,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    //alwaysRun = true otherwise, when we run unstable tests, this method is not invoked (because it belongs to the unit group)
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
-      marshaller = new TestObjectStreamMarshaller();
+      marshaller = new TestObjectStreamMarshaller(getSerializationContextInitializer());
       timeService = getTimeService();
       factory = new InternalEntryFactoryImpl();
       TestingUtil.inject(factory, timeService);
@@ -105,6 +110,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
     */
    protected PersistenceMarshaller getMarshaller() {
       return marshaller;
+   }
+
+   /**
+    * @return the {@link SerializationContextInitializer} used to initiate the user marshaller
+    */
+   protected SerializationContextInitializer getSerializationContextInitializer() {
+      return TestDataSCI.INSTANCE;
    }
 
    /**
@@ -523,10 +535,14 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
       assertIsEmpty();
 
-      Marshaller userMarshaller = new JavaSerializationMarshaller();
-      WrappedBytes key = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Pojo().role("key")));
-      WrappedBytes key2 = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Pojo().role("key2")));
-      WrappedBytes value = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Pojo().role("value")));
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      SerializationContextInitializer sci = TestDataSCI.INSTANCE;
+      sci.registerSchema(ctx);
+      sci.registerMarshallers(ctx);
+      Marshaller userMarshaller = new ProtoStreamMarshaller(ctx);
+      WrappedBytes key = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Key("key")));
+      WrappedBytes key2 = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Key("key2")));
+      WrappedBytes value = new WrappedByteArray(userMarshaller.objectToByteBuffer(new Person()));
 
       assertFalse(cl.contains(key));
       PersistenceMarshaller persistenceMarshaller = getMarshaller();
@@ -618,35 +634,4 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    private void assertEmpty(Collection<?> collection, boolean expected) {
       assertEquals(collection + ".isEmpty()", expected, collection.isEmpty());
    }
-
-
-
-   public static class Pojo implements Serializable {
-
-      private String role;
-
-      public Pojo role(String role) {
-         this.role = role;
-         return this;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         Pojo pojo = (Pojo) o;
-
-         if (role != null ? !role.equals(pojo.role) : pojo.role != null)
-            return false;
-
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         return role != null ? role.hashCode() : 0;
-      }
-   }
-
 }

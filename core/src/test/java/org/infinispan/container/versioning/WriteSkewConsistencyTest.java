@@ -42,6 +42,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractDelegatingRpcManager;
@@ -146,7 +147,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.clustering().hash().numSegments(60);
-      createClusteredCaches(4, builder);
+      createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
    }
 
    private BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache cache) {

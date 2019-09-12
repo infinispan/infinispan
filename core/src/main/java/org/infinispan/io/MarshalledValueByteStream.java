@@ -12,7 +12,7 @@ import java.io.OutputStream;
  * @author Manik Surtani
  * @author Sanne Grinovero
  * @since 5.1
- * @deprecated since 10.0
+ * @deprecated since 10.0 requires jboss-marshalling-osgi artifact to be provided at runtime.
  */
 @Deprecated
 public abstract class MarshalledValueByteStream extends OutputStream {

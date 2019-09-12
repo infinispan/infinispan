@@ -18,6 +18,7 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
@@ -38,6 +39,7 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       if (useTriangle == Boolean.FALSE) {
          gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       }

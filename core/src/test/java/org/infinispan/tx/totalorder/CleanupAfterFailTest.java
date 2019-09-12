@@ -17,6 +17,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
@@ -111,7 +112,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
             .numOwners(1)
             .numSegments(60);
       dcc.clustering().remoteTimeout(1, TimeUnit.SECONDS);
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 

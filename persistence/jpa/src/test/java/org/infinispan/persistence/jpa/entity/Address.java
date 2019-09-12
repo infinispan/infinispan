@@ -4,15 +4,16 @@ import java.io.Serializable;
 
 import javax.persistence.Embeddable;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 @Embeddable
 public class Address implements Serializable {
-
-   private static final long serialVersionUID = 5289488219505339148L;
 
    private String city;
    private String street;
    private int zipCode;
 
+   @ProtoField(number = 1)
    public String getCity() {
       return city;
    }
@@ -21,6 +22,7 @@ public class Address implements Serializable {
       this.city = city;
    }
 
+   @ProtoField(number = 2)
    public String getStreet() {
       return street;
    }
@@ -29,16 +31,13 @@ public class Address implements Serializable {
       this.street = street;
    }
 
+   @ProtoField(number = 3, defaultValue = "0")
    public int getZipCode() {
       return zipCode;
    }
 
    public void setZipCode(int zipCode) {
       this.zipCode = zipCode;
-   }
-
-   public static long getSerialversionuid() {
-      return serialVersionUID;
    }
 
    public boolean equals(Object o) {

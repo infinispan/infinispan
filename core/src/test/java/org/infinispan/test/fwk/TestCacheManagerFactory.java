@@ -24,10 +24,10 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
@@ -190,6 +190,16 @@ public class TestCacheManagerFactory {
       return createClusteredCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder(), defaultCacheConfig, flags);
    }
 
+   public static EmbeddedCacheManager createClusteredCacheManager(SerializationContextInitializer sci) {
+      return createClusteredCacheManager(sci, new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createClusteredCacheManager(SerializationContextInitializer sci, ConfigurationBuilder defaultCacheConfig) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(sci);
+      return createClusteredCacheManager(globalBuilder, defaultCacheConfig, new TransportFlags());
+   }
+
    public static EmbeddedCacheManager createClusteredCacheManager(GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
       return createClusteredCacheManager(gcb, defaultCacheConfig, new TransportFlags());
    }
@@ -251,6 +261,12 @@ public class TestCacheManagerFactory {
       return createCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault(), builder);
    }
 
+   public static EmbeddedCacheManager createCacheManager(SerializationContextInitializer sci, ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().addContextInitializer(sci);
+      return createCacheManager(globalBuilder, builder);
+   }
+
    public static EmbeddedCacheManager createCacheManager() {
       return createCacheManager(new ConfigurationBuilder());
    }
@@ -277,6 +293,16 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createCacheManager(boolean start) {
       return newDefaultCacheManager(start, new GlobalConfigurationBuilder().nonClusteredDefault(), new ConfigurationBuilder(), false);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(SerializationContextInitializer sci) {
+      return createCacheManager(true, sci);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(boolean start, SerializationContextInitializer sci) {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().addContextInitializer(sci);
+      return newDefaultCacheManager(start, globalBuilder, new ConfigurationBuilder(), false);
    }
 
    public static EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
@@ -464,7 +490,6 @@ public class TestCacheManagerFactory {
          amendDefaultCache(gc);
       }
       setNodeName(gc);
-      addTestClassesToWhiteList(gc);
       GlobalConfiguration globalConfiguration = gc.build();
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
@@ -472,22 +497,10 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
-      addTestClassesToWhiteList(holder.getGlobalConfigurationBuilder());
       amendDefaultCache(holder.getGlobalConfigurationBuilder());
       setNodeName(holder.getGlobalConfigurationBuilder());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
-   }
-
-   private static void addTestClassesToWhiteList(GlobalConfigurationBuilder globalCfg) {
-      globalCfg.serialization().whiteList()
-            .addClasses(MagicKey.class)
-            .addRegexps(
-                  "org.infinispan.*Test*",
-                  "org.infinispan.marshall.CustomClasses*",
-                  "org.infinispan.test.data.*",
-                  "org.infinispan.stream.*"
-            );
    }
 }

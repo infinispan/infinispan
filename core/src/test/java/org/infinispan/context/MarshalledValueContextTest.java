@@ -3,7 +3,6 @@ package org.infinispan.context;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.Serializable;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -15,7 +14,9 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.Key;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -36,7 +37,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       c.memory().storageType(StorageType.BINARY)
          .transaction().lockingMode(LockingMode.PESSIMISTIC);
-      return TestCacheManagerFactory.createCacheManager(c);
+      return TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, c);
    }
 
    public void testContentsOfContext() throws Exception {
@@ -78,31 +79,6 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
          this.ctx = ctx;
          return invokeNext(ctx, command);
-      }
-   }
-
-   private static class Key implements Serializable {
-      String actualKey;
-
-      private Key(String actualKey) {
-         this.actualKey = actualKey;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-
-         Key key = (Key) o;
-
-         if (actualKey != null ? !actualKey.equals(key.actualKey) : key.actualKey != null) return false;
-
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         return actualKey != null ? actualKey.hashCode() : 0;
       }
    }
 }

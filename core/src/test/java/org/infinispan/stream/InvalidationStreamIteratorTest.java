@@ -30,7 +30,7 @@ public class InvalidationStreamIteratorTest extends BaseStreamIteratorTest {
 
       builderUsed.clustering().hash().numOwners(2);
       builderUsed.clustering().stateTransfer().chunkSize(50);
-      createClusteredCaches(1, CACHE_NAME, builderUsed);
+      createClusteredCaches(1, CACHE_NAME, sci, builderUsed);
    }
 
    protected final AtomicInteger counter = new AtomicInteger();

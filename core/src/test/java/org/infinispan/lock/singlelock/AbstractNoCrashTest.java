@@ -7,6 +7,7 @@ import java.util.Collections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -42,7 +43,7 @@ public abstract class AbstractNoCrashTest extends MultipleCacheManagersTest {
             .useSynchronization(useSynchronization);
       config.clustering().hash().numOwners(3)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      createCluster(config, 3);
+      createCluster(TestDataSCI.INSTANCE, config, 3);
       waitForClusterToForm();
    }
 

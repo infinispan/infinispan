@@ -3,12 +3,8 @@ package org.infinispan.distribution.groups;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -16,8 +12,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -25,6 +19,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -76,16 +71,11 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       final BlockCommandInterceptor interceptor = injectBlockCommandInterceptorIfAbsent(extractTargetCache(testCache));
 
       interceptor.open = false;
-      Future<Map<GroupKey, String>> future = fork(new Callable<Map<GroupKey, String>>() {
-         @Override
-         public Map<GroupKey, String> call() throws Exception {
-            return testCache.testCache.getGroup(GROUP);
-         }
-      });
+      Future<Map<GroupKey, String>> future = fork(() -> testCache.testCache.getGroup(GROUP));
 
       interceptor.awaitCommandBlock();
 
-      addClusterEnabledCacheManager(createConfigurationBuilder());
+      addClusterEnabledCacheManager(GroupTestsSCI.INSTANCE, createConfigurationBuilder());
       waitForClusterToForm();
 
       interceptor.unblockCommandAndOpen();
@@ -105,7 +95,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
             killMember(3);
          }
          while (getCacheManagers().size() < 3) {
-            addClusterEnabledCacheManager(createConfigurationBuilder());
+            addClusterEnabledCacheManager(GroupTestsSCI.INSTANCE, createConfigurationBuilder());
          }
          waitForClusterToForm();
       }
@@ -124,7 +114,7 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, createConfigurationBuilder());
+      createClusteredCaches(3, GroupTestsSCI.INSTANCE, createConfigurationBuilder());
    }
 
    private static BlockCommandInterceptor injectBlockCommandInterceptorIfAbsent(Cache<GroupKey, String> cache) {
@@ -153,11 +143,15 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       return builder;
    }
 
-   @SerializeWith(CustomConsistentHashFactory.Externalizer.class)
-   private static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
-      private final CacheMode cacheMode;
 
-      private CustomConsistentHashFactory(Trait<CH> trait, CacheMode cacheMode) {
+   public static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
+
+      @ProtoField(number = 2)
+      CacheMode cacheMode;
+
+      CustomConsistentHashFactory() {}
+
+      CustomConsistentHashFactory(Trait<CH> trait, CacheMode cacheMode) {
          super(trait, 1);
          this.cacheMode = cacheMode;
       }
@@ -178,21 +172,6 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
             return new int[][]{{0}};
          } else {
             throw new IllegalStateException();
-         }
-      }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<CustomConsistentHashFactory> {
-         @Override
-         public void writeObject(ObjectOutput output, CustomConsistentHashFactory object) throws IOException {
-            output.writeObject(object.trait);
-            MarshallUtil.marshallEnum(object.cacheMode, output);
-         }
-
-         @Override
-         public CustomConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            Trait trait = (Trait) input.readObject();
-            CacheMode cacheMode = MarshallUtil.unmarshallEnum(input, CacheMode::valueOf);
-            return new CustomConsistentHashFactory<>(trait, cacheMode);
          }
       }
    }
@@ -233,5 +212,4 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
          checkPoint = new CheckPoint();
       }
    }
-
 }

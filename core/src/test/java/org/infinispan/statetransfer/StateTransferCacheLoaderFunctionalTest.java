@@ -2,11 +2,6 @@ package org.infinispan.statetransfer;
 
 import static org.testng.Assert.assertEquals;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,6 +10,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferCacheLoaderFunctionalTest")
@@ -116,9 +112,9 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          verifyNoData(cache1);
 
          // write initial data
-         cache1.put("A", new DelayedUnmarshal());
-         cache1.put("B", new DelayedUnmarshal());
-         cache1.put("C", new DelayedUnmarshal());
+         cache1.put("A", new DelayedMarshallingPojo(0, 2000));
+         cache1.put("B", new DelayedMarshallingPojo(0, 2000));
+         cache1.put("C", new DelayedMarshallingPojo(0, 2000));
          assertEquals(cache1.size(), 3);
          cm1.stop();
 
@@ -159,19 +155,4 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          sharedCacheLoader.set(false);
       }
    }
-
-   public static class DelayedUnmarshal implements Serializable {
-
-      private static final long serialVersionUID = 1L;
-
-      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-         TestingUtil.sleepThread(2000);
-         in.defaultReadObject();
-      }
-
-      private void writeObject(ObjectOutputStream out) throws IOException {
-         out.defaultWriteObject();
-      }
-   }
-
 }

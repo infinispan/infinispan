@@ -17,6 +17,7 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.topology.LocalTopologyManager;
@@ -89,7 +90,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, c1}, {c1, a0}});
       configBuilder.clustering().hash().consistentHashFactory(cchf);
-      createCluster(configBuilder, 4);
+      createCluster(TestDataSCI.INSTANCE, configBuilder, 4);
       waitForClusterToForm();
 
       Object k0 = new MagicKey("k1", cache(a0), cache(a1));

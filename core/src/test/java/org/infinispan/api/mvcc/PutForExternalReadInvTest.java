@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -26,7 +27,7 @@ public class PutForExternalReadInvTest extends MultipleCacheManagersTest {
             .clustering().cacheMode(CacheMode.INVALIDATION_SYNC)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, builder);
    }
 
    public void testReadOwnWrites() {

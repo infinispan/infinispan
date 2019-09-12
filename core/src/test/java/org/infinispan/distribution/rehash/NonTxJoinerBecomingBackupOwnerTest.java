@@ -17,6 +17,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -37,10 +38,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder c = getConfigurationBuilder();
-
-      addClusterEnabledCacheManager(c);
-      addClusterEnabledCacheManager(c);
+      createCluster(TestDataSCI.INSTANCE, getConfigurationBuilder(), 2);
       waitForClusterToForm();
    }
 
@@ -102,7 +100,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       // Add a new member, but don't start the cache yet
       ConfigurationBuilder c = getConfigurationBuilder();
       c.clustering().stateTransfer().awaitInitialTransfer(false);
-      addClusterEnabledCacheManager(c);
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, c);
 
       // Start the cache and wait until it's a member in the write CH
       log.tracef("Starting the cache on the joiner");

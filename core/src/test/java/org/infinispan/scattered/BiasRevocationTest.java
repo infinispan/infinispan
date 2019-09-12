@@ -23,6 +23,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.CountingRpcManager;
@@ -40,7 +41,7 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.SCATTERED_SYNC, false);
       builder.clustering().biasAcquisition(BiasAcquisition.ON_WRITE).remoteTimeout(1000);
-      createCluster(builder, 3);
+      createCluster(TestDataSCI.INSTANCE, builder, 3);
 
       TestingUtil.wrapComponent(cache(0), RpcManager.class, rpcManager -> rpcManager0 = new FailingRpcManager(rpcManager));
       cache(1); // just touch to start it

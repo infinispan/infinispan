@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jpa.entity;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.AttributeOverride;
@@ -12,10 +13,10 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 @Entity
 public class Person implements Serializable {
-
-   private static final long serialVersionUID = 4748311041613897465L;
 
    @Id
    private String id;
@@ -32,6 +33,7 @@ public class Person implements Serializable {
    @ElementCollection(fetch = FetchType.EAGER)
    private Set<Address> secondaryAdresses;
 
+   @ProtoField(number = 1)
    public String getId() {
       return id;
    }
@@ -40,6 +42,7 @@ public class Person implements Serializable {
       this.id = id;
    }
 
+   @ProtoField(number = 2)
    public String getName() {
       return name;
    }
@@ -48,6 +51,7 @@ public class Person implements Serializable {
       this.name = name;
    }
 
+   @ProtoField(number = 3, collectionImplementation = HashSet.class)
    public Set<String> getNickNames() {
       return nickNames;
    }
@@ -56,6 +60,7 @@ public class Person implements Serializable {
       this.nickNames = nickNames;
    }
 
+   @ProtoField(number = 4)
    public Address getAddress() {
       return address;
    }
@@ -64,6 +69,7 @@ public class Person implements Serializable {
       this.address = address;
    }
 
+   @ProtoField(number = 5, collectionImplementation = HashSet.class)
    public Set<Address> getSecondaryAdresses() {
       return secondaryAdresses;
    }

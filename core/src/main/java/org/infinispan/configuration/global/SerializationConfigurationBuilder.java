@@ -136,7 +136,8 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    public SerializationConfigurationBuilder addContextInitializer(SerializationContextInitializer sci) {
-      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).computeIfAbsent(ArrayList::new).add(sci);
+      if (sci != null)
+         attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).computeIfAbsent(ArrayList::new).add(sci);
       return this;
    }
 

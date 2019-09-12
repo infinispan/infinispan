@@ -15,18 +15,19 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.marshall.core.MarshallableFunctions;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
@@ -51,7 +52,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(cacheMode)
             .partitionHandling().enabled(false);
-      createClusteredCaches(4, cb, new TransportFlags().withFD(true).withMerge(true));
+      createClusteredCaches(4, TestDataSCI.INSTANCE, cb, new TransportFlags().withFD(true).withMerge(true));
    }
 
    @AfterMethod

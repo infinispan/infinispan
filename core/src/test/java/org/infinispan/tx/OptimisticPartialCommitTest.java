@@ -15,10 +15,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.concurrent.InvocationMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -47,9 +47,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       configuration.clustering().hash().numSegments(2).numOwners(2).consistentHashFactory(controlledCHFactory);
       configuration.transaction().lockingMode(LockingMode.OPTIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      for (int i = 0; i < 4; i++) {
-         addClusterEnabledCacheManager(configuration, new TransportFlags().withFD(true));
-      }
+      createCluster(TestDataSCI.INSTANCE, configuration, 4);
       waitForClusterToForm();
    }
 

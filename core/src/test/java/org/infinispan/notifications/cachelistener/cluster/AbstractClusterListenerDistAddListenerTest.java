@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateProvider;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
@@ -46,7 +47,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
          builderUsed.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       builderUsed.expiration().disableReaper();
-      createClusteredCaches(3, CACHE_NAME, builderUsed);
+      createClusteredCaches(3, CACHE_NAME, TestDataSCI.INSTANCE, builderUsed);
       injectTimeServices();
    }
 
@@ -82,10 +83,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       // Now wait until the listener is about to be installed on cache1
       checkPoint.awaitStrict("pre_add_listener_invoked_" + cache0, 10, TimeUnit.SECONDS);
 
-      // First we add the new node, but block the dist exec execution
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       // Now wait for cache3 to come up fully
       waitForClusterToForm(CACHE_NAME);
@@ -125,10 +123,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       // Now wait until the listener is about to be installed on cache1
       checkPoint.awaitStrict("post_add_listener_invoked_" + cache0, 10, TimeUnit.SECONDS);
 
-      // First we add the new node, but block the dist exec execution
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       // Now wait for cache3 to come up fully
       waitForClusterToForm(CACHE_NAME);
@@ -165,10 +160,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       waitUntilRequestingListeners(cache0, checkPoint);
       checkPoint.triggerForever("pre_cluster_listeners_release_" + cache0);
 
-      // First we add the new node, but block the dist exec execution
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       Future<Cache<Object, String>> future = fork(() -> cache(3, CACHE_NAME));
 
@@ -224,10 +216,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       waitUntilRequestingListeners(cache0, checkPoint);
       checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
 
-      // First we add the new node, but block the dist exec execution
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       Future<Cache<Object, String>> future = fork(() -> cache(3, CACHE_NAME));
 
@@ -289,10 +278,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       // What we want to block is the second one which is the removal of cache0
       checkPoint.trigger("pre_view_listener_release_" + "manager1");
 
-      // First we add the new node, but block the dist exec execution
-      log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builderUsed);
-      log.info("Added a new node");
+      addClusteredCacheManager();
 
       waitUntilViewChangeOccurs(manager(3), "manager3", checkPoint);
       // We don't want to block the view listener change on cache3

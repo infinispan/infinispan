@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -45,7 +46,7 @@ public class OptimisticTxFailureAfterLockingTest extends MultipleCacheManagersTe
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
       builder.clustering().hash().numOwners(2);
-      createClusteredCaches(3, builder);
+      createClusteredCaches(3, TestDataSCI.INSTANCE, builder);
    }
 
    private void doTest(int primaryOwnerIndex, int execIndex) throws Exception {

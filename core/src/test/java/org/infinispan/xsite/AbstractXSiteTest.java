@@ -22,6 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -266,6 +267,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          clone.read(gcb.build());
          clone.transport().transport(transport);
          clone.serialization().marshaller(marshaller);
+         clone.serialization().addContextInitializer(TestDataSCI.INSTANCE);
 
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
 

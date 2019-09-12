@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.testng.annotations.Test;
@@ -22,7 +23,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getConfig();
       c.transaction().autoCommit(false);
-      createClusteredCaches(2, c);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, c);
    }
 
    protected ConfigurationBuilder getConfig() {
@@ -45,7 +46,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       String v5 = "v5";
       String v6 = "v6";
       String v_null = "v_nonexistent";
-      Key key = new Key("k", false);
+      Key key = new Key("k");
       TransactionManager tm = TestingUtil.getTransactionManager(c1);
 
       // put

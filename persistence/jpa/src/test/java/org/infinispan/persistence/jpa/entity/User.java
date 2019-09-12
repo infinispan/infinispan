@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -15,10 +17,6 @@ import javax.persistence.Table;
 @Entity
 @Table(name="Users")
 public class User implements Serializable {
-   /**
-    *
-    */
-   private static final long serialVersionUID = 2787355123291122478L;
 
    @Id
    private String username;
@@ -31,6 +29,7 @@ public class User implements Serializable {
 
    private String note;
 
+   @ProtoField(number = 1)
    public String getUsername() {
       return username;
    }
@@ -39,6 +38,7 @@ public class User implements Serializable {
       this.username = username;
    }
 
+   @ProtoField(number = 2)
    public String getFirstName() {
       return firstName;
    }
@@ -47,6 +47,7 @@ public class User implements Serializable {
       this.firstName = firstName;
    }
 
+   @ProtoField(number = 3)
    public String getLastName() {
       return lastName;
    }
@@ -55,6 +56,7 @@ public class User implements Serializable {
       this.lastName = lastName;
    }
 
+   @ProtoField(number = 4)
    public String getNote() {
       return note;
    }

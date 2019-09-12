@@ -10,13 +10,14 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.CacheStoppedDuringReadTest")
 public class CacheStoppedDuringReadTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+      createClusteredCaches(3, TestDataSCI.INSTANCE, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
    }
 
    public void test() throws Exception {

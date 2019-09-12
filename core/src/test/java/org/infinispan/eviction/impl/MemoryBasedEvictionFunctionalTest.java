@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -41,7 +42,7 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
          builder.memory().size(CACHE_SIZE + MemoryStorageConfiguration.ADDRESS_COUNT.getDefaultValue() * 8);
       }
       configure(builder);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, builder);
       cache = cm.getCache();
       return cm;
    }

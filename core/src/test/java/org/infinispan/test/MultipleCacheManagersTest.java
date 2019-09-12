@@ -21,6 +21,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -40,6 +41,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
@@ -213,6 +215,21 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return addClusterEnabledCacheManager(defaultConfig, new TransportFlags());
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(SerializationContextInitializer sci) {
+      return addClusterEnabledCacheManager(sci, new ConfigurationBuilder(), new TransportFlags());
+   }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(SerializationContextInitializer sci, ConfigurationBuilder defaultConfig) {
+      return addClusterEnabledCacheManager(sci, defaultConfig, new TransportFlags());
+   }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(SerializationContextInitializer sci,
+                                                                ConfigurationBuilder defaultConfig, TransportFlags flags) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(sci);
+      return addClusterEnabledCacheManager(globalBuilder, defaultConfig, flags);
+   }
+
    protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder defaultConfig) {
       return addClusterEnabledCacheManager(globalBuilder, defaultConfig, new TransportFlags());
    }
@@ -250,6 +267,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void createCluster(ConfigurationBuilder builder, int count) {
       for (int i = 0; i < count; i++) addClusterEnabledCacheManager(builder);
+   }
+
+   protected void createCluster(SerializationContextInitializer sci, ConfigurationBuilder builder, int count) {
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(sci, builder);
    }
 
    /**
@@ -339,28 +360,50 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   protected <K, V> List<Cache<K, V>> createClusteredCaches(
-         int numMembersInCluster, String cacheName, ConfigurationBuilder builder) {
-      return createClusteredCaches(numMembersInCluster, cacheName, builder, new TransportFlags());
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName, ConfigurationBuilder builder) {
+      return createClusteredCaches(numMembersInCluster, cacheName, null, builder);
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName, SerializationContextInitializer sci,
+                                                            ConfigurationBuilder builder) {
+      return createClusteredCaches(numMembersInCluster, cacheName, sci, builder, new TransportFlags());
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName, ConfigurationBuilder builder, TransportFlags flags) {
+      return createClusteredCaches(numMembersInCluster, null, builder, flags, cacheName);
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(
-         int numMembersInCluster, String cacheName, ConfigurationBuilder builder, TransportFlags flags) {
-      List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
-      for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags);
-         cm.defineConfiguration(cacheName, builder.build());
-         Cache<K, V> cache = cm.getCache(cacheName);
-         caches.add(cache);
-      }
-      waitForClusterToForm(cacheName);
-      return caches;
+         int numMembersInCluster, String cacheName, SerializationContextInitializer sci, ConfigurationBuilder builder, TransportFlags flags) {
+      return createClusteredCaches(numMembersInCluster, sci, builder, flags, cacheName);
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            SerializationContextInitializer sci,
+                                                            ConfigurationBuilder defaultConfigBuilder) {
+      return createClusteredCaches(numMembersInCluster, sci, defaultConfigBuilder, new TransportFlags());
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            SerializationContextInitializer sci,
+                                                            ConfigurationBuilder defaultConfigBuilder,
+                                                            TransportFlags flags, String... cacheNames) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(sci);
+      return createClusteredCaches(numMembersInCluster, globalBuilder, defaultConfigBuilder, false, flags, cacheNames);
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
                                                             GlobalConfigurationBuilder globalConfigurationBuilder,
                                                             ConfigurationBuilder defaultConfigBuilder,
                                                             boolean serverMode, String... cacheNames) {
+      return createClusteredCaches(numMembersInCluster, globalConfigurationBuilder, defaultConfigBuilder, serverMode, new TransportFlags(), cacheNames);
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            GlobalConfigurationBuilder globalConfigurationBuilder,
+                                                            ConfigurationBuilder defaultConfigBuilder,
+                                                            boolean serverMode, TransportFlags flags, String... cacheNames) {
       List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm;
@@ -370,7 +413,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             global.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
             global.transport().defaultTransport();
          }
-         cm = addClusterEnabledCacheManager(global, defaultConfigBuilder);
+         cm = addClusterEnabledCacheManager(global, defaultConfigBuilder, flags);
          if (cacheNames.length == 0) {
             Cache<K, V> cache = cm.getCache();
             caches.add(cache);
