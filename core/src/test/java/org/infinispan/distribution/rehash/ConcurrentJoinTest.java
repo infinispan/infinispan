@@ -7,8 +7,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
@@ -26,7 +28,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
       joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[NUM_JOINERS]);
 
       for (int i = 0; i < NUM_JOINERS; i++) {
-         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(new TransportFlags().withFD(false).withPortRange(i));
+         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder(), new TransportFlags().withFD(false).withPortRange(i));
          joinerManager.defineConfiguration(cacheName, configuration.build());
          joinerManagers.add(joinerManager);
          joiners.set(i, null);

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.Cache;
@@ -39,6 +40,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
@@ -90,7 +92,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(chFactory).numSegments(2);
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      createCluster(cb, 3);
+      createCluster(TestDataSCI.INSTANCE, cb, 3);
       // make sure the caches are started in proper order
       for (int i = 0; i < 3; ++i) cache(i);
    }

@@ -15,6 +15,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -36,7 +37,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
             .transaction().lockingMode(LockingMode.OPTIMISTIC);
 
       amendConfig(builder);
-      createCluster(builder, 4);
+      createCluster(TestDataSCI.INSTANCE, builder, 4);
       waitForClusterToForm();
    }
 
@@ -72,7 +73,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       }
 
       log.debugf("Starting joiner");
-      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, builder);
       Cache<Object, Object> cache4 = cache(4);
 
       log.debugf("Joiner started, checking transferred data");

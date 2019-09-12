@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -33,7 +34,7 @@ public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCache
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 

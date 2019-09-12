@@ -65,7 +65,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       // Want to enable eviction, but don't actually evict anything
       configurationBuilder.memory().size(INSERTION_COUNT * 10);
 
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(configurationBuilder, new TransportFlags().withMerge(true));
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(sci, configurationBuilder, new TransportFlags().withMerge(true));
       cm.defineConfiguration(cacheName, configurationBuilder.build());
       return cm;
    }

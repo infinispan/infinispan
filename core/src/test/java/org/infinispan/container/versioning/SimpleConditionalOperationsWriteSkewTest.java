@@ -6,6 +6,7 @@ import static org.testng.Assert.assertNull;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -20,8 +21,7 @@ public class SimpleConditionalOperationsWriteSkewTest extends MultipleCacheManag
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getConfig();
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, getConfig(), 2);
       waitForClusterToForm();
    }
 

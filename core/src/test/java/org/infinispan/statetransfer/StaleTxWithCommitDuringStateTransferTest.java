@@ -23,6 +23,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -38,8 +39,7 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManager();
-      addClusterEnabledCacheManager();
+      createCluster(TestDataSCI.INSTANCE, new ConfigurationBuilder(), 2);
       waitForClusterToForm();
    }
 

@@ -8,6 +8,7 @@ import javax.transaction.Transaction;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -36,7 +37,7 @@ public class SizeDistTxRepeatableReadTest extends MultipleCacheManagersTest {
             .transaction()
             .lockingMode(LockingMode.OPTIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      createCluster(conf, 2);
+      createCluster(TestDataSCI.INSTANCE, conf, 2);
       waitForClusterToForm();
       k0 = getKeyForCache(0);
       k1 = getKeyForCache(1);

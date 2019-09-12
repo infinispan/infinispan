@@ -25,6 +25,7 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -91,7 +92,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
       builder.clustering()
             .hash().numOwners(2)
             .stateTransfer().fetchInMemoryState(true);
-      createClusteredCaches(3, builder);
+      createClusteredCaches(3, TestDataSCI.INSTANCE, builder);
    }
 
    private EntryFactory spyEntryFactory(Cache<Object, Object> cache) {

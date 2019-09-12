@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
@@ -18,7 +19,7 @@ public class L1LockTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       config.clustering().hash().numOwners(1).transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      createCluster(config, 2);
+      createCluster( TestDataSCI.INSTANCE, config, 2);
       waitForClusterToForm();
    }
 

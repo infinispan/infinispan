@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -38,6 +37,10 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -416,7 +419,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       configurePersistence(builder);
       configureEviction(builder);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(new EvictionWithConcurrentOperationsSCIImpl(), builder);
    }
 
    protected void configureEviction(ConfigurationBuilder builder) {
@@ -451,12 +454,23 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
                  Arrays.toString(expectedValues));
    }
 
-   public static class SameHashCodeKey implements Serializable {
+   public static class SameHashCodeKey {
 
-      private final String name;
+      @ProtoField(number = 1)
+      final String name;
 
-      public SameHashCodeKey(String name) {
+      @ProtoField(number = 2, defaultValue = "0")
+      final int hashCode;
+
+      //same hash code to force the keys to be in the same segment.
+      SameHashCodeKey(String name) {
+         this(name, 0);
+      }
+
+      @ProtoFactory
+      SameHashCodeKey(String name, int hashCode) {
          this.name = name;
+         this.hashCode = hashCode;
       }
 
       @Override
@@ -467,12 +481,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          SameHashCodeKey that = (SameHashCodeKey) o;
 
          return name.equals(that.name);
-
       }
 
       @Override
       public int hashCode() {
-         return 0; //same hash code to force the keys to be in the same segment.
+         return hashCode;
       }
 
       @Override
@@ -655,7 +668,13 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          }
 
       }
+   }
 
-
+   @AutoProtoSchemaBuilder(
+         includeClasses = SameHashCodeKey.class,
+         schemaFileName = "test.core.eviction.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.eviction")
+   interface EvictionWithConcurrentOperationsSCI extends SerializationContextInitializer {
    }
 }

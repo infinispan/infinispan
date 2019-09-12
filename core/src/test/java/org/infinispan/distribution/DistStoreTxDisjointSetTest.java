@@ -11,8 +11,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -25,9 +27,10 @@ import org.testng.annotations.Test;
 public class DistStoreTxDisjointSetTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManager(buildCacheConfig("DistCacheStoreTxDisjointSetTest0"));
-      addClusterEnabledCacheManager(buildCacheConfig("DistCacheStoreTxDisjointSetTest1"));
-      addClusterEnabledCacheManager(buildCacheConfig("DistCacheStoreTxDisjointSetTest2"));
+      SerializationContextInitializer sci = TestDataSCI.INSTANCE;
+      addClusterEnabledCacheManager(sci, buildCacheConfig("DistCacheStoreTxDisjointSetTest0"));
+      addClusterEnabledCacheManager(sci, buildCacheConfig("DistCacheStoreTxDisjointSetTest1"));
+      addClusterEnabledCacheManager(sci, buildCacheConfig("DistCacheStoreTxDisjointSetTest2"));
 
       waitForClusterToForm();
    }

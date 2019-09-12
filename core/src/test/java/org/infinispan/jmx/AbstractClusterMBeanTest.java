@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 
@@ -34,6 +35,7 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
       CacheContainer c2 = createManager(cb);
       CacheContainer c3 = createManager(cb);
       registerCacheManager(c1, c2, c3);
+      createCluster(TestDataSCI.INSTANCE, cb, 3);
       waitForClusterToForm(getDefaultCacheName());
    }
 
@@ -41,6 +43,7 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb1.globalJmxStatistics().enable().jmxDomain(jmxDomain)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
+      gcb1.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       CacheContainer cacheManager = TestCacheManagerFactory.createClusteredCacheManager(gcb1, builder,
             new TransportFlags(), true);
       cacheManager.start();

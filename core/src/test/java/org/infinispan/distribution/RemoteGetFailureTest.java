@@ -43,6 +43,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.ByteString;
@@ -64,7 +65,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       // cache stop takes quite long when the view splits
       builder.clustering().stateTransfer().timeout(10, TimeUnit.SECONDS);
       builder.clustering().remoteTimeout(5, TimeUnit.SECONDS);
-      createCluster(builder, 3);
+      createCluster(TestDataSCI.INSTANCE, builder, 3);
       waitForClusterToForm();
       key = getKeyForCache(cache(1), cache(2));
    }

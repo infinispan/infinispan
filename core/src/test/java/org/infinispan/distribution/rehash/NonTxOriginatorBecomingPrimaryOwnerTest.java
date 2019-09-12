@@ -15,6 +15,7 @@ import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
@@ -37,10 +38,7 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
       c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-
-      addClusterEnabledCacheManager(c);
-      addClusterEnabledCacheManager(c);
-      addClusterEnabledCacheManager(c);
+      createCluster(TestDataSCI.INSTANCE, c, 3);
       waitForClusterToForm();
    }
 

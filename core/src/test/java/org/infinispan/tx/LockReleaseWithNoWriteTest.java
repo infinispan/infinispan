@@ -9,6 +9,7 @@ import javax.transaction.SystemException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -23,7 +24,7 @@ public class LockReleaseWithNoWriteTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 

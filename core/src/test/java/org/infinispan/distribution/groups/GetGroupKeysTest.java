@@ -190,7 +190,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, amendConfiguration(createConfigurationBuilder(transactional)));
+      createClusteredCaches(3, GroupTestsSCI.INSTANCE, amendConfiguration(createConfigurationBuilder(transactional)));
       defineConfigurationOnAllManagers(PERSISTENCE_CACHE,
                                        amendConfiguration(createConfigurationBuilderWithPersistence(transactional, false)));
       waitForClusterToForm(PERSISTENCE_CACHE);

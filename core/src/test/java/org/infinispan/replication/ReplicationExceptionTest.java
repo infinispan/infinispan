@@ -5,8 +5,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import java.io.NotSerializableException;
 import java.io.Serializable;
+
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
@@ -58,25 +58,20 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       return mgr;
    }
 
-   public void testNonSerializableRepl() throws Exception {
-      doNonSerializableReplTest("syncReplCacheNoTx");
+   @Test(expectedExceptions = MarshallingException.class)
+   public void testNonMarshallableRepl() {
+      doNonMarshallableReplTest("syncReplCacheNoTx");
    }
 
-   public void testNonSerializableAsyncRepl() throws Exception {
-      doNonSerializableReplTest("asyncReplCacheNoTx");
+   @Test(expectedExceptions = MarshallingException.class)
+   public void testNonMarshallableAsyncRepl() {
+      doNonMarshallableReplTest("asyncReplCacheNoTx");
    }
 
-   private void doNonSerializableReplTest(String cacheName) {
+   private void doNonMarshallableReplTest(String cacheName) {
       AdvancedCache<Object, Object> cache1 = advancedCache(0, cacheName);
       AdvancedCache<Object, Object> cache2 = advancedCache(1, cacheName);
-      try {
-         cache1.put("test", new ContainerData());
-         // We should not come here.
-         assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
-      } catch (RuntimeException runtime) {
-         assertTrue(runtime instanceof MarshallingException);
-         assertTrue(runtime.getCause() instanceof NotSerializableException);
-      }
+      cache1.put("test", new ContainerData());
    }
 
    public void testNonSerializableReplWithTx() throws Exception {

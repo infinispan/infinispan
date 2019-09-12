@@ -4,6 +4,7 @@ package org.infinispan.tx;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 @Test (groups = "functional", testName = "tx.Use1PcForInducedTxLockingTest")
@@ -14,7 +15,7 @@ public class Use1PcForInducedTxLockingTest extends MultipleCacheManagersTest {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().use1PcForAutoCommitTransactions(true);
       dcc.clustering().hash().numOwners(1);
-      createCluster(dcc, 2);
+      createCluster(TestDataSCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 

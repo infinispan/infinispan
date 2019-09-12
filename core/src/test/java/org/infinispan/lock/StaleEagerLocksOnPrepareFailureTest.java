@@ -9,11 +9,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -34,12 +33,10 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
                .disable()
          .locking()
             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      registerCacheManager(cm1, cm2);
-      c1 = cm1.getCache();
-      c2 = cm2.getCache();
+      createCluster(TestDataSCI.INSTANCE, cfg, 2);
       waitForClusterToForm();
+      c1 = cache(0);
+      c2 = cache(1);
    }
 
    public void testNoModsCommit() throws Exception {

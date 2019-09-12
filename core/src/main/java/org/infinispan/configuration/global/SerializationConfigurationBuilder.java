@@ -136,6 +136,8 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    public SerializationConfigurationBuilder addContextInitializer(SerializationContextInitializer sci) {
+      if (sci == null)
+         throw new CacheConfigurationException("SerializationContextInitializer cannot be null");
       attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).computeIfAbsent(ArrayList::new).add(sci);
       return this;
    }

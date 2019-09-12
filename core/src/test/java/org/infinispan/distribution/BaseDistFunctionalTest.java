@@ -20,8 +20,10 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -79,7 +81,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       cacheName = "dist";
       configuration = buildConfiguration();
       // Create clustered caches with failure detection protocols on
-      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration,
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, getSerializationContext(), configuration,
                                      new TransportFlags().withFD(false));
 
       if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
@@ -92,6 +94,10 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
+   }
+
+   protected SerializationContextInitializer getSerializationContext() {
+      return TestDataSCI.INSTANCE;
    }
 
    protected ConfigurationBuilder buildConfiguration() {

@@ -4,10 +4,6 @@ package org.infinispan.distribution;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Exceptions;
-import org.infinispan.test.TestException;
+import org.infinispan.test.data.BrokenMarshallingPojo;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -81,7 +77,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       ownerCache.put("yourkey", new Object());
       try {
          nonOwnerCache.get("yourkey");
-         fail("Should have failed with a org.infinispan.marshall.NotSerializableException");
+         fail("Should have failed with a org.infinispan.commons.marshall.MarshallingException");
       } catch (RemoteException e) {
          assertTrue(e.getCause() instanceof MarshallingException);
       }
@@ -95,21 +91,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       assert nonOwners.length == 1;
       Cache ownerCache = owners[0];
       Cache nonOwnerCache = nonOwners[0];
-      ownerCache.put("diffkey", new ExceptionExternalizable());
-      Exceptions
-            .expectException(RemoteException.class, MarshallingException.class, () -> nonOwnerCache.get("diffkey"));
-   }
-
-   private static class ExceptionExternalizable implements Externalizable {
-      private static final long serialVersionUID = -483939825697574242L;
-
-      @Override
-      public void writeExternal(ObjectOutput out) throws IOException {
-         throw new TestException();
-      }
-
-      @Override
-      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      }
+      ownerCache.put("diffkey", new BrokenMarshallingPojo());
+      Exceptions.expectException(RemoteException.class, MarshallingException.class, () -> nonOwnerCache.get("diffkey"));
    }
 }

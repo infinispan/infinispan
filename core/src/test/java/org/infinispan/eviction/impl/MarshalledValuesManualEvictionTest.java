@@ -2,17 +2,13 @@ package org.infinispan.eviction.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.data.CountMarshallingPojo;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -23,22 +19,18 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.memory().storageType(StorageType.BINARY);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, cfg);
       cache = cm.getCache();
-      TestingUtil.initJbossMarshallerTypeHints(cm, new ManualEvictionPojo());
+      TestingUtil.initJbossMarshallerTypeHints(cm, new CountMarshallingPojo());
       return cm;
    }
 
    public void testManualEvictCustomKeyValue() {
-      ManualEvictionPojo.resetStats();
-      ManualEvictionPojo p1 = new ManualEvictionPojo();
-      p1.i = 64;
-      ManualEvictionPojo p2 = new ManualEvictionPojo();
-      p2.i = 24;
-      ManualEvictionPojo p3 = new ManualEvictionPojo();
-      p3.i = 97;
-      ManualEvictionPojo p4 = new ManualEvictionPojo();
-      p4.i = 35;
+      CountMarshallingPojo.reset();
+      CountMarshallingPojo p1 = new CountMarshallingPojo(64);
+      CountMarshallingPojo p2 = new CountMarshallingPojo(24);
+      CountMarshallingPojo p3 = new CountMarshallingPojo(97);
+      CountMarshallingPojo p4 = new CountMarshallingPojo(35);
 
       cache.put(p1, p2); // 2 writes, key & value
       cache.put(p3, p4); // 2 writes, key & value
@@ -46,16 +38,14 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cache.evict(p1); // 1 write
       assertEquals(1, cache.size());
       assertEquals(p4, cache.get(p3)); // 1 write, 1 read
-      assertEquals(6, ManualEvictionPojo.writes.get());
-      assertEquals(1, ManualEvictionPojo.reads.get());
+      assertEquals(6, CountMarshallingPojo.getMarshallCount());
+      assertEquals(1, CountMarshallingPojo.getUnmarshallCount());
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
-      ManualEvictionPojo.resetStats();
-      ManualEvictionPojo p1 = new ManualEvictionPojo();
-      p1.i = 51;
-      ManualEvictionPojo p2 = new ManualEvictionPojo();
-      p2.i = 78;
+      CountMarshallingPojo.reset();
+      CountMarshallingPojo p1 = new CountMarshallingPojo(51);
+      CountMarshallingPojo p2 = new CountMarshallingPojo(78);
 
       cache.put("key-isoprene", p1); // 1 write
       cache.put("key-hexastyle", p2); // 1 write
@@ -63,47 +53,8 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cache.evict("key-isoprene");
       assertEquals(1, cache.size());
       assertEquals(p2, cache.get("key-hexastyle")); // 1 read
-      assertEquals(2, ManualEvictionPojo.writes.get());
-      assertEquals(1, ManualEvictionPojo.reads.get());
-   }
-
-   public static class ManualEvictionPojo implements Externalizable {
-      static AtomicInteger writes = new AtomicInteger();
-      static AtomicInteger reads = new AtomicInteger();
-      int i;
-
-      public static void resetStats() {
-         reads.set(0);
-         writes.set(0);
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-         ManualEvictionPojo pojo = (ManualEvictionPojo) o;
-         if (i != pojo.i) return false;
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         int result;
-         result = i;
-         return result;
-      }
-
-      @Override
-      public void writeExternal(ObjectOutput out) throws IOException {
-         out.writeInt(i);
-         writes.incrementAndGet();
-      }
-
-      @Override
-      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-         i = in.readInt();
-         reads.incrementAndGet();
-      }
+      assertEquals(2, CountMarshallingPojo.getMarshallCount());
+      assertEquals(1, CountMarshallingPojo.getUnmarshallCount());
    }
 
 }

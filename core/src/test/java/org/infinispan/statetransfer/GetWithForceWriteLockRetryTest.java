@@ -9,6 +9,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -28,6 +29,7 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -43,13 +45,9 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
 
-   public static final int CLUSTER_SIZE = 3;
-
    @Override
    protected void createCacheManagers() {
-      for (int i = 0; i < CLUSTER_SIZE; i++) {
-         addClusterEnabledCacheManager(buildConfig());
-      }
+      createCluster(TestDataSCI.INSTANCE, buildConfig(), 3);
       waitForClusterToForm();
    }
 

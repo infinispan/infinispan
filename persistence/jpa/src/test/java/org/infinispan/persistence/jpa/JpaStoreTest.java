@@ -10,6 +10,7 @@ import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -58,5 +59,10 @@ public class JpaStoreTest extends BaseStoreTest {
    @Override
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
       // byte values make no sense for this store
+   }
+
+   @Override
+   protected SerializationContextInitializer getSerializationContextInitializer() {
+      return JpaSCI.INSTANCE;
    }
 }

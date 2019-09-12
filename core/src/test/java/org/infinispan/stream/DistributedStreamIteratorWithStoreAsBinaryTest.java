@@ -3,11 +3,13 @@ package org.infinispan.stream;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -18,6 +20,9 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.AssertJUnit;
@@ -39,8 +44,7 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(1);
       builderUsed.memory().storageType(StorageType.BINARY);
-      createClusteredCaches(3, builderUsed);
-      cacheManagers.forEach(cm -> cm.getClassWhiteList().addRegexps("java.util.Collections\\$SingletonMap"));
+      createClusteredCaches(3, new StreamStoreAsBinarySerializationContextImpl(), builderUsed);
    }
 
    @Test
@@ -96,11 +100,23 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       assertFalse(iterator.hasNext());
    }
 
-   private static class MagicKeyStringFilter implements KeyValueFilter<MagicKey, String>, Serializable {
-      private final Map<MagicKey, String> allowedEntries;
+   static class MagicKeyStringFilter implements KeyValueFilter<MagicKey, String> {
 
-      public MagicKeyStringFilter(Map<MagicKey, String> allowedEntries) {
+      Map<MagicKey, String> allowedEntries;
+
+      MagicKeyStringFilter() {}
+
+      MagicKeyStringFilter(Map<MagicKey, String> allowedEntries) {
          this.allowedEntries = allowedEntries;
+      }
+
+      @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+      public List<MapPair> getMapEntries() {
+         return allowedEntries.entrySet().stream().map(MapPair::new).collect(Collectors.toCollection(ArrayList::new));
+      }
+
+      public void setMapEntries(List<MapPair> entries) {
+         this.allowedEntries = entries.stream().collect(Collectors.toMap(m -> m.key, m -> m.value));
       }
 
       @Override
@@ -108,5 +124,33 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
          String allowedValue = allowedEntries.get(key);
          return allowedValue != null && allowedValue.equals(value);
       }
+   }
+
+   static class MapPair {
+
+      @ProtoField(number = 1)
+      MagicKey key;
+
+      @ProtoField(number = 2)
+      String value;
+
+      MapPair() {}
+
+      MapPair(Map.Entry<MagicKey, String> entry) {
+         this.key = entry.getKey();
+         this.value = entry.getValue();
+      }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               MagicKey.class,
+               MagicKeyStringFilter.class,
+               MapPair.class,
+         },
+         schemaFileName = "core.stream.binary.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.stream.binary")
+   interface StreamStoreAsBinarySerializationContext extends SerializationContextInitializer {
    }
 }

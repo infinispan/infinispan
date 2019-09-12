@@ -20,6 +20,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
@@ -62,7 +63,7 @@ public class WriteOperationDuringLeaverTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numOwners(2);
-      createClusteredCaches(NUMBER_NODES, builder);
+      createClusteredCaches(NUMBER_NODES, TestDataSCI.INSTANCE, builder);
    }
 
    @Override

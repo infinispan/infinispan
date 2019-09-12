@@ -14,6 +14,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -67,7 +68,7 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
       builder.clustering()
             .stateTransfer().fetchInMemoryState(true)
             .hash().numOwners(3);
-      createClusteredCaches(4, builder);
+      createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
    }
 
    private void performTest(Operation operation) throws Exception {

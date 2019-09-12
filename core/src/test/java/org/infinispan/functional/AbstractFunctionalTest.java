@@ -7,6 +7,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
@@ -40,7 +41,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder localBuilder = new ConfigurationBuilder();
       configureCache(localBuilder);
-      createClusteredCaches(numNodes, localBuilder);
+      createClusteredCaches(numNodes, TestDataSCI.INSTANCE, localBuilder);
       // Create distributed caches
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();
       distBuilder.clustering().cacheMode(isSync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC).hash().numOwners(numDistOwners);

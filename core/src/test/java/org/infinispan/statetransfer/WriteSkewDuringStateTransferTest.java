@@ -36,6 +36,8 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.topology.CacheTopology;
@@ -158,7 +160,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(2, configuration());
+      createClusteredCaches(2, WriteSkewDuringStateTransferSCI.INSTANCE, configuration());
    }
 
    private void assertKeyVersionInDataContainer(Object key, Cache... owners) {
@@ -188,7 +190,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       newNode.controller = new NodeController();
       newNode.controller.interceptor = new ControlledCommandInterceptor();
       builder.customInterceptors().addInterceptor().index(0).interceptor(newNode.controller.interceptor);
-      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(builder);
+      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(WriteSkewDuringStateTransferSCI.INSTANCE, builder);
       newNode.controller.topologyManager = replaceTopologyManager(embeddedCacheManager);
 
       newNode.controller.interceptor.addAction(new Action() {
@@ -325,7 +327,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
    @SerializeWith(ConsistentHashFactoryImpl.Externalizer.class)
    public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory.Default {
 
-      public ConsistentHashFactoryImpl() {
+      ConsistentHashFactoryImpl() {
          super(1);
       }
 
@@ -416,5 +418,14 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Void> joinerFuture;
       CountDownLatch commandLatch = new CountDownLatch(1);
       NodeController controller;
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = ConsistentHashFactoryImpl.class,
+         schemaFileName = "test.core.WriteSkewDuringStateTransferTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.WriteSkewDuringStateTransferTest")
+   public interface WriteSkewDuringStateTransferSCI extends SerializationContextInitializer {
+      WriteSkewDuringStateTransferSCI INSTANCE = new WriteSkewDuringStateTransferSCIImpl();
    }
 }

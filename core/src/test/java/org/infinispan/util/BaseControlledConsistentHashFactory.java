@@ -2,9 +2,6 @@ package org.infinispan.util;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,11 +11,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -29,8 +26,12 @@ import org.infinispan.remoting.transport.Address;
  */
 @SuppressWarnings("unchecked")
 public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentHash> implements ConsistentHashFactory<CH> {
-   protected final Trait<CH> trait;
-   protected final int numSegments;
+   protected Trait<CH> trait;
+
+   @ProtoField(number = 1, defaultValue = "0")
+   public int numSegments;
+
+   protected BaseControlledConsistentHashFactory() {}
 
    protected BaseControlledConsistentHashFactory(Trait<CH> trait, int numSegments) {
       this.trait = trait;
@@ -111,7 +112,6 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       boolean requiresPrimaryOwner();
    }
 
-   @SerializeWith(DefaultTrait.Externalizer.class)
    public static class DefaultTrait implements Trait<DefaultConsistentHash> {
       @Override
       public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors, List<Address>[] segmentOwners, boolean rebalanced) {
@@ -127,20 +127,8 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       public boolean requiresPrimaryOwner() {
          return true;
       }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<DefaultTrait> {
-         @Override
-         public void writeObject(ObjectOutput output, DefaultTrait object) throws IOException {
-         }
-
-         @Override
-         public DefaultTrait readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new DefaultTrait();
-         }
-      }
    }
 
-   @SerializeWith(ScatteredTrait.Externalizer.class)
    public static class ScatteredTrait implements Trait<ScatteredConsistentHash> {
       @Override
       public ScatteredConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors, List<Address>[] segmentOwners, boolean rebalanced) {
@@ -159,17 +147,6 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       @Override
       public boolean requiresPrimaryOwner() {
          return false;
-      }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ScatteredTrait> {
-         @Override
-         public void writeObject(ObjectOutput output, ScatteredTrait object) throws IOException {
-         }
-
-         @Override
-         public ScatteredTrait readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new ScatteredTrait();
-         }
       }
    }
 

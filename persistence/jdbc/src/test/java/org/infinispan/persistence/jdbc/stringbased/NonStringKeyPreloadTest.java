@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
@@ -93,12 +94,12 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
 
       JdbcStringBasedStoreConfigurationBuilder store = cfg
-            .persistence()
+         .persistence()
             .connectionAttempts(1)
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-            .fetchPersistentState(true)
-            .preload(preload)
-            .key2StringMapper(mapperName);
+               .fetchPersistentState(true)
+               .preload(preload)
+               .key2StringMapper(mapperName);
       UnitTestDatabaseManager.buildTableManipulation(store.table());
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
 
@@ -106,6 +107,6 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    }
 
    private void withCacheManagerConfig(ConfigurationBuilder config, Consumer<EmbeddedCacheManager> consumer) {
-      withCacheManager(() -> TestCacheManagerFactory.createCacheManager(config), consumer);
+      withCacheManager(() -> TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, config), consumer);
    }
 }

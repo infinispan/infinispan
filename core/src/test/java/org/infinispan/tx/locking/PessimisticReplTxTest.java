@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -27,7 +28,7 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       final ConfigurationBuilder conf = buildConfiguration();
-      createCluster(conf, 2);
+      createCluster(TestDataSCI.INSTANCE, conf, 2);
       waitForClusterToForm();
 
       k = new MagicKey(cache(0));
