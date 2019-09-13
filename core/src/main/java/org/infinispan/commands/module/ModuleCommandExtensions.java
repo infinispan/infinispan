@@ -13,7 +13,7 @@ public interface ModuleCommandExtensions {
 
    /**
     * @deprecated Since 10.0, Commands which require initialization should implement {@link
-    * org.infinispan.commands.InitializableCommand}.
+    * org.infinispan.commands.InitializableCommand}. This will be removed in next major version.
     */
    @Deprecated
    default ModuleCommandInitializer getModuleCommandInitializer() {
