@@ -55,17 +55,6 @@ public abstract class BaseQuery implements Query {
    }
 
    /**
-    * Returns the query string.
-    *
-    * @return the query string
-    * @deprecated To be removed in Infinispan 10.0. Use {@link #getQueryString()} instead.
-    */
-   @Deprecated
-   public String getJPAQuery() {
-      return getQueryString();
-   }
-
-   /**
     * Returns the Ickle query string.
     *
     * @return the Ickle query string
@@ -73,17 +62,6 @@ public abstract class BaseQuery implements Query {
    @Override
    public String getQueryString() {
       return queryString;
-   }
-
-   /**
-    * Returns the named parameters Map.
-    *
-    * @return the named parameters (unmodifiable) or {@code null} if the query does not have parameters
-    * @deprecated To be removed in Infinispan 10.0. Use {@link #getParameters()} instead.
-    */
-   @Deprecated
-   public Map<String, Object> getNamedParameters() {
-      return getParameters();
    }
 
    @Override
