@@ -1,10 +1,10 @@
-package org.infinispan.server.eventlogger;
+package org.infinispan.server.unit.configuration;
 
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.time.Instant;
@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -26,7 +27,7 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 
 /**
@@ -36,8 +37,9 @@ import org.testng.annotations.Test;
  * @since 8.2
  */
 
-@Test(testName = "server.eventlogger.ServerEventLoggerTest", groups = "functional")
 public class ServerEventLoggerTest extends AbstractInfinispanTest {
+
+   @Test
    public void testLocalServerEventLogging() {
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
@@ -66,8 +68,8 @@ public class ServerEventLoggerTest extends AbstractInfinispanTest {
       });
    }
 
+   @Test
    public void testClusteredServerEventLogging() {
-
       withCacheManagers(new MultiCacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
             TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
@@ -80,10 +82,10 @@ public class ServerEventLoggerTest extends AbstractInfinispanTest {
             for (int i = 0; i < cms.length; i++) {
                EventLogger eventLogger = EventLogManager.getEventLogger(cms[i]);
                assertTrue(eventLogger.getClass().getName(), eventLogger instanceof ServerEventLogger);
-               eventLogger.info(EventLogCategory.SECURITY, "message #" + Integer.toString(msg++));
-               eventLogger.warn(EventLogCategory.SECURITY, "message #" + Integer.toString(msg++));
-               eventLogger.info(EventLogCategory.TASKS, "message #" + Integer.toString(msg++));
-               eventLogger.warn(EventLogCategory.TASKS, "message #" + Integer.toString(msg++));
+               eventLogger.info(EventLogCategory.SECURITY, "message #" + msg++);
+               eventLogger.warn(EventLogCategory.SECURITY, "message #" + msg++);
+               eventLogger.info(EventLogCategory.TASKS, "message #" + msg++);
+               eventLogger.warn(EventLogCategory.TASKS, "message #" + msg++);
             }
             // query all nodes
             for (int i = 0; i < cms.length; i++) {
@@ -102,6 +104,7 @@ public class ServerEventLoggerTest extends AbstractInfinispanTest {
       });
    }
 
+   @Test
    public void testLocalServerEventLoggingPreloading() {
       deleteGlobalPersistentState();
       EmbeddedCacheManager cm = startCacheManager();
