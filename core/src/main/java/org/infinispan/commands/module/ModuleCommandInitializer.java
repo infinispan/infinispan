@@ -11,9 +11,12 @@ import org.infinispan.factories.scopes.Scopes;
  *
  * @author Manik Surtani
  * @since 5.0
+ * @deprecated Since 10.0, Commands which require initialization should implement {@link
+ * org.infinispan.commands.InitializableCommand}. This will be removed in next major version.
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
+@Deprecated
 public interface ModuleCommandInitializer {
 
    /**
