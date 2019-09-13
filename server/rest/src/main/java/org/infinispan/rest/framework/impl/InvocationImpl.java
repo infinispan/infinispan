@@ -123,4 +123,15 @@ public class InvocationImpl implements Invocation {
       }
    }
 
+   @Override
+   public String toString() {
+      return "InvocationImpl{" +
+            "methods=" + methods +
+            ", paths=" + paths +
+            ", handler=" + handler +
+            ", action='" + action + '\'' +
+            ", name='" + name + '\'' +
+            ", anonymous=" + anonymous +
+            '}';
+   }
 }

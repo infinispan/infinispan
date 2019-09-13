@@ -51,18 +51,31 @@ public class StaticFileResource implements ResourceHandler {
             .create();
    }
 
+   private File resolve(String resource) {
+      Path resolved = dir.resolve(resource);
+      try {
+         if (!resolved.toFile().getCanonicalPath().startsWith(dir.toAbsolutePath().toString())) {
+            return null;
+         }
+      } catch (IOException e) {
+         return null;
+      }
+      File file = resolved.toFile();
+      if (!file.isFile() || !file.exists()) {
+         return null;
+      }
+      return file;
+   }
+
    private CompletionStage<RestResponse> serveFile(RestRequest restRequest) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       String uri = restRequest.uri();
-      String resource = uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
+      String resource = uri.equals("/" + urlPath) ? "" : uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
       if (resource.isEmpty()) resource = DEFAULT_RESOURCE;
-      Path resolved = dir.resolve(resource);
-      if (!resolved.toAbsolutePath().startsWith(dir)) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
-      }
-      File file = resolved.toFile();
-      if (!file.isFile() || !file.exists()) {
+
+      File file = resolve(resource);
+      if (file == null) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
       }
 
@@ -87,7 +100,7 @@ public class StaticFileResource implements ResourceHandler {
 
       String mediaType = APPLICATION_OCTET_STREAM_TYPE;
       try {
-         String probed = Files.probeContentType(resolved);
+         String probed = Files.probeContentType(file.toPath());
          if (probed != null) mediaType = probed;
       } catch (IOException ignored) {
       }

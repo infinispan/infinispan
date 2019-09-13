@@ -7,6 +7,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
+import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RegistrationException;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
@@ -67,7 +68,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException illegalCompressionLevel(int compressionLevel);
 
    @Message(value = "Cannot register invocation '%s': resource already registered for method '%s' at the destination path '/%s'", id = 12015)
-   RegistrationException duplicateResource(String invocationName, Method method, String existingPath);
+   RegistrationException duplicateResourceMethod(String invocationName, Method method, String existingPath);
 
    @LogMessage(level = WARN)
    @Message(value = "Header '%s' will be ignored, expecting a number but got '%s'", id = 12016)
@@ -78,4 +79,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot register invocation with path '%s': '*' is only allowed at the end", id = 12018)
    RegistrationException invalidPath(String path);
+
+   @Message(value = "Cannot register path '%s' for invocation '%s', since it conflicts with already registered path '%s'", id = 12019)
+   RegistrationException duplicateResource(String candidate, Invocation invocation, String existingPath);
 }

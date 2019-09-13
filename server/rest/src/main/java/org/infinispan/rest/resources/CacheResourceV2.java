@@ -51,8 +51,8 @@ public class CacheResourceV2 extends CacheResource {
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
 
             // Info and statistics
-            .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/config").handleWith(this::getCacheConfig)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}/stats").handleWith(this::getCacheStats)
+            .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
 
             // Cache lifecycle
             .invocation().methods(POST).path("/v2/caches/{cacheName}").handleWith(this::createCache)

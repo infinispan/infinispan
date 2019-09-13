@@ -81,4 +81,8 @@ public class InvocationHelper {
    public void stop() {
       scheduledExecutor.shutdown();
    }
+
+   public String getContext() {
+      return configuration.contextPath();
+   }
 }

@@ -2,7 +2,6 @@ package org.infinispan.rest;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -77,9 +76,6 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
          return;
       }
 
-      if (!restRequest.getContext().equals(this.context)) {
-         sendResponse(ctx, request, new NettyRestResponse.Builder().status(NOT_FOUND).build());
-      }
 
       LookupResult invocationLookup = restServer.getRestDispatcher().lookupInvocation(restRequest);
 
