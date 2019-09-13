@@ -33,6 +33,7 @@ public interface ProtoStreamTypeIds {
    int SIMPLE_CLUSTERED_VERSION = 9;
    int JGROUPS_ADDRESS = 10;
    int PROTOBUF_VALUE_WRAPPER = 11;
+   int MEDIA_TYPE = 12;
 
    // Priority counter values
    int COUNTER_VALUE = 125;
@@ -42,7 +43,6 @@ public interface ProtoStreamTypeIds {
    // 2 byte Ids 128..16383
    // Commons range 128 -> 999
    int COMMONS_LOWER_BOUND = 128;
-   int MEDIA_TYPE = COMMONS_LOWER_BOUND;
 
    // Core range 1000 -> 3999
    int CORE_LOWER_BOUND = COMMONS_LOWER_BOUND + 872;
