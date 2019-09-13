@@ -1,7 +1,0 @@
-                <authentication security-realm="ApplicationRealm">
-                  <sasl server-name="node0" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth-conf" strength="high medium low">
-                    <policy>
-                      <no-anonymous value="true" />
-                    </policy>
-                  </sasl>
-                </authentication>

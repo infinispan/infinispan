@@ -1,7 +1,0 @@
-                <authentication security-realm="ClientCertRealm">
-                    <sasl server-name="node0" mechanisms="EXTERNAL" qop="auth" strength="high medium low">
-                        <policy>
-                            <no-anonymous value="true" />
-                        </policy>
-                    </sasl>
-                </authentication>

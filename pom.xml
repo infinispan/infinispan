@@ -137,8 +137,7 @@
       <module>cdi/embedded</module>
       <module>cdi/remote</module>
       <module>lock</module>
-      <module>feature-pack</module>
-      <module>server/integration</module>
+      <module>wildfly</module>
       <module>jcache</module>
       <module>integrationtests</module>
       <module>integrationtests/wildfly-modules</module>

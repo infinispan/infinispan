@@ -1,6 +1,0 @@
-SYNOPSIS
-    disconnect
-
-DESCRIPTION
-    Disconnects from the current server
- 

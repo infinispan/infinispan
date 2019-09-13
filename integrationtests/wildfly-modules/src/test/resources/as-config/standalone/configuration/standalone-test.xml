@@ -3,7 +3,6 @@
 <server xmlns="urn:jboss:domain:8.0">
     <extensions>
         <extension module="org.infinispan.extension:${infinispan.module.slot}"/>
-        <extension module="org.infinispan.server.endpoint:${infinispan.module.slot}"/>
         <extension module="org.jgroups.extension:${infinispan.module.slot}"/>
 
         <extension module="org.jboss.as.clustering.infinispan"/>
@@ -361,14 +360,6 @@
                 <replicated-cache name="replicatedCache"/>
                 <counters />
             </cache-container>
-        </subsystem>
-        <subsystem xmlns="urn:infinispan:server:endpoint:${infinispan.core.schema.version}">
-            <hotrod-connector socket-binding="hotrod" cache-container="infinispan_container">
-                    <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
-            </hotrod-connector>
-            <rest-connector socket-binding="rest" cache-container="infinispan_container">
-                <authentication security-realm="ApplicationRealm" auth-method="BASIC"/>
-            </rest-connector>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:infinispan:4.0">
             <cache-container name="server" default-cache="default" module="org.wildfly.clustering.server">

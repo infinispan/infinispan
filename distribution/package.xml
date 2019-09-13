@@ -10,7 +10,7 @@
       <filter token="current.year" value="${current.year}" />
    </filterset>
 
-   <target name="package" depends="clean, wf-modules, server" />
+   <target name="package" depends="clean, wf-modules" />
 
    <target name="clean">
       <delete dir="${dist.dir}" />
@@ -26,42 +26,6 @@
          </copy>
          <base-distribution-licenses dir="${output.dir}" inclusive="true" database="true"/>
       </sequential>
-   </target>
-
-   <target name="server">
-      <property name="server.dir" value="${root.dir}/server/integration/build/target/server-distribution-dist/${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}"/>
-      <path id="jar.fileset.path">
-         <fileset casesensitive="yes" dir="${server.dir}/modules">
-            <include name="**/*.jar" />
-         </fileset>
-      </path>
-      <copy todir="${project.build.directory}/server/docs/licenses">
-         <fileset dir="${project.build.directory}/docs/licenses" />
-      </copy>
-      <local name="jar.fileset"/>
-      <pathconvert pathsep=" " property="jar.fileset" refid="jar.fileset.path" />
-      <local name="temp.file"/>
-      <tempfile property="temp.file" destdir="${dist.dir}" prefix="list"/>
-      <delete file="${temp.file}"/>
-      <echo file="${temp.file}" message="${jar.fileset}"/>
-      <echo message="Merging licenses"/>
-      <java classname="org.infinispan.tools.licenses.LicenseMerger">
-         <arg line="-v"/>
-         <arg line="-i"/>
-         <arg line="-r"/>
-         <arg line="${temp.file}"/>
-         <arg line="-o"/>
-         <arg line="${project.build.directory}/server/docs/licenses/licenses.xml"/>
-         <arg line="${server.dir}/docs/licenses/core-feature-pack-licenses.xml"/>
-         <arg line="${server.dir}/docs/licenses/full-feature-pack-licenses.xml"/>
-         <classpath>
-            <pathelement path="${plugin_classpath}" />
-         </classpath>
-      </java>
-      <xslt in="${project.build.directory}/server/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="${project.build.directory}/server/docs/licenses/licenses.html">
-         <param name="product" expression="${infinispan.brand.name}" type="STRING"/>
-         <param name="version" expression="${infinispan.brand.version}" type="STRING"/>
-      </xslt>
    </target>
 
    <macrodef name="base-distribution-licenses">

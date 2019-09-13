@@ -1,6 +1,0 @@
-
-SYNOPSIS
-    end 
-    
-DESCRIPTION 
-    Ends a batch successfully

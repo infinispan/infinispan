@@ -1,3 +1,0 @@
-                <sasl security-realm="ApplicationRealm" mech="GSSAPI">
-                   <property name="login_module_name">krb-node0</property>
-                </sasl> 

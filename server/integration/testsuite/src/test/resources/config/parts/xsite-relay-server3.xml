@@ -1,4 +1,0 @@
-<relay site="NYC">
-   <remote-site name="LON" channel="xsite"/>
-   <remote-site name="SFO" channel="xsite"/>
-</relay>
