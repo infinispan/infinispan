@@ -1,4 +1,4 @@
-package org.infinispan.server.eventlogger;
+package org.infinispan.server.logging.events;
 
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;

@@ -1,4 +1,4 @@
-package org.infinispan.server.eventlogger;
+package org.infinispan.server.logging.events;
 
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;

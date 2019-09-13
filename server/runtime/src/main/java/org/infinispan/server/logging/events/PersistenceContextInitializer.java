@@ -1,4 +1,4 @@
-package org.infinispan.server.eventlogger;
+package org.infinispan.server.logging.events;
 
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
