@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
@@ -18,11 +17,6 @@ import org.infinispan.topology.CacheTopology;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface StateConsumer {
-   /**
-    * @deprecated Since 9.3, please use {@link DistributionManager#getCacheTopology()} instead.
-    */
-   @Deprecated
-   CacheTopology getCacheTopology();
 
    boolean isStateTransferInProgress();
 

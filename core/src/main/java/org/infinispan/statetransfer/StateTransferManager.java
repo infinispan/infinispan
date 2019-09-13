@@ -4,12 +4,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.CacheTopology;
 
 /**
  * A component that manages the state transfer when the topology of the cluster changes.
@@ -35,14 +33,12 @@ public interface StateTransferManager {
     *
     * @param key
     * @return
-    */
-   boolean isStateTransferInProgressForKey(Object key);
-
-   /**
-    * @deprecated Since 9.3, please use {@link DistributionManager#getCacheTopology()} instead.
+    * @deprecated since 10.0; to be removed in next major version
     */
    @Deprecated
-   CacheTopology getCacheTopology();
+   default boolean isStateTransferInProgressForKey(Object key) {
+      return getStateConsumer().isStateTransferInProgressForKey(key);
+   }
 
    void start() throws Exception;
 
@@ -55,22 +51,6 @@ public interface StateTransferManager {
     * command to the nodes that are new owners of the data, in order to assure consistency.
     */
    Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin);
-
-   /**
-    * @return  true if this node has already received the first rebalance start
-    * @deprecated Since 9.4, will be removed.
-    */
-   @Deprecated
-   boolean ownsData();
-
-   /**
-    * @return The id of the first cache topology in which the local node was a member
-    *    (even if it didn't own any data).
-    *
-    * @deprecated Since 9.4, will be removed.
-    */
-   @Deprecated
-   int getFirstTopologyAsMember();
 
    String getRebalancingStatus() throws Exception;
 

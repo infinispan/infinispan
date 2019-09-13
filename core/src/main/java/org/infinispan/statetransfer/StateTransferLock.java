@@ -45,16 +45,6 @@ public interface StateTransferLock {
 
    CompletableFuture<Void> transactionDataFuture(int expectedTopologyId);
 
-   @Deprecated
-   default void waitForTransactionData(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-      try {
-         CompletableFuture<Void> transactionDataFuture = transactionDataFuture(expectedTopologyId);
-         transactionDataFuture.get(timeout, unit);
-      } catch (ExecutionException e) {
-         throw new CacheException(e.getCause());
-      }
-   }
-
    boolean transactionDataReceived(int expectedTopologyId);
 
    // topology installation latch

@@ -286,16 +286,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public boolean isStateTransferInProgressForKey(Object key) {
-      return stateConsumer.isStateTransferInProgressForKey(key);
-   }
-
-   @Override
-   public CacheTopology getCacheTopology() {
-      return distributionManager.getCacheTopology();
-   }
-
-   @Override
    public Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys,
                                                         Address origin) {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
@@ -336,17 +326,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
       }
       return Collections.emptyMap();
-   }
-
-   // TODO Investigate merging ownsData() and getFirstTopologyAsMember(), as they serve a similar purpose
-   @Override
-   public boolean ownsData() {
-      return stateConsumer.ownsData();
-   }
-
-   @Override
-   public int getFirstTopologyAsMember() {
-      return inboundInvocationHandler.getFirstTopologyAsMember();
    }
 
    @Override

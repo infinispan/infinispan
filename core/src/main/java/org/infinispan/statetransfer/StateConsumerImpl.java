@@ -810,11 +810,6 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   @Override
-   public CacheTopology getCacheTopology() {
-      return cacheTopology;
-   }
-
    public void setKeyInvalidationListener(KeyInvalidationListener keyInvalidationListener) {
       this.keyInvalidationListener = keyInvalidationListener;
    }

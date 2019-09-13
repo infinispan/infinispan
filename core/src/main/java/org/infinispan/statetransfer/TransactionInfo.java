@@ -73,7 +73,7 @@ public class TransactionInfo {
 
       @Override
       public Set<Class<? extends TransactionInfo>> getTypeClasses() {
-         return Collections.<Class<? extends TransactionInfo>>singleton(TransactionInfo.class);
+         return Collections.singleton(TransactionInfo.class);
       }
 
       @Override
@@ -85,7 +85,6 @@ public class TransactionInfo {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
          int topologyId = input.readInt();

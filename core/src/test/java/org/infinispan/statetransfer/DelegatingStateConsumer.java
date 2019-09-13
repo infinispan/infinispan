@@ -8,16 +8,11 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 
 public class DelegatingStateConsumer implements StateConsumer {
+
    private final StateConsumer delegate;
 
    public DelegatingStateConsumer(StateConsumer delegate) {
       this.delegate = delegate;
-   }
-
-   @Override
-   @Deprecated
-   public CacheTopology getCacheTopology() {
-      return delegate.getCacheTopology();
    }
 
    @Override
