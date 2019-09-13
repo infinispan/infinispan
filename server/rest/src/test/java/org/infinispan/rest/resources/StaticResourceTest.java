@@ -32,7 +32,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    }
 
    private ContentResponse call(String path) throws InterruptedException, ExecutionException, TimeoutException {
-      String url = String.format("http://localhost:%d/rest/static/%s", restServer().getPort(), path);
+      String url = String.format("http://localhost:%d/static%s", restServer().getPort(), path);
       client.getContentDecoderFactories().clear();
       return client.newRequest(url).method(GET).send();
    }
@@ -45,13 +45,13 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       response = call("");
       assertResponse(response, "index.html", "<h1>Hello</h1>", TEXT_HTML);
 
-      response = call("index.html");
+      response = call("/index.html");
       assertResponse(response, "index.html", "<h1>Hello</h1>", TEXT_HTML);
 
-      response = call("xml/file.xml");
+      response = call("/xml/file.xml");
       assertResponse(response, "xml/file.xml", "<distributed-cache", MediaType.fromString("text/xml"), APPLICATION_XML);
 
-      response = call("other/text/file.txt");
+      response = call("/other/text/file.txt");
       assertResponse(response, "other/text/file.txt", "This is a text file", TEXT_PLAIN);
    }
 
@@ -76,7 +76,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCacheHeaders() throws InterruptedException, ExecutionException, TimeoutException {
       ContentResponse response;
-      String url = String.format("http://localhost:%d/rest/static/index.html", restServer().getPort());
+      String url = String.format("http://localhost:%d/static/index.html", restServer().getPort());
       long lastModified = getTestFile("static-test/index.html").lastModified();
 
       response = client.newRequest(url).method(GET).header("If-Modified-Since", DateUtils.toRFC1123(lastModified)).send();

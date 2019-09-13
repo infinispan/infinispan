@@ -36,7 +36,7 @@ class ResourceNode {
                String method = m.toString();
                Invocation previous = invocationTable.put(method, invocation);
                if (previous != null) {
-                  throw logger.duplicateResource(invocation.getName(), m, pathItem.toString());
+                  throw logger.duplicateResourceMethod(invocation.getName(), m, pathItem.toString());
                }
             });
          } else {
@@ -68,7 +68,8 @@ class ResourceNode {
 
    private void dumpTree(StringBuilder builder, ResourceNode node, int ident) {
       for (int i = 0; i < ident; i++) builder.append("    ");
-      builder.append("/").append(node.pathItem);
+      if (!node.pathItem.getPath().equals("/")) builder.append("/").append(node.pathItem);
+      else builder.append(node.pathItem);
       node.invocationTable.forEach((k, v) -> builder.append(" ").append(k).append(":").append(v));
       builder.append("\n");
       node.children.forEach((key, value) -> dumpTree(builder, value, ident + 1));
@@ -77,11 +78,16 @@ class ResourceNode {
    private void insertPathInternal(ResourceNode node, Invocation invocation, List<PathItem> path) {
       if (path.size() == 1) {
          PathItem next = path.iterator().next();
-         if (next.getPath().isEmpty()) {
-            updateTable(invocation);
+         if (next.getPath().equals("/")) {
+            node.updateTable(invocation);
             return;
          }
          ResourceNode child = node.children.get(next);
+
+         ResourceNode conflict = getConflicts(node, next);
+         if (conflict != null) {
+            throw logger.duplicateResource(next.toString(), invocation, conflict.pathItem.toString());
+         }
          if (child == null) {
             node.insert(next, invocation);
          } else {
@@ -89,12 +95,16 @@ class ResourceNode {
          }
       } else {
          PathItem pathItem = path.iterator().next();
-         ResourceNode child = node.children.get(pathItem);
-         if (child == null) {
-            ResourceNode inserted = node.insert(pathItem, null);
-            insertPathInternal(inserted, invocation, path.subList(1, path.size()));
+         if (pathItem.getPath().equals("/")) {
+            insertPathInternal(node, invocation, path.subList(1, path.size()));
          } else {
-            insertPathInternal(child, invocation, path.subList(1, path.size()));
+            ResourceNode child = node.children.get(pathItem);
+            if (child == null) {
+               ResourceNode inserted = node.insert(pathItem, null);
+               insertPathInternal(inserted, invocation, path.subList(1, path.size()));
+            } else {
+               insertPathInternal(child, invocation, path.subList(1, path.size()));
+            }
          }
       }
    }
@@ -113,10 +123,21 @@ class ResourceNode {
       return null;
    }
 
+   private ResourceNode getConflicts(ResourceNode node, PathItem candidate) {
+      Map<PathItem, ResourceNode> children = node.children;
+      for (Map.Entry<PathItem, ResourceNode> entry : children.entrySet()) {
+         PathItem pathItem = entry.getKey();
+         ResourceNode resourceNode = entry.getValue();
+         if (!pathItem.getClass().equals(candidate.getClass())) return resourceNode;
+      }
+      return null;
+   }
+
    public LookupResult find(Method method, List<PathItem> path, String action) {
       ResourceNode current = this;
       Map<String, String> variables = new HashMap<>();
       for (PathItem pathItem : path) {
+         if (pathItem.equals(current.pathItem)) continue;
          ResourceNode resourceNode = current.children.get(pathItem);
          ResourceNode matchAll = current.children.get(new StringPathItem("*"));
          if (resourceNode != null) {

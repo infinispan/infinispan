@@ -11,30 +11,42 @@ import java.util.Arrays;
 import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RegistrationException;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "rest.framework.ResourceManagerImplTest")
 public class ResourceManagerImplTest {
 
-   private ResourceManagerImpl resourceManager = new ResourceManagerImpl("root");
+   private ResourceManagerImpl resourceManager;
+
+   @BeforeMethod
+   public void setUp() {
+      resourceManager = new ResourceManagerImpl();
+   }
 
    @Test(expectedExceptions = RegistrationException.class, expectedExceptionsMessageRegExp = "ISPN.*Cannot register invocation 'HandlerB'.*")
    public void testShouldPreventOverlappingVariablePaths() {
-      registerHandler("HandlerA", "/{pathA}");
-      registerHandler("HandlerB", "/{pathB}");
+      registerHandler("/", "HandlerA", "/{pathA}");
+      registerHandler("/", "HandlerB", "/{pathB}");
+   }
+
+   @Test(expectedExceptions = RegistrationException.class, expectedExceptionsMessageRegExp = "ISPN.*path '\\{b\\}'.*conflicts with.*'a'")
+   public void testPreventAmbiguousPaths() {
+      registerHandler("/", "handler1", "/path/a");
+      registerHandler("/", "handler2", "/path/{b}");
    }
 
    public void testAllowRegistrationForDifferentMethods() {
-      registerHandler("HandlerA", GET, "/root/a/{pathA}");
-      registerHandler("HandlerB", POST, "/root/a/{pathA}");
+      registerHandler("/", "HandlerA", GET, "/root/a/{pathA}");
+      registerHandler("/", "HandlerB", POST, "/root/a/{pathA}");
    }
 
    @Test
    public void testLookupHandler() {
-      registerHandler("CompaniesHandler", "/companies", "/companies/{company}", "/companies/{company}/{id}");
-      registerHandler("StocksHandler", "/stocks/{stock}", "/stocks/{stock}/{currency}");
-      registerHandler("DirectorsHandler", "/directors", "/directors/director", "/directors/director/{personId}");
-      registerHandler("InfoHandler", "/info", "/info/jvm", "/info/jvm/{format}", "/info/jvm/threaddump", "/info/{format}/{encoding}");
+      registerHandler("root", "CompaniesHandler", "/companies", "/companies/{company}", "/companies/{company}/{id}");
+      registerHandler("root", "StocksHandler", "/stocks/{stock}", "/stocks/{stock}/{currency}");
+      registerHandler("root", "DirectorsHandler", "/directors", "/directors/director", "/directors/director/{personId}");
+      registerHandler("root", "InfoHandler", "/info", "/info/jvm", "/info/jvm/{format}", "/info/{format}/{encoding}");
 
       assertNull(resourceManager.lookupResource(GET, "/root/dummy"));
 
@@ -61,8 +73,8 @@ public class ResourceManagerImplTest {
       assertEquals(name, result.getInvocation().getName());
    }
 
-   private void registerHandler(String handlerName, Method method, String... paths) {
-      resourceManager.registerResource(() -> {
+   private void registerHandler(String ctx, String handlerName, Method method, String... paths) {
+      resourceManager.registerResource(ctx, () -> {
          Invocations.Builder builder = new Invocations.Builder();
          Arrays.stream(paths).forEach(p -> builder.invocation().method(method).path(p).name(handlerName).handleWith(restRequest -> null));
          return builder.create();
@@ -70,8 +82,8 @@ public class ResourceManagerImplTest {
    }
 
 
-   private void registerHandler(String handlerName, String... paths) {
-      resourceManager.registerResource(() -> {
+   private void registerHandler(String ctx, String handlerName, String... paths) {
+      resourceManager.registerResource(ctx, () -> {
          Invocations.Builder builder = new Invocations.Builder();
          Arrays.stream(paths).forEach(p -> builder.invocation().methods(GET, HEAD, POST).path(p).name(handlerName).handleWith(restRequest -> null));
          return builder.create();

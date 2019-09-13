@@ -29,20 +29,24 @@ public class RestDispatcherTest {
 
    @Test
    public void testDispatch() {
-      ResourceManagerImpl manager = new ResourceManagerImpl("ctx");
-      manager.registerResource(new RootResource());
-      manager.registerResource(new CounterResource());
-      manager.registerResource(new MemoryResource());
-      manager.registerResource(new EchoResource());
-      manager.registerResource(new FileResource());
+      ResourceManagerImpl manager = new ResourceManagerImpl();
+      manager.registerResource("/", new RootResource());
+      manager.registerResource("ctx", new CounterResource());
+      manager.registerResource("ctx", new MemoryResource());
+      manager.registerResource("ctx", new EchoResource());
+      manager.registerResource("ctx", new FileResource());
 
       RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager);
 
-      RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/").build();
+      RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/").build();
       CompletionStage<RestResponse> response = restDispatcher.dispatch(restRequest);
       assertEquals("Hello World!", join(response).getEntity().toString());
 
-      restRequest = new SimpleRequest.Builder().setMethod(POST).setPath("/ctx/counters/counter1").build();
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/image.gif").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("Hello World!", join(response).getEntity().toString());
+
+      restRequest = new SimpleRequest.Builder().setMethod(POST).setPath("//ctx/counters/counter1").build();
       response = restDispatcher.dispatch(restRequest);
       assertEquals(200, join(response).getStatus());
 
@@ -50,7 +54,7 @@ public class RestDispatcherTest {
       response = restDispatcher.dispatch(restRequest);
       assertEquals(200, join(response).getStatus());
 
-      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/counters/counter1").build();
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/counters//counter1").build();
       response = restDispatcher.dispatch(restRequest);
       assertEquals("counter1->1", join(response).getEntity().toString());
 
@@ -200,7 +204,7 @@ public class RestDispatcherTest {
       @Override
       public Invocations getInvocations() {
          return new Invocations.Builder()
-               .invocation().method(GET).path("/").handleWith(this::serveStaticResource)
+               .invocation().method(GET).path("/").path("/image.gif").handleWith(this::serveStaticResource)
                .create();
       }
 

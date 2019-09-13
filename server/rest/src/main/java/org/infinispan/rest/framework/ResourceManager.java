@@ -7,7 +7,7 @@ package org.infinispan.rest.framework;
  */
 public interface ResourceManager {
 
-   void registerResource(ResourceHandler handler) throws RegistrationException;
+   void registerResource(String context, ResourceHandler handler) throws RegistrationException;
 
    LookupResult lookupResource(Method method, String path, String action);
 

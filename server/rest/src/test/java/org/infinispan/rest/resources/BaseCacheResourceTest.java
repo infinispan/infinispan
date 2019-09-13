@@ -747,7 +747,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldServeHtmlFile() throws Exception {
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest", restServer().getPort()))
+            .newRequest(String.format("http://localhost:%d/", restServer().getPort()))
             .method(HttpMethod.GET)
             .send();
 
@@ -761,7 +761,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldServeBannerFile() throws Exception {
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/banner.png", restServer().getPort()))
+            .newRequest(String.format("http://localhost:%d/banner.png", restServer().getPort()))
             .method(HttpMethod.GET)
             .send();
 

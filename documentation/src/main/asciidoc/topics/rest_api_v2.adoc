@@ -298,6 +298,16 @@ request with the `?action=size` parameter:
 include::rest_examples/get_v2_size.adoc[]
 ----
 
+[[rest_v2_cache_stats]]
+=== Getting Cache Statistics
+
+To obtain runtime statistics of a cache invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_stats.adoc[]
+----
+
 [[rest_v2_query_cache]]
 === Querying Caches
 

@@ -66,13 +66,13 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
             .method(HttpMethod.POST).content(new StringContentProvider(json)).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      response = client.newRequest(url + "cache1/config").method(HttpMethod.GET).send();
+      response = client.newRequest(url + "cache1?action=config").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache1Cfg = response.getContentAsString();
 
 
-      response = client.newRequest(url + "cache2/config").method(HttpMethod.GET).send();
+      response = client.newRequest(url + "cache2?action=config").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache2Cfg = response.getContentAsString();
@@ -82,7 +82,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       response = client.newRequest(url + "cache1").method(HttpMethod.DELETE).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      response = client.newRequest(url + "cache1/config").method(HttpMethod.GET).send();
+      response = client.newRequest(url + "cache1?action=config").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
@@ -103,7 +103,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("statCache", "key1", "data");
       putStringValueInCache("statCache", "key2", "data");
 
-      response = client.newRequest(cacheURL + "/stats").send();
+      response = client.newRequest(cacheURL + "?action=stats").send();
       ResponseAssertion.assertThat(response).isOk();
 
       JsonNode jsonNode = objectMapper.readTree(response.getContent());
@@ -112,7 +112,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       response = client.newRequest(cacheURL + "?action=clear").send();
       ResponseAssertion.assertThat(response).isOk();
-      response = client.newRequest(cacheURL + "/stats").send();
+      response = client.newRequest(cacheURL + "?action=stats").send();
       ResponseAssertion.assertThat(response).isOk();
       assertEquals(objectMapper.readTree(response.getContent()).get("currentNumberOfEntries").asInt(), 0);
    }

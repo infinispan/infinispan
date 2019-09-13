@@ -106,19 +106,20 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
             (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),
             configuration, server, getExecutor());
 
-      ResourceManager resourceManager = new ResourceManagerImpl(configuration.contextPath());
-
-      resourceManager.registerResource(new CacheResource(invocationHelper));
-      resourceManager.registerResource(new CacheResourceV2(invocationHelper));
-      resourceManager.registerResource(new SplashResource());
-      resourceManager.registerResource(new CounterResource(invocationHelper));
-      resourceManager.registerResource(new CacheManagerResource(invocationHelper));
+      String restContext = configuration.contextPath();
+      String staticContext = "/";
+      ResourceManager resourceManager = new ResourceManagerImpl();
+      resourceManager.registerResource(staticContext, new SplashResource());
+      resourceManager.registerResource(restContext, new CacheResource(invocationHelper));
+      resourceManager.registerResource(restContext, new CacheResourceV2(invocationHelper));
+      resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
+      resourceManager.registerResource(restContext, new CacheManagerResource(invocationHelper));
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
-         resourceManager.registerResource(new StaticFileResource(staticResources, "static"));
+         resourceManager.registerResource(staticContext, new StaticFileResource(staticResources, "static"));
       }
       if (server != null) {
-         resourceManager.registerResource(new ServerResource(invocationHelper));
+         resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }
