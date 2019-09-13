@@ -1,7 +1,0 @@
-        <subsystem xmlns="urn:infinispan:server:endpoint:${infinispan.core.schema.version}">
-            <hotrod-connector socket-binding="hotrod" cache-container="local">
-                <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
-            </hotrod-connector>
-            <memcached-connector socket-binding="memcached" cache-container="local"/>
-            <rest-connector socket-binding="rest" cache-container="local"/>
-        </subsystem>

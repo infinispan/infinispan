@@ -1,16 +1,8 @@
 package org.infinispan.test.integration.as;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.INCLUDE_RUNTIME;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_RESOURCE_OPERATION;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
 
 import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
@@ -21,10 +13,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.as.arquillian.api.ContainerResource;
 import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.controller.client.ModelControllerClient;
-import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.Asset;
@@ -51,9 +41,6 @@ public class InfinispanExtensionIT {
    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container/cache/default")
    Cache cache;
 
-   @ContainerResource("container.active-1")
-   ManagementClient managementClient;
-
    @Deployment(name = "dep1", order = 1)
    public static Archive<?> dep1() {
       return createDeployment("dep1.war");
@@ -74,8 +61,7 @@ public class InfinispanExtensionIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", createDepString("org.infinispan", "org.infinispan.server.endpoint",
-                  "org.jgroups.extension")).exportAsString();
+            .attribute("Dependencies", createDepString("org.infinispan", "org.jgroups.extension")).exportAsString();
       return new StringAsset(manifest);
    }
 
@@ -103,22 +89,5 @@ public class InfinispanExtensionIT {
       assertTrue(container.getCacheManagerConfiguration().isClustered());
       assertNotNull(cache);
       assertEquals(1, cache.get("1"));
-   }
-
-   @Test
-   public void testAllEndpointsAreLoaded() throws IOException {
-      assert managementClient != null;
-      ModelControllerClient client = managementClient.getControllerClient();
-      readEndpointResource("hotrod-connector", client);
-      readEndpointResource("rest-connector", client);
-   }
-
-   private void readEndpointResource(String endpoint, ModelControllerClient client) throws IOException {
-      final ModelNode operation = new ModelNode();
-      operation.get(OP).set(READ_RESOURCE_OPERATION);
-      operation.get(OP_ADDR).add("subsystem", "datagrid-infinispan-endpoint").add(endpoint, endpoint);
-      operation.get(INCLUDE_RUNTIME).set(true);
-      ModelNode result = client.execute(operation);
-      assertEquals(SUCCESS, result.get(OUTCOME).asString());
    }
 }

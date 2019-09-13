@@ -1,3 +1,0 @@
-JBoss-Product-Release-Name: Infinispan Server
-JBoss-Product-Release-Version: @project.version@
-JBoss-Product-Console-Slot: ispn

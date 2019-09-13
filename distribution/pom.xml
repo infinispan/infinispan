@@ -195,6 +195,7 @@
                               <include name="core/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="spring/spring5/spring5-common/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
+                              <include name="server/runtime/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                            </fileset>
                         </path>
                         <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
@@ -202,36 +203,6 @@
                         <java classname="org.infinispan.tools.xsd.XSDoc">
                            <arg value="-o" />
                            <arg value="${project.build.directory}/site/configdocs" />
-                           <arg line="${xsd.fileset}" />
-                           <classpath>
-                              <pathelement path="${plugin_classpath}" />
-                           </classpath>
-                        </java>
-                     </target>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>serverxsdocgen</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <configuration>
-                     <target>
-			               <property name="plugin_classpath" refid="maven.plugin.classpath" />
-                        <property name="server.output.dir.prefix" value="${infinispan.brand.prefix}-${wildfly.brand.prefix}-server" />
-			               <property name="server.thin.dir.path" value="${basedir}/../server/integration/build/target/${server.output.dir.prefix}-${infinispan.brand.version}"/>
-                        <echo message="Base dir: ${basedir}" />
-                        <path id="xsd.fileset.path">
-                           <fileset casesensitive="yes" dir="${server.thin.dir.path}/docs/schema">
-                              <include name="*.xsd" />
-                           </fileset>
-                        </path>
-                        <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
-                        <echo message="XSDs: ${xsd.fileset}" />
-                        <java classname="org.infinispan.tools.xsd.XSDoc">
-                           <arg value="-o" />
-                           <arg value="${project.build.directory}/site/serverconfigdocs" />
                            <arg line="${xsd.fileset}" />
                            <classpath>
                               <pathelement path="${plugin_classpath}" />
@@ -353,20 +324,6 @@
                         <descriptor>src/main/assemblies/server.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-server-${infinispan.brand.version}</finalName>
-                     <appendAssemblyId>false</appendAssemblyId>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>assemble-wildfly-server</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>src/main/assemblies/wildfly-server.xml</descriptor>
-                     </descriptors>
-                     <finalName>${infinispan.brand.prefix}-${wildfly.brand.prefix}-server-${infinispan.brand.version}</finalName>
                      <appendAssemblyId>false</appendAssemblyId>
                   </configuration>
                </execution>

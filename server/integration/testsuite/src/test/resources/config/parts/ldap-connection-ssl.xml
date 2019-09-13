@@ -1,3 +1,0 @@
-        <outbound-connections>
-            <ldap name="ldaps_connection" url="ldaps://localhost:10636" search-dn="uid=admin,ou=People,dc=infinispan,dc=org" search-credential="${VAULT::krb_admin::password::1}" security-realm="LdapRealm"/>
-        </outbound-connections>

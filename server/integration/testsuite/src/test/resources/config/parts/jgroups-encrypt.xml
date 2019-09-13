@@ -1,7 +1,0 @@
-                <protocol type="SYM_ENCRYPT">
-                    <property name="sym_algorithm">AES</property>
-                    <property name="encrypt_entire_message">true</property>
-                    <property name="keystore_name">${jboss.server.config.dir}/cluster.jks</property>
-                    <property name="store_password">${VAULT::keystore::password::1}</property> <!-- password: secret -->
-                    <property name="alias">cluster</property>
-                </protocol>

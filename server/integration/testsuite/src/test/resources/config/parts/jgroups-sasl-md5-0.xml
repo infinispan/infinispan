@@ -1,3 +1,0 @@
-                <sasl security-realm="ApplicationRealm" mech="DIGEST-MD5">
-                   <property name="client_password">${VAULT::node0_md5::passwd_hash::1}</property>  <!-- password: 9833a158b3d5b5d729e0942422a699e8 -->
-                </sasl> 
