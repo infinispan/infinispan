@@ -132,7 +132,7 @@ public final class DependencyGraph<T> {
          incoming.add(from);
       }
       if (!incomingEdges.containsKey(from)) {
-         incomingEdges.put(from, new HashSet<T>());
+         incomingEdges.put(from, new HashSet<>());
       }
    }
 
@@ -166,7 +166,6 @@ public final class DependencyGraph<T> {
       } finally {
          lock.readLock().unlock();
       }
-
    }
 
    /**
@@ -179,13 +178,12 @@ public final class DependencyGraph<T> {
       try {
          Set<T> dependants = this.incomingEdges.get(element);
          if (dependants == null || dependants.isEmpty()) {
-            return new HashSet<>();
+            return Collections.emptySet();
          }
          return Collections.unmodifiableSet(this.incomingEdges.get(element));
       } finally {
          lock.readLock().unlock();
       }
-
    }
 
    /**
