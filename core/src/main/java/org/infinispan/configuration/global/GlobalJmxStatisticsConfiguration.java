@@ -17,11 +17,11 @@ public class GlobalJmxStatisticsConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ALLOW_DUPLICATE_DOMAINS = AttributeDefinition.builder("duplicateDomains", true).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(TypedProperties::new).build();
 
-   public static final AttributeSet attributeDefinitionSet() {
+   public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalJmxStatisticsConfiguration.class, JMX_DOMAIN, MBEAN_SERVER_LOOKUP, ALLOW_DUPLICATE_DOMAINS, PROPERTIES);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.JMX.getLocalName());
+   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.JMX.getLocalName());
 
    private final Attribute<String> jmxDomain;
    private final Attribute<MBeanServerLookup> mBeanServerLookup;
@@ -49,7 +49,7 @@ public class GlobalJmxStatisticsConfiguration implements ConfigurationInfo {
 
    /**
     * @return true if JMX statistics are enabled.
-    * @deprecated use {@link GlobalConfigurationBuilder#statistics()}
+    * @deprecated use {@link CacheContainerConfigurationBuilder#statistics(Boolean)}
     */
    @Deprecated
    public boolean enabled() {
@@ -114,6 +114,4 @@ public class GlobalJmxStatisticsConfiguration implements ConfigurationInfo {
             ", attributes=" + attributes +
             '}';
    }
-
-
 }

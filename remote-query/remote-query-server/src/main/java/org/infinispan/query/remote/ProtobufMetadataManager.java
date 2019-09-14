@@ -1,7 +1,5 @@
 package org.infinispan.query.remote;
 
-import javax.management.ObjectName;
-
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.protostream.BaseMarshaller;
@@ -20,8 +18,6 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
 public interface ProtobufMetadataManager extends ProtobufMetadataManagerMBean {
 
    String SCHEMA_MANAGER_ROLE = "___schema_manager";
-
-   ObjectName getObjectName();
 
    void registerMarshaller(BaseMarshaller<?> marshaller);
 

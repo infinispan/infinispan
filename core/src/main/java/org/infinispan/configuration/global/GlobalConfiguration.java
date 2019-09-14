@@ -85,6 +85,10 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration;
    }
 
+   public boolean statistics() {
+      return cacheContainerConfiguration.statistics();
+   }
+
    public ThreadPoolConfiguration expirationThreadPool() {
       return cacheContainerConfiguration.expirationThreadPool();
    }
@@ -181,15 +185,6 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return features;
    }
 
-   @Override
-   public String toString() {
-      return "GlobalConfiguration{" +
-            ", modules=" + modules +
-            ", site=" + site +
-            ", cl=" + cl +
-            '}';
-   }
-
    public boolean isClustered() {
       return transport().transport() != null;
    }
@@ -204,4 +199,12 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.getZeroCapacityNode();
    }
 
+   @Override
+   public String toString() {
+      return "GlobalConfiguration{" +
+            ", modules=" + modules +
+            ", site=" + site +
+            ", cl=" + cl +
+            '}';
+   }
 }

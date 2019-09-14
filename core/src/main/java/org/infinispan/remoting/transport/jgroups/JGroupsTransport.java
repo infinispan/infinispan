@@ -31,15 +31,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookup;
@@ -57,6 +54,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -156,6 +154,7 @@ public class JGroupsTransport implements Transport {
    protected ScheduledExecutorService timeoutExecutor;
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    protected ExecutorService remoteExecutor;
+   @Inject protected CacheManagerJmxRegistration jmxRegistration;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
@@ -178,8 +177,6 @@ public class JGroupsTransport implements Transport {
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
    private boolean globalStatsEnabled;
-   private MBeanServer mbeanServer;
-   private String domain;
    private boolean running;
 
    /**
@@ -495,10 +492,7 @@ public class JGroupsTransport implements Transport {
             GlobalJmxStatisticsConfiguration jmxConfig = configuration.globalJmxStatistics();
             globalStatsEnabled = jmxConfig.enabled();
             if (globalStatsEnabled) {
-               String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
-               mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-               domain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
-               JmxConfigurator.registerChannel(channel, mbeanServer, domain, clusterName, true);
+               JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName, true);
             }
          } catch (Exception e) {
             throw new CacheException("Channel connected, but unable to register MBeans", e);
@@ -736,7 +730,7 @@ public class JGroupsTransport implements Transport {
             // Unregistering before disconnecting/closing because
             // after that the cluster name is null
             if (globalStatsEnabled) {
-               JmxConfigurator.unregisterChannel(channel, mbeanServer, domain, channel.getClusterName());
+               JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), channel.getClusterName());
             }
 
             channel.disconnect();

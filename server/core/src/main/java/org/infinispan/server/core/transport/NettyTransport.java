@@ -220,7 +220,6 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns the number of pending tasks.",
       displayName = "Pending tasks",
-      dataType = DataType.MEASUREMENT,
       displayType = DisplayType.SUMMARY
    )
    @Override
@@ -277,7 +276,7 @@ public class NettyTransport implements Transport {
    @ManagedAttribute(
       description = "Returns a count of active connections this server.",
       displayName = "Local active connections",
-      dataType = DataType.MEASUREMENT, displayType = DisplayType.SUMMARY
+      displayType = DisplayType.SUMMARY
    )
    @Override
    public int getNumberOfLocalConnections() {
@@ -289,7 +288,6 @@ public class NettyTransport implements Transport {
                     "This operation will make remote calls to aggregate results, " +
                     "so latency might have an impact on the speed of calculation of this attribute.",
       displayName = "Cluster-wide number of active connections",
-      dataType = DataType.MEASUREMENT,
       displayType = DisplayType.SUMMARY
    )
    @Override

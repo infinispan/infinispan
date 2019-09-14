@@ -45,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.1
  */
 @MBean(objectName = "MassIndexer",
-       description = "Component that rebuilds the index from the cached data")
+       description = "Component that rebuilds the Lucene index from the cached data")
 public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);

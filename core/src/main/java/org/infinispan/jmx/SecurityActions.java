@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Set;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.QueryExp;

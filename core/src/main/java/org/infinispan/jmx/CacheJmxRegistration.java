@@ -1,14 +1,12 @@
 package org.infinispan.jmx;
 
-import static org.infinispan.util.logging.Log.CONTAINER;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import javax.management.ObjectName;
 
 import org.infinispan.cache.impl.CacheImpl;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -16,7 +14,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
@@ -36,35 +33,48 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
 
-   public static final String CACHE_JMX_GROUP = "type=Cache";
+   private static final String CACHE_JMX_GROUP = "type=Cache";
 
-   @Inject Configuration cacheConfiguration;
+   @Inject
+   Configuration cacheConfiguration;
 
-   @Inject CacheManagerJmxRegistration globalJmxRegistration;
+   @Inject
+   CacheManagerJmxRegistration globalJmxRegistration;
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
-   @Inject String cacheName;
+   @Inject
+   String cacheName;
 
+   /**
+    * Tracks all managed cache components, except the cache itself.
+    */
    private Collection<ResourceDMBean> nonCacheDMBeans;
-
-   private boolean needToUnregister = false;
-
-   private volatile boolean unregisterCacheMBean;
+   private boolean componentsRegistered = false;
+   private boolean cacheRegistered = false;
+   private volatile boolean unregisterCacheMBean = false;
 
    /**
     * Here is where the registration is being performed.
     */
    @Start(priority = 14)
+   @Override
    public void start() {
-      initMBeanServer(globalConfig);
+      if (mBeanServer == null) {
+         mBeanServer = globalJmxRegistration.mBeanServer;
+      }
+      if (jmxDomain == null) {
+         jmxDomain = globalJmxRegistration.jmxDomain;
+      }
+
+      super.start();
 
       if (mBeanServer != null) {
-         Collection<ComponentRef<?>> components = basicComponentRegistry.getRegisteredComponents();
-         Collection<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents(components);
-         nonCacheDMBeans = getNonCacheComponents(resourceDMBeans);
+         Collection<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
+         nonCacheDMBeans = Collections.synchronizedCollection(getNonCacheComponents(resourceDMBeans));
 
-         registrar.registerMBeans(resourceDMBeans);
-         needToUnregister = true;
+         internalRegister(cacheRegistered ? nonCacheDMBeans : resourceDMBeans);
+         cacheRegistered = true;
+         componentsRegistered = true;
          log.mbeansSuccessfullyRegistered();
       }
    }
@@ -74,11 +84,11 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
     */
    @Stop
    public void stop() {
-      if (needToUnregister) {
-         // Only unregister the non cache MBean so that it can be restarted
+      if (componentsRegistered) {
+         // Only unregister the non cache MBeans so that the cache can be restarted via JMX
          try {
-            unregisterMBeans(nonCacheDMBeans);
-            needToUnregister = false;
+            internalUnregister(nonCacheDMBeans);
+            componentsRegistered = false;
          } catch (Exception e) {
             log.problemsUnregisteringMBeans(e);
          }
@@ -87,52 +97,49 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       // If removing cache, also remove cache MBean
       if (unregisterCacheMBean) {
          globalJmxRegistration.unregisterCacheMBean(cacheName, cacheConfiguration.clustering().cacheModeString());
+         unregisterCacheMBean = false;
+         cacheRegistered = false;
       }
-
-      // make sure we don't set cache to null, in case it needs to be restarted via JMX.
    }
 
+   /**
+    * Indicates that the cache MBean is to be unregistered on stop. This is not normally done because we keep he MBean
+    * around to allow restart via jmx).
+    *
+    * @param unregisterCacheMBean
+    */
    public void setUnregisterCacheMBean(boolean unregisterCacheMBean) {
       this.unregisterCacheMBean = unregisterCacheMBean;
    }
 
    @Override
-   protected ComponentsJmxRegistration buildRegistrar() {
-      // Quote group name, to handle invalid ObjectName characters
-      String groupName = CACHE_JMX_GROUP + "," + globalJmxRegistration.getCacheJmxName(cacheName,
-            cacheConfiguration.clustering().cacheModeString()) + ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
+   protected String initGroup() {
+      return getCacheGroupName(cacheName, cacheConfiguration.clustering().cacheModeString(), globalConfig.cacheManagerName());
+   }
 
-      if (!globalConfig.globalJmxStatistics().enabled() && jmxDomain == null) {
-         String tmpJmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
-         synchronized (globalJmxRegistration) {
-            if (globalJmxRegistration.jmxDomain == null) {
-               if (!tmpJmxDomain.equals(globalConfig.globalJmxStatistics().domain()) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
-                  throw CONTAINER.jmxMBeanAlreadyRegistered(tmpJmxDomain, globalConfig.globalJmxStatistics().domain());
-               }
-               // Set manager component's jmx domain so that other caches under same manager
-               // can see it, particularly important when jmx is only enabled at the cache level
-               globalJmxRegistration.jmxDomain = tmpJmxDomain;
-            }
-            // So that all caches share the same domain, regardless of whether dups are
-            // allowed or not, simply assign the manager's calculated jmxDomain
-            jmxDomain = globalJmxRegistration.jmxDomain;
-         }
-      } else {
-         // If global stats were enabled, manager's jmxDomain would have been populated
-         // when cache manager was started, so no need for synchronization here.
-         jmxDomain = globalJmxRegistration.jmxDomain == null ? globalConfig.globalJmxStatistics().domain() : globalJmxRegistration.jmxDomain;
-      }
+   @Override
+   protected String initDomain() {
+      return globalJmxRegistration.jmxDomain;
+   }
 
-      return new ComponentsJmxRegistration(mBeanServer, jmxDomain, groupName);
+   static String getCacheGroupName(String cacheName, String cacheModeString, String cacheManagerName) {
+      return CACHE_JMX_GROUP + "," + NAME_KEY + "="
+            + ObjectName.quote(cacheName + "(" + cacheModeString.toLowerCase() + ")")
+            + ",manager=" + ObjectName.quote(cacheManagerName);
    }
 
    private Collection<ResourceDMBean> getNonCacheComponents(Collection<ResourceDMBean> components) {
       Collection<ResourceDMBean> componentsExceptCache = new ArrayList<>(64);
       for (ResourceDMBean component : components) {
-         if (!CacheImpl.OBJECT_NAME.equals(component.getObjectName())) {
+         if (!CacheImpl.OBJECT_NAME.equals(component.getMBeanName())) {
             componentsExceptCache.add(component);
          }
       }
       return componentsExceptCache;
+   }
+
+   @Override
+   protected void trackRegisteredResourceDMBean(ResourceDMBean resourceDMBean) {
+      nonCacheDMBeans.add(resourceDMBean);
    }
 }

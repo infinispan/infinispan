@@ -80,9 +80,9 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
 
    /**
-    * Sets the instance of the {@link org.infinispan.jmx.MBeanServerLookup} class to be used to bound JMX MBeans to.
+    * Sets the instance of the {@link org.infinispan.commons.jmx.MBeanServerLookup} class to be used to bound JMX MBeans to.
     *
-    * @param mBeanServerLookupInstance An instance of {@link org.infinispan.jmx.MBeanServerLookup}
+    * @param mBeanServerLookupInstance An instance of {@link org.infinispan.commons.jmx.MBeanServerLookup}
     */
    public GlobalJmxStatisticsConfigurationBuilder mBeanServerLookup(MBeanServerLookup mBeanServerLookupInstance) {
       attributes.attribute(MBEAN_SERVER_LOOKUP).set(mBeanServerLookupInstance);
@@ -109,13 +109,11 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
-   public
-   void validate() {
+   public void validate() {
    }
 
    @Override
-   public
-   GlobalJmxStatisticsConfiguration create() {
+   public GlobalJmxStatisticsConfiguration create() {
       if (getGlobalConfig().cacheContainer().statistics() && attributes.attribute(MBEAN_SERVER_LOOKUP).isNull()) {
          mBeanServerLookup(new PlatformMBeanServerLookup());
       }
@@ -123,10 +121,8 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
-   public
-   GlobalJmxStatisticsConfigurationBuilder read(GlobalJmxStatisticsConfiguration template) {
+   public GlobalJmxStatisticsConfigurationBuilder read(GlobalJmxStatisticsConfiguration template) {
       attributes.read(template.attributes());
-
       return this;
    }
 
@@ -134,5 +130,4 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    public String toString() {
       return "GlobalJmxStatisticsConfigurationBuilder [attributes=" + attributes + "]";
    }
-
 }

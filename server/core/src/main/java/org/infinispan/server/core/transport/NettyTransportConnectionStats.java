@@ -3,24 +3,19 @@ package org.infinispan.server.core.transport;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
+import javax.management.JMException;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import io.netty.channel.group.ChannelGroup;
@@ -45,7 +40,6 @@ class NettyTransportConnectionStats {
       if (isGlobalStatsEnabled)
          base.addAndGet(bytes);
    }
-
 
    public void incrementTotalBytesWritten(long bytes) {
       increment(totalBytesWritten, bytes);
@@ -99,16 +93,22 @@ class NettyTransportConnectionStats {
 
       @Override
       public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
-         GlobalJmxStatisticsConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(embeddedCacheManager).globalJmxStatistics();
-         String jmxDomain = globalCfg.domain();
-         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
+         CacheManagerJmxRegistration jmxRegistration = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager)
+               .getComponent(CacheManagerJmxRegistration.class);
          try {
-            ObjectName transportMBeanName = new ObjectName(
-                  jmxDomain + ":type=Server,component=Transport,name=" + serverName);
+            ObjectName transportNamePattern = new ObjectName(jmxRegistration.getDomain() + ":type=Server,component=Transport,name=*");
+            Set<ObjectName> objectNames = jmxRegistration.getMBeanServer().queryNames(transportNamePattern, null);
 
-            return (Integer) mbeanServer.getAttribute(transportMBeanName, "NumberOfLocalConnections");
-         } catch (MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException |
-               MalformedObjectNameException e) {
+            // sum the NumberOfLocalConnections from all transport MBeans that match the pattern
+            int total = 0;
+            for (ObjectName name : objectNames) {
+               if (name.getKeyProperty("name").startsWith(serverName)) {
+                  Integer connections = (Integer) jmxRegistration.getMBeanServer().getAttribute(name, "NumberOfLocalConnections");
+                  total += connections;
+               }
+            }
+            return total;
+         } catch (JMException e) {
             throw new RuntimeException(e);
          }
       }

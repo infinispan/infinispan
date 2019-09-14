@@ -573,7 +573,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Returns the number of sync cross-site requests",
          displayName = "Sync Cross-Site replication requests",
-         units = Units.NONE,
          displayType = DisplayType.SUMMARY)
    public long getSyncXSiteCount() {
       return isStatisticsEnabled() ? syncXSiteReplicationTime.count() : 0;
@@ -581,7 +580,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Returns the number of async cross-site requests",
          displayName = "Async Cross-Site replication requests",
-         units = Units.NONE,
          displayType = DisplayType.SUMMARY)
    public long getAsyncXSiteCount() {
       return isStatisticsEnabled() ? asyncXSiteCounter.sum() : 0;
@@ -613,7 +611,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Returns the number of async cross-site acknowledges received",
          displayName = "Async Cross-Site replication acks",
-         units = Units.NONE,
          displayType = DisplayType.SUMMARY)
    public long getAsyncXSiteAcksCount() {
       return isStatisticsEnabled() ? asyncXSiteReplicationTime.count() : 0;

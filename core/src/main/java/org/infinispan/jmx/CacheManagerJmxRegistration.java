@@ -8,13 +8,12 @@ import java.util.Set;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
@@ -27,29 +26,29 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@SurvivesRestarts
 @Scope(Scopes.GLOBAL)
+@SurvivesRestarts
 public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
 
    private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
 
-   public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
+   private static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
 
    private boolean needToUnregister = false;
-   private boolean stopped;
+   private boolean stopped = false;
    private Collection<ResourceDMBean> resourceDMBeans;
 
    /**
     * On start, the mbeans are registered.
     */
+   @Override
    public void start() {
-      initMBeanServer(globalConfig);
+      super.start();
 
       if (mBeanServer != null) {
-         Collection<ComponentRef<?>> components = basicComponentRegistry.getRegisteredComponents();
-         resourceDMBeans = Collections.synchronizedCollection(getResourceDMBeansFromComponents(components));
+         resourceDMBeans = Collections.synchronizedCollection(getResourceDMBeansFromComponents());
 
-         registrar.registerMBeans(resourceDMBeans);
+         internalRegister(resourceDMBeans);
          needToUnregister = true;
       }
       stopped = false;
@@ -61,9 +60,10 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    public void stop() {
       // This method might get called several times.
       if (stopped) return;
+
       if (needToUnregister) {
          try {
-            unregisterMBeans(resourceDMBeans);
+            internalUnregister(resourceDMBeans);
             needToUnregister = false;
          } catch (Exception e) {
             log.problemsUnregisteringMBeans(e);
@@ -73,61 +73,43 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    }
 
    @Override
-   protected ComponentsJmxRegistration buildRegistrar() {
-      // Quote group name, to handle invalid ObjectName characters
-      String groupName = CACHE_MANAGER_JMX_GROUP
-            + "," + ComponentsJmxRegistration.NAME_KEY
-            + "=" + ObjectName.quote(globalConfig.cacheManagerName());
+   protected String initGroup() {
+      return CACHE_MANAGER_JMX_GROUP + "," + NAME_KEY + "=" + ObjectName.quote(globalConfig.cacheManagerName());
+   }
 
-      if (jmxDomain == null) {
-         jmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
-         String configJmxDomain = globalConfig.globalJmxStatistics().domain();
-         if (!jmxDomain.equals(configJmxDomain) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
-            throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, configJmxDomain);
-         }
+   @Override
+   protected String initDomain() {
+      GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
+      String jmxDomain = JmxUtil.buildJmxDomain(globalJmxConfig.domain(), mBeanServer, getGroupName());
+      if (!globalJmxConfig.allowDuplicateDomains() && !jmxDomain.equals(globalJmxConfig.domain())) {
+         throw CONTAINER.jmxMBeanAlreadyRegistered(getGroupName(), globalJmxConfig.domain());
       }
-
-      return new ComponentsJmxRegistration(mBeanServer, jmxDomain, groupName);
+      return jmxDomain;
    }
 
    public void unregisterCacheMBean(String cacheName, String cacheModeString) {
+      // Unregisters cache and everything from same group
       if (mBeanServer != null) {
-         String groupName = CacheJmxRegistration.CACHE_JMX_GROUP + "," + getCacheJmxName(cacheName, cacheModeString) +
-               ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
-         String pattern = jmxDomain + ":" + groupName + ",*";
+         String nameFilter = getDomain() + ":" + CacheJmxRegistration.getCacheGroupName(cacheName, cacheModeString, globalConfig.cacheManagerName()) + ",*";
          try {
-            Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(pattern), null, mBeanServer);
+            Set<ObjectName> names = SecurityActions.queryNames(new ObjectName(nameFilter), null, mBeanServer);
             for (ObjectName name : names) {
-               JmxUtil.unregisterMBean(name, mBeanServer);
+               try {
+                  JmxUtil.unregisterMBean(name, mBeanServer);
+               } catch (MBeanRegistrationException e) {
+                  log.unableToUnregisterMBean(name.toString(), e);
+               } catch (InstanceNotFoundException e) {
+                  // Ignore if MBean not present
+               }
             }
-         } catch (MBeanRegistrationException e) {
-            log.unableToUnregisterMBeanWithPattern(pattern, e);
-         } catch (InstanceNotFoundException e) {
-            // Ignore if Cache MBeans not present
-         } catch (MalformedObjectNameException e) {
-            String message = "Malformed pattern " + pattern;
-            throw new CacheException(message, e);
          } catch (Exception e) {
             throw new CacheException(e);
          }
       }
    }
 
-   String getCacheJmxName(String cacheName, String cacheModeString) {
-      return ComponentsJmxRegistration.NAME_KEY + "=" + ObjectName.quote(cacheName + "(" + cacheModeString.toLowerCase() + ")");
-   }
-
-   public void registerMBean(Object managedComponent) {
-      ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
-      registrar.registerMBeans(Collections.singleton(resourceDMBean));
+   @Override
+   protected void trackRegisteredResourceDMBean(ResourceDMBean resourceDMBean) {
       resourceDMBeans.add(resourceDMBean);
-   }
-
-   public ObjectName registerExternalMBean(Object managedComponent, String jmxDomain, String groupName, String name) throws Exception {
-      ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, name);
-      String fullName = ComponentsJmxRegistration.getObjectName(jmxDomain, groupName, resourceDMBean.getObjectName());
-      ObjectName objectName = new ObjectName(fullName);
-      JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-      return objectName;
    }
 }

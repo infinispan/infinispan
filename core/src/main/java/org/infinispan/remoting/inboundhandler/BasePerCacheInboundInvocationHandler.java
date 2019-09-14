@@ -27,7 +27,6 @@ import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.jmx.annotations.Units;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -253,7 +252,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    @ManagedAttribute(description = "Returns the number of sync cross-site requests received by this node",
          displayName = "Sync Cross-Site Requests Received",
-         units = Units.NONE,
          displayType = DisplayType.SUMMARY)
    public long getSyncXSiteRequestsReceived() {
       return statisticsEnabled ? syncXsiteReceived.sum() : 0;
@@ -261,7 +259,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    @ManagedAttribute(description = "Returns the number of async cross-site requests received by this node",
          displayName = "Async Cross-Site Requests Received",
-         units = Units.NONE,
          displayType = DisplayType.SUMMARY)
    public long getAsyncXSiteRequestsReceived() {
       return statisticsEnabled ? asyncXsiteReceived.sum() : 0;

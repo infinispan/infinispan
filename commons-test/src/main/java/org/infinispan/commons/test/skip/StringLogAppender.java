@@ -21,7 +21,6 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
  * @author Tristan Tarrant
  * @since 9.2
  */
-
 public class StringLogAppender extends AbstractAppender {
 
    private final String category;
@@ -63,7 +62,10 @@ public class StringLogAppender extends AbstractAppender {
       }
    }
 
-   public String getLog(int i) {
-      return logs.get(i);
+   public String getLog(int index) {
+      if (index < 0 || index >= logs.size()) {
+         throw new IllegalArgumentException("Index " + index + " is out of bounds: [0.." + logs.size() + "]");
+      }
+      return logs.get(index);
    }
 }

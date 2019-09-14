@@ -9,14 +9,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.stats.impl.AbstractClusterStats;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-/**
- *
- */
 @Test(groups = "functional", testName = "jmx.ClusterCacheStatsMBeanTest")
 public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
 
@@ -26,7 +22,7 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
 
    public void testClusterStats() throws Exception {
       Cache<String, Serializable> cache1 = manager(0).getCache();
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName clusterStats = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "ClusterCacheStats");
 
       mBeanServer.setAttribute(clusterStats, new Attribute("StatisticsEnabled", false));

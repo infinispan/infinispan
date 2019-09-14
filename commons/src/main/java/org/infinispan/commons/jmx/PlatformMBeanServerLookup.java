@@ -20,5 +20,4 @@ public class PlatformMBeanServerLookup implements MBeanServerLookup {
    public MBeanServer getMBeanServer(Properties properties) {
       return ManagementFactory.getPlatformMBeanServer();
    }
-
 }

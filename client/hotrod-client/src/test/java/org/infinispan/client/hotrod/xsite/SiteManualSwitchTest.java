@@ -13,14 +13,15 @@ import javax.management.ObjectName;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.xsite.SiteManualSwitchTest")
 public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
-   RemoteCacheManager clientA;
-   RemoteCacheManager clientB;
+
+   private RemoteCacheManager clientA;
+
+   private RemoteCacheManager clientB;
 
    @Override
    protected void createSites() {
@@ -60,7 +61,7 @@ public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
       clientA = client(SITE_A, Optional.of(SITE_B));
       clientB = client(SITE_B, Optional.empty());
 
-      MBeanServer mbeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mbeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName objectName = remoteCacheManagerObjectName(clientA);
 
       RemoteCache<Integer, String> cacheA = clientA.getCache();
@@ -90,5 +91,4 @@ public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
       assertSiteNotHit(siteNotHit);
       resetHitCounters();
    }
-
 }

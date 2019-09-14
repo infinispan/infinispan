@@ -25,6 +25,8 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
@@ -34,7 +36,6 @@ import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.globalstate.GlobalConfigurationManager;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
@@ -48,6 +49,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "counter.jmx.CounterJmxTest")
 public class CounterJmxTest extends BaseCounterTest {
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    private static void assertCollection(Collection<String> expected, Collection<String> actual) {
       List<String> expectedList = new ArrayList<>(expected);
@@ -121,7 +124,7 @@ public class CounterJmxTest extends BaseCounterTest {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       builder.globalJmxStatistics()
             .enable()
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .mBeanServerLookup(mBeanServerLookup);
       return builder;
    }
 
@@ -234,7 +237,7 @@ public class CounterJmxTest extends BaseCounterTest {
    }
 
    private Collection<String> executeCountersOperation(int index) {
-      MBeanServer server = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer server = mBeanServerLookup.getMBeanServer();
       try {
          //noinspection unchecked
          return (Collection<String>) server.invoke(counterObjectName(index), "counters", new Object[0], new String[0]);
@@ -244,7 +247,7 @@ public class CounterJmxTest extends BaseCounterTest {
    }
 
    private <T> T executeCounterNameArgOperation(int index, String operationName, String arg) {
-      MBeanServer server = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer server = mBeanServerLookup.getMBeanServer();
       try {
          //noinspection unchecked
          return (T) server

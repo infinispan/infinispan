@@ -103,10 +103,7 @@ public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitB
 
       splitCluster(new int[]{0, 1, 2, 3}, new int[]{4, 5});
 
-      asList(lock0, lock1, lock2, lock3).forEach(lock -> {
-         assertTryLock(lock);
-
-      });
+      asList(lock0, lock1, lock2, lock3).forEach(this::assertTryLock);
 
       assertFailureFromMinorityPartition(lock4);
       assertFailureFromMinorityPartition(lock5);

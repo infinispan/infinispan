@@ -50,10 +50,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.management.JMException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.security.auth.Subject;
 import javax.transaction.Status;
@@ -64,7 +66,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -89,6 +90,8 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.jmx.CacheJmxRegistration;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
@@ -314,7 +317,6 @@ public class TestingUtil {
       }
    }
 
-
    public static Object extractField(Class type, Object target, String fieldName) {
       while (true) {
          Field field;
@@ -508,6 +510,7 @@ public class TestingUtil {
       }
       viewsTimedOut(cacheContainers);
    }
+
    private static void viewsTimedOut(CacheContainer[] cacheContainers) {
       int length = cacheContainers.length;
       List<View> incompleteViews = new ArrayList<>(length);
@@ -537,7 +540,6 @@ public class TestingUtil {
       viewsTimedOut(caches);
    }
 
-
    /**
     * Version of blockUntilViewsReceived that uses varargs
     */
@@ -560,11 +562,11 @@ public class TestingUtil {
    }
 
    /**
-    * Waits for the given memebrs to be removed from the cluster. The difference between this and {@link
+    * Waits for the given members to be removed from the cluster. The difference between this and {@link
     * #blockUntilViewsReceived(long, org.infinispan.manager.CacheContainer...)} methods(s) is that it does not barf if
-    * more than expected memebers is in the cluster - this is because we expect to start with a grater number fo
-    * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but only
-    * after the timeout expieres.
+    * more than expected members is in the cluster - this is because we expect to start with a grater number fo members
+    * than we eventually expect. It will barf though, if the number of members is not the one expected but only after
+    * the timeout expires.
     */
    public static void blockForMemberToFail(long timeout, CacheContainer... cacheContainers) {
       blockUntilViewsReceived(timeout, false, cacheContainers);
@@ -1371,10 +1373,6 @@ public class TestingUtil {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
 
-   public static String getMethodSpecificJmxDomain(Method m, String jmxDomain) {
-      return jmxDomain + '.' + m.getName();
-   }
-
    public static ObjectName getCacheManagerObjectName(String jmxDomain) {
       return getCacheManagerObjectName(jmxDomain, "DefaultCacheManager");
    }
@@ -1386,7 +1384,7 @@ public class TestingUtil {
    public static ObjectName getCacheManagerObjectName(String jmxDomain, String cacheManagerName, String component) {
       try {
          return new ObjectName(jmxDomain + ":type=CacheManager,name=" + ObjectName.quote(cacheManagerName) + ",component=" + component);
-      } catch (Exception e) {
+      } catch (MalformedObjectNameException e) {
          throw new RuntimeException(e);
       }
    }
@@ -1400,36 +1398,37 @@ public class TestingUtil {
    }
 
    public static ObjectName getCacheObjectName(String jmxDomain, String cacheName, String component, String cacheManagerName) {
+      if (!cacheName.contains("(") || !cacheName.endsWith(")")) {
+         throw new IllegalArgumentException("Cache name does not appear to include a cache mode suffix: " + cacheName);
+      }
       try {
          return new ObjectName(jmxDomain + ":type=Cache,manager=" + ObjectName.quote(cacheManagerName)
                + ",name=" + ObjectName.quote(cacheName) + ",component=" + component);
-      } catch (Exception e) {
+      } catch (MalformedObjectNameException e) {
          throw new RuntimeException(e);
       }
    }
 
-   public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) throws Exception {
-      return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
+   public static ObjectName getJGroupsChannelObjectName(String jmxDomain, String clusterName) {
+      try {
+         return new ObjectName(String.format("%s:type=channel,cluster=%s", jmxDomain, ObjectName.quote(clusterName)));
+      } catch (MalformedObjectNameException e) {
+         throw new RuntimeException(e);
+      }
    }
 
-   public static boolean existsObject(ObjectName objectName) {
-      return PerThreadMBeanServerLookup.getThreadMBeanServer().isRegistered(objectName);
-   }
-
-   public static boolean existsDomains(String... domains) {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      Set<String> domainSet = new HashSet<>(Arrays.asList(domains));
-      for (String domain : mBeanServer.getDomains()) {
-         if (domainSet.contains(domain)) return true;
+   public static boolean existsDomain(MBeanServer mBeanServer, String domain) {
+      for (String d : mBeanServer.getDomains()) {
+         if (domain.equals(d)) return true;
       }
       return false;
    }
 
-   public static void checkMBeanOperationParameterNaming(ObjectName objectName) throws Exception {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+   public static void checkMBeanOperationParameterNaming(MBeanServer mBeanServer, ObjectName objectName) throws JMException {
       MBeanInfo mBeanInfo = mBeanServer.getMBeanInfo(objectName);
-      for(MBeanOperationInfo op : mBeanInfo.getOperations()) {
-         for(MBeanParameterInfo param : op.getSignature()) {
+      for (MBeanOperationInfo op : mBeanInfo.getOperations()) {
+         for (MBeanParameterInfo param : op.getSignature()) {
+            // assert that all operation parameters have a proper name (not an autogenerated p0, p1, ...
             assertFalse(param.getName().matches("p[0-9]+"));
          }
       }
@@ -1593,6 +1592,7 @@ public class TestingUtil {
       return new EmbeddedMetadata.Builder().lifespan(lifespan != null ? lifespan : -1)
             .maxIdle(maxIdle != null ? maxIdle : -1).build();
    }
+
    public static Metadata metadata(Integer lifespan, Integer maxIdle) {
       return new EmbeddedMetadata.Builder().lifespan(lifespan != null ? lifespan : -1)
             .maxIdle(maxIdle != null ? maxIdle : -1).build();
@@ -1700,6 +1700,14 @@ public class TestingUtil {
       if (actual < lowerBound || upperBound < actual) {
          fail("Expected between:<" + lowerBound + "> and:<" + upperBound + "> but was:<" + actual + ">");
       }
+   }
+
+   public static MBeanServer getMBeanServer(Cache<?, ?> cache) {
+      return extractComponent(cache, CacheJmxRegistration.class).getMBeanServer();
+   }
+
+   public static MBeanServer getMBeanServer(EmbeddedCacheManager cacheManager) {
+      return extractGlobalComponent(cacheManager, CacheManagerJmxRegistration.class).getMBeanServer();
    }
 
    public static class TestPrincipal implements Principal, Serializable {

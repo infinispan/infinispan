@@ -21,7 +21,7 @@ class CacheContainerConfiguration implements ConfigurationInfo {
 
    static final AttributeDefinition<String> DEFAULT_CACHE = AttributeDefinition.builder("defaultCache", null, String.class).immutable().build();
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "DefaultCacheManager").immutable().build();
-   public static final AttributeDefinition<Boolean> STATISTICS = AttributeDefinition.builder("statistics", false).immutable().build();
+   static final AttributeDefinition<Boolean> STATISTICS = AttributeDefinition.builder("statistics", false).immutable().build();
    static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zeroCapacityNode", Boolean.FALSE).immutable().build();
    static final AttributeDefinition<String> ASYNC_EXECUTOR = AttributeDefinition.builder("asyncExecutor", "async-pool", String.class).immutable().build();
    static final AttributeDefinition<String> LISTENER_EXECUTOR = AttributeDefinition.builder("listenerExecutor", "listener-pool", String.class).immutable().build();
@@ -33,7 +33,7 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return new AttributeSet(CacheContainerConfiguration.class, NAME, STATISTICS, ZERO_CAPACITY_NODE, DEFAULT_CACHE, ASYNC_EXECUTOR, LISTENER_EXECUTOR, EXPIRATION_EXECUTOR, PERSISTENCE_EXECUTOR, STATE_TRANSFER_EXECUTOR);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.CACHE_CONTAINER.getLocalName());
+   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.CACHE_CONTAINER.getLocalName());
 
    private final Attribute<String> defaultCache;
    private final Attribute<String> name;
@@ -146,28 +146,12 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
    }
 
-
    public GlobalStateConfiguration globalState() {
       return globalState;
    }
 
    public boolean isClustered() {
       return transport().transport() != null;
-   }
-
-   @Override
-   public String toString() {
-      return "CacheContainerConfiguration{" +
-            "zeroCapacityAvailable=" + zeroCapacityAvailable +
-            ", threads=" + threads +
-            ", globalJmxStatistics=" + globalJmxStatistics +
-            ", transport=" + transport +
-            ", security=" + security +
-            ", serialization=" + serialization +
-            ", globalState=" + globalState +
-            ", shutdown=" + shutdown +
-            ", attributes=" + attributes +
-            '}';
    }
 
    public ThreadsConfiguration threads() {
@@ -192,5 +176,20 @@ class CacheContainerConfiguration implements ConfigurationInfo {
 
    public ThreadPoolConfiguration asyncThreadPool() {
       return threads.asyncThreadPool();
+   }
+
+   @Override
+   public String toString() {
+      return "CacheContainerConfiguration{" +
+            "zeroCapacityAvailable=" + zeroCapacityAvailable +
+            ", threads=" + threads +
+            ", globalJmxStatistics=" + globalJmxStatistics +
+            ", transport=" + transport +
+            ", security=" + security +
+            ", serialization=" + serialization +
+            ", globalState=" + globalState +
+            ", shutdown=" + shutdown +
+            ", attributes=" + attributes +
+            '}';
    }
 }

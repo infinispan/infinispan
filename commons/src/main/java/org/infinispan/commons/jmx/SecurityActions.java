@@ -20,8 +20,9 @@ import javax.management.QueryExp;
  * @since 9.4
  */
 final class SecurityActions {
+
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      return (System.getSecurityManager() != null) ? AccessController.doPrivileged(action) : action.run();
+      return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
    }
 
    private static void doPrivileged(PrivilegedExceptionAction<Void> action) throws Exception {

@@ -8,6 +8,14 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.CLASS)
 public @interface Parameter {
+
+   /**
+    * Operation parameter name.
+    */
    String name() default "";
+
+   /**
+    * Operation parameter description.
+    */
    String description() default "";
 }

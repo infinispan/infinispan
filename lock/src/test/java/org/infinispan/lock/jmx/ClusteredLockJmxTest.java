@@ -13,8 +13,9 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lock.BaseClusteredLockTest;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
@@ -33,9 +34,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "clusteredLock.jmx.ClusteredLockJmxTest")
 public class ClusteredLockJmxTest extends BaseClusteredLockTest {
 
-   private static final String LOCK_NAME = "ClusteredLockJmxTest";
+   private static final String LOCK_NAME = ClusteredLockJmxTest.class.getSimpleName();
 
-   public void testForceRelease() throws Exception {
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+
+   public void testForceRelease() {
       ClusteredLockManager clm = clusteredLockManager(0);
       assertTrue(clusteredLockManager(0).defineLock(LOCK_NAME));
       ClusteredLock lock = clm.get(LOCK_NAME);
@@ -46,7 +49,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
       assertFalse(await(lock.isLocked()));
    }
 
-   public void testRemove() throws Exception {
+   public void testRemove() {
       ClusteredLockManager clm = clusteredLockManager(0);
       assertTrue(clm.defineLock(LOCK_NAME));
       assertFalse(clm.defineLock(LOCK_NAME));
@@ -59,7 +62,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
       assertTrue(clm.defineLock(LOCK_NAME));
    }
 
-   public void testIsDefined() throws Exception {
+   public void testIsDefined() {
       assertFalse(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_DEFINED, LOCK_NAME));
 
       assertTrue(clusteredLockManager(0).defineLock(LOCK_NAME));
@@ -67,7 +70,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
       assertTrue(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_DEFINED, LOCK_NAME));
    }
 
-   public void testIsLocked() throws Exception {
+   public void testIsLocked() {
       assertFalse(executeClusteredLockNameArgOperation(0, EmbeddedClusteredLockManager.IS_LOCKED, LOCK_NAME));
 
       ClusteredLockManager clm = clusteredLockManager(0);
@@ -98,7 +101,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       builder.globalJmxStatistics()
             .enable()
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .mBeanServerLookup(mBeanServerLookup);
       return builder;
    }
 
@@ -107,7 +110,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
    }
 
    private <T> T executeClusteredLockNameArgOperation(int index, String operationName, String arg) {
-      MBeanServer server = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer server = mBeanServerLookup.getMBeanServer();
       try {
          //noinspection unchecked
          return (T) server

@@ -12,7 +12,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -74,7 +73,6 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    @ManagedAttribute(description = "The maximum amount of free memory in bytes across the cluster JVMs",
          displayName = "Cluster wide available memory.",
-         measurementType = MeasurementType.DYNAMIC,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getMemoryAvailable() {
@@ -83,7 +81,6 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    @ManagedAttribute(description = "The maximum amount of memory that JVMs across the cluster will attempt to utilise in bytes",
          displayName = "Cluster wide max memory of JVMs",
-         measurementType = MeasurementType.DYNAMIC,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getMemoryMax() {
@@ -92,7 +89,6 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    @ManagedAttribute(description = "The total amount of memory in the JVMs across the cluster in bytes",
          displayName = "Cluster wide total memory",
-         measurementType = MeasurementType.DYNAMIC,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getMemoryTotal() {
@@ -101,7 +97,6 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    @ManagedAttribute(description = "The amount of memory used by JVMs across the cluster in bytes",
          displayName = "Cluster wide memory utilisation",
-         measurementType = MeasurementType.DYNAMIC,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getMemoryUsed() {

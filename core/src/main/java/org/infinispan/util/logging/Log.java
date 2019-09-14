@@ -196,8 +196,8 @@ public interface Log extends BasicLogger {
    void problemsUnregisteringMBeans(@Cause Exception e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to unregister Cache MBeans with pattern %s", id = 33)
-   void unableToUnregisterMBeanWithPattern(String pattern, @Cause Throwable e);
+   @Message(value = "Unable to unregister MBean %s", id = 33)
+   void unableToUnregisterMBean(String name, @Cause Exception e);
 
    @Message(value = "There's already a JMX MBean instance %s already registered under " +
          "'%s' JMX domain. If you want to allow multiple instances configured " +

@@ -17,7 +17,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -37,7 +38,9 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    static String SITE_B = "NYC-2";
    static int NODES_PER_SITE = 2;
 
-   Map<String, List<HotRodServer>> siteServers = new HashMap<>();
+   protected final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+
+   private Map<String, List<HotRodServer>> siteServers = new HashMap<>();
 
    RemoteCacheManager client(String siteName, Optional<String> backupSiteName) {
       HotRodServer server = siteServers.get(siteName).get(0);
@@ -51,7 +54,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       clientBuilder
          .addServer().host("127.0.0.1").port(server.getPort())
          .maxRetries(3); // Some retries so that shutdown nodes can be skipped
-      clientBuilder.statistics().jmxEnable().jmxName(backupSiteName.orElse("default")).mBeanServerLookup(new PerThreadMBeanServerLookup());
+      clientBuilder.statistics().jmxEnable().jmxName(backupSiteName.orElse("default")).mBeanServerLookup(mBeanServerLookup);
       clientBuilder.asyncExecutorFactory().addExecutorProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX, TestResourceTracker.getCurrentTestShortName());
 
       Optional<Integer> backupPort = backupSiteName.map(name -> {
@@ -167,5 +170,4 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    protected HitCountInterceptor getHitCountInterceptor(Cache<?, ?> cache) {
       return cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(HitCountInterceptor.class);
    }
-
 }

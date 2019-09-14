@@ -4,10 +4,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.Units;
 
 /**
  * CacheConfigurationMBeanImpl.
@@ -23,8 +21,7 @@ public class CacheConfigurationMBean {
 
    @ManagedAttribute(description = "Gets the eviction size for the cache",
          displayName = "Gets the eviction size for the cache",
-         units = Units.NONE,
-         displayType = DisplayType.DETAIL, writable = true)
+         writable = true)
    public long getEvictionSize() {
       return configuration.memory().size();
    }

@@ -9,7 +9,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -20,29 +21,27 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
-/**
- *
- */
 @Test(groups = "functional", testName = "jmx.CacheContainerStatsMBeanTest")
 public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
+
    private final String cachename = CacheContainerStatsMBeanTest.class.getName();
    private final String cachename2 = cachename + "2";
-   public static final String JMX_DOMAIN = CacheContainerStatsMBeanTest.class.getSimpleName();
-   public static final String JMX_DOMAIN2 = JMX_DOMAIN + "2";
+   private static final String JMX_DOMAIN = CacheContainerStatsMBeanTest.class.getSimpleName();
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb1.globalJmxStatistics().enable().jmxDomain(JMX_DOMAIN)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .mBeanServerLookup(mBeanServerLookup);
       CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
             new TransportFlags(), true);
       cacheManager1.start();
 
       GlobalConfigurationBuilder gcb2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb2.globalJmxStatistics().enable().jmxDomain(JMX_DOMAIN)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .mBeanServerLookup(mBeanServerLookup);
       CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(gcb2, defaultConfig,
             new TransportFlags(), true);
       cacheManager2.start();
@@ -58,7 +57,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
 
    public void testClusterStats() throws Exception {
       Cache<String, Serializable> cache1 = manager(0).getCache(cachename);
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName nodeStats = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager",
             CacheContainerStats.OBJECT_NAME);
       mBeanServer.setAttribute(nodeStats, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -91,7 +90,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
 
 
    public void testClusterStatsDisabled() throws Exception {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName nodeStats = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager",
             CacheContainerStats.OBJECT_NAME);
       mBeanServer.setAttribute(nodeStats, new Attribute("StatisticsEnabled", Boolean.FALSE));

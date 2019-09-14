@@ -26,7 +26,8 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -58,20 +59,21 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
    private static final String TEST_CACHE_NAME = "userCache";
 
-   private final String jmxDomain = getClass().getSimpleName();
+   private static final String JMX_DOMAIN = RemoteQueryJmxTest.class.getSimpleName();
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
 
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, User> remoteCache;
-   private MBeanServer mBeanServer;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
       gcb.globalJmxStatistics()
             .enable()
-            .jmxDomain(jmxDomain)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .jmxDomain(JMX_DOMAIN)
+            .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -91,8 +93,6 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
-
-      mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, getProtobufMetadataManagerObjectName(), ProtobufMetadataManagerMBean.class);
       String protofile = Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
@@ -164,13 +164,13 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
    private ObjectName getQueryStatsObjectName(String cacheName) throws MalformedObjectNameException {
       String cacheManagerName = cacheManager.getCacheManagerConfiguration().cacheManagerName();
-      return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
+      return new ObjectName(JMX_DOMAIN + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
             + ",cache=" + ObjectName.quote(cacheName) + ",component=Statistics");
    }
 
    private ObjectName getProtobufMetadataManagerObjectName() throws MalformedObjectNameException {
       String cacheManagerName = cacheManager.getCacheManagerConfiguration().cacheManagerName();
-      return new ObjectName(jmxDomain + ":type=RemoteQuery,name="
+      return new ObjectName(JMX_DOMAIN + ":type=RemoteQuery,name="
             + ObjectName.quote(cacheManagerName)
             + ",component=" + ProtobufMetadataManagerMBean.OBJECT_NAME);
    }

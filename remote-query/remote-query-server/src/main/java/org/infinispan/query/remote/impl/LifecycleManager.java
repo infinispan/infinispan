@@ -6,27 +6,23 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 
 import java.util.Map;
 
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
-import org.infinispan.factories.impl.MBeanMetadata;
-import org.infinispan.jmx.ResourceDMBean;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -58,11 +54,6 @@ import org.infinispan.server.core.dataconversion.ProtostreamTranscoder;
 public final class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
-
-   /**
-    * Caching the looked-up MBeanServer for the lifetime of the cache manager is safe.
-    */
-   private MBeanServer mbeanServer;
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
@@ -116,43 +107,16 @@ public final class LifecycleManager implements ModuleLifecycle {
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManagerImpl protobufMetadataManager,
                                                      GlobalConfiguration globalConfig, BasicComponentRegistry bcr) {
-      GlobalJmxStatisticsConfiguration jmxConfig = globalConfig.globalJmxStatistics();
-      if (mbeanServer == null) {
-         mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-      }
-
-      String groupName = "type=RemoteQuery,name=" + ObjectName.quote(globalConfig.cacheManagerName());
-      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
-      MBeanMetadata metadata = bcr.getMBeanMetadata(ProtobufMetadataManagerImpl.class.getName());
-
+      CacheManagerJmxRegistration jmxRegistration = bcr.getComponent(CacheManagerJmxRegistration.class).running();
       try {
-         ResourceDMBean mBean = new ResourceDMBean(protobufMetadataManager, metadata, null);
-         ObjectName objName = new ObjectName(jmxDomain + ":" + groupName + ",component=" + metadata.getJmxObjectName());
-         protobufMetadataManager.setObjectName(objName);
-         JmxUtil.registerMBean(mBean, objName, mbeanServer);
+         jmxRegistration.registerMBean(protobufMetadataManager, getRemoteQueryGroupName(globalConfig));
       } catch (Exception e) {
          throw new CacheException("Unable to register ProtobufMetadataManager MBean", e);
       }
    }
 
-   @Override
-   public void cacheManagerStopping(GlobalComponentRegistry gcr) {
-      if (gcr.getGlobalConfiguration().globalJmxStatistics().enabled()) {
-         unregisterProtobufMetadataManagerMBean(gcr);
-      }
-   }
-
-   private void unregisterProtobufMetadataManagerMBean(GlobalComponentRegistry gcr) {
-      if (mbeanServer != null) {
-         try {
-            ProtobufMetadataManager protobufMetadataManager = gcr.getComponent(ProtobufMetadataManager.class);
-            if (protobufMetadataManager != null) {
-               JmxUtil.unregisterMBean(protobufMetadataManager.getObjectName(), mbeanServer);
-            }
-         } catch (Exception e) {
-            throw new CacheException("Unable to unregister ProtobufMetadataManager MBean", e);
-         }
-      }
+   private String getRemoteQueryGroupName(GlobalConfiguration globalConfig) {
+      return "type=RemoteQuery,name=" + ObjectName.quote(globalConfig.cacheManagerName());
    }
 
    /**
@@ -223,10 +187,5 @@ public final class LifecycleManager implements ModuleLifecycle {
             queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx).get());
          }
       }
-   }
-
-   @Override
-   public void cacheManagerStopped(GlobalComponentRegistry gcr) {
-      mbeanServer = null;
    }
 }

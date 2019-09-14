@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.management.MBeanException;
-import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -67,8 +66,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    private final SerializationContext serCtx;
 
    private volatile Cache<String, String> protobufSchemaCache;
-
-   private ObjectName objectName;
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -176,15 +173,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
       }
       return cfg;
-   }
-
-   @Override
-   public ObjectName getObjectName() {
-      return objectName;
-   }
-
-   void setObjectName(ObjectName objectName) {
-      this.objectName = objectName;
    }
 
    @Override

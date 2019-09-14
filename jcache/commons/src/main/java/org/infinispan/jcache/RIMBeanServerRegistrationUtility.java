@@ -19,8 +19,7 @@ public final class RIMBeanServerRegistrationUtility {
    /**
     * The type of registered Object
     */
-   //TODO: was package-level initially
-   public enum ObjectNameType {
+   enum ObjectNameType {
 
       /**
        * Cache Statistics
@@ -39,7 +38,6 @@ public final class RIMBeanServerRegistrationUtility {
       }
    }
 
-
    private RIMBeanServerRegistrationUtility() {
       //prevent construction
    }
@@ -50,8 +48,7 @@ public final class RIMBeanServerRegistrationUtility {
     *
     * @param cache the cache to register
     */
-   //TODO: was package-level originally
-   public static <K, V> void registerCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
+   static <K, V> void registerCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
       //these can change during runtime, so always look it up
       MBeanServer mBeanServer = cache.getMBeanServer();
       if (mBeanServer != null) {
@@ -79,14 +76,11 @@ public final class RIMBeanServerRegistrationUtility {
     * @throws javax.cache.CacheException - all exceptions are wrapped in
     *                                    CacheException
     */
-   static <K, V> boolean isRegistered(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
-      Set<ObjectName> registeredObjectNames;
+   private static <K, V> boolean isRegistered(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
       MBeanServer mBeanServer = cache.getMBeanServer();
-
       if (mBeanServer != null) {
          ObjectName objectName = calculateObjectName(cache, objectNameType);
-         registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
-
+         Set<ObjectName> registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
          return !registeredObjectNames.isEmpty();
       } else {
          return false;
@@ -99,14 +93,11 @@ public final class RIMBeanServerRegistrationUtility {
     * @throws javax.cache.CacheException - all exceptions are wrapped in
     *                                    CacheException
     */
-   //TODO: was package-level initially
-   public static <K, V> void unregisterCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
-      Set<ObjectName> registeredObjectNames;
+   static <K, V> void unregisterCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
       MBeanServer mBeanServer = cache.getMBeanServer();
-
       if (mBeanServer != null) {
          ObjectName objectName = calculateObjectName(cache, objectNameType);
-         registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
+         Set<ObjectName> registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
 
          //should just be one
          for (ObjectName registeredObjectName : registeredObjectNames) {

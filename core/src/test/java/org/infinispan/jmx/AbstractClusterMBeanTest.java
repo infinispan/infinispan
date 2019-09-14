@@ -3,7 +3,8 @@ package org.infinispan.jmx;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -21,6 +22,8 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
 
    final String jmxDomain;
    final String jmxDomain2;
+
+   protected final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    AbstractClusterMBeanTest(String clusterName) {
       this.jmxDomain = clusterName;
@@ -42,7 +45,7 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
    private CacheContainer createManager(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb1.globalJmxStatistics().enable().jmxDomain(jmxDomain)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .mBeanServerLookup(mBeanServerLookup);
       gcb1.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       CacheContainer cacheManager = TestCacheManagerFactory.createClusteredCacheManager(gcb1, builder,
             new TransportFlags(), true);

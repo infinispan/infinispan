@@ -76,7 +76,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -542,7 +541,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          displayName = "Number of cache store loads",
          measurementType = MeasurementType.TRENDSUP
    )
-   @SuppressWarnings("unused")
    public long getCacheLoaderLoads() {
       return cacheLoads.get();
    }
@@ -552,7 +550,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          displayName = "Number of cache store load misses",
          measurementType = MeasurementType.TRENDSUP
    )
-   @SuppressWarnings("unused")
    public long getCacheLoaderMisses() {
       return cacheMisses.get();
    }
@@ -563,13 +560,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       cacheMisses.set(0);
    }
 
-   @ManagedAttribute(
-         description = "Returns a collection of cache loader types which are configured and enabled",
-         displayName = "Returns a collection of cache loader types which are configured and enabled",
-         displayType = DisplayType.DETAIL)
    /**
     * This method returns a collection of cache loader types (fully qualified class names) that are configured and enabled.
     */
+   @ManagedAttribute(
+         description = "Returns a collection of cache loader types which are configured and enabled",
+         displayName = "Returns a collection of cache loader types which are configured and enabled")
    public Collection<String> getStores() {
       if (cacheConfiguration.persistence().usingStores()) {
          return persistenceManager.getStoresAsString();
@@ -578,11 +574,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       }
    }
 
-   @ManagedOperation(
-         description = "Disable all stores of a given type, where type is a fully qualified class name of the cache loader to disable",
-         displayName = "Disable all stores of a given type"
-   )
-   @SuppressWarnings("unused")
    /**
     * Disables a store of a given type.
     *
@@ -591,6 +582,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
     *
     * @param storeType fully qualified class name of the cache loader type to disable
     */
+   @ManagedOperation(
+         description = "Disable all stores of a given type, where type is a fully qualified class name of the cache loader to disable",
+         displayName = "Disable all stores of a given type"
+   )
    public void disableStore(@Parameter(name = "storeType", description = "Fully qualified class name of a store implementation") String storeType) {
       persistenceManager.disableStore(storeType);
    }
@@ -706,7 +701,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          Flowable<MarshallableEntry<K, V>> flowable = Flowable.fromPublisher(persistenceManager.publishEntries(
                k -> !seenKeys.contains(k), true, true, PersistenceManager.AccessMode.BOTH));
          Publisher<CacheEntry<K, V>> publisher = flowable
-               .map(me -> (CacheEntry<K, V>) PersistenceUtil.convert(me, iceFactory));
+               .map(me -> PersistenceUtil.convert(me, iceFactory));
          // This way we don't subscribe to the flowable until after the first iterator is fully exhausted
          return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(publisher, 128));
       }

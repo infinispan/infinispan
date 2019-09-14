@@ -264,9 +264,9 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         builder.stateTransferThreadPool().read(this.stateTransferThreadPool.getValue());
         builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
 
-        builder.globalJmxStatistics()
+        builder.cacheManagerName(this.name)
+                .globalJmxStatistics()
                 .enabled(this.statisticsEnabled)
-                .cacheManagerName(this.name)
                 .mBeanServerLookup(new MBeanServerProvider(this.server.getValue()))
                 .jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName());
 
