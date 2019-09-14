@@ -10,7 +10,8 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -25,6 +26,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "jmx.CacheAvailabilityJmxTest")
 public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -45,13 +48,13 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.globalJmxStatistics()
             .enable()
-            .mBeanServerLookup(new PerThreadMBeanServerLookup())
+            .mBeanServerLookup(mBeanServerLookup)
          .transport().rackId(rackId);
       return gcb;
    }
 
    public void testAvailabilityChange() throws Exception {
-      final MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       final String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
       String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
       final ObjectName cacheName0 = TestingUtil.getCacheObjectName(domain0, cacheName + "(dist_sync)");
@@ -70,13 +73,10 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       // Enter degraded mode
       log.debugf("Entering degraded mode");
       mBeanServer.setAttribute(cacheName0, new Attribute("CacheAvailability", "DEGRADED_MODE"));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            Object availability0 = mBeanServer.getAttribute(cacheName0, "CacheAvailability");
-            Object availability1 = mBeanServer.getAttribute(cacheName1, "CacheAvailability");
-            return "DEGRADED_MODE".equals(availability0) && "DEGRADED_MODE".equals(availability1);
-         }
+      eventually(() -> {
+         Object availability0 = mBeanServer.getAttribute(cacheName0, "CacheAvailability");
+         Object availability1 = mBeanServer.getAttribute(cacheName1, "CacheAvailability");
+         return "DEGRADED_MODE".equals(availability0) && "DEGRADED_MODE".equals(availability1);
       });
 
       // Add 2 nodes
@@ -97,13 +97,10 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       // Enter available mode
       log.debugf("Back to available mode");
       mBeanServer.setAttribute(cacheName0, new Attribute("CacheAvailability", "AVAILABLE"));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            Object availability0 = mBeanServer.getAttribute(cacheName0, "CacheAvailability");
-            Object availability1 = mBeanServer.getAttribute(cacheName1, "CacheAvailability");
-            return "AVAILABLE".equals(availability0) && "AVAILABLE".equals(availability1);
-         }
+      eventually(() -> {
+         Object availability0 = mBeanServer.getAttribute(cacheName0, "CacheAvailability");
+         Object availability1 = mBeanServer.getAttribute(cacheName1, "CacheAvailability");
+         return "AVAILABLE".equals(availability0) && "AVAILABLE".equals(availability1);
       });
 
       // Check that the cache now has 4 nodes, and the CH is balanced

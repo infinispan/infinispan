@@ -10,7 +10,7 @@ import java.util.UUID;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
@@ -370,7 +370,7 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean allowDuplicateDomains) {
-      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), new PerThreadMBeanServerLookup());
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), MBeanServerLookupProvider.create());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
@@ -382,13 +382,13 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
-      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false, globalBuilder, builder, new PerThreadMBeanServerLookup());
+      return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false, globalBuilder, builder, MBeanServerLookupProvider.create());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
          String jmxDomain, boolean exposeGlobalJmx, boolean allowDuplicateDomains, ConfigurationBuilder builder) {
       return createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain,
-            exposeGlobalJmx, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, new PerThreadMBeanServerLookup());
+            exposeGlobalJmx, allowDuplicateDomains, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, MBeanServerLookupProvider.create());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(
@@ -396,13 +396,14 @@ public class TestCacheManagerFactory {
          MBeanServerLookup mBeanServerLookup) {
 
       amendGlobalConfiguration(globalBuilder, new TransportFlags());
-      globalBuilder.globalJmxStatistics()
+      globalBuilder
+            .cacheContainer().statistics(exposeGlobalJmx)
+            .globalJmxStatistics()
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(mBeanServerLookup)
-            .allowDuplicateDomains(allowDuplicateDomains)
-            .enabled(exposeGlobalJmx);
+            .allowDuplicateDomains(allowDuplicateDomains);
       if (cacheManagerName != null) {
-         globalBuilder.globalJmxStatistics().cacheManagerName(cacheManagerName);
+         globalBuilder.cacheManagerName(cacheManagerName);
       }
       return createClusteredCacheManager(globalBuilder, builder, new TransportFlags(), true);
    }
@@ -420,13 +421,13 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx, boolean allowDuplicates) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       globalConfiguration
+            .cacheContainer().statistics(exposeGlobalJmx)
             .globalJmxStatistics()
             .allowDuplicateDomains(allowDuplicates)
             .jmxDomain(jmxDomain)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup())
-            .enabled(exposeGlobalJmx);
+            .mBeanServerLookup(MBeanServerLookupProvider.create());
       if (cacheManagerName != null)
-         globalConfiguration.globalJmxStatistics().cacheManagerName(cacheManagerName);
+         globalConfiguration.cacheManagerName(cacheManagerName);
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.jmxStatistics().enabled(exposeCacheJmx);
       return createCacheManager(globalConfiguration, configuration, true);

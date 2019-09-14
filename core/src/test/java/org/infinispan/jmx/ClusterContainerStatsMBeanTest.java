@@ -5,7 +5,6 @@ import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.ClusterContainerStatsMBeanTest")
@@ -16,7 +15,7 @@ public class ClusterContainerStatsMBeanTest extends AbstractClusterMBeanTest {
    }
 
    public void testContainerStats() throws Exception {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName clusterStats = getCacheManagerObjectName(jmxDomain, "DefaultCacheManager", "ClusterContainerStats");
 
       assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "MemoryAvailable", 1);

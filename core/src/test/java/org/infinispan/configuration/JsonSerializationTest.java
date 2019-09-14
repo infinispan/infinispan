@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.JsonReader;
@@ -31,6 +30,7 @@ import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -396,7 +396,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
 
    @Test
    public void testWithDefaultCache() throws IOException {
-      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalJmxStatistics()
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder()
             .cacheManagerName("my-cm").defaultCacheName("default-one").build();
       String json = jsonWriter.toJSON(globalConfiguration);
 

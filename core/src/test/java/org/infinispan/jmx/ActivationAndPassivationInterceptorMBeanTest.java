@@ -17,7 +17,8 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -42,15 +43,16 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
    private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getSimpleName();
 
-   AdvancedLoadWriteStore loader;
-   MBeanServer threadMBeanServer;
-   ObjectName activationInterceptorObjName;
-   ObjectName passivationInterceptorObjName;
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+
+   private AdvancedLoadWriteStore loader;
+   private ObjectName activationInterceptorObjName;
+   private ObjectName passivationInterceptorObjName;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.globalJmxStatistics()
-            .mBeanServerLookup(new PerThreadMBeanServerLookup())
+            .mBeanServerLookup(mBeanServerLookup)
             .jmxDomain(JMX_DOMAIN)
             .enable();
 
@@ -60,10 +62,6 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
             .persistence()
                .passivation(true)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);
-
-      // Do not initialize this in instance declaration since a different
-      // thread will be used when running from maven, breaking the thread local
-      threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
       return TestCacheManagerFactory.createCacheManager(globalBuilder, builder, true);
    }
@@ -80,21 +78,23 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
    @AfterMethod
    public void resetStats() throws Exception {
-      threadMBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
-      threadMBeanServer.invoke(passivationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+      mBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+      mBeanServer.invoke(passivationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
    }
 
    public void passivateAll() throws Exception {
-      threadMBeanServer.invoke(passivationInterceptorObjName, "passivateAll", new Object[0], new String[0]);
+      mBeanServerLookup.getMBeanServer().invoke(passivationInterceptorObjName, "passivateAll", new Object[0], new String[0]);
    }
 
    public void testDisableStatistics() throws Exception {
-      threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.FALSE));
-      assert threadMBeanServer.getAttribute(activationInterceptorObjName, "Activations").toString().equals("N/A");
-      threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+      mBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.FALSE));
+      assert mBeanServer.getAttribute(activationInterceptorObjName, "Activations").toString().equals("N/A");
+      mBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
-   public void testActivationOnGet(Method m) throws Exception {
+   public void testActivationOnGet(Method m) {
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
@@ -105,7 +105,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assert !loader.contains(k(m));
    }
 
-   public void testActivationOnPut(Method m) throws Exception {
+   public void testActivationOnPut(Method m) {
       assertActivationCount(0);
       assert cache.get(k(m)) == null;
       assertActivationCount(0);
@@ -117,7 +117,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assert !loader.contains(k(m)) : "this should only be persisted on evict";
    }
 
-   public void testActivationOnReplace(Method m) throws Exception {
+   public void testActivationOnReplace(Method m) {
       assertActivationCount(0);
       assertNull(cache.get(k(m)));
       assertActivationCount(0);
@@ -131,14 +131,14 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertFalse(loader.contains(k(m)));
    }
 
-   public void testActivationOnPutMap(Method m) throws Exception {
+   public void testActivationOnPutMap(Method m) {
       assertActivationCount(0);
       assertNull(cache.get(k(m)));
       assertActivationCount(0);
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assertTrue(loader.contains(k(m)));
 
-      Map<String, String> toAdd = new HashMap<String, String>();
+      Map<String, String> toAdd = new HashMap<>();
       toAdd.put(k(m), v(m, 2));
       cache.putAll(toAdd);
       assertActivationCount(1);
@@ -169,21 +169,20 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertPassivationCount(9);
    }
 
-   private void assertActivationCount(int activationCount) throws Exception {
+   private void assertActivationCount(long activationCount) {
       eventuallyEquals(activationCount, () -> {
          try {
-            return Integer.valueOf(threadMBeanServer.getAttribute(
-                  activationInterceptorObjName, "Activations").toString());
+            return Long.parseLong(mBeanServerLookup.getMBeanServer()
+                  .getAttribute(activationInterceptorObjName, "Activations").toString());
          } catch (Exception e) {
             throw Util.rewrapAsCacheException(e);
          }
       });
    }
 
-   private void assertPassivationCount(int activationCount) throws Exception {
-      Object passivations = threadMBeanServer.getAttribute(
-            passivationInterceptorObjName, "Passivations");
-      assertEquals(activationCount,
-            Integer.valueOf(passivations.toString()).intValue());
+   private void assertPassivationCount(long activationCount) throws Exception {
+      long passivations = Long.parseLong(mBeanServerLookup.getMBeanServer()
+            .getAttribute(passivationInterceptorObjName, "Passivations").toString());
+      assertEquals(activationCount, passivations);
    }
 }

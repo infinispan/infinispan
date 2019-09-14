@@ -5,17 +5,18 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -31,12 +32,14 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test (groups = "functional", testName = "tx.recovery.admin.SimpleCacheRecoveryAdminTest")
+@Test(groups = "functional", testName = "tx.recovery.admin.SimpleCacheRecoveryAdminTest")
 @CleanupAfterMethod
 public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
-   private MBeanServer threadMBeanServer;
    private static final String JMX_DOMAIN = "tx.recovery.admin.LocalCacheRecoveryAdminTest";
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+
    private EmbeddedTransaction tx1;
 
    @Override
@@ -60,11 +63,9 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
       TestingUtil.waitForNoRebalance(caches("test"));
 
-      threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-
-      assert showInDoubtTransactions(0).isEmpty();
-      assert showInDoubtTransactions(1).isEmpty();
-      assert showInDoubtTransactions(2).isEmpty();
+      assertTrue(showInDoubtTransactions(0).isEmpty());
+      assertTrue(showInDoubtTransactions(1).isEmpty());
+      assertTrue(showInDoubtTransactions(2).isEmpty());
 
       tx1 = beginAndSuspendTx(cache(2, "test"));
       prepareTransaction(tx1);
@@ -78,16 +79,16 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    private GlobalConfigurationBuilder createGlobalConfigurationBuilder() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalConfiguration.globalJmxStatistics().enable()
-            .mBeanServerLookup(new PerThreadMBeanServerLookup())
+            .mBeanServerLookup(mBeanServerLookup)
             .jmxDomain(JMX_DOMAIN);
       return globalConfiguration;
    }
 
    public void testJmxOperationMetadata() throws Exception {
-      checkMBeanOperationParameterNaming(getRecoveryAdminObjectName(0));
+      checkMBeanOperationParameterNaming(mBeanServerLookup.getMBeanServer(), getRecoveryAdminObjectName(0));
    }
 
-   public void testForceCommitOnOtherNode() throws Exception {
+   public void testForceCommitOnOtherNode() {
       String inDoubt = showInDoubtTransactions(0);
 
       assertInDoubtTxCount(inDoubt, 1);
@@ -111,7 +112,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
       //try again
       s = invokeForceWithXid("forceCommit", 0, tx1.getXid());
-      assert s.indexOf("Transaction not found") >= 0;
+      assertTrue(s.contains("Transaction not found"));
    }
 
    public void testForceRollbackInternalId() {
@@ -121,7 +122,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
       checkResponse(result, 0);
 
-      assert invokeForceWithId("forceRollback", 0, ids.get(0)).contains("Transaction not found");
+      assertTrue(invokeForceWithId("forceRollback", 0, ids.get(0)).contains("Transaction not found"));
    }
 
    public void testForceRollbackXid() {
@@ -130,28 +131,21 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
       //try again
       s = invokeForceWithXid("forceRollback", 0, tx1.getXid());
-      assert s.indexOf("Transaction not found") >= 0;
+      assertTrue(s.contains("Transaction not found"));
    }
 
    private void checkResponse(String result, int entryCount) {
-      assert isSuccess(result) : "Received: " + result;
+      assertTrue("Received: " + result, isSuccess(result));
 
       assertEquals(cache(0, "test").keySet().size(), entryCount);
       assertEquals(cache(1, "test").keySet().size(), entryCount);
 
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return showInDoubtTransactions(0).isEmpty() && showInDoubtTransactions(1).isEmpty();
-         }
-      });
+      eventually(() -> showInDoubtTransactions(0).isEmpty() && showInDoubtTransactions(1).isEmpty());
 
       //just make sure everything is cleaned up properly now
       checkProperlyCleanup(0);
       checkProperlyCleanup(1);
    }
-
 
    @Override
    protected void checkProperlyCleanup(final int managerIndex) {
@@ -163,11 +157,10 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       eventually(() -> rm.getPreparedTransactionsFromCluster().all().length == 0);
    }
 
-
    private String invokeForceWithId(String methodName, int cacheIndex, Long aLong) {
       try {
          ObjectName recoveryAdmin = getRecoveryAdminObjectName(cacheIndex);
-         return threadMBeanServer.invoke(recoveryAdmin, methodName, new Object[]{aLong}, new String[]{long.class.getName()}).toString();
+         return mBeanServerLookup.getMBeanServer().invoke(recoveryAdmin, methodName, new Object[]{aLong}, new String[]{long.class.getName()}).toString();
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -178,7 +171,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
          ObjectName recoveryAdmin = getRecoveryAdminObjectName(cacheIndex);
          Object[] params = {xid.getFormatId(), xid.getGlobalTransactionId(), xid.getBranchQualifier()};
          String[] signature = {int.class.getName(), byte[].class.getName(), byte[].class.getName()};
-         return threadMBeanServer.invoke(recoveryAdmin, methodName, params, signature).toString();
+         return mBeanServerLookup.getMBeanServer().invoke(recoveryAdmin, methodName, params, signature).toString();
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -192,14 +185,13 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    private String showInDoubtTransactions(int cacheIndex) {
       try {
          ObjectName recoveryAdmin = getRecoveryAdminObjectName(cacheIndex);
-
-         return (String) threadMBeanServer.invoke(recoveryAdmin, "showInDoubtTransactions", new Object[0], new String[0]);
+         return (String) mBeanServerLookup.getMBeanServer().invoke(recoveryAdmin, "showInDoubtTransactions", new Object[0], new String[0]);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   private ObjectName getRecoveryAdminObjectName(int cacheIndex) throws Exception {
+   private ObjectName getRecoveryAdminObjectName(int cacheIndex) {
       String postfix = cacheIndex == 0 ? "" : String.valueOf(++cacheIndex);
       return getCacheObjectName(JMX_DOMAIN + postfix, "test(dist_sync)", "RecoveryAdmin");
    }

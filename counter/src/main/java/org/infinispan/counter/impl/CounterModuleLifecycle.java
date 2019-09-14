@@ -96,7 +96,8 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       // This must happen before CacheManagerJmxRegistration starts
       registry.registerComponent(CounterManager.class, counterManager, true);
       if (cacheManager.getCacheManagerConfiguration().globalJmxStatistics().enabled()) {
-         registry.getComponent(CacheManagerJmxRegistration.class).running().registerMBean(counterManager);
+         CacheManagerJmxRegistration jmxRegistration = registry.getComponent(CacheManagerJmxRegistration.class).running();
+         jmxRegistration.registerMBean(counterManager);
       }
    }
 

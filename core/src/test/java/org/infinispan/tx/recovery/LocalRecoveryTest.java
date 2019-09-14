@@ -1,14 +1,20 @@
 package org.infinispan.tx.recovery;
 
-import static org.infinispan.test.TestingUtil.existsObject;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.assertPrepared;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
+import javax.management.ObjectName;
+
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -23,24 +29,29 @@ import org.testng.annotations.Test;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test (groups = "functional", testName = "tx.recovery.LocalRecoveryTest")
+@Test(groups = "functional", testName = "tx.recovery.LocalRecoveryTest")
 public class LocalRecoveryTest extends SingleCacheManagerTest {
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
+      gcb.cacheContainer().statistics(true).globalJmxStatistics().mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .useSynchronization(false)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().enable();
-      return TestCacheManagerFactory.createCacheManager(cb);
+      return TestCacheManagerFactory.createCacheManager(gcb, cb);
    }
 
-   public void testRecoveryManagerInJmx() throws Exception {
-      assert cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
+   public void testRecoveryManagerInJmx() {
+      assertTrue(cache.getCacheConfiguration().transaction().transactionMode().isTransactional());
       String jmxDomain = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().domain();
-      assert !existsObject(getCacheObjectName(jmxDomain, cache.getName(), "RecoveryManager"));
+      ObjectName recoveryManager = getCacheObjectName(jmxDomain, cache.getName() + "(local)", "RecoveryManager");
+      assertFalse(mBeanServerLookup.getMBeanServer().isRegistered(recoveryManager));
    }
 
    public void testOneTx() throws Exception {
@@ -95,7 +106,6 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
    private EmbeddedTransaction beginTx() {
       return beginAndSuspendTx(cache);
    }
-
 
    private EmbeddedTransactionManager embeddedTm() {
       return (EmbeddedTransactionManager) tm();

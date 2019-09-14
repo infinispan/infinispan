@@ -26,25 +26,21 @@ import java.util.Properties;
 
 import javax.management.MBeanServer;
 
-import org.infinispan.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
 
 /**
  * @author Paul Ferraro
  */
 public class MBeanServerProvider implements MBeanServerLookup {
 
-    private final MBeanServer server;
+   private final MBeanServer server;
 
-    public MBeanServerProvider(MBeanServer server) {
-        this.server = server;
-    }
+   public MBeanServerProvider(MBeanServer server) {
+      this.server = server;
+   }
 
-    /**
-     * {@inheritDoc}
-     * @see org.infinispan.jmx.MBeanServerLookup#getMBeanServer(java.util.Properties)
-     */
-    @Override
-    public MBeanServer getMBeanServer(Properties properties) {
-        return this.server;
-    }
+   @Override
+   public MBeanServer getMBeanServer(Properties properties) {
+      return server;
+   }
 }

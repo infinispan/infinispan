@@ -15,22 +15,23 @@ import javax.management.NotificationListener;
  * @author Galder Zamarreño
  * @since 7.0
  */
-public class TckMbeanServerBuilder extends MBeanServerBuilder {
+public final class TckMbeanServerBuilder extends MBeanServerBuilder {
 
    @Override
    public MBeanServer newMBeanServer(String defaultDomain, MBeanServer outer, MBeanServerDelegate delegate) {
-      return new MBeanServerBuilder().newMBeanServer(defaultDomain, outer, new TckMbeanServerDelegate(delegate));
+      return new MBeanServerBuilder().newMBeanServer(defaultDomain, outer, new TckMBeanServerDelegate(delegate));
    }
 
-   public class TckMbeanServerDelegate extends MBeanServerDelegate {
+   private static final class TckMBeanServerDelegate extends MBeanServerDelegate {
+
       private final MBeanServerDelegate delegate;
 
-      public TckMbeanServerDelegate(MBeanServerDelegate delegate) {
+      TckMBeanServerDelegate(MBeanServerDelegate delegate) {
          this.delegate = delegate;
       }
 
       @Override
-      public synchronized String getMBeanServerId() {
+      public String getMBeanServerId() {
          return System.getProperty("org.jsr107.tck.management.agentId");
       }
 
@@ -70,19 +71,19 @@ public class TckMbeanServerBuilder extends MBeanServerBuilder {
       }
 
       @Override
-      public synchronized void addNotificationListener(
+      public void addNotificationListener(
             NotificationListener listener, NotificationFilter filter, Object handback) throws IllegalArgumentException {
          delegate.addNotificationListener(listener, filter, handback);
       }
 
       @Override
-      public synchronized void removeNotificationListener(
+      public void removeNotificationListener(
             NotificationListener listener, NotificationFilter filter, Object handback) throws ListenerNotFoundException {
          delegate.removeNotificationListener(listener, filter, handback);
       }
 
       @Override
-      public synchronized void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
+      public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
          delegate.removeNotificationListener(listener);
       }
 
@@ -91,5 +92,4 @@ public class TckMbeanServerBuilder extends MBeanServerBuilder {
          delegate.sendNotification(notification);
       }
    }
-
 }

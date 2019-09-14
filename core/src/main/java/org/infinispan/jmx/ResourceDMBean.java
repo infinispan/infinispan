@@ -18,8 +18,10 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
+import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.jmx.annotations.MBean;
@@ -51,24 +53,29 @@ public final class ResourceDMBean implements DynamicMBean {
    private final String[] opNames;
    private final MBeanAttributeInfo[] attInfos;
    private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<>(2);
-   private final String jmxObjectName;
+   private final String mbeanName;
    private final String description;
+
+   /**
+    * This is the name under which this MBean was registered.
+    */
+   private ObjectName objectName;
 
    private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>(64);
    private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<>(64);
 
-   public ResourceDMBean(Object instance, MBeanMetadata mBeanMetadata, String componentName) {
+   ResourceDMBean(Object instance, MBeanMetadata mBeanMetadata, String componentName) {
       if (instance == null) {
          throw new NullPointerException("Cannot make an MBean wrapper for null instance");
       }
       this.obj = instance;
       this.objectClass = instance.getClass();
       if (mBeanMetadata.getJmxObjectName() != null) {
-         jmxObjectName = mBeanMetadata.getJmxObjectName();
+         mbeanName = mBeanMetadata.getJmxObjectName();
       } else if (componentName != null) {
-         jmxObjectName = componentName;
+         mbeanName = componentName;
       } else {
-         jmxObjectName = objectClass.getSimpleName();
+         throw new IllegalArgumentException("MBean.objectName and componentName cannot be both null");
       }
       this.description = mBeanMetadata.getDescription();
 
@@ -80,7 +87,7 @@ public final class ResourceDMBean implements DynamicMBean {
          InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          if (atts.containsKey(attributeName)) {
             throw new IllegalArgumentException("Component " + objectClass.getName()
-                                               + " metadata has a duplicate attribute: " + attributeName);
+                  + " metadata has a duplicate attribute: " + attributeName);
          }
          atts.put(attributeName, info);
          attInfos[i++] = info.attributeInfo;
@@ -100,6 +107,21 @@ public final class ResourceDMBean implements DynamicMBean {
          opInfos[i++] = op;
          if (trace) log.tracef("Operation %s %s", op.getReturnType(), op.getName());
       }
+   }
+
+   /**
+    * The name assigned via {@link MBean#objectName} or generated based on default rules if missing.
+    */
+   String getMBeanName() {
+      return mbeanName;
+   }
+
+   public ObjectName getObjectName() {
+      return objectName;
+   }
+
+   void setObjectName(ObjectName objectName) {
+      this.objectName = objectName;
    }
 
    private static Field findField(Class<?> objectClass, String fieldName) {
@@ -137,16 +159,16 @@ public final class ResourceDMBean implements DynamicMBean {
          Field field = findField(objectClass, attributeMetadata.getName());
          if (field != null) {
             return new InvokableFieldBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
-                                                             attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                                                             attributeMetadata.isIs(), field);
+                  attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
+                  attributeMetadata.isIs(), field);
          }
       }
 
       Method setter = attributeMetadata.isWritable() ? findSetter(objectClass, attributeMetadata.getName()) : null;
       Method getter = findGetter(objectClass, attributeMetadata.getName());
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
-                                                        attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                                                        attributeMetadata.isIs(), getter, setter);
+            attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
+            attributeMetadata.isIs(), getter, setter);
    }
 
    private MBeanOperationInfo toJmxInfo(MBeanMetadata.OperationMetadata operationMetadata) {
@@ -172,7 +194,7 @@ public final class ResourceDMBean implements DynamicMBean {
       Attribute attr = getNamedAttribute(name);
       if (attr == null) {
          throw new AttributeNotFoundException("Unknown attribute '" + name
-                                                    + "'. Known attributes names are: " + atts.keySet());
+               + "'. Known attributes names are: " + atts.keySet());
       }
       return attr.getValue();
    }
@@ -194,6 +216,7 @@ public final class ResourceDMBean implements DynamicMBean {
             al.add(attr);
          } else {
             log.couldNotFindAttribute(name);
+            //todo [anistor] is it ok to ignore missing attributes ?
          }
       }
       return al;
@@ -240,7 +263,7 @@ public final class ResourceDMBean implements DynamicMBean {
          if (args[i] != null) {
             if (log.isDebugEnabled())
                log.debugf("Argument value before transformation: %s and its class: %s. " +
-                                "For method.invoke we need it to be class: %s", args[i], args[i].getClass(), sig[i]);
+                     "For method.invoke we need it to be class: %s", args[i], args[i].getClass(), sig[i]);
             if (sig[i].equals(int.class.getName()) || sig[i].equals(Integer.class.getName())) {
                if (args[i].getClass() != Integer.class && args[i].getClass() != int.class)
                   args[i] = Integer.parseInt((String) args[i]);
@@ -289,9 +312,10 @@ public final class ResourceDMBean implements DynamicMBean {
             result = new Attribute(name, i.invoke(null));
             if (trace)
                log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
-                          name, i.attributeInfo.isReadable(), i.attributeInfo.isWritable(), i.attributeInfo.isIs(), result.getValue());
+                     name, i.attributeInfo.isReadable(), i.attributeInfo.isWritable(), i.attributeInfo.isIs(), result.getValue());
          } catch (Exception e) {
             log.debugf(e, "Exception while reading value of attribute %s", name);
+            throw new CacheException(e);
          }
       } else {
          log.queriedAttributeNotFound(name);
@@ -383,7 +407,27 @@ public final class ResourceDMBean implements DynamicMBean {
       }
    }
 
-   public String getObjectName() {
-      return jmxObjectName;
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || o.getClass() != ResourceDMBean.class) return false;
+      ResourceDMBean that = (ResourceDMBean) o;
+      return obj == that.obj;  // == is intentional
+   }
+
+   @Override
+   public int hashCode() {
+      return obj.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return "ResourceDMBean{" +
+            "obj=" + System.identityHashCode(obj) +
+            ", objectClass=" + objectClass +
+            ", mbeanName='" + mbeanName + '\'' +
+            ", description='" + description + '\'' +
+            ", objectName=" + objectName +
+            '}';
    }
 }

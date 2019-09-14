@@ -30,12 +30,10 @@ import javax.cache.processor.EntryProcessorResult;
 import javax.management.MBeanServer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -60,6 +58,7 @@ import org.infinispan.jcache.embedded.functions.RemoveConditionally;
 import org.infinispan.jcache.embedded.functions.Replace;
 import org.infinispan.jcache.embedded.functions.ReplaceConditionally;
 import org.infinispan.jcache.embedded.logging.Log;
+import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.util.logging.LogFactory;
@@ -84,6 +83,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    private final ReadWriteMap<K, V> rwMap;
    private final ReadWriteMap<K, V> rwMapSkipCacheLoad;
    private final RICacheStatistics stats;
+   private final CacheJmxRegistration jmxRegistration;
 
    public JCache(AdvancedCache<K, V> cache, CacheManager cacheManager, ConfigurationAdapter<K, V> c) {
       super(adjustConfiguration(c.getConfiguration(), cache), cacheManager, new JCacheNotifier<>());
@@ -97,6 +97,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       this.rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache));
       this.rwMapSkipCacheLoad = rwMap.withParams(Param.PersistenceMode.SKIP_LOAD);
       this.stats = new RICacheStatistics(this.cache);
+
+      jmxRegistration = cache.getCacheManager().getCacheManagerConfiguration().statistics() ?
+            cache.getComponentRegistry().getComponent(CacheJmxRegistration.class) : null;
 
       addConfigurationListeners();
 
@@ -265,6 +268,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void close() {
       super.close();
+      if (jmxRegistration != null) {
+         jmxRegistration.setUnregisterCacheMBean(true);
+      }
       cache.stop();
    }
 
@@ -580,12 +586,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    protected MBeanServer getMBeanServer() {
-      GlobalJmxStatisticsConfiguration jmxConfig = cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics();
-      if (jmxConfig.enabled()) {
-         return JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-      } else {
-         return null;
-      }
+      return jmxRegistration != null ? jmxRegistration.getMBeanServer() : null;
    }
 
    protected AbstractJCache<K, V> checkNotClosed() {

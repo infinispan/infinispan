@@ -46,7 +46,6 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    private ThreadPoolExecutor executor;
    private ObjectName executorObjName;
 
-
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
    }
@@ -157,23 +156,18 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
       if (jmxConfig.enabled()) {
-         mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-         String groupName = String.format("type=Server,name=%s", getQualifiedName());
-         String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
+         CacheManagerJmxRegistration jmxRegistration =
+               SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
 
+         mbeanServer = jmxRegistration.getMBeanServer();
+         String groupName = String.format("type=Server,name=%s-%d", getQualifiedName(), configuration.port());
          try {
-            transportObjName = registerMBean(transport, jmxDomain, groupName, null);
-            executorObjName = registerMBean(new ManageableThreadPoolExecutorService(getExecutor()), jmxDomain, groupName, "WorkerExecutor");
+            transportObjName = jmxRegistration.registerExternalMBean(transport, groupName);
+            executorObjName = jmxRegistration.registerExternalMBean(new ManageableThreadPoolExecutorService(getExecutor()), groupName);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
       }
-   }
-
-   private ObjectName registerMBean(Object instance, String jmxDomain, String groupName, String name) throws Exception {
-      CacheManagerJmxRegistration jmxRegistration =
-            SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
-      return jmxRegistration.registerExternalMBean(instance, jmxDomain, groupName, name);
    }
 
    protected void unregisterServerMBeans() throws Exception {
@@ -184,7 +178,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
          JmxUtil.unregisterMBean(executorObjName, mbeanServer);
    }
 
-   public String getQualifiedName() {
+   public final String getQualifiedName() {
       return protocolName + (configuration.name().length() > 0 ? "-" : "") + configuration.name();
    }
 

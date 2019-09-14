@@ -13,11 +13,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
@@ -189,8 +189,9 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    /**
-    * Used by testStoreWithNoConfigureBy, although the cache is not really created
+    * Used by testStoreWithNoConfigureBy, although the cache is not really created.
     */
+   @SuppressWarnings("unused")
    public static class GenericLoader implements CacheLoader {
 
       @Override
@@ -515,11 +516,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("/tmp/Another-FileCacheStore-Location", loaderCfg.location());
 
       c = getCacheConfiguration(holder, "withouthJmxEnabled");
-      assertTrue(!c.jmxStatistics().enabled());
+      assertFalse(c.jmxStatistics().enabled());
       assertTrue(gc.globalJmxStatistics().enabled());
       assertTrue(gc.globalJmxStatistics().allowDuplicateDomains());
       assertEquals("funky_domain", gc.globalJmxStatistics().domain());
-      assertTrue(gc.globalJmxStatistics().mbeanServerLookup() instanceof PerThreadMBeanServerLookup);
+      assertTrue(gc.globalJmxStatistics().mbeanServerLookup() instanceof PlatformMBeanServerLookup);
 
       c = getCacheConfiguration(holder, "dist");
       assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
@@ -551,7 +552,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(1000, c.clustering().stateTransfer().chunkSize());
 
       c = getCacheConfiguration(holder, "cacheWithCustomInterceptors");
-      assertTrue(!c.customInterceptors().interceptors().isEmpty());
+      assertFalse(c.customInterceptors().interceptors().isEmpty());
       assertEquals(6, c.customInterceptors().interceptors().size());
       for(InterceptorConfiguration i : c.customInterceptors().interceptors()) {
          if (i.asyncInterceptor() instanceof FooInterceptor) {

@@ -12,7 +12,6 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -32,17 +31,16 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "jmx.PerCacheInboundHandlerMBeanTest")
 public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
 
-
    public PerCacheInboundHandlerMBeanTest() {
       super(PerCacheInboundHandlerMBeanTest.class.getSimpleName());
    }
 
    public void testJmxOperationMetadata() throws Exception {
-      checkMBeanOperationParameterNaming(getObjectName());
+      checkMBeanOperationParameterNaming(mBeanServerLookup.getMBeanServer(), getObjectName());
    }
 
    public void testEnableJmxStats() throws Exception {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       PerCacheInboundInvocationHandler handler = getHandler();
 
       ObjectName objName = getObjectName();
@@ -75,7 +73,7 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
    }
 
    public void testStats() throws Throwable {
-      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       InboundInvocationHandler handler = manager(0).getGlobalComponentRegistry()
             .getComponent(InboundInvocationHandler.class);
 
@@ -125,7 +123,6 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(0, (long) mBeanServer.getAttribute(objName, "AsyncXSiteRequestsReceived"));
    }
 
-
    private ObjectName getObjectName() {
       return getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", MBEAN_COMPONENT_NAME);
    }
@@ -133,5 +130,4 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
    private PerCacheInboundInvocationHandler getHandler() {
       return cache(0).getAdvancedCache().getComponentRegistry().getPerCacheInboundInvocationHandler();
    }
-
 }

@@ -5,7 +5,6 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -202,9 +201,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 942)
    void unableToConvertStringPropertyToEnum(String value, String defaultValue);
 
-   @LogMessage(level = WARN)
+   @LogMessage(level = ERROR)
    @Message(value = "Could not register object with name: %s", id = 943)
-   void couldNotRegisterObjectName(ObjectName objectName, @Cause InstanceAlreadyExistsException e);
+   void couldNotRegisterObjectName(ObjectName objectName, @Cause Exception e);
 
    @Message(value = "Feature %s is disabled!", id = 944)
    CacheConfigurationException featureDisabled(String feature);

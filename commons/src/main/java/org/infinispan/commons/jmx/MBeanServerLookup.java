@@ -13,9 +13,11 @@ import javax.management.MBeanServer;
  * @public
  */
 public interface MBeanServerLookup {
+
    /**
     * Retrieves an {@link MBeanServer} instance.
-    * @param properties properties to configure the MBeanServer instance
+    *
+    * @param properties optional properties (can be null) to configure the MBeanServer instance
     * @return an MBeanServer instance
     */
    MBeanServer getMBeanServer(Properties properties);

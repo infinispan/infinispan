@@ -19,9 +19,7 @@ import org.testng.annotations.AfterClass;
 import net.spy.memcached.MemcachedClient;
 
 /**
- * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
  */
 abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
 
@@ -35,7 +33,7 @@ abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
    protected int timeout = 60;
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       for (int i = 0; i < nodeCount; ++i) {
          cacheManagers.add(createCacheManager(i));
       }
@@ -46,7 +44,7 @@ abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
 
       servers.add(startMemcachedTextServer(cacheManagers.get(1), servers.get(0).getPort() + 50, cacheName));
       servers.forEach(s -> {
-         MemcachedClient client = null;
+         MemcachedClient client;
          try {
             client = createMemcachedClient(60000, s.getPort());
          } catch (IOException e) {
@@ -68,5 +66,4 @@ abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
       clients.forEach(MemcachedTestingUtil::killMemcachedClient);
       servers.forEach(ServerTestingUtil::killServer);
    }
-
 }

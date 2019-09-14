@@ -2,13 +2,13 @@ package org.infinispan.query.jmx;
 
 import java.net.URL;
 
-import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -26,12 +26,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.jmx.DistributedMassIndexingViaJmxTest")
 public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTest {
 
-   static final String BASE_JMX_DOMAIN = DistributedMassIndexingViaJmxTest.class.getSimpleName();
-   MBeanServer server;
+   private static final String BASE_JMX_DOMAIN = DistributedMassIndexingViaJmxTest.class.getSimpleName();
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       for (int i = 0; i < NUM_NODES; i++) {
          URL url = FileLookupFactory.newInstance().lookupFileLocation(
                "dynamic-indexing-distribution.xml",
@@ -43,7 +43,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
          // a parallel-testsuite friendly mbean server
          holder.getGlobalConfigurationBuilder().globalJmxStatistics()
                .jmxDomain(BASE_JMX_DOMAIN + i)
-               .mBeanServerLookup(new PerThreadMBeanServerLookup());
+               .mBeanServerLookup(mBeanServerLookup);
 
          EmbeddedCacheManager cm = TestCacheManagerFactory
                .createClusteredCacheManager(holder, true);
@@ -59,7 +59,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
       String cacheManagerName = manager(0).getCacheManagerConfiguration().cacheManagerName();
       ObjectName massIndexerObjName = getMassIndexerObjectName(
             BASE_JMX_DOMAIN + 0, cacheManagerName, manager(0).getCacheManagerConfiguration().defaultCacheName().get());
-      server.invoke(massIndexerObjName, "start", new Object[0], new String[0]);
+      mBeanServerLookup.getMBeanServer().invoke(massIndexerObjName, "start", new Object[0], new String[0]);
    }
 
    private ObjectName getMassIndexerObjectName(String jmxDomain, String cacheManagerName, String cacheName) {
@@ -71,5 +71,4 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
          throw new CacheException("Malformed object name", e);
       }
    }
-
 }

@@ -24,5 +24,4 @@ public class JBossMBeanServerLookup implements MBeanServerLookup {
          throw new CacheException("Unable to locate JBoss MBean server", e);
       }
    }
-
 }

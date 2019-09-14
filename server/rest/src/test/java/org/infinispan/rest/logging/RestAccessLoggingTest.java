@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "rest.RestAccessLoggingTest")
 public class RestAccessLoggingTest extends SingleCacheManagerTest {
-   public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} %X{h:User-Agent}";
+   private static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration} %X{h:User-Agent}";
    private StringLogAppender logAppender;
    private RestServerHelper restServer;
    private HttpClient client;

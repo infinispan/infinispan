@@ -1,16 +1,19 @@
 package org.infinispan.jmx;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -18,55 +21,58 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.CustomMBeanServerPropertiesTest")
 public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
-   public void testDeclarativeCustomMBeanServerLookupProperties() throws IOException {
+
+   public void testDeclarativeCustomMBeanServerLookupProperties() {
       String cfg = "<infinispan>" +
-              "<cache-container default-cache=\"default\">" +
-              "<jmx mbean-server-lookup=\"" + TestLookup.class.getName() + "\">" +
-              "<property name=\"key\">value</property>" +
-              "</jmx>" +
-              "<local-cache name=\"default\" statistics=\"true\"/>" +
-              "</cache-container>" +
-              "</infinispan>";
+            "<cache-container default-cache=\"default\">" +
+            "<jmx mbean-server-lookup=\"" + TestLookup.class.getName() + "\">" +
+            "<property name=\"key\">value</property>" +
+            "</jmx>" +
+            "<local-cache name=\"default\" statistics=\"true\"/>" +
+            "</cache-container>" +
+            "</infinispan>";
       InputStream stream = new ByteArrayInputStream(cfg.getBytes());
-      CacheContainer cc = null;
+
+      EmbeddedCacheManager cm = null;
       try {
-         cc = TestCacheManagerFactory.fromStream(stream);
-         cc.getCache();
-         assert "value".equals(TestLookup.p.get("key"));
+         cm = TestCacheManagerFactory.fromStream(stream);
+         cm.getCache();
+         MBeanServerLookup mbsl = cm.getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup();
+         assertTrue(mbsl instanceof TestLookup);
+         assertEquals("value", ((TestLookup) mbsl).props.get("key"));
       } finally {
-         TestingUtil.killCacheManagers(cc);
+         TestingUtil.killCacheManagers(cm);
       }
    }
 
    public void testProgrammaticCustomMBeanServerLookupProperties() {
-      CacheContainer cc = null;
+      EmbeddedCacheManager cm = null;
       try {
          GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
          TestLookup mbsl = new TestLookup();
-         gc.globalJmxStatistics().enable().mBeanServerLookup(mbsl);
-         Properties p = new Properties();
-         p.setProperty("key", "value");
-         gc.globalJmxStatistics().addProperty("key", "value");
+         gc.globalJmxStatistics().enable()
+               .mBeanServerLookup(mbsl)
+               .addProperty("key", "value");
          ConfigurationBuilder cfg = new ConfigurationBuilder();
          cfg.jmxStatistics().enable();
-         cc = TestCacheManagerFactory.createCacheManager(gc, cfg);
-         cc.getCache();
-         assert "value".equals(mbsl.localProps.get("key"));
+         cm = TestCacheManagerFactory.createCacheManager(gc, cfg);
+         cm.getCache();
+         assertEquals("value", mbsl.props.get("key"));
       } finally {
-         TestingUtil.killCacheManagers(cc);
+         TestingUtil.killCacheManagers(cm);
       }
    }
 
-   public static class TestLookup implements MBeanServerLookup {
+   public static final class TestLookup implements MBeanServerLookup {
 
-      static Properties p;
-      Properties localProps;
+      Properties props;
+
+      private final MBeanServer mBeanServer = MBeanServerFactory.newMBeanServer();
 
       @Override
-      public MBeanServer getMBeanServer(Properties properties) {
-         TestLookup.p = properties;
-         localProps = properties;
-         return new PerThreadMBeanServerLookup().getMBeanServer(p);
+      public MBeanServer getMBeanServer(Properties props) {
+         this.props = props;
+         return mBeanServer;
       }
    }
 }

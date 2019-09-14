@@ -1,7 +1,5 @@
 package org.infinispan.server.memcached;
 
-import static org.infinispan.server.memcached.ConnectionStatsTest.testMultipleLocalConnections;
-import static org.infinispan.server.memcached.ConnectionStatsTest.testSingleLocalConnection;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.sleepThread;
@@ -22,13 +20,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MalformedObjectNameException;
-import javax.management.ReflectionException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.commons.util.Version;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -48,11 +47,21 @@ import net.spy.memcached.internal.OperationFuture;
 @Test(groups = "functional", testName = "server.memcached.MemcachedStatsTest")
 public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
-   private static String jmxDomain = MemcachedStatsTest.class.getSimpleName();
+   private static final String jmxDomain = MemcachedStatsTest.class.getSimpleName();
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    public EmbeddedCacheManager createTestCacheManager() {
-      return TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain);
+      GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalConfiguration.globalJmxStatistics().enable()
+            .jmxDomain(jmxDomain)
+            .mBeanServerLookup(mBeanServerLookup);
+
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.jmxStatistics().enabled(true);
+
+      return TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
    }
 
    public void testUnsupportedStats() {
@@ -79,9 +88,9 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
    }
 
    public void testStaticStats() {
-       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
-       assertEquals(stats.getVal1().get("version"), Version.getVersion());
-    }
+      Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
+      assertEquals(stats.getVal1().get("version"), Version.getVersion());
+   }
 
    public void testTodoStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
@@ -218,17 +227,22 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       }
    }
 
-   public void testStatsSpecificToMemcachedViaJmx() throws MalformedObjectNameException, AttributeNotFoundException,
-           MBeanException, ReflectionException, InstanceNotFoundException, IOException {
+   public void testStatsSpecificToMemcachedViaJmx() throws Exception {
       // Send any command
       getStats(-1, -1);
 
-      String serverName = "Memcached-" + TestResourceTracker.getCurrentTestShortName();
-      testSingleLocalConnection(jmxDomain, serverName);
+      MBeanServer mbeanServer = mBeanServerLookup.getMBeanServer();
+      String serverName = "Memcached-" + TestResourceTracker.getCurrentTestShortName() + "-" + server.getPort();
+      ObjectName on = new ObjectName(String.format("%s:type=Server,name=%s,component=Transport", jmxDomain, serverName));
+
+      assertTrue(Integer.parseInt(mbeanServer.getAttribute(on, "TotalBytesRead").toString()) > 0);
+      assertTrue(Integer.parseInt(mbeanServer.getAttribute(on, "TotalBytesWritten").toString()) > 0);
+      assertEquals(mbeanServer.getAttribute(on, "NumberOfLocalConnections"), 1);
+
       List<MemcachedClient> clients = new ArrayList<>();
       try {
          clients = createMultipleClients(clients, 10, 0);
-         testMultipleLocalConnections(jmxDomain, serverName, clients.size() + 1);
+         assertEquals(mbeanServer.getAttribute(on, "NumberOfLocalConnections"), clients.size() + 1);
       } finally {
          clients.forEach(client -> {
             try {
@@ -255,7 +269,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       Map<String, String> stats = globalStats.values().iterator().next();
       int bytesRead = assertHigherBytes(currentBytesRead, stats.get("bytes_read"));
       int bytesWritten = assertHigherBytes(currentBytesRead, stats.get("bytes_written"));
-      return new Triple(stats, bytesRead, bytesWritten);
+      return new Triple<>(stats, bytesRead, bytesWritten);
    }
 
    private int assertHigherBytes(int currentBytesRead, String bytesStr) {

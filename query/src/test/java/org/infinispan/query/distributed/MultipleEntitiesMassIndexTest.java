@@ -50,9 +50,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
 
       waitForClusterToForm();
 
-      for (Cache cache : cacheList) {
-         caches.add(cache);
-      }
+      caches.addAll(cacheList);
    }
 
    @Override
@@ -99,17 +97,16 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       checkIndex(4, Person.class);
    }
 
-   protected void checkIndex(int expectedCount, String fieldName, String fieldValue, Class<?> entity) throws ParseException {
+   private void checkIndex(int expectedCount, String fieldName, String fieldValue, Class<?> entity) throws ParseException {
       Query q = new QueryParser(fieldName, new StandardAnalyzer()).parse(fieldName + ":" + fieldValue);
       checkIndex(expectedCount, q, entity);
    }
 
-
-   protected void checkIndex(int expectedCount, Class<?> entity) throws ParseException {
+   private void checkIndex(int expectedCount, Class<?> entity) {
       checkIndex(expectedCount, new MatchAllDocsQuery(), entity);
    }
 
-   private void checkIndex(int expectedCount, Query luceneQuery, Class<?> entity) throws ParseException {
+   private void checkIndex(int expectedCount, Query luceneQuery, Class<?> entity) {
       for (Cache cache : caches) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);

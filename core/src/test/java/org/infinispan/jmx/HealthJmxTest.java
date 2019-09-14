@@ -6,7 +6,8 @@ import static org.testng.Assert.assertTrue;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -19,6 +20,8 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.HealthJmxTest")
 public class HealthJmxTest extends MultipleCacheManagersTest {
+
+    private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
     @Override
     protected void createCacheManagers() throws Throwable {
@@ -38,7 +41,7 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
         GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
         gcb.globalJmxStatistics()
                 .enable()
-                .mBeanServerLookup(new PerThreadMBeanServerLookup())
+                .mBeanServerLookup(mBeanServerLookup)
                 .transport().rackId(rackId);
         return gcb;
     }
@@ -48,7 +51,7 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
         //we need this to start a cache with a custom name
         cacheManagers.get(0).getCache("test").put("1", "1");
 
-        final MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+        MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
 
         //when
         String domain0 = manager(0).getCacheManagerConfiguration().globalJmxStatistics().domain();

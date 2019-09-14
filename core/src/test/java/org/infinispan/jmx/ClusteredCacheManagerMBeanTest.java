@@ -2,7 +2,6 @@ package org.infinispan.jmx;
 
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.test.TestingUtil.existsObject;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getJGroupsChannelObjectName;
@@ -13,11 +12,13 @@ import static org.testng.AssertJUnit.assertTrue;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -31,32 +32,37 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "jmx.ClusteredCacheManagerMBeanTest")
 public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
-   public static final String JMX_DOMAIN = ClusteredCacheManagerMBeanTest.class.getSimpleName();
-   public static final String JMX_DOMAIN2 = JMX_DOMAIN + "2";
-   public static final String CACHE_NAME = "mycache";
+   private static final String JMX_DOMAIN = ClusteredCacheManagerMBeanTest.class.getSimpleName();
+   private static final String JMX_DOMAIN2 = JMX_DOMAIN + "2";
+   private static final String CACHE_NAME = "mycache";
 
    private ObjectName name1;
    private ObjectName name2;
-   private MBeanServer server;
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN, true);
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      config.jmxStatistics().enable();
+
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, JMX_DOMAIN,
+            true, true, GlobalConfigurationBuilder.defaultClusteredBuilder(), config, mBeanServerLookup);
       cacheManager1.start();
-      CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN, true);
+
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, JMX_DOMAIN,
+            true, true, GlobalConfigurationBuilder.defaultClusteredBuilder(), config, mBeanServerLookup);
       cacheManager2.start();
+
       registerCacheManager(cacheManager1, cacheManager2);
       name1 = getCacheManagerObjectName(JMX_DOMAIN);
       name2 = getCacheManagerObjectName(JMX_DOMAIN2);
-      server = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
-      config.jmxStatistics().enable();
       defineConfigurationOnAllManagers(CACHE_NAME, config);
       manager(0).getCache(CACHE_NAME);
       manager(1).getCache(CACHE_NAME);
    }
 
    public void testAddressInformation() throws Exception {
+      MBeanServer server = mBeanServerLookup.getMBeanServer();
       String cm1Address = manager(0).getAddress().toString();
       String cm2Address = manager(1).getAddress().toString();
       assertEquals(cm1Address, server.getAttribute(name1, "NodeAddress"));
@@ -68,10 +74,11 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       assertNotEquals("local", server.getAttribute(name2, "PhysicalAddresses"));
       assertEquals(2, server.getAttribute(name2, "ClusterSize"));
       String cm1members = (String) server.getAttribute(name1, "ClusterMembersPhysicalAddresses");
-      assertEquals(2,cm1members.substring(1, cm1members.length()-2).split(",\\s+").length);
+      assertEquals(2, cm1members.substring(1, cm1members.length() - 2).split(",\\s+").length);
    }
 
    public void testJGroupsInformation() throws Exception {
+      MBeanServer server = mBeanServerLookup.getMBeanServer();
       ObjectName jchannelName1 = getJGroupsChannelObjectName(JMX_DOMAIN, manager(0).getClusterName());
       ObjectName jchannelName2 = getJGroupsChannelObjectName(JMX_DOMAIN2, manager(1).getClusterName());
       assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "address"));
@@ -81,12 +88,12 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
    }
 
    public void testExecutorMBeans() throws Exception {
-      ObjectName objectName =
-         getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
-      assertTrue(existsObject(objectName));
+      MBeanServer server = mBeanServerLookup.getMBeanServer();
+      ObjectName objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
+      assertTrue(server.isRegistered(objectName));
       assertEquals(Integer.MAX_VALUE, server.getAttribute(objectName, "MaximumPoolSize"));
       String javaVersion = System.getProperty("java.version");
-      assertEquals(javaVersion.startsWith("1.8.") ? 0l : 10l, server.getAttribute(objectName, "KeepAliveTime"));
+      assertEquals(javaVersion.startsWith("1.8.") ? 0L : 10L, server.getAttribute(objectName, "KeepAliveTime"));
 
       LazyInitializingBlockingTaskAwareExecutorService remoteExecutor =
          extractGlobalComponent(manager(0), LazyInitializingBlockingTaskAwareExecutorService.class,
@@ -94,7 +101,7 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       remoteExecutor.submit(() -> {});
 
       objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", REMOTE_COMMAND_EXECUTOR);
-      assertTrue(existsObject(objectName));
+      assertTrue(server.isRegistered(objectName));
       assertEquals(30000L, server.getAttribute(objectName, "KeepAliveTime"));
       assertEquals(TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
                    server.getAttribute(objectName, "MaximumPoolSize"));

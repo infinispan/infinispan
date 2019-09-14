@@ -14,9 +14,21 @@ import java.lang.annotation.Target;
  * @since 4.0
  */
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD})
+@Target(ElementType.METHOD)
 public @interface ManagedOperation {
-   String description() default "";
-   String displayName() default "";
+
+   /**
+    * The name of the JMX operation.
+    */
    String name() default "";
+
+   /**
+    * The human-readable description of the operation.
+    */
+   String description() default "";
+
+   /**
+    * Similar with {@link #description} but shorter.
+    */
+   String displayName() default "";
 }

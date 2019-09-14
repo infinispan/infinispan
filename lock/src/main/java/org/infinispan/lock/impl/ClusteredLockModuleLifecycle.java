@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.lock.api.ClusteredLockManager;
@@ -70,7 +71,7 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
          internalCacheRegistry.registerInternalCache(CLUSTERED_LOCK_CACHE_NAME, createClusteredLockCacheConfiguration(config, globalConfig),
                EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
          CompletableFuture<CacheHolder> future = startCaches(cacheManager);
-         registerClusteredLockManager(gcr, future, config);
+         registerClusteredLockManager(gcr.getComponent(BasicComponentRegistry.class), globalConfig, future, config);
       } else {
          log.configurationNotClustered();
       }
@@ -110,8 +111,7 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       new Thread(() -> {
          try {
             Cache<? extends ClusteredLockKey, ClusteredLockValue> locksCache = cacheManager.getCache(CLUSTERED_LOCK_CACHE_NAME);
-            future.complete(
-                  new CacheHolder(locksCache.getAdvancedCache()));
+            future.complete(new CacheHolder(locksCache.getAdvancedCache()));
          } catch (Throwable throwable) {
             future.completeExceptionally(throwable);
          }
@@ -119,21 +119,16 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       return future;
    }
 
-   private static void registerClusteredLockManager(GlobalComponentRegistry registry,
+   private static void registerClusteredLockManager(BasicComponentRegistry registry,
+                                                    GlobalConfiguration globalConfig,
                                                     CompletableFuture<CacheHolder> future,
                                                     ClusteredLockManagerConfiguration config) {
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (registry) {
-         ClusteredLockManager clusteredLockManager = registry.getComponent(ClusteredLockManager.class);
-         if (clusteredLockManager == null || !(clusteredLockManager instanceof EmbeddedClusteredLockManager)) {
-            clusteredLockManager = new EmbeddedClusteredLockManager(future, config);
-            registry.registerComponent(clusteredLockManager, ClusteredLockManager.class);
-            //this start() is only invoked when the DefaultCacheManager.start() is invoked
-            //it is invoked here again to force it to check the managed global components
-            // and register them in the MBeanServer, if they are missing.
-            registry.getComponent(CacheManagerJmxRegistration.class).start(); //HACK!
-         }
+      ClusteredLockManager clusteredLockManager = new EmbeddedClusteredLockManager(future, config);
+      registry.registerComponent(ClusteredLockManager.class, clusteredLockManager, true);
+
+      if (globalConfig.globalJmxStatistics().enabled()) {
+         CacheManagerJmxRegistration jmxRegistration = registry.getComponent(CacheManagerJmxRegistration.class).running();
+         jmxRegistration.registerMBean(clusteredLockManager);
       }
    }
-
 }

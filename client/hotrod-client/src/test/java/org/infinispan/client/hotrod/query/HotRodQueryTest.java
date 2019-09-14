@@ -18,7 +18,8 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -47,7 +48,9 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.HotRodQueryTest", groups = {"functional", "smoke"})
 public class HotRodQueryTest extends SingleCacheManagerTest {
 
-   protected static final String TEST_CACHE_NAME = "userCache";
+   private static final String TEST_CACHE_NAME = "userCache";
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
@@ -59,7 +62,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       gcb.globalJmxStatistics()
             .enable()
             .jmxDomain(getClass().getSimpleName())
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+            .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
       ConfigurationBuilder builder = getConfigurationBuilder();

@@ -6,8 +6,10 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
@@ -29,39 +31,47 @@ import org.testng.annotations.Test;
 public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName loaderInterceptorObjName;
    private ObjectName storeInterceptorObjName;
-   private MBeanServer threadMBeanServer;
    private AdvancedLoadWriteStore store;
    private static final String JMX_DOMAIN = CacheLoaderAndCacheWriterInterceptorMBeanTest.class.getName();
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
       configuration
-         .jmxStatistics().enable()
-         .persistence()
+            .jmxStatistics().enable()
+            .persistence()
             .passivation(false)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+
+      GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
+      globalConfiguration
+            .cacheContainer().statistics(true)
+            .globalJmxStatistics()
+            .allowDuplicateDomains(false)
+            .jmxDomain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
 
       cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
       loaderInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheLoader");
       storeInterceptorObjName = getCacheObjectName(JMX_DOMAIN, "test(local)", "CacheStore");
 
-      threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
+      store = TestingUtil.getFirstLoader(cache);
       return cacheManager;
    }
 
    @AfterMethod
    public void resetStats() throws Exception {
-      threadMBeanServer.invoke(loaderInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
-      threadMBeanServer.invoke(storeInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+      mBeanServer.invoke(loaderInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+      mBeanServer.invoke(storeInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
    }
 
    public void testJmxOperationMetadata() throws Exception {
-      checkMBeanOperationParameterNaming(loaderInterceptorObjName);
-      checkMBeanOperationParameterNaming(storeInterceptorObjName);
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+      checkMBeanOperationParameterNaming(mBeanServer, loaderInterceptorObjName);
+      checkMBeanOperationParameterNaming(mBeanServer, storeInterceptorObjName);
    }
 
    public void testPutKeyValue() throws Exception {
@@ -142,14 +152,15 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
    }
 
    private void assertLoadCount(int loadsCount, int missesCount) throws Exception {
-      Object actualLoadCount = threadMBeanServer.getAttribute(loaderInterceptorObjName, "CacheLoaderLoads");
-      assert Integer.valueOf(actualLoadCount.toString()).equals(loadsCount) : "expected " + loadsCount + " loads count and received " + actualLoadCount;
-      Object actualMissesCount = threadMBeanServer.getAttribute(loaderInterceptorObjName, "CacheLoaderMisses");
-      assert Integer.valueOf(actualMissesCount.toString()).equals(missesCount) : "expected " + missesCount + " misses count, and received " + actualMissesCount;
+      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
+      String actualLoadCount = mBeanServer.getAttribute(loaderInterceptorObjName, "CacheLoaderLoads").toString();
+      assert Integer.valueOf(actualLoadCount).equals(loadsCount) : "expected " + loadsCount + " loads count and received " + actualLoadCount;
+      String actualMissesCount = mBeanServer.getAttribute(loaderInterceptorObjName, "CacheLoaderMisses").toString();
+      assert Integer.valueOf(actualMissesCount).equals(missesCount) : "expected " + missesCount + " misses count, and received " + actualMissesCount;
    }
 
    private void assertStoreCount(int count) throws Exception {
-      Object actualStoreCount = threadMBeanServer.getAttribute(storeInterceptorObjName, "WritesToTheStores");
-      assert Integer.valueOf(actualStoreCount.toString()).equals(count) : "expected " + count + " store counts, but received " + actualStoreCount;
+      String actualStoreCount = mBeanServerLookup.getMBeanServer().getAttribute(storeInterceptorObjName, "WritesToTheStores").toString();
+      assert Integer.valueOf(actualStoreCount).equals(count) : "expected " + count + " store counts, but received " + actualStoreCount;
    }
 }

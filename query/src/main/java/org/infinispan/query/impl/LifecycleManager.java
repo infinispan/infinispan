@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
@@ -27,7 +26,6 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AggregatedClassLoader;
@@ -36,7 +34,6 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -47,7 +44,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.jmx.CacheManagerJmxRegistration;
+import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -109,11 +106,6 @@ public class LifecycleManager implements ModuleLifecycle {
    public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
 
    private static boolean maxBooleanClausesWasSet = false;
-
-   /**
-    * Caching the looked-up MBeanServer for the lifetime of the cache manager is safe.
-    */
-   private MBeanServer mbeanServer;
 
    /**
     * Registers the Search interceptor in the cache before it gets started
@@ -259,42 +251,31 @@ public class LifecycleManager implements ModuleLifecycle {
     * Register query statistics and mass-indexer MBeans for a cache.
     */
    private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchIntegrator) {
-      AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-      // Resolve MBean server instance
       GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
-      GlobalJmxStatisticsConfiguration jmxConfig = globalConfig.globalJmxStatistics();
-      if (!jmxConfig.enabled())
+      if (!globalConfig.globalJmxStatistics().enabled())
          return;
-      if (mbeanServer == null) {
-         mbeanServer = JmxUtil.lookupMBeanServer(jmxConfig.mbeanServerLookup(), jmxConfig.properties());
-      }
 
-      // Resolve jmx domain to use for query MBeans
+      AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cache.getName());
-      String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, queryGroupName);
+      CacheJmxRegistration jmxRegistration = cr.getComponent(CacheJmxRegistration.class);
 
       // Register query statistics MBean, but only enable it if Infinispan config says so
       try {
-         ObjectName statsObjName = new ObjectName(jmxDomain + ":" + queryGroupName + ",component=Statistics");
-
-         InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator, statsObjName);
+         InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator);
          stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
-
-         JmxUtil.registerMBean(stats, statsObjName, mbeanServer);
-
          cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
+         jmxRegistration.registerMBean(stats, queryGroupName);
       } catch (Exception e) {
          throw new CacheException("Unable to register query statistics MBean", e);
       }
 
-      // Register mass indexer MBean, picking metadata from repo
+      // Register mass indexer MBean
       try {
          KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
          TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
-         // TODO: MassIndexer should be some kind of query cache component?
          DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchIntegrator, keyTransformationHandler, timeService);
-         CacheManagerJmxRegistration jmxRegistration = cr.getComponent(CacheManagerJmxRegistration.class);
-         jmxRegistration.registerExternalMBean(massIndexer, jmxDomain, queryGroupName, null);
+         cr.registerComponent(massIndexer, DistributedExecutorMassIndexer.class);
+         jmxRegistration.registerMBean(massIndexer, queryGroupName);
       } catch (Exception e) {
          throw new CacheException("Unable to create MassIndexer MBean", e);
       }
@@ -392,32 +373,6 @@ public class LifecycleManager implements ModuleLifecycle {
       if (searchIntegrator != null) {
          searchIntegrator.close();
       }
-
-      unregisterQueryMBeans(cr, cacheName);
-   }
-
-   /**
-    * Unregister query related MBeans for a cache, primarily the statistics, but also all other MBeans from the same
-    * related group.
-    */
-   private void unregisterQueryMBeans(ComponentRegistry cr, String cacheName) {
-      if (mbeanServer != null) {
-         try {
-            InfinispanQueryStatisticsInfo stats = cr.getComponent(InfinispanQueryStatisticsInfo.class);
-            if (stats != null) {
-               GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
-               String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cacheName);
-               String queryMBeanFilter = stats.getObjectName().getDomain() + ":" + queryGroupName + ",*";
-               JmxUtil.unregisterMBeans(queryMBeanFilter, mbeanServer);
-            }
-         } catch (Exception e) {
-            throw new CacheException("Unable to unregister query MBeans", e);
-         }
-      }
-   }
-
-   @Override
-   public void cacheStopped(ComponentRegistry cr, String cacheName) {
    }
 
    @Override
@@ -454,14 +409,10 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE, new QueryResponse.Externalizer());
    }
 
-   @Override
-   public void cacheManagerStopped(GlobalComponentRegistry gcr) {
-      mbeanServer = null;
-   }
-
    /**
     * Sets {@link BooleanQuery#setMaxClauseCount} according to the value of {@link #MAX_BOOLEAN_CLAUSES_SYS_PROP} system
     * property. This is executed only once, when first indexed cache is started.
+    *
     * @param properties
     */
    private void setBooleanQueryMaxClauseCount(TypedProperties properties) {

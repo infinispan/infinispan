@@ -1,9 +1,15 @@
 package org.infinispan.tx;
 
-import static org.infinispan.test.TestingUtil.existsObject;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
+import javax.management.ObjectName;
+
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookupProvider;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -18,16 +24,22 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "tx.NoRecoveryManagerByDefaultTest", groups = "functional")
 public class NoRecoveryManagerByDefaultTest extends SingleCacheManagerTest {
-   public void testNoRecoveryManager() throws Exception {
-      assert cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
+
+   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+
+   public void testNoRecoveryManager() {
+      assertTrue(cache.getCacheConfiguration().transaction().transactionMode().isTransactional());
       String jmxDomain = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().domain();
-      assert !existsObject(getCacheObjectName(jmxDomain, cache.getName(), "RecoveryManager"));
+      ObjectName recoveryManager = getCacheObjectName(jmxDomain, cache.getName() + "(local)", "RecoveryManager");
+      assertFalse(mBeanServerLookup.getMBeanServer().isRegistered(recoveryManager));
    }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
+      gcb.cacheContainer().statistics(true).globalJmxStatistics().mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      return TestCacheManagerFactory.createCacheManager(cb);
+      return TestCacheManagerFactory.createCacheManager(gcb, cb);
    }
 }

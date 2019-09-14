@@ -356,7 +356,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Total number of exclusive locks available in the cluster",
          displayName = "Cluster wide total number of locks",
-         measurementType = MeasurementType.DYNAMIC,
          displayType = DisplayType.SUMMARY)
    @Override
    public int getNumberOfLocksAvailable() {
@@ -365,7 +364,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @ManagedAttribute(description = "Total number of locks held in the cluster",
          displayName = "Cluster wide total number of locks held",
-         measurementType = MeasurementType.DYNAMIC,
          displayType = DisplayType.SUMMARY)
    @Override
    public int getNumberOfLocksHeld() {
