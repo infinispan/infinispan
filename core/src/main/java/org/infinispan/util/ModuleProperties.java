@@ -13,7 +13,6 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ServiceFinder;
-import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,7 +23,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Since 10.0, without replacement. To be removed very soon.
  */
+@Deprecated
 public final class ModuleProperties {
 
    private static final Log log = LogFactory.getLog(ModuleProperties.class);
@@ -32,14 +33,6 @@ public final class ModuleProperties {
    private Map<Byte, ModuleCommandFactory> commandFactories;
    private Map<Byte, ModuleCommandInitializer> commandInitializers;
    private Collection<Class<? extends ReplicableCommand>> moduleCommands;
-
-   /**
-    * @deprecated Since 10.0, ModuleLifecycle implementations are no longer services
-    */
-   @Deprecated
-   public static Collection<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
-      return ServiceFinder.load(ModuleLifecycle.class, cl);
-   }
 
    public void loadModuleCommandHandlers(ClassLoader cl) {
       Collection<ModuleCommandExtensions> moduleCmdExtLoader = ServiceFinder.load(ModuleCommandExtensions.class, cl);
