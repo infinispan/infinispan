@@ -60,7 +60,7 @@ public final class ModuleRepository {
       return moduleLifecycles;
    }
 
-   public static class Builder {
+   public static final class Builder {
       private final List<ModuleMetadataBuilder> modules;
       private final List<ModuleLifecycle> moduleLifecycles = new ArrayList<>();
       private final Map<String, ComponentAccessor> components = new HashMap<>();
@@ -80,7 +80,7 @@ public final class ModuleRepository {
                throw new IllegalStateException("Multiple modules registered with name " + module.getModuleName());
             }
          }
-         this.modules = sortModules(modules);
+         this.modules = sortModuleDependencies(modules);
       }
 
       ModuleRepository build(GlobalConfiguration globalConfiguration) {
@@ -94,14 +94,14 @@ public final class ModuleRepository {
          return new ModuleRepository(modules, moduleLifecycles, components, factoryNames, mbeans);
       }
 
-      private static List<ModuleMetadataBuilder> sortModules(Map<String, ModuleMetadataBuilder> modulesMap) {
+      private static List<ModuleMetadataBuilder> sortModuleDependencies(Map<String, ModuleMetadataBuilder> modulesMap) {
          DependencyGraph<ModuleMetadataBuilder> dependencyGraph = new DependencyGraph<>();
          for (ModuleMetadataBuilder module : modulesMap.values()) {
             for (String dependencyName : module.getRequiredDependencies()) {
                ModuleMetadataBuilder dependency = modulesMap.get(dependencyName);
                if (dependency == null) {
-                  throw new CacheConfigurationException(
-                     "Missing required dependency: " + module.getModuleName() + " requires " + dependencyName);
+                  throw new CacheConfigurationException("Missing required dependency: Module '"
+                        + module.getModuleName() + "' requires '" + dependencyName + "'");
                }
                dependencyGraph.addDependency(dependency, module);
             }
