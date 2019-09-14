@@ -1,8 +1,5 @@
 package org.infinispan.lifecycle;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * Different states a component may be in.
  *
@@ -35,8 +32,6 @@ public enum ComponentStatus {
     * The component is in a failed state due to a problem with one of the other lifecycle transition phases.
     */
    FAILED;
-
-   private static final Log log = LogFactory.getLog(ComponentStatus.class);
 
    public boolean needToDestroyFailedCache() {
       return this == ComponentStatus.FAILED;
