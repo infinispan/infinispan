@@ -163,6 +163,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertContains("k", true);
       assertCorrectExpiry(cl.loadEntry("k"), "v", lifespan, -1, false);
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, -1, false);
+      timeService.advance(lifespan + 1);
 
       lifespan = 2000;
       se = internalCacheEntry("k", "v", lifespan);
@@ -207,6 +208,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertContains("k", true);
       assertCorrectExpiry(cl.loadEntry("k"), "v", -1, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", -1, idle, false);
+      timeService.advance(idle + 1);
 
       idle = 1000;
       se = internalCacheEntry("k", "v", -1, idle);
@@ -282,6 +284,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertContains("k", true);
       assertCorrectExpiry(cl.loadEntry("k"), "v", lifespan, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, idle, false);
+      timeService.advance(idle + 1);
 
       idle = 1000;
       lifespan = 4000;
@@ -431,7 +434,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       // before running out of lifespan making this test unpredictably fail on them.
 
       long lifespan = 7000;
-      long idle = 5000;
+      long idle = 2000;
 
       InternalCacheEntry ice1 = internalCacheEntry("k1", "v1", lifespan);
       cl.write(marshalledEntry(ice1));
