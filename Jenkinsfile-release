@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label 'slave-group-release'
+        label 'ec2'
     }
 
     parameters {
