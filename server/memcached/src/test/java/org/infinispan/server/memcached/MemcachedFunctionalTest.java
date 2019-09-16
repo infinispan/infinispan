@@ -107,6 +107,29 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       addAndGet(m);
    }
 
+   public void testTouchWithExpiryUnixTime(Method m) throws InterruptedException, ExecutionException, TimeoutException {
+      int future = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 1000);
+      OperationFuture<Boolean> f = client.set(k(m), future, v(m));
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      f = client.touch(k(m), future + 1);
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      sleepThread(1100);
+      assertEquals(v(m), client.get(k(m)));
+      sleepThread(1100);
+      assertNull(client.get(k(m)));
+   }
+
+   public void testTouchWithExpirySeconds(Method m) throws InterruptedException, ExecutionException, TimeoutException {
+      OperationFuture<Boolean> f = client.set(k(m), 1, v(m));
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      f = client.touch(k(m), 2);
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      sleepThread(1100);
+      assertEquals(v(m), client.get(k(m)));
+      sleepThread(1100);
+      assertNull(client.get(k(m)));
+   }
+
    public void testAddWithExpirySeconds(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = client.add(k(m), 1, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));

@@ -20,6 +20,7 @@ import static org.infinispan.server.memcached.TextProtocolUtil.OK;
 import static org.infinispan.server.memcached.TextProtocolUtil.SERVER_ERROR;
 import static org.infinispan.server.memcached.TextProtocolUtil.SP;
 import static org.infinispan.server.memcached.TextProtocolUtil.STORED;
+import static org.infinispan.server.memcached.TextProtocolUtil.TOUCHED;
 import static org.infinispan.server.memcached.TextProtocolUtil.VALUE;
 import static org.infinispan.server.memcached.TextProtocolUtil.VALUE_SIZE;
 import static org.infinispan.server.memcached.TextProtocolUtil.ZERO;
@@ -238,6 +239,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             writeResponse(ch, get(buffer));
             break;
          case PutRequest:
+         case TouchRequest:
          case RemoveRequest:
          case PutIfAbsentRequest:
          case ReplaceRequest:
@@ -274,6 +276,9 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             readValue(buffer);
             ret = put();
             break;
+         case TouchRequest:
+            ret = touch();
+            break;
          case PutIfAbsentRequest:
             readValue(buffer);
             ret = putIfAbsent();
@@ -296,6 +301,26 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       writeResponse(ch, ret);
    }
 
+   private Object touch() {
+      final CacheEntry<byte[], byte[]> cacheEntry = cache.getCacheEntry(key);
+      if (cacheEntry == null) {
+         return createNotExistResponse();
+      }
+      final Metadata newMetadata = new MemcachedMetadata.Builder()
+              .merge(cacheEntry.getMetadata())
+              .lifespan(params.lifespan > 0 ? toMillis(params.lifespan) : -1)
+              .build();
+      cache.replace(key, cacheEntry.getValue(), newMetadata);
+      return createTouchedResponse();
+   }
+
+   private Object createTouchedResponse() {
+      if (params == null || !params.noReply) {
+         return TOUCHED;
+      } else {
+         return null;
+      }
+   }
 
    private Object putIfAbsent() {
       Object prev = cache.get(key);
@@ -405,6 +430,10 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
                case PutRequest:
                   params = readStorageParameters(args, b);
                   break;
+               case TouchRequest:
+                  endOfOp = true;
+                  params = readTouchParameters(args, b);
+                  break;
                case RemoveRequest:
                   params = readRemoveParameters(args);
                   break;
@@ -425,6 +454,14 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          }
       }
       return endOfOp;
+   }
+
+   private MemcachedParameters readTouchParameters(List<String> args, ByteBuf b) throws StreamCorruptedException,
+           EOFException {
+      int streamLifespan = getLifespan(args.get(0));
+      int lifespan = streamLifespan <= 0 ? -1 : getLifespan(args.get(0));
+      boolean noReply = parseNoReply(1, args);
+      return new MemcachedParameters(0, lifespan, -1, -1, noReply, 0, "", 0);
    }
 
    private MemcachedParameters readRemoveParameters(List<String> args) throws StreamCorruptedException {
@@ -1030,6 +1067,8 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             return MemcachedOperation.GetRequest;
          case "set":
             return MemcachedOperation.PutRequest;
+         case "touch":
+            return MemcachedOperation.TouchRequest;
          case "add":
             return MemcachedOperation.PutIfAbsentRequest;
          case "delete":
