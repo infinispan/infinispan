@@ -14,7 +14,6 @@
    <description>Infinispan Hibernate Cache Commons module</description>
 
    <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
       <version.hibernate.core>5.1.10.Final</version.hibernate.core><!-- TODO remove this -->
    </properties>
 

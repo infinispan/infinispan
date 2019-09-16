@@ -14,11 +14,6 @@
    <name>Infinispan Server - Core Components</name>
    <description>Infinispan Server - Core Components</description>
 
-
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>io.netty</groupId>
