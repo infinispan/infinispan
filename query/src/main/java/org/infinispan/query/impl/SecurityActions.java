@@ -43,7 +43,7 @@ final class SecurityActions {
       return doPrivileged(new GetCacheComponentRegistryAction(cache));
    }
 
-   static void addCacheDependency(EmbeddedCacheManager cacheManager, String cacheStarting, String queryKnownClassesCacheName) {
-      doPrivileged(new AddCacheDependencyAction(cacheManager, cacheStarting, queryKnownClassesCacheName));
+   static void addCacheDependency(EmbeddedCacheManager cacheManager, String from, String to) {
+      doPrivileged(new AddCacheDependencyAction(cacheManager, from, to));
    }
 }
