@@ -113,4 +113,10 @@ public final class ClassWhiteList {
       this.regexps.addAll(asList(regexps));
       this.compiled.addAll(stream(regexps).map(Pattern::compile).collect(Collectors.toList()));
    }
+
+   public void read(ClassWhiteList whiteList) {
+      this.regexps.addAll(whiteList.regexps);
+      this.compiled.addAll(whiteList.compiled);
+      this.classes.addAll(whiteList.classes);
+   }
 }

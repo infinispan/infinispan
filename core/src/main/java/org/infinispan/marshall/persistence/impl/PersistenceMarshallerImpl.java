@@ -76,7 +76,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       SerializationConfiguration serializationConfig = globalConfig.serialization();
       Marshaller marshaller = serializationConfig.marshaller();
       if (marshaller != null) {
-         // TODO add a inject method to make initialisation of whitelist possible?
+         marshaller.initialize(gcr.getCacheManager().getClassWhiteList());
          return marshaller;
       }
 
