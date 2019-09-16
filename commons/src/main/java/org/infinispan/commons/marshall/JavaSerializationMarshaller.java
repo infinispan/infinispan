@@ -33,6 +33,11 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
    }
 
    @Override
+   public void initialize(ClassWhiteList classWhiteList) {
+      this.whiteList.read(classWhiteList);
+   }
+
+   @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       ObjectOutput out = new ObjectOutputStream(baos);

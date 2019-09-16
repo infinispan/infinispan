@@ -14,26 +14,31 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
 
    public GenericJBossMarshaller() {
-      super();
-      baseCfg.setClassResolver(
-            new DefaultContextClassResolver(this.getClass().getClassLoader()));
+      this(null, null);
    }
 
    public GenericJBossMarshaller(ClassLoader classLoader) {
-      super();
-      baseCfg.setClassResolver(
-            new DefaultContextClassResolver(classLoader != null ? classLoader : this.getClass().getClassLoader()));
+      this(classLoader, null);
    }
 
    public GenericJBossMarshaller(ClassWhiteList classWhiteList) {
-      super();
-      baseCfg.setClassResolver(
-            new CheckedClassResolver(classWhiteList, this.getClass().getClassLoader()));
+      this(null, classWhiteList);
    }
 
    public GenericJBossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
       super();
-      baseCfg.setClassResolver(new CheckedClassResolver(classWhiteList, classLoader));
+      if (classLoader == null) {
+         classLoader = getClass().getClassLoader();
+      }
+      baseCfg.setClassResolver(classWhiteList == null ?
+            new DefaultContextClassResolver(classLoader) :
+            new CheckedClassResolver(classWhiteList, classLoader)
+      );
    }
 
+   @Override
+   public void initialize(ClassWhiteList classWhiteList) {
+      ClassLoader classLoader = ((DefaultContextClassResolver) baseCfg.getClassResolver()).getClassLoader();
+      baseCfg.setClassResolver(new CheckedClassResolver(classWhiteList, classLoader));
+   }
 }
