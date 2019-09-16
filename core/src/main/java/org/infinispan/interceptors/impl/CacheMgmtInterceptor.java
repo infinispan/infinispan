@@ -33,7 +33,9 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.concurrent.StripedCounters;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -53,12 +55,9 @@ import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.concurrent.StripedCounters;
 
 /**
  * Captures cache management statistics
@@ -759,10 +758,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   @ManagedOperation(
-         description = "Resets statistics gathered by this component",
-         displayName = "Reset Statistics (Statistics)"
-   )
    public void resetStatistics() {
       counters.reset(StripeB.hitsFieldUpdater);
       counters.reset(StripeB.missesFieldUpdater);

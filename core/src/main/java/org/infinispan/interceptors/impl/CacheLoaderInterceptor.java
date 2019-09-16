@@ -548,10 +548,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    @Override
-   @ManagedOperation(
-         description = "Resets statistics gathered by this component",
-         displayName = "Reset Statistics"
-   )
    public void resetStatistics() {
       cacheLoads.set(0);
       cacheMisses.set(0);

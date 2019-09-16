@@ -45,7 +45,7 @@ public abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor impl
     * Resets statistics gathered.  Is a no-op, and should be overridden if it is to be meaningful.
     */
    @Override
-   @ManagedOperation(description = "Resets statistics gathered by this component")
+   @ManagedOperation(displayName = "Reset Statistics", description = "Resets statistics gathered by this component")
    public void resetStatistics() {
    }
 }
