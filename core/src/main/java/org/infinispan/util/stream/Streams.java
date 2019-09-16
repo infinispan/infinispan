@@ -10,13 +10,15 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * A collection of stream related utility methods.
- * <p/>
- * <p>Exceptions that are thrown and not explicitly declared are ignored.
+ * A collection of I/O stream related utility methods.
+ * <p>
+ * Exceptions that are thrown and not explicitly declared are ignored.
  *
  * @author <a href="mailto:jason@planet57.com">Jason Dillon</a>
  * @since 4.2
+ * @deprecated Since 10.0. This will be removed in next major version.
  */
+@Deprecated
 public class Streams {
 
    private static final Log log = LogFactory.getLog(Streams.class);
@@ -254,7 +256,7 @@ public class Streams {
     */
    public static long copy(final InputStream input,
                            final OutputStream output,
-                           final byte buffer[])
+                           final byte[] buffer)
          throws IOException {
       long total = 0;
       int read;
@@ -345,7 +347,7 @@ public class Streams {
     */
    public static long copySome(final InputStream input,
                                final OutputStream output,
-                               final byte buffer[],
+                               final byte[] buffer,
                                final long length)
          throws IOException {
       long total = 0;
