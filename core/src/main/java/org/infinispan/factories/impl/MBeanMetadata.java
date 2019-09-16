@@ -170,11 +170,30 @@ public final class MBeanMetadata {
          return returnType;
       }
 
+      public String getSignature() {
+         StringBuilder signature = new StringBuilder();
+         signature.append(methodName).append('(');
+         if (methodParameters != null) {
+            boolean first = true;
+            for (OperationParameterMetadata param : methodParameters) {
+               if (first) {
+                  first = false;
+               } else {
+                  signature.append(',');
+               }
+               signature.append(param.getType());
+            }
+         }
+         signature.append(')');
+         return signature.toString();
+      }
+
       @Override
       public String toString() {
          return "OperationMetadata{" +
                "methodName='" + methodName + '\'' +
-               ", methodParameters=" + (methodParameters == null ? null : Arrays.asList(methodParameters)) +
+               ", returnType=" + returnType +
+               ", methodParameters=" + (methodParameters == null ? null : Arrays.toString(methodParameters)) +
                ", description='" + description + '\'' +
                '}';
       }
@@ -206,7 +225,7 @@ public final class MBeanMetadata {
 
       @Override
       public String toString() {
-         return "OperationParameter{name=" + name + ", type=" + type + ", description=" + description + "}";
+         return "OperationParameter{name='" + name + "', type=" + type + ", description='" + description + "'}";
       }
    }
 }

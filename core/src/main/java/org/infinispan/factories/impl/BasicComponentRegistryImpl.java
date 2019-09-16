@@ -67,28 +67,43 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
 
    @Override
    public MBeanMetadata getMBeanMetadata(String className) {
-      if (moduleRepository.getMBeanMetadata(className) == null)
+      MBeanMetadata metadata = moduleRepository.getMBeanMetadata(className);
+      if (metadata == null) {
          return null;
+      }
 
+      // collect attributes and operations from supers (in reverse order to ensure proper overriding)
       Map<String, MBeanMetadata.AttributeMetadata> attributes = new HashMap<>();
       Map<String, MBeanMetadata.OperationMetadata> operations = new HashMap<>();
-      String currentClass = className;
-      while (currentClass != null) {
-         MBeanMetadata metadata = moduleRepository.getMBeanMetadata(currentClass);
-         if (metadata == null) {
-            throw new CacheConfigurationException("Missing MBean metadata for class " + currentClass);
+
+      MBeanMetadata currentMetadata = metadata;
+      for (;;) {
+         for (MBeanMetadata.AttributeMetadata attribute : currentMetadata.getAttributes()) {
+            MBeanMetadata.AttributeMetadata existingAttr = attributes.put(attribute.getName(), attribute);
+            if (existingAttr != null) {
+               throw new IllegalStateException("Overriding of JMX attributes is not allowed. Attribute "
+                     + attribute.getName() + " is overridden in a subclass of " + className);
+            }
          }
-         for (MBeanMetadata.AttributeMetadata attribute : metadata.getAttributes()) {
-            attributes.put(attribute.getName(), attribute);
+         for (MBeanMetadata.OperationMetadata operation : currentMetadata.getOperations()) {
+            MBeanMetadata.OperationMetadata existingOp = operations.put(operation.getSignature(), operation);
+            if (existingOp != null) {
+               throw new IllegalStateException("Overriding of JMX operations is not allowed. Operation "
+                     + operation.getSignature() + " is overridden in a subclass of " + className);
+            }
          }
-         for (MBeanMetadata.OperationMetadata operation : metadata.getOperations()) {
-            operations.put(operation.getMethodName(), operation);
+         className = currentMetadata.getSuperMBeanClassName();
+         if (className == null) {
+            break;
          }
-         currentClass = metadata.getSuperMBeanClassName();
+         currentMetadata = moduleRepository.getMBeanMetadata(className);
+         if (currentMetadata == null) {
+            throw new IllegalStateException("Missing MBean metadata for class " + className);
+         }
       }
-      MBeanMetadata metadata = moduleRepository.getMBeanMetadata(className);
+
       return new MBeanMetadata(metadata.getJmxObjectName(), metadata.getDescription(), null,
-                               attributes.values(), operations.values());
+            attributes.values(), operations.values());
    }
 
    <T, U extends T> ComponentRef<T> getComponent0(String name, Class<U> componentType, boolean needInstance) {

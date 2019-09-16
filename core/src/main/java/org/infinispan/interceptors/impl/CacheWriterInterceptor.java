@@ -52,7 +52,6 @@ import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -468,10 +467,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   @ManagedOperation(
-         description = "Resets statistics gathered by this component",
-         displayName = "Reset statistics"
-   )
    public void resetStatistics() {
       cacheStores.set(0);
    }
