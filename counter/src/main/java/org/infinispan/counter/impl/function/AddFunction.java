@@ -41,7 +41,7 @@ public final class AddFunction<K extends CounterKey> extends BaseFunction<K, Cou
       return log;
    }
 
-   private static class Externalizer implements AdvancedExternalizer<AddFunction> {
+   public static class Externalizer implements AdvancedExternalizer<AddFunction> {
 
       @Override
       public Set<Class<? extends AddFunction>> getTypeClasses() {

@@ -48,7 +48,7 @@ public class RemoveFunction<K extends CounterKey> implements
       return null;
    }
 
-   private static class Externalizer extends NoStateExternalizer<RemoveFunction> {
+   public static class Externalizer extends NoStateExternalizer<RemoveFunction> {
 
       @Override
       public RemoveFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {

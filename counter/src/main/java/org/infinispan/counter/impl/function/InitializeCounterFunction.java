@@ -52,7 +52,7 @@ public class InitializeCounterFunction<K extends CounterKey> implements
             '}';
    }
 
-   private static class Externalizer implements AdvancedExternalizer<InitializeCounterFunction> {
+   public static class Externalizer implements AdvancedExternalizer<InitializeCounterFunction> {
 
       @Override
       public void writeObject(ObjectOutput output, InitializeCounterFunction object) throws IOException {

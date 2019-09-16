@@ -43,10 +43,7 @@ public class ReadFunction<K> implements Function<EntryView.ReadEntryView<K, Coun
       return view.find().map(CounterValue::getValue).orElse(null);
    }
 
-   private static class Externalizer extends NoStateExternalizer<ReadFunction> {
-
-      private Externalizer() {
-      }
+   public static class Externalizer extends NoStateExternalizer<ReadFunction> {
 
       @Override
       public Set<Class<? extends ReadFunction>> getTypeClasses() {

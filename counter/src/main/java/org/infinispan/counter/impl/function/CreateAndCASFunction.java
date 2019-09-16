@@ -42,7 +42,7 @@ public class CreateAndCASFunction<K extends CounterKey> extends BaseCreateFuncti
       return FunctionHelper.compareAndSwap(entryView, currentValue, metadata, expect, value);
    }
 
-   private static class Externalizer implements AdvancedExternalizer<CreateAndCASFunction> {
+   public static class Externalizer implements AdvancedExternalizer<CreateAndCASFunction> {
 
       @Override
       public Set<Class<? extends CreateAndCASFunction>> getTypeClasses() {

@@ -50,7 +50,7 @@ public class CompareAndSwapFunction<K extends CounterKey> extends BaseFunction<K
       return log;
    }
 
-   private static class Externalizer implements AdvancedExternalizer<CompareAndSwapFunction> {
+   public static class Externalizer implements AdvancedExternalizer<CompareAndSwapFunction> {
 
       @Override
       public Set<Class<? extends CompareAndSwapFunction>> getTypeClasses() {
