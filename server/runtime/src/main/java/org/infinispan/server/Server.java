@@ -247,7 +247,7 @@ public class Server implements ServerManagement {
          cacheManagers.put(cm.getName(), cm);
 
          // Start the protocol servers
-         serverConfiguration = cm.getCacheManagerConfiguration().module(ServerConfiguration.class);
+         serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
          ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
          serverConfiguration.endpoints().connectors().parallelStream().forEach(configuration -> {
