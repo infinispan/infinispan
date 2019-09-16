@@ -62,6 +62,13 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
       return this;
    }
 
+   public AuthorizationConfigurationBuilder roles(String... names) {
+      for (String name : names) {
+         this.role(name);
+      }
+      return this;
+   }
+
    @Override
    public void validate() {
    }
