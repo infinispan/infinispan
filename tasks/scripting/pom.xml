@@ -13,10 +13,6 @@
    <name>Infinispan Scripting</name>
    <packaging>jar</packaging>
 
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>

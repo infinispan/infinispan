@@ -14,7 +14,6 @@
    <description>Infinispan Hot Rod Server</description>
 
    <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
       <certificate.dname>CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</certificate.dname>
    </properties>
 

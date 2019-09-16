@@ -13,11 +13,6 @@
    <name>Infinispan JCACHE (JSR-107) Embedded Implementation</name>
    <description>JCACHE (JSR-107) implementation using Infinispan embedded mode</description>
 
-
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>

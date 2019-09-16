@@ -13,10 +13,6 @@
    <name>Infinispan Hibernate Cache SPI</name>
    <description>Infinispan Hibernate Cache SPI module</description>
 
-   <properties>
-      <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
-   </properties>
-
    <build>
       <plugins>
          <plugin>

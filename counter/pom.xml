@@ -13,10 +13,6 @@
     <name>Infinispan Clustered Counter</name>
     <description>Infinispan Clustered Counter module</description>
 
-    <properties>
-        <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-    </properties>
-
     <build>
         <resources>
             <resource>

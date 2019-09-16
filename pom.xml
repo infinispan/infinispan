@@ -227,9 +227,6 @@
       <upload.schemaDir>${upload.username}@${upload.host}:/schema_htdocs/infinispan</upload.schemaDir>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
-      <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
-      <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
-      <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <module.skipSupportModuleDeployment>true</module.skipSupportModuleDeployment>
       <packaging>jar</packaging>
