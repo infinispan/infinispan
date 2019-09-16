@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
@@ -41,6 +42,7 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       globalBuilder.globalJmxStatistics().enable();
+      globalBuilder.serialization().addContextInitializer(RestTestSCI.INSTANCE);
       return globalBuilder.clusteredDefault().cacheManagerName("default");
    }
 

@@ -39,7 +39,7 @@ public class CreateAndAddFunction<K extends CounterKey> extends BaseCreateFuncti
       return FunctionHelper.add(entryView, currentValue, metadata, delta);
    }
 
-   private static class Externalizer implements AdvancedExternalizer<CreateAndAddFunction> {
+   public static class Externalizer implements AdvancedExternalizer<CreateAndAddFunction> {
 
       @Override
       public Set<Class<? extends CreateAndAddFunction>> getTypeClasses() {

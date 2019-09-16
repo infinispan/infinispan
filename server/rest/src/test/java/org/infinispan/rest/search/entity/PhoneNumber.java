@@ -2,6 +2,8 @@ package org.infinispan.rest.search.entity;
 
 import java.io.Serializable;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  * @since 9.2
  */
@@ -10,6 +12,7 @@ public class PhoneNumber implements Serializable {
 
    private String number;
 
+   @ProtoField(number = 1)
    public String getNumber() {
       return number;
    }

@@ -54,7 +54,7 @@ public class ResetFunction<K extends CounterKey> extends BaseFunction<K, Void> {
       return "ResetFunction{}";
    }
 
-   private static class Externalizer extends NoStateExternalizer<ResetFunction> {
+   public static class Externalizer extends NoStateExternalizer<ResetFunction> {
 
       @Override
       public ResetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {

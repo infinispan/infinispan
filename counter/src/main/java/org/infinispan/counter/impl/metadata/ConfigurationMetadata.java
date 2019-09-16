@@ -36,7 +36,7 @@ public class ConfigurationMetadata implements MetaParam.Writable<CounterConfigur
       return configuration;
    }
 
-   private static class Externalizer implements AdvancedExternalizer<ConfigurationMetadata> {
+   public static class Externalizer implements AdvancedExternalizer<ConfigurationMetadata> {
 
       @Override
       public Set<Class<? extends ConfigurationMetadata>> getTypeClasses() {

@@ -39,7 +39,7 @@ public final class CounterKeyFilter implements KeyFilter<Object> {
       return key instanceof CounterKey;
    }
 
-   private static class Externalizer implements AdvancedExternalizer<CounterKeyFilter> {
+   public static class Externalizer implements AdvancedExternalizer<CounterKeyFilter> {
 
       @Override
       public Set<Class<? extends CounterKeyFilter>> getTypeClasses() {
