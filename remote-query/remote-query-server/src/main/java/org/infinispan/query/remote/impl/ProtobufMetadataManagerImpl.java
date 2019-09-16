@@ -3,19 +3,32 @@ package org.infinispan.query.remote.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.management.MBeanException;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -25,33 +38,48 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.CacheRoleImpl;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 @MBean(objectName = ProtobufMetadataManagerConstants.OBJECT_NAME,
-      description = "Component that acts as a manager and container for Protocol Buffers message type definitions in the scope of a CacheManger.")
+      description = "Component that acts as a manager and persistent container for Protocol Buffers message type definitions in the scope of a CacheManger.")
 @Scope(Scopes.GLOBAL)
 public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManager {
+
+   private static final Log log = LogFactory.getLog(ProtobufMetadataManagerImpl.class, Log.class);
+
+   private final SerializationContext serCtx;
 
    private volatile Cache<String, String> protobufSchemaCache;
 
    private ObjectName objectName;
 
-   private final SerializationContext serCtx;
+   @Inject
+   EmbeddedCacheManager cacheManager;
 
-   @Inject EmbeddedCacheManager cacheManager;
+   @Inject
+   InternalCacheRegistry internalCacheRegistry;
 
    public ProtobufMetadataManagerImpl() {
-      Configuration.Builder cfgBuilder = Configuration.builder();
-      IndexingMetadata.configure(cfgBuilder);
-      serCtx = ProtobufUtil.newSerializationContext(cfgBuilder.build());
+      Configuration.Builder protostreamCfgBuilder = Configuration.builder();
+      IndexingMetadata.configure(protostreamCfgBuilder);
+      serCtx = ProtobufUtil.newSerializationContext(protostreamCfgBuilder.build());
       try {
          MarshallerRegistration.init(serCtx);
       } catch (IOException | DescriptorParserException e) {
@@ -59,25 +87,95 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       }
    }
 
-   /**
-    * Starts the ___protobuf_metadata cache when needed. This method must be invoked for each cache that uses protobuf.
-    *
-    * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
-    */
-   protected void addCacheDependency(String dependantCacheName) {
-      protobufSchemaCache = (Cache<String, String>) SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME).getAdvancedCache().withEncoding(IdentityEncoder.class);
-      // add stop dependency
-      SecurityActions.addCacheDependency(cacheManager, dependantCacheName, ProtobufMetadataManagerImpl.PROTOBUF_METADATA_CACHE_NAME);
+   @Start
+   void start() {
+      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+
+      internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
+            getProtobufMetadataCacheConfig(globalConfiguration).build(),
+            EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PROTECTED, InternalCacheRegistry.Flag.PERSISTENT));
+
+      processSerializationContextInitializer(globalConfiguration.serialization().contextInitializers());
+      processProtostreamSerializationContextInitializers(globalConfiguration.classLoader());
+   }
+
+   private void processProtostreamSerializationContextInitializers(ClassLoader classLoader) {
+      Collection<ProtostreamSerializationContextInitializer> initializers =
+            ServiceFinder.load(ProtostreamSerializationContextInitializer.class, classLoader);
+
+      for (ProtostreamSerializationContextInitializer psci : initializers) {
+         try {
+            psci.init(serCtx);
+         } catch (Exception e) {
+            throw log.errorInitializingSerCtx(e);
+         }
+      }
+   }
+
+   private void processSerializationContextInitializer(Collection<SerializationContextInitializer> initializers) {
+      if (initializers != null) {
+         for (SerializationContextInitializer sci : initializers) {
+            try {
+               sci.registerSchema(serCtx);
+               sci.registerMarshallers(serCtx);
+            } catch (Exception e) {
+               throw log.errorInitializingSerCtx(e);
+            }
+         }
+      }
    }
 
    /**
-    * Obtain the cache, lazily.
+    * Adds an interceptor to the protobuf manager cache to detect entry updates and sync the SerializationContext.
+    *
+    * @param cacheComponentRegistry the component registry of the protobuf manager cache
     */
-   private Cache<String, String> getCache() {
+   void addProtobufMetadataManagerInterceptor(BasicComponentRegistry cacheComponentRegistry) {
+      ProtobufMetadataManagerInterceptor interceptor = new ProtobufMetadataManagerInterceptor();
+      cacheComponentRegistry.registerComponent(ProtobufMetadataManagerInterceptor.class, interceptor, true);
+      cacheComponentRegistry.addDynamicDependency(AsyncInterceptorChain.class.getName(), ProtobufMetadataManagerInterceptor.class.getName());
+      cacheComponentRegistry.getComponent(AsyncInterceptorChain.class).wired().addInterceptorAfter(interceptor, EntryWrappingInterceptor.class);
+   }
+
+   /**
+    * Adds a stop dependency on ___protobuf_metadata cache. This must be invoked for each cache that uses protobuf.
+    *
+    * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
+    */
+   void addCacheDependency(String dependantCacheName) {
+      SecurityActions.addCacheDependency(cacheManager, dependantCacheName, PROTOBUF_METADATA_CACHE_NAME);
+   }
+
+   /**
+    * Get the protobuf schema cache (lazily).
+    */
+   @SuppressWarnings("unchecked")
+   public Cache<String, String> getCache() {
       if (protobufSchemaCache == null) {
-         throw new IllegalStateException("Not started yet");
+         protobufSchemaCache = (Cache<String, String>) SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME)
+               .getAdvancedCache().withEncoding(IdentityEncoder.class);
       }
       return protobufSchemaCache;
+   }
+
+   private static ConfigurationBuilder getProtobufMetadataCacheConfig(GlobalConfiguration globalConfiguration) {
+      CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
+
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
+            .transaction().lockingMode(LockingMode.PESSIMISTIC)
+            .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
+            .clustering().cacheMode(cacheMode)
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
+            .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      if (globalConfiguration.security().authorization().enabled()) {
+         globalConfiguration.security().authorization().roles()
+               .put(SCHEMA_MANAGER_ROLE, new CacheRoleImpl(SCHEMA_MANAGER_ROLE, AuthorizationPermission.ALL));
+         cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
+      }
+      return cfg;
    }
 
    @Override

@@ -1,5 +1,8 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTO_KEY_SUFFIX;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -57,7 +60,7 @@ import org.infinispan.query.remote.impl.logging.Log;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInterceptor implements ProtobufMetadataManagerConstants {
+final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManagerInterceptor.class, Log.class);
 
