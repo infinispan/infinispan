@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -28,7 +28,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  */
 @Scope(Scopes.GLOBAL)
-public class TestObjectStreamMarshaller extends AbstractMarshaller implements PersistenceMarshaller {
+public class TestObjectStreamMarshaller implements PersistenceMarshaller {
 
    private static Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);
 
@@ -50,8 +50,28 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements Pe
    }
 
    @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
+      return marshaller.objectToByteBuffer(obj, estimatedSize);
+   }
+
+   @Override
+   public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
+      return marshaller.objectToByteBuffer(obj);
+   }
+
+   @Override
+   public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
+      return marshaller.objectFromByteBuffer(buf);
+   }
+
+   @Override
+   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       return marshaller.objectToBuffer(o);
+   }
+
+   @Override
+   public BufferSizePredictor getBufferSizePredictor(Object o) {
+      return marshaller.getBufferSizePredictor(o);
    }
 
    @Override
