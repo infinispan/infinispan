@@ -37,8 +37,7 @@ final class SecurityActions {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 
-   static void addCacheDependency(EmbeddedCacheManager cacheManager, String dependantCacheName,
-                                  String protobufMetadataCacheName) {
-      doPrivileged(new AddCacheDependencyAction(cacheManager, dependantCacheName, protobufMetadataCacheName));
+   static void addCacheDependency(EmbeddedCacheManager cacheManager, String from, String to) {
+      doPrivileged(new AddCacheDependencyAction(cacheManager, from, to));
    }
 }
