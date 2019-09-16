@@ -20,7 +20,8 @@ import org.junit.runners.Suite;
       HotRodCounterOperations.class,
       HotRodMultiMapOperations.class,
       HotRodTransactionalCacheOperations.class,
-      HotRodCacheQueries.class
+      HotRodCacheQueries.class,
+      HotRodCacheContinuousQueries.class
 })
 public class ClusteredIT {
 
