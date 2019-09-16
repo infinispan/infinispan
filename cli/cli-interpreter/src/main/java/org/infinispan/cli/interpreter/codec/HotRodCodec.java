@@ -2,8 +2,8 @@ package org.infinispan.cli.interpreter.codec;
 
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -30,7 +30,7 @@ public class HotRodCodec extends AbstractCodec {
    private Marshaller getMarshaller() {
       if (marshaller == null) {
          if (classWhiteList == null) throw log.whiteListNotFound();
-         return new GenericJBossMarshaller(classWhiteList);
+         return new JavaSerializationMarshaller(classWhiteList);
       }
       return marshaller;
    }
