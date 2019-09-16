@@ -23,6 +23,7 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
       </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
@@ -49,6 +50,16 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-multimap</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>

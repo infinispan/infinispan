@@ -24,6 +24,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodClient;
@@ -31,6 +34,7 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestClientListener;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.KeyValuePair;
 import org.testng.annotations.Test;
 
@@ -56,6 +60,11 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
    @Override
    protected ConfigurationBuilder createCacheConfig() {
       return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(cacheMode, false));
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() {
+      return TestCacheManagerFactory.createClusteredCacheManager(HotRodClusterEventsSCI.INSTANCE, hotRodCacheConfiguration());
    }
 
    @Override
@@ -201,7 +210,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       Optional<KeyValuePair<String, List<byte[]>>> filterFactory =
             Optional.of(new KeyValuePair<String, List<byte[]>>("accepted-key-filter-factory", Collections.emptyList()));
       byte[] key1 = k(m, "k1-");
-      withClusterClientListener(client1, listener1, filterFactory, Optional.empty(), Optional.of(key1), false, () -> {
+      withClusterClientListener(client1, listener1, filterFactory, Optional.empty(), key1, false, () -> {
          client2.put(k(m, "k-99"), 0, 0, v(m));
          listener1.expectNoEvents(Optional.empty());
          client2.remove(k(m, "k-99"));
@@ -220,7 +229,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       byte[] dynamicAcceptedKey = new byte[]{4, 5, 6};
       Optional<KeyValuePair<String, List<byte[]>>> filterFactory = Optional.of(
             new KeyValuePair<>("accepted-key-filter-factory", Collections.singletonList(dynamicAcceptedKey)));
-      withClusterClientListener(client1, listener1, filterFactory, Optional.empty(), Optional.empty(), false, () -> {
+      withClusterClientListener(client1, listener1, filterFactory, Optional.empty(), null, false, () -> {
          byte[] key1 = k(m, "k1-");
          client2.put(k(m, "k-99"), 0, 0, v(m));
          listener1.expectNoEvents(Optional.empty());
@@ -242,7 +251,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       Optional<KeyValuePair<String, List<byte[]>>> converterFactory = Optional
             .of(new KeyValuePair<String, List<byte[]>>("accepted-keyvalue-converter-factory", Collections.emptyList()));
       final byte[] key1 = k(m, "k1-");
-      withClusterClientListener(client1, listener1, Optional.empty(), converterFactory, Optional.of(key1), false,
+      withClusterClientListener(client1, listener1, Optional.empty(), converterFactory, key1, false,
                                 () -> {
                                    byte[] value = v(m);
 
@@ -265,7 +274,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       byte[] convertedKey = new byte[]{4, 5, 6};
       Optional<KeyValuePair<String, List<byte[]>>> converteFactory = Optional.of(
             new KeyValuePair<>("accepted-keyvalue-converter-factory", Collections.singletonList(new byte[]{4, 5, 6})));
-      withClusterClientListener(client1, listener1, Optional.empty(), converteFactory, Optional.empty(), false, () -> {
+      withClusterClientListener(client1, listener1, Optional.empty(), converteFactory, null, false, () -> {
          byte[] key1 = k(m, "k1-");
          byte[] value = v(m);
 
@@ -339,7 +348,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
    private void withClusterClientListener(HotRodClient client, TestClientListener listener,
                                           Optional<KeyValuePair<String, List<byte[]>>> filterFactory,
                                           Optional<KeyValuePair<String, List<byte[]>>> converterFactory,
-                                          Optional<byte[]> staticKey, boolean includeState, Runnable fn) {
+                                          byte[] staticKey, boolean includeState, Runnable fn) {
       filters.forEach(factory -> factory.staticKey = staticKey);
       converters.forEach(factory -> factory.staticKey = staticKey);
       TestResponse response = client.addClientListener(listener, includeState, filterFactory, converterFactory, true);
@@ -348,8 +357,8 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
          fn.run();
       } finally {
          assertStatus(client.removeClientListener(listener.getId()), Success);
-         filters.forEach(factory -> factory.staticKey = Optional.empty());
-         converters.forEach(factory -> factory.staticKey = Optional.empty());
+         filters.forEach(factory -> factory.staticKey = null);
+         converters.forEach(factory -> factory.staticKey = null);
       }
    }
 
@@ -373,26 +382,41 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       return buffer.array();
    }
 
-   private static class AcceptedKeyFilterFactory implements CacheEventFilterFactory, Serializable {
-      Optional<byte[]> staticKey = null;
+   static class AcceptedKeyFilterFactory implements CacheEventFilterFactory {
+
+      @ProtoField(number = 1)
+      byte[] staticKey = null;
+
+      AcceptedKeyFilterFactory() {}
+
+      Optional<byte[]> getStaticKey() {
+         return Optional.ofNullable(staticKey);
+      }
 
       @Override
       public <K, V> CacheEventFilter<K, V> getFilter(Object[] params) {
          return (CacheEventFilter<K, V> & Serializable) ((key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {
-            byte[] checkKey = staticKey.orElseGet(() -> (byte[]) params[0]);
+            byte[] checkKey = getStaticKey().orElseGet(() -> (byte[]) params[0]);
             return Arrays.equals(checkKey, (byte[]) key);
          });
       }
    }
 
-   private static class AcceptedKeyValueConverterFactory
-         implements CacheEventConverterFactory, Serializable {
-      Optional<byte[]> staticKey = null;
+   static class AcceptedKeyValueConverterFactory implements CacheEventConverterFactory {
+
+      @ProtoField(number = 1)
+      byte[] staticKey = null;
+
+      AcceptedKeyValueConverterFactory() {}
+
+      Optional<byte[]> getStaticKey() {
+         return Optional.ofNullable(staticKey);
+      }
 
       @Override
       public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
          return (CacheEventConverter<K, V, C>) (CacheEventConverter<byte[], byte[], byte[]> & Serializable) ((key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {
-            byte[] checkKey = staticKey.orElseGet(() -> (byte[]) params[0]);
+            byte[] checkKey = getStaticKey().orElseGet(() -> (byte[]) params[0]);
             if (newValue == null || !Arrays.equals(checkKey, key)) {
                return addLengthPrefix(key);
             } else {
@@ -400,5 +424,17 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
             }
          });
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               AcceptedKeyFilterFactory.class,
+               AcceptedKeyValueConverterFactory.class
+         },
+         schemaFileName = "test.hotrod.AbstractHotRodClusterEvents.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.hotord.AbstractHotRodClusterEvents")
+   interface HotRodClusterEventsSCI extends SerializationContextInitializer {
+      HotRodClusterEventsSCI INSTANCE = new HotRodClusterEventsSCIImpl();
    }
 }
