@@ -34,7 +34,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
       TestingUtil.withCacheManagers(new MultiCacheManagerCallable(createCacheManager(persistentStateLocation1),
                                                                   createCacheManager(persistentStateLocation2)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache<String, String> protobufMetadaCache = cms[0].getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
             protobufMetadaCache.put("testA.proto", "package A;");
             protobufMetadaCache.put("testB.proto", "import \"testB.proto\";\npackage B;");
@@ -44,7 +44,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
       TestingUtil.withCacheManagers(new MultiCacheManagerCallable(createCacheManager(persistentStateLocation1),
                                                                   createCacheManager(persistentStateLocation2)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             Cache<String, String> protobufMetadaCache = cms[0].getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
             assertTrue(protobufMetadaCache.containsKey("testA.proto"));
             assertTrue(protobufMetadaCache.containsKey("testB.proto"));
