@@ -58,7 +58,6 @@ import org.infinispan.client.hotrod.marshall.BytesOnlyJBossLikeMarshaller;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.Marshaller;
@@ -306,15 +305,13 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          marshaller = configuration.marshaller();
          if (marshaller == null) {
             Class<? extends Marshaller> clazz = configuration.marshallerClass();
-            if (!configuration.serialWhitelist().isEmpty()) {
-               // First try to instantiate the instance with the white list if possible
-               marshaller = Util.newInstanceOrNull(clazz, new Class[]{ClassWhiteList.class},
-                     configuration.getClassWhiteList());
-            }
             if (marshaller == null) {
                marshaller = Util.getInstance(clazz);
             }
          }
+      }
+      if (!configuration.serialWhitelist().isEmpty()) {
+         marshaller.initialize(configuration.getClassWhiteList());
       }
       marshallerRegistry.registerMarshaller(BytesOnlyJBossLikeMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
