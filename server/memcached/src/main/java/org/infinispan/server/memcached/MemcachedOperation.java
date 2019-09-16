@@ -8,6 +8,7 @@ package org.infinispan.server.memcached;
  */
 public enum MemcachedOperation {
    PutRequest,
+   TouchRequest,
    PutIfAbsentRequest,
    ReplaceRequest,
    ReplaceIfUnmodifiedRequest,

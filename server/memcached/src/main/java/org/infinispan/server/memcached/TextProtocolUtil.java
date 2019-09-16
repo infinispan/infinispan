@@ -35,6 +35,7 @@ public class TextProtocolUtil {
    public static final byte[] STORED = "STORED\r\n".getBytes();
    public static final byte[] NOT_STORED = "NOT_STORED\r\n".getBytes();
    public static final byte[] OK = "OK\r\n".getBytes();
+   public static final byte[] TOUCHED = "TOUCHED\r\n".getBytes();
    public static final byte[] ERROR = "ERROR\r\n".getBytes();
    public static final String CLIENT_ERROR_BAD_FORMAT = "CLIENT_ERROR bad command line format: ";
    public static final String SERVER_ERROR = "SERVER_ERROR ";
