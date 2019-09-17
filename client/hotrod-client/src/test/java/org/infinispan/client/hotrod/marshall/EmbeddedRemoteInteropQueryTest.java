@@ -44,6 +44,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -210,7 +211,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -250,7 +251,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -335,7 +336,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -375,7 +376,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -448,7 +449,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -485,7 +486,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 

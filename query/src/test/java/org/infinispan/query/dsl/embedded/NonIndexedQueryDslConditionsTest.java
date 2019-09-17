@@ -12,7 +12,9 @@ import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -29,7 +31,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, QueryTestSCI.INSTANCE, cfg);
    }
 
    public void testInsertAndIterateInTx() throws Exception {
@@ -37,7 +39,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       newUser.setId(15);
       newUser.setName("Test");
       newUser.setSurname("User");
-      newUser.setGender(User.Gender.MALE);
+      newUser.setGender(Gender.MALE);
       newUser.setAge(20);
 
       List results = withTx(tm(0), (Callable<List>) () -> {

@@ -5,6 +5,9 @@
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container>
+      <serialization>
+         <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
+      </serialization>
       <transport cluster="MyCluster"/>
       <local-cache name="queryCache_lucenestore_async_filestore">
          <transaction mode="NON_XA"/>

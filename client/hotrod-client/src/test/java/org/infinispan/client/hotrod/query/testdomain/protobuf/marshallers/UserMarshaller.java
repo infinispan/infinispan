@@ -11,7 +11,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 
 /**
  * @author anistor@redhat.com
@@ -42,7 +42,7 @@ public class UserMarshaller implements MessageMarshaller<UserPB> {
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), AddressPB.class);
 
       Integer age = reader.readInt("age");
-      User.Gender gender = reader.readEnum("gender", User.Gender.class);
+      Gender gender = reader.readEnum("gender", Gender.class);
       String notes = reader.readString("notes");
       Instant creationDate = reader.readInstant("creationDate");
       Instant passwordExpirationDate = reader.readInstant("passwordExpirationDate");

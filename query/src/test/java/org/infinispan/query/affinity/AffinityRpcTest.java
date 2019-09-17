@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.HashConfiguration;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -25,7 +26,7 @@ public class AffinityRpcTest extends BaseAffinityTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, getDefaultCacheConfigBuilder());
+      createClusteredCaches(3, QueryTestSCI.INSTANCE, getDefaultCacheConfigBuilder());
    }
 
    @Override

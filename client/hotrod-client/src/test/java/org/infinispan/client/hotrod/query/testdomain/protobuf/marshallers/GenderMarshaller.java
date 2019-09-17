@@ -1,17 +1,17 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class GenderMarshaller implements EnumMarshaller<User.Gender> {
+public class GenderMarshaller implements EnumMarshaller<Gender> {
 
    @Override
-   public Class<User.Gender> getJavaClass() {
-      return User.Gender.class;
+   public Class<Gender> getJavaClass() {
+      return Gender.class;
    }
 
    @Override
@@ -20,18 +20,18 @@ public class GenderMarshaller implements EnumMarshaller<User.Gender> {
    }
 
    @Override
-   public User.Gender decode(int enumValue) {
+   public Gender decode(int enumValue) {
       switch (enumValue) {
          case 0:
-            return User.Gender.MALE;
+            return Gender.MALE;
          case 1:
-            return User.Gender.FEMALE;
+            return Gender.FEMALE;
       }
       return null;  // unknown value
    }
 
    @Override
-   public int encode(User.Gender gender) {
+   public int encode(Gender gender) {
       switch (gender) {
          case MALE:
             return 0;

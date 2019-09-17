@@ -22,6 +22,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
@@ -71,7 +72,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
 
       NoopEventListener listener = new NoopEventListener();

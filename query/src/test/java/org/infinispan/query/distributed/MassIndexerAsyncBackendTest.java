@@ -6,6 +6,7 @@ import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
+import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.byteman.contrib.bmunit.BMNGListener;

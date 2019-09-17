@@ -13,6 +13,7 @@ import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
 /**
@@ -58,6 +59,7 @@ public class TransactionHS implements Transaction, Serializable {
    private boolean isValid;
 
    @Override
+   @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -68,11 +70,18 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @ProtoField(number = 2)
    public String getDescription() {
       return description;
    }
 
    @Override
+   public void setDescription(String description) {
+      this.description = description;
+   }
+
+   @Override
+   @ProtoField(number = 3)
    public String getLongDescription() {
       return longDescription;
    }
@@ -83,11 +92,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   public void setDescription(String description) {
-      this.description = description;
-   }
-
-   @Override
+   @ProtoField(number = 4)
    public String getNotes() {
       return notes;
    }
@@ -98,6 +103,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @ProtoField(number = 5, defaultValue = "0")
    public int getAccountId() {
       return accountId;
    }
@@ -108,6 +114,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @ProtoField(number = 6)
    public Date getDate() {
       return date;
    }
@@ -118,6 +125,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @ProtoField(number = 7, defaultValue = "0")
    public double getAmount() {
       return amount;
    }
@@ -128,6 +136,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @ProtoField(number = 8, defaultValue = "false")
    public boolean isDebit() {
       return isDebit;
    }
@@ -138,6 +147,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
+   @ProtoField(number = 9, defaultValue = "false")
    public boolean isValid() {
       return isValid;
    }

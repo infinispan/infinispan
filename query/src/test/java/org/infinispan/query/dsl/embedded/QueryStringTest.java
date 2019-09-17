@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -51,7 +52,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
@@ -68,7 +69,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
-      user2.setGender(User.Gender.MALE);
+      user2.setGender(Gender.MALE);
       user2.setAccountIds(Collections.singleton(3));
       user2.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user2.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
@@ -87,7 +88,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
-      user3.setGender(User.Gender.FEMALE);
+      user3.setGender(Gender.FEMALE);
       user3.setAccountIds(Collections.emptySet());
       user3.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user3.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));

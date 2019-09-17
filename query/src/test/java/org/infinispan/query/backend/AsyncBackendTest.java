@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.indexmanager.IndexUpdateCommand;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Transport;
@@ -132,8 +133,8 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
 
    private void test(ConfigurationBuilder cfg, final Assertion assertion) {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createClusteredCacheManager(cfg),
-            TestCacheManagerFactory.createClusteredCacheManager(cfg)) {
+            TestCacheManagerFactory.createClusteredCacheManager(QueryTestSCI.INSTANCE, cfg),
+            TestCacheManagerFactory.createClusteredCacheManager(QueryTestSCI.INSTANCE, cfg)) {
          @Override
          public void call() {
             EmbeddedCacheManager slave = isMaster(cms[0].getCache()) ? cms[1] : cms[0];

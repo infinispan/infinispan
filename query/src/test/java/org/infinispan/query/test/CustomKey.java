@@ -1,43 +1,34 @@
 package org.infinispan.query.test;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Transformable;
 
 @Transformable(transformer = CustomTransformer.class)
 public class CustomKey {
 
-   int i, j, k;
+   final int i, j, k;
 
+   @ProtoFactory
    public CustomKey(int i, int j, int k) {
       this.i = i;
       this.j = j;
       this.k = k;
    }
 
-   public CustomKey() {
-   }
-
+   @ProtoField(number = 1, defaultValue = "0")
    public int getI() {
       return i;
    }
 
-   public void setI(int i) {
-      this.i = i;
-   }
-
+   @ProtoField(number = 2, defaultValue = "0")
    public int getJ() {
       return j;
    }
 
-   public void setJ(int j) {
-      this.j = j;
-   }
-
+   @ProtoField(number = 3, defaultValue = "0")
    public int getK() {
       return k;
-   }
-
-   public void setK(int k) {
-      this.k = k;
    }
 
    @Override

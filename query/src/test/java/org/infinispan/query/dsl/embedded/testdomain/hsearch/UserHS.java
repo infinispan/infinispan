@@ -2,8 +2,11 @@ package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
@@ -15,7 +18,9 @@ import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 
 /**
@@ -49,7 +54,7 @@ public class UserHS extends UserBase {
    private Gender gender;
 
    @IndexedEmbedded(targetElement = AddressHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   private List<Address> addresses;
+   private List<AddressHS> addresses;
 
    @Field(analyze = Analyze.NO, store = Store.YES, index = Index.YES)
    private Instant creationDate;
@@ -63,6 +68,7 @@ public class UserHS extends UserBase {
    private String notes;
 
    @Override
+   @ProtoField(number = 2, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -73,6 +79,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 3, collectionImplementation = HashSet.class)
    public Set<Integer> getAccountIds() {
       return accountIds;
    }
@@ -83,6 +90,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 4)
    public String getSurname() {
       return surname;
    }
@@ -93,6 +101,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 5)
    public String getSalutation() {
       return salutation;
    }
@@ -103,6 +112,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 6)
    public Integer getAge() {
       return age;
    }
@@ -113,6 +123,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 7)
    public Gender getGender() {
       return gender;
    }
@@ -124,15 +135,25 @@ public class UserHS extends UserBase {
 
    @Override
    public List<Address> getAddresses() {
-      return addresses;
+      return addresses == null ? null : addresses.stream().map(Address.class::cast).collect(Collectors.toList());
    }
 
    @Override
    public void setAddresses(List<Address> addresses) {
+      this.addresses = addresses == null ? null :  addresses.stream().map(AddressHS.class::cast).collect(Collectors.toList());
+   }
+
+   @ProtoField(number = 8, collectionImplementation = ArrayList.class)
+   List<AddressHS> getHSAddresses() {
+      return addresses;
+   }
+
+   void setHSAddresses(List<AddressHS> addresses) {
       this.addresses = addresses;
    }
 
    @Override
+   @ProtoField(number = 9)
    public String getNotes() {
       return notes;
    }
@@ -143,6 +164,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 10)
    public Instant getCreationDate() {
       return creationDate;
    }
@@ -153,6 +175,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
+   @ProtoField(number = 11)
    public Instant getPasswordExpirationDate() {
       return passwordExpirationDate;
    }
@@ -228,6 +251,7 @@ abstract class UserBase implements User, Serializable {
    protected String name;
 
    @Override
+   @ProtoField(number = 1)
    public String getName() {
       return name;
    }

@@ -18,11 +18,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -46,6 +48,11 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
             .index(Index.PRIMARY_OWNER)
             .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
       return configurationBuilder;
+   }
+
+   @Override
+   protected SerializationContextInitializer serializationContextInitializer() {
+      return QueryTestSCI.INSTANCE;
    }
 
    @Override

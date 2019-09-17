@@ -49,6 +49,7 @@ import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
@@ -126,7 +127,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cacheCfg.memory()
             .storageType(storageType);
       enhanceConfig(cacheCfg);
-      List<Cache<Object, Person>> caches = createClusteredCaches(2, cacheCfg);
+      List<Cache<Object, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }

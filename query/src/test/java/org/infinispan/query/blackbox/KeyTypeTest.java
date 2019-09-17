@@ -13,6 +13,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -44,7 +45,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
+      cacheManager = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
 
       person1 = new Person();
       person1.setName("Navin");

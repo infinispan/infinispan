@@ -5,6 +5,9 @@
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
     <cache-container name="MassIndexingOffHeapAll" default-cache="default">
+        <serialization>
+            <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
+        </serialization>
         <transport cluster="Infinispan-Query-Cluster"/>
         <jmx duplicate-domains="true"/>
         <distributed-cache name="default" remote-timeout="20000" statistics="true">

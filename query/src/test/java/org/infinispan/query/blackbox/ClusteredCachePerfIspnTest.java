@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +36,7 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
       enhanceConfig(cacheCfg);
       ConfigurationBuilder indexCfg = new ConfigurationBuilder();
       for(int i = 0; i < 2; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(cacheCfg);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, cacheCfg);
          cm.defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCfg.build());
          cm.defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCfg.build());
          cm.defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCfg.build());

@@ -9,6 +9,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinArrayBridge;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
 /**
@@ -28,6 +29,7 @@ public class LimitsHS implements Limits, Serializable {
    private String[] payees = new String[0];
 
    @Override
+   @ProtoField(number = 1)
    public Double getMaxDailyLimit() {
       return maxDailyLimit;
    }
@@ -38,6 +40,7 @@ public class LimitsHS implements Limits, Serializable {
    }
 
    @Override
+   @ProtoField(number = 2)
    public Double getMaxTransactionLimit() {
       return maxTransactionLimit;
    }
@@ -48,6 +51,7 @@ public class LimitsHS implements Limits, Serializable {
    }
 
    @Override
+   @ProtoField(number = 3)
    public String[] getPayees() {
       return payees;
    }

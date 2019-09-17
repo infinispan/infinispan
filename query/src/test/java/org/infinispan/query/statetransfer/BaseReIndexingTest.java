@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -43,11 +44,11 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
 
       configureCache(builder);
 
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 
    private EmbeddedCacheManager createCacheManager() {
-      return addClusterEnabledCacheManager(
+      return addClusterEnabledCacheManager(QueryTestSCI.INSTANCE,
             builder, new TransportFlags().withMerge(true));
    }
 

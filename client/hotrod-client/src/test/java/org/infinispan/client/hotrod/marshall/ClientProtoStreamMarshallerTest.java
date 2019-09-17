@@ -20,6 +20,7 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -92,7 +93,7 @@ public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("Tom");
       user.setSurname("Cat");
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setAccountIds(Collections.singleton(12));
       Address address = new AddressPB();
       address.setStreet("Dark Alley");
@@ -106,7 +107,7 @@ public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
       assertEquals(1, user.getId());
       assertEquals("Tom", user.getName());
       assertEquals("Cat", user.getSurname());
-      assertEquals(User.Gender.MALE, user.getGender());
+      assertEquals(Gender.MALE, user.getGender());
       assertNotNull(user.getAccountIds());
       assertEquals(1, user.getAccountIds().size());
       assertTrue(user.getAccountIds().contains(12));
