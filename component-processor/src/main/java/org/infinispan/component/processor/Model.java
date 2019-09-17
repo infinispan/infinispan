@@ -190,13 +190,13 @@ public class Model {
 
    public static class MParameter {
       final String name;
-      final String description;
       final String type;
+      final String description;
 
-      public MParameter(String name, String description, String type) {
+      public MParameter(String name, String type, String description) {
          this.name = name;
-         this.description = description;
          this.type = type;
+         this.description = description;
       }
    }
 
