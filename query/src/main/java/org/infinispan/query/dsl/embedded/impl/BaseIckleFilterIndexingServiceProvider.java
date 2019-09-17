@@ -251,6 +251,9 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
          }
 
          boolean conversionDone = false;
+         if (invocations == null) {
+            return;
+         }
          for (DelegatingCacheEntryListenerInvocation<K, V> invocation : invocations) {
             if (invocation.getObservation().shouldInvoke(event.isPre())) {
                if (!conversionDone) {

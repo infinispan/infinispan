@@ -17,6 +17,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.logging.events.ServerEventLogger;
+import org.infinispan.server.test.TestThreadTrackerRule;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
@@ -27,10 +28,8 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-
 
 /**
  * ServerEventLoggerTest.
@@ -40,21 +39,14 @@ import org.junit.Test;
  */
 
 public class ServerEventLoggerTest {
-   @BeforeClass
-   public static void before() {
-      TestResourceTracker.testStarted(ServerConfigurationParserTest.class.getName());
-   }
-
-   @AfterClass
-   public static void after() {
-      TestResourceTracker.testFinished(ServerConfigurationParserTest.class.getName());
-   }
+   @Rule
+   public TestThreadTrackerRule tracker = new TestThreadTrackerRule();
 
    @Test
    public void testLocalServerEventLogging() {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(amendGlobalConfiguration(new GlobalConfigurationBuilder()), new ConfigurationBuilder())) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             cm.getCache();
             EventLogger eventLogger = EventLogManager.getEventLogger(cm);
             assertTrue(eventLogger.getClass().getName(), eventLogger instanceof ServerEventLogger);
@@ -87,7 +79,7 @@ public class ServerEventLoggerTest {
             TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder),
             TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder)) {
          @Override
-         public void call() throws Exception {
+         public void call() {
             int msg = 1;
             blockUntilViewReceived(cms[0].getCache(), 3);
             // Fill all nodes with logs

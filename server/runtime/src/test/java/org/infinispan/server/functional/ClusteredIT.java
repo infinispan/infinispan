@@ -10,8 +10,9 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
@@ -34,7 +35,9 @@ import org.junit.runners.Suite;
       HotRodCounterOperations.class,
       HotRodMultiMapOperations.class,
       HotRodTransactionalCacheOperations.class,
-      HotRodCacheQueries.class
+      HotRodCacheQueries.class,
+      HotRodCacheContinuousQueries.class,
+      HotRodListenerWithDslFilter.class
 })
 public class ClusteredIT {
 
@@ -53,7 +56,7 @@ public class ClusteredIT {
       if (indexed) {
          builder.indexing()
                .index(Index.PRIMARY_OWNER)
-               .addProperty("default.directory_provider", "local-heap")
+               .autoConfig(true)
                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 

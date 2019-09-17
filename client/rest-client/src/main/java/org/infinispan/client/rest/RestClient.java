@@ -28,6 +28,8 @@ public interface RestClient extends Closeable {
 
    CompletionStage<RestResponse> cacheDelete(String cache, String key);
 
+   CompletionStage<RestResponse> cacheQuery(String cache, String query);
+
    CompletionStage<RestResponse> cacheCreateFromTemplate(String cacheName, String template);
 
    CompletionStage<RestResponse> serverConfig();

@@ -101,6 +101,10 @@ public class RestClientOkHttp implements RestClient {
       return baseCacheURL + "/" + sanitize(cache) + "/" + sanitize(key);
    }
 
+   private String cacheUrl(String cache) {
+      return baseCacheURL + "/" + sanitize(cache);
+   }
+
    private String sanitize(String s) {
       try {
          return URLEncoder.encode(s, "UTF-8");
@@ -145,6 +149,13 @@ public class RestClientOkHttp implements RestClient {
    public CompletionStage<RestResponse> cacheDelete(String cache, String key) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl(cache, key)).delete();
+      return execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> cacheQuery(String cache, String query) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl(cache) + "?action=search&query=" + sanitize(query)).get();
       return execute(builder);
    }
 
