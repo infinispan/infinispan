@@ -132,7 +132,7 @@ parameters:
 meaning any firewall you may have configured won't get in the way.
 Very useful for testing a cluster where all nodes are on one machine.
 
-*TODO - add more tips!*
+//*TODO - add more tips!*
 
 You can also configure the JGroups configuration to use in {brandname}'s XML configuration:
 

@@ -81,9 +81,8 @@ See how to configure a regular Cache in the section link to [configure a cache].
 include::code_examples/MultiMapCacheEmbedded.java[]
 ----
 
-=== Server mode
-
-TODO
+//TODO
+//=== Server mode
 
 == Limitations
 
