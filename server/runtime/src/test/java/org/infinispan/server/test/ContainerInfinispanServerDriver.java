@@ -59,6 +59,23 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       createServerHierarchy(rootDir);
       String baseImageName = System.getProperty("org.infinispan.test.server.baseImageName", "jboss/base-jdk:11");
       Path serverOutputDir = Paths.get(System.getProperty("server.output.dir"));
+
+      List<String> args = new ArrayList<>();
+      args.add("bin/server.sh");
+      args.add("-c");
+      args.add(configurationFile);
+      args.add("-b");
+      args.add("SITE_LOCAL");
+      args.add("-Djgroups.tcp.address=SITE_LOCAL");
+      args.add("-Dinfinispan.cluster.name=" + name);
+      args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostName());
+      args.add("-Dcom.sun.management.jmxremote.port=9999");
+      args.add("-Dcom.sun.management.jmxremote.authenticate=false");
+      args.add("-Dcom.sun.management.jmxremote.ssl=false");
+      configuration.properties().forEach((k, v) -> {
+         args.add("-D" + k + "=" + v);
+      });
+
       ImageFromDockerfile image = new ImageFromDockerfile()
             .withFileFromPath("build", serverOutputDir)
             .withFileFromPath("test", rootDir.toPath())
@@ -79,15 +96,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                         .copy("src/test/resources/bin", INFINISPAN_SERVER_HOME + "/bin")
                         .workDir(INFINISPAN_SERVER_HOME)
                         .cmd(
-                              "bin/server.sh",
-                              "-c", configurationFile,
-                              "-b", "SITE_LOCAL",
-                              "-Djgroups.tcp.address=SITE_LOCAL",
-                              "-Dinfinispan.cluster.name=" + name,
-                              "-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostName(),
-                              "-Dcom.sun.management.jmxremote.port=9999",
-                              "-Dcom.sun.management.jmxremote.authenticate=false",
-                              "-Dcom.sun.management.jmxremote.ssl=false"
+                              args.toArray(new String[]{})
                         )
                         .expose(
                               11222, // Protocol endpoint

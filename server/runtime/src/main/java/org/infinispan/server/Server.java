@@ -117,6 +117,7 @@ public class Server implements ServerManagement {
    private Map<String, ProtocolServer> protocolServers;
    private volatile ComponentStatus status;
    private ServerConfiguration serverConfiguration;
+   private Extensions extensions;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -241,10 +242,14 @@ public class Server implements ServerManagement {
       cacheManagers = new LinkedHashMap<>(1);
       protocolServers = new LinkedHashMap<>(3);
       try {
+         // Load any server extensions
+         extensions = new Extensions();
+         extensions.load(this.getClass().getClassLoader());
+
          // Start the cache manager(s)
          DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);
-         SecurityActions.startCacheManager(cm);
          cacheManagers.put(cm.getName(), cm);
+         SecurityActions.startCacheManager(cm);
 
          // Start the protocol servers
          serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
@@ -263,6 +268,7 @@ public class Server implements ServerManagement {
                } else {
                   if (protocolServer instanceof HotRodServer) {
                      routes.put(new Route<>(routeSource, new HotRodServerRouteDestination(protocolServer.getName(), (HotRodServer) protocolServer)), 0);
+                     extensions.apply((HotRodServer) protocolServer);
                   } else if (protocolServer instanceof RestServer) {
                      routes.put(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)), 0);
                   }

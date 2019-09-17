@@ -30,6 +30,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -128,7 +129,7 @@ public class LifecycleManager implements ModuleLifecycle {
          SearchIntegrator searchFactory = null;
          boolean isIndexed = cfg.indexing().index().isEnabled();
          if (isIndexed) {
-            setBooleanQueryMaxClauseCount();
+            setBooleanQueryMaxClauseCount(cfg.indexing().properties());
 
             cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
             searchFactory = createSearchIntegrator(cfg.indexing(), cr, aggregatedClassLoader);
@@ -463,11 +464,15 @@ public class LifecycleManager implements ModuleLifecycle {
    /**
     * Sets {@link BooleanQuery#setMaxClauseCount} according to the value of {@link #MAX_BOOLEAN_CLAUSES_SYS_PROP} system
     * property. This is executed only once, when first indexed cache is started.
+    * @param properties
     */
-   private void setBooleanQueryMaxClauseCount() {
+   private void setBooleanQueryMaxClauseCount(TypedProperties properties) {
       if (!maxBooleanClausesWasSet) {
          maxBooleanClausesWasSet = true;
-         String maxClauseCountProp = SecurityActions.getSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+         String maxClauseCountProp = properties.getProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+         if (maxClauseCountProp == null) {
+            maxClauseCountProp = SecurityActions.getSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+         }
          if (maxClauseCountProp != null) {
             int maxClauseCount;
             try {

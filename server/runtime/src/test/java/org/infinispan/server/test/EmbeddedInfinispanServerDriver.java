@@ -41,6 +41,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
          properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
+         properties.putAll(configuration.properties());
          Server server = new Server(serverRoot, new File(configurationFile), properties);
          server.setExitHandler(new DefaultExitHandler());
          serverFutures.add(server.run());

@@ -98,6 +98,11 @@ public class RestClientNetty implements RestClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> cacheQuery(String cache, String query) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public CompletionStage<RestResponse> cacheCreateFromTemplate(String cacheName, String template) {
       String url = String.format("%s/%s?template=%s", baseCacheURL, cacheName, template);
       DefaultFullHttpRequest request = new DefaultFullHttpRequest(version, HttpMethod.POST, url);

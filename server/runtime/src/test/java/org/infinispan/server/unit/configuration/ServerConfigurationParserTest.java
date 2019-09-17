@@ -22,10 +22,9 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.junit.AfterClass;
+import org.infinispan.server.test.TestThreadTrackerRule;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -35,16 +34,8 @@ import org.junit.Test;
 
 public class ServerConfigurationParserTest {
 
-   @BeforeClass
-   public static void before() {
-      TestResourceTracker.testStarted(ServerConfigurationParserTest.class.getName());
-   }
-
-   @AfterClass
-   public static void after() {
-      TestResourceTracker.testFinished(ServerConfigurationParserTest.class.getName());
-   }
-
+   @Rule
+   public TestThreadTrackerRule tracker = new TestThreadTrackerRule();
 
    @Test
    public void testParser() throws IOException {
