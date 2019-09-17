@@ -1,6 +1,8 @@
 package org.infinispan.server.core.transport;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +19,7 @@ import javax.management.ReflectionException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -86,7 +89,8 @@ class NettyTransportConnectionStats {
       return connectionCount.get();
    }
 
-   static class ConnectionAdderTask implements Serializable, Function<EmbeddedCacheManager, Integer> {
+   @SerializeWith(NettyTransportConnectionStats.ConnectionAdderTask.Externalizer.class)
+   static class ConnectionAdderTask implements Function<EmbeddedCacheManager, Integer> {
       private final String serverName;
 
       ConnectionAdderTask(String serverName) {
@@ -106,6 +110,18 @@ class NettyTransportConnectionStats {
          } catch (MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException |
                MalformedObjectNameException e) {
             throw new RuntimeException(e);
+         }
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ConnectionAdderTask> {
+         @Override
+         public void writeObject(ObjectOutput output, ConnectionAdderTask task) throws IOException {
+            output.writeUTF(task.serverName);
+         }
+
+         @Override
+         public ConnectionAdderTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new ConnectionAdderTask(input.readUTF());
          }
       }
    }
