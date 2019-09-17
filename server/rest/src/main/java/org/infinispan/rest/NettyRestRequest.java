@@ -4,16 +4,21 @@ import static java.net.URLDecoder.decode;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.context.Flag;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.rest.operations.exceptions.InvalidFlagException;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -37,6 +42,7 @@ public class NettyRestRequest implements RestRequest {
    private static final String LAST_USED_HEADER = "lastUsed";
    private static final String TTL_SECONDS_HEADER = "timeToLiveSeconds";
    private static final String KEY_CONTENT_TYPE_HEADER = "key-content-type";
+   private static final String FLAGS_HEADER = "flags";
 
    private final FullHttpRequest request;
    private final Map<String, List<String>> parameters;
@@ -181,6 +187,30 @@ public class NettyRestRequest implements RestRequest {
    @Override
    public Long getTimeToLiveSecondsHeader() {
       return getHeaderAsLong(TTL_SECONDS_HEADER);
+   }
+
+   @Override
+   public EnumSet<CacheContainerAdmin.AdminFlag> getAdminFlags() {
+      String requestFlags = request.headers().get(FLAGS_HEADER);
+      if (requestFlags == null || requestFlags.isEmpty()) return null;
+      try {
+         return CacheContainerAdmin.AdminFlag.fromString(requestFlags);
+      } catch (IllegalArgumentException e) {
+         throw new InvalidFlagException(e);
+      }
+   }
+
+   @Override
+   public Flag[] getFlags() {
+      try {
+         String flags = request.headers().get(FLAGS_HEADER);
+         if (flags == null || flags.isEmpty()) {
+            return null;
+         }
+         return Arrays.stream(flags.split(",")).filter(s -> !s.isEmpty()).map(Flag::valueOf).toArray(Flag[]::new);
+      } catch (IllegalArgumentException e) {
+         throw new InvalidFlagException(e);
+      }
    }
 
    @Override

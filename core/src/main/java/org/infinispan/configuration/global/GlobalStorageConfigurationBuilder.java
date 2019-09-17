@@ -48,6 +48,7 @@ public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    public GlobalStorageConfigurationBuilder read(GlobalStorageConfiguration template) {
       attributes.read(template.attributes());
+      this.storage = template.configurationStorage();
       return this;
    }
 }

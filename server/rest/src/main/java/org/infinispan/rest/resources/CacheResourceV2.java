@@ -11,12 +11,14 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.configuration.cache.Configuration;
@@ -72,7 +74,7 @@ public class CacheResourceV2 extends CacheResource {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
-      Cache<?, ?> cache = restCacheManager.getCache(cacheName, request.getSubject());
+      Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
       if (cache == null) {
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return CompletableFuture.completedFuture(responseBuilder.build());
@@ -88,7 +90,11 @@ public class CacheResourceV2 extends CacheResource {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       List<String> template = request.parameters().get("template");
       String cacheName = request.variables().get("cacheName");
-      EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getInstance().administration();
+
+      EnumSet<AdminFlag> adminFlags = request.getAdminFlags();
+      EmbeddedCacheManagerAdmin initialAdmin = invocationHelper.getRestCacheManager().getInstance().administration();
+      EmbeddedCacheManagerAdmin administration = adminFlags == null ? initialAdmin : initialAdmin.withFlags(adminFlags);
+
       if (template != null && !template.isEmpty()) {
          String templateName = template.iterator().next();
          return CompletableFuture.supplyAsync(() -> {
@@ -133,7 +139,7 @@ public class CacheResourceV2 extends CacheResource {
    private CompletionStage<RestResponse> getCacheStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request.getSubject());
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       Stats stats = cache.getAdvancedCache().getStats();
       try {
          byte[] statsResponse = invocationHelper.getMapper().writeValueAsBytes(stats);
@@ -155,7 +161,7 @@ public class CacheResourceV2 extends CacheResource {
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
          responseBuilder.status(NOT_FOUND).build();
       }
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request.getSubject());
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null)
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
 
@@ -175,7 +181,7 @@ public class CacheResourceV2 extends CacheResource {
 
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request.getSubject());
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
       return CompletableFuture.supplyAsync(() -> {
          try {
