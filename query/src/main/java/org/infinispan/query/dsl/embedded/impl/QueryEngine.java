@@ -109,7 +109,7 @@ public class QueryEngine<TypeMetadata> {
 
    private static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
+   public static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
 
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
       this.cache = wrapCache(cache, isIndexed);

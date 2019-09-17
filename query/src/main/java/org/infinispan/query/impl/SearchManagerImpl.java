@@ -24,6 +24,7 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
@@ -102,7 +103,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
       if (queryMode == IndexedQueryMode.BROADCAST) {
          ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-         return new ClusteredCacheQueryImpl<>(new QueryDefinition(hSearchQuery), asyncExecutor, cache, keyTransformationHandler, null);
+         return new ClusteredCacheQueryImpl<>(new QueryDefinition(hSearchQuery, QueryEngine.queryEngineProvider), asyncExecutor, cache, keyTransformationHandler, null);
       } else {
          return new CacheQueryImpl<>(hSearchQuery, cache, keyTransformationHandler);
       }

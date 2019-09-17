@@ -57,13 +57,13 @@ public final class QueryDefinition {
       this.queryEngineProvider = queryEngineProvider;
    }
 
-   public QueryDefinition(HSQuery hsQuery) {
+   public QueryDefinition(HSQuery hsQuery, SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
       if (hsQuery == null) {
          throw new IllegalArgumentException("hsQuery cannot be null");
       }
       this.hsQuery = hsQuery;
-      this.queryString = null;
-      this.queryEngineProvider = null;
+      this.queryString = hsQuery.getQueryString();
+      this.queryEngineProvider = queryEngineProvider;
    }
 
    public String getQueryString() {
@@ -149,7 +149,7 @@ public final class QueryDefinition {
    }
 
    public void setSort(Sort sort) {
-      if (queryString != null) {
+      if (hsQuery == null) {
          throw log.sortNotSupportedWithQueryString();
       }
       hsQuery.sort(sort);
@@ -157,17 +157,17 @@ public final class QueryDefinition {
    }
 
    public void filter(Filter filter) {
-      if (queryString != null) throw log.filterNotSupportedWithQueryString();
+      if (hsQuery == null) throw log.filterNotSupportedWithQueryString();
       hsQuery.filter(filter);
    }
 
    public FullTextFilter enableFullTextFilter(String name) {
-      if (queryString != null) throw log.filterNotSupportedWithQueryString();
+      if (hsQuery == null) throw log.filterNotSupportedWithQueryString();
       return hsQuery.enableFullTextFilter(name);
    }
 
    public void disableFullTextFilter(String name) {
-      if (queryString != null) throw log.filterNotSupportedWithQueryString();
+      if (hsQuery == null) throw log.filterNotSupportedWithQueryString();
       hsQuery.disableFullTextFilter(name);
    }
 
@@ -201,14 +201,8 @@ public final class QueryDefinition {
 
       @Override
       public void writeObject(ObjectOutput output, QueryDefinition queryDefinition) throws IOException {
-         if (queryDefinition.queryString != null) {
-            output.writeBoolean(true);
-            output.writeUTF(queryDefinition.queryString);
-            output.writeObject(queryDefinition.queryEngineProvider);
-         } else {
-            output.writeBoolean(false);
-            output.writeObject(queryDefinition.hsQuery);
-         }
+         output.writeUTF(queryDefinition.queryString);
+         output.writeObject(queryDefinition.queryEngineProvider);
          output.writeInt(queryDefinition.firstResult);
          output.writeInt(queryDefinition.maxResults);
          output.writeObject(queryDefinition.sortableFields);
@@ -226,14 +220,9 @@ public final class QueryDefinition {
 
       @Override
       public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         QueryDefinition queryDefinition;
-         if (input.readBoolean()) {
-            String queryString = input.readUTF();
-            SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
-            queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
-         } else {
-            queryDefinition = new QueryDefinition((HSQuery) input.readObject());
-         }
+         String queryString = input.readUTF();
+         SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
+         QueryDefinition queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
          queryDefinition.setFirstResult(input.readInt());
          queryDefinition.setMaxResults(input.readInt());
          Set<String> sortableField = (Set<String>) input.readObject();

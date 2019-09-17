@@ -21,6 +21,7 @@ import org.infinispan.query.FetchOptions;
 import org.infinispan.query.FetchOptions.FetchMode;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 
 /**
  * Implementation class of the CacheQuery interface.
@@ -70,7 +71,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     * Create a CacheQueryImpl based on a HSQuery.
     */
    public CacheQueryImpl(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this(new QueryDefinition(hSearchQuery), cache, keyTransformationHandler);
+      this(new QueryDefinition(hSearchQuery, QueryEngine.queryEngineProvider), cache, keyTransformationHandler);
    }
 
    /**

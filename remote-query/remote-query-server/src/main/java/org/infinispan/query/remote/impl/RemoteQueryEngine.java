@@ -101,7 +101,7 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
       if (queryMode == IndexedQueryMode.BROADCAST) {
          queryDefinition = new QueryDefinition(ickleParsingResult.getQueryString(), queryEngineProvider);
       } else {
-         queryDefinition = new QueryDefinition(getSearchFactory().createHSQuery(luceneQuery, queryMetadata));
+         queryDefinition = new QueryDefinition(getSearchFactory().createHSQuery(luceneQuery, queryMetadata), queryEngineProvider);
       }
       queryDefinition.setNamedParameters(namedParameters);
       return getSearchManager().getQuery(queryDefinition, queryMode, queryMetadata);
