@@ -24,6 +24,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -46,7 +47,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       builder.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(builder.persistence()));
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, builder);
       cache = cacheManager.getCache();
       store = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class)
             .getStores(DummyInMemoryStore.class).iterator().next();

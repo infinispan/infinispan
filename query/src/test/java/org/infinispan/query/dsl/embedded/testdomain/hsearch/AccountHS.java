@@ -19,7 +19,9 @@ import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinArrayBridge;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.Currency;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
 /**
@@ -31,29 +33,36 @@ public class AccountHS implements Account, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField
-   private int id;
+   @ProtoField(number = 1, defaultValue = "0")
+   int id;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @SortableField
-   private String description;
+   @ProtoField(number = 2)
+   String description;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @DateBridge(encoding = EncodingType.STRING, resolution = Resolution.MILLISECOND)
    @SortableField
-   private Date creationDate;
+   @ProtoField(number = 3)
+   Date creationDate;
 
    @IndexedEmbedded(targetElement = LimitsHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   private Limits limits;
+   @ProtoField(number = 4)
+   LimitsHS limits;
 
    @IndexedEmbedded(targetElement = LimitsHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
-   private Limits hardLimits;
+   @ProtoField(number = 5)
+   LimitsHS hardLimits;
 
    // not indexed
-   private List<byte[]> blurb = new ArrayList<>();
+   @ProtoField(number = 6, collectionImplementation = ArrayList.class)
+   List<byte[]> blurb = new ArrayList<>();
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @FieldBridge(impl = BuiltinArrayBridge.class)
-   private Currency[] currencies = new Currency[0];
+   @ProtoField(number = 7)
+   Currency[] currencies = new Currency[0];
 
    public AccountHS() {
       // hardLimits is a required field, so we make our life easy by providing defaults here
@@ -99,7 +108,7 @@ public class AccountHS implements Account, Serializable {
 
    @Override
    public void setLimits(Limits limits) {
-      this.limits = limits;
+      this.limits = (LimitsHS) limits;
    }
 
    @Override
@@ -109,7 +118,7 @@ public class AccountHS implements Account, Serializable {
 
    @Override
    public void setHardLimits(Limits hardLimits) {
-      this.hardLimits = hardLimits;
+      this.hardLimits = (LimitsHS) hardLimits;
    }
 
    @Override

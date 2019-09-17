@@ -42,6 +42,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.FilterResult;
@@ -115,7 +116,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
@@ -124,7 +125,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
-      user2.setGender(User.Gender.MALE);
+      user2.setGender(Gender.MALE);
       user2.setAge(32);
       user2.setAccountIds(Collections.singleton(3));
 
@@ -132,7 +133,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
-      user3.setGender(User.Gender.FEMALE);
+      user3.setGender(Gender.FEMALE);
       user3.setAge(31);
 
       remoteCache.clear();
@@ -170,7 +171,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
@@ -179,7 +180,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
-      user2.setGender(User.Gender.MALE);
+      user2.setGender(Gender.MALE);
       user2.setAge(32);
       user2.setAccountIds(Collections.singleton(3));
 
@@ -187,7 +188,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
-      user3.setGender(User.Gender.FEMALE);
+      user3.setGender(Gender.FEMALE);
       user3.setAge(31);
 
       remoteCache.clear();

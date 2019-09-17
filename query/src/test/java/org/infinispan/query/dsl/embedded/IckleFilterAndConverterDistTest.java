@@ -45,7 +45,7 @@ public class IckleFilterAndConverterDistTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cfgBuilder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      createClusteredCaches(numNodes, cfgBuilder);
+      createClusteredCaches(numNodes, DslSCI.INSTANCE, cfgBuilder);
    }
 
    @Test

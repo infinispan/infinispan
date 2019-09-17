@@ -10,10 +10,6 @@ import java.util.List;
  */
 public interface Account extends Serializable {
 
-   enum Currency {
-      EUR, GBP, USD, BRL
-   }
-
    int getId();
 
    void setId(int id);

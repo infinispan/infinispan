@@ -9,6 +9,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -36,6 +37,7 @@ public class ClusteredCacheWithAsyncDirTest extends ClusteredCacheTest {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
 
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
+      holder.getGlobalConfigurationBuilder().serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
       for (ConfigurationBuilder builder : holder.getNamedConfigurationBuilders().values()) {
          for (StoreConfigurationBuilder storeBuilder : builder.persistence().stores()) {

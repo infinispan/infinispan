@@ -21,11 +21,13 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.impl.model.TheEntity;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.Author;
 import org.infinispan.query.dsl.embedded.testdomain.Book;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -73,7 +75,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Book.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 
    @BeforeClass(alwaysRun = true)
@@ -85,7 +87,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
@@ -99,7 +101,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
-      user2.setGender(User.Gender.MALE);
+      user2.setGender(Gender.MALE);
       user2.setAge(44);
       user2.setAccountIds(Collections.singleton(3));
 
@@ -115,7 +117,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
-      user3.setGender(User.Gender.FEMALE);
+      user3.setGender(Gender.FEMALE);
       user3.setAccountIds(Collections.emptySet());
 
       Account account1 = new AccountHS();

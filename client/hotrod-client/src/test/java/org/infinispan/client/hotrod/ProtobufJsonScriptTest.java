@@ -19,6 +19,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
@@ -66,7 +67,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       user1.setId(1);
       user1.setName("Tom");
       user1.setSurname("Cat");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(33);
       user1.setAccountIds(Collections.singleton(12));
 
@@ -74,7 +75,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       user2.setId(2);
       user2.setName("Jane");
       user2.setSurname("Doe");
-      user2.setGender(User.Gender.FEMALE);
+      user2.setGender(Gender.FEMALE);
       user2.setAge(39);
 
       cache.put(1, user1);

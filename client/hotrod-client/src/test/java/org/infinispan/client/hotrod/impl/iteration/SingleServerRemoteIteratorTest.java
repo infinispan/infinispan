@@ -17,7 +17,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.Currency;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.LimitsHS;
 import org.testng.annotations.Test;
@@ -42,7 +42,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cacheManager = super.createCacheManager();
-      cacheManager.getClassWhiteList().addClasses(AccountHS.class, Account.Currency.class, LimitsHS.class);
+      cacheManager.getClassWhiteList().addClasses(AccountHS.class, Currency.class, LimitsHS.class);
       return cacheManager;
    }
 

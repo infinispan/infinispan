@@ -37,6 +37,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
@@ -153,7 +154,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       user.setId(id);
       user.setName("Tom" + id);
       user.setSurname("Cat" + id);
-      user.setGender(User.Gender.MALE);
+      user.setGender(Gender.MALE);
       user.setAccountIds(Collections.singleton(12));
       Address address = new AddressPB();
       address.setStreet("Dark Alley");

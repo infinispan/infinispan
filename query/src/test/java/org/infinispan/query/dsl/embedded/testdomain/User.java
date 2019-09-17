@@ -10,10 +10,6 @@ import java.util.Set;
  */
 public interface User {
 
-   enum Gender {
-      MALE, FEMALE
-   }
-
    int getId();
 
    void setId(int id);

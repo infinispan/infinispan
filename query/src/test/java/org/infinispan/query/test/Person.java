@@ -1,6 +1,5 @@
 package org.infinispan.query.test;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import org.hibernate.search.annotations.Analyze;
@@ -13,6 +12,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author Navin Surtani
@@ -22,9 +22,7 @@ import org.hibernate.search.annotations.Store;
       @FullTextFilterDef(name = "personFilter", impl = PersonBlurbFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS),
       @FullTextFilterDef(name = "personAgeFilter", impl = PersonAgeFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS)
 })
-public class Person implements Serializable {
-
-   private static final long serialVersionUID = 0xBABEL;
+public class Person {
 
    @Field(store = Store.YES)
    private String name;
@@ -59,6 +57,7 @@ public class Person implements Serializable {
       this.dateOfGraduation = dateOfGraduation;
    }
 
+   @ProtoField(number = 1)
    public String getName() {
       return name;
    }
@@ -67,6 +66,7 @@ public class Person implements Serializable {
       this.name = name;
    }
 
+   @ProtoField(number = 2)
    public String getBlurb() {
       return blurb;
    }
@@ -75,6 +75,7 @@ public class Person implements Serializable {
       this.blurb = blurb;
    }
 
+   @ProtoField(number = 3, defaultValue = "0")
    public int getAge() {
       return age;
    }
@@ -83,6 +84,7 @@ public class Person implements Serializable {
       this.age = age;
    }
 
+   @ProtoField(number = 4)
    public String getNonIndexedField() {
       return nonIndexedField;
    }
@@ -91,6 +93,7 @@ public class Person implements Serializable {
       this.nonIndexedField = nonIndexedField;
    }
 
+   @ProtoField(number = 5)
    public Date getDateOfGraduation() {
       return dateOfGraduation;
    }

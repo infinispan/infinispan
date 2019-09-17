@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,12 +26,12 @@ public class ReplaceTest extends SingleCacheManagerTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 
    public void testReplaceSimple() {
       //for comparison we use a non-indexing cache here:
-      EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(true));
+      EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, getDefaultStandaloneCacheConfig(true));
       try {
          Cache<Object, Object> simpleCache = simpleCacheManager.getCache();
          TestEntity se1 = new TestEntity("name1", "surname1", 10, "note");

@@ -37,6 +37,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -98,7 +99,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cacheCfg.memory()
             .storageType(storageType);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
+      List<Cache<String, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cacheAMachine1 = caches.get(0);
       cacheAMachine2 = caches.get(1);
       populateCache();

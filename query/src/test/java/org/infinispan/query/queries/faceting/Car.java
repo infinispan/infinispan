@@ -1,7 +1,5 @@
 package org.infinispan.query.queries.faceting;
 
-import java.io.Serializable;
-
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Facet;
 import org.hibernate.search.annotations.FacetEncodingType;
@@ -10,12 +8,14 @@ import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.IntegerBridge;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author Hardy Ferentschik
  */
 @Indexed(index = "car")
-public class Car implements Serializable {
+public class Car {
 
    @Field(analyze = Analyze.NO)
    private String color;
@@ -27,14 +27,26 @@ public class Car implements Serializable {
    @Facet(encoding = FacetEncodingType.STRING)
    private int cubicCapacity;
 
+   @ProtoFactory
    public Car(String make, String color, int cubicCapacity) {
       this.color = color;
       this.cubicCapacity = cubicCapacity;
       this.make = make;
    }
 
+   @ProtoField(number = 1)
    public String getMake() {
       return make;
+   }
+
+   @ProtoField(number = 2)
+   public String getColor() {
+      return color;
+   }
+
+   @ProtoField(number = 3, defaultValue = "0")
+   public int getCubicCapacity() {
+      return cubicCapacity;
    }
 
    @Override

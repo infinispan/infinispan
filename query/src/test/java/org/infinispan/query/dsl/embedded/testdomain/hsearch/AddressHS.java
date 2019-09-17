@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
 /**
@@ -26,6 +27,7 @@ public class AddressHS implements Address, Serializable {
    private boolean isCommercial;
 
    @Override
+   @ProtoField(number = 1)
    public String getStreet() {
       return street;
    }
@@ -36,6 +38,7 @@ public class AddressHS implements Address, Serializable {
    }
 
    @Override
+   @ProtoField(number = 2)
    public String getPostCode() {
       return postCode;
    }
@@ -46,6 +49,7 @@ public class AddressHS implements Address, Serializable {
    }
 
    @Override
+   @ProtoField(number = 3, defaultValue = "0")
    public int getNumber() {
       return number;
    }
@@ -56,6 +60,7 @@ public class AddressHS implements Address, Serializable {
    }
 
    @Override
+   @ProtoField(number = 4, defaultValue = "false")
    public boolean isCommercial() {
       return isCommercial;
    }

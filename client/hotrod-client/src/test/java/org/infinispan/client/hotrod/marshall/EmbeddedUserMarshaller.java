@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AddressHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 
@@ -42,7 +42,7 @@ public class EmbeddedUserMarshaller implements MessageMarshaller<UserHS> {
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), AddressHS.class);
 
       Integer age = reader.readInt("age");
-      User.Gender gender = reader.readEnum("gender", User.Gender.class);
+      Gender gender = reader.readEnum("gender", Gender.class);
       String notes = reader.readString("notes");
       Instant creationDate = reader.readInstant("creationDate");
       Instant passwordExpirationDate = reader.readInstant("passwordExpirationDate");

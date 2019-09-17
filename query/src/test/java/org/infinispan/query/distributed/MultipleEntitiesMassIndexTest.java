@@ -21,6 +21,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -45,7 +46,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<String, Car>> cacheList = createClusteredCaches(2, cacheCfg);
+      List<Cache<String, Car>> cacheList = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
 
       waitForClusterToForm();
 

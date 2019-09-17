@@ -32,6 +32,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -216,7 +217,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("default.indexBase", indexDir.getAbsolutePath())
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(b);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, b);
    }
 
    protected EmbeddedCacheManager createVolatileCacheManager() {
@@ -226,7 +227,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(b);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, b);
    }
 
    private int countIndex(Class<?> entityType, Cache<?, ?> cache) {

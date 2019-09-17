@@ -29,6 +29,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -108,7 +109,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       user1.setId(1);
       user1.setName("Tom");
       user1.setSurname("Cat");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAccountIds(Collections.singleton(12));
       Address address1 = new AddressPB();
       address1.setStreet("Dark Alley");
@@ -120,7 +121,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       user2.setId(2);
       user2.setName("Adrian");
       user2.setSurname("Nistor");
-      user2.setGender(User.Gender.MALE);
+      user2.setGender(Gender.MALE);
       Address address2 = new AddressPB();
       address2.setStreet("Old Street");
       address2.setPostCode("XYZ");
@@ -199,7 +200,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertEquals(1, user.getId());
       assertEquals("Tom", user.getName());
       assertEquals("Cat", user.getSurname());
-      assertEquals(User.Gender.MALE, user.getGender());
+      assertEquals(Gender.MALE, user.getGender());
       assertNotNull(user.getAccountIds());
       assertEquals(1, user.getAccountIds().size());
       assertTrue(user.getAccountIds().contains(12));

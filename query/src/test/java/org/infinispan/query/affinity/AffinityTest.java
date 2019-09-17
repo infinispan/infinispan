@@ -24,6 +24,7 @@ import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.AfterMethod;
@@ -42,7 +43,7 @@ public class AffinityTest extends BaseAffinityTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, getDefaultCacheConfigBuilder());
+      createClusteredCaches(3, QueryTestSCI.INSTANCE, getDefaultCacheConfigBuilder());
    }
 
    @AfterMethod(alwaysRun = true)

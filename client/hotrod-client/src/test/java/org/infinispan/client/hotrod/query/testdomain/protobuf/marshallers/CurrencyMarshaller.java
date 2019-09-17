@@ -1,17 +1,17 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.Currency;
 
 /**
  * @author anistor@redhat.com
  * @since 9.4.1
  */
-public class CurrencyMarshaller implements EnumMarshaller<Account.Currency> {
+public class CurrencyMarshaller implements EnumMarshaller<Currency> {
 
    @Override
-   public Class<Account.Currency> getJavaClass() {
-      return Account.Currency.class;
+   public Class<Currency> getJavaClass() {
+      return Currency.class;
    }
 
    @Override
@@ -20,22 +20,22 @@ public class CurrencyMarshaller implements EnumMarshaller<Account.Currency> {
    }
 
    @Override
-   public Account.Currency decode(int enumValue) {
+   public Currency decode(int enumValue) {
       switch (enumValue) {
          case 0:
-            return Account.Currency.EUR;
+            return Currency.EUR;
          case 1:
-            return Account.Currency.GBP;
+            return Currency.GBP;
          case 2:
-            return Account.Currency.USD;
+            return Currency.USD;
          case 3:
-            return Account.Currency.BRL;
+            return Currency.BRL;
       }
       return null;  // unknown value
    }
 
    @Override
-   public int encode(Account.Currency currency) {
+   public int encode(Currency currency) {
       switch (currency) {
          case EUR:
             return 0;

@@ -10,6 +10,11 @@ import org.hibernate.search.annotations.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.query.nulls.SCIImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -27,7 +32,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
             .addIndexedEntity(Session.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      return TestCacheManagerFactory.createCacheManager(new SCIImpl(), cfg);
    }
 
    @BeforeMethod
@@ -72,13 +77,23 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    public static class Session {
       private String m_id;
 
-      public Session(String id) {
+      @ProtoFactory
+      Session(String id) {
          m_id = id;
       }
 
       @Field(name = "Id")
+      @ProtoField(number = 1)
       public String getId() {
          return m_id;
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = Session.class,
+         schemaFileName = "test.query.tx.TransactionalQueryTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.TransactionalQueryTest")
+   interface SCI extends SerializationContextInitializer {
    }
 }

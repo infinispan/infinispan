@@ -2,7 +2,6 @@ package org.infinispan.query.blackbox;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Serializable;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
@@ -13,6 +12,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -35,7 +38,8 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      List<Cache<String, ClassWithLongIndexName>> caches = createClusteredCaches(3, getDefaultConfiguration());
+      List<Cache<String, ClassWithLongIndexName>> caches =
+            createClusteredCaches(3, SCI.INSTANCE, getDefaultConfiguration());
       cache0 = caches.get(0);
       cache1 = caches.get(1);
       cache2 = caches.get(2);
@@ -73,7 +77,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       CacheQuery<?> cq = sm2.getQuery(q, ClassWithLongIndexName.class);
       assertEquals(100, cq.getResultSize());
 
-      addClusterEnabledCacheManager(getDefaultConfiguration());
+      addClusterEnabledCacheManager(SCI.INSTANCE, getDefaultConfiguration());
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
       SearchManager sm3 = Search.getSearchManager(cache(3));
@@ -85,13 +89,13 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
    // index name as in bug description
    @Indexed(index = "default_taskworker-java__com.google.appengine.api.datastore.Entity")
-   private static class ClassWithLongIndexName implements Serializable {
-
-      private static final long serialVersionUID = 1;
+   public static class ClassWithLongIndexName {
 
       @Field(store = Store.YES)
+      @ProtoField(number = 1)
       String name;
 
+      @ProtoFactory
       ClassWithLongIndexName(String name) {
          this.name = name;
       }
@@ -113,5 +117,14 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       public String toString() {
          return "ClassWithLongIndexName{name='" + name + "'}";
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = ClusteredCacheWithLongIndexNameTest.ClassWithLongIndexName.class,
+         schemaFileName = "test.query.blackbox.ClusteredCacheWithLongIndexNameTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.ClusteredCacheWithLongIndexNameTest")
+   interface SCI extends SerializationContextInitializer {
+      SCI INSTANCE = new SCIImpl();
    }
 }

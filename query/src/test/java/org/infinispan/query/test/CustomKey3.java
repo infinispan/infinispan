@@ -1,20 +1,18 @@
 package org.infinispan.query.test;
 
-import java.io.Serializable;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
-public class CustomKey3 implements Serializable {
+public class CustomKey3 {
 
-   private static final long serialVersionUID = -1;
+   private final String str;
 
-   private String str;
-
-   public CustomKey3() {
-   }
-
+   @ProtoFactory
    public CustomKey3(String str) {
       this.str = str;
    }
 
+   @ProtoField(number = 1)
    public String getStr() {
       return str;
    }

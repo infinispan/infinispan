@@ -41,6 +41,7 @@ import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -72,7 +73,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .addIndexedEntity(getModelFactory().getTransactionImplClass())
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 
    protected boolean testNullCollections() {
@@ -86,7 +87,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
@@ -104,7 +105,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user2.setName("Spider");
       user2.setSurname("Man");
       user2.setSalutation("Mr.");
-      user2.setGender(User.Gender.MALE);
+      user2.setGender(Gender.MALE);
       user2.setAccountIds(Collections.singleton(3));
       user2.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user2.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
@@ -124,7 +125,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user3.setName("Spider");
       user3.setSurname("Woman");
       user3.setSalutation("Ms.");
-      user3.setGender(User.Gender.FEMALE);
+      user3.setGender(Gender.FEMALE);
       user3.setAccountIds(Collections.emptySet());
       user3.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user3.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
@@ -570,8 +571,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("gender").eq(User.Gender.MALE)
-            .and().having("gender").eq(User.Gender.FEMALE)
+            .having("gender").eq(Gender.MALE)
+            .and().having("gender").eq(Gender.FEMALE)
             .build();
 
       List<User> list = q.list();
@@ -626,8 +627,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("gender").eq(User.Gender.MALE)
-            .or().having("gender").eq(User.Gender.FEMALE)
+            .having("gender").eq(Gender.MALE)
+            .or().having("gender").eq(Gender.FEMALE)
             .build();
 
       List<User> list = q.list();
@@ -639,9 +640,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("surname", SortOrder.DESC)
-            .having("gender").eq(User.Gender.MALE)
+            .having("gender").eq(Gender.MALE)
             .or().having("name").eq("Spider")
-            .and().having("gender").eq(User.Gender.FEMALE)
+            .and().having("gender").eq(Gender.FEMALE)
             .or().having("surname").like("%oe%")
             .build();
       List<User> list = q.list();
@@ -655,9 +656,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("gender").eq(User.Gender.MALE)
+            .having("gender").eq(Gender.MALE)
             .or().having("name").eq("Spider")
-            .or().having("gender").eq(User.Gender.FEMALE)
+            .or().having("gender").eq(Gender.FEMALE)
             .and().having("surname").like("%oe%")
             .build();
       List<User> list = q.list();
@@ -739,7 +740,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // QueryFactory.not() test
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .not(qf.not(qf.having("gender").eq(User.Gender.FEMALE)))
+            .not(qf.not(qf.having("gender").eq(Gender.FEMALE)))
             .build();
 
       List<User> list = q.list();
@@ -751,7 +752,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("gender").eq(User.Gender.FEMALE)
+            .having("gender").eq(Gender.FEMALE)
             .and().not(qf.having("name").eq("Spider"))
             .build();
 
@@ -1109,7 +1110,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all male users
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("name", SortOrder.ASC)
-            .having("gender").eq(User.Gender.MALE)
+            .having("gender").eq(Gender.MALE)
             .build();
 
       List<User> list = q.list();
@@ -1124,8 +1125,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all male users, but this time retrieved in a twisted manner
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("name", SortOrder.ASC)
-            .not(qf.having("gender").eq(User.Gender.FEMALE))
-            .and(qf.not().not(qf.having("gender").eq(User.Gender.MALE)))
+            .not(qf.having("gender").eq(Gender.FEMALE))
+            .and(qf.not().not(qf.having("gender").eq(Gender.MALE)))
             .build();
 
       List<User> list = q.list();
@@ -1167,7 +1168,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       // all male users
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("name", SortOrder.ASC)
-            .having("gender").eq(User.Gender.MALE)
+            .having("gender").eq(Gender.MALE)
             .build();
 
       List<User> list = q.list();
@@ -1684,8 +1685,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       FilterConditionEndContext q1 = qf.from(getModelFactory().getUserImplClass())
             .having("gender");
 
-      q1.eq(User.Gender.MALE);
-      q1.eq(User.Gender.FEMALE);
+      q1.eq(Gender.MALE);
+      q1.eq(Gender.FEMALE);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
@@ -2508,20 +2509,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .having("gender").eq(param("param2"))
             .build();
 
-      q.setParameter("param2", User.Gender.MALE);
+      q.setParameter("param2", Gender.MALE);
 
       List<User> list = q.list();
 
       assertEquals(2, list.size());
-      assertEquals(User.Gender.MALE, list.get(0).getGender());
-      assertEquals(User.Gender.MALE, list.get(1).getGender());
+      assertEquals(Gender.MALE, list.get(0).getGender());
+      assertEquals(Gender.MALE, list.get(1).getGender());
 
-      q.setParameter("param2", User.Gender.FEMALE);
+      q.setParameter("param2", Gender.FEMALE);
 
       list = q.list();
 
       assertEquals(1, list.size());
-      assertEquals(User.Gender.FEMALE, list.get(0).getGender());
+      assertEquals(Gender.FEMALE, list.get(0).getGender());
    }
 
    public void testWithParameterMap() {
@@ -2534,7 +2535,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .build();
 
       Map<String, Object> parameterMap = new HashMap<>(2);
-      parameterMap.put("param1", User.Gender.MALE);
+      parameterMap.put("param1", Gender.MALE);
       parameterMap.put("param2", "John");
 
       q.setParameters(parameterMap);
@@ -2542,11 +2543,11 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<User> list = q.list();
 
       assertEquals(1, list.size());
-      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals(Gender.MALE, list.get(0).getGender());
       assertEquals("John", list.get(0).getName());
 
       parameterMap = new HashMap<>(2);
-      parameterMap.put("param1", User.Gender.MALE);
+      parameterMap.put("param1", Gender.MALE);
       parameterMap.put("param2", "Spider");
 
       q.setParameters(parameterMap);
@@ -2554,7 +2555,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       list = q.list();
 
       assertEquals(1, list.size());
-      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals(Gender.MALE, list.get(0).getGender());
       assertEquals("Spider", list.get(0).getName());
    }
 
@@ -2606,7 +2607,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
-      parameterMap.put("param2", User.Gender.MALE);
+      parameterMap.put("param2", Gender.MALE);
 
       q.setParameters(parameterMap);
    }
@@ -2630,7 +2631,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
-      parameterMap.put("param1", User.Gender.MALE);
+      parameterMap.put("param1", Gender.MALE);
 
       q.setParameters(parameterMap);
    }
@@ -3075,13 +3076,13 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("surname").in("Man")
             .and()
-            .having("gender").eq(User.Gender.MALE)
+            .having("gender").eq(Gender.MALE)
             .build();
 
       List<User> list = q.list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).getId());
       assertEquals("Man", list.get(0).getSurname());
-      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals(Gender.MALE, list.get(0).getGender());
    }
 }

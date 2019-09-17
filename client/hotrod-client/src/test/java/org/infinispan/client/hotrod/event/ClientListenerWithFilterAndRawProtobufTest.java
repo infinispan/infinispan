@@ -28,6 +28,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.query.dsl.embedded.testdomain.Gender;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.testng.annotations.Test;
@@ -81,7 +82,7 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
+      user1.setGender(Gender.MALE);
       user1.setAge(22);
 
       remoteCache.put("string_key_1", "string value 1");

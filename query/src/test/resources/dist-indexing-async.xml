@@ -5,13 +5,16 @@
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
     <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="true">
+        <serialization>
+            <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
+        </serialization>
         <transport cluster="Infinispan-Query-Cluster"/>
         <jmx duplicate-domains="true"/>
 
         <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
             <indexing index="LOCAL">
                 <indexed-entities>
-                    <indexed-entity>org.infinispan.query.distributed.Transaction</indexed-entity>
+                    <indexed-entity>org.infinispan.query.test.Transaction</indexed-entity>
                 </indexed-entities>
                 <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                 <property name="default.worker.execution">async</property>

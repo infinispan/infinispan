@@ -8,7 +8,7 @@ import java.util.List;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.LimitsPB;
 import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.Currency;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
 /**
@@ -35,7 +35,7 @@ public class AccountMarshaller implements MessageMarshaller<AccountPB> {
       Limits limits = reader.readObject("limits", LimitsPB.class);
       Limits hardLimits = reader.readObject("hardLimits", LimitsPB.class);
       List<byte[]> blurb = reader.readCollection("blurb", new ArrayList<>(), byte[].class);
-      Account.Currency[] currencies = reader.readArray("currencies", Account.Currency.class);
+      Currency[] currencies = reader.readArray("currencies", Currency.class);
 
       AccountPB account = new AccountPB();
       account.setId(id);
@@ -56,6 +56,6 @@ public class AccountMarshaller implements MessageMarshaller<AccountPB> {
       writer.writeObject("limits", account.getLimits(), LimitsPB.class);
       writer.writeObject("hardLimits", account.getHardLimits(), LimitsPB.class);
       writer.writeCollection("blurb", account.getBlurb(), byte[].class);
-      writer.writeArray("currencies", account.getCurrencies(), Account.Currency.class);
+      writer.writeArray("currencies", account.getCurrencies(), Currency.class);
    }
 }

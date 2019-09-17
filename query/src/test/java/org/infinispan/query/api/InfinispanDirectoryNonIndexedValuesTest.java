@@ -3,6 +3,7 @@ package org.infinispan.query.api;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -23,7 +24,7 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(c);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, c);
    }
 
    protected boolean isTransactional() {

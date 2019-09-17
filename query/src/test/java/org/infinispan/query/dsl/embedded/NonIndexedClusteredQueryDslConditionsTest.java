@@ -16,6 +16,6 @@ public class NonIndexedClusteredQueryDslConditionsTest extends NonIndexedQueryDs
       ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       defaultConfiguration.clustering()
             .stateTransfer().fetchInMemoryState(true);
-      createClusteredCaches(2, defaultConfiguration);
+      createClusteredCaches(2, DslSCI.INSTANCE, defaultConfiguration);
    }
 }
