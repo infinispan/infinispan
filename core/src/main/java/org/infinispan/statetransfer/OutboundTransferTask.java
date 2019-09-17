@@ -1,37 +1,40 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.reactivex.Completable;
+import io.reactivex.CompletableObserver;
 import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -41,19 +44,13 @@ import io.reactivex.Flowable;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class OutboundTransferTask implements Runnable {
+public class OutboundTransferTask {
 
    private static final Log log = LogFactory.getLog(OutboundTransferTask.class);
 
    private final boolean trace = log.isTraceEnabled();
 
-   private final Consumer<OutboundTransferTask> onCompletion;
-
-   private final Consumer<List<StateChunk>> onChunkReplicated;
-
-   private final BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer;
-
-   private final BiFunction<MarshallableEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore;
+   private final Consumer<Collection<StateChunk>> onChunkReplicated;
 
    private final int topologyId;
 
@@ -64,10 +61,6 @@ public class OutboundTransferTask implements Runnable {
    private final int chunkSize;
 
    private final KeyPartitioner keyPartitioner;
-
-   private final InternalDataContainer<Object, Object> dataContainer;
-
-   private final PersistenceManager persistenceManager;
 
    private final RpcManager rpcManager;
 
@@ -81,29 +74,16 @@ public class OutboundTransferTask implements Runnable {
 
    private final boolean pushTransfer;
 
-   private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = new ConcurrentHashMap<>();
-
-   /**
-    * The total number of entries from all segments accumulated in entriesBySegment.
-    */
-   private int accumulatedEntries;
-
-   /**
-    * The Future obtained from submitting this task to an executor service. This is used for cancellation.
-    */
-   private FutureTask<Void> runnableFuture;
 
    private final RpcOptions rpcOptions;
 
-   private InternalEntryFactory entryFactory;
+   private volatile boolean cancelled;
 
    public OutboundTransferTask(Address destination, IntSet segments, int segmentCount, int chunkSize,
                                int topologyId, KeyPartitioner keyPartitioner,
-                               Consumer<OutboundTransferTask> onCompletion, Consumer<List<StateChunk>> onChunkReplicated,
-                               BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer,
-                               BiFunction<MarshallableEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore, InternalDataContainer dataContainer,
-                               PersistenceManager persistenceManager, RpcManager rpcManager,
-                               CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName,
+                               Consumer<Collection<StateChunk>> onChunkReplicated,
+                               RpcManager rpcManager,
+                               CommandsFactory commandsFactory, long timeout, String cacheName,
                                boolean applyState, boolean pushTransfer) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
@@ -114,40 +94,20 @@ public class OutboundTransferTask implements Runnable {
       if (chunkSize <= 0) {
          throw new IllegalArgumentException("chunkSize must be greater than 0");
       }
-      this.onCompletion = onCompletion;
       this.onChunkReplicated = onChunkReplicated;
-      this.mapEntryFromDataContainer = mapEntryFromDataContainer;
-      this.mapEntryFromStore = mapEntryFromStore;
       this.destination = destination;
       this.segments = IntSets.concurrentCopyFrom(segments, segmentCount);
       this.chunkSize = chunkSize;
       this.topologyId = topologyId;
       this.keyPartitioner = keyPartitioner;
-      this.dataContainer = dataContainer;
-      this.persistenceManager = persistenceManager;
-      this.entryFactory = ef;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
       this.cacheName = cacheName;
       this.applyState = applyState;
       this.pushTransfer = pushTransfer;
-      //the rpc options does not change in runtime. re-use the same instance
-      this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
-            .timeout(timeout, TimeUnit.MILLISECONDS).build();
-   }
 
-   public void execute(ExecutorService executorService) {
-      if (runnableFuture != null) {
-         throw new IllegalStateException("This task was already submitted");
-      }
-      runnableFuture = new FutureTask<Void>(this, null) {
-         @Override
-         protected void done() {
-            onCompletion.accept(OutboundTransferTask.this);
-         }
-      };
-      executorService.submit(runnableFuture);
+      this.rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
    }
 
    public Address getDestination() {
@@ -162,118 +122,125 @@ public class OutboundTransferTask implements Runnable {
       return topologyId;
    }
 
-   //todo [anistor] check thread interrupt status in loops to implement faster cancellation
-   public void run() {
+   /**
+    * Starts sending entries from the data container and the first loader with fetch persistent data enabled
+    * to the target node.
+    *
+    * @return a completion stage that completes when all the entries have been sent.
+    * @param entries a {@code Flowable} with all the entries that need to be sent
+    */
+   public CompletionStage<Void> execute(Flowable<InternalCacheEntry<Object, Object>> entries) {
+      CompletableFuture<Void> taskFuture = new CompletableFuture<>();
       try {
-         // TODO: need to change to SDC.forEachSegment
-         // send data container entries
-         for (InternalCacheEntry ice : dataContainer) {
-            Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
-            int segmentId = keyPartitioner.getSegment(key);
-            if (segments.contains(segmentId) && !ice.isL1Entry()) {
-               InternalCacheEntry entry = mapEntryFromDataContainer.apply(ice, entryFactory);
-               if (entry != null) {
-                  sendEntry(entry, segmentId);
-               }
-            }
-         }
+         AtomicReference<List<InternalCacheEntry<Object, Object>>> batchRef =
+            new AtomicReference<>(Collections.emptyList());
+         entries.buffer(chunkSize)
+                .takeUntil(batch -> cancelled)
+                .concatMapCompletable(batch -> {
+                   // Send the previous batch, not the current one
+                   // This allows us to mark all the segments as finished in the same RPC with the
+                   // last batch
+                   List<InternalCacheEntry<Object, Object>> previousBatch = batchRef.getAndSet(batch);
+                   if (previousBatch.isEmpty())
+                      return Completable.complete();
 
-         AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
-         if (stProvider != null) {
-            try {
-               Flowable.fromPublisher(stProvider.entryPublisher(k -> !dataContainer.containsKey(k), true, true))
-                     .blockingForEach(me -> {
-                        int segmentId = keyPartitioner.getSegment(me.getKey());
-                        if (segments.contains(segmentId)) {
-                           try {
-                              InternalCacheEntry entry = mapEntryFromStore.apply(me, entryFactory);
-                              if (entry != null) {
-                                 sendEntry(entry, segmentId);
-                              }
-                           } catch (CacheException e) {
-                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                           }
-                        }
-                     });
-            } catch (CacheException e) {
-               log.failedLoadingKeysFromCacheStore(e);
-            }
-         }
+                   return completionStageToCompletable().apply(sendEntries(previousBatch, false));
+                }, 1)
+                .subscribe(new CompletableObserver() {
+                   @Override
+                   public void onSubscribe(Disposable d) {
+                   }
 
-         // send the last chunk of all segments
-         sendEntries(true);
+                   @Override
+                   public void onComplete() {
+                      // Send the remaining entries and mark all the segments as finished
+                      List<InternalCacheEntry<Object, Object>> previousBatch = batchRef.get();
+                      sendEntries(previousBatch, true)
+                         .whenComplete((ignored, throwable) -> {
+                            if (throwable == null) {
+                               taskFuture.complete(null);
+                            } else {
+                               taskFuture.completeExceptionally(throwable);
+                            }
+                         });
+                   }
+
+                   @Override
+                   public void onError(Throwable e) {
+                      taskFuture.completeExceptionally(e);
+                   }
+                });
       } catch (Throwable t) {
-         // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
-         if (isCancelled()) {
-            if (trace) {
-               log.tracef("Ignoring error in already cancelled transfer to node %s, segments %s", destination,
-                          segments);
-            }
-         } else {
-            log.failedOutBoundTransferExecution(t);
-         }
+         taskFuture.completeExceptionally(t);
       }
-      if (trace) {
-         log.tracef("Completed outbound transfer to node %s, segments %s", destination, segments);
-      }
+      return taskFuture;
    }
 
-   private void sendEntry(InternalCacheEntry ice, int segmentId) {
-      // send if we have a full chunk
-      if (accumulatedEntries >= chunkSize) {
-         sendEntries(false);
-         accumulatedEntries = 0;
-      }
-
-      List<InternalCacheEntry> entries = entriesBySegment.computeIfAbsent(segmentId, k -> new ArrayList<>());
-      entries.add(ice);
-      accumulatedEntries++;
-   }
-
-   private void sendEntries(boolean isLast) {
-      List<StateChunk> chunks = new ArrayList<>();
-      for (Map.Entry<Integer, List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
-         List<InternalCacheEntry> entries = e.getValue();
-         if (!entries.isEmpty() || isLast) {
-            chunks.add(new StateChunk(e.getKey(), new ArrayList<>(entries), isLast));
-            entries.clear();
+   private CompletionStage<Void> sendEntries(List<InternalCacheEntry<Object, Object>> entries, boolean isLast) {
+      Map<Integer, StateChunk> chunks = new HashMap<>();
+      for (InternalCacheEntry<Object, Object> ice : entries) {
+         int segmentId = keyPartitioner.getSegment(ice.getKey());
+         if (segments.contains(segmentId)) {
+            StateChunk chunk = chunks.computeIfAbsent(
+               segmentId, segment -> new StateChunk(segment, new ArrayList<>(), isLast));
+            chunk.getCacheEntries().add(ice);
          }
       }
 
       if (isLast) {
          for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
             int segmentId = iter.nextInt();
-            List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
-            if (entries == null) {
-               chunks.add(new StateChunk(segmentId, Collections.emptyList(), true));
-            }
+            chunks.computeIfAbsent(
+               segmentId, segment -> new StateChunk(segment, Collections.emptyList(), true));
          }
       }
 
-      if (!chunks.isEmpty()) {
-         if (trace) {
-            if (isLast) {
-               log.tracef("Sending last chunk to node %s containing %d cache entries from segments %s", destination, accumulatedEntries, segments);
-            } else {
-               log.tracef("Sending to node %s %d cache entries from segments %s", destination, accumulatedEntries, entriesBySegment.keySet());
-            }
-         }
+      if (chunks.isEmpty())
+         return CompletableFutures.completedNull();
 
-         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, chunks, applyState, pushTransfer);
-         // send synchronously, in order. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
-         try {
-            rpcManager.invokeRemotely(Collections.singleton(destination), cmd, rpcOptions);
-            onChunkReplicated.accept(chunks);
-         } catch (SuspectException e) {
-            log.debugf("Node %s left cache %s while we were sending state to it, cancelling transfer.", destination, cacheName);
-            cancel();
-         } catch (Exception e) {
-            if (isCancelled()) {
-               log.debugf("Stopping cancelled transfer to node %s, segments %s", destination, segments);
-            } else {
-               log.errorf(e, "Failed to send entries to node %s: %s", destination, e.getMessage());
-            }
+      if (trace) {
+         if (isLast) {
+            log.tracef("Sending last chunk to node %s containing %d cache entries from segments %s", destination,
+                       entries.size(), segments);
+         } else {
+            log.tracef("Sending to node %s %d cache entries from segments %s", destination, entries.size(),
+                       chunks.keySet());
          }
+      }
+
+      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId,
+                                                                           chunks.values(), applyState, pushTransfer);
+      try {
+         return rpcManager.invokeCommand(destination, cmd, SingleResponseCollector.validOnly(), rpcOptions)
+                          .handle((response, throwable) -> {
+                             if (throwable == null) {
+                                onChunkReplicated.accept(chunks.values());
+                                return null;
+                             }
+
+                             logSendException(throwable);
+                             cancel();
+                             return null;
+                          });
+      } catch (IllegalLifecycleStateException e) {
+         // Manager is shutting down, ignore the error
+         cancel();
+      } catch (Exception e) {
+         logSendException(e);
+         cancel();
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   private void logSendException(Throwable throwable) {
+      if (throwable instanceof SuspectException) {
+         log.debugf("Node %s left cache %s while we were sending state to it, cancelling transfer.",
+                    destination, cacheName);
+      } else if (isCancelled()) {
+         log.debugf("Stopping cancelled transfer to node %s, segments %s", destination, segments);
+      } else {
+         log.errorf(throwable, "Failed to send entries to node %s: %s", destination,
+                    throwable.getMessage());
       }
    }
 
@@ -282,13 +249,12 @@ public class OutboundTransferTask implements Runnable {
     *
     * @param cancelledSegments segments to cancel.
     */
-   public void cancelSegments(IntSet cancelledSegments) {
+   void cancelSegments(IntSet cancelledSegments) {
       if (segments.removeAll(cancelledSegments)) {
          if (trace) {
             log.tracef("Cancelling outbound transfer to node %s, segments %s (remaining segments %s)",
                        destination, cancelledSegments, segments);
          }
-         entriesBySegment.keySet().removeAll(cancelledSegments);  // here we do not update accumulatedEntries but this inaccuracy does not cause any harm
          if (segments.isEmpty()) {
             cancel();
          }
@@ -299,14 +265,14 @@ public class OutboundTransferTask implements Runnable {
     * Cancel the whole task.
     */
    public void cancel() {
-      if (runnableFuture != null && !runnableFuture.isCancelled()) {
+      if (!cancelled) {
          log.debugf("Cancelling outbound transfer to node %s, segments %s", destination, segments);
-         runnableFuture.cancel(true);
+         cancelled = true;
       }
    }
 
    public boolean isCancelled() {
-      return runnableFuture != null && runnableFuture.isCancelled();
+      return cancelled;
    }
 
    @Override
@@ -319,13 +285,5 @@ public class OutboundTransferTask implements Runnable {
             ", timeout=" + timeout +
             ", cacheName='" + cacheName + '\'' +
             '}';
-   }
-
-   public static InternalCacheEntry defaultMapEntryFromDataContainer(InternalCacheEntry ice, InternalEntryFactory entryFactory) {
-      return ice;
-   }
-
-   public static InternalCacheEntry defaultMapEntryFromStore(MarshallableEntry me, InternalEntryFactory entryFactory) {
-      return entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
    }
 }

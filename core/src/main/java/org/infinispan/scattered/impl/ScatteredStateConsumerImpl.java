@@ -26,6 +26,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
@@ -39,7 +40,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -53,6 +54,7 @@ import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
 import net.jcip.annotations.GuardedBy;
@@ -259,9 +261,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       if (completedSegments.isEmpty()) {
          log.tracef("Not requesting any values yet because no segments have been completed.");
       } else if (inboundTransfer.isCompletedSuccessfully()) {
-         IntSet finalCompletedSegments = completedSegments;
-         log.tracef("Requesting values from segments %s, for in-memory keys", finalCompletedSegments);
-         dataContainer.forEach(finalCompletedSegments, ice -> {
+         log.tracef("Requesting values from segments %s, for in-memory keys", completedSegments);
+         dataContainer.forEach(completedSegments, ice -> {
             // TODO: could the version be null in here?
             if (ice.getMetadata() instanceof RemoteMetadata) {
                Address backup = ((RemoteMetadata) ice.getMetadata()).getAddress();
@@ -281,37 +282,34 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
          // With passivation, some key could be activated here and we could miss it,
          // but then it should be broadcast-loaded in PrefetchInvalidationInterceptor
-         AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
-         if (stProvider != null) {
-            try {
-               Flowable.fromPublisher(stProvider.entryPublisher(k -> !dataContainer.containsKey(k), true, true))
-                     .blockingForEach(me -> {
-                        int segmentId = keyPartitioner.getSegment(me.getKey());
-                        if (finalCompletedSegments.contains(segmentId)) {
-                           try {
-                              Metadata metadata = me.getMetadata();
-                              if (metadata instanceof RemoteMetadata) {
-                                 Address backup = ((RemoteMetadata) metadata).getAddress();
-                                 retrieveEntry(me.getKey(), backup);
-                                 for (Address member : cacheTopology.getActualMembers()) {
-                                    if (!member.equals(backup)) {
-                                       invalidate(me.getKey(), metadata.version(), member);
-                                    }
-                                 }
-                              } else {
-                                 backupEntry(entryFactory.create(me.getKey(), me.getValue(), me.getMetadata()));
-                                 for (Address member : nonBackupAddresses) {
-                                    invalidate(me.getKey(), metadata.version(), member);
-                                 }
-                              }
-                           } catch (CacheException e) {
-                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                           }
-                        }
-                     });
-            } catch (CacheException e) {
-               log.failedLoadingKeysFromCacheStore(e);
-            }
+         Publisher<MarshallableEntry<Object, Object>> persistencePublisher =
+            persistenceManager.publishEntries(completedSegments, k -> !dataContainer.containsKey(k), true, true,
+                                              Configurations::isStateTransferStore);
+         try {
+            Flowable.fromPublisher(persistencePublisher)
+                    .blockingForEach(me -> {
+                       try {
+                          Metadata metadata = me.getMetadata();
+                          if (metadata instanceof RemoteMetadata) {
+                             Address backup = ((RemoteMetadata) metadata).getAddress();
+                             retrieveEntry(me.getKey(), backup);
+                             for (Address member : cacheTopology.getActualMembers()) {
+                                if (!member.equals(backup)) {
+                                   invalidate(me.getKey(), metadata.version(), member);
+                                }
+                             }
+                          } else {
+                             backupEntry(entryFactory.create(me.getKey(), me.getValue(), me.getMetadata()));
+                             for (Address member : nonBackupAddresses) {
+                                invalidate(me.getKey(), metadata.version(), member);
+                             }
+                          }
+                       } catch (CacheException e) {
+                          log.failedLoadingValueFromCacheStore(me.getKey(), e);
+                       }
+                    });
+         } catch (CacheException e) {
+            log.failedLoadingKeysFromCacheStore(e);
          }
       }
 
@@ -531,7 +529,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void removeStaleData(IntSet removedSegments) throws InterruptedException {
+   protected void removeStaleData(IntSet removedSegments) {
       // Noop - scattered cache cannot remove data even if it is not an owner
    }
 

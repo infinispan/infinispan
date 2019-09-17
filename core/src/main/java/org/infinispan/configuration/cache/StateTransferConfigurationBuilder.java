@@ -96,7 +96,7 @@ public class StateTransferConfigurationBuilder extends
    public void validate() {
       int chunkSize = attributes.attribute(CHUNK_SIZE).get();
       if (chunkSize <= 0) {
-         throw log.invalidChunkSize(chunkSize);
+         throw CONFIG.invalidChunkSize(chunkSize);
       }
 
       if (clustering().cacheMode().isInvalidation()) {

@@ -732,7 +732,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed loading keys from cache store", id = 194)
-   void failedLoadingKeysFromCacheStore(@Cause Exception e);
+   void failedLoadingKeysFromCacheStore(@Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error during rebalance for cache %s on node %s, topology id = %d", id = 195)

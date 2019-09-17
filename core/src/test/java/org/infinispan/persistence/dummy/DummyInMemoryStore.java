@@ -378,4 +378,8 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       if (!available)
          throw new PersistenceException();
    }
+
+   public DummyInMemoryStoreConfiguration getConfiguration() {
+      return configuration;
+   }
 }

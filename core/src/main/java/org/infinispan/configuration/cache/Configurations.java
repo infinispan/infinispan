@@ -95,6 +95,10 @@ public class Configurations {
       return globalConfiguration.transport().transport() != null;
    }
 
+   public static boolean isStateTransferStore(StoreConfiguration storeConfiguration) {
+      return !storeConfiguration.shared() && storeConfiguration.fetchPersistentState();
+   }
+
    static Set<Class<? extends StoreConfigurationBuilder<?, ?>>> lookupPersistenceBuilders() {
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, Configurations.class.getClassLoader(), ParserRegistry.class.getClassLoader());
       Set<Class<? extends StoreConfigurationBuilder<?, ?>>> builders = new HashSet<>();

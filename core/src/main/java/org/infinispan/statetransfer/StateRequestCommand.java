@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -87,9 +87,9 @@ public class StateRequestCommand extends BaseRpcCommand implements Initializable
       try {
          switch (type) {
             case GET_TRANSACTIONS:
-               List<TransactionInfo> transactions =
-                     stateProvider.getTransactionsForSegments(getOrigin(), topologyId, segments);
-               return CompletableFuture.completedFuture(transactions);
+               CompletionStage transactionsStage =
+                  stateProvider.getTransactionsForSegments(getOrigin(), topologyId, segments);
+               return transactionsStage.toCompletableFuture();
 
             case START_CONSISTENCY_CHECK:
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments, false);

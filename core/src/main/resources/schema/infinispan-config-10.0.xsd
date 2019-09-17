@@ -1804,12 +1804,12 @@
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
-          <xs:attribute name="chunk-size" type="xs:int" default="512">
+          <xs:attribute name="chunk-size" type="xs:int" default="${XSiteStateTransfer.ChunkSize}">
             <xs:annotation>
                <xs:documentation>The number of cache entries to batch in each transfer.</xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="timeout" type="xs:long" default="1200000">
+          <xs:attribute name="timeout" type="xs:long" default="${XSiteStateTransfer.timeout}">
             <xs:annotation>
               <xs:documentation>
                 The time (in milliseconds) to wait for the backup site acknowledge the state chunk
@@ -1817,7 +1817,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="max-retries" type="xs:int" default="30">
+          <xs:attribute name="max-retries" type="xs:int" default="${XSiteStateTransfer.maxRetries}">
             <xs:annotation>
               <xs:documentation>
                 The maximum number of retries when a push state command fails. A value &lt;= 0 (zero) mean that
@@ -1825,7 +1825,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="wait-time" type="xs:long" default="2000">
+          <xs:attribute name="wait-time" type="xs:long" default="${XSiteStateTransfer.waitTime}">
             <xs:annotation>
               <xs:documentation>
                 The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default
