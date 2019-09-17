@@ -1,11 +1,14 @@
 package org.infinispan.rest.framework;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.context.Flag;
 
 /**
  * @since 10.0
@@ -49,6 +52,10 @@ public interface RestRequest {
    Long getMaxIdleTimeSecondsHeader();
 
    Long getTimeToLiveSecondsHeader();
+
+   EnumSet<AdminFlag> getAdminFlags();
+
+   Flag[] getFlags();
 
    Long getCreatedHeader();
 

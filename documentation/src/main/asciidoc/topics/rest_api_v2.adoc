@@ -1,9 +1,10 @@
 [[rest_v2_api]]
 = REST v2 (version 2) API
 
-The {brandname} REST v2 API improves on the REST v1 API, offering the same
-features and capabilities in addition to supporting resources beyond caching.
-//dnaro: is it recommended to use REST v2 only? is there any reason for users to go with REST v1 over REST v2?
+The {brandname} REST v2 API improves on the REST v1 API, offering the same features and capabilities in addition to supporting resources beyond caching.
+
+[NOTE]
+The REST v1 API is deprecated and will not be supported in the next version of {brandname}
 
 [[rest_v2_cache_operations]]
 == Working with Caches
@@ -60,6 +61,7 @@ include::config_examples/infinispan_distributed_cache.json[]
 |Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
 {brandname} configuration payload; either `application/xml` or
 `application/json`.
+| `Flags` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
 [[rest_v2_create_cache_template]]
@@ -129,7 +131,15 @@ should use `PUT` requests. See link:#rest_v2_replace_entries[Replacing Entries].
 |`maxIdleTimeSeconds`
 |OPTIONAL
 |Sets the number of seconds that entries can be idle. If a read or write operation does not occur for an entry after the maximum idle time elapses, the entry is automatically deleted. If you do not set this parameter, {brandname} uses the default value from the configuration. If you set a negative value, the entry is never deleted.
+
+|`flags`
+|OPTIONAL
+|The flags used to add the entry. See https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/context/Flag.html[Flag] for more information.
+
 |===
+
+[NOTE]
+The `flags` header also applies to all other operations involving data manipulation on the cache,
 
 [NOTE]
 ====
@@ -162,7 +172,7 @@ return HTTP `CONFLICT` status instead of modifying values. See
 link:#rest_v2_add_entries[Adding Values].
 
 [[rest_v2_retrieve_cache]]
-=== Retrieving Caches By Keys
+=== Retrieving Data By Keys
 
 To retrieve data for a specific key in a cache, invoke a `GET` request:
 

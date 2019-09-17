@@ -37,17 +37,21 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
       return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
    }
 
-   @Override
-   protected void createCacheManagers() throws Exception {
+   protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       globalBuilder.globalJmxStatistics().enable();
-      GlobalConfigurationBuilder globalConfiguration = globalBuilder.clusteredDefault().cacheManagerName("default");
+      return globalBuilder.clusteredDefault().cacheManagerName("default");
+   }
 
-      createCluster(globalConfiguration, getDefaultCacheBuilder(), NUM_SERVERS);
-
+   @Override
+   protected void createCacheManagers() throws Exception {
+      for (int i = 0; i < NUM_SERVERS; i++) {
+         GlobalConfigurationBuilder configForNode = getGlobalConfigForNode(i);
+         addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder());
+      }
+      cacheManagers.forEach(this::defineCaches);
       for (EmbeddedCacheManager cm : cacheManagers) {
-         this.defineCaches(cm);
          String[] cacheNames = cm.getCacheNames().toArray(new String[0]);
          cm.startCaches(cacheNames);
          cm.getClassWhiteList().addClasses(TestClass.class);

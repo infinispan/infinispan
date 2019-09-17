@@ -1,11 +1,14 @@
 package org.infinispan.rest.framework.impl;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.context.Flag;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
@@ -141,6 +144,16 @@ public class SimpleRequest implements RestRequest {
    @Override
    public Long getTimeToLiveSecondsHeader() {
       return null;
+   }
+
+   @Override
+   public EnumSet<AdminFlag> getAdminFlags() {
+      return null;
+   }
+
+   @Override
+   public Flag[] getFlags() {
+      return new Flag[0];
    }
 
    @Override

@@ -10,6 +10,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.framework.impl.SimpleRequest;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,23 +38,24 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
       Map<String, Cache<String, ?>> knownCaches = TestingUtil.extractField(restCacheManager, "knownCaches");
 
       // Request cache by simple name
-      restCacheManager.getCache("cache1", null);
-      restCacheManager.getCache("cache2", null);
+      SimpleRequest request = new SimpleRequest.Builder().setPath("/test").build();
+      restCacheManager.getCache("cache1", request);
+      restCacheManager.getCache("cache2", request);
 
       // Verify they are stored internally
       assertEquals(knownCaches.size(), 2);
 
       // Requesting again should not cause interaction with the cache manager
       Mockito.reset(embeddedCacheManager);
-      restCacheManager.getCache("cache1", null);
-      restCacheManager.getCache("cache2", null);
+      restCacheManager.getCache("cache1", request);
+      restCacheManager.getCache("cache2", request);
 
       Mockito.verify(embeddedCacheManager, never()).getCache("cache1");
       Mockito.verify(embeddedCacheManager, never()).getCache("cache2");
 
       // Request cache with a certain mime type
-      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.APPLICATION_JSON, null);
-      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN, null);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.APPLICATION_JSON, request);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN, request);
 
       // Verify they are stored internally
       assertEquals(knownCaches.size(), 4);
@@ -61,9 +63,9 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
 
       // Requesting again with same media, or with same media but different parameters should reuse internal instance
       Mockito.reset(embeddedCacheManager);
-      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN, null);
-      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=UTF-8"), null);
-      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=SHIFT-JIS"), null);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN, request);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=UTF-8"), request);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=SHIFT-JIS"), request);
 
       assertEquals(knownCaches.keySet().size(), 4);
 

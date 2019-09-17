@@ -25,6 +25,7 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.logging.LogFactory;
@@ -48,13 +49,15 @@ public class RestCacheManager<V> {
       this.isCacheIgnored = isCacheIgnored;
       this.icr = SecurityActions.getGlobalComponentRegistry(instance).getComponent(InternalCacheRegistry.class);
       this.allowInternalCacheAccess = SecurityActions.getCacheManagerConfiguration(instance)
-                                                     .security().authorization().enabled();
+            .security().authorization().enabled();
       removeCacheListener = new RemoveCacheListener();
       SecurityActions.addListener(instance, removeCacheListener);
    }
 
    @SuppressWarnings("unchecked")
-   public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, MediaType valueContentType, Subject subject) {
+   public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, MediaType valueContentType, RestRequest request) {
+      Subject subject = request.getSubject();
+      Flag[] flags = request.getFlags();
       if (isCacheIgnored.test(name)) {
          throw logger.cacheUnavailable(name);
       }
@@ -74,11 +77,12 @@ public class RestCacheManager<V> {
 
          knownCaches.putIfAbsent(cacheKey, cache);
       }
+      if (flags != null && flags.length > 0) cache = cache.withFlags(flags);
       return subject == null ? cache : cache.withSubject(subject);
    }
 
-   public AdvancedCache<Object, V> getCache(String name, Subject subject) {
-      return getCache(name, MATCH_ALL, MATCH_ALL, subject);
+   public AdvancedCache<Object, V> getCache(String name, RestRequest restRequest) {
+      return getCache(name, MATCH_ALL, MATCH_ALL, restRequest);
    }
 
    private void checkCacheAvailable(String cacheName) {
@@ -91,12 +95,12 @@ public class RestCacheManager<V> {
       }
    }
 
-   public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType, Subject subject) {
-      return getInternalEntry(cacheName, key, false, keyContentType, mediaType, subject);
+   public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType, RestRequest request) {
+      return getInternalEntry(cacheName, key, false, keyContentType, mediaType, request);
    }
 
-   public CompletionStage<V> remove(String cacheName, Object key, MediaType keyContentType, Subject subject) {
-      Cache<Object, V> cache = getCache(cacheName, keyContentType, MediaType.MATCH_ALL, subject);
+   public CompletionStage<V> remove(String cacheName, Object key, MediaType keyContentType, RestRequest restRequest) {
+      Cache<Object, V> cache = getCache(cacheName, keyContentType, MediaType.MATCH_ALL, restRequest);
       return cache.removeAsync(key);
    }
 
@@ -105,16 +109,16 @@ public class RestCacheManager<V> {
       return SecurityActions.getCacheEntryAsync(cache, key);
    }
 
-   public CompletionStage<CacheEntry<Object, V>> getInternalEntry(AdvancedCache<Object, V> cache, Object key, boolean skipListener) {
+   private CompletionStage<CacheEntry<Object, V>> getInternalEntry(AdvancedCache<Object, V> cache, Object key, boolean skipListener) {
       return skipListener ? cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(key) : cache.getCacheEntryAsync(key);
    }
 
-   public MediaType getValueConfiguredFormat(String cacheName) {
-      return SecurityActions.getCacheConfiguration(getCache(cacheName, null)).encoding().valueDataType().mediaType();
+   public MediaType getValueConfiguredFormat(String cacheName, RestRequest restRequest) {
+      return SecurityActions.getCacheConfiguration(getCache(cacheName, restRequest)).encoding().valueDataType().mediaType();
    }
 
-   public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, boolean skipListener, MediaType keyContentType, MediaType mediaType, Subject subject) {
-      return getInternalEntry(getCache(cacheName, keyContentType, mediaType, subject), key, skipListener);
+   private CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, boolean skipListener, MediaType keyContentType, MediaType mediaType, RestRequest restRequest) {
+      return getInternalEntry(getCache(cacheName, keyContentType, mediaType, restRequest), key, skipListener);
    }
 
    public String getNodeName() {
@@ -133,8 +137,8 @@ public class RestCacheManager<V> {
       return "0.0.0.0";
    }
 
-   public String getPrimaryOwner(String cacheName, Object key) {
-      DistributionManager dm = SecurityActions.getDistributionManager(getCache(cacheName, null));
+   public String getPrimaryOwner(String cacheName, Object key, RestRequest restRequest) {
+      DistributionManager dm = SecurityActions.getDistributionManager(getCache(cacheName, restRequest));
       if (dm == null) {
          //this is a local cache
          return "0.0.0.0";

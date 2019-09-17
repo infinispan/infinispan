@@ -1,16 +1,37 @@
 package org.infinispan.rest.resources;
 
 import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
+import static org.eclipse.jetty.http.HttpMethod.GET;
+import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.PERMANENT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.util.Util.getResourceAsString;
+import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
+import static org.infinispan.context.Flag.SKIP_INDEXING;
+import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.File;
+import java.net.URLEncoder;
+
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
+import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.ScopedState;
+import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,9 +40,38 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Test(groups = "functional", testName = "rest.CacheV2ResourceTest")
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
+   private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory(CacheV2ResourceTest.class.getName());
+   private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
+   private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
+
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cm.defineConfiguration("default", getDefaultCacheBuilder().build());
+      cm.defineConfiguration("indexedCache", getIndexedPersistedCache().build());
+   }
+
+   private ConfigurationBuilder getIndexedPersistedCache() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.indexing().index(Index.PRIMARY_OWNER).autoConfig(true)
+            .jmxStatistics().enable()
+            .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
+      return builder;
+   }
+
+   @AfterClass
+   public void tearDown() {
+      Util.recursiveFileRemove(PERSISTENT_LOCATION);
+   }
+
+   @Override
+   protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
+      GlobalConfigurationBuilder config = super.getGlobalConfigForNode(id);
+      config.globalState().enable()
+            .configurationStorage(ConfigurationStorage.OVERLAY)
+            .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
+            .temporaryLocation(TMP_LOCATION + File.separator + id)
+            .sharedPersistentLocation(SHARED_LOCATION + File.separator + id);
+      return config;
    }
 
    @Test
@@ -59,20 +109,22 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String json = getResourceAsString("cache.json", getClass().getClassLoader());
 
       ContentResponse response = client.newRequest(url + "cache1").header("Content-type", APPLICATION_XML_TYPE)
-            .method(HttpMethod.POST).content(new StringContentProvider(xml)).send();
+            .method(HttpMethod.POST).header("flags", "PERMANENT").content(new StringContentProvider(xml)).send();
       ResponseAssertion.assertThat(response).isOk();
+      assertPersistence("cache1", true);
 
       response = client.newRequest(url + "cache2").header("Content-type", APPLICATION_JSON_TYPE)
             .method(HttpMethod.POST).content(new StringContentProvider(json)).send();
       ResponseAssertion.assertThat(response).isOk();
+      assertPersistence("cache2", false);
 
-      response = client.newRequest(url + "cache1?action=config").method(HttpMethod.GET).send();
+      response = client.newRequest(url + "cache1?action=config").method(GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache1Cfg = response.getContentAsString();
 
 
-      response = client.newRequest(url + "cache2?action=config").method(HttpMethod.GET).send();
+      response = client.newRequest(url + "cache2?action=config").method(GET).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache2Cfg = response.getContentAsString();
@@ -82,8 +134,15 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       response = client.newRequest(url + "cache1").method(HttpMethod.DELETE).send();
       ResponseAssertion.assertThat(response).isOk();
 
-      response = client.newRequest(url + "cache1?action=config").method(HttpMethod.GET).send();
+      response = client.newRequest(url + "cache1?action=stats").method(GET).send();
       ResponseAssertion.assertThat(response).isNotFound();
+   }
+
+   private void assertPersistence(String name, boolean persisted) {
+      EmbeddedCacheManager cm = cacheManagers.iterator().next();
+      Cache<ScopedState, CacheState> configCache = cm.getCache(CONFIG_STATE_CACHE_NAME);
+      assertEquals(persisted, configCache.entrySet()
+            .stream().anyMatch(e -> e.getKey().getName().equals(name) && e.getValue().getFlags().contains(PERMANENT)));
    }
 
    @Test
@@ -131,4 +190,52 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).containsReturnedText("100");
    }
 
+   @Test
+   public void testFlags() throws Exception {
+      registerSchema();
+      ContentResponse response = insertEntity(1, 1000);
+      ResponseAssertion.assertThat(response).isOk();
+      assertIndexed(1000);
+
+      response = insertEntity(2, 1200, SKIP_INDEXING.toString(), SKIP_CACHE_LOAD.toString());
+      ResponseAssertion.assertThat(response).isOk();
+      assertNotIndexed(1200);
+
+      response = insertEntity(3, 1200, "Invalid");
+      ResponseAssertion.assertThat(response).isBadRequest();
+   }
+
+   private void registerSchema() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/___protobuf_metadata/sample.proto", restServer().getPort());
+      String proto = "message Entity { required int32 value=1; }";
+      ContentResponse response = client.newRequest(url).method(HttpMethod.PUT).content(new StringContentProvider(proto)).send();
+      ResponseAssertion.assertThat(response).isOk();
+   }
+
+   private ContentResponse insertEntity(int key, int value, String... flags) throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/indexedCache/%s", restServer().getPort(), key);
+      String json = String.format("{\"_type\": \"Entity\",\"value\": %d}", value);
+      Request req = client.newRequest(url)
+            .method(HttpMethod.POST)
+            .content(new StringContentProvider(json))
+            .header(CONTENT_TYPE, APPLICATION_JSON_TYPE);
+      if (flags.length > 0) req.header("flags", String.join(",", flags));
+      return req.send();
+   }
+
+   private void assertIndexed(int value) throws Exception {
+      assertIndex(value, true);
+   }
+
+   private void assertNotIndexed(int value) throws Exception {
+      assertIndex(value, false);
+   }
+
+   private void assertIndex(int value, boolean present) throws Exception {
+      String query = URLEncoder.encode("FROM Entity where value = " + value);
+      String url = String.format("http://localhost:%d/rest/v2/caches/indexedCache?action=search&query=%s", restServer().getPort(), query);
+      ContentResponse response = client.newRequest(url).method(GET).send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(present, response.getContentAsString().contains(String.valueOf(value)));
+   }
 }
