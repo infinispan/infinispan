@@ -99,7 +99,7 @@ There are two levels of configuration: global and per-cache. The global configur
   GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
   global
      .security()
-        .authorization()
+        .authorization().enable()
            .principalRoleMapper(new IdentityRoleMapper())
            .role("admin")
               .permission(AuthorizationPermission.ALL)
