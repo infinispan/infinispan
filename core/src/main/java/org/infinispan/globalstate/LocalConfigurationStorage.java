@@ -2,8 +2,11 @@ package org.infinispan.globalstate;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -20,8 +23,10 @@ public interface LocalConfigurationStorage {
    /**
     * Initialization entry point for the {@link LocalConfigurationStorage}
     * @param embeddedCacheManager
+    * @param configurationManager
+    * @param executor
     */
-   void initialize(EmbeddedCacheManager embeddedCacheManager);
+   void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, Executor executor);
    /**
     * Checks whether this {@link LocalConfigurationStorage} supports the supplied flags.
     * A {@link org.infinispan.commons.CacheConfigurationException} will be thrown in case this cannot be done.
@@ -39,7 +44,7 @@ public interface LocalConfigurationStorage {
     * @param configuration the {@link Configuration} to use
     * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
     */
-   void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
     * Removes the specified cache.
@@ -47,7 +52,7 @@ public interface LocalConfigurationStorage {
     * @param name the name of the cache to remove
     * @param flags the desired {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag}s
     */
-   void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags);
 
    /**
     * Loads all persisted cache configurations

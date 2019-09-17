@@ -12,6 +12,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -24,9 +25,8 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 
 /**
- * An implementation of {@link LocalConfigurationStorage} which stores
- * {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
- *
+ * An implementation of {@link LocalConfigurationStorage} which stores {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
+ * <p>
  * This component persists cache configurations to the {@link GlobalStateConfiguration#persistentLocation()} in a
  * <pre>caches.xml</pre> file which is read on startup.
  *
@@ -44,19 +44,25 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          throw log.globalStateDisabled();
    }
 
-   public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      super.createCache(name, template, configuration, flags);
+   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      CompletableFuture<Void> future = super.createCache(name, template, configuration, flags);
       if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT)) {
-         persistentCaches.add(name);
-         storeAll();
+         return future.thenApplyAsync((v) -> {
+            persistentCaches.add(name);
+            storeAll();
+            return v;
+         }, executor);
+      } else {
+         return future;
       }
    }
 
-   public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      if (persistentCaches.remove(name)) {
-         storeAll();
-      }
-      super.removeCache(name, flags);
+   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return CompletableFuture.runAsync(() -> {
+         if (persistentCaches.remove(name)) {
+            storeAll();
+         }
+      }, executor).thenCompose((v) -> super.removeCache(name, flags));
    }
 
    public Map<String, Configuration> loadAll() {
@@ -96,7 +102,7 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          try {
             renameTempFile(temp, getPersistentFileLock(), persistentFile);
          } catch (Exception e) {
-             throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+            throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
          }
       } catch (Exception e) {
          throw log.errorPersistingGlobalConfiguration(e);

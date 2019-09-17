@@ -1,5 +1,7 @@
 package org.infinispan.manager;
 
+import static org.infinispan.util.concurrent.CompletableFutures.uncheckedAwait;
+
 import java.util.EnumSet;
 
 import org.infinispan.Cache;
@@ -32,35 +34,35 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, Configuration configuration) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      clusterConfigurationManager.createCache(cacheName, configuration, flags);
+      uncheckedAwait(clusterConfigurationManager.createCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Configuration configuration) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags);
+      uncheckedAwait(clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, String template) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      clusterConfigurationManager.createCache(cacheName, template, flags);
+      uncheckedAwait(clusterConfigurationManager.createCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, String template) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      clusterConfigurationManager.getOrCreateCache(cacheName, template, flags);
+      uncheckedAwait(clusterConfigurationManager.getOrCreateCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
 
    @Override
    public void removeCache(String cacheName) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      clusterConfigurationManager.removeCache(cacheName, flags);
+      uncheckedAwait(clusterConfigurationManager.removeCache(cacheName, flags));
    }
 
    @Override

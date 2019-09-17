@@ -6,6 +6,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -36,12 +38,14 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    protected EmbeddedCacheManager cacheManager;
    protected ParserRegistry parserRegistry;
    protected ConfigurationManager configurationManager;
+   protected Executor executor;
 
-   public void initialize(EmbeddedCacheManager cacheManager) {
-      this.configurationManager =
-         SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ConfigurationManager.class);
+   @Override
+   public void initialize(EmbeddedCacheManager cacheManager, ConfigurationManager configurationManager, Executor executor) {
+      this.configurationManager = configurationManager;
       this.cacheManager = cacheManager;
       this.parserRegistry = new ParserRegistry();
+      this.executor = executor;
    }
 
    @Override
@@ -50,7 +54,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          throw log.globalStateDisabled();
    }
 
-   public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
       if (existing == null) {
          SecurityActions.defineConfiguration(cacheManager, name, configuration);
@@ -61,30 +65,37 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
       }
       // Ensure the cache is started
-      SecurityActions.getCache(cacheManager, name);
+
+      return CompletableFuture.supplyAsync(() -> {
+         SecurityActions.getCache(cacheManager, name);
+         return null;
+      }, executor);
    }
 
 
-   public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Remove cache %s", name);
 
-      GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
-      ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(name);
-      if (cacheComponentRegistry != null) {
-         cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
-         cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
-         cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
-         Cache<?, ?> cache = cacheManager.getCache(name, false);
-         if (cache != null) {
-            cache.stop();
+      return CompletableFuture.supplyAsync(() -> {
+         GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
+         ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(name);
+         if (cacheComponentRegistry != null) {
+            cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
+            cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
+            cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
+            Cache<?, ?> cache = cacheManager.getCache(name, false);
+            if (cache != null) {
+               cache.stop();
+            }
          }
-      }
-      globalComponentRegistry.removeCache(name);
-      // Remove cache configuration and remove it from the computed cache name list
-      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(name);
-      // Remove cache from dependency graph
-      //noinspection unchecked
-      globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(name);
+         globalComponentRegistry.removeCache(name);
+         // Remove cache configuration and remove it from the computed cache name list
+         globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(name);
+         // Remove cache from dependency graph
+         //noinspection unchecked
+         globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(name);
+         return null;
+      }, executor);
    }
 
    public Map<String, Configuration> loadAll() {
