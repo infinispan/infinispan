@@ -15,8 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.infinispan.commons.util.Version;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -26,7 +27,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

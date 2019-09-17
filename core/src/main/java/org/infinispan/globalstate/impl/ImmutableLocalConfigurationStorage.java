@@ -4,8 +4,11 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -22,8 +25,7 @@ public class ImmutableLocalConfigurationStorage implements LocalConfigurationSto
    protected static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Override
-   public void initialize(EmbeddedCacheManager embeddedCacheManager) {
-
+   public void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, Executor executor) {
    }
 
    @Override
@@ -32,12 +34,12 @@ public class ImmutableLocalConfigurationStorage implements LocalConfigurationSto
    }
 
    @Override
-   public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw log.immutableConfiguration();
    }
 
    @Override
-   public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       throw log.immutableConfiguration();
    }
 

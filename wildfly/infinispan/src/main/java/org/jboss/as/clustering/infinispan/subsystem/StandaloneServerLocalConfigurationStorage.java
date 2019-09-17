@@ -13,11 +13,15 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -37,8 +41,7 @@ public class StandaloneServerLocalConfigurationStorage implements ServerLocalCon
    private PathAddress rootPath;
 
    @Override
-   public void initialize(EmbeddedCacheManager embeddedCacheManager) {
-      // NO-OP
+   public void initialize(EmbeddedCacheManager embeddedCacheManager, ConfigurationManager configurationManager, Executor executor) {
    }
 
    @Override
@@ -46,7 +49,7 @@ public class StandaloneServerLocalConfigurationStorage implements ServerLocalCon
    }
 
    @Override
-   public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (!flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT)) {
          throw InfinispanMessages.MESSAGES.cannotCreateNonPermamentCache(name);
       }
@@ -74,10 +77,11 @@ public class StandaloneServerLocalConfigurationStorage implements ServerLocalCon
       } catch (IOException e) {
          throw InfinispanMessages.MESSAGES.cannotCreateCache(e, name);
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String cacheMode = findCacheMode(name, false);
 
       if (cacheMode == null) {
@@ -96,6 +100,7 @@ public class StandaloneServerLocalConfigurationStorage implements ServerLocalCon
       } catch (IOException e) {
          throw InfinispanMessages.MESSAGES.cannotRemoveCache(e, name);
       }
+      return CompletableFutures.completedNull();
    }
 
    private String findCacheMode(String name, boolean configuration) {

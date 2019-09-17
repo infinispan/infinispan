@@ -1,8 +1,6 @@
 package org.infinispan.globalstate.impl;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.notifications.Listener;
@@ -20,23 +18,21 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 @Listener(observation = Listener.Observation.POST)
 public class GlobalConfigurationStateListener {
    private final GlobalConfigurationManagerImpl gcm;
-   private final ExecutorService blockingExecutorService;
 
-   GlobalConfigurationStateListener(GlobalConfigurationManagerImpl gcm, ExecutorService blockingExecutorService) {
+   GlobalConfigurationStateListener(GlobalConfigurationManagerImpl gcm) {
       this.gcm = gcm;
-      this.blockingExecutorService = blockingExecutorService;
    }
 
    @CacheEntryCreated
    public CompletionStage<Void> createCache(CacheEntryCreatedEvent<ScopedState, CacheState> event) {
       String cacheName = event.getKey().getName();
       CacheState state = event.getCache().get(event.getKey());
-      return CompletableFuture.runAsync(()-> gcm.createCacheLocally(cacheName, state), blockingExecutorService);
+      return gcm.createCacheLocally(cacheName, state);
    }
 
    @CacheEntryRemoved
    public CompletionStage<Void> removeCache(CacheEntryRemovedEvent<ScopedState, CacheState> event) {
       String cacheName = event.getKey().getName();
-      return CompletableFuture.runAsync(()-> gcm.removeCacheLocally(cacheName, event.getOldValue()), blockingExecutorService);
+      return gcm.removeCacheLocally(cacheName, event.getOldValue());
    }
 }

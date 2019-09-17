@@ -1,10 +1,15 @@
 package org.infinispan.globalstate.impl;
 
+import static org.infinispan.util.concurrent.CompletableFutures.uncheckedAwait;
+
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -27,6 +32,7 @@ import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,8 +53,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Inject ConfigurationManager configurationManager;
    @Inject InternalCacheRegistry internalCacheRegistry;
    @Inject GlobalComponentRegistry globalComponentRegistry;
-   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
-   ExecutorService blockingExecutorService;
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+   ExecutorService executorService;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -77,22 +83,23 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
       parserRegistry = new ParserRegistry();
 
-      localConfigurationManager.initialize(cacheManager);
+      localConfigurationManager.initialize(cacheManager, configurationManager, executorService);
       // Initialize caches which are present in the initial state. We do this before installing the listener.
       for (Map.Entry<ScopedState, Object> e : getStateCache().entrySet()) {
          if (CACHE_SCOPE.equals(e.getKey().getScope()))
-            createCacheLocally(e.getKey().getName(), (CacheState) e.getValue());
+            uncheckedAwait(createCacheLocally(e.getKey().getName(), (CacheState) e.getValue()));
       }
       // Install the listener
-      GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this,
-            blockingExecutorService);
+      GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
       getStateCache().addListener(stateCacheListener, new ScopeFilter(CACHE_SCOPE));
 
       // Tell the LocalConfigurationManager that it can load any persistent caches
-      localConfigurationManager.loadAll().forEach((name, configuration) -> {
-         // The cache configuration was permanent, it still needs to be
-         getOrCreateCache(name, configuration, EnumSet.of(CacheContainerAdmin.AdminFlag.PERMANENT));
-      });
+
+      List<CompletableFuture<Configuration>> all = localConfigurationManager.loadAll().entrySet().stream().map((entry) ->
+            // The cache configuration was permanent, it still needs to be
+            getOrCreateCache(entry.getKey(), entry.getValue(), EnumSet.of(CacheContainerAdmin.AdminFlag.PERMANENT))
+      ).collect(Collectors.toList());
+      uncheckedAwait(CompletableFutures.sequence(all));
    }
 
    public Cache<ScopedState, Object> getStateCache() {
@@ -103,7 +110,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public Configuration createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Configuration> createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (cacheManager.cacheExists(cacheName)) {
          throw log.cacheExists(cacheName);
       } else {
@@ -112,12 +119,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public Configuration getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Configuration> getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return createCache(cacheName, null, configuration, flags);
    }
 
    @Override
-   public Configuration createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Configuration> createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (cacheManager.cacheExists(cacheName)) {
          throw log.cacheExists(cacheName);
       } else {
@@ -126,12 +133,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    @Override
-   public Configuration getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Configuration> getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration configuration;
       if (template == null) {
          // The user has not specified a template, if a cache already exists just return it without checking for compatibility
          if (cacheManager.cacheExists(cacheName))
-            return configurationManager.getConfiguration(cacheName, true);
+            return CompletableFuture.completedFuture(configurationManager.getConfiguration(cacheName, true));
          else {
             Optional<String> defaultCacheName = configurationManager.getGlobalConfiguration().defaultCacheName();
             if (defaultCacheName.isPresent()) {
@@ -152,26 +159,25 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return createCache(cacheName, template, configuration, flags);
    }
 
-   Configuration createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   CompletableFuture<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       localConfigurationManager.validateFlags(flags);
       try {
          CacheState state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
-         getStateCache().putIfAbsent(new ScopedState(CACHE_SCOPE, cacheName), state);
-         return configuration;
+         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state).thenApply((v) -> configuration);
       } catch (Exception e) {
          throw log.configurationSerializationFailed(cacheName, configuration, e);
       }
    }
 
-   void createCacheLocally(String name, CacheState state) {
+   CompletableFuture<Void> createCacheLocally(String name, CacheState state) {
       log.debugf("Create cache %s", name);
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
       Configuration configuration = builderHolder.getNamedConfigurationBuilders().get(name).build();
-      localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags());
+      return localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags());
    }
 
    @Override
-   public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       ScopedState cacheScopedState = new ScopedState(CACHE_SCOPE, name);
       if (getStateCache().containsKey(cacheScopedState)) {
          try {
@@ -179,13 +185,13 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          } catch (Exception e) {
             // Ignore
          }
-         getStateCache().remove(cacheScopedState);
+         return getStateCache().removeAsync(cacheScopedState).thenCompose((r) -> CompletableFutures.completedNull());
       } else {
-         localConfigurationManager.removeCache(name, flags);
+         return localConfigurationManager.removeCache(name, flags);
       }
    }
 
-   void removeCacheLocally(String name, CacheState state) {
-      localConfigurationManager.removeCache(name, state.getFlags());
+   CompletableFuture<Void> removeCacheLocally(String name, CacheState state) {
+      return localConfigurationManager.removeCache(name, state.getFlags());
    }
 }

@@ -52,8 +52,7 @@ public class ServerEventLoggerTest {
 
    @Test
    public void testLocalServerEventLogging() {
-
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(amendGlobalConfiguration(new GlobalConfigurationBuilder()), new ConfigurationBuilder())) {
          @Override
          public void call() throws Exception {
             cm.getCache();
@@ -81,10 +80,12 @@ public class ServerEventLoggerTest {
 
    @Test
    public void testClusteredServerEventLogging() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
+            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder),
+            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder),
+            TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder)) {
          @Override
          public void call() throws Exception {
             int msg = 1;
@@ -117,27 +118,32 @@ public class ServerEventLoggerTest {
 
    @Test
    public void testLocalServerEventLoggingPreloading() {
-      deleteGlobalPersistentState();
-      EmbeddedCacheManager cm = startCacheManager();
+      GlobalConfigurationBuilder global = amendGlobalConfiguration(new GlobalConfigurationBuilder());
+      global.globalState().enable();
+      deleteGlobalPersistentState(global);
+      EmbeddedCacheManager cm = startCacheManager(global);
       EventLogger eventLogger = EventLogManager.getEventLogger(cm);
       eventLogger.info(EventLogCategory.CLUSTER, "message #1");
       TestingUtil.killCacheManagers(cm);
-      cm = startCacheManager();
+      cm = startCacheManager(global);
       eventLogger = EventLogManager.getEventLogger(cm);
       eventLogger.info(EventLogCategory.CLUSTER, "message #5");
    }
 
-   public EmbeddedCacheManager startCacheManager() {
-      GlobalConfigurationBuilder globaCfg = new GlobalConfigurationBuilder();
-      globaCfg.globalState().enable();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(
-            globaCfg, new ConfigurationBuilder());
+   public EmbeddedCacheManager startCacheManager(GlobalConfigurationBuilder global) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(global, new ConfigurationBuilder());
       cm.getCache();
       return cm;
    }
 
-   private static void deleteGlobalPersistentState() {
-      GlobalConfiguration globalCfg = new GlobalConfigurationBuilder().build();
+   private static GlobalConfigurationBuilder amendGlobalConfiguration(GlobalConfigurationBuilder global) {
+      String stateDirectory = TestingUtil.tmpDirectory(TestResourceTracker.getCurrentTestName());
+      global.globalState().persistentLocation(stateDirectory);
+      return global;
+   }
+
+   private static void deleteGlobalPersistentState(GlobalConfigurationBuilder global) {
+      GlobalConfiguration globalCfg = global.build();
       new File(globalCfg.globalState().persistentLocation() + "/___event_log_cache.dat").delete();
    }
 

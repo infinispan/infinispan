@@ -15,6 +15,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.CacheException;
+
 /**
  * Utility methods connecting {@link CompletableFuture} futures.
  *
@@ -34,7 +36,7 @@ public class CompletableFutures {
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
 
    @SuppressWarnings("unchecked")
-   public static <K,V> CompletableFuture<Map<K, V>> completedEmptyMap() {
+   public static <K, V> CompletableFuture<Map<K, V>> completedEmptyMap() {
       return completedEmptyMapFuture;
    }
 
@@ -106,6 +108,29 @@ public class CompletableFutures {
    }
 
    /**
+    * Same as {@link #await(CompletableFuture, long, TimeUnit)} but wraps checked exceptions in {@link CacheException}
+    *
+    * @param future the {@link CompletableFuture} to test.
+    * @param time   the timeout.
+    * @param unit   the timeout unit.
+    * @return {@code true} if completed, {@code false} if timed out.
+    * @throws NullPointerException if {@code future} or {@code unit} is {@code null}.
+    */
+   public static boolean uncheckedAwait(CompletableFuture<?> future, long time, TimeUnit unit) {
+      try {
+         requireNonNull(future, "Completable Future must be non-null.").get(time, requireNonNull(unit, "Time Unit must be non-null"));
+         return true;
+      } catch (ExecutionException e) {
+         return true;
+      } catch (java.util.concurrent.TimeoutException e) {
+         return false;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      }
+   }
+
+   /**
     * Wait for a long time until the {@link CompletableFuture} is completed.
     *
     * @param future the {@link CompletableFuture}.
@@ -121,6 +146,27 @@ public class CompletableFutures {
          throw new IllegalStateException("This should never happen!", e);
       }
    }
+
+   /**
+    * Same as {@link #await(CompletableFuture)} but wraps checked exceptions in {@link CacheException}
+    *
+    * @param future the {@link CompletableFuture}.
+    * @param <T>    the return type.
+    * @return the result value.
+    */
+   public static <T> T uncheckedAwait(CompletableFuture<T> future) {
+      try {
+         return Objects.requireNonNull(future, "Completable Future must be non-null.").get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
+      } catch (java.util.concurrent.TimeoutException e) {
+         throw new IllegalStateException("This should never happen!", e);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      } catch (ExecutionException e) {
+         throw new CacheException(e);
+      }
+   }
+
 
    public static CompletionException asCompletionException(Throwable t) {
       if (t instanceof CompletionException) {

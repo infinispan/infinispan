@@ -78,4 +78,9 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
    public int hashCode() {
       return attributes.hashCode();
    }
+
+   @Override
+   public String toString() {
+      return "MemoryStorageConfiguration[attributes=" + attributes + "]";
+   }
 }
