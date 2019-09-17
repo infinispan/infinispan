@@ -17,7 +17,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.reactivestreams.Publisher;
@@ -134,11 +133,6 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    public <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, boolean localInvocation,
                                                                             boolean includeStores) {
       return persistenceManager.loadFromAllStores(key, localInvocation, includeStores);
-   }
-
-   @Override
-   public AdvancedCacheLoader getStateTransferProvider() {
-      return persistenceManager.getStateTransferProvider();
    }
 
    @Override

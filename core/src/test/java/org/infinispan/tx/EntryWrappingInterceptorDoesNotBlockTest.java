@@ -119,7 +119,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       cache(0).addListener(new TopologyChangeListener(topologyChangeLatch));
       cache(2).addListener(new TopologyChangeListener(topologyChangeLatch));
       PrepareExpectingInterceptor prepareExpectingInterceptor = new PrepareExpectingInterceptor();
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(prepareExpectingInterceptor, 0);
+      TestingUtil.extractInterceptorChain(cache(2)).addInterceptor(prepareExpectingInterceptor, 0);
 
       tm(0).begin();
       for (int i = 0; i < keys.length; ++i) {
@@ -135,7 +135,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
       // block sending segment 0 to node 2
       expectStateRequestCommand(crm2, StateRequestCommand.Type.GET_TRANSACTIONS).send().receiveAll();
-      expectStateRequestCommand(crm2, StateRequestCommand.Type.START_STATE_TRANSFER).send().receiveAll();
+      expectStateRequestCommand(crm2, StateRequestCommand.Type.START_STATE_TRANSFER).send().receiveAllAsync();
       ControlledRpcManager.BlockedRequest blockedStateResponse0 = crm0.expectCommand(StateResponseCommand.class);
       assertTrue(topologyChangeLatch.await(10, TimeUnit.SECONDS));
 
@@ -179,8 +179,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    }
 
    private ControlledRpcManager.BlockedRequest expectStateRequestCommand(ControlledRpcManager crm,
-                                                                         StateRequestCommand.Type type)
-      throws InterruptedException {
+                                                                         StateRequestCommand.Type type) {
       return crm.expectCommand(StateRequestCommand.class, c -> assertEquals(type, c.getType()));
    }
 

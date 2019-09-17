@@ -2,11 +2,10 @@ package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -16,10 +15,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -51,12 +48,11 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       volatile Callable<Void> callOnStateResponseCommand;
 
       @Override
-      public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                           ReplicableCommand command,
-                                                                           ResponseMode mode, long timeout,
-                                                                           ResponseFilter responseFilter,
-                                                                           DeliverOrder deliverOrder,
-                                                                           boolean anycast) {
+      public <T> CompletionStage<T> invokeCommand(Address target,
+                                                  ReplicableCommand command,
+                                                  ResponseCollector<T> collector,
+                                                  DeliverOrder deliverOrder, long timeout,
+                                                  TimeUnit unit) {
          if (callOnStateResponseCommand != null && command.getClass() == StateResponseCommand.class) {
             log.trace("Ignoring StateResponseCommand");
             try {
@@ -64,9 +60,9 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             } catch (Exception e) {
                log.error("Error in callOnStateResponseCommand", e);
             }
-            return CompletableFuture.completedFuture(Collections.emptyMap());
+            return CompletableFuture.completedFuture(null);
          }
-         return super.invokeRemotelyAsync(recipients, command, mode, timeout, responseFilter, deliverOrder, anycast);
+         return super.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
       }
    }
 

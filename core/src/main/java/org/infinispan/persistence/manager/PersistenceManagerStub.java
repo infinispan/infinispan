@@ -16,7 +16,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
@@ -128,11 +127,6 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public CompletionStage<Void> writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment, Predicate<? super StoreConfiguration> predicate, long flags) {
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public AdvancedCacheLoader getStateTransferProvider() {
-      return null;
    }
 
    @Override

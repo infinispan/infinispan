@@ -1,13 +1,15 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 
 import javax.transaction.TransactionManager;
 
@@ -21,6 +23,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -69,10 +72,16 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[0];
          int topologyId = (Integer) arguments[1];
-         Object result = invocation.callRealMethod();
-         checkpoint.trigger("post_get_transactions_" + topologyId + "_from_" + source);
-         checkpoint.awaitStrict("resume_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
-         return result;
+         CompletionStage<?> result = (CompletionStage<?>) invocation.callRealMethod();
+         return result.thenApply(transactions -> {
+            try {
+               checkpoint.trigger("post_get_transactions_" + topologyId + "_from_" + source);
+               checkpoint.awaitStrict("resume_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
+               return transactions;
+            } catch (InterruptedException | TimeoutException e) {
+               throw new TestException(e);
+            }
+         });
       }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), any());
       TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
 

@@ -1,5 +1,6 @@
 package org.infinispan.scattered.impl;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -10,11 +11,12 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredStateProvider;
@@ -26,6 +28,9 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -75,34 +80,43 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
             return CompletableFutures.completedNull();
          }
 
-         // we'll start at 1, so the counter will never drop to 0 until we send all chunks
+         // We pretend to do one extra invalidation at the beginning that finishes after we sent all chunks
          AtomicInteger outboundInvalidations = new AtomicInteger(1);
-         CompletableFuture<Void> outboundTaskFuture = new CompletableFuture<>();
-         OutboundTransferTask outboundTransferTask = new OutboundTransferTask(nextMember, oldSegments,
-            cacheTopology.getCurrentCH().getNumSegments(), chunkSize, cacheTopology.getTopologyId(), keyPartitioner,
-            task -> {
-               if (outboundInvalidations.decrementAndGet() == 0) {
-                  outboundTaskFuture.complete(null);
-               }
-            }, chunks -> invalidateChunks(chunks, otherMembers, outboundInvalidations, outboundTaskFuture, cacheTopology),
-            OutboundTransferTask::defaultMapEntryFromDataContainer, OutboundTransferTask::defaultMapEntryFromStore,
-            dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, true, true);
-         outboundTransferTask.execute(executorService);
-         return outboundTaskFuture;
+         CompletableFuture<Void> invalidationFuture = new CompletableFuture<>();
+         OutboundTransferTask outboundTransferTask =
+            new OutboundTransferTask(nextMember, oldSegments, cacheTopology.getCurrentCH().getNumSegments(), chunkSize,
+                                     cacheTopology.getTopologyId(), keyPartitioner,
+                                     chunks -> invalidateChunks(chunks, otherMembers, outboundInvalidations,
+                                                                invalidationFuture, cacheTopology),
+                                     rpcManager, commandsFactory,
+                                     timeout, cacheName, true, true);
+         outboundTransferTask.execute(Flowable.concat(publishDataContainerEntries(oldSegments),
+                                                      publishStoreEntries(oldSegments)))
+                             .whenComplete((ignored, throwable) -> {
+                                if (throwable != null) {
+                                   logError(outboundTransferTask, throwable);
+                                }
+                                if (outboundInvalidations.decrementAndGet() == 0) {
+                                   invalidationFuture.complete(null);
+                                }
+                             });
+         return invalidationFuture;
       } else {
          return CompletableFutures.completedNull();
       }
    }
 
-   private void invalidateChunks(List<StateChunk> stateChunks, Set<Address> otherMembers, AtomicInteger outboundInvalidations, CompletableFuture<Void> outboundTaskFuture, CacheTopology cacheTopology) {
+   private void invalidateChunks(Collection<StateChunk> stateChunks, Set<Address> otherMembers,
+                                 AtomicInteger outboundInvalidations, CompletableFuture<Void> invalidationFuture,
+                                 CacheTopology cacheTopology) {
       int numEntries = stateChunks.stream().mapToInt(chunk -> chunk.getCacheEntries().size()).sum();
       if (numEntries == 0) {
          log.tracef("Nothing to invalidate");
          return;
       }
-      Object keys[] = new Object[numEntries];
-      int topologyIds[] = new int[numEntries];
-      long versions[] = new long[numEntries];
+      Object[] keys = new Object[numEntries];
+      int[] topologyIds = new int[numEntries];
+      long[] versions = new long[numEntries];
       int i = 0;
       for (StateChunk chunk : stateChunks) {
          for (InternalCacheEntry entry : chunk.getCacheEntries()) {
@@ -117,7 +131,8 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          }
       }
       if (trace) {
-         log.tracef("Invalidating %d entries from segments %s", numEntries, stateChunks.stream().map(chunk -> chunk.getSegmentId()).collect(Collectors.toList()));
+         log.tracef("Invalidating %d entries from segments %s", numEntries,
+                    stateChunks.stream().map(StateChunk::getSegmentId).collect(Collectors.toList()));
       }
       outboundInvalidations.incrementAndGet();
       rpcManager.invokeCommand(otherMembers,
@@ -132,7 +147,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
             }
          } finally {
             if (outboundInvalidations.decrementAndGet() == 0) {
-               outboundTaskFuture.complete(null);
+               invalidationFuture.complete(null);
             }
          }
       });
@@ -161,28 +176,40 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    @Override
    public void startKeysTransfer(IntSet segments, Address origin) {
       CacheTopology cacheTopology = distributionManager.getCacheTopology();
-      Address localAddress = rpcManager.getAddress();
-      OutboundTransferTask outboundTransferTask = new OutboundTransferTask(origin, segments,
-         cacheTopology.getCurrentCH().getNumSegments(), chunkSize, cacheTopology.getTopologyId(), keyPartitioner,
-         this::onTaskCompletion, list -> {},
-         (ice, ef) -> {
-            Metadata metadata = ice.getMetadata();
-            if (metadata != null && metadata.version() != null) {
-               return ef.create(ice.getKey(), null, new RemoteMetadata(localAddress, metadata.version()));
-            } else {
-               return null;
-            }
-         },
-         (me, ef) -> {
-            Metadata metadata = me.getMetadata();
-            if (metadata != null && metadata.version() != null) {
-               return ef.create(me.getKey(), null, new RemoteMetadata(localAddress, metadata.version()));
-            } else {
-               return null;
-            }
-         }, dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, true, false);
+      OutboundTransferTask outboundTransferTask =
+         new OutboundTransferTask(origin, segments, cacheTopology.getCurrentCH().getNumSegments(), chunkSize,
+                                  cacheTopology.getTopologyId(), keyPartitioner, chunks -> {},
+                                  rpcManager, commandsFactory,
+                                  timeout, cacheName, true, false);
       addTransfer(outboundTransferTask);
-      outboundTransferTask.execute(executorService);
+      outboundTransferTask.execute(Flowable.concat(publishDataContainerKeys(segments), publishStoreKeys(segments)))
+                          .whenComplete((ignored, throwable) -> {
+         if (throwable != null) {
+            logError(outboundTransferTask, throwable);
+         }
+         onTaskCompletion(outboundTransferTask);
+      });
+   }
+
+   private Flowable<InternalCacheEntry<Object, Object>> publishDataContainerKeys(IntSet segments) {
+      Address localAddress = rpcManager.getAddress();
+      return Flowable.fromIterable(() -> dataContainer.iterator(segments))
+                     .filter(ice -> ice.getMetadata() != null && ice.getMetadata().version() != null)
+                     .map(ice -> entryFactory.create(ice.getKey(), null,
+                                                     new RemoteMetadata(localAddress, ice.getMetadata().version())));
+
+   }
+
+   private Flowable<InternalCacheEntry<Object, Object>> publishStoreKeys(IntSet segments) {
+      Address localAddress = rpcManager.getAddress();
+      Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
+         persistenceManager.publishEntries(segments, k -> !dataContainer.containsKey(k), true, true,
+                                           Configurations::isStateTransferStore);
+      return Flowable.fromPublisher(loaderPublisher)
+                     // We rely on MarshallableEntry implementations caching the unmarshalled metadata for performance
+                     .filter(me -> me.getMetadata() != null && me.getMetadata().version() != null)
+                     .map(me -> entryFactory.create(me.getKey(), null,
+                                                    new RemoteMetadata(localAddress, me.getMetadata().version())));
    }
 
    @Override

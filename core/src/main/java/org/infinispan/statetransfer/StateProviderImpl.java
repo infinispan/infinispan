@@ -1,6 +1,5 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.ArrayList;
@@ -13,15 +12,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
@@ -37,6 +39,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -48,6 +51,9 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * {@link StateProvider} implementation.
@@ -68,15 +74,15 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected CommandsFactory commandsFactory;
    @Inject ClusterCacheNotifier clusterCacheNotifier;
    @Inject TransactionTable transactionTable;     // optional
-   @Inject protected InternalDataContainer dataContainer;
+   @Inject protected InternalDataContainer<Object, Object> dataContainer;
    @Inject protected PersistenceManager persistenceManager; // optional
-   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   protected ExecutorService executorService;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected InternalEntryFactory entryFactory;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected DistributionManager distributionManager;
-   @Inject TransactionOriginatorChecker transactionOriginatorChecker;
+   @Inject protected TransactionOriginatorChecker transactionOriginatorChecker;
+   @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
+   @Inject ScheduledExecutorService timeoutExecutor;
 
    protected long timeout;
    protected int chunkSize;
@@ -147,31 +153,39 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public List<TransactionInfo> getTransactionsForSegments(Address destination, int requestTopologyId, IntSet segments) throws InterruptedException {
+   public CompletionStage<List<TransactionInfo>> getTransactionsForSegments(Address destination, int requestTopologyId,
+                                                                            IntSet segments) {
       if (trace) {
          log.tracef("Received request for transactions from node %s for cache %s, topology id %d, segments %s",
                     destination, cacheName, requestTopologyId, segments);
       }
 
-      final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, true);
-      final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
+      return getCacheTopology(requestTopologyId, destination, true)
+                .thenApply(topology -> {
+                   final ConsistentHash readCh = topology.getReadConsistentHash();
 
-      IntSet ownedSegments = IntSets.from(readCh.getSegmentsForOwner(rpcManager.getAddress()));
-      if (!ownedSegments.containsAll(segments)) {
-         segments.removeAll(ownedSegments);
-         throw new IllegalArgumentException("Segments " + segments + " are not owned by " + rpcManager.getAddress());
-      }
+                   IntSet ownedSegments = IntSets.from(readCh.getSegmentsForOwner(rpcManager.getAddress()));
+                   if (!ownedSegments.containsAll(segments)) {
+                      segments.removeAll(ownedSegments);
+                      throw new IllegalArgumentException(
+                         "Segments " + segments + " are not owned by " + rpcManager.getAddress());
+                   }
 
-      List<TransactionInfo> transactions = new ArrayList<>();
-      //we migrate locks only if the cache is transactional and distributed
-      if (configuration.transaction().transactionMode().isTransactional()) {
-         collectTransactionsToTransfer(destination, transactions, transactionTable.getRemoteTransactions(), segments, cacheTopology);
-         collectTransactionsToTransfer(destination, transactions, transactionTable.getLocalTransactions(), segments, cacheTopology);
-         if (trace) {
-            log.tracef("Found %d transaction(s) to transfer", transactions.size());
-         }
-      }
-      return transactions;
+                   List<TransactionInfo> transactions = new ArrayList<>();
+                   //we migrate locks only if the cache is transactional and distributed
+                   if (configuration.transaction().transactionMode().isTransactional()) {
+                      collectTransactionsToTransfer(destination, transactions, transactionTable.getRemoteTransactions(),
+                                                    segments,
+                                                    topology);
+                      collectTransactionsToTransfer(destination, transactions, transactionTable.getLocalTransactions(),
+                                                    segments,
+                                                    topology);
+                      if (trace) {
+                         log.tracef("Found %d transaction(s) to transfer", transactions.size());
+                      }
+                   }
+                   return transactions;
+                });
    }
 
    @Override
@@ -179,30 +193,31 @@ public class StateProviderImpl implements StateProvider {
       return clusterCacheNotifier.retrieveClusterListenerCallablesToInstall();
    }
 
-   private CacheTopology getCacheTopology(int requestTopologyId, Address destination, boolean isReqForTransactions) throws InterruptedException {
+   private CompletionStage<CacheTopology> getCacheTopology(int requestTopologyId, Address destination,
+                                                           boolean isReqForTransactions) {
       CacheTopology cacheTopology = distributionManager.getCacheTopology();
-      int currentTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
+      int currentTopologyId = cacheTopology.getTopologyId();
       if (requestTopologyId < currentTopologyId) {
          if (isReqForTransactions)
             log.debugf("Transactions were requested by node %s with topology %d, older than the local topology (%d)",
-                  destination, requestTopologyId, currentTopologyId);
+                       destination, requestTopologyId, currentTopologyId);
          else
             log.debugf("Segments were requested by node %s with topology %d, older than the local topology (%d)",
-                  destination, requestTopologyId, currentTopologyId);
+                       destination, requestTopologyId, currentTopologyId);
       } else if (requestTopologyId > currentTopologyId) {
          if (trace) {
             log.tracef("%s were requested by node %s with topology %d, greater than the local " +
-                  "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
-                  requestTopologyId, currentTopologyId, requestTopologyId);
+                       "topology (%d). Waiting for topology %d to be installed locally.",
+                       isReqForTransactions ? "Transactions" : "Segments", destination,
+                       requestTopologyId, currentTopologyId, requestTopologyId);
          }
-         try {
-            stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
-         } catch (TimeoutException e) {
-            throw CLUSTER.failedWaitingForTopology(requestTopologyId);
-         }
-         cacheTopology = distributionManager.getCacheTopology();
+         CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(requestTopologyId);
+         timeoutExecutor.schedule(
+            () -> topologyFuture.completeExceptionally(CLUSTER.failedWaitingForTopology(requestTopologyId)),
+            timeout, TimeUnit.MILLISECONDS);
+         return topologyFuture.thenApply(ignored -> distributionManager.getCacheTopology());
       }
-      return cacheTopology;
+      return CompletableFuture.completedFuture(cacheTopology);
    }
 
    private void collectTransactionsToTransfer(Address destination,
@@ -225,21 +240,15 @@ public class StateProviderImpl implements StateProvider {
 
          // transfer only locked keys that belong to requested segments
          Set<Object> filteredLockedKeys = new HashSet<>();
-         Set<Object> lockedKeys = tx.getLockedKeys();
-         synchronized (lockedKeys) {
-            for (Object key : lockedKeys) {
-               if (segments.contains(keyPartitioner.getSegment(key))) {
-                  filteredLockedKeys.add(key);
-               }
-            }
-         }
          //avoids the warning about synchronizing in a local variable.
          //and allows us to change the CacheTransaction internals without having to worry about it
-         tx.forEachBackupLock(key -> {
+         Consumer<Object> lockFilter = key -> {
             if (segments.contains(keyPartitioner.getSegment(key))) {
                filteredLockedKeys.add(key);
             }
-         });
+         };
+         tx.forEachLock(lockFilter);
+         tx.forEachBackupLock(lockFilter);
          if (filteredLockedKeys.isEmpty()) {
             if (trace) log.tracef("Skipping transaction %s because the state requestor %s doesn't own any key",
                     tx, destination);
@@ -249,7 +258,7 @@ public class StateProviderImpl implements StateProvider {
          List<WriteCommand> txModifications = tx.getModifications();
          WriteCommand[] modifications = null;
          if (!txModifications.isEmpty()) {
-            modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+            modifications = txModifications.toArray(new WriteCommand[0]);
          }
 
          // If a key affected by a local transaction has a new owner, we must add the new owner to the transaction's
@@ -266,21 +275,38 @@ public class StateProviderImpl implements StateProvider {
    }
 
    @Override
-   public void startOutboundTransfer(Address destination, int requestTopologyId, IntSet segments, boolean applyState)
-         throws InterruptedException {
+   public void startOutboundTransfer(Address destination, int requestTopologyId, IntSet segments, boolean applyState) {
       if (trace) {
          log.tracef("Starting outbound transfer to node %s for cache %s, topology id %d, segments %s", destination,
                     cacheName, requestTopologyId, segments);
       }
 
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments,
-            this.configuration.clustering().hash().numSegments(), chunkSize, requestTopologyId,
-            keyPartitioner, this::onTaskCompletion, chunks -> {},
-            OutboundTransferTask::defaultMapEntryFromDataContainer, OutboundTransferTask::defaultMapEntryFromStore,
-            dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, applyState, false);
+      OutboundTransferTask outboundTransfer =
+         new OutboundTransferTask(destination, segments, this.configuration.clustering().hash().numSegments(),
+                                  chunkSize, requestTopologyId, keyPartitioner, chunks -> {}, rpcManager,
+                                  commandsFactory, timeout, cacheName, applyState, false);
       addTransfer(outboundTransfer);
-      outboundTransfer.execute(executorService);
+      outboundTransfer.execute(Flowable.concat(publishDataContainerEntries(segments), publishStoreEntries(segments)))
+                      .whenComplete((ignored, throwable) -> {
+                         if (throwable != null) {
+                            logError(outboundTransfer, throwable);
+                         }
+                         onTaskCompletion(outboundTransfer);
+                      });
+   }
+
+   protected Flowable<InternalCacheEntry<Object, Object>> publishDataContainerEntries(IntSet segments) {
+      return Flowable.fromIterable(() -> dataContainer.iterator(segments))
+                     // TODO Investigate removing the filter, we clear L1 entries before becoming an owner
+                     .filter(ice -> !ice.isL1Entry());
+   }
+
+   protected Flowable<InternalCacheEntry<Object, Object>> publishStoreEntries(IntSet segments) {
+      Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
+         persistenceManager.publishEntries(segments, k -> !dataContainer.containsKey(k), true, true,
+                                           Configurations::isStateTransferStore);
+      return Flowable.fromPublisher(loaderPublisher).map(this::defaultMapEntryFromStore);
    }
 
    protected void addTransfer(OutboundTransferTask transferTask) {
@@ -306,7 +332,7 @@ public class StateProviderImpl implements StateProvider {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(destination);
          if (transferTasks != null) {
             // get an array copy of the collection to avoid ConcurrentModificationException if the entire task gets cancelled and removeTransfer(transferTask) is called
-            OutboundTransferTask[] taskListCopy = transferTasks.toArray(new OutboundTransferTask[transferTasks.size()]);
+            OutboundTransferTask[] taskListCopy = transferTasks.toArray(new OutboundTransferTask[0]);
             for (OutboundTransferTask transferTask : taskListCopy) {
                if (transferTask.getTopologyId() == topologyId) {
                   transferTask.cancelSegments(segments); //this can potentially result in a call to removeTransfer(transferTask)
@@ -336,5 +362,21 @@ public class StateProviderImpl implements StateProvider {
       }
 
       removeTransfer(transferTask);
+   }
+
+   protected void logError(OutboundTransferTask task, Throwable t) {
+      if (task.isCancelled()) {
+         // ignore eventual exceptions caused by cancellation or by the node stopping
+         if (trace) {
+            log.tracef("Ignoring error in already cancelled transfer to node %s, segments %s",
+                       task.getDestination(), task.getSegments());
+         }
+      } else {
+         log.failedOutBoundTransferExecution(t);
+      }
+   }
+
+   private InternalCacheEntry<Object, Object> defaultMapEntryFromStore(MarshallableEntry<Object, Object> me) {
+      return entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
    }
 }

@@ -368,6 +368,14 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
+   public void forEachLock(Consumer<Object> consumer) {
+      Set<Object> locked = lockedKeys.get();
+      if (locked != null) {
+         locked.forEach(consumer);
+      }
+   }
+
+   @Override
    public synchronized void forEachBackupLock(Consumer<Object> consumer) {
       if (backupKeyLocks != null) {
          backupKeyLocks.keySet().forEach(consumer);

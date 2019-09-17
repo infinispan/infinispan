@@ -2,11 +2,11 @@ package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -238,7 +238,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
                primaryOwnerCache.put(mk, value);
                log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
             }
-            primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
+            TestingUtil.extractInterceptorChain(primaryOwnerCache).addInterceptorBefore(
                   new BlockingInterceptor<>(cyclicBarrier, getVisitableCommand(op), true, false),
                   StateTransferInterceptor.class);
             return op.perform(primaryOwnerCache, key);
@@ -359,7 +359,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          blockingRpcManager2.expectCommand(StateRequestCommand.class);
 
       // Unblock the state request from node 2
-      blockedStateRequest2.send().receiveAll();
+      // Don't wait for response, because node 2 might be sending the first state response on the request thread
+      blockedStateRequest2.send().receiveAllAsync();
       // Wait for cache0 to collect the state to send to node 2 (including our previous value).
       ControlledRpcManager.BlockedRequest blockedStateResponse0 =
          blockingRpcManager0.expectCommand(StateResponseCommand.class);
@@ -368,7 +369,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
                                                                          op.getCommandClass(), true, false);
-      nonOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
+      TestingUtil.extractInterceptorChain(nonOwnerCache).addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
       // The put command will be blocked on cache1 just before committing the entry.
@@ -386,7 +387,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Wait for second in line to finish applying the state, but don't allow the rebalance confirmation to be processed.
       // (It would change the topology and it would trigger a retry for the command.)
-      blockedStateRequest0.send().receiveAll();
+      // Don't wait for response, because node 2 might be sending the first state response on the request thread
+      blockedStateRequest0.send().receiveAllAsync();
       blockingRpcManager2.expectCommand(StateResponseCommand.class).send().receiveAll();
       checkPoint.awaitStrict("pre_rebalance_confirmation_" + rebalanceTopologyId + "_from_" +
                                    primaryOwnerCache.getCacheManager().getAddress(), 10, SECONDS);
@@ -448,7 +450,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
                                                                          getVisitableCommand(op), false, false);
-      primaryOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
+      TestingUtil.extractInterceptorChain(primaryOwnerCache).addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes
       Future<Object> future = fork(() -> {

@@ -5,12 +5,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.processors.AsyncProcessor;
+import io.reactivex.subjects.CompletableSubject;
 
 /**
  * Static factory class that provides methods to obtain commonly used instances for interoperation between RxJava
@@ -64,6 +66,10 @@ public class RxJavaInterop {
     */
    public static <E> java.util.function.Function<CompletionStage<E>, Flowable<E>> completionStageToPublisher() {
       return (java.util.function.Function) completionStageToPublisher;
+   }
+
+   public static java.util.function.Function<CompletionStage<?>, Completable> completionStageToCompletable() {
+      return completionStageCompletableFunction;
    }
 
    /**
@@ -124,4 +130,17 @@ public class RxJavaInterop {
    };
 
    private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
+
+   private static final java.util.function.Function<CompletionStage<?>, Completable> completionStageCompletableFunction =
+      completionStage -> {
+         CompletableSubject cs = CompletableSubject.create();
+         completionStage.whenComplete((o, throwable) -> {
+            if (throwable != null) {
+               cs.onError(throwable);
+            } else {
+               cs.onComplete();
+            }
+         });
+         return cs;
+      };
 }

@@ -2,7 +2,6 @@ package org.infinispan.persistence;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -19,7 +18,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -99,8 +97,8 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
          stores = pm.getStores(CacheLoader.class);
          assertEquals(1, stores.size());
 
-         AdvancedCacheLoader loader = pm.getStateTransferProvider();
-         assertNotNull(loader);
+         DummyInMemoryStore store = (DummyInMemoryStore) stores.iterator().next();
+         assertTrue(store.getConfiguration().fetchPersistentState());
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }

@@ -191,11 +191,6 @@ public interface PersistenceManager extends Lifecycle {
       return CompletionStages.join(loadFromAllStores(key, segment, localInvocation, includeStores));
    }
 
-   /**
-    * Returns the store one configured with fetch persistent state, or null if none exist.
-    */
-   AdvancedCacheLoader getStateTransferProvider();
-
    default CompletionStage<Integer> size() {
        return size(AccessMode.BOTH);
    }

@@ -11,6 +11,9 @@ import org.infinispan.statetransfer.StateProvider;
  */
 public interface ScatteredStateProvider extends StateProvider {
 
+   /**
+    * Start transferring keys and remote metadata for the given segments to the origin.
+    */
    void startKeysTransfer(IntSet segments, Address origin);
 
    /**

@@ -1014,22 +1014,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public AdvancedCacheLoader getStateTransferProvider() {
-      storesMutex.readLock().lock();
-      try {
-         checkStoreAvailability();
-         for (CacheLoader l : loaders) {
-            StoreConfiguration storeConfiguration = getStoreConfig(l);
-            if (storeConfiguration.fetchPersistentState() && !storeConfiguration.shared())
-               return (AdvancedCacheLoader) l;
-         }
-         return null;
-      } finally {
-         storesMutex.readLock().unlock();
-      }
-   }
-
-   @Override
    public CompletionStage<Integer> size(Predicate<? super StoreConfiguration> predicate) {
       assert !Thread.currentThread().getName().startsWith("persistence") : "Thread name is: " + Thread.currentThread().getName();
       storesMutex.readLock().lock();

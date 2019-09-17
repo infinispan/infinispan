@@ -147,6 +147,12 @@ public interface CacheTransaction {
    void removeBackupLock(Object key);
 
    /**
+    * Invokes the {@link Consumer} with each lock.
+    * @param consumer The backup lock {@link Consumer}
+    */
+   void forEachLock(Consumer<Object> consumer);
+
+   /**
     * Invokes the {@link Consumer} with each backup lock.
     * @param consumer The backup lock {@link Consumer}
     */

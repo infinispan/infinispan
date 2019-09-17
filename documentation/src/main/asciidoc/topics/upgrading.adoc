@@ -55,6 +55,10 @@ Several configuration elements and attributes that were deprecated since 9.0 hav
 * `deadlock-detection-spin` - always disabled
 * `write-skew` - enabled automatically
 
+The xsite state transfer chunk size (`<backup><state-transfer chunk-size="X"/></backup>`) can no longer be `&gt;= 0`,
+same as the regular state transfer chunk size.
+Previously a value &lt;= 0 would transfer the entire cache in a single batch, which is almost always a bad idea.
+
 == RemoteCache Changes
 
 === The getBulk methods have been removed

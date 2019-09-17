@@ -601,6 +601,10 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          expectAllResponses().receive();
       }
 
+      public void receiveAllAsync() {
+         expectAllResponsesAsync().thenAccept(BlockedResponseMap::receive);
+      }
+
       /**
        * Complete a request after expecting and receiving responses individually, e.g. with
        * {@link #expectResponse(Address)}.
