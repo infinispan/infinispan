@@ -316,7 +316,7 @@ public class DefaultLockManager implements LockManager {
       @SuppressWarnings("CanBeFinal")
       volatile LockState lockState = LockState.ACQUIRED;
       private final AtomicInteger countersLeft = new AtomicInteger();
-      private ScheduledFuture<Void> timeoutTask;
+      private volatile ScheduledFuture<Void> timeoutTask;
 
       private CompositeLockPromise(int size, Executor executor) {
          lockPromiseList = new ArrayList<>(size);
@@ -403,14 +403,14 @@ public class DefaultLockManager implements LockManager {
             return;
          }
          if (countersLeft.decrementAndGet() == 0) {
-            timeoutTask.cancel(false);
+            cancelTimeoutTask();
             notifier.complete(lockState);
          }
       }
 
       private void cancelAll(LockState state) {
          if (UPDATER.compareAndSet(this, LockState.ACQUIRED, state)) {
-            timeoutTask.cancel(false);
+            cancelTimeoutTask();
             //complete the future before cancel other locks. the remaining locks will be invoke onEvent()
             notifier.complete(state);
             for (KeyAwareExtendedLockPromise promise : lockPromiseList) {
@@ -458,6 +458,12 @@ public class DefaultLockManager implements LockManager {
             }
          }
          return rv;
+      }
+
+      private void cancelTimeoutTask() {
+         if (timeoutTask != null) {
+            timeoutTask.cancel(false);
+         }
       }
    }
 }
