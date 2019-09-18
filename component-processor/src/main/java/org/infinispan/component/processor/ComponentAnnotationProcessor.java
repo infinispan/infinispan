@@ -372,9 +372,9 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             boolean is = methodName.startsWith("is");
             String type;
             if (methodName.startsWith("set")) {
-               type = e.getParameters().get(0).asType().toString();
+               type = types().erasure(e.getParameters().get(0).asType()).toString();
             } else if (methodName.startsWith("get") || is) {
-               type = e.getReturnType().toString();
+               type = types().erasure(e.getReturnType()).toString();
             } else {
                error(e, "Method annotated with @ManagedAttribute does not start with `set`, `get`, or `is`");
                type = "";
@@ -390,13 +390,13 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
                   Parameter parameterAnnotation = parameter.getAnnotation(Parameter.class);
                   String name = (parameterAnnotation != null && !parameterAnnotation.name().isEmpty()) ?
                                 parameterAnnotation.name() : parameter.getSimpleName().toString();
-                  String type = parameter.asType().toString();
+                  String type = types().erasure(parameter.asType()).toString();
                   String description = parameterAnnotation != null ?
                                        parameterAnnotation.description() : null;
                   parameters.add(new Model.MParameter(name, type, description));
                }
                currentType.mComponent.operations.add(
-                  new Model.MOperation(methodName, operation, e.getReturnType().toString(), parameters));
+                  new Model.MOperation(methodName, operation, types().erasure(e.getReturnType()).toString(), parameters));
             }
          return super.visitExecutable(e, ignored);
       }
