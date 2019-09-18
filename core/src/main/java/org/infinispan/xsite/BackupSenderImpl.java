@@ -86,7 +86,7 @@ import org.jgroups.UnreachableException;
 public class BackupSenderImpl implements BackupSender {
 
    private static Log log = LogFactory.getLog(BackupSenderImpl.class);
-   private static final BackupResponse EMPTY_RESPONSE = new EmptyBackupResponse();
+   public static final BackupResponse EMPTY_RESPONSE = new EmptyBackupResponse();
 
    @Inject ComponentRef<Cache> cache;
    @Inject RpcManager rpcManager;
