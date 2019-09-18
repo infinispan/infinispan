@@ -59,6 +59,9 @@ import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
+import org.infinispan.xsite.NoOpBackupSender;
+import org.infinispan.xsite.statetransfer.NoOpXSiteStateProvider;
+import org.infinispan.xsite.statetransfer.NoOpXSiteStateTransferManager;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumerImpl;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
@@ -87,7 +90,6 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
       boolean isTransactional = configuration.transaction().transactionMode().isTransactional();
       if (componentName.equals(InvocationContextFactory.class.getName())) {
@@ -129,7 +131,9 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(TransactionFactory.class.getName())) {
          return new TransactionFactory();
       } else if (componentName.equals(BackupSender.class.getName())) {
-         return new BackupSenderImpl(globalConfiguration.sites().localSite());
+         return configuration.sites().hasEnabledBackups() ?
+                new BackupSenderImpl(globalConfiguration.sites().localSite()) :
+                NoOpBackupSender.getInstance();
       } else if (componentName.equals(TotalOrderManager.class.getName())) {
          return isTransactional && configuration.transaction().transactionProtocol().isTotalOrder() ?
                new TotalOrderManager() : null;
@@ -140,11 +144,13 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(CommitManager.class.getName())) {
          return new CommitManager();
       } else if (componentName.equals(XSiteStateTransferManager.class.getName())) {
-         return (new XSiteStateTransferManagerImpl());
+         return configuration.sites().hasEnabledBackups() ? new XSiteStateTransferManagerImpl()
+                                                          : new NoOpXSiteStateTransferManager();
       } else if (componentName.equals(XSiteStateConsumer.class.getName())) {
          return new XSiteStateConsumerImpl();
       } else if (componentName.equals(XSiteStateProvider.class.getName())) {
-         return new XSiteStateProviderImpl();
+         return configuration.sites().hasEnabledBackups() ? new XSiteStateProviderImpl()
+                                                          : NoOpXSiteStateProvider.getInstance();
       } else if (componentName.equals(FunctionalNotifier.class.getName())) {
          return new FunctionalNotifierImpl<>();
       } else if (componentName.equals(CommandAckCollector.class.getName())) {

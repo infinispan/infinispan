@@ -253,7 +253,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       if (topologyChangedEvent.isPre()) {
          return null;
       }
-      final List<Address> newMembers = topologyChangedEvent.getConsistentHashAtEnd().getMembers();
+      final List<Address> newMembers = topologyChangedEvent.getWriteConsistentHashAtEnd().getMembers();
       final boolean amINewCoordinator = newMembers.get(0).equals(rpcManager.getAddress());
       Collection<String> missingCoordinatorSites = provider.getSitesMissingCoordinator(new HashSet<>(newMembers));
 
