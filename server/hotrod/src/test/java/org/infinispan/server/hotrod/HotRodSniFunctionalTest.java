@@ -138,8 +138,14 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
       public HotrodClientBuilder useSslConfiguration(String keystoreFileName, String keystorePassword,
                                                      String truststoreFileName, String truststorePassword) {
-         sslContext = SslContextFactory.getContext(keystoreFileName, "pkcs12", keystorePassword.toCharArray(),
-               truststoreFileName, "pkcs12", truststorePassword.toCharArray());
+         sslContext = new SslContextFactory()
+               .keyStoreFileName(keystoreFileName)
+               .keyStorePassword(keystorePassword.toCharArray())
+               .keyStoreType("pkcs12")
+               .trustStoreFileName(truststoreFileName)
+               .trustStorePassword(truststorePassword.toCharArray())
+               .trustStoreType("pkcs12")
+               .getContext();
          sslEngine = SslContextFactory.getEngine(sslContext, true, false);
          return this;
       }
@@ -160,8 +166,6 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
    }
 
    class HotrodServerBuilder {
-
-      String ip = "127.0.0.1";
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder()
             .proxyHost("127.0.0.1")
             .proxyPort(serverPort())

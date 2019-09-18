@@ -34,7 +34,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion isOk() {
-      Assertions.assertThat(response.getStatus()).isBetween(HttpStatus.OK_200, HttpStatus.NO_CONTENT_204);
+      Assertions.assertThat(response.getStatus()).withFailMessage(response.getContentAsString()).isBetween(HttpStatus.OK_200, HttpStatus.NO_CONTENT_204);
       return this;
    }
 

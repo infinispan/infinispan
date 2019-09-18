@@ -198,10 +198,32 @@
       </dependency>
 
       <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-java</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-linux-x86_64</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-windows-x86_64</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.mockito</groupId>
          <artifactId>mockito-core</artifactId>
          <scope>test</scope>
       </dependency>
+
       <dependency>
          <groupId>org.apache.geronimo.components</groupId>
          <artifactId>geronimo-transaction</artifactId>
@@ -213,6 +235,7 @@
             </exclusion>
          </exclusions>
       </dependency>
+
       <dependency>
          <groupId>org.objectweb.howl</groupId>
          <artifactId>howl</artifactId>

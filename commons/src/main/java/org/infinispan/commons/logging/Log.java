@@ -1,6 +1,7 @@
 package org.infinispan.commons.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
@@ -208,6 +209,14 @@ public interface Log extends BasicLogger {
 
 //   @Message(value = "Unable to marshall Object '%s' wrapped by '%s', the wrapped object must be registered with the marshallers SerializationContext", id = 945)
 //   MarshallingException unableToMarshallRuntimeObject(String wrappedObjectClass, String wrapperClass);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Using OpenSSL Provider", id = 946)
+   void openSSLAvailable();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Using Java SSL Provider", id = 947)
+   void openSSLNotAvailable();
 
    //----- counters exceptions // don't use the same id range ------
 

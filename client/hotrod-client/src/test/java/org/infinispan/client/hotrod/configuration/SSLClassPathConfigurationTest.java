@@ -17,7 +17,13 @@ public class SSLClassPathConfigurationTest {
       char[] password = "secret".toCharArray();
 
       SSLContext context =
-              SslContextFactory.getContext(keyStoreFileName, "pkcs12", password, truststoreFileName, "pkcs12", password);
+              new SslContextFactory()
+                    .keyStoreFileName(keyStoreFileName)
+                    .keyStoreType("pkcs12")
+                    .keyStorePassword(password)
+                    .trustStoreFileName(truststoreFileName)
+                    .trustStoreType("pkcs12")
+                    .trustStorePassword(password).getContext();
 
       assertNotNull(context);
    }

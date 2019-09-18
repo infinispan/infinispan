@@ -305,8 +305,6 @@
       <versionx.io.netty.netty-common>${version.netty}</versionx.io.netty.netty-common>
       <versionx.io.netty.netty-handler>${version.netty}</versionx.io.netty.netty-handler>
       <versionx.io.netty.netty-resolver>${version.netty}</versionx.io.netty.netty-resolver>
-      <versionx.io.netty.netty-tcnative>${version.netty.tcnative}</versionx.io.netty.netty-tcnative>
-      <versionx.io.netty.netty-tcnative-boringssl-static>${version.netty.tcnative}</versionx.io.netty.netty-tcnative-boringssl-static>
       <versionx.io.netty.netty-transport>${version.netty}</versionx.io.netty.netty-transport>
       <versionx.io.netty.netty-transport-native-epoll>${version.netty}</versionx.io.netty.netty-transport-native-epoll>
       <versionx.io.netty.netty-transport-native-unix-common>${version.netty}</versionx.io.netty.netty-transport-native-unix-common>
@@ -456,7 +454,6 @@
       <versionx.org.codehaus.plexus.plexus-interpolation>1.24</versionx.org.codehaus.plexus.plexus-interpolation>
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.woodstox.stax2-api>3.1.4</versionx.org.codehaus.woodstox.stax2-api>
-      <versionx.org.conscrypt.conscrypt-openjdk>1.0.0</versionx.org.conscrypt.conscrypt-openjdk>
       <versionx.org.eclipse.aether.aether-api>${version.eclipse.aether}</versionx.org.eclipse.aether.aether-api>
       <versionx.org.eclipse.aether.aether-connector-basic>${version.eclipse.aether}</versionx.org.eclipse.aether.aether-connector-basic>
       <versionx.org.eclipse.aether.aether-impl>${version.eclipse.aether}</versionx.org.eclipse.aether.aether-impl>
@@ -755,6 +752,13 @@
       <versionx.org.wildfly.legacy.test.wildfly-legacy-spi>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-spi>
       <versionx.org.wildfly.legacy.test.wildfly-legacy-versions>3.0.0.Final</versionx.org.wildfly.legacy.test.wildfly-legacy-versions>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.0.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+      <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl}</versionx.org.wildfly.openssl.natives>
+      <versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-i386>
+      <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-windows-i386>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-i386>
+      <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
       <versionx.org.wildfly.security.elytron-web.undertow-server>1.1.0.Final</versionx.org.wildfly.security.elytron-web.undertow-server>
       <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
       <versionx.org.wildfly.security.wildfly-security-manager>1.1.2.Final</versionx.org.wildfly.security.wildfly-security-manager>
@@ -1199,18 +1203,6 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver</artifactId>
             <version>${versionx.io.netty.netty-resolver}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative</artifactId>
-            <version>${versionx.io.netty.netty-tcnative}</version>
-            <classifier>linux-x86_64</classifier>
-         </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <version>${versionx.io.netty.netty-tcnative-boringssl-static}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
@@ -2051,12 +2043,6 @@
             <artifactId>stax2-api</artifactId>
             <version>${versionx.org.codehaus.woodstox.stax2-api}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.conscrypt</groupId>
-            <artifactId>conscrypt-openjdk</artifactId>
-            <version>${versionx.org.conscrypt.conscrypt-openjdk}</version>
-            <classifier>linux-x86_64</classifier>
          </dependency>
          <dependency>
             <groupId>org.eclipse.aether</groupId>
@@ -3794,6 +3780,41 @@
             <groupId>${appserver.groupId}</groupId>
             <artifactId>wildfly-transactions</artifactId>
             <version>${versionx.org.wildfly.wildfly-transactions}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-java</artifactId>
+            <version>${version.org.wildfly.openssl}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-linux-i386</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-linux-i386}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-linux-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-solaris-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-solaris-x86_64}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-windows-i386</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-windows-i386}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.openssl</groupId>
+            <artifactId>wildfly-openssl-windows-x86_64</artifactId>
+            <version>${versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64}</version>
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>

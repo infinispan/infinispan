@@ -43,8 +43,9 @@ public class RestRawClientOkHttp implements RestRawClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> get(String url) {
+   public CompletionStage<RestResponse> get(String url, Map<String, String> headers) {
       Request.Builder builder = new Request.Builder().get().url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
       return restClient.execute(builder);
    }
 }

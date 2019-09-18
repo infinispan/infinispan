@@ -10,8 +10,3 @@
    </dependencies>
 </dependencyManagement>
 
-<dependency>
-   <groupId>io.netty</groupId>
-   <artifactId>netty-tcnative-boringssl-static</artifactId>
-   <!-- The version is defined in Netty BOM -->
-</dependency>

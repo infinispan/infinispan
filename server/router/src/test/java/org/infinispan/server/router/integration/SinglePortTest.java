@@ -41,13 +41,13 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.openssl.OpenSSLEngine;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.ssl.OpenSsl;
 import io.netty.util.CharsetUtil;
 
 public class SinglePortTest {
@@ -183,9 +183,7 @@ public class SinglePortTest {
 
     @Test
     public void shouldUpgradeThroughALPN() throws Exception {
-        if (!OpenSsl.isAlpnSupported()) {
-            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support. Version: " + OpenSsl.versionString() + " Cause: " + OpenSsl.unavailabilityCause());
-        }
+        checkForOpenSSL();
 
         //given
         restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
@@ -225,9 +223,7 @@ public class SinglePortTest {
 
     @Test
     public void shouldUpgradeToHotRodThroughALPN() {
-        if (!OpenSsl.isAlpnSupported()) {
-            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support. Version: " + OpenSsl.versionString() + " Cause: " + OpenSsl.unavailabilityCause());
-        }
+        checkForOpenSSL();
 
         //given
         hotrodServer = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
@@ -261,5 +257,11 @@ public class SinglePortTest {
         builder.security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword(TRUST_STORE_PASSWORD.toCharArray());
         hotRodClient = new RemoteCacheManager(builder.build());
         hotRodClient.getCache("default").put("test", "test");
+    }
+
+    private void checkForOpenSSL() {
+        if (!OpenSSLEngine.isAlpnSupported()) {
+            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support.");
+        }
     }
 }

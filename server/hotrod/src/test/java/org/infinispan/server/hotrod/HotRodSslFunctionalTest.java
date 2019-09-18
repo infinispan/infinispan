@@ -43,8 +43,14 @@ public class HotRodSslFunctionalTest extends HotRodFunctionalTest {
    @Override
    protected HotRodClient connectClient(byte protocolVersion) {
       SslConfiguration ssl = hotRodServer.getConfiguration().ssl();
-      SSLContext sslContext = SslContextFactory.getContext(ssl.keyStoreFileName(), "pkcs12", ssl.keyStorePassword(),
-                                                           ssl.trustStoreFileName(), "pkcs12", ssl.trustStorePassword());
+      SSLContext sslContext = new SslContextFactory()
+            .keyStoreFileName(ssl.keyStoreFileName())
+            .keyStorePassword(ssl.keyStorePassword())
+            .keyStoreType("pkcs12")
+            .trustStoreFileName(ssl.trustStoreFileName())
+            .trustStorePassword(ssl.trustStorePassword())
+            .trustStoreType("pkcs12")
+            .getContext();
       SSLEngine sslEngine = SslContextFactory.getEngine(sslContext, true, false);
       return new HotRodClient(host(), hotRodServer.getPort(), cacheName, 60, protocolVersion, sslEngine);
    }
