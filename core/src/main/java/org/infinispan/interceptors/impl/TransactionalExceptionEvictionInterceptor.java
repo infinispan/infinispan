@@ -25,6 +25,7 @@ import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -89,7 +90,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    @Start
    public void start() {
-      if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
+      if (memoryConfiguration.storageType() == StorageType.OFF_HEAP && memoryConfiguration.evictionType() == EvictionType.MEMORY) {
          minSize = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(memoryConfiguration.addressCount() << 3);
          currentSize.set(minSize);
       }
