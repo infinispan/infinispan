@@ -1292,37 +1292,56 @@ This default behavior can can be changed through force-return-value=true configu
 
 include::server_protocols_hotrod_transaction.adoc[]
 
-==== Client Intelligence
-HotRod defines three level of intelligence for the clients:
+=== Client Intelligence
+Client intelligence refers to mechanisms the `HotRod` protocol provides
+for clients to locate and send requests to {brandname} servers.
 
-. basic client, interested in neither cluster nor hash information
-. topology-aware client, interested in cluster information
-. hash-distribution-aware client, that is interested in both cluster and hash information
+.Basic intelligence
+Clients do not store any information about {brandname} clusters or key hash
+values.
 
-The java client supports all 3 levels of intelligence. It is transparently notified whenever a new server is added/removed from the HotRod cluster. At startup it only needs to know the address of one HotRod server (ip:host). On connection to the server the cluster topology is piggybacked to the client, and all further requests are being dispatched to all available servers. Any further topology change is also piggybacked.
+.Topology-aware
+Clients receive and store information about {brandname} clusters. Clients
+maintain an internal mapping of the cluster topology that changes whenever
+servers join or leave clusters.
 
-===== Distribution-aware client
-Another aspect of the 3rd level of intelligence is the fact that it is hash-distribution-aware. This means that, for each operation, the client chooses the most appropriate remote server to go to: the data owner. As an example, for a put(k,v) operation, the client calculates k's hash value and knows exactly on which server the data resides on. Then it picks up a tcp connection to that particular server and dispatches the operation to it. This means less burden on the server side which would otherwise need to lookup the value based on the key's hash. It also results in a quicker response from the server, as an additional network roundtrip is skipped. This hash-distribution-aware aspect is only relevant to the distributed HotRod clusters and makes no difference for replicated server deployments.
+To receive a cluster topology, clients need the address (`IP:HOST`) of at least
+one Hot Rod server at startup. After the client connects to the server,
+{brandname} transmits the topology to the client. When servers join or leave the
+cluster, {brandname} transmits an updated topology to the client.
 
-==== Request Balancing
-Request balancing is only relevant when the server side is configured with replicated {brandname} cluster (on distributed clusters the hash-distribution-aware client logic is used, as discussed in the previos paragraph). Because the client is topology-aware, it knows the list of available servers at all the time. Request balancing has to do with how the client dispatches requests to the available servers.
+.Distribution-aware
+Clients are topology-aware and store consistent hash values for keys.
 
-The default strategy is round-robin: requests are being dispatched to all existing servers in a circular manner. E.g. given a cluster of servers {s1, s2, s3} here is how request will be dispatched:
+For example, take a `put(k,v)` operation. The client calculates the hash value
+for the key so it can locate the exact server on which the data resides. Clients
+can then connect directly to the owner to dispatch the operation.
+
+The benefit of distribution-aware intelligence is that {brandname} servers do
+not need to look up values based on key hashes, which uses less resources on
+the server side. Another benefit is that servers respond to client requests
+more quickly because it skips additional network roundtrips.
+
+=== Request Balancing
+Clients that use topology-aware intelligence use request balancing for all
+requests. The default balancing strategy is round-robin, so topology-aware
+clients always send requests to servers in round-robin order.
+
+For example, `s1`, `s2`, `s3` are servers in a {brandname} cluster. Clients
+perform request balancing as follows:
 
 [source,java]
 ----
-CacheContainer cacheContainer = new RemoteCacheManager();
-Cache<String, String> cache = cacheContainer.getCache();
-
-cache.put("key1", "aValue"); //this goes to s1
-cache.put("key2", "aValue"); //this goes to s2
-String value = cache.get("key1"); //this goes to s3
-
-cache.remove("key2"); //this is dispatched to s1 again, and so on...
-
+include::code_examples/RequestBalancing.java[]
 ----
 
-Custom types of balancing policies can defined by implementing the link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy] and by specifying it through the infinispan.client.hotrod.request-balancing-strategy configuration property. Please refer to configuration section for more details on this.
+Clients that use distribution-aware intelligence use request balancing only
+for failed requests. When requests fail, distribution-aware clients retry the
+request on the next available server.
+
+.Custom balancing policies
+You can implement link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy] and specify your class in your
+`hotrod-client.properties` configuration.
 
 ==== Persistent connections
 In order to avoid creating a TCP connection on each request (which is a costly operation), the client keeps a pool of persistent connections to all the available servers and it reuses these connections whenever it is possible. The validity of the connections is checked using an async thread that iterates over the connections in the pool and sends a HotRod ping command to the server. By using this connection validation process the client is being proactive: there's a hight chance for broken connections to be found while being idle in the pool and no on actual request from the application.
