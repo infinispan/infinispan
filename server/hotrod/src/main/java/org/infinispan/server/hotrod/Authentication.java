@@ -55,7 +55,7 @@ public class Authentication extends BaseRequestProcessor {
       authenticationConfig = serverConfig.authentication();
       enabled = authenticationConfig.enabled();
       requireAuthentication = !authenticationConfig.mechProperties().containsKey(Sasl.POLICY_NOANONYMOUS)
-            || authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
+            || "true".equals(authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS));
    }
 
    public void authMechList(HotRodHeader header) {
@@ -124,7 +124,8 @@ public class Authentication extends BaseRequestProcessor {
       SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
       if (sslHandler != null) {
          try {
-            principals.add(sslHandler.engine().getSession().getPeerPrincipal());
+            Principal peerPrincipal = sslHandler.engine().getSession().getPeerPrincipal();
+            principals.add(peerPrincipal);
          } catch (SSLPeerUnverifiedException e) {
             if ("EXTERNAL".equals(mech)) {
                throw log.externalMechNotAllowedWithoutSSLClientCert();

@@ -149,14 +149,14 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
    }
 
 
-   public void testSSLAuthentication() throws Exception {
+   public void testSSLAuthentication() {
       RemoteCache<String, String> cache = remoteCacheManager.getCache();
       cache.put("k","v");
       assertEquals("v", cache.get("k"));
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000287.*")
-   public void testSSLUnauthorized() throws Exception {
+   public void testSSLUnauthorized() {
       RemoteCache<String, String> cache = remoteCacheManager.getCache(UNAUTHORIZED);
       cache.put("k1","v1");
       assertEquals("v1", cache.get("k1"));

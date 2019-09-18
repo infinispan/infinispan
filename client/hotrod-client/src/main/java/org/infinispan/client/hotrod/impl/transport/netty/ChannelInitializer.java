@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
@@ -106,26 +105,27 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
    private void initSsl(Channel channel) {
       SslConfiguration ssl = configuration.security().ssl();
-      SslContext nettySslContext;
-      SSLContext jdkSslContext = ssl.sslContext();
-      if (jdkSslContext == null) {
+      SslContext sslContext;
+      if (ssl.sslContext() == null) {
          SslContextBuilder builder = SslContextBuilder.forClient();
          try {
             if (ssl.keyStoreFileName() != null) {
-               builder.keyManager(SslContextFactory.getKeyManagerFactory(
-                     ssl.keyStoreFileName(),
-                     ssl.keyStoreType(),
-                     ssl.keyStorePassword(),
-                     ssl.keyStoreCertificatePassword(),
-                     ssl.keyAlias(),
-                     configuration.classLoader()));
+               builder.keyManager(new SslContextFactory()
+                     .keyStoreFileName(ssl.keyStoreFileName())
+                     .keyStoreType(ssl.keyStoreType())
+                     .keyStorePassword(ssl.keyStorePassword())
+                     .keyAlias(ssl.keyAlias())
+                     .keyStoreCertificatePassword(ssl.keyStoreCertificatePassword())
+                     .classLoader(configuration.classLoader())
+                     .getKeyManagerFactory());
             }
             if (ssl.trustStoreFileName() != null) {
-               builder.trustManager(SslContextFactory.getTrustManagerFactory(
-                     ssl.trustStoreFileName(),
-                     ssl.trustStoreType(),
-                     ssl.trustStorePassword(),
-                     configuration.classLoader()));
+               builder.trustManager(new SslContextFactory()
+                     .trustStoreFileName(ssl.trustStoreFileName())
+                     .trustStoreType(ssl.trustStoreType())
+                     .trustStorePassword(ssl.trustStorePassword())
+                     .classLoader(configuration.classLoader())
+                     .getTrustManagerFactory());
             }
             if (ssl.trustStorePath() != null) {
                builder.trustManager(new File(ssl.trustStorePath()));
@@ -133,14 +133,14 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
             if (ssl.protocol() != null) {
                builder.protocols(ssl.protocol());
             }
-            nettySslContext = builder.build();
+            sslContext = builder.build();
          } catch (Exception e) {
             throw new CacheConfigurationException(e);
          }
       } else {
-         nettySslContext = new JdkSslContext(jdkSslContext, true, ClientAuth.NONE);
+         sslContext = new JdkSslContext(ssl.sslContext(), true, ClientAuth.NONE);
       }
-      SslHandler sslHandler = nettySslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
+      SslHandler sslHandler = sslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
       if (ssl.sniHostName() != null) {
          SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
          sslParameters.setServerNames(Collections.singletonList(new SNIHostName(ssl.sniHostName())));

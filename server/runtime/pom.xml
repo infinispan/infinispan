@@ -136,10 +136,15 @@
          <artifactId>metainf-services</artifactId>
       </dependency>
       <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-tcnative</artifactId>
-         <classifier>linux-x86_64</classifier>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-java</artifactId>
       </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-linux-x86_64</artifactId>
+         <scope>compile</scope>
+      </dependency>
+
       <!-- Test dependencies -->
       <dependency>
          <groupId>junit</groupId>

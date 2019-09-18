@@ -11,8 +11,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.infinispan.client.rest.RestCacheClient;
@@ -28,6 +28,7 @@ import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
+import org.infinispan.client.rest.configuration.SslConfiguration;
 import org.infinispan.client.rest.impl.okhttp.auth.AutoDetectAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.BasicAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.BearerAuthenticator;
@@ -36,6 +37,7 @@ import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorIntercept
 import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorWrapper;
 import org.infinispan.client.rest.impl.okhttp.auth.DigestAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.NegotiateAuthenticator;
+import org.infinispan.commons.util.SslContextFactory;
 
 import okhttp3.Authenticator;
 import okhttp3.Call;
@@ -64,13 +66,31 @@ public class RestClientOkHttp implements RestClient {
       builder
             .connectTimeout(configuration.connectionTimeout(), TimeUnit.MILLISECONDS)
             .readTimeout(configuration.socketTimeout(), TimeUnit.MILLISECONDS).followRedirects(configuration.followRedirects());
-
-      SSLContext sslContext = configuration.security().ssl().sslContext();
-      if (sslContext != null) {
-         builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) configuration.security().ssl().trustManagers()[0]);
-         HostnameVerifier hostnameVerifier = configuration.security().ssl().hostnameVerifier();
-         if (hostnameVerifier != null) {
-            builder.hostnameVerifier(hostnameVerifier);
+      SslConfiguration ssl = configuration.security().ssl();
+      if (ssl.enabled()) {
+         SSLContext sslContext = ssl.sslContext();
+         if (sslContext == null) {
+            SslContextFactory sslContextFactory = new SslContextFactory()
+                  .keyStoreFileName(ssl.keyStoreFileName())
+                  .keyStorePassword(ssl.keyStorePassword())
+                  .keyStoreType(ssl.keyStoreType())
+                  .trustStoreFileName(ssl.trustStoreFileName())
+                  .trustStorePassword(ssl.trustStorePassword())
+                  .trustStoreType(ssl.trustStoreType())
+                  .classLoader(Thread.currentThread().getContextClassLoader())
+                  .useNativeIfAvailable(false);
+            sslContext = sslContextFactory.getContext();
+            try {
+               TrustManagerFactory tmf = sslContextFactory.getTrustManagerFactory();
+               builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) tmf.getTrustManagers()[0]);
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
+         } else {
+            builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) ssl.trustManagers()[0]);
+         }
+         if (ssl.hostnameVerifier() != null) {
+            builder.hostnameVerifier(ssl.hostnameVerifier());
          }
       }
 
@@ -79,7 +99,7 @@ public class RestClientOkHttp implements RestClient {
             builder.protocols(Arrays.asList(Protocol.HTTP_1_1));
             break;
          case HTTP_20:
-            if (sslContext == null) {
+            if (!ssl.enabled()) {
                builder.protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
             } else {
                builder.protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
@@ -120,7 +140,7 @@ public class RestClientOkHttp implements RestClient {
 
       httpClient = builder.build();
       ServerConfiguration server = configuration.servers().get(0);
-      baseURL = String.format("%s://%s:%d", sslContext == null ? "http" : "https", server.host(), server.port()).replaceAll("//", "/");
+      baseURL = String.format("%s://%s:%d", ssl.enabled() ? "https" : "http", server.host(), server.port()).replaceAll("//", "/");
    }
 
    @Override

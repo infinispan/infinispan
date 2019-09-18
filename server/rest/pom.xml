@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
@@ -20,8 +21,8 @@
 
    <dependencies>
       <dependency>
-        <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-server-core</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
       <dependency>
@@ -58,11 +59,11 @@
            <scope>test</scope>
        </dependency>
 
-       <dependency>
-           <groupId>org.infinispan.protostream</groupId>
-           <artifactId>protostream-processor</artifactId>
-           <scope>test</scope>
-       </dependency>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -96,8 +97,23 @@
          <artifactId>netty-codec-http2</artifactId>
       </dependency>
       <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-tcnative-boringssl-static</artifactId>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-java</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-linux-x86_64</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-windows-x86_64</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.openssl</groupId>
+         <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -115,11 +131,11 @@
          <artifactId>jmh-core</artifactId>
          <scope>test</scope>
       </dependency>
-       <dependency>
-           <groupId>org.infinispan</groupId>
-           <artifactId>infinispan-cachestore-jdbc</artifactId>
-           <scope>test</scope>
-       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.openjdk.jmh</groupId>
          <artifactId>jmh-generator-annprocess</artifactId>
@@ -130,95 +146,95 @@
          <artifactId>infinispan-client-rest</artifactId>
          <scope>test</scope>
       </dependency>
-       <dependency>
-           <groupId>org.apache.httpcomponents</groupId>
-           <artifactId>httpcore</artifactId>
-           <scope>test</scope>
-       </dependency>
+      <dependency>
+         <groupId>org.apache.httpcomponents</groupId>
+         <artifactId>httpcore</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
       <plugins>
-          <plugin>
-              <artifactId>maven-war-plugin</artifactId>
-              <configuration>
-                  <!-- we also pack WEB-INF/classes separately so JDG can use infinispan-server-rest-x.y.z-classes.jar
-                       to build a custom server war rather than use the war generated here -->
-                  <attachClasses>true</attachClasses>
-              </configuration>
-          </plugin>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-antrun-plugin</artifactId>
-              <executions>
-                  <execution>
-                      <id>create-certificates</id>
-                      <phase>process-test-resources</phase>
-                      <goals>
-                          <goal>run</goal>
-                      </goals>
-                      <configuration>
-                          <target>
-                              <macrodef name="keytool">
-                                  <attribute name="command"/>
-                                  <element name="args"/>
-                                  <sequential>
-                                      <exec executable="${server.jvm}/bin/keytool">
-                                          <arg value="@{command}"/>
-                                          <!-- common arguments -->
-                                          <arg value="-validity"/>
-                                          <arg value="365"/>
-                                          <arg value="-keyalg"/>
-                                          <arg value="RSA"/>
-                                          <arg value="-keysize"/>
-                                          <arg value="2048"/>
-                                          <arg value="-noprompt"/>
-                                          <arg value="-storepass"/>
-                                          <arg value="secret"/>
-                                          <arg value="-keypass"/>
-                                          <arg value="secret"/>
-                                          <arg value="-storetype"/>
-                                          <arg value="pkcs12"/>
-                                          <!-- additional arguments -->
-                                          <args/>
-                                      </exec>
-                                  </sequential>
-                              </macrodef>
-                              <delete quiet="true">
-                                  <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
-                              </delete>
-                              <echo message="Generate the CA certificate"/>
-                              <keytool command="-genkeypair">
-                                  <args>
-                                      <arg value="-alias"/>
-                                      <arg value="default"/>
-                                      <arg value="-dname"/>
-                                      <arg value="${certificate.dname}"/>
-                                      <arg value="-keystore"/>
-                                      <arg value="${project.build.testOutputDirectory}/server.p12"/>
-                                  </args>
-                              </keytool>
-                              <keytool command="-importkeystore">
-                                  <args>
-                                      <arg value="-srckeystore"/>
-                                      <arg value="${project.build.testOutputDirectory}/server.p12"/>
-                                      <arg value="-srcstorepass"/>
-                                      <arg value="secret"/>
-                                      <arg value="-srcstoretype"/>
-                                      <arg value="pkcs12"/>
-                                      <arg value="-destkeystore"/>
-                                      <arg value="${project.build.testOutputDirectory}/client.p12"/>
-                                      <arg value="-deststorepass"/>
-                                      <arg value="secret"/>
-                                      <arg value="-deststoretype"/>
-                                      <arg value="pkcs12"/>
-                                  </args>
-                              </keytool>
-                          </target>
-                      </configuration>
-                  </execution>
-              </executions>
-          </plugin>
+         <plugin>
+            <artifactId>maven-war-plugin</artifactId>
+            <configuration>
+               <!-- we also pack WEB-INF/classes separately so JDG can use infinispan-server-rest-x.y.z-classes.jar
+                    to build a custom server war rather than use the war generated here -->
+               <attachClasses>true</attachClasses>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>create-certificates</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <target>
+                        <macrodef name="keytool">
+                           <attribute name="command"/>
+                           <element name="args"/>
+                           <sequential>
+                              <exec executable="${server.jvm}/bin/keytool">
+                                 <arg value="@{command}"/>
+                                 <!-- common arguments -->
+                                 <arg value="-validity"/>
+                                 <arg value="365"/>
+                                 <arg value="-keyalg"/>
+                                 <arg value="RSA"/>
+                                 <arg value="-keysize"/>
+                                 <arg value="2048"/>
+                                 <arg value="-noprompt"/>
+                                 <arg value="-storepass"/>
+                                 <arg value="secret"/>
+                                 <arg value="-keypass"/>
+                                 <arg value="secret"/>
+                                 <arg value="-storetype"/>
+                                 <arg value="pkcs12"/>
+                                 <!-- additional arguments -->
+                                 <args/>
+                              </exec>
+                           </sequential>
+                        </macrodef>
+                        <delete quiet="true">
+                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
+                        </delete>
+                        <echo message="Generate the CA certificate"/>
+                        <keytool command="-genkeypair">
+                           <args>
+                              <arg value="-alias"/>
+                              <arg value="default"/>
+                              <arg value="-dname"/>
+                              <arg value="${certificate.dname}"/>
+                              <arg value="-keystore"/>
+                              <arg value="${project.build.testOutputDirectory}/server.p12"/>
+                           </args>
+                        </keytool>
+                        <keytool command="-importkeystore">
+                           <args>
+                              <arg value="-srckeystore"/>
+                              <arg value="${project.build.testOutputDirectory}/server.p12"/>
+                              <arg value="-srcstorepass"/>
+                              <arg value="secret"/>
+                              <arg value="-srcstoretype"/>
+                              <arg value="pkcs12"/>
+                              <arg value="-destkeystore"/>
+                              <arg value="${project.build.testOutputDirectory}/client.p12"/>
+                              <arg value="-deststorepass"/>
+                              <arg value="secret"/>
+                              <arg value="-deststoretype"/>
+                              <arg value="pkcs12"/>
+                           </args>
+                        </keytool>
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

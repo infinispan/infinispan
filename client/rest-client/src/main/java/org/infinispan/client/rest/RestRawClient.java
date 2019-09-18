@@ -1,5 +1,6 @@
 package org.infinispan.client.rest;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -12,5 +13,9 @@ public interface RestRawClient {
 
    CompletionStage<RestResponse> putValue(String url, Map<String, String> headers, String body, String bodyMediaType);
 
-   CompletionStage<RestResponse> get(String url);
+   default CompletionStage<RestResponse> get(String url) {
+      return get(url, Collections.emptyMap());
+   }
+
+   CompletionStage<RestResponse> get(String url, Map<String, String> headers);
 }

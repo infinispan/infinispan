@@ -197,9 +197,6 @@ public class Server implements ServerManagement, AutoCloseable {
 
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 
-      //SecurityActions.addSecurityProvider(new WildFlyElytronProvider());
-
-
       // Register only the providers that matter to us
       SecurityActions.addSecurityProvider(WildFlyElytronHttpBasicProvider.getInstance());
       SecurityActions.addSecurityProvider(WildFlyElytronHttpBearerProvider.getInstance());

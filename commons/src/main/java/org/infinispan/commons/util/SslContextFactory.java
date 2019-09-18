@@ -16,6 +16,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.wildfly.openssl.OpenSSLProvider;
+
 /**
  * SslContextFactory.
  *
@@ -26,47 +28,112 @@ public class SslContextFactory {
    private static final String DEFAULT_KEYSTORE_TYPE = "JKS";
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
    private static final String CLASSPATH_RESOURCE = "classpath:";
+   private static final String SSL_PROTOCOL_PREFIX;
 
-   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, String trustStoreFileName, char[] trustStorePassword) {
-      return getContext(keyStoreFileName, keyStorePassword, null, trustStoreFileName, trustStorePassword, DEFAULT_SSL_PROTOCOL);
+   static {
+      String sslProtocolPrefix = "";
+      if (Boolean.parseBoolean(SecurityActions.getProperty("org.infinispan.openssl", "true"))) {
+         try {
+            OpenSSLProvider.register();
+            sslProtocolPrefix = "openssl.";
+            SECURITY.openSSLAvailable();
+         } catch (Throwable e) {
+            SECURITY.openSSLNotAvailable();
+         }
+      }
+      SSL_PROTOCOL_PREFIX = sslProtocolPrefix;
    }
 
-   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, String trustStoreFileName, char[] trustStorePassword, String sslProtocol) {
-      return getContext(keyStoreFileName, keyStorePassword, null, trustStoreFileName, trustStorePassword, sslProtocol);
+   private String keyStoreFileName;
+   private char[] keyStorePassword;
+   private char[] keyStoreCertificatePassword;
+   private String keyStoreType = DEFAULT_KEYSTORE_TYPE;
+   private String keyAlias;
+   private String trustStoreFileName;
+   private char[] trustStorePassword;
+   private String trustStoreType = DEFAULT_KEYSTORE_TYPE;
+   private String sslProtocol = DEFAULT_SSL_PROTOCOL;
+   private boolean useNativeIfAvailable = true;
+   private ClassLoader classLoader;
+
+   public SslContextFactory() {
    }
 
-   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, String trustStoreFileName, char[] trustStorePassword) {
-      return getContext(keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, trustStoreFileName, trustStorePassword, DEFAULT_SSL_PROTOCOL);
+   public SslContextFactory keyStoreFileName(String keyStoreFileName) {
+      this.keyStoreFileName = keyStoreFileName;
+      return this;
    }
 
-   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword,
-                                       String trustStoreFileName, char[] trustStorePassword, String sslProtocol) {
-      return getContext(keyStoreFileName, DEFAULT_KEYSTORE_TYPE, keyStorePassword, keyStoreCertificatePassword, null, trustStoreFileName, DEFAULT_KEYSTORE_TYPE, trustStorePassword, sslProtocol, null);
+   public SslContextFactory keyStorePassword(char[] keyStorePassword) {
+      this.keyStorePassword = keyStorePassword;
+      return this;
    }
 
-   public static SSLContext getContext(String keyStoreFileName, String keyStoreType, char[] keyStorePassword,
-                                       String trustStoreFileName, String trustStoreType, char[] trustStorePassword) {
-      return getContext(keyStoreFileName, keyStoreType, keyStorePassword, null, null,
-            trustStoreFileName, trustStoreType, trustStorePassword, DEFAULT_SSL_PROTOCOL, null);
+   public SslContextFactory keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
+      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
+      return this;
    }
 
-   public static SSLContext getContext(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword,
-                                       String keyAlias, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String sslProtocol,
-                                       ClassLoader classLoader) {
+   public SslContextFactory keyStoreType(String keyStoreType) {
+      if (keyStoreType != null) {
+         this.keyStoreType = keyStoreType;
+      }
+      return this;
+   }
+
+   public SslContextFactory keyAlias(String keyAlias) {
+      this.keyAlias = keyAlias;
+      return this;
+   }
+
+   public SslContextFactory trustStoreFileName(String trustStoreFileName) {
+      this.trustStoreFileName = trustStoreFileName;
+      return this;
+   }
+
+   public SslContextFactory trustStorePassword(char[] trustStorePassword) {
+      this.trustStorePassword = trustStorePassword;
+      return this;
+   }
+
+   public SslContextFactory trustStoreType(String trustStoreType) {
+      if (trustStoreType != null) {
+         this.trustStoreType = trustStoreType;
+      }
+      return this;
+   }
+
+   public SslContextFactory sslProtocol(String sslProtocol) {
+      if (sslProtocol != null) {
+         this.sslProtocol = sslProtocol;
+      }
+      return this;
+   }
+
+   public SslContextFactory useNativeIfAvailable(boolean useNativeIfAvailable) {
+      this.useNativeIfAvailable = useNativeIfAvailable;
+      return this;
+   }
+
+   public SslContextFactory classLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
+      return this;
+   }
+
+   public SSLContext getContext() {
       try {
          KeyManager[] keyManagers = null;
          if (keyStoreFileName != null) {
-            KeyManagerFactory kmf = getKeyManagerFactory(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, classLoader);
+            KeyManagerFactory kmf = getKeyManagerFactory();
             keyManagers = kmf.getKeyManagers();
          }
-
          TrustManager[] trustManagers = null;
          if (trustStoreFileName != null) {
-            TrustManagerFactory tmf = getTrustManagerFactory(trustStoreFileName, trustStoreType, trustStorePassword, classLoader);
+            TrustManagerFactory tmf = getTrustManagerFactory();
             trustManagers = tmf.getTrustManagers();
          }
-
-         SSLContext sslContext = SSLContext.getInstance(sslProtocol == null ? DEFAULT_SSL_PROTOCOL : sslProtocol);
+         String protocol = useNativeIfAvailable ? SSL_PROTOCOL_PREFIX + sslProtocol : sslProtocol;
+         SSLContext sslContext = SSLContext.getInstance(protocol);
          sslContext.init(keyManagers, trustManagers, null);
          return sslContext;
       } catch (Exception e) {
@@ -74,7 +141,7 @@ public class SslContextFactory {
       }
    }
 
-   public static KeyManagerFactory getKeyManagerFactory(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias, ClassLoader classLoader) throws IOException, GeneralSecurityException {
+   public KeyManagerFactory getKeyManagerFactory() throws IOException, GeneralSecurityException {
       KeyStore ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
       loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
       char[] keyPassword = keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword;
@@ -95,7 +162,7 @@ public class SslContextFactory {
       return kmf;
    }
 
-   public static TrustManagerFactory getTrustManagerFactory(String trustStoreFileName, String trustStoreType, char[] trustStorePassword, ClassLoader classLoader) throws IOException, GeneralSecurityException {
+   public TrustManagerFactory getTrustManagerFactory() throws IOException, GeneralSecurityException {
       KeyStore ks = KeyStore.getInstance(trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE);
       loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
       TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
