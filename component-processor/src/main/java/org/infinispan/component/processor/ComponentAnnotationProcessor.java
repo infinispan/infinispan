@@ -390,8 +390,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
                   Parameter parameterAnnotation = parameter.getAnnotation(Parameter.class);
                   String name = (parameterAnnotation != null && !parameterAnnotation.name().isEmpty()) ?
                                 parameterAnnotation.name() : parameter.getSimpleName().toString();
-                  String type = (parameterAnnotation != null && !parameterAnnotation.type().isEmpty()) ?
-                                parameterAnnotation.type() : parameter.asType().toString();
+                  String type = parameter.asType().toString();
                   String description = parameterAnnotation != null ?
                                        parameterAnnotation.description() : null;
                   parameters.add(new Model.MParameter(name, type, description));
