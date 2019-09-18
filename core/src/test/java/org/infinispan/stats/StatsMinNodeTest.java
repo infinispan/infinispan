@@ -4,17 +4,19 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.stream.IntStream;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -31,6 +33,7 @@ public class StatsMinNodeTest extends MultipleCacheManagersTest {
    private static final int NUM_OWNERS = 3;
 
    protected StorageType storageType;
+   protected EvictionStrategy evictionStrategy;
    protected ControlledTimeService timeService;
 
    @Override
@@ -70,7 +73,12 @@ public class StatsMinNodeTest extends MultipleCacheManagersTest {
          .memory()
             .storageType(storageType)
             .evictionType(EvictionType.COUNT)
-            .size(MAX_SIZE);
+            .size(MAX_SIZE)
+            .evictionStrategy(evictionStrategy);
+      if (evictionStrategy == EvictionStrategy.EXCEPTION) {
+         cfg.transaction()
+               .transactionMode(TransactionMode.TRANSACTIONAL);
+      }
    }
 
    public StatsMinNodeTest withStorage(StorageType storageType) {
@@ -78,21 +86,42 @@ public class StatsMinNodeTest extends MultipleCacheManagersTest {
       return this;
    }
 
+   public StatsMinNodeTest withEvictionStrategy(EvictionStrategy evictionStrategy) {
+      this.evictionStrategy = evictionStrategy;
+      return this;
+   }
+
    @Override
    public Object[] factory() {
       return new Object[]{
-            new StatsMinNodeTest().withStorage(StorageType.OBJECT).cacheMode(CacheMode.DIST_SYNC),
-            new StatsMinNodeTest().withStorage(StorageType.OBJECT).cacheMode(CacheMode.REPL_SYNC),
-            new StatsMinNodeTest().withStorage(StorageType.BINARY).cacheMode(CacheMode.DIST_SYNC),
-            new StatsMinNodeTest().withStorage(StorageType.BINARY).cacheMode(CacheMode.REPL_SYNC),
-            new StatsMinNodeTest().withStorage(StorageType.OFF_HEAP).cacheMode(CacheMode.DIST_SYNC),
-            new StatsMinNodeTest().withStorage(StorageType.OFF_HEAP).cacheMode(CacheMode.REPL_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OBJECT).withEvictionStrategy(EvictionStrategy.REMOVE).cacheMode(CacheMode.DIST_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OBJECT).withEvictionStrategy(EvictionStrategy.EXCEPTION).cacheMode(CacheMode.DIST_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OBJECT).withEvictionStrategy(EvictionStrategy.REMOVE).cacheMode(CacheMode.REPL_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OBJECT).withEvictionStrategy(EvictionStrategy.EXCEPTION).cacheMode(CacheMode.REPL_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.BINARY).withEvictionStrategy(EvictionStrategy.REMOVE).cacheMode(CacheMode.DIST_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.BINARY).withEvictionStrategy(EvictionStrategy.EXCEPTION).cacheMode(CacheMode.DIST_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.BINARY).withEvictionStrategy(EvictionStrategy.REMOVE).cacheMode(CacheMode.REPL_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.BINARY).withEvictionStrategy(EvictionStrategy.EXCEPTION).cacheMode(CacheMode.REPL_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OFF_HEAP).withEvictionStrategy(EvictionStrategy.REMOVE).cacheMode(CacheMode.DIST_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OFF_HEAP).withEvictionStrategy(EvictionStrategy.EXCEPTION).cacheMode(CacheMode.DIST_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OFF_HEAP).withEvictionStrategy(EvictionStrategy.REMOVE).cacheMode(CacheMode.REPL_SYNC),
+            new StatsMinNodeTest().withStorage(StorageType.OFF_HEAP).withEvictionStrategy(EvictionStrategy.EXCEPTION).cacheMode(CacheMode.REPL_SYNC),
       };
    }
 
    @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "StorageType", "EvictionStrategy");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), storageType, evictionStrategy);
+   }
+
+   @Override
    protected String parameters() {
-      return "[" + cacheMode + ", " + storageType + "]";
+      return "[" + cacheMode + ", " + storageType + "," + evictionStrategy + "]";
    }
 
    private int handleModeEstimate(int desired, CacheMode mode) {

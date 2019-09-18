@@ -43,7 +43,9 @@ import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
@@ -70,6 +72,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Inject private InternalDataContainer dataContainer;
    @Inject private TimeService timeService;
    @Inject private OffHeapMemoryAllocator allocator;
+   @Inject private ComponentRegistry componentRegistry;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private volatile AtomicLong resetNanoseconds = new AtomicLong(0);
@@ -675,10 +678,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public int getRequiredMinimumNumberOfNodes() {
-      return calculateRequiredMinimumNumberOfNodes(cache.wired());
+      return calculateRequiredMinimumNumberOfNodes(cache.wired(), componentRegistry);
    }
 
-   public static int calculateRequiredMinimumNumberOfNodes(AdvancedCache<?, ?> cache) {
+   public static int calculateRequiredMinimumNumberOfNodes(AdvancedCache<?, ?> cache, ComponentRegistry componentRegistry) {
       Configuration config = cache.getCacheConfiguration();
 
       ClusteringConfiguration clusteringConfiguration = config.clustering();
@@ -700,10 +703,24 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       int evictionRestrictedNodes;
       if (maxSize > 0) {
-         DataContainer dataContainer = cache.getDataContainer();
-         long totalData = dataContainer.evictionSize() * numOwners;
-         long capacity = dataContainer.capacity();
-
+         EvictionStrategy evictionStrategy = config.memory().evictionStrategy();
+         long totalData;
+         long capacity;
+         switch (evictionStrategy) {
+            case REMOVE:
+               DataContainer dataContainer = cache.getDataContainer();
+               totalData = dataContainer.evictionSize() * numOwners;
+               capacity = dataContainer.capacity();
+               break;
+            case EXCEPTION:
+               TransactionalExceptionEvictionInterceptor exceptionInterceptor = componentRegistry.getComponent(
+                     TransactionalExceptionEvictionInterceptor.class);
+               totalData = exceptionInterceptor.getCurrentSize();
+               capacity = exceptionInterceptor.getMaxSize();
+               break;
+            default:
+               throw new IllegalArgumentException("We only support remove or exception based strategy here");
+         }
          evictionRestrictedNodes = (int) (totalData / capacity) + (totalData % capacity != 0 ? 1 : 0);
       } else {
          evictionRestrictedNodes = 1;
