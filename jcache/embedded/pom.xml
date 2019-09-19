@@ -26,11 +26,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jboss-marshalling</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jcache-commons</artifactId>
       </dependency>
 
@@ -39,6 +34,11 @@
          <artifactId>infinispan-jcache-commons</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
       </dependency>
 
       <dependency>
@@ -112,6 +112,7 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
+                     /proto=${project.basedir}/target/classes/proto,
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                      /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>
@@ -142,6 +143,17 @@
                      <goal>run</goal>
                   </goals>
                   <phase>prepare-package</phase>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.infinispan.maven-plugins</groupId>
+            <artifactId>proto-schema-compatibility</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>proto-schema-compatibility-check</goal>
+                  </goals>
                </execution>
             </executions>
          </plugin>

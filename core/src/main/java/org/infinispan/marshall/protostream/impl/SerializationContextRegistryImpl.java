@@ -32,15 +32,23 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    public void start() {
       // Add user configured SCIs to both the global and persistence context
       List<SerializationContextInitializer> scis = globalConfig.serialization().contextInitializers();
-      Consumer<MarshallerContext> init = ctx -> {
+      update(GLOBAL, ctx -> {
+         if (scis != null)
+            ctx.addContextIntializers(scis);
+
+         ctx.addContextIntializer(new PersistenceContextInitializerImpl())
+               // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
+               .addContextIntializer(new org.infinispan.commons.GlobalContextInitializerImpl())
+               .update();
+      });
+
+      update(PERSISTENCE, ctx -> {
          if (scis != null)
             ctx.addContextIntializers(scis);
 
          ctx.addContextIntializer(new PersistenceContextInitializerImpl())
                .update();
-      };
-      update(GLOBAL, init);
-      update(PERSISTENCE, init);
+      });
    }
 
    @Override

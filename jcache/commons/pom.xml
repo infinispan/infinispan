@@ -31,6 +31,12 @@
       </dependency>
 
       <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-tests</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
          <scope>test</scope>
@@ -45,6 +51,12 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
          <scope>test</scope>
       </dependency>
 

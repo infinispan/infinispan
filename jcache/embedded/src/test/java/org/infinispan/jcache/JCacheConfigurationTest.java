@@ -4,7 +4,6 @@ import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -43,7 +42,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
          public void call() {
             cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());
             JCacheManager jCacheManager = new JCacheManager(URI.create("oneCacheManager"), cm, null);
-            assertTrue(null != jCacheManager.getCache("oneCache"));
+            assertNotNull(jCacheManager.getCache("oneCache"));
          }
       });
    }
@@ -56,7 +55,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
                provider.getClass().getClassLoader(),
                provider,
                null);
-         assertTrue(null != jCacheManager.getCache("foo"));
+         assertNotNull(jCacheManager.getCache("foo"));
       });
    }
 

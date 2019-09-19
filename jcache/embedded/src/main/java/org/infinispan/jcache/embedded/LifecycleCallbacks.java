@@ -24,6 +24,7 @@ import org.infinispan.jcache.embedded.functions.RemoveConditionally;
 import org.infinispan.jcache.embedded.functions.Replace;
 import org.infinispan.jcache.embedded.functions.ReplaceConditionally;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 @InfinispanModule(name = "jcache", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
@@ -31,6 +32,9 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+
       Map<Integer, AdvancedExternalizer<?>> map = globalConfiguration.serialization().advancedExternalizers();
       add(map, new SuppliedExternalizer<>(ExternalizerIds.READ_WITH_EXPIRY, ReadWithExpiry.class, ReadWithExpiry::new));
       add(map, new SuppliedExternalizer<>(ExternalizerIds.GET_AND_PUT, GetAndPut.class, GetAndPut::new));
