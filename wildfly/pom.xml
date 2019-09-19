@@ -3,12 +3,13 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.infinispan.wildfly</groupId>
-      <artifactId>infinispan-wildfly-versions</artifactId>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
       <version>10.0.0-SNAPSHOT</version>
-      <relativePath>versions/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
+   <groupId>org.infinispan.wildfly</groupId>
    <artifactId>infinispan-wildfly</artifactId>
 
    <name>Infinispan WildFly Modules</name>
@@ -17,7 +18,6 @@
    <packaging>pom</packaging>
 
    <modules>
-      <module>versions</module>
       <module>commons</module>
       <module>jgroups</module>
       <module>infinispan</module>
