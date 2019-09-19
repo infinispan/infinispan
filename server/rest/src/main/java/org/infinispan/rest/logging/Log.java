@@ -32,8 +32,8 @@ import org.jboss.logging.annotations.MessageLogger;
 public interface Log extends BasicLogger {
    Log REST = Logger.getMessageLogger(Log.class, LogFactory.LOG_ROOT + "REST");
 
-   @Message(value = "Error transcoding content", id = 495)
-   EncodingException errorTranscoding(@Cause Throwable cause);
+//   @Message(value = "Error transcoding content", id = 495)
+//   EncodingException errorTranscoding(@Cause Throwable cause);
 
    @Message(value = "Unsupported configuration option", id = 12004)
    UnsupportedOperationException unsupportedConfigurationOption();

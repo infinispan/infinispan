@@ -298,9 +298,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Exception while marshalling object: %s", id = 65)
 //   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
-   void unableToReadVersionId();
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
+//   void unableToReadVersionId();
 
 //   @LogMessage(level = INFO)
 //   @Message(value = "Will try and wait for the cache %s to start", id = 67)
@@ -416,10 +416,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed creating initial JNDI context", id = 105)
    void failedToCreateInitialCtx(@Cause Throwable e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Found WebSphere TransactionManager factory class [%s], but " +
-         "couldn't invoke its static 'getTransactionManager' method", id = 106)
-   void unableToInvokeWebsphereStaticGetTmMethod(@Cause Exception ex, String className);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Found WebSphere TransactionManager factory class [%s], but " +
+//         "couldn't invoke its static 'getTransactionManager' method", id = 106)
+//   void unableToInvokeWebsphereStaticGetTmMethod(@Cause Exception ex, String className);
 
    @LogMessage(level = INFO)
    @Message(value = "Retrieving transaction manager %s", id = 107)
@@ -513,9 +513,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Infinispan version: %s", id = 128)
    void version(String version);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Received a remote call but the cache is not in STARTED state - ignoring call.", id = 129)
-   void cacheNotStarted();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Received a remote call but the cache is not in STARTED state - ignoring call.", id = 129)
+//   void cacheNotStarted();
 
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Caught exception! Aborting join.", id = 130)
@@ -552,9 +552,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed invalidating remote cache", id = 137)
    void failedInvalidatingRemoteCache(@Cause Throwable e);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Could not register object with name: %s", id = 138)
-   void couldNotRegisterObjectName(Object objectName, @Cause Throwable e);
+//   @LogMessage(level = INFO)
+//   @Message(value = "Could not register object with name: %s", id = 138)
+//   void couldNotRegisterObjectName(Object objectName, @Cause Throwable e);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Infinispan configuration schema could not be resolved locally nor fetched from URL. Local path=%s, schema path=%s, schema URL=%s", id = 139)
@@ -737,17 +737,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Error updating cluster member list for view %d, waiting for next view", id = 197)
    void errorUpdatingMembersList(int viewId, @Cause Throwable cause);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Unable to register MBeans for default cache", id = 198)
-   void unableToRegisterMBeans();
+//   @LogMessage(level = INFO)
+//   @Message(value = "Unable to register MBeans for default cache", id = 198)
+//   void unableToRegisterMBeans();
 
-   @LogMessage(level = INFO)
-   @Message(value = "Unable to register MBeans for named cache %s", id = 199)
-   void unableToRegisterMBeans(String cacheName);
+//   @LogMessage(level = INFO)
+//   @Message(value = "Unable to register MBeans for named cache %s", id = 199)
+//   void unableToRegisterMBeans(String cacheName);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Unable to register MBeans for cache manager", id = 200)
-   void unableToRegisterCacheManagerMBeans();
+//   @LogMessage(level = INFO)
+//   @Message(value = "Unable to register MBeans for cache manager", id = 200)
+//   void unableToRegisterCacheManagerMBeans();
 
    @LogMessage(level = TRACE)
    @Message(value = "This cache is configured to backup to its own site (%s).", id = 201)
@@ -769,9 +769,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Trying to bring back an non-existent site (%s)!", id = 205)
    void tryingToBringOnlineNonexistentSite(String siteName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Could not execute cancellation command locally", id = 206)
-   void couldNotExecuteCancellationLocally(@Cause Throwable e);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Could not execute cancellation command locally", id = 206)
+//   void couldNotExecuteCancellationLocally(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not interrupt as no thread found for command uuid %s", id = 207)
@@ -962,9 +962,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to enlist TransactionXaAdapter to transaction", id = 262)
    void failedToEnlistTransactionXaAdapter(@Cause Throwable e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "FIFO strategy is deprecated, LRU will be used instead", id = 263)
-   void warnFifoStrategyIsDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "FIFO strategy is deprecated, LRU will be used instead", id = 263)
+//   void warnFifoStrategyIsDeprecated();
 
    @LogMessage(level = WARN)
    @Message(value = "Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!", id = 264)
@@ -1005,8 +1005,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Persistence enabled without any CacheWriteInterceptor in InterceptorChain!", id = 275)
    void persistenceWithoutCacheWriteInterceptor();
 
-   @Message(value = "Could not find migration data in cache %s", id = 276)
-   CacheException missingMigrationData(String name);
+//   @Message(value = "Could not find migration data in cache %s", id = 276)
+//   CacheException missingMigrationData(String name);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not migrate key %s", id = 277)
@@ -1278,16 +1278,16 @@ public interface Log extends BasicLogger {
 //   @Message(value = "There was an issue with topology update for topology: %s", id = 367)
 //   void topologyUpdateError(int topologyId, @Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Memory approximation calculation for eviction is unsupported for the '%s' Java VM", id = 368)
-   void memoryApproximationUnsupportedVM(String javaVM);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Memory approximation calculation for eviction is unsupported for the '%s' Java VM", id = 368)
+//   void memoryApproximationUnsupportedVM(String javaVM);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Ignoring asyncMarshalling configuration", id = 369)
 //   void ignoreAsyncMarshalling();
 
-   @Message(value = "Cache name '%s' cannot be used as it is a reserved, internal name", id = 370)
-   IllegalArgumentException illegalCacheName(String name);
+//   @Message(value = "Cache name '%s' cannot be used as it is a reserved, internal name", id = 370)
+//   IllegalArgumentException illegalCacheName(String name);
 
    @Message(value = "Cannot remove cache configuration '%s' because it is in use", id = 371)
    IllegalStateException configurationInUse(String configurationName);
@@ -1417,9 +1417,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Node %s attempting to join cache %s with incompatible state", id = 410)
    CacheJoinException nodeWithIncompatibleStateJoiningCache(Address joiner, String cacheName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
-   void warnAboutUberJarDuplicates();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
+//   void warnAboutUberJarDuplicates();
 
    @Message(value = "Cannot determine a synthetic transaction configuration from mode=%s, xaEnabled=%s, recoveryEnabled=%s, batchingEnabled=%s", id = 412)
    CacheConfigurationException unknownTransactionConfiguration(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled);
@@ -1655,8 +1655,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot create remote transaction %s, already completed", id = 482)
    CacheException remoteTransactionAlreadyCompleted(GlobalTransaction gtx);
 
-   @Message(value = "Class %s not found", id = 483)
-   CacheConfigurationException classNotFound(String name);
+//   @Message(value = "Class %s not found", id = 483)
+//   CacheConfigurationException classNotFound(String name);
 
    @Message(value = "Wildcards not allowed in cache names: '%s'", id = 484)
    CacheConfigurationException wildcardsNotAllowedInCacheNames(String name);
@@ -1688,14 +1688,14 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Invalid text format: '%s'", id = 493)
 //   EncodingException invalidTextFormat(Object content);
 
-   @Message(value = "Invalid binary format: '%s'", id = 494)
-   EncodingException invalidBinaryFormat(Object content);
+//   @Message(value = "Invalid binary format: '%s'", id = 494)
+//   EncodingException invalidBinaryFormat(Object content);
 
    @Message(value = "Error transcoding content", id = 495)
    EncodingException errorTranscoding(@Cause Throwable cause);
 
-   @Message(value = "Error transcoding content '%s'", id = 496)
-   EncodingException errorTranscodingContent(@Cause Throwable cause, Object content);
+//   @Message(value = "Error transcoding content '%s'", id = 496)
+//   EncodingException errorTranscodingContent(@Cause Throwable cause, Object content);
 
    @Message(value = "Unsupported content '%s' during transcoding", id = 497)
    EncodingException unsupportedContent(Object content);

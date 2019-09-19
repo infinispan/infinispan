@@ -93,8 +93,8 @@ public interface Log extends BasicLogger {
    @Message(value = "The supplied configuration for cache '%s' is missing a named configuration for it: %s", id = 5031)
    CacheConfigurationException missingCacheConfiguration(String name, String configuration);
 
-   @Message(value = "Error during transcoding", id = 5032)
-   TranscodingException errorDuringTranscoding(@Cause Throwable e);
+//   @Message(value = "Error during transcoding", id = 5032)
+//   TranscodingException errorDuringTranscoding(@Cause Throwable e);
 
    @Message(value = "Data format '%s' not supported", id = 5033)
    TranscodingException unsupportedDataFormat(MediaType contentFormat);
@@ -108,6 +108,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Illegal number of ioThreads: %d", id = 5036)
    IllegalArgumentException illegalIOThreads(int ioThreads);
 
-   @Message(value = "No provider for authorization realm", id = 5037)
-   XMLStreamException noProviderForAuthorizationRealm();
+//   @Message(value = "No provider for authorization realm", id = 5037)
+//   XMLStreamException noProviderForAuthorizationRealm();
 }

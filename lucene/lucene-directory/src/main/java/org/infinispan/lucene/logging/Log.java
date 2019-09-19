@@ -25,9 +25,9 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
-   @LogMessage(level = ERROR)
-   @Message(value = "Error executing parallel store task", id = 252)
-   void errorExecutingParallelStoreTask(@Cause Throwable cause);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Error executing parallel store task", id = 252)
+//   void errorExecutingParallelStoreTask(@Cause Throwable cause);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error in suspending transaction", id = 15001)

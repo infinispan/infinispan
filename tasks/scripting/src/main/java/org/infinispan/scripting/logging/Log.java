@@ -1,11 +1,8 @@
 package org.infinispan.scripting.logging;
 
-import static org.jboss.logging.Logger.Level.ERROR;
-
 import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -18,13 +15,13 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
-   @LogMessage(level = ERROR)
-   @Message(value = "Could not register interpreter MBean", id = 27501)
-   void jmxRegistrationFailed();
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Could not register interpreter MBean", id = 27501)
+//   void jmxRegistrationFailed();
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Could not unregister interpreter MBean", id = 27502)
-   void jmxUnregistrationFailed();
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Could not unregister interpreter MBean", id = 27502)
+//   void jmxUnregistrationFailed();
 
    @Message(value = "Script execution error", id = 27503)
    CacheException scriptExecutionError(@Cause Throwable t);
