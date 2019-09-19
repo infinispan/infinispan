@@ -17,16 +17,18 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.logging.events.ServerEventLogger;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 
@@ -37,7 +39,16 @@ import org.junit.Test;
  * @since 8.2
  */
 
-public class ServerEventLoggerTest extends AbstractInfinispanTest {
+public class ServerEventLoggerTest {
+   @BeforeClass
+   public static void before() {
+      TestResourceTracker.testStarted(ServerConfigurationParserTest.class.getName());
+   }
+
+   @AfterClass
+   public static void after() {
+      TestResourceTracker.testFinished(ServerConfigurationParserTest.class.getName());
+   }
 
    @Test
    public void testLocalServerEventLogging() {
