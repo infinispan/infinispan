@@ -128,21 +128,14 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan.server</groupId>
-         <artifactId>infinispan-server-infinispan</artifactId>
+         <groupId>org.infinispan.wildfly</groupId>
+         <artifactId>infinispan-wildfly-infinispan</artifactId>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-feature-pack-wf-modules</artifactId>
-         <type>zip</type>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.server</groupId>
-         <artifactId>infinispan-server-build</artifactId>
          <type>zip</type>
          <scope>test</scope>
       </dependency>

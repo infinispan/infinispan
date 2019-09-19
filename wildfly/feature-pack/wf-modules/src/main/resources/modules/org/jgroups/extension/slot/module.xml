@@ -5,13 +5,13 @@
     </properties>
 
     <resources>
-        <artifact name="${org.infinispan.server:infinispan-server-jgroups}"/>
+        <artifact name="${org.infinispan.wildfly:infinispan-server-jgroups}"/>
     </resources>
 
     <dependencies>
         <module name="javax.api"/>
         <module name="jdk.unsupported" optional="true"/>
-        <module name="org.infinispan.server.commons" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.wildfly.commons" slot="@infinispan.module.slot@"/>
         <module name="org.jboss.as.controller"/>
         <module name="org.jboss.as.core-security"/>
         <module name="org.jboss.as.domain-management"/>

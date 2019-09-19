@@ -57,20 +57,21 @@
             <artifactId>infinispan-cachestore-rest</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.infinispan.server</groupId>
+            <groupId>org.infinispan.wildfly</groupId>
             <artifactId>infinispan-server-commons</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.infinispan.server</groupId>
+            <groupId>org.infinispan.wildfly</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.infinispan.server</groupId>
-            <artifactId>infinispan-server-endpoints</artifactId>
+            <groupId>org.infinispan.wildfly</groupId>
+            <artifactId>infinispan-wildfly-infinispan</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.infinispan.server</groupId>
-            <artifactId>infinispan-server-infinispan</artifactId>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-clustered-counter</artifactId>
         </dependency>
     </dependencies>
 
@@ -111,9 +112,8 @@
                                 <jar>infinispan-cachestore-rocksdb</jar>
                                 <jar>infinispan-cachestore-remote</jar>
                                 <jar>infinispan-cachestore-rest</jar>
-                                <jar>infinispan-server-endpoints</jar>
                                 <jar>infinispan-server-jgroups</jar>
-                                <jar>infinispan-server-infinispan</jar>
+                                <jar>infinispan-wildfly-infinispan</jar>
                             </jars>
                         </configuration>
                     </execution>

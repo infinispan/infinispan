@@ -5,7 +5,7 @@
    </properties>
 
    <resources>
-      <artifact name="${org.infinispan.server:infinispan-server-infinispan}"/>
+      <artifact name="${org.infinispan.wildfly:infinispan-wildfly-infinispan}"/>
    </resources>
 
    <dependencies>
@@ -25,7 +25,7 @@
       <module name="org.infinispan.multimap" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.query" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.scripting" services="import" slot="@infinispan.module.slot@"/>
-      <module name="org.infinispan.server.commons" slot="@infinispan.module.slot@"/>
+      <module name="org.infinispan.wildfly.commons" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.tasks" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.infinispan.tasks.api" services="import" slot="@infinispan.module.slot@"/>
 

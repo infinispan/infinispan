@@ -279,7 +279,7 @@
                         </group>
                         <group>
                            <title>Server Connectors API</title>
-                           <packages>org.infinispan.server*:org.infinispan.rest*</packages>
+                           <packages>org.infinispan.rest*</packages>
                         </group>
                         <group>
                            <title>Tasks API</title>
