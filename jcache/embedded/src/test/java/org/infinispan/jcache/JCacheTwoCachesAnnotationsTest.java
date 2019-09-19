@@ -61,9 +61,9 @@ public class JCacheTwoCachesAnnotationsTest extends AbstractTwoCachesAnnotations
 
    @BeforeClass(alwaysRun = true)
    public void initCacheManagers() {
-      cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+      cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(JCacheTestSCI.INSTANCE, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       cacheManager1.defineConfiguration("annotation", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
-      cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+      cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(JCacheTestSCI.INSTANCE, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       cacheManager2.defineConfiguration("annotation", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
       TestingUtil.blockUntilViewsReceived(30000,
             cacheManager1.getCache("annotation"),

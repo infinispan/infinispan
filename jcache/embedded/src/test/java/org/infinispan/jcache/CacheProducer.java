@@ -18,7 +18,7 @@ public class CacheProducer {
    @ApplicationScoped
    public EmbeddedCacheManager defaultClusteredCacheManager() {
       ConfigurationBuilder defaultClusteredCacheConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(defaultClusteredCacheConfig);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(JCacheTestSCI.INSTANCE, defaultClusteredCacheConfig);
       cacheManager.defineConfiguration("annotation", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
       return cacheManager;
    }

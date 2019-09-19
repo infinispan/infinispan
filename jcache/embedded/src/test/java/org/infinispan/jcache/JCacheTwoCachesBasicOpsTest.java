@@ -33,8 +33,7 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultClusteredCacheConfig1 = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      createClusteredCaches(2, "default", defaultClusteredCacheConfig1);
+      createClusteredCaches(2, "default", JCacheTestSCI.INSTANCE, defaultClusteredCacheConfig1);
       waitForClusterToForm("default");
    }
-
 }

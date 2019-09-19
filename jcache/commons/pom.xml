@@ -49,6 +49,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.arquillian.testng</groupId>
          <artifactId>arquillian-testng-container</artifactId>
          <scope>test</scope>

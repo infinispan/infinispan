@@ -14,7 +14,6 @@ import javax.cache.processor.EntryProcessor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
@@ -23,12 +22,13 @@ import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.jcache.embedded.Durations;
 import org.infinispan.jcache.embedded.ExternalizerIds;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 
 public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K, V>, R>, InjectableComponent {
    private final EntryProcessor<K, V, R> processor;
    private final Object[] arguments;
    private final boolean storeByReference;
-   private StreamingMarshaller marshaller;
+   private PersistenceMarshaller marshaller;
    private ExpiryPolicy expiryPolicy;
 
    public Invoke(EntryProcessor<K, V, R> processor, Object[] arguments, boolean storeByReference) {
@@ -39,8 +39,8 @@ public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K,
 
    @Override
    public void inject(ComponentRegistry registry) {
-      this.marshaller = registry.getComponent(StreamingMarshaller.class);
-      expiryPolicy = registry.getComponent(ExpiryPolicy.class);
+      this.marshaller = registry.getPersistenceMarshaller();
+      this.expiryPolicy = registry.getComponent(ExpiryPolicy.class);
    }
 
    @Override
