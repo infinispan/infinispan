@@ -187,11 +187,12 @@
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <parallel>classes</parallel>
                <groups combine.self="override"/>
-               <excludedGroups combine.self="override"/>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <testNGArtifactName>none:none</testNGArtifactName>
-               <parallel>methods</parallel>
-               <properties>
+               <disableXmlReport>false</disableXmlReport>
+               <properties combine.self="override">
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>
                </properties>
