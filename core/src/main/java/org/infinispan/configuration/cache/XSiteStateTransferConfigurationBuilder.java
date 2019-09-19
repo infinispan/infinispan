@@ -33,6 +33,10 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    public void validate() {
+      int chunkSize = attributes.attribute(StateTransferConfiguration.CHUNK_SIZE).get();
+      if (chunkSize <= 0) {
+         throw log.invalidChunkSize(chunkSize);
+      }
       if (attributes.attribute(TIMEOUT).get() <= 0) {
          throw CONFIG.invalidXSiteStateTransferTimeout();
       }

@@ -1906,4 +1906,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The AdvancedExternalizer configuration has been deprecated and will be removed in the future", id = 560)
    void advancedExternalizerDeprecated();
+
+   @Message(value = "Chunk size must be positive, got %d", id = 561)
+   CacheConfigurationException invalidChunkSize(int chunkSize);
 }
