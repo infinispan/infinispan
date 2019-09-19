@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
 import javax.cache.Cache;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
@@ -32,6 +33,7 @@ import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
 
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -440,8 +442,8 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       }
    }
 
-   private static class CustomEntryProcessor implements EntryProcessor, Serializable {
-
+   @ProtoName("CustomEntryProcessor")
+   public static class CustomEntryProcessor implements EntryProcessor {
       @Override
       public Object process(MutableEntry entry, Object... arguments) throws EntryProcessorException {
          entry.setValue(entry.getValue() + "_processed");
