@@ -47,8 +47,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ResourceDMBean implements DynamicMBean {
 
-   private static final String MBEAN_DESCRIPTION = "Dynamic MBean Description";
-
    private static final Log log = LogFactory.getLog(ResourceDMBean.class);
    private static final boolean trace = log.isTraceEnabled();
    private final Object obj;
@@ -304,31 +302,30 @@ public class ResourceDMBean implements DynamicMBean {
 
    private Attribute getNamedAttribute(String name) {
       Attribute result = null;
-      if (name.equals(MBEAN_DESCRIPTION)) {
-         result = new Attribute(MBEAN_DESCRIPTION, description);
-      } else {
-         InvokableMBeanAttributeInfo i = atts.get(name);
-         if (i == null && name.length() > 0) {
-            // This is legacy.  Earlier versions used an upper-case starting letter for *some* attributes.
-            char firstChar = name.charAt(0);
-            if (Character.isUpperCase(firstChar)) {
-               name = name.replaceFirst(Character.toString(firstChar), Character.toString(Character.toLowerCase(firstChar)));
-               i = atts.get(name);
-            }
-         }
-         if (i != null) {
-            try {
-               result = new Attribute(name, i.invoke(null));
-               if (trace)
-                  log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
-                             name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
-            } catch (Exception e) {
-               log.debugf(e, "Exception while reading value of attribute %s", name);
-            }
-         } else {
-            log.queriedAttributeNotFound(name);
+
+      InvokableMBeanAttributeInfo i = atts.get(name);
+      if (i == null && name.length() > 0) {
+         // This is legacy.  Earlier versions used an upper-case starting letter for *some* attributes.
+         char firstChar = name.charAt(0);
+         if (Character.isUpperCase(firstChar)) {
+            name = Character.toLowerCase(firstChar) + name.substring(1);
+            i = atts.get(name);
          }
       }
+
+      if (i != null) {
+         try {
+            result = new Attribute(name, i.invoke(null));
+            if (trace)
+               log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
+                          name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
+         } catch (Exception e) {
+            log.debugf(e, "Exception while reading value of attribute %s", name);
+         }
+      } else {
+         log.queriedAttributeNotFound(name);
+      }
+
       return result;
    }
 
