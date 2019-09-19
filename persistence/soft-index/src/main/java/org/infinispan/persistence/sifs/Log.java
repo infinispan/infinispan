@@ -26,13 +26,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Calculation of size has been interrupted.", id = 29003)
    PersistenceException sizeCalculationInterrupted(@Cause InterruptedException e);
 
-   @LogMessage(level = Logger.Level.ERROR)
-   @Message(value = "Failed processing task for key %s", id = 29004)
-   void failedProcessingTask(Object key, @Cause Exception e);
+//   @LogMessage(level = Logger.Level.ERROR)
+//   @Message(value = "Failed processing task for key %s", id = 29004)
+//   void failedProcessingTask(Object key, @Cause Exception e);
 
-   @LogMessage(level = Logger.Level.ERROR)
-   @Message(value = "Iteration was interrupted.", id = 29005)
-   void iterationInterrupted(@Cause InterruptedException e);
+//   @LogMessage(level = Logger.Level.ERROR)
+//   @Message(value = "Iteration was interrupted.", id = 29005)
+//   void iterationInterrupted(@Cause InterruptedException e);
 
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "Cannot truncate index", id = 29006)
