@@ -132,6 +132,9 @@ pipeline {
 
             // Remove all untracked files, ignoring .gitignore
             sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
+
+            // Remove all created SNAPSHOT artifacts to ensure a clean build on every run
+            sh 'find ~/.m2/repository -type d -name "*-SNAPSHOT" -prune -exec rm -rf {} \\;'
         }
     }
 }
