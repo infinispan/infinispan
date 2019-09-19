@@ -2359,18 +2359,12 @@
             <classifier>tests</classifier>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.server</groupId>
-            <artifactId>infinispan-server-build</artifactId>
-            <version>${version.infinispan}</version>
-            <type>pom</type>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.server</groupId>
+            <groupId>org.infinispan.wildfly</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.server</groupId>
+            <groupId>org.infinispan.wildfly</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -2423,21 +2417,14 @@
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.server</groupId>
-            <artifactId>infinispan-server-infinispan</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan.server</groupId>
+            <groupId>org.infinispan.wildfly</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
-            <groupId>org.infinispan.server</groupId>
+            <groupId>org.infinispan.wildfly</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <version>${version.infinispan}</version>
          </dependency>

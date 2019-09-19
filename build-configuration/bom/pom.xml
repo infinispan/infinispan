@@ -422,35 +422,8 @@
                 <version>${version.protostream}</version>
             </dependency>
             <dependency>
-                <groupId>org.infinispan.server</groupId>
-                <artifactId>infinispan-server-build</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.server</groupId>
-                <artifactId>infinispan-server-cli</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.server</groupId>
-                <artifactId>infinispan-server-endpoints</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.server</groupId>
-                <artifactId>infinispan-server-event-logger</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.server</groupId>
-                <artifactId>infinispan-server-feature-pack</artifactId>
-                <version>${version.infinispan}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.server</groupId>
-                <artifactId>infinispan-server-infinispan</artifactId>
+                <groupId>org.infinispan.wildfly</groupId>
+                <artifactId>infinispan-wildfly-infinispan</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
