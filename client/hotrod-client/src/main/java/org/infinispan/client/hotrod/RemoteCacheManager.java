@@ -67,8 +67,6 @@ import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
-import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.counter.api.CounterManager;
 import org.wildfly.security.WildFlyElytronProvider;
 
@@ -349,8 +347,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       // Print version to help figure client version run
       log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
 
-      warnAboutUberJarDuplicates();
-
       started = true;
    }
 
@@ -500,16 +496,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    @Override
    public Marshaller getMarshaller() {
       return marshaller;
-   }
-
-   private void warnAboutUberJarDuplicates() {
-      UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
-      scanner.isClasspathCorrectAsync()
-            .thenAccept(isClasspathCorrect -> {
-               if (!isClasspathCorrect) {
-                  log.warnAboutUberJarDuplicates();
-               }
-            });
    }
 
    public static byte[] cacheNameBytes(String cacheName) {
