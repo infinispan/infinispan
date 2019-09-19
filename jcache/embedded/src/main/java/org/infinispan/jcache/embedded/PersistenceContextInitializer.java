@@ -1,8 +1,6 @@
-package org.infinispan.commons.marshall;
+package org.infinispan.jcache.embedded;
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.util.KeyValueWithPrevious;
-import org.infinispan.counter.api.CounterState;
+import org.infinispan.jcache.annotation.DefaultCacheKey;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
@@ -14,14 +12,10 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @since 10.0
  */
 @AutoProtoSchemaBuilder(
-      includeClasses = {
-            KeyValueWithPrevious.class,
-            MediaType.class,
-            WrappedByteArray.class,
-            CounterState.class,
-      },
-      schemaFileName = "persistence.commons.proto",
+      dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
+      includeClasses = DefaultCacheKey.class,
+      schemaFileName = "persistence.jcache.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.commons")
+      schemaPackageName = "org.infinispan.persistence.jcache")
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

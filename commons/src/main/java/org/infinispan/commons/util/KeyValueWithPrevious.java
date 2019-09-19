@@ -1,14 +1,12 @@
 package org.infinispan.commons.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
-@SerializeWith(KeyValueWithPrevious.KeyValueWithPreviousExternalizer.class)
-public class KeyValueWithPrevious<K, V> {
+public class KeyValueWithPrevious<K, V> implements Serializable {
    /**
     * The serialVersionUID
     */
@@ -24,6 +22,13 @@ public class KeyValueWithPrevious<K, V> {
       this.prev = prev;
    }
 
+   @ProtoFactory
+   KeyValueWithPrevious(WrappedMessage wrappedKey, WrappedMessage wrappedValue, WrappedMessage wrappedPrev) {
+      this.key = (K) wrappedKey.getValue();
+      this.value = (V) wrappedValue.getValue();
+      this.prev = (V) wrappedPrev.getValue();
+   }
+
    public K getKey() {
       return key;
    }
@@ -34,6 +39,21 @@ public class KeyValueWithPrevious<K, V> {
 
    public V getPrev() {
       return prev;
+   }
+
+   @ProtoField(number = 1)
+   WrappedMessage getWrappedKey() {
+      return new WrappedMessage(key);
+   }
+
+   @ProtoField(number = 2)
+   WrappedMessage getWrappedValue() {
+      return new WrappedMessage(key);
+   }
+
+   @ProtoField(number = 3)
+   WrappedMessage getWrappedPrev() {
+      return new WrappedMessage(key);
    }
 
    @Override
@@ -66,22 +86,4 @@ public class KeyValueWithPrevious<K, V> {
             ", prev=" + prev +
             '}';
    }
-
-   @SuppressWarnings("unchecked")
-   public static class KeyValueWithPreviousExternalizer implements Externalizer<KeyValueWithPrevious> {
-
-      @Override
-      public void writeObject(ObjectOutput output, KeyValueWithPrevious kvPair) throws IOException {
-         output.writeObject(kvPair.getKey());
-         output.writeObject(kvPair.getValue());
-         output.writeObject(kvPair.getPrev());
-      }
-
-      @Override
-      public KeyValueWithPrevious readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new KeyValueWithPrevious(input.readObject(), input.readObject(), input.readObject());
-      }
-
-   }
-
 }

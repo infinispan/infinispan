@@ -14,13 +14,17 @@ import javax.cache.spi.CachingProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.GlobalContextInitializer;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheManager;
 import org.infinispan.jcache.logging.Log;
+import org.infinispan.protostream.SerializationContext;
 
 public class JCacheManager extends AbstractJCacheManager {
    private static final Log log = LogFactory.getLog(JCacheManager.class, Log.class);
@@ -35,9 +39,18 @@ public class JCacheManager extends AbstractJCacheManager {
 
       org.infinispan.client.hotrod.configuration.Configuration configuration = builder.build();
       cm = new RemoteCacheManager(configuration, true);
+      initializeProtoContext(cm.getMarshaller());
 
       builder.forceReturnValues(true);
       cmForceReturnValue = new RemoteCacheManager(builder.build(), true);
+   }
+
+   private void initializeProtoContext(Marshaller marshaller) {
+      if (marshaller instanceof ProtoStreamMarshaller) {
+         SerializationContext ctx = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
+         GlobalContextInitializer.INSTANCE.registerSchema(ctx);
+         GlobalContextInitializer.INSTANCE.registerMarshallers(ctx);
+      }
    }
 
    private ConfigurationBuilder getConfigurationBuilder(Properties userProperties) {

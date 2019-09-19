@@ -7,6 +7,9 @@ import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.GeneratedCacheKey;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  * Custom implementation of {@link javax.cache.annotation.CacheKeyGenerator}. Compatible with methods providing one key parameter.
  *
@@ -19,14 +22,16 @@ public class JCacheCustomKeyGenerator implements CacheKeyGenerator {
       if (cacheKeyInvocationContext.getKeyParameters().length != 1) {
          throw new IllegalArgumentException("Composed keys are not supported.");
       }
-      return new CustomGeneratedCacheKey(cacheKeyInvocationContext.getKeyParameters()[0].getValue());
+      return new CustomGeneratedCacheKey((String) cacheKeyInvocationContext.getKeyParameters()[0].getValue());
    }
 
    public static class CustomGeneratedCacheKey implements GeneratedCacheKey {
 
-      private Object value;
+      @ProtoField(number = 1)
+      final String value;
 
-      public CustomGeneratedCacheKey(Object value) {
+      @ProtoFactory
+      CustomGeneratedCacheKey(String value) {
          if (value == null) {
             throw new IllegalArgumentException("Value needs to be specified.");
          }

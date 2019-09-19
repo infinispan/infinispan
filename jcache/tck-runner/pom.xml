@@ -34,6 +34,7 @@
       <ispnserver.project.dir>${basedir}/../../server/runtime</ispnserver.project.dir>
       <server.build.dist>${ispnserver.project.dir}/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.build.dist>
       <ispnserver.dist>${basedir}/target/infinispan-server</ispnserver.dist>
+      <ispnserver.config.file>${project.build.testOutputDirectory}/infinispan.xml</ispnserver.config.file>
       <server.dir.parent>${project.build.directory}</server.dir.parent>
       <server.dir.name>infinispan-${wildfly.brand.prefix}-server-${project.version}</server.dir.name>
       <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
@@ -65,12 +66,13 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
+         <artifactId>infinispan-jcache-commons</artifactId>
          <scope>test</scope>
+         <type>test-jar</type>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jboss-marshalling</artifactId>
+         <artifactId>infinispan-client-hotrod</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -129,7 +131,7 @@
                   <goals>
                      <goal>run</goal>
                   </goals>
-                  <phase>generate-resources</phase>
+                  <phase>process-test-resources</phase>
                   <configuration>
                      <skip>${skipTests}</skip>
                      <target>
@@ -137,6 +139,7 @@
                            <property name="server.build.dist" value="${server.build.dist}" />
                            <property name="server.dist" value="${ispnserver.dist}" />
                         </ant>
+                        <copy file="${ispnserver.config.file}" todir="${ispnserver.dist}/server/conf" overwrite="true" />
                      </target>
                   </configuration>
                </execution>
@@ -176,6 +179,34 @@
                            <property name="hotrod.port" value="11222" />
                         </ant>
                      </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>copy-agent</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${ispnserver.dist}/server/lib</outputDirectory>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.infinispan</groupId>
+                           <artifactId>infinispan-jcache-commons</artifactId>
+                           <classifier>tests</classifier>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>javax.cache</groupId>
+                           <artifactId>cache-tests</artifactId>
+                        </artifactItem>
+                     </artifactItems>
                   </configuration>
                </execution>
             </executions>
@@ -266,6 +297,9 @@
                         <!-- TCK tests -->
                         <dependency>javax.cache:cache-tests</dependency>
                      </dependenciesToScan>
+                     <additionalClasspathElements>
+                        <classpathElement>${project.build.testOutputDirectory}/hotrod-client.properties</classpathElement>
+                     </additionalClasspathElements>
                      <classpathDependencyExcludes>
                         <!-- Don't include the embedded JCache implementation -->
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
