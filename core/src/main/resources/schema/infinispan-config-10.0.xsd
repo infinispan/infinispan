@@ -1806,10 +1806,7 @@
         <xs:complexType>
           <xs:attribute name="chunk-size" type="xs:int" default="512">
             <xs:annotation>
-              <xs:documentation>
-                If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries.
-                If &lt;= 0, the state will be transferred in all at once. Not recommended. Defaults to 512.
-              </xs:documentation>
+               <xs:documentation>The number of cache entries to batch in each transfer.</xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="timeout" type="xs:long" default="1200000">

@@ -8,7 +8,6 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -95,8 +94,9 @@ public class StateTransferConfigurationBuilder extends
 
    @Override
    public void validate() {
-      if (attributes.attribute(CHUNK_SIZE).get() <= 0) {
-         throw new CacheConfigurationException("chunkSize can not be <= 0");
+      int chunkSize = attributes.attribute(CHUNK_SIZE).get();
+      if (chunkSize <= 0) {
+         throw log.invalidChunkSize(chunkSize);
       }
 
       if (clustering().cacheMode().isInvalidation()) {
