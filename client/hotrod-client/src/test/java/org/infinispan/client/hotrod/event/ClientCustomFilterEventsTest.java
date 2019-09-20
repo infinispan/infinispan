@@ -11,6 +11,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -24,6 +25,11 @@ public class ClientCustomFilterEventsTest extends SingleHotRodServerTest {
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, builder);
       server.addCacheEventFilterConverterFactory("filter-converter-factory", new FilterConverterFactory());
       return server;
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
    }
 
    @Test(expectedExceptions = IllegalStateException.class)

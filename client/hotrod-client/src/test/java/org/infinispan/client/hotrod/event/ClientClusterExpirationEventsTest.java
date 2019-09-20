@@ -16,15 +16,14 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilte
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterExpirationEventsTest")
@@ -41,6 +40,11 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
       injectTimeServices();
    }
 
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
+   }
+
    private ConfigurationBuilder getCacheConfiguration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numOwners(1);
@@ -48,12 +52,9 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
-      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
+      HotRodServer server = super.addHotRodServer(builder);
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
       server.addCacheEventFilterConverterFactory("filter-converter-factory", new FilterConverterFactory());
-      servers.add(server);
       return server;
    }
 

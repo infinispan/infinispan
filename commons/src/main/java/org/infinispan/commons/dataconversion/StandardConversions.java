@@ -143,7 +143,7 @@ public final class StandardConversions {
       }
       try {
          return marshaller.objectFromByteBuffer(source);
-      } catch (IOException | ClassNotFoundException e) {
+      } catch (IOException | IllegalStateException | ClassNotFoundException e) {
          throw log.conversionNotSupported(source, MediaType.APPLICATION_OCTET_STREAM_TYPE, destination.toString());
       }
    }

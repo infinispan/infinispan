@@ -51,6 +51,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
       defaultRemote.put("a", "a");
+      Object o = defaultRemote.get("a");
       assertEquals("a", defaultRemote.get("a"));
    }
 
@@ -78,6 +79,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
       defaultRemote.put("a", "a");
+      Object o = defaultRemote.get("a");
       assertEquals("a", defaultRemote.get("a"));
    }
 

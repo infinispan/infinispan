@@ -20,10 +20,12 @@ import java.util.function.BiConsumer;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
@@ -51,6 +53,12 @@ public class ExecTest extends MultiHotRodServersTest {
       createHotRodServers(NUM_SERVERS, new ConfigurationBuilder());
       defineInAll(REPL_CACHE, CacheMode.REPL_SYNC);
       defineInAll(DIST_CACHE, CacheMode.DIST_SYNC);
+   }
+
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(HotRodServer server) {
+      // Remote scripting must use the JavaSerializationMarshaller for now due to IPROTO-118
+      return createHotRodClientConfigurationBuilder(server.getHost(), server.getPort()).marshaller(JavaSerializationMarshaller.class).addJavaSerialWhiteList("java.*");
    }
 
    @AfterMethod

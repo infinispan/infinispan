@@ -31,6 +31,7 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.tx.util.KeyValueGenerator;
 import org.infinispan.client.hotrod.tx.util.TransactionSetup;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
@@ -52,21 +53,20 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
 
    private KeyValueGenerator<K, V> kvGenerator;
    private TransactionMode transactionMode;
+   private boolean useJavaSerialization;
 
    @Override
    public Object[] factory() {
       return new Object[]{
-            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
             new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA),
-
-            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
             new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-
-            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
             new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(FULL_XA),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA)
+            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
+            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
+            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
+            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA).javaSerialization(),
+            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA).javaSerialization(),
+            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA).javaSerialization()
       };
    }
 
@@ -277,6 +277,9 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       clientBuilder.forceReturnValues(false);
       TransactionSetup.amendJTA(clientBuilder);
       clientBuilder.transaction().transactionMode(transactionMode);
+      if (useJavaSerialization) {
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialWhiteList("\\Q[\\ELjava.lang.Object;");
+      }
       return clientBuilder;
    }
 
@@ -295,6 +298,11 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
 
    private APITxTest<K, V> keyValueGenerator(KeyValueGenerator<K, V> kvGenerator) {
       this.kvGenerator = kvGenerator;
+      return this;
+   }
+
+   public APITxTest<K, V> javaSerialization() {
+      useJavaSerialization = true;
       return this;
    }
 

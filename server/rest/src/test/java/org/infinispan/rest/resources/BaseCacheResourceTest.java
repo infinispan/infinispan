@@ -33,7 +33,7 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -43,8 +43,10 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
@@ -976,7 +978,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    @Test
    public void shouldNegotiateFromDefaultCacheWithBinary() throws Exception {
       TestClass testClass = new TestClass();
-      byte[] javaSerialized = new JavaSerializationMarshaller().objectToByteBuffer(testClass);
+      Marshaller marshaller = TestingUtil.createProtoStreamMarshaller(RestTestSCI.INSTANCE);
+      byte[] javaSerialized = marshaller.objectToByteBuffer(testClass);
 
       putBinaryValueInCache("default", "test", javaSerialized, APPLICATION_OCTET_STREAM);
 

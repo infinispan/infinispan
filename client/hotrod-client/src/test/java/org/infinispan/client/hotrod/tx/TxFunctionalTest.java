@@ -20,8 +20,10 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.tx.util.KeyValueGenerator;
 import org.infinispan.client.hotrod.tx.util.TransactionSetup;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -41,6 +43,7 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
 
    private KeyValueGenerator<K, V> kvGenerator;
    private TransactionMode transactionMode;
+   private boolean useJavaSerialization;
 
    public TxFunctionalTest<K, V> keyValueGenerator(KeyValueGenerator<K, V> kvGenerator) {
       this.kvGenerator = kvGenerator;
@@ -50,15 +53,15 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
             new TxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
             new TxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
             new TxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(FULL_XA),
-            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA)
+            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
+            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
+            new TxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
+            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA).javaSerialization(),
+            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA).javaSerialization(),
+            new TxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA).javaSerialization()
       };
    }
 
@@ -71,6 +74,11 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
 
    public TxFunctionalTest<K, V> transactionMode(TransactionMode transactionMode) {
       this.transactionMode = transactionMode;
+      return this;
+   }
+
+   public TxFunctionalTest<K, V> javaSerialization() {
+      useJavaSerialization = true;
       return this;
    }
 
@@ -433,6 +441,10 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
       defineInAll(cacheName(), cacheBuilder);
    }
 
+   protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
+      builder.serialization().marshaller(new JavaSerializationMarshaller()).whiteList().addClasses(Object[].class);
+   }
+
    protected final RemoteCache<K, V> remoteCache(int index) {
       return client(index).getCache(cacheName());
    }
@@ -445,6 +457,9 @@ public class TxFunctionalTest<K, V> extends MultiHotRodServersTest {
       clientBuilder.forceReturnValues(false);
       TransactionSetup.amendJTA(clientBuilder);
       clientBuilder.transaction().transactionMode(transactionMode);
+      if (useJavaSerialization) {
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialWhiteList("\\Q[\\ELjava.lang.Object;");
+      }
       return clientBuilder;
    }
 

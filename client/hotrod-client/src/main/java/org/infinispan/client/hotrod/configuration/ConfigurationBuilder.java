@@ -472,6 +472,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (marshaller == null) {
          // Otherwise we use the protostream marshaller
          marshaller = new ProtoStreamMarshaller();
+         marshallerClass = marshaller.getClass();
       }
    }
 
