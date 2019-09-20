@@ -29,7 +29,7 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
    private static final String LON = "LON-1";
    private static final String NYC = "NYC-2";
 
-   public void testStateTransferWithClusterIdle() throws InterruptedException {
+   public void testStateTransferWithClusterIdle() {
       takeSiteOffline(LON, NYC);
       assertOffline(LON, NYC);
 
@@ -79,6 +79,7 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
    protected void createSites() {
       createSite(LON, 1, globalConfigurationBuilderForSite(LON), configurationBuilderForSite(NYC));
       createSite(NYC, 1, globalConfigurationBuilderForSite(NYC), getDefaultCacheConfiguration(false));
+      waitForSites(LON, NYC);
    }
 
    private GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {

@@ -361,7 +361,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       SitesConfiguration sites = configuration.sites();
       for (BackupConfiguration bc : sites.allBackups()) {
          if (bc.site().equals(siteName)) {
-            return new XSiteBackup(bc.site(), true, bc.stateTransfer().timeout());
+            return new XSiteBackup(bc.site(), true, bc.replicationTimeout());
          }
       }
       return null;
