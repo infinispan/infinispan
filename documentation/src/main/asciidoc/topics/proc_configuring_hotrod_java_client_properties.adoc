@@ -1,0 +1,38 @@
+= Configuring Hot Rod Java Client Property Files
+
+Add `hotrod-client.properties` to your classpath so that the client passes
+configuration to `RemoteCacheManager`.
+
+To use `hotrod-client.properties` somewhere other than your classpath, do:
+
+[source,java]
+----
+include::code_examples/HotRodClientProperties.java[]
+----
+
+.Example hotrod-client.properties
+[source]
+----
+include::config_examples/hotrod-client.properties[]
+----
+
+[TIP]
+====
+Substitute Java system properties to replace values at runtime, for example:
+
+[source]
+----
+infinispan.client.hotrod.server_list = ${server_list}
+----
+
+The preceding example expands the value of the
+`infinispan.client.hotrod.server_list` property to the value of the
+`server_list` Java system property, which comes from system property named
+`jboss.bind.address.management` or defaults to `127.0.0.1`.
+====
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[org.infinispan.client.hotrod.configuration] lists and describes Hot Rod client properties.
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]
+* link:https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html[Java system properties]

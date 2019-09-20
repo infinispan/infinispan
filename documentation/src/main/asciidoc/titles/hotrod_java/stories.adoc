@@ -2,5 +2,6 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{topics}/server_protocols_hotrod.adoc[leveloffset=+1]
-//topic included in server_protocols_hotrod.adoc
-//include::{topics}/server_protocols_hotrod_transaction.adoc[leveloffset=+1]
+//server_protocols_hotrod.adoc includes these topics:
+//proc_configuring_hotrod_java_client.adoc
+//server_protocols_hotrod_transaction.adoc
