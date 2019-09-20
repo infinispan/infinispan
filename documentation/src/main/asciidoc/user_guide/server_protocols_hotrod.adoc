@@ -1292,7 +1292,7 @@ This default behavior can can be changed through force-return-value=true configu
 
 include::server_protocols_hotrod_transaction.adoc[]
 
-=== Client Intelligence
+==== Client Intelligence
 Client intelligence refers to mechanisms the `HotRod` protocol provides
 for clients to locate and send requests to {brandname} servers.
 
@@ -1322,7 +1322,7 @@ not need to look up values based on key hashes, which uses less resources on
 the server side. Another benefit is that servers respond to client requests
 more quickly because it skips additional network roundtrips.
 
-=== Request Balancing
+===== Request Balancing
 Clients that use topology-aware intelligence use request balancing for all
 requests. The default balancing strategy is round-robin, so topology-aware
 clients always send requests to servers in round-robin order.
@@ -1332,7 +1332,7 @@ perform request balancing as follows:
 
 [source,java]
 ----
-include::code_examples/RequestBalancing.java[]
+include::topics/code_examples/RequestBalancing.java[]
 ----
 
 Clients that use distribution-aware intelligence use request balancing only
