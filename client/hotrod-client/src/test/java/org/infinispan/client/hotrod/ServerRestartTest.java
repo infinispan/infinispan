@@ -43,7 +43,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       log.info("Started server on port: " + hotrodServer.getPort());
 
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).connectionPool().timeBetweenEvictionRuns(2000);
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());
       defaultRemote = remoteCacheManager.getCache();
    }

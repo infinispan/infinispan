@@ -88,22 +88,15 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       OPTIONS.put(REQUEST_BALANCING_STRATEGY, c -> c.balancingStrategyFactory().get().getClass());
       OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
       OPTIONS.put(CONNECTION_POOL_MAX_ACTIVE, c -> c.connectionPool().maxActive());
-      OPTIONS.put("maxTotal", c -> c.connectionPool().maxTotal());
       OPTIONS.put("maxWait", c -> c.connectionPool().maxWait());
       OPTIONS.put(CONNECTION_POOL_MAX_WAIT, c -> c.connectionPool().maxWait());
-      OPTIONS.put("maxIdle", c -> c.connectionPool().maxIdle());
       OPTIONS.put("minIdle", c -> c.connectionPool().minIdle());
       OPTIONS.put(CONNECTION_POOL_MIN_IDLE, c -> c.connectionPool().minIdle());
       OPTIONS.put("exhaustedAction", c -> c.connectionPool().exhaustedAction());
       OPTIONS.put(CONNECTION_POOL_EXHAUSTED_ACTION, c -> c.connectionPool().exhaustedAction());
-      OPTIONS.put("numTestsPerEvictionRun", c -> c.connectionPool().numTestsPerEvictionRun());
-      OPTIONS.put("timeBetweenEvictionRunsMillis", c -> c.connectionPool().timeBetweenEvictionRuns());
       OPTIONS.put("minEvictableIdleTimeMillis", c -> c.connectionPool().minEvictableIdleTime());
       OPTIONS.put(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, c -> c.connectionPool().minEvictableIdleTime());
       OPTIONS.put(CONNECTION_POOL_MAX_PENDING_REQUESTS, c -> c.connectionPool().maxPendingRequests());
-      OPTIONS.put("testOnBorrow", c -> c.connectionPool().testOnBorrow());
-      OPTIONS.put("testOnReturn", c -> c.connectionPool().testOnReturn());
-      OPTIONS.put("testWhileIdle", c -> c.connectionPool().testWhileIdle());
       OPTIONS.put(CONNECT_TIMEOUT, Configuration::connectionTimeout);
       OPTIONS.put(PROTOCOL_VERSION, Configuration::version);
       OPTIONS.put(SO_TIMEOUT, Configuration::socketTimeout);
@@ -192,13 +185,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .minEvictableIdleTime(12000)
             .exhaustedAction(ExhaustedAction.WAIT)
             .maxPendingRequests(12)
-            .maxIdle(20)
-            .maxTotal(150)
-            .numTestsPerEvictionRun(5)
-            .testOnBorrow(true)
-            .testOnReturn(true)
-            .testWhileIdle(false)
-            .timeBetweenEvictionRuns(15000)
             .connectionTimeout(100)
             .version(ProtocolVersion.PROTOCOL_VERSION_29)
             .consistentHashImpl(2, SomeCustomConsistentHashV2.class)
@@ -427,13 +413,9 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertTrue(cfg.tcpKeepAlive());
       assertEquals(128, cfg.keySizeEstimate());
       assertEquals(256, cfg.valueSizeEstimate());
-      assertEquals(79, cfg.connectionPool().maxTotal());
       assertEquals(78, cfg.connectionPool().maxActive());
-      assertEquals(77, cfg.connectionPool().maxIdle());
       assertEquals(76, cfg.connectionPool().minIdle());
-      assertEquals(1000, cfg.connectionPool().timeBetweenEvictionRuns());
       assertEquals(2000, cfg.connectionPool().minEvictableIdleTime());
-      assertTrue(cfg.connectionPool().testWhileIdle());
       assertTrue(cfg.security().authentication().enabled());
       assertEquals("PLAIN", cfg.security().authentication().saslMechanism());
       CallbackHandler callbackHandler = cfg.security().authentication().callbackHandler();
@@ -530,21 +512,14 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
       assertEqualsConfig(100, "maxActive", configuration);
       assertEqualsConfig(100, CONNECTION_POOL_MAX_ACTIVE, configuration);
-      assertEqualsConfig(150, "maxTotal", configuration);
       assertEqualsConfig(1000L, "maxWait", configuration);
       assertEqualsConfig(1000L, CONNECTION_POOL_MAX_WAIT, configuration);
-      assertEqualsConfig(20, "maxIdle", configuration);
       assertEqualsConfig(10, "minIdle", configuration);
       assertEqualsConfig(10, CONNECTION_POOL_MIN_IDLE, configuration);
       assertEqualsConfig(ExhaustedAction.WAIT, CONNECTION_POOL_EXHAUSTED_ACTION, configuration);
-      assertEqualsConfig(5, "numTestsPerEvictionRun", configuration);
-      assertEqualsConfig(15000L, "timeBetweenEvictionRunsMillis", configuration);
       assertEqualsConfig(12000L, "minEvictableIdleTimeMillis", configuration);
       assertEqualsConfig(12000L, CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, configuration);
       assertEqualsConfig(12, CONNECTION_POOL_MAX_PENDING_REQUESTS, configuration);
-      assertEqualsConfig(true, "testOnBorrow", configuration);
-      assertEqualsConfig(true, "testOnReturn", configuration);
-      assertEqualsConfig(false, "testWhileIdle", configuration);
       assertEqualsConfig(100, CONNECT_TIMEOUT, configuration);
       assertEqualsConfig(100, SO_TIMEOUT, configuration);
       assertEqualsConfig(false, TCP_NO_DELAY, configuration);

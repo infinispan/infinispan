@@ -7,7 +7,6 @@ import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -167,22 +166,6 @@ public interface ConfigurationChildBuilder {
     * Affects TCP KEEPALIVE on the TCP stack. Defaults to disable
     */
    ConfigurationBuilder tcpKeepAlive(boolean keepAlive);
-
-   /**
-    * Controls which transport to use.
-    *
-    * @deprecated Ignored.
-    */
-   @Deprecated
-   ConfigurationBuilder transportFactory(String transportFactory);
-
-   /**
-    * Controls which transport to use.
-    *
-    * @deprecated Ignored.
-    */
-   @Deprecated
-   ConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory);
 
    /**
     * This hint allows sizing of byte buffers when serializing and deserializing values, to minimize

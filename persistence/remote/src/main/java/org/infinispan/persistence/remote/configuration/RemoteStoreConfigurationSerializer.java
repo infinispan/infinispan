@@ -48,12 +48,10 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       writer.writeStartElement(Element.CONNECTION_POOL);
       writer.writeAttribute(Attribute.EXHAUSTED_ACTION, connectionPool.exhaustedAction().name());
       writer.writeAttribute(Attribute.MAX_ACTIVE, Integer.toString(connectionPool.maxActive()));
-      writer.writeAttribute(Attribute.MAX_IDLE, Integer.toString(connectionPool.maxIdle()));
+      writer.writeAttribute(Attribute.MAX_PENDING_REQUESTS, Integer.toString(connectionPool.maxPendingRequests()));
+      writer.writeAttribute(Attribute.MAX_WAIT, Integer.toString(connectionPool.maxWait()));
       writer.writeAttribute(Attribute.MIN_IDLE, Integer.toString(connectionPool.minIdle()));
-      writer.writeAttribute(Attribute.MAX_TOTAL, Integer.toString(connectionPool.maxTotal()));
       writer.writeAttribute(Attribute.MIN_EVICTABLE_IDLE_TIME, Long.toString(connectionPool.minEvictableIdleTime()));
-      writer.writeAttribute(Attribute.TIME_BETWEEN_EVICTION_RUNS, Long.toString(connectionPool.timeBetweenEvictionRuns()));
-      writer.writeAttribute(Attribute.TEST_WHILE_IDLE, Boolean.toString(connectionPool.testWhileIdle()));
       writer.writeEndElement();
    }
 

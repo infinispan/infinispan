@@ -8,7 +8,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -48,26 +47,11 @@ public class ConfigurationPropertiesOverridesTest {
    @Test
    public final void testIfIsEmptyShouldRecognizesThatConfigurationPropertiesOverridesAreNotEmpty() {
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
-      objectUnderTest.setTransportFactory("test.TransportFactory");
+      objectUnderTest.setMarshaller("test.Marshaller");
 
       assertFalse(
             "isEmpty() should have noticed that the ConfigurationPropertiesOverrides instance is not empty. However, it didn't.",
             objectUnderTest.isEmpty());
-   }
-
-   @Test
-   public final void testIfSetTransportFactoryOverridesDefaultTransportFactory() {
-      final String expectedTransportFactory = "test.TransportFactory";
-      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
-
-      objectUnderTest.setTransportFactory(expectedTransportFactory);
-      final Properties overriddenConfigurationProperties = objectUnderTest
-            .override(this.defaultConfigurationProperties);
-
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedTransportFactory,
-                   overriddenConfigurationProperties.getProperty(TRANSPORT_FACTORY));
    }
 
    @Test

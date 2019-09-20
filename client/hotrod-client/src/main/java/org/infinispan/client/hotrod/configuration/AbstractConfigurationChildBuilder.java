@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -149,16 +148,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public ConfigurationBuilder tcpKeepAlive(boolean tcpKeepAlive) {
       return builder.tcpKeepAlive(tcpKeepAlive);
-   }
-
-   @Override
-   public ConfigurationBuilder transportFactory(String transportFactory) {
-      return builder.transportFactory(transportFactory);
-   }
-
-   @Override
-   public ConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
-      return builder.transportFactory(transportFactory);
    }
 
    @Override

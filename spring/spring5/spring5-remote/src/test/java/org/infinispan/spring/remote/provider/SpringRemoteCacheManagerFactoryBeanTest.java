@@ -82,7 +82,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
          throws Exception {
       objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
       objectUnderTest.setConfigurationProperties(new Properties());
-      objectUnderTest.setTransportFactory("test.TransportFactory");
+      objectUnderTest.setMarshaller("test.Marshaller");
 
       objectUnderTest.afterPropertiesSet();
    }

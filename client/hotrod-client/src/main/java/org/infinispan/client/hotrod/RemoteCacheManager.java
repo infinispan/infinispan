@@ -598,12 +598,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public int getConnectionCount() {
-      int count = channelFactory.getNumActive() + channelFactory.getNumIdle();
-      int maxAllowed = configuration.connectionPool().maxTotal();
-      if (maxAllowed > 0)
-         return Math.min(maxAllowed, count);
-      else
-         return count;
+      return channelFactory.getNumActive() + channelFactory.getNumIdle();
    }
 
    @Override

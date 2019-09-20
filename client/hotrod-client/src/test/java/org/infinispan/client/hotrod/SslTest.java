@@ -82,7 +82,6 @@ public class SslTest extends SingleCacheManagerTest {
             .socketTimeout(3000)
             .connectionPool()
                .maxActive(1)
-               .timeBetweenEvictionRuns(2000)
             .security()
             .authentication()
                .disable()

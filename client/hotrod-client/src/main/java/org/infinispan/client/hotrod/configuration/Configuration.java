@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
@@ -96,36 +95,6 @@ public class Configuration {
       return asyncExecutorFactory;
    }
 
-   /**
-    * Use {@link #balancingStrategyFactory()} instead.
-    *
-    * @deprecated since 9.3
-    */
-   @Deprecated
-   public Class<? extends org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy> balancingStrategyClass() {
-      FailoverRequestBalancingStrategy strategy = balancingStrategyFactory.get();
-      if (org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy.class.isInstance(strategy)) {
-         return (Class<? extends org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy>) strategy.getClass();
-      } else {
-         return org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy.class;
-      }
-   }
-
-   /**
-    * Use {@link #balancingStrategyFactory()} instead.
-    *
-    * @deprecated since 9.3
-    */
-   @Deprecated
-   public org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy balancingStrategy() {
-      FailoverRequestBalancingStrategy strategy = balancingStrategyFactory.get();
-      if (org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy.class.isInstance(strategy)) {
-         return (org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy) strategy;
-      } else {
-         return null;
-      }
-   }
-
    public Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory() {
       return balancingStrategyFactory;
    }
@@ -175,14 +144,6 @@ public class Configuration {
       return nearCache;
    }
 
-   /**
-    * @deprecated Use {@link Configuration#version()} instead.
-    */
-   @Deprecated
-   public String protocolVersion() {
-      return protocolVersion.toString();
-   }
-
    public ProtocolVersion version() {
       return protocolVersion;
    }
@@ -209,11 +170,6 @@ public class Configuration {
 
    public boolean tcpKeepAlive() {
       return tcpKeepAlive;
-   }
-
-   @Deprecated
-   public Class<? extends TransportFactory> transportFactory() {
-      return TransportFactory.class;
    }
 
    public int valueSizeEstimate() {
@@ -269,7 +225,7 @@ public class Configuration {
       if (asyncExecutorFactory().factoryClass() != null) {
          properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, asyncExecutorFactory().factoryClass().getName());
          TypedProperties aefProps = asyncExecutorFactory().properties();
-         for (String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
+         for (String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE)) {
             if (aefProps.containsKey(key)) {
                properties.setProperty(key, aefProps.getProperty(key));
             }
@@ -307,16 +263,6 @@ public class Configuration {
       properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, connectionPool().minEvictableIdleTime());
       properties.setProperty("minEvictableIdleTimeMillis", connectionPool().minEvictableIdleTime());
       properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS, connectionPool().maxPendingRequests());
-
-      // Deprecated properties
-      properties.setProperty("maxIdle", connectionPool().maxIdle());
-      properties.setProperty("maxTotal", connectionPool().maxTotal());
-      properties.setProperty("numTestsPerEvictionRun", connectionPool().numTestsPerEvictionRun());
-      properties.setProperty("timeBetweenEvictionRunsMillis", connectionPool().timeBetweenEvictionRuns());
-      properties.setProperty("lifo", connectionPool().lifo());
-      properties.setProperty("testOnBorrow", connectionPool().testOnBorrow());
-      properties.setProperty("testOnReturn", connectionPool().testOnReturn());
-      properties.setProperty("testWhileIdle", connectionPool().testWhileIdle());
 
       StringBuilder servers = new StringBuilder();
       for (ServerConfiguration server : servers()) {

@@ -13,7 +13,6 @@ import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -25,8 +24,6 @@ import org.infinispan.commons.util.TypedProperties;
  */
 public class ConfigurationProperties {
    private static final String ICH = "infinispan.client.hotrod.";
-   @Deprecated
-   public static final String TRANSPORT_FACTORY = ICH + "transport_factory";
    public static final String SERVER_LIST = ICH + "server_list";
    public static final String MARSHALLER = ICH + "marshaller";
    public static final String ASYNC_EXECUTOR_FACTORY = ICH + "async_executor_factory";
@@ -41,8 +38,6 @@ public class ConfigurationProperties {
    public static final String VALUE_SIZE_ESTIMATE = ICH + "value_size_estimate";
    public static final String FORCE_RETURN_VALUES = ICH + "force_return_values";
    public static final String HASH_FUNCTION_PREFIX = ICH + "hash_function_impl";
-   @Deprecated
-   public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE = ICH + "default_executor_factory.queue_size";
    // Connection properties
    public static final String SO_TIMEOUT = ICH + "socket_timeout";
    public static final String CONNECT_TIMEOUT = ICH + "connect_timeout";
@@ -109,6 +104,11 @@ public class ConfigurationProperties {
    public static final int DEFAULT_CONNECT_TIMEOUT = 60_000;
    public static final int DEFAULT_MAX_RETRIES = 10;
    public static final int DEFAULT_BATCH_SIZE = 10_000;
+   public static final int DEFAULT_MAX_PENDING_REQUESTS = 5;
+   public static final long DEFAULT_MIN_EVICTABLE_IDLE_TIME = 1800000L;
+   public static final int DEFAULT_MAX_ACTIVE = -1;
+   public static final int DEFAULT_MAX_WAIT = -1;
+   public static final int DEFAULT_MIN_IDLE = -1;
 
    private final TypedProperties props;
 
@@ -128,10 +128,6 @@ public class ConfigurationProperties {
 
    public void setServerList(String serverList) {
       props.setProperty(SERVER_LIST, serverList);
-   }
-
-   public String getTransportFactory() {
-      return props.getProperty(TRANSPORT_FACTORY, ChannelFactory.class.getName());
    }
 
    public String getMarshaller() {
@@ -479,7 +475,7 @@ public class ConfigurationProperties {
    }
 
    public int getConnectionPoolMaxActive() {
-      return props.getIntProperty(CONNECTION_POOL_MAX_ACTIVE, -1);
+      return props.getIntProperty(CONNECTION_POOL_MAX_ACTIVE, DEFAULT_MAX_ACTIVE);
    }
 
    public void setConnectionPoolMaxActive(int connectionPoolMaxActive) {
@@ -487,7 +483,7 @@ public class ConfigurationProperties {
    }
 
    public long getConnectionPoolMaxWait() {
-      return props.getLongProperty(CONNECTION_POOL_MAX_WAIT, -1);
+      return props.getLongProperty(CONNECTION_POOL_MAX_WAIT, DEFAULT_MAX_WAIT);
    }
 
    public void setConnectionPoolMaxWait(long connectionPoolMaxWait) {
@@ -495,7 +491,7 @@ public class ConfigurationProperties {
    }
 
    public int gtConnectionPoolMinIdle() {
-      return props.getIntProperty(CONNECTION_POOL_MIN_IDLE, -1);
+      return props.getIntProperty(CONNECTION_POOL_MIN_IDLE, DEFAULT_MIN_IDLE);
    }
 
    public void setConnectionPoolMinIdle(int connectionPoolMinIdle) {
@@ -503,7 +499,7 @@ public class ConfigurationProperties {
    }
 
    public int getConnectionPoolMaxPendingRequests() {
-      return props.getIntProperty(CONNECTION_POOL_MAX_PENDING_REQUESTS, 5);
+      return props.getIntProperty(CONNECTION_POOL_MAX_PENDING_REQUESTS, DEFAULT_MAX_PENDING_REQUESTS);
    }
 
    public void setConnectionPoolMaxPendingRequests(int connectionPoolMaxPendingRequests) {
@@ -511,7 +507,7 @@ public class ConfigurationProperties {
    }
 
    public long setConnectionPoolMinEvictableIdleTime() {
-      return props.getLongProperty(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, 1800000);
+      return props.getLongProperty(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, DEFAULT_MIN_EVICTABLE_IDLE_TIME);
    }
 
    public void setConnectionPoolMinEvictableIdleTime(long connectionPoolMinEvictableIdleTime) {

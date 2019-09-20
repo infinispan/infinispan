@@ -2,12 +2,10 @@ package org.infinispan.persistence.remote.configuration;
 
 import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.EXHAUSTED_ACTION;
 import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_ACTIVE;
-import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_IDLE;
-import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_TOTAL;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_PENDING_REQUESTS;
+import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MAX_WAIT;
 import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MIN_EVICTABLE_IDLE_TIME;
 import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.MIN_IDLE;
-import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.TEST_WHILE_IDLE;
-import static org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration.TIME_BETWEEN_EVICTION_RUNS;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
@@ -64,9 +62,11 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * combined set of servers. When non-positive, there is no limit to the total number of
     * persistent connections in circulation. When maxTotal is exceeded, all connections pools are
     * exhausted. The default setting for this parameter is -1 (no limit).
+    *
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
-      this.attributes.attribute(MAX_TOTAL).set(maxTotal);
       return this;
    }
 
@@ -74,9 +74,21 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * Controls the maximum number of idle persistent connections, per server, at any time. When
     * negative, there is no limit to the number of connections that may be idle per server. The
     * default setting for this parameter is -1.
+    *
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder maxIdle(int maxIdle) {
-      this.attributes.attribute(MAX_IDLE).set(maxIdle);
+      return this;
+   }
+
+   /**
+    * The amount of time in milliseconds to wait for a connection to become available when the
+    * exhausted action is {@link org.infinispan.client.hotrod.configuration.ExhaustedAction#WAIT}, after which a {@link java.util.NoSuchElementException}
+    * will be thrown. If a negative value is supplied, the pool will block indefinitely.
+    */
+   public ConnectionPoolConfigurationBuilder maxWait(int maxWait) {
+      this.attributes.attribute(MAX_WAIT).set(maxWait);
       return this;
    }
 
@@ -96,9 +108,11 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * Indicates how long the eviction thread should sleep before "runs" of examining idle
     * connections. When non-positive, no eviction thread will be launched. The default setting for
     * this parameter is 2 minutes.
+    *
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder timeBetweenEvictionRuns(long timeBetweenEvictionRuns) {
-      this.attributes.attribute(TIME_BETWEEN_EVICTION_RUNS).set(timeBetweenEvictionRuns);
       return this;
    }
 
@@ -119,9 +133,27 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     * server, during idle connection eviction runs. Connections that fail to validate will be
     * dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0.
     * The default setting for this parameter is true.
+    *
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder testWhileIdle(boolean testWhileIdle) {
-      this.attributes.attribute(TEST_WHILE_IDLE).set(testWhileIdle);
+      return this;
+   }
+
+   /**
+    * Specifies maximum number of requests sent over single connection at one instant.
+    * Connections with more concurrent requests will be ignored in the pool when choosing available connection
+    * and the pool will try to create a new connection if all connections are utilized. Only if the new connection
+    * cannot be created and the {@link #exhaustedAction(ExhaustedAction) exhausted action}
+    * is set to {@link org.infinispan.client.hotrod.configuration.ExhaustedAction#WAIT} the pool will allow sending the request over one of the over-utilized
+    * connections.
+    * The rule of thumb is that this should be set to higher values if the values are small (&lt; 1kB) and to lower values
+    * if the entries are big (&gt; 10kB).
+    * Default setting for this parameter is 5.
+    */
+   public ConnectionPoolConfigurationBuilder maxPendingRequests(int maxPendingRequests) {
+      this.attributes.attribute(MAX_PENDING_REQUESTS).set(maxPendingRequests);
       return this;
    }
 
