@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
 
@@ -17,7 +18,7 @@ public class WhiteListMarshallingTest extends SingleHotRodServerTest {
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addJavaSerialWhiteList(".*Person.*");
+      builder.addJavaSerialWhiteList(".*Person.*").marshaller(JavaSerializationMarshaller.class);
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       return new InternalRemoteCacheManager(builder.build());
    }

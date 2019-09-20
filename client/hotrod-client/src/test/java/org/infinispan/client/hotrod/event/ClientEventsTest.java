@@ -11,6 +11,9 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.testng.annotations.Test;
 
 /**
@@ -18,6 +21,11 @@ import org.testng.annotations.Test;
  */
 @Test(groups = {"functional", "smoke"}, testName = "client.hotrod.event.ClientEventsTest")
 public class ClientEventsTest extends SingleHotRodServerTest {
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
+   }
 
    public void testCreatedEvent() {
       final EventLogListener<Integer> l = new EventLogListener<>(remoteCacheManager.getCache());
@@ -220,7 +228,10 @@ public class ClientEventsTest extends SingleHotRodServerTest {
    }
 
    static final class CustomKey implements Serializable {
+      @ProtoField(number = 1, defaultValue = "0")
       final int id;
+
+      @ProtoFactory
       CustomKey(int id) {
          this.id = id;
       }

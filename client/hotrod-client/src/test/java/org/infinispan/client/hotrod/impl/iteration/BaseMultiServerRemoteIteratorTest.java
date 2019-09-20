@@ -16,15 +16,24 @@ import java.util.stream.IntStream;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.BeforeMethod;
@@ -42,6 +51,17 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    @BeforeMethod
    public void clear() {
       clients.forEach(c -> c.getCache().clear());
+   }
+
+   @Override
+   protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
+      builder.serialization().addContextInitializer(SCI.INSTANCE);
+   }
+
+   @Override
+   protected RemoteCacheManager createClient(int i) {
+      Configuration cfg = createHotRodClientConfigurationBuilder(server(i)).contextInitializer(DslSCI.INSTANCE).build();
+      return new InternalRemoteCacheManager(cfg);
    }
 
    @Test
@@ -155,13 +175,14 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       }
    }
 
-   static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Integer, Integer, String> {
+   static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Integer, Integer, String>, Serializable {
       @Override
       public KeyValueFilterConverter<Integer, Integer, String> getFilterConverter() {
          return new HexFilterConverter();
       }
 
-      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Integer, Integer, String> implements Serializable {
+      @ProtoName("HexFilterConverter")
+      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Integer, Integer, String> {
          @Override
          public String filterAndConvert(Integer key, Integer value, Metadata metadata) {
             return Integer.toHexString(value);
@@ -172,7 +193,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
    static final class SubstringFilterFactory implements ParamKeyValueFilterConverterFactory<String, String, String> {
 
-      public static final int DEFAULT_LENGTH = 20;
+      static final int DEFAULT_LENGTH = 20;
 
       @Override
       public KeyValueFilterConverter<String, String, String> getFilterConverter(Object[] params) {
@@ -181,9 +202,16 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
 
       static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> implements Serializable {
-         private final int length;
 
-         public SubstringFilterConverter(Object[] params) {
+         @ProtoField(number = 1, defaultValue = "0")
+         final int length;
+
+         @ProtoFactory
+         SubstringFilterConverter(int length) {
+            this.length = length;
+         }
+
+         SubstringFilterConverter(Object[] params) {
             this.length = (int) (params == null || params.length == 0 ? DEFAULT_LENGTH : params[0]);
          }
 
@@ -205,4 +233,16 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
                  .collect(Collectors.toSet());
    }
 
+   @AutoProtoSchemaBuilder(
+         dependsOn = DslSCI.class,
+         includeClasses = {
+               ToHexConverterFactory.HexFilterConverter.class,
+               SubstringFilterFactory.SubstringFilterConverter.class
+         },
+         schemaFileName = "test.client.BaseMultiServerRemoteIterator.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.client.BaseMultiServerRemoteIterator")
+   interface SCI extends SerializationContextInitializer {
+      SCI INSTANCE = new SCIImpl();
+   }
 }

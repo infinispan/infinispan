@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -552,7 +552,7 @@ public class HotRodTestingUtil {
    private static Marshaller getMarshaller() {
       // Must check for GenericJbossMarshaller as infinispan-jboss-marshalling still used by client
       Marshaller marshaller = Util.getJBossMarshaller(HotRodTestingUtil.class.getClassLoader(), null);
-      return marshaller != null ? marshaller : new JavaSerializationMarshaller();
+      return marshaller != null ? marshaller : new ProtoStreamMarshaller();
    }
 
    public static void withClientListener(HotRodClient client, TestClientListener listener,

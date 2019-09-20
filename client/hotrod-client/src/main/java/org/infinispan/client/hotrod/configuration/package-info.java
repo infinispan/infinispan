@@ -153,7 +153,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.marshaller</b></td>
  *          <td>String (class name)</td>
- *          <td>{@link org.infinispan.commons.marshall.ProtoStreamMarshaller}</td>
+ *          <td>{@link org.infinispan.jboss.marshalling.commons.jboss.GenericJBossMarshaller} if the infinispan-jboss-marshalling module is present on the classpath, otherwise {@link org.infinispan.commons.marshall.ProtoStreamMarshaller} is used</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#marshaller(String) marshaller} that serializes keys and values</td>
  *       </tr>
  *       <tr>

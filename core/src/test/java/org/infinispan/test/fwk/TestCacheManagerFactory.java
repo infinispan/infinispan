@@ -281,6 +281,13 @@ public class TestCacheManagerFactory {
       return createCacheManager(globalBuilder, builder);
    }
 
+   public static EmbeddedCacheManager createServerModeCacheManager(SerializationContextInitializer sci, ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().addContextInitializer(sci);
+      return createServerModeCacheManager(globalBuilder, builder);
+   }
+
+
    public static EmbeddedCacheManager createServerModeCacheManager(GlobalConfigurationBuilder gcb) {
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       return createCacheManager(gcb, new ConfigurationBuilder());

@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.tx.util.KeyValueGenerator;
 import org.infinispan.client.hotrod.tx.util.TransactionSetup;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.Exceptions;
@@ -44,21 +45,24 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
    private static final String CACHE_C = "tx-cache-c";
    private KeyValueGenerator<K, V> kvGenerator;
    private TransactionMode transactionMode;
+   private boolean useJavaSerialization;
 
    @Override
    public Object[] factory() {
       return new Object[]{
-            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
             new MultipleCacheTxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA),
-            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
             new MultipleCacheTxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
             new MultipleCacheTxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(FULL_XA),
-            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA)
+            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
+            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
+            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
+            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA).javaSerialization(),
+            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA).javaSerialization(),
+            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA).javaSerialization()
       };
    }
+
+
 
    @AfterMethod(alwaysRun = true)
    @Override
@@ -265,6 +269,9 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
       clientBuilder.forceReturnValues(false);
       TransactionSetup.amendJTA(clientBuilder);
       clientBuilder.transaction().transactionMode(transactionMode);
+      if (useJavaSerialization) {
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialWhiteList("\\Q[\\ELjava.lang.Object;");
+      }
       return clientBuilder;
    }
 
@@ -286,6 +293,11 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
 
    private MultipleCacheTxFunctionalTest<K, V> transactionMode(TransactionMode transactionMode) {
       this.transactionMode = transactionMode;
+      return this;
+   }
+
+   private MultipleCacheTxFunctionalTest<K, V> javaSerialization() {
+      useJavaSerialization = true;
       return this;
    }
 }

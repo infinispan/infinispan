@@ -5,7 +5,8 @@ import static org.testng.Assert.assertTrue;
 
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.rest.RestTestSCI;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
@@ -23,7 +24,8 @@ public class TextObjectTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = new DefaultTranscoder(new JavaSerializationMarshaller());
+
+      transcoder = new DefaultTranscoder(TestingUtil.createProtoStreamMarshaller(RestTestSCI.INSTANCE));
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

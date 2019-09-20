@@ -28,6 +28,10 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.testng.annotations.Test;
@@ -64,6 +68,11 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
       MarshallerRegistration.registerMarshallers(client(0));
 
       remoteCache = client(0).getCache();
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
    }
 
    @Override
@@ -133,13 +142,17 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
       }
    }
 
+   @ProtoName("RawProtobufCustomEventFilter")
    public static class CustomEventFilter implements CacheEventFilter<byte[], byte[]>, Serializable {
 
       private transient ProtoStreamMarshaller marshaller;
-      private String firstParam;
-      private String secondParam;
+      @ProtoField(number = 1)
+      final String firstParam;
+      @ProtoField(number = 2)
+      final String secondParam;
 
-      public CustomEventFilter(String firstParam, String secondParam) {
+      @ProtoFactory
+      CustomEventFilter(String firstParam, String secondParam) {
          this.firstParam = firstParam;
          this.secondParam = secondParam;
       }

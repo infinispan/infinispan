@@ -15,6 +15,8 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
@@ -32,7 +34,7 @@ public class EventWithStorageTypeTest extends SingleHotRodServerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory().storageType(storageType);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(contextInitializer(), builder);
    }
 
    @Factory
@@ -47,6 +49,11 @@ public class EventWithStorageTypeTest extends SingleHotRodServerTest {
    private Object storageType(StorageType storageType) {
       this.storageType = storageType;
       return this;
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDataSCI.INSTANCE;
    }
 
    @Override
