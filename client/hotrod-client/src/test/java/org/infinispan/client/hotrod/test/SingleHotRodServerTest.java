@@ -7,6 +7,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,7 +22,7 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      return TestCacheManagerFactory.createCacheManager(contextInitializer(), hotRodCacheConfiguration());
    }
 
    @Override
@@ -38,8 +39,12 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
 
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).contextInitializer(contextInitializer());
       return new InternalRemoteCacheManager(builder.build());
+   }
+
+   protected SerializationContextInitializer contextInitializer() {
+      return null;
    }
 
    @Override

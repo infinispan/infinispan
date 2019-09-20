@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -11,15 +12,19 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.query.dsl.embedded.testdomain.Currency;
+import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.LimitsHS;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -31,19 +36,23 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
 
    public static final String FILTER_CONVERTER_FACTORY_NAME = "even-accounts-descriptions";
 
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      return TestCacheManagerFactory.createCacheManager(DslSCI.INSTANCE, hotRodCacheConfiguration());
+   }
+
+   @Override
+   protected RemoteCacheManager getRemoteCacheManager() {
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).contextInitializer(DslSCI.INSTANCE);
+      return new InternalRemoteCacheManager(builder.build());
+   }
+
    @Test
    public void testEmptyCache() {
       try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries(null, null, 100)) {
          assertFalse(iterator.hasNext());
-         assertFalse(iterator.hasNext());
       }
-   }
-
-   @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = super.createCacheManager();
-      cacheManager.getClassWhiteList().addClasses(AccountHS.class, Currency.class, LimitsHS.class);
-      return cacheManager;
    }
 
    @Test

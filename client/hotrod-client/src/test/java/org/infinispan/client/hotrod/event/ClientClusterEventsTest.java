@@ -15,6 +15,8 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -33,6 +35,11 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numOwners(1);
       return hotRodCacheConfiguration(builder);
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return SCI.INSTANCE;
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
@@ -124,4 +131,15 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       });
    }
 
+   @AutoProtoSchemaBuilder(
+         includeClasses = {
+               CustomEvent.class,
+               StaticConverterFactory.StaticConverter.class
+         },
+         schemaFileName = "test.client.ClientClusterEventsTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.client.ClientClusterEventsTest")
+   interface SCI extends SerializationContextInitializer {
+      SCI INSTANCE = new SCIImpl();
+   }
 }

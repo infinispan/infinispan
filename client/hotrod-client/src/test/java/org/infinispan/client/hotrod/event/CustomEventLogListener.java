@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -25,6 +24,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 
 @ClientListener(converterFactoryName = "test-converter-factory")
 public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplier<K> {
@@ -137,16 +139,25 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       expiredCustomEvents.add(e.getEventData());
    }
 
-   public static final class CustomEvent<K> implements Serializable {
-      final K key;
+   public static final class CustomEvent {
+      @ProtoField(number = 1)
+      final Integer key;
+      @ProtoField(number = 2)
       final String value;
+      @ProtoField(number = 3, defaultValue = "-1")
       final long timestamp;
+      @ProtoField(number = 4, defaultValue = "0")
       final int counter;
 
-      public CustomEvent(K key, String value, int counter) {
+      public CustomEvent(Integer key, String value, int counter) {
+         this(key, value, System.nanoTime(), counter);
+      }
+
+      @ProtoFactory
+      CustomEvent(Integer key, String value, long timestamp, int counter) {
          this.key = key;
          this.value = value;
-         this.timestamp = System.nanoTime();
+         this.timestamp = timestamp;
          this.counter = counter;
       }
 
@@ -252,7 +263,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new SimpleConverter();
       }
 
-      static class SimpleConverter<K> implements CacheEventConverter<K, String, String>, Serializable {
+      static class SimpleConverter<K> implements CacheEventConverter<K, String, String> {
          @Override
          public String convert(K key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
             if (newValue != null) return newValue;
@@ -262,15 +273,16 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    @NamedFactory(name = "static-converter-factory")
-   public static class StaticConverterFactory<K> implements CacheEventConverterFactory {
+   public static class StaticConverterFactory implements CacheEventConverterFactory {
       @Override
-      public CacheEventConverter<K, String, CustomEvent> getConverter(Object[] params) {
-         return new StaticConverter<>();
+      public CacheEventConverter<Integer, String, CustomEvent> getConverter(Object[] params) {
+         return new StaticConverter();
       }
 
-      static class StaticConverter<K> implements CacheEventConverter<K, String, CustomEvent>, Serializable {
+      @ProtoName("StaticConverter")
+      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent> {
          @Override
-         public CustomEvent convert(K key, String previousValue, Metadata previousMetadata, String value,
+         public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
             return new CustomEvent(key, value, 0);
          }
@@ -278,13 +290,13 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    @NamedFactory(name = "dynamic-converter-factory")
-   public static class DynamicConverterFactory<K> implements CacheEventConverterFactory {
+   public static class DynamicConverterFactory implements CacheEventConverterFactory {
       @Override
-      public CacheEventConverter<K, String, CustomEvent> getConverter(final Object[] params) {
+      public CacheEventConverter<Integer, String, CustomEvent> getConverter(final Object[] params) {
          return new DynamicConverter(params);
       }
 
-      static class DynamicConverter<K> implements CacheEventConverter<K, String, CustomEvent>, Serializable {
+      static class DynamicConverter implements CacheEventConverter<Integer, String, CustomEvent> {
          private final Object[] params;
 
          public DynamicConverter(Object[] params) {
@@ -292,7 +304,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          }
 
          @Override
-         public CustomEvent convert(K key, String previousValue, Metadata previousMetadata, String value,
+         public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
             if (params[0].equals(key))
                return new CustomEvent(key, null, 0);
@@ -309,7 +321,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new RawStaticConverter();
       }
 
-      static class RawStaticConverter implements CacheEventConverter<byte[], byte[], byte[]>, Serializable {
+      static class RawStaticConverter implements CacheEventConverter<byte[], byte[], byte[]> {
          @Override
          public byte[] convert(byte[] key, byte[] previousValue, Metadata previousMetadata, byte[] value,
                Metadata metadata, EventType eventType) {
@@ -318,7 +330,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       }
    }
 
-   public interface CallbackCounter extends Serializable {
+   public interface CallbackCounter {
       void incr();
       int get();
       void reset();
@@ -351,8 +363,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new FilterConverter(params);
       }
 
-      static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
-         implements Serializable {
+      static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent> {
          private final Object[] params;
          private final CallbackCounter counter = new NumericCallbackCounter();
 

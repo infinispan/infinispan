@@ -14,6 +14,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -63,8 +64,13 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       clientBuilder.addServer()
             .host(host)
             .port(serverPort)
-            .maxRetries(maxRetries());
+            .maxRetries(maxRetries())
+            .contextInitializer(contextInitializer());
       return clientBuilder;
+   }
+
+   protected SerializationContextInitializer contextInitializer() {
+      return null;
    }
 
    protected int maxRetries() {
@@ -155,6 +161,6 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
-
+      builder.serialization().addContextInitializer(contextInitializer());
    }
 }

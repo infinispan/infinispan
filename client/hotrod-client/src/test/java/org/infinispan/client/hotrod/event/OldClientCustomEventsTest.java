@@ -54,8 +54,7 @@ public class OldClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(l, remote -> {
          l.expectNoEvents();
          remote.put("key-1", "one");
-         l.expectCreatedEvent(new CustomEvent<>("key-1", "one", 0));
+         l.expectCreatedEvent(new CustomEvent(1, "one", 0));
       });
    }
-
 }
