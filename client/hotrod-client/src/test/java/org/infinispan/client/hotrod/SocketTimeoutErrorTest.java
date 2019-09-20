@@ -12,9 +12,8 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -92,9 +91,7 @@ public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
       }
 
       private String unmarshall(Object key) throws Exception {
-         Marshaller marshaller = new GenericJBossMarshaller();
-         return (String) marshaller.objectFromByteBuffer(((WrappedByteArray) key).getBytes());
+         return (String) new ProtoStreamMarshaller().objectFromByteBuffer(((WrappedByteArray) key).getBytes());
       }
    }
-
 }

@@ -5,13 +5,14 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
@@ -24,6 +25,11 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 
 @ClientListener
 public class EventLogListener<K> implements RemoteCacheSupplier<K> {
@@ -246,20 +252,27 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
 
       @Override
       public CacheEventFilter<K, String> getFilter(final Object[] params) {
-         return new StaticCacheEventFilter(staticKey);
+         return new StaticCacheEventFilter<>(staticKey);
       }
 
-      static class StaticCacheEventFilter<K> implements CacheEventFilter<K, String>, Serializable {
-         final K staticKey;
+      static class StaticCacheEventFilter<K> implements CacheEventFilter<K, String> {
+         @ProtoField(number = 1)
+         final WrappedMessage staticKey;
 
          StaticCacheEventFilter(K staticKey) {
+            this.staticKey = new WrappedMessage(staticKey);
+         }
+
+         @ProtoFactory
+         StaticCacheEventFilter(WrappedMessage staticKey) {
             this.staticKey = staticKey;
          }
+
 
          @Override
          public boolean accept(K key, String previousValue, Metadata previousMetadata, String value,
                                Metadata metadata, EventType eventType) {
-            return staticKey.equals(key);
+            return staticKey.getValue().equals(key);
          }
       }
    }
@@ -271,11 +284,21 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
          return new DynamicCacheEventFilter(params);
       }
 
-      static class DynamicCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
+      static class DynamicCacheEventFilter implements CacheEventFilter<Integer, String> {
          private final Object[] params;
 
          public DynamicCacheEventFilter(Object[] params) {
             this.params = params;
+         }
+
+         @ProtoFactory
+         DynamicCacheEventFilter(ArrayList<WrappedMessage> wrappedParams) {
+            this.params = wrappedParams == null ? null : wrappedParams.toArray();
+         }
+
+         @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+         List<WrappedMessage> getWrappedParams() {
+            return Arrays.stream(params).map(WrappedMessage::new).collect(Collectors.toList());
          }
 
          @Override
@@ -290,11 +313,26 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
    public static class RawStaticCacheEventFilterFactory implements CacheEventFilterFactory {
       @Override
       public CacheEventFilter<byte[], byte[]> getFilter(final Object[] params) {
-         return new RawStaticCacheEventFilter();
+         try {
+            // Static key is 2 marshalled
+            byte[] staticKey = ProtobufUtil.toWrappedByteArray(ProtobufUtil.newSerializationContext(), 2);
+            return new RawStaticCacheEventFilter(staticKey);
+         } catch (IOException e) {
+            throw new IllegalStateException(e);
+         }
       }
 
-      static class RawStaticCacheEventFilter implements CacheEventFilter<byte[], byte[]>, Serializable {
-         final byte[] staticKey = new byte[]{3, 75, 0, 0, 0, 2}; // key integer `2`, as marshalled by GenericJBossMarshaller
+      @ProtoName("RawStaticCacheEventFilter")
+      static class RawStaticCacheEventFilter implements CacheEventFilter<byte[], byte[]> {
+
+         @ProtoField(number = 1)
+         final byte[] staticKey;
+
+         @ProtoFactory
+         RawStaticCacheEventFilter(byte[] staticKey) {
+            this.staticKey = staticKey;
+         }
+
          @Override
          public boolean accept(byte[] key, byte[] previousValue, Metadata previousMetadata, byte[] value,
                Metadata metadata, EventType eventType) {
@@ -302,5 +340,4 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
          }
       }
    }
-
 }

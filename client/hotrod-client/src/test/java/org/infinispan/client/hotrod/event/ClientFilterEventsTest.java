@@ -15,12 +15,18 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLo
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientFilterEventsTest")
 public class ClientFilterEventsTest extends SingleHotRodServerTest {
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
+   }
 
    @Override
    protected HotRodServer createHotRodServer() {

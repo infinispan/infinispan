@@ -31,6 +31,7 @@ public class ProtostreamObjectTranscoder implements Transcoder {
       supportedTypes = new HashSet<>();
       supportedTypes.add(APPLICATION_OBJECT);
       supportedTypes.add(APPLICATION_PROTOSTREAM);
+//      supportedTypes.add(APPLICATION_UNKNOWN);
    }
 
    @Override
@@ -45,7 +46,9 @@ public class ProtostreamObjectTranscoder implements Transcoder {
             byte[] bytes = (byte[]) content;
             return ProtobufUtil.fromByteArray(ctx, bytes, 0, bytes.length, destination);
          }
+         // TEst fails when this is called. Does it?
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
+//         if (destinationType.matchesAny(APPLICATION_PROTOSTREAM, APPLICATION_UNKNOWN)) {
             Object decoded = StandardConversions.decodeObjectContent(content, contentType);
             Optional<String> wrappedParam = destinationType.getParameter("wrapped");
             if (!wrappedParam.isPresent() || !wrappedParam.get().equals("false"))

@@ -6,10 +6,14 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
@@ -25,6 +29,10 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 
 @ClientListener(converterFactoryName = "test-converter-factory")
 public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplier<K> {
@@ -137,16 +145,25 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       expiredCustomEvents.add(e.getEventData());
    }
 
-   public static final class CustomEvent<K> implements Serializable {
-      final K key;
+   public static final class CustomEvent<K> {
+      @ProtoField(number = 1)
+      final WrappedMessage key;
+      @ProtoField(number = 2)
       final String value;
+      @ProtoField(number = 3, defaultValue = "-1")
       final long timestamp;
+      @ProtoField(number = 4, defaultValue = "0")
       final int counter;
 
       public CustomEvent(K key, String value, int counter) {
+         this(new WrappedMessage(key), value, System.nanoTime(), counter);
+      }
+
+      @ProtoFactory
+      CustomEvent(WrappedMessage key, String value, long timestamp, int counter) {
          this.key = key;
          this.value = value;
-         this.timestamp = System.nanoTime();
+         this.timestamp = timestamp;
          this.counter = counter;
       }
 
@@ -158,13 +175,13 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          CustomEvent that = (CustomEvent) o;
 
          if (counter != that.counter) return false;
-         if (!key.equals(that.key)) return false;
+         if (!key.getValue().equals(that.key.getValue())) return false;
          return !(value != null ? !value.equals(that.value) : that.value != null);
       }
 
       @Override
       public int hashCode() {
-         int result = key.hashCode();
+         int result = key.getValue().hashCode();
          result = 31 * result + (value != null ? value.hashCode() : 0);
          result = 31 * result + counter;
          return result;
@@ -173,7 +190,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       @Override
       public String toString() {
          return "CustomEvent{" +
-               "key=" + key +
+               "key=" + key.getValue() +
                ", value='" + value + '\'' +
                ", timestamp=" + timestamp +
                ", counter=" + counter +
@@ -252,6 +269,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new SimpleConverter();
       }
 
+      @ProtoName("SimpleConverter")
       static class SimpleConverter<K> implements CacheEventConverter<K, String, String>, Serializable {
          @Override
          public String convert(K key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
@@ -268,11 +286,12 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new StaticConverter<>();
       }
 
+      @ProtoName("StaticConverter")
       static class StaticConverter<K> implements CacheEventConverter<K, String, CustomEvent>, Serializable {
          @Override
          public CustomEvent convert(K key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
-            return new CustomEvent(key, value, 0);
+            return new CustomEvent<>(key, value, 0);
          }
       }
    }
@@ -281,7 +300,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    public static class DynamicConverterFactory<K> implements CacheEventConverterFactory {
       @Override
       public CacheEventConverter<K, String, CustomEvent> getConverter(final Object[] params) {
-         return new DynamicConverter(params);
+         return new DynamicConverter<>(params);
       }
 
       static class DynamicConverter<K> implements CacheEventConverter<K, String, CustomEvent>, Serializable {
@@ -291,13 +310,23 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
             this.params = params;
          }
 
+         @ProtoFactory
+         DynamicConverter(ArrayList<WrappedMessage> wrappedParams) {
+            this.params = wrappedParams == null ? null : wrappedParams.toArray();
+         }
+
+         @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+         List<WrappedMessage> getWrappedParams() {
+            return Arrays.stream(params).map(WrappedMessage::new).collect(Collectors.toList());
+         }
+
          @Override
          public CustomEvent convert(K key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
             if (params[0].equals(key))
-               return new CustomEvent(key, null, 0);
+               return new CustomEvent<>(key, null, 0);
 
-            return new CustomEvent(key, value, 0);
+            return new CustomEvent<>(key, value, 0);
          }
       }
    }
@@ -309,6 +338,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          return new RawStaticConverter();
       }
 
+      @ProtoName("RawStaticConverter")
       static class RawStaticConverter implements CacheEventConverter<byte[], byte[], byte[]>, Serializable {
          @Override
          public byte[] convert(byte[] key, byte[] previousValue, Metadata previousMetadata, byte[] value,
@@ -325,6 +355,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    public static final class NumericCallbackCounter implements CallbackCounter {
+      @ProtoField(number = 1, defaultValue = "0")
       int count = 0;
 
       @Override
@@ -354,10 +385,24 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
          implements Serializable {
          private final Object[] params;
-         private final CallbackCounter counter = new NumericCallbackCounter();
+
+         @ProtoField(number = 1)
+         final NumericCallbackCounter counter;
 
          FilterConverter(Object[] params) {
             this.params = params;
+            this.counter = new NumericCallbackCounter();
+         }
+
+         @ProtoFactory
+         FilterConverter(List<WrappedMessage> wrappedParams, NumericCallbackCounter counter) {
+            this.params = wrappedParams == null ? null : wrappedParams.toArray();
+            this.counter = counter;
+         }
+
+         @ProtoField(number = 2, collectionImplementation = ArrayList.class)
+         List<WrappedMessage> getWrappedParams() {
+            return Arrays.stream(params).map(WrappedMessage::new).collect(Collectors.toList());
          }
 
          @Override
@@ -365,9 +410,9 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
             String newValue, Metadata newMetadata, EventType eventType) {
             counter.incr();
             if (params[0].equals(key))
-               return new CustomEvent(key, null, counter.get());
+               return new CustomEvent<>(key, null, counter.get());
 
-            return new CustomEvent(key, newValue, counter.get());
+            return new CustomEvent<>(key, newValue, counter.get());
          }
       }
    }
@@ -385,5 +430,4 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       System.arraycopy(b, 0, ret, aLen, bLen);
       return ret;
    }
-
 }

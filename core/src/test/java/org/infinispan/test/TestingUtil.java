@@ -61,13 +61,14 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Version;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -104,6 +105,9 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
@@ -1863,5 +1867,12 @@ public class TestingUtil {
       while ((length = is.read(buffer)) > 0) {
          os.write(buffer, 0, length);
       }
+   }
+
+   public static ProtoStreamMarshaller createProtoStreamMarshaller(SerializationContextInitializer sci) {
+      SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      sci.registerSchema(ctx);
+      sci.registerMarshallers(ctx);
+      return new ProtoStreamMarshaller(ctx);
    }
 }

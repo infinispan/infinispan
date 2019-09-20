@@ -48,7 +48,7 @@ public class ProtostreamJsonTranscoder implements Transcoder {
          }
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
             Reader reader;
-            content = addTypeIfNeeded(content);
+            content = addTypeIfNeeded(content, contentType);
             if (content instanceof byte[]) {
                reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
             } else {
@@ -62,7 +62,7 @@ public class ProtostreamJsonTranscoder implements Transcoder {
       throw log.unsupportedContent(content);
    }
 
-   private Object addTypeIfNeeded(Object content) {
+   private Object addTypeIfNeeded(Object content, MediaType type) {
       String wrapped = "{ \"_type\":\"%s\", \"_value\":\"%s\"}";
       if (content instanceof Integer || content instanceof Short) {
          return String.format(wrapped, "int32", content);

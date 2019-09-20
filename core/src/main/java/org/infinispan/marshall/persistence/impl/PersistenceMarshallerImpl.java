@@ -83,6 +83,10 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       register(new PersistenceContextInitializerImpl());
    }
 
+   public SerializationContext getSerializationContext() {
+      return serializationContext;
+   }
+
    private Marshaller createUserMarshaller() {
       GlobalConfiguration globalConfig = gcr.getGlobalConfiguration();
       SerializationConfiguration serializationConfig = globalConfig.serialization();

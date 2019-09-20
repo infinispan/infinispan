@@ -1,10 +1,14 @@
 package org.infinispan.server.core.dataconversion;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
@@ -20,19 +24,24 @@ public class ProtostreamTextTranscoder implements Transcoder {
 
    public ProtostreamTextTranscoder(SerializationContext ctx) {
       supported = new HashSet<>();
-      supported.add(MediaType.APPLICATION_PROTOSTREAM);
-      supported.add(MediaType.TEXT_PLAIN);
+      supported.add(APPLICATION_PROTOSTREAM);
+      supported.add(TEXT_PLAIN);
       this.ctx = ctx;
    }
 
    @Override
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       try {
-         if (destinationType.match(MediaType.APPLICATION_PROTOSTREAM)) {
-            return ProtobufUtil.toWrappedByteArray(ctx, content);
+         if (destinationType.match(APPLICATION_PROTOSTREAM)) {
+            if (contentType.match(TEXT_PLAIN)) {
+               String decoded = StandardConversions.convertTextToObject(content, contentType);
+               return marshall(decoded);
+            }
+            return marshall(content);
          }
-         if (destinationType.match(MediaType.TEXT_PLAIN)) {
-            return ProtobufUtil.fromWrappedByteArray(ctx, (byte[]) content);
+         if (destinationType.match(TEXT_PLAIN)) {
+            String decoded = ProtobufUtil.fromWrappedByteArray(ctx, (byte[]) content);
+            return decoded.getBytes(destinationType.getCharset());
          }
       } catch (IOException e) {
          throw log.errorTranscoding(e);
@@ -43,5 +52,9 @@ public class ProtostreamTextTranscoder implements Transcoder {
    @Override
    public Set<MediaType> getSupportedMediaTypes() {
       return supported;
+   }
+
+   private byte[] marshall(Object o) throws IOException {
+      return ProtobufUtil.toWrappedByteArray(ctx, o);
    }
 }

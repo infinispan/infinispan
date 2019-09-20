@@ -40,6 +40,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Gender;
@@ -93,6 +94,11 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(client(0));
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

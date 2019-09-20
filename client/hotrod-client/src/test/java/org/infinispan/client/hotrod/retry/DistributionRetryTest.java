@@ -19,7 +19,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
@@ -118,8 +118,8 @@ public class DistributionRetryTest extends AbstractRetryTest {
       assertOnlyServerHit(getAddress(hotRodServer2));
       ChannelFactory channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
 
-      Marshaller sm = new GenericJBossMarshaller();
-      Channel channel = channelFactory.fetchChannelAndInvoke(sm.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes(), new NoopChannelOperation()).join();
+      Marshaller m = new ProtoStreamMarshaller();
+      Channel channel = channelFactory.fetchChannelAndInvoke(m.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes(), new NoopChannelOperation()).join();
       try {
          assertEquals(channel.remoteAddress(), new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()));
       } finally {
@@ -139,9 +139,8 @@ public class DistributionRetryTest extends AbstractRetryTest {
       @Override
       public byte[] getKey() {
          String result = String.valueOf(r.nextLong());
-         Marshaller sm = new GenericJBossMarshaller();
          try {
-            return sm.objectToByteBuffer(result, 64);
+            return new ProtoStreamMarshaller().objectToByteBuffer(result, 64);
          } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
          }
@@ -149,8 +148,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
       public static String getStringObject(byte[] bytes) {
          try {
-            Marshaller sm = new GenericJBossMarshaller();
-            return (String) sm.objectFromByteBuffer(bytes);
+            return (String) new ProtoStreamMarshaller().objectFromByteBuffer(bytes);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

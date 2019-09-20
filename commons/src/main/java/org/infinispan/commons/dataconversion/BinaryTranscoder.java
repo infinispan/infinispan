@@ -24,6 +24,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
 
    private final AtomicReference<Marshaller> marshallerRef;
 
+   // TODO pass Ctx instead of marshaller
    public BinaryTranscoder(Marshaller marshaller) {
       super(APPLICATION_UNKNOWN, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, APPLICATION_WWW_FORM_URLENCODED, TEXT_PLAIN);
       this.marshallerRef = new AtomicReference<>(marshaller);
@@ -85,6 +86,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
       }
    }
 
+   // TODO WTF
    private Object convertToUrlEncoded(Object content, MediaType contentType) {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
          return StandardConversions.convertOctetStreamToUrlEncoded(content, contentType);

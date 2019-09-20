@@ -4,9 +4,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.embedded.testdomain.Currency;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.LimitsHS;
+import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -26,8 +24,6 @@ public class SingleServerObjectStorageRemoteIteratorTest extends SingleServerRem
       ConfigurationBuilder cb = HotRodTestingUtil.hotRodCacheConfiguration();
       cb.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cb.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager(cb);
-      cacheManager.getClassWhiteList().addClasses(AccountHS.class, Currency.class, LimitsHS.class);
-      return cacheManager;
+      return TestCacheManagerFactory.createServerModeCacheManager(DslSCI.INSTANCE, cb);
    }
 }

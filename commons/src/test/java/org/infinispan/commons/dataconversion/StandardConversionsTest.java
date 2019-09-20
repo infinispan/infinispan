@@ -16,9 +16,11 @@ import static org.junit.Assert.assertNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.time.Instant;
 import java.util.Calendar;
 
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -91,7 +93,7 @@ public class StandardConversionsTest {
       byte[] textStream = value.getBytes(UTF_8);
       byte[] randomBytes = new byte[]{23, 23, 34, 1, -1, -123};
 
-      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
+      Marshaller marshaller = new ProtoStreamMarshaller();
 
       MediaType stringType = APPLICATION_OBJECT.withParameter("type", "java.lang.String");
       Object result = StandardConversions.convertOctetStreamToJava(textStream, stringType, marshaller);
@@ -132,10 +134,10 @@ public class StandardConversionsTest {
 
    @Test
    public void testJavaToOctetStreamConversion() throws IOException, InterruptedException {
-      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
+      Marshaller marshaller = new ProtoStreamMarshaller();
       String string = "I've seen things you people wouldn't believe.";
       Double number = 12.1d;
-      Calendar complex = Calendar.getInstance();
+      Instant complex = Instant.now();
       byte[] binary = new byte[]{1, 2, 3};
 
       MediaType stringType = APPLICATION_OBJECT.withParameter("type", "java.lang.String");
@@ -162,8 +164,8 @@ public class StandardConversionsTest {
       assertEquals("", bytesToHex(new byte[]{}));
       assertArrayEquals(new byte[]{}, hexToBytes(""));
 
-      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
-      byte[] before = marshaller.objectToByteBuffer(Calendar.getInstance());
+      Marshaller marshaller = new ProtoStreamMarshaller();
+      byte[] before = marshaller.objectToByteBuffer(Instant.now());
       byte[] after = hexToBytes(bytesToHex(before));
       assertArrayEquals(before, after);
 

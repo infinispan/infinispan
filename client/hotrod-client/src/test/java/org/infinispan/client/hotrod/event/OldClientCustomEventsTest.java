@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -36,6 +37,11 @@ public class OldClientCustomEventsTest extends SingleHotRodServerTest {
       return new InternalRemoteCacheManager(builder.build());
    }
 
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
+   }
+
    public void testFilteredEvents() {
       final EventLogListener.StaticFilteredEventLogListener<String> l = new EventLogListener.StaticFilteredEventLogListener<>(remoteCacheManager.getCache());
       withClientListener(l, new Object[]{"match"}, new Object[]{}, remote -> {
@@ -54,8 +60,7 @@ public class OldClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(l, remote -> {
          l.expectNoEvents();
          remote.put("key-1", "one");
-         l.expectCreatedEvent(new CustomEvent<>("key-1", "one", 0));
+         l.expectCreatedEvent(new CustomEvent(1, "one", 0));
       });
    }
-
 }

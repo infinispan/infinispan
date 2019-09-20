@@ -456,6 +456,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             sci.registerMarshallers(ctx);
          }
          this.marshaller = protoMarshaller;
+         this.marshallerClass = marshaller.getClass();
       }
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
