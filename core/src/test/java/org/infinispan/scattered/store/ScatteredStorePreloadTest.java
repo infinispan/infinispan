@@ -20,8 +20,8 @@ public class ScatteredStorePreloadTest extends DistStorePreloadTest<ScatteredSto
    @Override
    public Object[] factory() {
       return new Object[] {
-            new ScatteredStorePreloadTest().segmented(true),
-            new ScatteredStorePreloadTest().segmented(false),
+            new ScatteredStorePreloadTest().segmented(true).shared(true).preload(true),
+            new ScatteredStorePreloadTest().segmented(false).shared(true).preload(true),
       };
    }
 

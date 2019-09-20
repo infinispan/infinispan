@@ -94,6 +94,12 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       }
    }
 
+   @Override
+   protected void killMember(int cacheIndex, String cacheName, boolean awaitRehash) {
+      super.killMember(cacheIndex, cacheName, awaitRehash);
+      caches.remove(cacheIndex);
+   }
+
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(cacheMode, transactional);
       configuration.clustering().stateTransfer().fetchInMemoryState(performRehashing);

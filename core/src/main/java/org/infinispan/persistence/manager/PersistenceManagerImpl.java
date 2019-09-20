@@ -66,8 +66,6 @@ import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
@@ -324,9 +322,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       Long insertAmount = Flowable.fromPublisher(preloadCl.publishEntries(null, true, true))
             .take(maxEntries)
             .doOnNext(me -> {
-               //the downcast will go away with ISPN-3460
-               Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl) me.getMetadata()).actual() : null;
-               preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
+               preloadKey(flaggedCache, me);
             }).count().blockingGet();
       this.preloaded = insertAmount < maxEntries;
 
@@ -1127,13 +1123,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Long.MAX_VALUE;
    }
 
-   private void preloadKey(AdvancedCache<Object, Object> cache, Object key, Object value, Metadata metadata) {
+   private void preloadKey(AdvancedCache<Object, Object> cache, MarshalledEntry me) {
       final Transaction transaction = suspendIfNeeded();
       boolean success = false;
       try {
          try {
             beginIfNeeded();
-            cache.put(key, value, metadata);
+            cache.put(me.getKey(), me.getValue(), me.getMetadata());
             success = true;
          } catch (Exception e) {
             throw new PersistenceException("Unable to preload!", e);
