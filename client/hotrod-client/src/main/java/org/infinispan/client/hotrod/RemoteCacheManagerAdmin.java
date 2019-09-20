@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import java.util.EnumSet;
-
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
@@ -65,19 +63,6 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    @Override
    <K, V> RemoteCache<K, V> getOrCreateCache(String name, BasicConfiguration configuration) throws HotRodClientException;
-
-   /**
-    * Creates a cache on the remote server cluster using the specified template and flags.
-    *
-    * @param name the name of the cache to create
-    * @param template the template to use for the cache. If null, the configuration marked as default on the server
-    *                 will be used
-    * @param flags an {@link EnumSet} of flags to use when creating the cache. See {@link AdminFlag}
-    * @throws HotRodClientException
-    * @deprecated use {@link #withFlags(AdminFlag...)} instead
-    */
-   @Deprecated
-   void createCache(String name, String template, EnumSet<org.infinispan.client.hotrod.AdminFlag> flags) throws HotRodClientException;
 
    /**
     * Removes a cache from the remote server cluster.

@@ -131,8 +131,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
     * @see ConfigurationPropertiesOverrides#setTransportFactory(String)
     */
    @Deprecated
-   public void setTransportFactory(final String TransportFactory) {
-      this.configurationPropertiesOverrides.setTransportFactory(TransportFactory);
+   public void setTransportFactory(final String transportFactory) {
    }
 
    /**

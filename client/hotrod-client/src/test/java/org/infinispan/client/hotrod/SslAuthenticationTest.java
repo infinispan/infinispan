@@ -116,7 +116,6 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
             .socketTimeout(3000)
             .connectionPool()
                .maxActive(1)
-               .timeBetweenEvictionRuns(2000)
             .security()
                .authentication()
                   .enable()

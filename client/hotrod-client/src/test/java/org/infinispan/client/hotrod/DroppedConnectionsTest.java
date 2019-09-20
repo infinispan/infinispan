@@ -40,9 +40,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .connectionPool()
-               .testWhileIdle(false)
                .minIdle(1)
-               .maxIdle(2)
                .maxActive(2)
             .addServer().host(hotRodServer.getHost()).port(hotRodServer.getPort());
 

@@ -1,5 +1,8 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,10 +46,10 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       );
 
       RemoteStoreConfiguration store = (RemoteStoreConfiguration) buildCacheManagerWithCacheStore(config);
-      assert store.servers().size() == 2;
-      assert store.connectionPool().exhaustedAction() == ExhaustedAction.CREATE_NEW;
-      assert store.asyncExecutorFactory().properties().getIntProperty("maxThreads", 0) == 4;
-      assert store.async().enabled();
+      assertEquals(2, store.servers().size());
+      assertEquals(ExhaustedAction.CREATE_NEW, store.connectionPool().exhaustedAction());
+      assertEquals(4, store.asyncExecutorFactory().properties().getIntProperty("maxThreads", 0));
+      assertTrue(store.async().enabled());
    }
 
    private StoreConfiguration buildCacheManagerWithCacheStore(final String config) throws IOException {

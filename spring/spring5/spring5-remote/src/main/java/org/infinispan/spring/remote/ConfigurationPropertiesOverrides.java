@@ -11,7 +11,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 
 import java.net.InetSocketAddress;
@@ -44,9 +43,10 @@ public class ConfigurationPropertiesOverrides {
 
    /**
     * @param TransportFactory
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    public void setTransportFactory(final String TransportFactory) {
-      this.overridingProperties.setProperty(TRANSPORT_FACTORY, TransportFactory);
    }
 
    /**

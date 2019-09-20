@@ -39,12 +39,11 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
          .initializer(ArrayList::new).autoPersist(false).build();
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long)ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).build();
-   static final AttributeDefinition<String> TRANSPORT_FACTORY = AttributeDefinition.builder("transportFactory", null, String.class).immutable().build();
    private final List<ConfigurationInfo> subElements;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, TRANSPORT_FACTORY, VALUE_SIZE_ESTIMATE);
+            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE);
    }
 
    static ElementDefinition ELELEMENT_DEFINITION = new DefaultElementDefinition(REMOTE_STORE.getLocalName());
@@ -62,7 +61,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<List<RemoteServerConfiguration>> servers;
    private final Attribute<Long> socketTimeout;
    private final Attribute<Boolean> tcpNoDelay;
-   private final Attribute<String> transportFactory;
    private final ConnectionPoolConfiguration connectionPool;
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final SecurityConfiguration security;
@@ -84,7 +82,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       servers = attributes.attribute(SERVERS);
       socketTimeout = attributes.attribute(SOCKET_TIMEOUT);
       tcpNoDelay = attributes.attribute(TCP_NO_DELAY);
-      transportFactory = attributes.attribute(TRANSPORT_FACTORY);
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.connectionPool = connectionPool;
       this.security = security;
@@ -161,8 +158,12 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       return tcpNoDelay.get();
    }
 
+   /**
+    * @deprecated since 10.0. This method always returns null
+    */
+   @Deprecated
    public String transportFactory() {
-      return transportFactory.get();
+      return null;
    }
 
    public int valueSizeEstimate() {

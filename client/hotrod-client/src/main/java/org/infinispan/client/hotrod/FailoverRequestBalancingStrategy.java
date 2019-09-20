@@ -8,8 +8,6 @@ import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Defines what servers will be selected when a smart-routed request fails.
- *
- * Note: this replaces deprecated {@link org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy}
  */
 @NotThreadSafe
 public interface FailoverRequestBalancingStrategy {

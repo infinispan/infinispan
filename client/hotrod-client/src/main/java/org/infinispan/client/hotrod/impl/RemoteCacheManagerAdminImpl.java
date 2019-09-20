@@ -79,13 +79,6 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
-   public void createCache(String name, String template, EnumSet<org.infinispan.client.hotrod.AdminFlag> flags) {
-      EnumSet<AdminFlag> newFlags = EnumSet.noneOf(AdminFlag.class);
-      for(org.infinispan.client.hotrod.AdminFlag flag : flags) newFlags.add(flag.upgrade());
-      new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, newFlags, remover).createCache(name, template);
-   }
-
-   @Override
    public void removeCache(String name) {
       remover.accept(name);
       Map<String, byte[]> params = new HashMap<>(2);

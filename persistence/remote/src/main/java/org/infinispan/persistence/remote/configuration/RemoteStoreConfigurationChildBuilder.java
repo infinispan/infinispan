@@ -83,7 +83,6 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
     */
    RemoteStoreConfigurationBuilder remoteCacheName(String remoteCacheName);
 
-
    /**
     * Configures connection security
     */
@@ -102,12 +101,18 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
 
    /**
     * Controls which transport to use. Currently only the TcpTransport is supported.
+    *
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    RemoteStoreConfigurationBuilder transportFactory(String transportFactory);
 
    /**
     * Controls which transport to use. Currently only the TcpTransport is supported.
+    *
+    * @deprecated since 10.0. This method has no effect
     */
+   @Deprecated
    RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory);
 
    /**

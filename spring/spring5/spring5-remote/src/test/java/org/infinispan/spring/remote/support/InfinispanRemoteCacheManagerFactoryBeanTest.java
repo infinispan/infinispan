@@ -77,7 +77,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest extends AbstractInfinis
          throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setConfigurationProperties(new Properties());
-      objectUnderTest.setTransportFactory("test.TransportFactory");
+      objectUnderTest.setMarshaller("test.Marshaller");
 
       objectUnderTest.afterPropertiesSet();
    }

@@ -376,12 +376,8 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             .connectionPool()
             .exhaustedAction(ExhaustedAction.valueOf(poolConfiguration.exhaustedAction().toString()))
             .maxActive(poolConfiguration.maxActive())
-            .maxIdle(poolConfiguration.maxIdle())
-            .maxTotal(poolConfiguration.maxTotal())
             .minIdle(poolConfiguration.minIdle())
             .minEvictableIdleTime(poolConfiguration.minEvictableIdleTime())
-            .testWhileIdle(poolConfiguration.testWhileIdle())
-            .timeBetweenEvictionRuns(poolConfiguration.timeBetweenEvictionRuns())
             .connectionTimeout(connectionTimeout.intValue())
             .forceReturnValues(configuration.forceReturnValues())
             .keySizeEstimate(configuration.keySizeEstimate())
@@ -392,8 +388,6 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             .valueSizeEstimate(configuration.valueSizeEstimate())
             .version(configuration.protocol() == null ? ProtocolVersion.DEFAULT_PROTOCOL_VERSION : configuration.protocol());
 
-      if (configuration.transportFactory() != null)
-         builder.transportFactory(configuration.transportFactory());
       SslConfiguration ssl = configuration.security().ssl();
       if (ssl.enabled()) {
          builder.security().ssl()

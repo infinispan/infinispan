@@ -13,7 +13,6 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SERVERS;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TRANSPORT_FACTORY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
 
 import java.util.ArrayList;
@@ -174,7 +173,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
 
    @Override
    public RemoteStoreConfigurationBuilder transportFactory(String transportFactory) {
-      attributes.attribute(TRANSPORT_FACTORY).set(transportFactory);
       return this;
    }
 

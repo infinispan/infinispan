@@ -6,11 +6,12 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
- * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy}.
+ * Round-robin implementation for {@link org.infinispan.client.hotrod.FailoverRequestBalancingStrategy}.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -58,13 +59,6 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
       }
    }
 
-   /**
-    * Returns same value as {@link FailoverRequestBalancingStrategy#nextServer(java.util.Set)} without modifying indexes/state.
-    */
-   public SocketAddress dryRunNextServer() {
-      return getServerByIndex(index);
-   }
-
    private SocketAddress getServerByIndex(int pos) {
       SocketAddress server = servers[pos];
       if (trace) {
@@ -75,9 +69,5 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
 
    public SocketAddress[] getServers() {
       return servers;
-   }
-
-   public int getNextPosition() {
-      return index;
    }
 }

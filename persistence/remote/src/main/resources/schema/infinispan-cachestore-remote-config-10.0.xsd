@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+<xs:schema elementFormDefault="qualified" version="1.0"
            targetNamespace="urn:infinispan:config:store:remote:10.0"
            xmlns:tns="urn:infinispan:config:store:remote:10.0"
            xmlns:config="urn:infinispan:config:10.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -114,13 +114,6 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="transport-factory" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              Controls which transport to use. Currently only the TcpTransport is supported.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="value-size-estimate" type="xs:int" default="${RemoteStore.valueSizeEstimate}">
           <xs:annotation>
             <xs:documentation>
@@ -147,31 +140,19 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-idle" type="xs:int" default="${ConnectionPool.maxIdle}">
-      <xs:annotation>
-        <xs:documentation>
-          Controls the maximum number of idle persistent connections, per server, at any time. When negative, there is no limit to the number of connections that may be idle per server. The default setting for this parameter is -1.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="max-total" type="xs:int" default="-${ConnectionPool.maxTotal}">
-      <xs:annotation>
-        <xs:documentation>
-          Sets a global limit on the number persistent connections that can be in circulation within the combined set of servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit).
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="min-idle-time" type="xs:int" default="${ConnectionPool.minIdle}">
+    <xs:attribute name="min-idle" type="xs:int" default="${ConnectionPool.minIdle}">
       <xs:annotation>
         <xs:documentation>
           Sets a target value for the minimum number of idle connections (per server) that should always be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances available for each server. The default setting for this parameter is 1.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="eviction-interval" type="xs:long" default="${ConnectionPool.timeBetweenEvictionRuns}">
+    <xs:attribute name="max-pending-requests" type="xs:int" default="${ConnectionPool.maxPendingRequests}">
       <xs:annotation>
         <xs:documentation>
-          Indicates how long the eviction thread should sleep before "runs" of examining idle connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is 2 minutes.
+          Specifies maximum number of requests sent over single connection at one instant. Connections with more concurrent requests will be ignored in the pool when choosing available connection
+          and the pool will try to create a new connection if all connections are utilized. Only if the new connection cannot be created and the exhausted action is set to WAIT the pool will allow sending the request over one of the over-utilized connections.
+          The rule of thumb is that this should be set to higher values if the values are small (&lt; 1kB) and to lower values if the entries are big (&gt; 10kB). Default setting for this parameter is 5.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -179,13 +160,6 @@
       <xs:annotation>
         <xs:documentation>
           Specifies the minimum amount of time that an connection may sit idle in the pool before it is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is 1800000(30 minutes).
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="test-idle" type="xs:boolean" default="${ConnectionPool.testWhileIdle}">
-      <xs:annotation>
-        <xs:documentation>
-          Indicates whether or not idle connections should be validated by sending an TCP packet to the server, during idle connection eviction runs. Connections that fail to validate will be dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is true.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

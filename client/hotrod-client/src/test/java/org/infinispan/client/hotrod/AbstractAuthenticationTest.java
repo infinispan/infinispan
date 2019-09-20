@@ -60,8 +60,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .enable()
          .saslMechanism("CRAM-MD5")
          .connectionPool()
-            .maxActive(1)
-            .timeBetweenEvictionRuns(2000);
+            .maxActive(1);
       return clientBuilder;
    }
 
