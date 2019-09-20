@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
  * ConfigurationChildBuilder.
@@ -131,6 +132,25 @@ public interface ConfigurationChildBuilder {
     * and deserialize user objects. This method is mutually exclusive with {@link #marshaller(Class)}.
     */
    ConfigurationBuilder marshaller(Marshaller marshaller);
+
+   /**
+    * Supply a {@link SerializationContextInitializer} implementation to register classes with the {@link
+    * org.infinispan.commons.marshall.ProtoStreamMarshaller}'s {@link org.infinispan.protostream.SerializationContext}.
+    */
+   ConfigurationBuilder contextInitializer(String contextInitializer);
+
+   /**
+    * Supply a {@link SerializationContextInitializer} implementation to register classes with the {@link
+    * org.infinispan.commons.marshall.ProtoStreamMarshaller}'s {@link org.infinispan.protostream.SerializationContext}.
+    */
+   ConfigurationBuilder contextInitializer(SerializationContextInitializer contextInitializer);
+
+   /**
+    * Convenience method to supply multiple {@link SerializationContextInitializer} implementations.
+    *
+    * @see #contextInitializer(SerializationContextInitializer).
+    */
+   ConfigurationBuilder contextInitializers(SerializationContextInitializer... contextInitializers);
 
    /**
     * This property defines the protocol version that this client should use. Defaults to the latest protocol version

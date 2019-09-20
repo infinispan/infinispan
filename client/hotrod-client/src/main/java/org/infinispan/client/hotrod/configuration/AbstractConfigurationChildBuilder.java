@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
  * AbstractConfigurationChildBuilder.
@@ -115,6 +116,21 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public ConfigurationBuilder marshaller(Marshaller marshaller) {
       return builder.marshaller(marshaller);
+   }
+
+   @Override
+   public ConfigurationBuilder contextInitializer(String contextInitializer) {
+      return builder.contextInitializer(contextInitializer);
+   }
+
+   @Override
+   public ConfigurationBuilder contextInitializer(SerializationContextInitializer contextInitializer) {
+      return builder.contextInitializer(contextInitializer);
+   }
+
+   @Override
+   public ConfigurationBuilder contextInitializers(SerializationContextInitializer... contextInitializers) {
+      return builder.contextInitializers(contextInitializers);
    }
 
    /**
