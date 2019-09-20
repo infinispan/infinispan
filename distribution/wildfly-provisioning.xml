@@ -11,7 +11,6 @@
 		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-commons" version="${project.version}" />
 		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded" version="${project.version}" />
 		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded-query" version="${project.version}" />
-		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-server" version="${project.version}" />
 		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-wf-modules" version="${project.version}" />
 
 		<feature-pack
