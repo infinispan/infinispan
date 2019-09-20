@@ -2,86 +2,30 @@
 = Using Hot Rod Server
 The {brandname} Server distribution contains a server module that implements {brandname}'s custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
 
-
 To connect to {brandname} over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
 tools such as Hibernate OGM.
 
 [[hotrod_java_client]]
-== Java Hot Rod client
+== Hot Rod Java clients
+Use Java clients to access data through a {brandname} Hot Rod server.
 
-Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all {brandname} distributions, and this article focuses on the capabilities of this java client.
+[TIP]
+====
+{brandname} provides a reference Hot Rod Java client implementation.
 
-TIP: Looking for more clients?  Visit link:http://infinispan.org/hotrod-clients[this website] for clients written in a variety of different languages.
+//Community
+ifndef::productized[]
+Visit the link:http://infinispan.org/hotrod-clients[Hot Rod clients] page on _infinispan.org_ to download the Java client and find client implementations in other languages.
+endif::productized[]
+//Product
+ifdef::productized[]
+Visit the link:{download_url}[{brandname} downloads] page on the {portal} to download the Java client and find client implementations in other languages.
+endif::productized[]
+====
 
-=== Configuration
-The Java Hot Rod client can be configured both programmatically and externally, through a configuration file.
-
-The code snippet below illustrates the creation of a client instance using the available Java fluent API:
-
-[source,java]
-----
-org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb
-      = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-cb.tcpNoDelay(true)
-  .connectionPool()
-      .numTestsPerEvictionRun(3)
-      .testOnBorrow(false)
-      .testOnReturn(false)
-      .testWhileIdle(true)
-  .addServer()
-      .host("localhost")
-      .port(11222);
-RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
-
-----
-
-For a complete reference to the available configuration option please refer to the
-link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]'s javadoc.
-
-It is also possible to configure the Java Hot Rod client using a properties file, e.g.:
-
-[source]
-----
-infinispan.client.hotrod.transport_factory = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory
-infinispan.client.hotrod.server_list = 127.0.0.1:11222
-infinispan.client.hotrod.marshaller = org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller
-infinispan.client.hotrod.async_executor_factory = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory
-infinispan.client.hotrod.default_executor_factory.pool_size = 1
-infinispan.client.hotrod.default_executor_factory.queue_size = 10000
-infinispan.client.hotrod.tcp_no_delay = true
-infinispan.client.hotrod.request_balancing_strategy = org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy
-infinispan.client.hotrod.key_size_estimate = 64
-infinispan.client.hotrod.value_size_estimate = 512
-infinispan.client.hotrod.force_return_values = false
-infinispan.client.hotrod.client_intelligence = HASH_DISTRIBUTION_AWARE
-infinispan.client.hotrod.batch_Size = 10000
-
-## below is connection pooling config
-maxActive=-1
-maxTotal = -1
-maxIdle = -1
-whenExhaustedAction = 1
-timeBetweenEvictionRunsMillis=120000
-minEvictableIdleTimeMillis=300000
-testWhileIdle = true
-minIdle = 1
-
-----
-
-The properties file is then passed to one of constructors of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[RemoteCacheManager].
-You can use property substitution to replace values at runtime with link:https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html[Java system properties]:
-
-[source]
-----
-infinispan.client.hotrod.server_list = ${server_list}
-----
-
-In the above example the value of the _infinispan.client.hotrod.server_list_ property will be expanded to the value of the _server_list_ Java system property.
-
-which means that the value should be taken from a system property named jboss.bind.address.management and if it is not defined use 127.0.0.1.
-
-For a complete reference of the available configuration options for the properties file please refer to link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
+include::proc_creating_hotrod_java_client_instances.adoc[leveloffset=+2]
+include::proc_configuring_hotrod_java_client_properties.adoc[leveloffset=+2]
 
 === Authentication
 
