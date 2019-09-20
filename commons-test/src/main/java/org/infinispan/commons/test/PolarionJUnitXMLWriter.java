@@ -50,6 +50,12 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
    private XMLStreamWriter xmlWriter;
 
    public PolarionJUnitXMLWriter(File outputFile) throws IOException {
+      File outputDirectory = outputFile.getParentFile();
+      if (!outputDirectory.exists()) {
+         if (!outputDirectory.mkdirs()) {
+            throw new IllegalStateException("Unable to create report directory " + outputDirectory);
+         }
+      }
       fileWriter = new FileWriter(outputFile);
    }
 
