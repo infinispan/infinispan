@@ -77,7 +77,7 @@ import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
-import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
@@ -379,7 +379,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
             .take(maxEntries)
             .observeOn(cpuScheduler)
-            .doOnNext(me -> preloadKey(flaggedCache, me.getKey(), me.getValue(), me.getMetadata()))
+            .doOnNext(me -> preloadKey(flaggedCache, me))
             .count()
             .subscribeOn(persistenceScheduler)
             .to(RxJavaInterop.singleToCompletionStage())
@@ -1406,13 +1406,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return Long.MAX_VALUE;
    }
 
-   private void preloadKey(AdvancedCache<Object, Object> cache, Object key, Object value, Metadata metadata) {
+   private void preloadKey(AdvancedCache<Object, Object> cache, MarshallableEntry me) {
       final Transaction transaction = suspendIfNeeded();
       boolean success = false;
       try {
          try {
             beginIfNeeded();
-            cache.put(key, value, metadata);
+            // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
+            InternalMetadataImpl metadata = new InternalMetadataImpl(me.getMetadata(), me.created(), me.lastUsed());
+            cache.put(me.getKey(), me.getValue(), metadata);
             success = true;
          } catch (Exception e) {
             throw new PersistenceException("Unable to preload!", e);
