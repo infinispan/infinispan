@@ -1,9 +1,14 @@
 package org.infinispan.distribution;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -14,6 +19,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -32,16 +38,14 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
    public DistStorePreloadTest() {
       INIT_CLUSTER_SIZE = 1;
       testRetVals = true;
-      preload = true;
-      // Has to be shared as well, otherwise preload can't load anything
-      shared = true;
    }
 
    @Override
    public Object[] factory() {
       return new Object[] {
-            new DistStorePreloadTest().segmented(true),
-            new DistStorePreloadTest().segmented(false),
+            // Have to be shared and preload
+            new DistStorePreloadTest().segmented(true).preload(true).shared(true),
+            new DistStorePreloadTest().segmented(false).preload(true).shared(true),
       };
    }
 
@@ -51,6 +55,11 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
          log.trace("Clearing stats for cache store on cache "+ c);
          AdvancedLoadWriteStore cs = TestingUtil.getFirstLoader(c);
          cs.clear();
+      }
+
+      // Make sure to clean up any extra caches
+      if (managers().length > 1) {
+         killMember(1, cacheName);
       }
    }
 
@@ -77,5 +86,52 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
       for (int i = 0; i < NUM_KEYS; i++) {
          assertOwnershipAndNonOwnership("k" + i, true);
       }
+   }
+
+   public void testPreloadExpirationMemoryPresent() {
+      testPreloadExpiration(true);
+   }
+
+   public void testPreloadExpirationNoMemoryPresent() {
+      testPreloadExpiration(false);
+   }
+
+   private void testPreloadExpiration(boolean hasMemoryContents) {
+      ControlledTimeService timeService = new ControlledTimeService();
+      TestingUtil.replaceComponent(c1.getCacheManager(), TimeService.class, timeService, true);
+
+      long createdTime = timeService.wallClockTime();
+
+      String key = "key";
+      String value = "value";
+      c1.put(key, value, 10, TimeUnit.MINUTES);
+
+      DataContainer dc1 = c1.getAdvancedCache().getDataContainer();
+      CacheEntry<?, ?> entry = dc1.get(key);
+      assertNotNull(entry);
+      assertEquals(createdTime, entry.getCreated());
+
+      if (!hasMemoryContents) {
+         dc1.clear();
+      }
+
+      timeService.advance(1000);
+
+      AdvancedCacheLoader cs = TestingUtil.getFirstLoader(c1);
+      assertEquals(1, cs.size());
+
+      addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm2 = cacheManagers.get(1);
+      TestingUtil.replaceComponent(cm2, TimeService.class, timeService, true);
+      cm2.defineConfiguration(cacheName, buildConfiguration().build());
+      c2 = cache(1, cacheName);
+      caches.add(c2);
+      waitForClusterToForm(cacheName);
+
+      DataContainer dc2 = c2.getAdvancedCache().getDataContainer();
+      entry = dc2.get(key);
+      assertNotNull(entry);
+      // Created time should be the same, not the incremented one
+      assertEquals(createdTime, entry.getCreated());
    }
 }
