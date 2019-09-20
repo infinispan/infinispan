@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.configuration;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -25,13 +26,15 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
  * <p>ConfigurationBuilder used to generate immutable {@link Configuration} objects to pass to the
@@ -79,6 +82,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final StatisticsConfigurationBuilder statistics;
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
    private Features features;
+   private final Collection<SerializationContextInitializer> contextInitializers = new ArrayList<>();
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -236,6 +240,24 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   @Override
+   public ConfigurationBuilder contextInitializer(String contextInitializer) {
+      return contextInitializers(Util.getInstance(contextInitializer, this.classLoader()));
+   }
+
+   @Override
+   public ConfigurationBuilder contextInitializer(SerializationContextInitializer contextInitializer) {
+      if (contextInitializer != null)
+         this.contextInitializers.add(contextInitializer);
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder contextInitializers(SerializationContextInitializer... contextInitializers) {
+      this.contextInitializers.addAll(Arrays.asList(contextInitializers));
+      return this;
+   }
+
    public NearCacheConfigurationBuilder nearCache() {
       return nearCache;
    }
@@ -349,6 +371,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER, null, true));
       }
+      if (typed.containsKey(ConfigurationProperties.CONTEXT_INITIALIZERS)) {
+         String initializers = typed.getProperty(ConfigurationProperties.CONTEXT_INITIALIZERS);
+         for (String sci : initializers.split(","))
+            this.contextInitializer(sci);
+      }
       this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
       String serverList = typed.getProperty(ConfigurationProperties.SERVER_LIST, null, true);
       if (serverList != null) {
@@ -422,26 +449,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
             .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
       if (marshaller == null && marshallerClass == null) {
-         handleNullMarshaller();
+         ProtoStreamMarshaller protoMarshaller = new ProtoStreamMarshaller();
+         SerializationContext ctx = protoMarshaller.getSerializationContext();
+         for (SerializationContextInitializer sci : contextInitializers) {
+            sci.registerSchema(ctx);
+            sci.registerMarshallers(ctx);
+         }
+         this.marshaller = protoMarshaller;
       }
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features);
-   }
-
-   // Method that handles default marshaller - needed as a placeholder
-   private void handleNullMarshaller() {
-      try {
-         // First see if marshalling is in the class path - if so we can use the generic marshaller
-         // We have to use the commons class loader, since marshalling is its dependency
-         marshallerClass = Class.forName("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller", true, ConfigurationBuilder.class.getClassLoader())
-            .asSubclass(Marshaller.class);
-      } catch (ClassNotFoundException e) {
-         log.tracef("JBoss Marshalling is not on the class path - Only byte[] instances can be marshalled");
-         // Otherwise we fall back to a byte[] only marshaller
-         marshaller = BytesOnlyMarshaller.INSTANCE;
-      }
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features, contextInitializers);
    }
 
    @Override
@@ -488,6 +507,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.whiteListRegExs.addAll(template.serialWhitelist());
       this.transaction.read(template.transaction());
       this.statistics.read(template.statistics());
+      this.contextInitializers.clear();
+      this.contextInitializers.addAll(template.getContextInitializers());
 
       return this;
    }

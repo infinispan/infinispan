@@ -70,11 +70,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jboss-marshalling</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty-handler</artifactId>
       </dependency>
@@ -153,6 +148,12 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
          <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
          <scope>test</scope>
       </dependency>
 
