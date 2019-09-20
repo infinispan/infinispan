@@ -10,7 +10,6 @@ import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -40,15 +39,13 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassWhiteList classWhiteList = embeddedCacheManager.getClassWhiteList();
 
-      JavaSerializationMarshaller javaSerializationMarshaller = new JavaSerializationMarshaller(classWhiteList);
-
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
       encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
       encoderRegistry.registerEncoder(new BinaryEncoder(persistenceMarshaller.wired()));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
-      encoderRegistry.registerTranscoder(new DefaultTranscoder(javaSerializationMarshaller));
-      encoderRegistry.registerTranscoder(new BinaryTranscoder(javaSerializationMarshaller));
+      encoderRegistry.registerTranscoder(new DefaultTranscoder(persistenceMarshaller.wired()));
+      encoderRegistry.registerTranscoder(new BinaryTranscoder(persistenceMarshaller.wired()));
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
       encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);

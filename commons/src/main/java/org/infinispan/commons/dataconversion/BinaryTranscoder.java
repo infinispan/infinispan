@@ -79,7 +79,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
          if (contentType.match(TEXT_PLAIN)) {
             return StandardConversions.convertTextToOctetStream(content, contentType);
          }
-         return StandardConversions.convertJavaToOctetStream(content, contentType, getMashaller());
+         return getMashaller().objectToByteBuffer(content);
       } catch (EncodingException | InterruptedException | IOException e) {
          throw log.unsupportedContent(content);
       }
@@ -100,5 +100,4 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
       }
       throw log.unsupportedContent(content);
    }
-
 }

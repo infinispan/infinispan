@@ -17,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @author Ryan Emerson
  * @since 10.0
  */
-@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_LOWER_BOUND)
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_BUCKET)
 public class Bucket<V> {
 
    final Collection<V> values;
