@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -59,8 +59,8 @@ public class SecureExecTest extends AbstractAuthenticationTest {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config
             .security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
-      config.encoding().key().mediaType(APPLICATION_JBOSS_MARSHALLING_TYPE);
-      config.encoding().value().mediaType(APPLICATION_JBOSS_MARSHALLING_TYPE);
+      config.encoding().key().mediaType(APPLICATION_PROTOSTREAM_TYPE);
+      config.encoding().value().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
       cacheManager.defineConfiguration(CACHE_NAME, config.build());
       cacheManager.getCache();

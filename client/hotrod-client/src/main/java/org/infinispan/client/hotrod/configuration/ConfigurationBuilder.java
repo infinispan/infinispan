@@ -236,6 +236,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder marshaller(Marshaller marshaller) {
       this.marshaller = marshaller;
+      this.marshallerClass = marshaller == null ? null : marshaller.getClass();
       return this;
    }
 
@@ -391,7 +392,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.security.authentication().withProperties(properties);
 
       String serialWhitelist = typed.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
-      if (serialWhitelist != null) {
+      if (serialWhitelist != null && !serialWhitelist.isEmpty()) {
          String[] classes = serialWhitelist.split(",");
          Collections.addAll(this.whiteListRegExs, classes);
       }
@@ -473,6 +474,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          // Otherwise we use the protostream marshaller
          marshaller = new ProtoStreamMarshaller();
       }
+      marshallerClass = marshaller.getClass();
    }
 
    @Override

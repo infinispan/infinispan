@@ -12,6 +12,8 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.testng.annotations.Test;
 
@@ -26,6 +28,11 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
    @Override
    protected void createCacheManagers() throws Throwable {
       createHotRodServers(SERVERS, getCacheConfiguration());
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return DslSCI.INSTANCE;
    }
 
    public abstract ConfigurationBuilder getCacheConfiguration();

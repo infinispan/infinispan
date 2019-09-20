@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.IOException;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -18,6 +21,8 @@ import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEve
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -34,6 +39,11 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       server.addCacheEventConverterFactory("raw-static-converter-factory", new RawStaticConverterFactory());
       server.addCacheEventConverterFactory("simple-converter-factory", new SimpleConverterFactory<>());
       return server;
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return ClientEventSCI.INSTANCE;
    }
 
    public void testCustomEvents() {
@@ -115,9 +125,11 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             staticEventListener.expectCreatedEvent(new CustomEvent(1, "one", 0)));
       DynamicCustomEventWithStateLogListener<Integer> dynamicEventListener =
             new DynamicCustomEventWithStateLogListener<>(cache);
-      cache.put(2, "two");
-      withClientListener(dynamicEventListener, null, new Object[]{2}, remote ->
-            dynamicEventListener.expectCreatedEvent(new CustomEvent(2, null, 0)));
+      withClientListener(dynamicEventListener, null, new Object[]{2}, remote -> {
+         dynamicEventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
+         cache.put(2, "two");
+         dynamicEventListener.expectCreatedEvent(new CustomEvent(2, null, 0));
+      });
    }
 
    public void testConvertedNoEventsReplay() {
@@ -137,14 +149,29 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             new RawStaticCustomEventLogListener<>(remoteCacheManager.getCache());
       withClientListener(eventListener, remote -> {
          eventListener.expectNoEvents();
-         remote.put(1, "one");
-         // 1 = [3,75,0,0,0,1], "one" = [3,62,3,111,110,101]
-         eventListener.expectCreatedEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 3, 111, 110, 101});
-         remote.put(1, "newone");
-         // "newone" = [3,62,6,110,101,119,111,110,101]
-         eventListener.expectModifiedEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 6, 110, 101, 119, 111, 110, 101});
-         remote.remove(1);
-         eventListener.expectRemovedEvent(new byte[]{3, 75, 0, 0, 0, 1});
+         Marshaller marshaller = remote.getRemoteCacheManager().getMarshaller();
+         Integer key = 1;
+         Object value = "one";
+         try {
+            byte[] keyBytes = marshaller.objectToByteBuffer(key);
+            byte[] valBytes = marshaller.objectToByteBuffer(value);
+
+            // Put initial value and assert converter creates a byte[] of the key + value bytes
+            remote.put(key, value);
+            eventListener.expectCreatedEvent(CustomEventLogListener.concat(keyBytes, valBytes));
+            value = "newone";
+
+            // Repeat with new value
+            valBytes = marshaller.objectToByteBuffer(value);
+            remote.put(key, value);
+            eventListener.expectModifiedEvent(CustomEventLogListener.concat(keyBytes, valBytes));
+
+            // Only keyBytes should be returned as no value in remove event
+            remote.remove(key);
+            eventListener.expectRemovedEvent(keyBytes);
+         } catch (InterruptedException | IOException e) {
+            fail(e.getMessage());
+         }
       });
    }
 
