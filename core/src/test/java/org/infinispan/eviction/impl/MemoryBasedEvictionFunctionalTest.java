@@ -76,6 +76,8 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }
 
+   // IPROTO-118 Disabled until ProtoStream supports native marshalling of primitive arrays
+   @Test(enabled = false)
    public void testByteObjectArray() throws Exception {
       int keyValueByteSize = 100;
       long numberInserted = CACHE_SIZE / 2 / keyValueByteSize;
@@ -115,6 +117,8 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }
 
+   // IPROTO-118 Disabled until ProtoStream supports native marshalling of primitive arrays
+   @Test(enabled = false)
    public void testShortArray() throws Exception {
       int arraySize = 10;
       long numberInserted = CACHE_SIZE / 2 / arraySize;
@@ -142,6 +146,8 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }
 
+   // IPROTO-118 Disabled until ProtoStream supports native marshalling of primitive arrays
+   @Test(enabled = false)
    public void testIntegerArray() throws Exception {
       int arraySize = 10;
       long numberInserted = CACHE_SIZE / 4 / arraySize;
@@ -169,6 +175,8 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }
 
+   // IPROTO-118 Disabled until ProtoStream supports native marshalling of primitive arrays
+   @Test(enabled = false)
    public void testLongArray() throws Exception {
       int arraySize = 10;
       long numberInserted = CACHE_SIZE / 8 / arraySize;
@@ -233,6 +241,8 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }
 
+   // IPROTO-118 Disabled until ProtoStream supports native marshalling of primitive arrays
+   @Test(enabled = false)
    public void testDoubleArray() throws Exception {
       int arraySize = 10;
       long numberInserted = CACHE_SIZE / 8 / arraySize;
@@ -261,6 +271,8 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
       assertTrue(cache.getAdvancedCache().getDataContainer().size() < numberInserted);
    }
 
+   // IPROTO-118 Disabled until ProtoStream supports native marshalling of primitive arrays
+   @Test(enabled = false)
    public void testStringArray() throws Exception {
       int arraySize = 10;
       int stringLength = 10;

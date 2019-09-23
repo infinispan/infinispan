@@ -45,7 +45,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
       encoderRegistry.registerEncoder(new JavaSerializationEncoder(classWhiteList));
-      encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller.wired()));
+      encoderRegistry.registerEncoder(new BinaryEncoder(persistenceMarshaller.wired()));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller.wired()));
       encoderRegistry.registerTranscoder(new DefaultTranscoder(javaSerializationMarshaller));
       encoderRegistry.registerTranscoder(new BinaryTranscoder(javaSerializationMarshaller));

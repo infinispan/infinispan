@@ -4,7 +4,9 @@ import java.util.Collection;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 
@@ -20,6 +22,9 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
 
    public EmbeddedMultimapCacheManager(EmbeddedCacheManager embeddedMultimapCacheManager){
       this.cacheManager = embeddedMultimapCacheManager;
+      this.cacheManager.getGlobalComponentRegistry()
+            .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER)
+            .register(new PersistenceContextInitializerImpl());
    }
 
    @Override

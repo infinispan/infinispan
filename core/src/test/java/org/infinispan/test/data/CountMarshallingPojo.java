@@ -17,7 +17,7 @@ public class CountMarshallingPojo {
 
    private static AtomicInteger marshallCount = new AtomicInteger();
    private static AtomicInteger unmarshallCount = new AtomicInteger();
-   private int value;
+   private long value;
 
    public static void reset() {
       marshallCount.set(0);
@@ -35,18 +35,18 @@ public class CountMarshallingPojo {
    public CountMarshallingPojo() {
    }
 
-   public CountMarshallingPojo(int value) {
+   public CountMarshallingPojo(long value) {
       this.value = value;
    }
 
    @ProtoField(number = 1, defaultValue = "0")
-   int getValue() {
+   long getValue() {
       int serCount = marshallCount.incrementAndGet();
       log.trace("marshallCount=" + serCount);
       return value;
    }
 
-   void setValue(int i) {
+   void setValue(long i) {
       this.value = i;
       int deserCount = unmarshallCount.incrementAndGet();
       log.trace("unmarshallCount=" + deserCount);
