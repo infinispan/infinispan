@@ -4,6 +4,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,7 +73,7 @@ public class NettyRestResponse implements RestResponse {
       @Override
       public NettyRestResponse build() {
          HttpResponse response;
-         if (entity instanceof File) {
+         if (entity instanceof File || entity instanceof InputStream) {
             response = new DefaultHttpResponse(HTTP_1_1, OK);
          } else {
             response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.buffer());

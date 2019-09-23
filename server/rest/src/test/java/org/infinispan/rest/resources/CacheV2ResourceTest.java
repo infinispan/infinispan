@@ -9,10 +9,13 @@ import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.File;
 import java.net.URLEncoder;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -203,6 +206,30 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       response = insertEntity(3, 1200, "Invalid");
       ResponseAssertion.assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testGetAllKeys() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/default?action=%s", restServer().getPort(), "keys");
+
+      ContentResponse response = client.newRequest(url).method(GET).send();
+      Set emptyKeys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      assertEquals(0, emptyKeys.size());
+
+
+      putStringValueInCache("default", "1", "value");
+      response = client.newRequest(url).method(GET).send();
+      Set singleSet = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      assertEquals(1, singleSet.size());
+
+      int entries = 1000;
+      for (int i = 0; i < entries; i++) {
+         putStringValueInCache("default", String.valueOf(i), "value");
+      }
+      response = client.newRequest(url).method(GET).send();
+      Set keys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
+      assertEquals(entries, keys.size());
+      assertTrue(IntStream.range(0, entries).allMatch(i -> keys.contains(String.valueOf(i))));
    }
 
    private void registerSchema() throws Exception {
