@@ -73,24 +73,7 @@ example.HelloTask
 ----
 
 With jar packaged, the next step is to push the jar to the {brandname} Server.
-The server is powered by WildFly Application Server, so if using Maven
-https://docs.jboss.org/wildfly/plugins/maven/latest/index.html[Wildfly's Maven plugin]
-can be used for this:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::dependencies_maven/wildfly_maven_plugin.xml[]
-----
-
-Then call the following from command line:
-
-[source, bash]
-----
-$ mvn package wildfly:deploy
-----
-
-Alternative ways of deployment jar files to Wildfly Application Server are explained
-https://docs.jboss.org/author/display/WFLY10/Application+deployment[here].
+//dnaro: Need to provide example to push the JAR without using Wildfly.
 
 Executing the task can be done using the following code:
 
