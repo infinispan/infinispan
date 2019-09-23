@@ -4,6 +4,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
@@ -25,6 +26,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
+import org.infinispan.rest.CacheInputStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -40,6 +42,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 public class CacheResourceV2 extends CacheResource {
 
+   private static final int STREAM_BATCH_SIZE = 1000;
+
    public CacheResourceV2(InvocationHelper invocationHelper) {
       super(invocationHelper);
    }
@@ -51,6 +55,7 @@ public class CacheResourceV2 extends CacheResource {
             .invocation().methods(PUT, POST).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::putValueToCache)
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
 
             // Info and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
@@ -68,6 +73,24 @@ public class CacheResourceV2 extends CacheResource {
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search").handleWith(queryAction::search)
             .create();
 
+   }
+
+   private CompletionStage<RestResponse> streamKeys(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      String cacheName = request.variables().get("cacheName");
+
+      List<String> values = request.parameters().get("batch");
+      int batch = values == null || values.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(values.iterator().next());
+
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, APPLICATION_JSON, APPLICATION_JSON, request);
+      if (cache == null) {
+         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
+         return CompletableFuture.completedFuture(responseBuilder.build());
+      }
+      responseBuilder.entity(new CacheInputStream(cache.keySet().stream(), batch));
+
+      responseBuilder.contentType(APPLICATION_JSON_TYPE);
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> removeCache(RestRequest request) {

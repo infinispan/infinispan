@@ -286,6 +286,25 @@ include::rest_examples/delete_v2_caches.adoc[]
 {brandname} deletes all data and removes the cache named `cacheName` from the
 cluster.
 
+[[rest_v2_get_keys]]
+=== Retrieving cache keys
+
+To obtain all the keys from the cache in JSON format, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_keys.adoc[]
+----
+
+.Request Parameters
+|===
+|Parameter |Required or Optional |Value
+
+|`batch-size`
+|OPTIONAL
+|Specifies the internal batch size when retrieving the keys. The default value is 1000.
+|===
+
 [[rest_v2_clear_cache]]
 === Clearing Caches
 

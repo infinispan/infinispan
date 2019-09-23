@@ -81,4 +81,5 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot register path '%s' for invocation '%s', since it conflicts with already registered path '%s'", id = 12019)
    RegistrationException duplicateResource(String candidate, Invocation invocation, String existingPath);
+
 }

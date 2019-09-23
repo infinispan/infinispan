@@ -1,9 +1,12 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
+import static io.netty.handler.codec.http.HttpHeaderValues.KEEP_ALIVE;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
@@ -21,6 +24,7 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.stream.ChunkedFile;
+import io.netty.handler.stream.ChunkedStream;
 
 /**
  * @since 10.0
@@ -52,7 +56,7 @@ public enum ResponseWriter {
          handleKeepAlive(res, ctx.writeAndFlush(res), keepAlive);
       }
    },
-   CHUNKED {
+   CHUNKED_FILE {
       @Override
       void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive) {
          try {
@@ -67,11 +71,23 @@ public enum ResponseWriter {
             throw new RestResponseException(e);
          }
       }
+   },
+   CHUNKED_STREAM {
+      @Override
+      void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response, boolean keepAlive) {
+         HttpResponse res = response.getResponse();
+         res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+         res.headers().set(CONNECTION, KEEP_ALIVE);
+         InputStream inputStream = (InputStream) response.getEntity();
+         accessLog.log(ctx, request, response.getResponse());
+         ctx.write(res);
+         ctx.writeAndFlush(new HttpChunkedInput(new ChunkedStream(inputStream)), ctx.newProgressivePromise());
+      }
    };
 
    void handleKeepAlive(HttpResponse response, ChannelFuture future, boolean keepAlive) {
       if (!keepAlive) {
-         response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+         response.headers().set(CONNECTION, HttpHeaderValues.CLOSE);
          future.addListener(ChannelFutureListener.CLOSE);
       }
    }
@@ -83,7 +99,8 @@ public enum ResponseWriter {
    static ResponseWriter forContent(Object content) {
       if (content == null) return EMPTY;
       if (content instanceof String || content instanceof byte[]) return FULL;
-      if (content instanceof File) return CHUNKED;
-      throw new RestResponseException(INTERNAL_SERVER_ERROR, "Cannot write chunked content of type " + content.getClass());
+      if (content instanceof File) return CHUNKED_FILE;
+      if (content instanceof InputStream) return CHUNKED_STREAM;
+      throw new RestResponseException(INTERNAL_SERVER_ERROR, "Cannot write content of type " + content.getClass());
    }
 }
