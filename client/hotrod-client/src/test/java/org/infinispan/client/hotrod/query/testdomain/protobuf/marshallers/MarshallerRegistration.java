@@ -13,7 +13,7 @@ import org.infinispan.protostream.SerializationContext;
  */
 public final class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/sample_bank_account/bank.proto";
+   private static final String PROTOBUF_RES = "sample_bank_account/bank.proto";
 
    private MarshallerRegistration() {
    }

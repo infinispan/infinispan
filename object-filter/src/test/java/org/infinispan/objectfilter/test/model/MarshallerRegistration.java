@@ -11,7 +11,7 @@ import org.infinispan.protostream.SerializationContext;
  */
 public final class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/org/infinispan/objectfilter/test/model/test_model.proto";
+   private static final String PROTOBUF_RES = "org/infinispan/objectfilter/test/model/test_model.proto";
 
    private MarshallerRegistration() {
    }

@@ -1,5 +1,7 @@
 package org.infinispan.commons.marshall;
 
+import org.infinispan.protostream.WrappedMessage;
+
 /**
  * TypeIds used by protostream in place of FQN message/enum names to reduce payload size.
  * <p>
@@ -19,9 +21,8 @@ package org.infinispan.commons.marshall;
  */
 public interface ProtoStreamTypeIds {
 
-
    // 1 byte Ids 0..127 -> Reserved for critical messages used a lot
-   int WRAPPED_MESSAGE = 0; // Id reserved for ProtoStream WrappedMessage class
+   int WRAPPED_MESSAGE = WrappedMessage.PROTOBUF_TYPE_ID; // Id 0 is reserved for ProtoStream WrappedMessage class
    int WRAPPED_BYTE_ARRAY = 1;
    int USER_MARSHALLER_BYTES = 2;
    int BYTE_STRING = 3;
