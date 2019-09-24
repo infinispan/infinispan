@@ -143,7 +143,7 @@
       <version.glassfish.jaxb>2.3.0</version.glassfish.jaxb>
       <version.glassfish.json>1.1.4</version.glassfish.json>
       <version.groovy>2.4.8</version.groovy>
-      <version.gson>2.8.2</version.gson>
+      <version.gson>2.8.5</version.gson>
       <version.hamcrest>1.3</version.hamcrest>
       <version.hibernate.core>5.3.10.Final</version.hibernate.core>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
