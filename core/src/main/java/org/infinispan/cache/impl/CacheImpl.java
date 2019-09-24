@@ -692,7 +692,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan, long explicitFlags) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key),
-            lifespan, explicitFlags | FlagBitSets.SKIP_CACHE_LOAD);
+            lifespan, explicitFlags | FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_XSITE_BACKUP);
       // Remove expired returns a boolean - just ignore it, the caller just needs to know that the expired
       // entry is removed when this completes
       CompletableFuture<Boolean> completableFuture = performRemoveExpiredCommand(command);
@@ -706,7 +706,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value, long explicitFlags) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key),
-            explicitFlags | FlagBitSets.SKIP_CACHE_LOAD);
+            explicitFlags | FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_XSITE_BACKUP);
       return performRemoveExpiredCommand(command);
    }
 
