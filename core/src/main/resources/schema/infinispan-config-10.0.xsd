@@ -102,7 +102,7 @@
   </xs:complexType>
 
   <xs:complexType name="jgroups-remote-sites">
-    <xs:sequence>
+    <xs:sequence maxOccurs="unbounded">
       <xs:element name="remote-site" type="tns:jgroups-stack-relay-remote-site" />
     </xs:sequence>
     <xs:attribute name="default-stack" type="xs:string" use="required"/>
