@@ -101,6 +101,6 @@ public class RestServerResource {
       ArrayNode cacheManagers = (ArrayNode) mapper.readTree(restResponse.getBody());
       Set<String> cmNames = StreamSupport.stream(cacheManagers.spliterator(), false).map(JsonNode::asText).collect(Collectors.toSet());
 
-      assertEquals(cmNames, Sets.newHashSet("DefaultCacheManager"));
+      assertEquals(cmNames, Sets.newHashSet("default"));
    }
 }

@@ -1,8 +1,7 @@
 package org.infinispan.commons.util;
 
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Assert;
+import java.util.function.Supplier;
 
 public class Eventually {
 
@@ -11,8 +10,7 @@ public class Eventually {
       boolean isSatisfied() throws Exception;
    }
 
-
-   public static void eventually(String message, Condition ec, long timeout, long pollInterval, TimeUnit unit) {
+   public static void eventually(Supplier<AssertionError> assertionErrorSupplier, Condition ec, long timeout, long pollInterval, TimeUnit unit) {
       if (pollInterval <= 0) {
          throw new IllegalArgumentException("Check interval must be positive");
       }
@@ -23,10 +21,16 @@ public class Eventually {
             if (ec.isSatisfied()) return;
             Thread.sleep(sleepMillis);
          }
-         Assert.assertTrue(message, ec.isSatisfied());
+         if (!ec.isSatisfied()) {
+            throw assertionErrorSupplier.get();
+         }
       } catch (Exception e) {
          throw new RuntimeException("Unexpected!", e);
       }
+   }
+
+   public static void eventually(String message, Condition ec, long timeout, long pollInterval, TimeUnit unit) {
+      eventually(() -> new AssertionError(message), ec, timeout, pollInterval, unit);
    }
 
    public static void eventually(Condition ec) {
@@ -42,11 +46,10 @@ public class Eventually {
    }
 
    public static void eventually(Condition ec, long timeout, TimeUnit unit) {
-      eventually(null, ec, unit.toMillis(timeout), 500, TimeUnit.MILLISECONDS);
+      eventually(() -> new AssertionError(), ec, unit.toMillis(timeout), 500, TimeUnit.MILLISECONDS);
    }
 
-   public static  void eventually(Condition ec, long timeout, long pollInterval, TimeUnit unit) {
-      eventually(null, ec, timeout, pollInterval, unit);
+   public static void eventually(Condition ec, long timeout, long pollInterval, TimeUnit unit) {
+      eventually(() -> new AssertionError(), ec, timeout, pollInterval, unit);
    }
-
 }

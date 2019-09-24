@@ -82,6 +82,9 @@ public class Bootstrap extends Main {
    }
 
    public void runInternal() {
+      if (!serverRoot.isAbsolute()) {
+         serverRoot =  serverRoot.getAbsoluteFile();
+      }
       File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
       if (configurationFile == null) {
          configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);

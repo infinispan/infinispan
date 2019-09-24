@@ -1,48 +1,53 @@
 package org.infinispan.cli.impl;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.nio.file.AccessDeniedException;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
-import org.infinispan.cli.CommandBuffer;
-import org.infinispan.cli.CommandRegistry;
+import javax.net.ssl.SSLContext;
+
+import org.aesh.command.CommandResult;
+import org.aesh.command.shell.Shell;
+import org.aesh.io.FileResource;
+import org.aesh.readline.AeshContext;
+import org.aesh.readline.Prompt;
+import org.aesh.readline.ReadlineConsole;
+import org.aesh.readline.terminal.formatting.Color;
+import org.aesh.readline.terminal.formatting.TerminalColor;
+import org.aesh.readline.terminal.formatting.TerminalString;
+import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
-import org.infinispan.cli.commands.ProcessedCommand;
+import org.infinispan.cli.commands.CommandInputLine;
 import org.infinispan.cli.connection.Connection;
-import org.infinispan.cli.io.IOAdapter;
+import org.infinispan.cli.connection.ConnectionFactory;
+import org.infinispan.cli.logging.Messages;
+import org.infinispan.cli.resources.Resource;
+import org.infinispan.cli.util.SystemUtils;
+import org.infinispan.commons.util.Version;
 
 /**
- *
  * ContextImpl.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ContextImpl implements Context {
-   private final CommandBuffer commandBuffer;
-   private final CommandRegistry commandRegistry;
-   private IOAdapter outputAdapter;
-
+public class ContextImpl implements Context, AeshContext {
+   private final ConfigImpl config;
    private Connection connection;
-   private boolean quitting;
-   private Map<String, String> env = new HashMap<String, String>();
+   private final Properties properties;
+   private org.aesh.io.Resource cwd;
+   private ReadlineConsole console;
+   private SSLContext sslContext;
 
-   public ContextImpl(IOAdapter outputAdapter, CommandBuffer commandBuffer) {
-      this.commandBuffer = commandBuffer;
-      this.outputAdapter = outputAdapter;
-      this.commandRegistry = new CommandRegistry();
-   }
-
-   @Override
-   public void setOutputAdapter(IOAdapter outputAdapter) {
-      if (this.outputAdapter!=null) {
-         try {
-            this.outputAdapter.close();
-         } catch (IOException e) {
-         }
-      }
-      this.outputAdapter = outputAdapter;
+   public ContextImpl(Properties properties) {
+      this.properties = properties;
+      String userDir = properties.getProperty("user.dir");
+      cwd = userDir != null ? new FileResource(userDir) : null;
+      config = new ConfigImpl(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
+      config.load();
    }
 
    @Override
@@ -51,94 +56,140 @@ public class ContextImpl implements Context {
    }
 
    @Override
-   public boolean isQuitting() {
-      return quitting;
-   }
-
-   @Override
-   public void setQuitting(boolean quitting) {
-      this.quitting = quitting;
-   }
-
-   @Override
    public void setProperty(String key, String value) {
-      env.put(key, value);
+      properties.setProperty(key, value);
    }
 
    @Override
    public String getProperty(String key) {
-      return env.get(key);
+      return properties.getProperty(key);
    }
 
    @Override
-   public void println(String s) {
+   public SSLContext getSslContext() {
+      return sslContext;
+   }
+
+   @Override
+   public void setSslContext(SSLContext sslContext) {
+      this.sslContext = sslContext;
+   }
+
+   @Override
+   public Connection connect(Shell shell, String connectionString) {
+      disconnect();
+      connection = ConnectionFactory.getConnection(connectionString, sslContext);
+      // Attempt a connection. If we receive an exception we might need credentials
       try {
-         outputAdapter.println(s);
+         connection.connect();
+      } catch (AccessDeniedException accessDenied) {
+         try {
+            String username = null;
+            String password = null;
+            if (shell != null) {
+               username = shell.readLine(Messages.MSG.username());
+               password = username.isEmpty() ? null : shell.readLine(new Prompt(Messages.MSG.password(), '*'));
+            } else {
+               java.io.Console sysConsole = System.console();
+               if (sysConsole != null) {
+                  username = sysConsole.readLine(Messages.MSG.username());
+                  password = username.isEmpty() ? null : new String(sysConsole.readPassword(Messages.MSG.password()));
+               } else {
+               }
+            }
+            connection.connect(username, password);
+         } catch (Exception e) {
+            connection = null;
+            showError(shell, e);
+         }
       } catch (IOException e) {
+         connection = null;
+         showError(shell, e);
+      }
+      refreshPrompt();
+      return connection;
+   }
+
+   private void showError(Shell shell, Throwable t) {
+      if (shell != null) {
+         shell.writeln(t.getMessage());
+      } else {
+         System.err.println(t.getMessage());
       }
    }
 
    @Override
-   public void error(String s) {
+   public Connection connect(Shell shell, String connectionString, String username, String password) {
+      disconnect();
+      connection = ConnectionFactory.getConnection(connectionString, sslContext);
       try {
-         outputAdapter.error(s);
+         connection.connect(username, password);
       } catch (IOException e) {
+         if (shell != null) {
+            shell.writeln(ANSI.RED_TEXT + e.getMessage() + ANSI.DEFAULT_TEXT);
+         } else {
+            System.err.println(e.getMessage());
+         }
+      }
+      refreshPrompt();
+      return connection;
+   }
+
+   private void buildPrompt(Resource resource, StringBuilder builder) {
+      if (resource != null) {
+         if (resource.getParent() != null) {
+            buildPrompt(resource.getParent(), builder);
+         }
+         builder.append("/").append(resource.getName());
       }
    }
 
-   @Override
-   public void error(Throwable t) {
-      try {
-         outputAdapter.error(t.getMessage()!=null?t.getMessage():t.getClass().getName());
-      } catch (IOException e) {
+   private void refreshPrompt() {
+      if (console != null) {
+         if (connection != null) {
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("[").append(ANSI.GREEN_TEXT).append(connection.getConnectionInfo()).append(ANSI.DEFAULT_TEXT);
+            buildPrompt(connection.getActiveResource(), prompt);
+            prompt.append("]> ");
+            console.setPrompt(prompt.toString());
+         } else {
+            console.setPrompt("[" + ANSI.YELLOW_TEXT + "disconnected" + ANSI.DEFAULT_TEXT + "]> ");
+         }
       }
-   }
-
-   @Override
-   public void result(List<ProcessedCommand> commands, String result, boolean isError) {
-      try {
-         outputAdapter.result(commands, result, isError);
-      } catch (IOException e) {
-      }
-   }
-
-   @Override
-   public CommandBuffer getCommandBuffer() {
-      return commandBuffer;
    }
 
    @Override
    public void disconnect() {
-      if (isConnected()) {
+      if (connection != null) {
          try {
             connection.close();
          } catch (IOException e) {
          }
          connection = null;
       }
+      refreshPrompt();
    }
 
-   @Override
-   public void setConnection(Connection connection) {
-      if (isConnected()) {
-         throw new IllegalStateException("Still connected");
-      } else {
-         this.connection = connection;
-      }
-   }
-
-   @Override
-   public void execute() {
+   public CommandResult execute(Shell shell, List<CommandInputLine> commands) {
       try {
-         connection.execute(this, commandBuffer);
-      } finally {
-         commandBuffer.reset();
+         String response = connection.execute(commands);
+         if (response != null && !response.isEmpty()) {
+            shell.writeln(response);
+         }
+         refreshPrompt();
+         return CommandResult.SUCCESS;
+      } catch (Exception e) {
+         TerminalString error = new TerminalString(e.getMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));
+         shell.writeln(error.toString());
+         refreshPrompt();
+         return CommandResult.FAILURE;
       }
    }
 
    @Override
-   public void execute(CommandBuffer commandBuffer) {
-      connection.execute(this, commandBuffer);
+   public void setConsole(ReadlineConsole console) {
+      this.console = console;
+      refreshPrompt();
    }
 
    @Override
@@ -147,20 +198,22 @@ public class ContextImpl implements Context {
    }
 
    @Override
-   public CommandRegistry getCommandRegistry() {
-      return commandRegistry;
+   public org.aesh.io.Resource getCurrentWorkingDirectory() {
+      return cwd;
    }
 
    @Override
-   public IOAdapter getOutputAdapter() {
-      return outputAdapter;
+   public void setCurrentWorkingDirectory(org.aesh.io.Resource cwd) {
+      this.cwd = cwd;
    }
 
    @Override
-   public void refreshProperties() {
-      setProperty("CONNECTION", connection != null ? connection.toString() : "disconnected");
-      setProperty("CONTAINER", connection != null ? connection.getActiveContainer() : "");
-      setProperty("CACHE", connection != null ? connection.getActiveCache() : "");
+   public Set<String> exportedVariableNames() {
+      return Collections.emptySet();
    }
 
+   @Override
+   public String exportedVariable(String key) {
+      return null;
+   }
 }

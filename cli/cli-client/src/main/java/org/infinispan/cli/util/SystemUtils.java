@@ -10,10 +10,9 @@ import java.io.File;
  */
 public class SystemUtils {
    /**
-    * Returns an appropriate system-dependent folder for storing application-specific data. The
-    * logic in this method uses the os.name to decide which is best. Currently it uses:
-    * ~/.config/${appName} on Unix/Linux (as per Freedesktop.org) %APPDATA%/Sun/Java/${appName} on
-    * Windows ~/Library/Java/${appName} on Mac OS X
+    * Returns an appropriate system-dependent folder for storing application-specific data. The logic in this method
+    * uses the os.name to decide which is best. Currently it uses: ~/.config/${appName} on Unix/Linux (as per
+    * Freedesktop.org) %APPDATA%/Sun/Java/${appName} on Windows ~/Library/Java/${appName} on Mac OS X
     *
     * @param appName
     * @return
