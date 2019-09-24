@@ -1,2 +1,2 @@
 <!-- empty cache container -->
-<cache-container/>
+<cache-container name="default"/>

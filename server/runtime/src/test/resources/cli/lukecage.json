@@ -1,0 +1,10 @@
+{
+  "_type":"org.infinispan.rest.search.entity.Person",
+  "id":2,
+  "name":"Luke",
+  "surname":"Cage",
+  "gender":"MALE",
+  "address":{"street":"Malcolm X Boulevard","postCode":"NY 11221"},
+  "phoneNumbers":[{"number":4444},{"number":5555}]
+}
+

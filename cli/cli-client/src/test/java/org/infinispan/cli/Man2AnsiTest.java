@@ -5,12 +5,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 
-import org.infinispan.cli.shell.Man2Ansi;
+import org.infinispan.cli.impl.Man2Ansi;
 import org.infinispan.commons.util.Util;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-@Test(groups="functional", testName="cli.shell.Man2AnsiTest")
 public class Man2AnsiTest {
+
+   @Test
    public void testMacro() {
       Matcher matcher = Man2Ansi.MAN_MACRO_REGEX.matcher(".SH SYNOPSIS");
       assert matcher.matches();
@@ -19,6 +20,7 @@ public class Man2AnsiTest {
       assert "SYNOPSIS".equals(matcher.group(2));
    }
 
+   @Test
    public void testNoMacro() {
       Matcher matcher = Man2Ansi.MAN_MACRO_REGEX.matcher("Text");
       assert matcher.matches();
@@ -27,6 +29,7 @@ public class Man2AnsiTest {
       assert "Text".equals(matcher.group(2));
    }
 
+   @Test
    public void testAllManPages() throws Exception {
       InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("help");
       BufferedReader r = new BufferedReader(new InputStreamReader(is));

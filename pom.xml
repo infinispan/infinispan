@@ -346,9 +346,9 @@
       <versionx.net.minidev.json-smart>2.2.1</versionx.net.minidev.json-smart>
       <versionx.net.sf.jopt-simple.jopt-simple>5.0.2</versionx.net.sf.jopt-simple.jopt-simple>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
-      <versionx.org.aesh.aesh>1.7</versionx.org.aesh.aesh>
-      <versionx.org.aesh.aesh-extensions>1.6</versionx.org.aesh.aesh-extensions>
-      <versionx.org.aesh.aesh-readline>1.10</versionx.org.aesh.aesh-readline>
+      <versionx.org.aesh.aesh>2.4</versionx.org.aesh.aesh>
+      <versionx.org.aesh.aesh-extensions>1.8</versionx.org.aesh.aesh-extensions>
+      <versionx.org.aesh.aesh-readline>1.17</versionx.org.aesh.aesh-readline>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.antlr.antlr4-runtime>4.7</versionx.org.antlr.antlr4-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
@@ -497,7 +497,7 @@
       <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
       <versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>${version.lucene.featurepack}</versionx.org.hibernate.lucene-jbossmodules.lucene-jbossmodules>
       <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
-      <versionx.org.jboss.aesh.aesh>0.66.13</versionx.org.jboss.aesh.aesh>
+      <versionx.org.javassist.javassist>3.24.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.config.arquillian-config-api>${version.arquillian}</versionx.org.jboss.arquillian.config.arquillian-config-api>
       <versionx.org.jboss.arquillian.config.arquillian-config-impl-base>${version.arquillian}</versionx.org.jboss.arquillian.config.arquillian-config-impl-base>
       <versionx.org.jboss.arquillian.container.arquillian-container-impl-base>${version.arquillian}</versionx.org.jboss.arquillian.container.arquillian-container-impl-base>
@@ -2535,11 +2535,6 @@
             <groupId>org.jboss</groupId>
             <artifactId>staxmapper</artifactId>
             <version>${versionx.org.jboss.staxmapper}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.aesh</groupId>
-            <artifactId>aesh</artifactId>
-            <version>${versionx.org.jboss.aesh.aesh}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.arquillian.config</groupId>

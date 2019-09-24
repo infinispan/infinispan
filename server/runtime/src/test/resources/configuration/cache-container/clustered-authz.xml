@@ -1,4 +1,4 @@
-<cache-container>
+<cache-container name="default">
    <transport cluster="${infinispan.cluster.name}" stack="test"/>
    <security>
       <authorization>

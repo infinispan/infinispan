@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
@@ -15,28 +16,34 @@
 
    <dependencies>
       <dependency>
-         <groupId>org.jboss.aesh</groupId>
+         <groupId>org.aesh</groupId>
          <artifactId>aesh</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-rest</artifactId>
       </dependency>
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
       </dependency>
       <dependency>
-         <groupId>gnu.getopt</groupId>
-         <artifactId>java-getopt</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.infinispan</groupId>
-          <artifactId>infinispan-commons</artifactId>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
       </dependency>
       <dependency>
          <groupId>org.jboss.remotingjmx</groupId>
          <artifactId>remoting-jmx</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
-          <groupId>org.jboss.xnio</groupId>
-          <artifactId>xnio-nio</artifactId>
+         <groupId>org.jboss.xnio</groupId>
+         <artifactId>xnio-nio</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -53,8 +60,12 @@
          <artifactId>metainf-services</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -68,15 +79,17 @@
       </resources>
       <plugins>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-                <reuseForks>false</reuseForks>
-                <forkCount>1</forkCount>
-                <parallel>none</parallel>
-               <dependenciesToScan>
-                  <dependency>org.infinispan:infinispan-commons-test</dependency>
-               </dependenciesToScan>
+               <parallel>classes</parallel>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <disableXmlReport>false</disableXmlReport>
+               <properties combine.self="override">
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+               </properties>
             </configuration>
          </plugin>
          <plugin>
@@ -93,6 +106,23 @@
                   </Include-Resource>
                </instructions>
             </configuration>
+         </plugin>
+         <!-- For debug purposes -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default-cli</id>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <mainClass>org.infinispan.cli.CLI</mainClass>
+                     <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>
