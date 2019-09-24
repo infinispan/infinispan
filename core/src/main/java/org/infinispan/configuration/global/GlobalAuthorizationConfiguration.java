@@ -29,7 +29,7 @@ import org.infinispan.security.impl.NullAuditLogger;
  */
 public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger)new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger) new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
 
    public static final AttributeDefinition<Map<String, Role>> ROLES = AttributeDefinition.<Map<String, Role>>builder("roles", new HashMap<>())
          .serializer(new AttributeSerializer<Map<String, Role>, GlobalAuthorizationConfiguration, ConfigurationBuilderInfo>() {
@@ -39,7 +39,7 @@ public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
                return attribute.get().entrySet().stream()
                      .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPermissions()));
             }
-         }).build();
+         }).initializer(HashMap::new).build();
 
    static final AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, AUDIT_LOGGER, ROLES);
