@@ -99,6 +99,10 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>io.agroal</groupId>
+         <artifactId>agroal-pool</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.jboss.logmanager</groupId>
          <artifactId>jboss-logmanager</artifactId>
       </dependency>
