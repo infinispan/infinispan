@@ -23,8 +23,8 @@ public class SaslConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Set<String>> MECHANISMS = AttributeDefinition.builder("mechanisms", null, (Class<Set<String>>) (Class<?>) Set.class)
          .initializer(LinkedHashSet::new).immutable().build();
    public static final AttributeDefinition<List<QOP>> QOP = AttributeDefinition.builder("qop", new ArrayList<>(), (Class<List<QOP>>) (Class<?>) List.class)
-         .immutable().build();
-   public static final AttributeDefinition<List<Strength>> STRENGTH = AttributeDefinition.builder("strength", new ArrayList<>(), (Class<List<Strength>>) (Class<?>) Strength.class).immutable().build();
+         .initializer(ArrayList::new).immutable().build();
+   public static final AttributeDefinition<List<Strength>> STRENGTH = AttributeDefinition.builder("strength", new ArrayList<>(), (Class<List<Strength>>) (Class<?>) Strength.class).initializer(ArrayList::new).immutable().build();
    static final AttributeDefinition<Map<String, String>> SASL_PROPERTIES = AttributeDefinition.builder("property", null, (Class<Map<String, String>>) (Class<?>) Map.class).initializer(LinkedHashMap::new).autoPersist(false).immutable().build();
 
    private final AttributeSet attributes;
