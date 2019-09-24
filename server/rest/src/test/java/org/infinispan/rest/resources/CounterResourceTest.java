@@ -3,7 +3,9 @@ package org.infinispan.rest.resources;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -122,6 +124,25 @@ public class CounterResourceTest extends AbstractRestResourceTest {
 
       response = getCounterValue(name);
       assertThat(response).hasReturnedText("90");
+   }
+
+   @Test
+   public void testCounterNames() throws Exception {
+      ObjectMapper objectMapper = new ObjectMapper();
+      String name = "weak-one-%d";
+      for (int i = 0; i < 5; i++) {
+         createCounter(String.format(name, i), CounterConfiguration.builder(CounterType.WEAK).initialValue(5).build());
+      }
+
+      String url = String.format("http://localhost:%d/rest/v2/counters", restServer().getPort());
+      ContentResponse response = client.newRequest(url).send();
+      ResponseAssertion.assertThat(response).isOk();
+      JsonNode jsonNode = objectMapper.readTree(response.getContent());
+      Collection<String> counterNames = EmbeddedCounterManagerFactory.asCounterManager(cacheManagers.get(0)).getCounterNames();
+      assertEquals(counterNames.size(), jsonNode.size());
+      for (int i = 0; i < jsonNode.size(); i++) {
+         assertTrue(counterNames.contains(jsonNode.get(i).asText()));
+      }
    }
 
    private void createCounter(String name, CounterConfiguration configuration) throws InterruptedException, ExecutionException, TimeoutException {

@@ -9,12 +9,13 @@ import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
-import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 import java.net.URLEncoder;
 import java.util.Set;
+
 import java.util.stream.IntStream;
 
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -191,6 +192,23 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).containsReturnedText("100");
+   }
+
+   @Test
+   public void testCacheNames() throws Exception {
+      ObjectMapper objectMapper = new ObjectMapper();
+      String URL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
+
+      ContentResponse response = client.newRequest(URL).send();
+
+      ResponseAssertion.assertThat(response).isOk();
+
+      JsonNode jsonNode = objectMapper.readTree(response.getContent());
+      Set<String> cacheNames = cacheManagers.get(0).getCacheNames();
+      assertEquals(cacheNames.size(), jsonNode.size());
+      for (int i = 0; i < jsonNode.size(); i++) {
+         assertTrue(cacheNames.contains(jsonNode.get(i).asText()));
+      }
    }
 
    @Test

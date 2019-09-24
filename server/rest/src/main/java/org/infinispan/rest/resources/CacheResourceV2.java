@@ -3,6 +3,7 @@ package org.infinispan.rest.resources;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
@@ -29,6 +30,7 @@ import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.rest.CacheInputStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.RestRequest;
@@ -60,6 +62,9 @@ public class CacheResourceV2 extends CacheResource {
             // Info and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
+
+            // List
+            .invocation().methods(GET).path("/v2/caches/").handleWith(this::getCacheNames)
 
             // Cache lifecycle
             .invocation().methods(POST).path("/v2/caches/{cacheName}").handleWith(this::createCache)
@@ -215,6 +220,17 @@ public class CacheResourceV2 extends CacheResource {
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      try {
+         byte[] bytes = invocationHelper.getMapper().writeValueAsBytes(invocationHelper.getRestCacheManager().getCacheNames());
+         responseBuilder.contentType(APPLICATION_JSON).entity(bytes).status(OK);
+      } catch (JsonProcessingException e) {
+         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+      return completedFuture(responseBuilder.build());
    }
 
 }
