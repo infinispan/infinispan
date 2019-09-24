@@ -65,6 +65,9 @@ public class CounterResource implements ResourceHandler {
             // Config
             .invocation().methods(GET).path("/v2/counters/{counterName}/config").handleWith(this::getConfig)
 
+            // List
+            .invocation().methods(GET).path("/v2/counters/").handleWith(this::getCounterNames)
+
             // Common counter ops
             .invocation().methods(GET).path("/v2/counters/{counterName}").handleWith(this::getCounter)
             .invocation().methods(GET).path("/v2/counters/{counterName}").withAction("reset").handleWith(this::resetCounter)
@@ -155,6 +158,17 @@ public class CounterResource implements ResourceHandler {
 
          return result.thenApply(v -> new NettyRestResponse.Builder().build());
       });
+   }
+
+   private CompletionStage<RestResponse> getCounterNames(RestRequest request) throws RestResponseException {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      try {
+         byte[] bytes = invocationHelper.getMapper().writeValueAsBytes(counterManager.getCounterNames());
+         responseBuilder.contentType(APPLICATION_JSON).entity(bytes).status(OK);
+      } catch (JsonProcessingException e) {
+         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+      return completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> incrementCounter(RestRequest request) {

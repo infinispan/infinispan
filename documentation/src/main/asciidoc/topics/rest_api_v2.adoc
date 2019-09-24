@@ -396,6 +396,17 @@ The following example shows a query in the request body:
 include::rest_examples/rest_query_request_body.json[]
 ----
 
+[[rest_v2_list_caches]]
+=== Listing Caches
+
+To obtain a list of caches available in a {brandname} cluster, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_list_caches.adoc[]
+----
+
+
 [[rest_v2_cache_manager_operations]]
 == Interacting with Cache Managers
 
@@ -752,6 +763,16 @@ include::rest_examples/get_v2_counter_compare_swap.adoc[]
 {brandname} atomically sets the value to `{update}` if the current value is
 `{expect}`. If the operation is successful, {brandname} returns the previous
 value in the payload.
+
+[[rest_server_counters_list]]
+=== Listing Counters
+
+To obtain a list of counters available in a {brandname} cluster, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_counter_list.adoc[]
+----
 
 [[rest_v2_server]]
 == Interacting with {brandname} Servers

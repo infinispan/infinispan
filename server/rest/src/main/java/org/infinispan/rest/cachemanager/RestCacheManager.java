@@ -3,6 +3,7 @@ package org.infinispan.rest.cachemanager;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,6 +94,10 @@ public class RestCacheManager<V> {
       } else if (!allowInternalCacheAccess && icr.isInternalCache(cacheName) && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
          throw logger.requestNotAllowedToInternalCachesWithoutAuthz(cacheName);
       }
+   }
+
+   public Collection<String> getCacheNames() {
+      return instance.getCacheNames();
    }
 
    public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType, RestRequest request) {
