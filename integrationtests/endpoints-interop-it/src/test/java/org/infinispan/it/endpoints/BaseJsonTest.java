@@ -23,7 +23,6 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -69,10 +68,8 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheManager = TestCacheManagerFactory.createServerModeCacheManager();
-      ClassWhiteList classWhiteList = cacheManager.getClassWhiteList();
-      classWhiteList.addRegexps(".*");
-
+      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(EndpointITSCI.INSTANCE, new ConfigurationBuilder());
+      cacheManager.getClassWhiteList().addRegexps(".*");
       cacheManager.defineConfiguration(CACHE_NAME, getIndexCacheConfiguration().build());
 
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
@@ -90,12 +87,18 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       restEndpoint = String.format("http://localhost:%s/rest/%s", restServer.getPort(), CACHE_NAME);
    }
 
-   abstract String getEntityName();
+   protected String getMessageName() {
+      return EndpointITSCI.getFQMessageName(CryptoCurrency.class.getSimpleName());
+   }
+
+   protected String getJsonType() {
+      return getMessageName();
+   }
 
    private void writeCurrencyViaJson(String key, String description, int rank) throws IOException {
       EntityEnclosingMethod put = new PutMethod(restEndpoint + "/" + key);
       ObjectNode currency = MAPPER.createObjectNode();
-      currency.put(TYPE, getEntityName());
+      currency.put(TYPE, getJsonType());
       currency.put("description", description);
       currency.put("rank", rank);
       put.setRequestEntity(new StringRequestEntity(currency.toString(), "application/json", "UTF-8"));
@@ -140,7 +143,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       assertEquals(remoteCache.get("CAT").getDescription(), "Catcoin");
       assertEquals(remoteCache.size(), 4);
 
-      Query query = Search.getQueryFactory(remoteCache).create("FROM " + getEntityName() + " c where c.rank < 10");
+      Query query = Search.getQueryFactory(remoteCache).create("FROM " + getMessageName() + " c where c.rank < 10");
       List<CryptoCurrency> highRankCoins = query.list();
       assertEquals(highRankCoins.size(), 3);
 
@@ -153,7 +156,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       writeCurrencyViaJson("LTC", "Litecoin", 4);
 
       // Assert inserted entity is searchable
-      query = Search.getQueryFactory(remoteCache).create("FROM " + getEntityName() + " c  where c.description = 'Litecoin'");
+      query = Search.getQueryFactory(remoteCache).create("FROM " + getMessageName() + " c  where c.description = 'Litecoin'");
 
       CryptoCurrency litecoin = (CryptoCurrency) query.list().iterator().next();
       assertEquals(litecoin.getDescription(), "Litecoin");
@@ -178,6 +181,4 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       killCacheManagers(cacheManager);
       killServers(hotRodServer);
    }
-
-
 }

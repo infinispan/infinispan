@@ -10,10 +10,7 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.testng.annotations.Test;
 
 /**
@@ -27,22 +24,16 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
 
    @Override
    protected RemoteCacheManager createRemoteCacheManager() throws IOException {
+      SerializationContextInitializer sci = EndpointITSCI.INSTANCE;
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
             .addServer().host("localhost").port(hotRodServer.getPort())
-            .marshaller(new ProtoStreamMarshaller())
+            .contextInitializer(sci)
             .build());
-
-      //initialize client-side serialization context
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoFile = protoSchemaBuilder.fileName("crypto.proto")
-            .addClass(CryptoCurrency.class)
-            .build(serializationContext);
 
       //initialize server-side serialization context via rest endpoint
       String metadataCacheEndpoint = String.format("http://localhost:%s/rest/%s", restServer.getPort(), PROTOBUF_METADATA_CACHE_NAME);
-      EntityEnclosingMethod put = new PutMethod(metadataCacheEndpoint + "/crypto.proto");
-      put.setRequestEntity(new StringRequestEntity(protoFile, "text/plain", "UTF-8"));
+      EntityEnclosingMethod put = new PutMethod(metadataCacheEndpoint + "/" + sci.getProtoFileName());
+      put.setRequestEntity(new StringRequestEntity(sci.getProtoFile(), "text/plain", "UTF-8"));
 
       restClient.executeMethod(put);
       assertEquals(put.getStatusCode(), HttpStatus.SC_OK);

@@ -35,6 +35,8 @@ import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -60,7 +62,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<String, Object>(CacheMode.LOCAL).setup();
+      cacheFactory = new EndpointsCacheFactory<String, Object>(CacheMode.LOCAL, EndpointITSCI.INSTANCE).setup();
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
       cacheFactory.addRegexWhiteList("org.infinispan.*Person");
    }
@@ -416,9 +418,11 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
     */
    static class Person implements Serializable {
 
+      @ProtoField(number = 1)
       final String name;
 
-      public Person(String name) {
+      @ProtoFactory
+      Person(String name) {
          this.name = name;
       }
 
@@ -443,5 +447,4 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
          return name.hashCode();
       }
    }
-
 }

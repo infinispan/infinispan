@@ -2,6 +2,9 @@ package org.infinispan.it.endpoints;
 
 import java.io.Serializable;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+
 public class CustomKey implements Serializable {
 
    private String text;
@@ -9,13 +12,15 @@ public class CustomKey implements Serializable {
    private Float floatValue;
    private Boolean booleanValue;
 
-   public CustomKey(String text, Double doubleValue, Float floatValue, Boolean booleanValue) {
+   @ProtoFactory
+   CustomKey(String text, Double doubleValue, Float floatValue, Boolean booleanValue) {
       this.text = text;
       this.doubleValue = doubleValue;
       this.floatValue = floatValue;
       this.booleanValue = booleanValue;
    }
 
+   @ProtoField(number = 1)
    public String getText() {
       return text;
    }
@@ -24,6 +29,7 @@ public class CustomKey implements Serializable {
       this.text = text;
    }
 
+   @ProtoField(number = 2)
    public Double getDoubleValue() {
       return doubleValue;
    }
@@ -32,6 +38,7 @@ public class CustomKey implements Serializable {
       this.doubleValue = doubleValue;
    }
 
+   @ProtoField(number = 3)
    public Float getFloatValue() {
       return floatValue;
    }
@@ -40,6 +47,7 @@ public class CustomKey implements Serializable {
       this.floatValue = floatValue;
    }
 
+   @ProtoField(number = 4)
    public Boolean getBooleanValue() {
       return booleanValue;
    }

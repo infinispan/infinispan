@@ -42,7 +42,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory = new EndpointsCacheFactory<Integer, String>(CacheMode.LOCAL).setup();
+      cacheFactory = new EndpointsCacheFactory<Integer, String>(CacheMode.LOCAL, EndpointITSCI.INSTANCE).setup();
       HotRodServer hotrod = cacheFactory.getHotrodServer();
       hotrod.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(2));
       hotrod.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicCacheEventFilterFactory());

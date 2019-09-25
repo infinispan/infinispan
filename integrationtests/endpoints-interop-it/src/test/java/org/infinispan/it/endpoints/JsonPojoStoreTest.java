@@ -10,8 +10,8 @@ import org.infinispan.configuration.cache.Index;
 import org.testng.annotations.Test;
 
 /**
- * Tests for indexing json using object storage. The entity {@link CryptoCurrency} is annotated
- * with both Protobuf and Hibernate Search.
+ * Tests for indexing json using object storage. The entity {@link CryptoCurrency} is annotated with both Protobuf and
+ * Hibernate Search.
  *
  * @since 9.2
  */
@@ -32,15 +32,15 @@ public class JsonPojoStoreTest extends BaseJsonTest {
    }
 
    @Override
-   protected String getEntityName() {
-      return CryptoCurrency.class.getName();
-   }
-
-   @Override
    protected RemoteCacheManager createRemoteCacheManager() throws IOException {
       return new RemoteCacheManager(new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
             .addServer().host("localhost").port(hotRodServer.getPort())
+            .contextInitializers(EndpointITSCI.INSTANCE)
             .build());
    }
 
+   @Override
+   protected String getJsonType() {
+      return CryptoCurrency.class.getName();
+   }
 }
