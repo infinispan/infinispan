@@ -34,7 +34,6 @@
       <dependency>
          <groupId>io.agroal</groupId>
          <artifactId>agroal-pool</artifactId>
-         <scope>runtime</scope>
       </dependency>
 
       <dependency>
