@@ -4,6 +4,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
@@ -23,6 +24,7 @@ class WrappedMessageTagHandler implements TagHandler {
 
    protected final ProtobufValueWrapper valueWrapper;
    protected final SerializationContext serCtx;
+   protected final WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
 
    protected GenericDescriptor descriptor;
    protected byte[] messageBytes;
@@ -32,6 +34,7 @@ class WrappedMessageTagHandler implements TagHandler {
    WrappedMessageTagHandler(ProtobufValueWrapper valueWrapper, SerializationContext serCtx) {
       this.valueWrapper = valueWrapper;
       this.serCtx = serCtx;
+      this.wrappedMessageTypeIdMapper = serCtx.getConfiguration().wrappingConfig().wrappedMessageTypeIdMapper();
    }
 
    @Override
@@ -69,6 +72,9 @@ class WrappedMessageTagHandler implements TagHandler {
          }
          case WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID: {
             Integer typeId = (Integer) value;
+            if (wrappedMessageTypeIdMapper != null) {
+               typeId = wrappedMessageTypeIdMapper.mapTypeIdIn(typeId, serCtx);
+            }
             descriptor = serCtx.getDescriptorByTypeId(typeId);
             break;
          }

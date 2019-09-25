@@ -1,7 +1,5 @@
 package org.infinispan.query.remote.client.impl;
 
-import java.io.IOException;
-
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -21,10 +19,14 @@ public final class MarshallerRegistration implements SerializationContextInitial
    }
 
    @Override
-   public String getProtoFileName() { return QUERY_PROTO_RES; }
+   public String getProtoFileName() {
+      return QUERY_PROTO_RES;
+   }
 
    @Override
-   public String getProtoFile() { return FileDescriptorSource.getResourceAsString(getClass(), QUERY_PROTO_RES); }
+   public String getProtoFile() {
+      return FileDescriptorSource.getResourceAsString(getClass(), QUERY_PROTO_RES);
+   }
 
    @Override
    public void registerSchema(SerializationContext serCtx) {
@@ -46,7 +48,6 @@ public final class MarshallerRegistration implements SerializationContextInitial
     *
     * @param ctx the serialization context
     * @throws org.infinispan.protostream.DescriptorParserException if a proto definition file fails to parse correctly
-    * @throws IOException if proto file registration fails
     */
    public static void init(SerializationContext ctx) {
       INSTANCE.registerSchema(ctx);

@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.MessageContext;
@@ -8,6 +9,7 @@ import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.WrappedMessageTypeIdMapper;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
@@ -31,10 +33,12 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
    private MessageContext messageContext;
 
    private final SerializationContext serializationContext;
+   private final WrappedMessageTypeIdMapper wrappedMessageTypeIdMapper;
 
    public ProtobufMatcherEvalContext(Object userContext, Object eventType, Object instance, Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
       super(userContext, eventType, instance);
       this.serializationContext = serializationContext;
+      this.wrappedMessageTypeIdMapper = serializationContext.getConfiguration().wrappingConfig().wrappedMessageTypeIdMapper();
       try {
          ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, (byte[]) getInstance());
       } catch (IOException e) {
@@ -68,9 +72,14 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
                entityTypeName = (String) tagValue;
                break;
 
-            case WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID:
-               entityTypeName = serializationContext.getDescriptorByTypeId((Integer) tagValue).getFullName();
+            case WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID: {
+               Integer typeId = (Integer) tagValue;
+               if (wrappedMessageTypeIdMapper != null) {
+                  typeId = wrappedMessageTypeIdMapper.mapTypeIdIn(typeId, serializationContext);
+               }
+               entityTypeName = serializationContext.getDescriptorByTypeId(typeId).getFullName();
                break;
+            }
 
             case WrappedMessage.WRAPPED_MESSAGE:
                payload = (byte[]) tagValue;
@@ -158,7 +167,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
       try {
          ProtobufParser.INSTANCE.parse(this, payloadMessageDescriptor, payload);
       } catch (IOException e) {
-         throw new RuntimeException(e);  // TODO [anistor] proper exception handling needed
+         throw new UncheckedIOException(e);
       }
    }
 

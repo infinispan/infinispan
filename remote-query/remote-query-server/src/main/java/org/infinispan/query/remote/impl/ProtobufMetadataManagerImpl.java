@@ -16,6 +16,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -78,8 +79,15 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    public ProtobufMetadataManagerImpl() {
       Configuration.Builder protostreamCfgBuilder = Configuration.builder();
+
+      // Configure a TypeId mapper to support 9.x legacy. the values above 1000000 were used for WrappedMessage and remote query objects
+      protostreamCfgBuilder.wrappingConfig()
+            .wrappedMessageTypeIdMapper(ProtoStreamMarshaller.getLegacyWrappedMessageTypeIdMapper());
+
       IndexingMetadata.configure(protostreamCfgBuilder);
+
       serCtx = ProtobufUtil.newSerializationContext(protostreamCfgBuilder.build());
+
       try {
          MarshallerRegistration.init(serCtx);
       } catch (DescriptorParserException e) {

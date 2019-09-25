@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.infinispan.protostream.MessageMarshaller;
 
-public class UUIDMarshaller implements MessageMarshaller<UUID> {
+public final class UUIDMarshaller implements MessageMarshaller<UUID> {
 
    private final String typeName;
 
@@ -30,7 +30,7 @@ public class UUIDMarshaller implements MessageMarshaller<UUID> {
    }
 
    @Override
-   public Class<? extends UUID> getJavaClass() {
+   public Class<UUID> getJavaClass() {
       return UUID.class;
    }
 

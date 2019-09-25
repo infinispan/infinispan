@@ -5,9 +5,12 @@ import java.io.IOException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.WrappedMessageTypeIdMapper;
+import org.infinispan.protostream.config.Configuration;
 
 /**
  * Provides the starting point for implementing a {@link org.infinispan.commons.marshall.Marshaller} that uses Protobuf
@@ -21,7 +24,13 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
    private final SerializationContext serializationContext;
 
    public ProtoStreamMarshaller() {
-      this(ProtobufUtil.newSerializationContext());
+      this(ProtobufUtil.newSerializationContext(
+            Configuration.builder()
+                  .wrappingConfig()
+                  .wrappedMessageTypeIdMapper(getLegacyWrappedMessageTypeIdMapper())
+                  .build()
+            )
+      );
    }
 
    public ProtoStreamMarshaller(SerializationContext serializationContext) {
@@ -34,7 +43,7 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
    }
 
    /**
-    * @return the SerializationContext instance to use
+    * @return the SerializationContext instance
     */
    public SerializationContext getSerializationContext() {
       return serializationContext;
@@ -73,5 +82,59 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
    @Override
    public MediaType mediaType() {
       return MediaType.APPLICATION_PROTOSTREAM;
+   }
+
+   /**
+    * A type id mapper that maps old and new type ids back and forth.
+    */
+   public static WrappedMessageTypeIdMapper getLegacyWrappedMessageTypeIdMapper() {
+      // to support the 9.x legacy, the values starting at 1000000 were used for WrappedMessage and remote query objects
+      // and need to be mapped to the new 0..65535 range
+      return new WrappedMessageTypeIdMapper() {
+
+         private static final int LEGACY_WRAPPED_MESSAGE = 1000000;
+         private static final int LEGACY_REMOTE_QUERY_REQUEST = 1000101;
+         private static final int LEGACY_REMOTE_QUERY_RESPONSE = 1000102;
+         private static final int LEGACY_ICKLE_FILTER_RESULT = 1000103;
+         private static final int LEGACY_ICKLE_CONTINUOUS_QUERY_RESULT = 1000104;
+
+         @Override
+         public int mapTypeIdIn(int typeId, ImmutableSerializationContext ctx) {
+            switch (typeId) {
+               // historically, the values above 1000000 were used for internal stuff
+               // mapping them unconditionally is OK
+               case LEGACY_WRAPPED_MESSAGE:
+                  return ProtoStreamTypeIds.WRAPPED_MESSAGE;
+               case LEGACY_REMOTE_QUERY_REQUEST:
+                  return ProtoStreamTypeIds.REMOTE_QUERY_REQUEST;
+               case LEGACY_REMOTE_QUERY_RESPONSE:
+                  return ProtoStreamTypeIds.REMOTE_QUERY_RESPONSE;
+               case LEGACY_ICKLE_FILTER_RESULT:
+                  return ProtoStreamTypeIds.ICKLE_FILTER_RESULT;
+               case LEGACY_ICKLE_CONTINUOUS_QUERY_RESULT:
+                  return ProtoStreamTypeIds.ICKLE_CONTINUOUS_QUERY_RESULT;
+            }
+            return typeId;
+         }
+
+         @Override
+         public int mapTypeIdOut(int typeId, ImmutableSerializationContext ctx) {
+            // when writing back we map the new ids back to the legacy ones
+            // TODO [anistor] this has to happen conditionally: only if new server + old client or old server + new client, where 'new' means HR version >= 3.0
+            switch (typeId) {
+               case ProtoStreamTypeIds.WRAPPED_MESSAGE:
+                  return LEGACY_WRAPPED_MESSAGE;
+               case ProtoStreamTypeIds.REMOTE_QUERY_REQUEST:
+                  return LEGACY_REMOTE_QUERY_REQUEST;
+               case ProtoStreamTypeIds.REMOTE_QUERY_RESPONSE:
+                  return LEGACY_REMOTE_QUERY_RESPONSE;
+               case ProtoStreamTypeIds.ICKLE_FILTER_RESULT:
+                  return LEGACY_ICKLE_FILTER_RESULT;
+               case ProtoStreamTypeIds.ICKLE_CONTINUOUS_QUERY_RESULT:
+                  return LEGACY_ICKLE_CONTINUOUS_QUERY_RESULT;
+            }
+            return typeId;
+         }
+      };
    }
 }
