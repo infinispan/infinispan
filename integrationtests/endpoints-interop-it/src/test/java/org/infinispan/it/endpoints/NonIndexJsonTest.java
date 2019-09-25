@@ -19,5 +19,4 @@ public class NonIndexJsonTest extends JsonIndexingProtobufStoreTest {
       configurationBuilder.encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       return configurationBuilder;
    }
-
 }

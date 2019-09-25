@@ -7,6 +7,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
  * Provides the starting point for implementing a {@link org.infinispan.commons.marshall.Marshaller} that uses Protobuf
@@ -25,6 +26,11 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
 
    public ProtoStreamMarshaller(SerializationContext serializationContext) {
       this.serializationContext = serializationContext;
+   }
+
+   public void register(SerializationContextInitializer initializer) {
+      initializer.registerSchema(serializationContext);
+      initializer.registerMarshallers(serializationContext);
    }
 
    /**

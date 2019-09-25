@@ -30,6 +30,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -67,6 +68,7 @@ public class EndpointsCacheFactory<K, V> {
    private final String cacheName;
    private final Marshaller marshaller;
    private final CacheMode cacheMode;
+   private final SerializationContextInitializer contextInitializer;
    private final int numOwners;
    private final boolean l1Enable;
    private final boolean memcachedWithDecoder;
@@ -76,12 +78,16 @@ public class EndpointsCacheFactory<K, V> {
       this(cacheMode, DEFAULT_NUM_OWNERS, false);
    }
 
+   EndpointsCacheFactory(CacheMode cacheMode, SerializationContextInitializer contextInitializer) {
+      this("test", null, cacheMode, DEFAULT_NUM_OWNERS, false, null, null, contextInitializer);
+   }
+
    EndpointsCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable) {
-      this("test", null, cacheMode, numOwners, l1Enable, null, null);
+      this("test", null, cacheMode, numOwners, l1Enable, null, null, null);
    }
 
    EndpointsCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable, Encoder encoder) {
-      this("test", null, cacheMode, numOwners, l1Enable, null, encoder);
+      this("test", null, cacheMode, numOwners, l1Enable, null, encoder, null);
    }
 
    EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode) {
@@ -89,20 +95,20 @@ public class EndpointsCacheFactory<K, V> {
    }
 
    EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, Encoder encoder) {
-      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, false, null, encoder);
+      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, false, null, encoder, null);
    }
 
 
    EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners, Encoder encoder) {
-      this(cacheName, marshaller, cacheMode, numOwners, false, null, encoder);
+      this(cacheName, marshaller, cacheMode, numOwners, false, null, encoder, null);
    }
 
    public EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, Transcoder transcoder) {
-      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, false, transcoder, null);
+      this(cacheName, marshaller, cacheMode, DEFAULT_NUM_OWNERS, false, transcoder, null, null);
    }
 
    EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners, boolean l1Enable,
-                         Transcoder transcoder, Encoder encoder) {
+                         Transcoder transcoder, Encoder encoder, SerializationContextInitializer contextInitializer) {
       this.cacheName = cacheName;
       this.marshaller = marshaller;
       this.cacheMode = cacheMode;
@@ -110,6 +116,7 @@ public class EndpointsCacheFactory<K, V> {
       this.l1Enable = l1Enable;
       this.transcoder = transcoder;
       this.memcachedWithDecoder = transcoder != null;
+      this.contextInitializer = contextInitializer;
    }
 
    public EndpointsCacheFactory<K, V> setup() throws Exception {
@@ -139,6 +146,8 @@ public class EndpointsCacheFactory<K, V> {
       }
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       globalBuilder.defaultCacheName(cacheName);
+      if (contextInitializer != null)
+         globalBuilder.serialization().addContextInitializer(contextInitializer);
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
@@ -180,6 +189,7 @@ public class EndpointsCacheFactory<K, V> {
             .addServers("localhost:" + hotrod.getPort())
             .addJavaSerialWhiteList(".*Person.*", ".*CustomEvent.*")
             .marshaller(marshaller)
+            .contextInitializer(contextInitializer)
             .build());
       hotrodCache = cacheName.isEmpty()
             ? hotrodClient.getCache()
