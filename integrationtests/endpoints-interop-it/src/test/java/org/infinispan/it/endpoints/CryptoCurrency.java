@@ -6,31 +6,30 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoName;
 
 /**
  * @since 9.2
  */
 @Indexed
-@ProtoName("CryptoCurrency")
 @ProtoDoc("@Indexed")
-public class CryptoCurrency implements Serializable {
+class CryptoCurrency implements Serializable {
 
    @Field(analyze = Analyze.NO)
    @ProtoField(number = 1)
    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
-   public String description;
+   String description;
 
    @Field
    @ProtoField(number = 2)
    @ProtoDoc("@Field(index = Index.YES, store = Store.NO)")
-   public Integer rank;
+   Integer rank;
 
-   public CryptoCurrency() {
-   }
+   CryptoCurrency() {}
 
-   public CryptoCurrency(String description, Integer rank) {
+   @ProtoFactory
+   CryptoCurrency(String description, Integer rank) {
       this.description = description;
       this.rank = rank;
    }
