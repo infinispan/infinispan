@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "commands.OffHeapMultiNodeTest")
 public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
-   protected int numberOfKeys = 10;
+   protected static final int NUMBER_OF_KEYS = 10;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -44,13 +44,13 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
 
    public void testPutMapCommand() {
       Map<String, String> map = new HashMap<>();
-      for (int i = 0; i < numberOfKeys; ++i) {
+      for (int i = 0; i < NUMBER_OF_KEYS; ++i) {
          map.put("key" + i, "value" + i);
       }
 
       cache(0).putAll(map);
 
-      for (int i = 0; i < numberOfKeys; ++i) {
+      for (int i = 0; i < NUMBER_OF_KEYS; ++i) {
          assertEquals("value" + i, cache(0).get("key" + i));
       }
    }
@@ -63,7 +63,7 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
 
       assertNull(map.put(key, value));
 
-      for (int i = 0; i < 50; ++i) {
+      for (int i = 0; i < NUMBER_OF_KEYS; ++i) {
          map.put(randomBytes(KEY_SIZE), value);
       }
 
@@ -108,7 +108,7 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
    }
 
    public void testIterate() {
-      int cacheSize = 50;
+      int cacheSize = NUMBER_OF_KEYS;
       Map<byte[], byte[]> original = new HashMap<>();
       for (int i = 0; i < cacheSize; ++i) {
          byte[] key = randomBytes(KEY_SIZE);
