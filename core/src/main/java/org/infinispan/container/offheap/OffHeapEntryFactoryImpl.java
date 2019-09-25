@@ -239,11 +239,9 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       byte[] keyBytes = new byte[MEMORY.getInt(address, offset)];
       offset += 4;
 
-      switch (metadataType) {
-         case CUSTOM:
-         case HAS_VERSION:
-            // These have additional 4 bytes for custom metadata
-            offset += 4;
+      if ((metadataType & (CUSTOM + HAS_VERSION)) != 0) {
+         // These have additional 4 bytes for custom metadata or version
+         offset += 4;
       }
 
       // Ignore value bytes
