@@ -50,6 +50,11 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote-query-client</artifactId>
          <scope>test</scope>
       </dependency>
@@ -64,10 +69,14 @@
          <scope>test</scope>
          <type>test-jar</type>
       </dependency>
-
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-rest</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -80,7 +89,6 @@
          <artifactId>httpcore</artifactId>
          <scope>test</scope>
       </dependency>
-
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-memcached</artifactId>
@@ -105,6 +113,11 @@
       <dependency>
          <groupId>com.fasterxml.jackson.core</groupId>
          <artifactId>jackson-databind</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr-runtime</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
