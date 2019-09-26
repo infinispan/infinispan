@@ -16,14 +16,13 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.github.benmanes.caffeine.cache.CacheWriter;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.EvictionListener;
@@ -45,8 +44,11 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.CoreImmutables;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+
+import com.github.benmanes.caffeine.cache.CacheWriter;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 
 /**
  * Abstract class implemenation for a segmented data container. All methods delegate to
@@ -468,6 +470,18 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       @Override
       public Spliterator<InternalCacheEntry<K, V>> spliterator() {
          return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.CONCURRENT);
+      }
+   }
+
+   @Override
+   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
+      if (segments == null || !segments.isEmpty()) {
+         iteratorIncludingExpired().forEachRemaining(ice -> {
+            int segment = keyPartitioner.getSegment(ice.getKey());
+            if (segments == null || segments.contains(segment)) {
+               action.accept(ice, segment);
+            }
+         });
       }
    }
 

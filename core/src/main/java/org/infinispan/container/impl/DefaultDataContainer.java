@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -218,11 +217,6 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired(IntSet segments) {
       return new FilterIterator<>(iteratorIncludingExpired(),
             ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
-   }
-
-   @Override
-   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      iteratorIncludingExpired().forEachRemaining(ice -> action.accept(ice, keyPartitioner.getSegment(ice.getKey())));
    }
 
    @Override
