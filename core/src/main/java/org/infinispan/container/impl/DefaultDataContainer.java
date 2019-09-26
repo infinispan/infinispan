@@ -9,12 +9,7 @@ import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.function.ObjIntConsumer;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Policy;
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
@@ -29,6 +24,12 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Policy;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -218,11 +219,6 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired(IntSet segments) {
       return new FilterIterator<>(iteratorIncludingExpired(),
             ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
-   }
-
-   @Override
-   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      iteratorIncludingExpired().forEachRemaining(ice -> action.accept(ice, keyPartitioner.getSegment(ice.getKey())));
    }
 
    @Override

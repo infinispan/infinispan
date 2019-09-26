@@ -24,6 +24,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.reactivestreams.Publisher;
@@ -232,11 +233,18 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    }
 
    @Override
-   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      for (int i = 0; i < maps.length(); ++i) {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(i);
+   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
+      IntSet targetSegments;
+      if (segments == null) {
+         targetSegments = IntSets.immutableRangeSet(maps.length());
+      } else {
+         targetSegments = segments;
+      }
+
+      for (PrimitiveIterator.OfInt iter = targetSegments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
+         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(segment);
          if (map != null) {
-            int segment = i;
             map.forEach((k, ice) -> action.accept(ice, segment));
          }
       }

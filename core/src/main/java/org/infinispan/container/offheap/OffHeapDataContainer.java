@@ -90,8 +90,10 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    }
 
    @Override
-   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<WrappedBytes, WrappedBytes>> action) {
-      map.values().forEach(e -> action.accept(e, 0));
+   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<WrappedBytes, WrappedBytes>> action) {
+      if (segments == null || segments.contains(0)) {
+         map.values().forEach(e -> action.accept(e, 0));
+      }
    }
 
    @Override
