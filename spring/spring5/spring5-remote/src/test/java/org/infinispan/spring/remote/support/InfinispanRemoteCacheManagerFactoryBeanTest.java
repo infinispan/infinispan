@@ -2,6 +2,7 @@ package org.infinispan.spring.remote.support;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MODE;
@@ -25,6 +26,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory;
 import org.infinispan.spring.remote.AssertionUtils;
@@ -116,15 +118,21 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest extends AbstractInfinis
 
       objectUnderTest.afterPropertiesSet();
 
-      final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-      RemoteCacheManager remoteCacheManager2 = new RemoteCacheManager();
+      final RemoteCacheManager springRemoteCacheManager = objectUnderTest.getObject();
+      RemoteCacheManager defaultRemoteCacheManager = new RemoteCacheManager();
+
+      // Explicitly set the expected properties on the client defaults, as otherwise the ProtoStream marshaller is expected
+      Properties clientDefaultProps = defaultRemoteCacheManager.getConfiguration().properties();
+      clientDefaultProps.setProperty(MARSHALLER, JavaSerializationMarshaller.class.getName());
+      clientDefaultProps.setProperty(JAVA_SERIAL_WHITELIST, InfinispanRemoteCacheManagerFactoryBean.SPRING_JAVA_SERIAL_WHITELIST);
+
       AssertionUtils.assertPropertiesSubset(
               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
                       + "to RemoteCacheManager's default settings since neither property 'configurationProperties' "
                       + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-              remoteCacheManager2.getConfiguration().properties(), remoteCacheManager.getConfiguration().properties());
+              clientDefaultProps, springRemoteCacheManager.getConfiguration().properties());
       objectUnderTest.destroy();
-      remoteCacheManager2.stop();
+      defaultRemoteCacheManager.stop();
    }
 
    /**

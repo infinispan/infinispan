@@ -2,6 +2,7 @@ package org.infinispan.spring.remote.provider;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
@@ -23,6 +24,7 @@ import java.util.Properties;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.spring.remote.AssertionUtils;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -120,13 +122,19 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
 
       final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       RemoteCacheManager defaultRemoteCacheManager = new RemoteCacheManager();
+
+      // Explicitly set the expected properties on the client defaults, as otherwise the ProtoStream marshaller is expected
+      Properties clientDefaultProps = defaultRemoteCacheManager.getConfiguration().properties();
+      clientDefaultProps.setProperty(MARSHALLER, JavaSerializationMarshaller.class.getName());
+      clientDefaultProps.setProperty(JAVA_SERIAL_WHITELIST, SpringRemoteCacheManagerFactoryBean.SPRING_JAVA_SERIAL_WHITELIST);
+
       try {
          AssertionUtils.assertPropertiesSubset(
                  "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
                          + "to SpringRemoteCacheManager's default settings since neither property 'configurationProperties' "
                          + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-                 defaultRemoteCacheManager.getConfiguration().properties(),
-                 remoteCacheManager.getNativeCacheManager().getConfiguration().properties());
+                 clientDefaultProps,
+               remoteCacheManager.getNativeCacheManager().getConfiguration().properties());
       } finally {
          defaultRemoteCacheManager.stop();
       }

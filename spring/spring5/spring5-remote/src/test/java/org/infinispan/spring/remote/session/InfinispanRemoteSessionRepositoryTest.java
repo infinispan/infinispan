@@ -1,7 +1,10 @@
 package org.infinispan.spring.remote.session;
 
+import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_WHITELIST;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -28,7 +31,9 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
       embeddedCacheManager = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       hotrodServer = HotRodTestingUtil.startHotRodServer(embeddedCacheManager, 19723);
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.addServer().host("localhost").port(hotrodServer.getPort());
+      builder.addServer().host("localhost").port(hotrodServer.getPort())
+            .marshaller(new JavaSerializationMarshaller())
+            .addJavaSerialWhiteList(SPRING_JAVA_SERIAL_WHITELIST.split(","));
       remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 
