@@ -196,11 +196,13 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
 
    /**
     * Performs the given action for each element of the container, even if expired. This method should be preferred when
-    * user wants to perform an operation across all entries that depends on the segment it maps to.
+    * user wants to perform an operation across all entries that depends on the segment it maps to. Note the consumer
+    * is not invoked with any locks.
+    * @param segments limits the action to only firing for segments including in this. If null all segments are used
     * @param action The action to be performed for each element
     * @throws NullPointerException if the specified action is null
     */
-   void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action);
+   void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action);
 
    /**
     * Sets what segments this data container should be using. Already associated segments are unaffected by this and

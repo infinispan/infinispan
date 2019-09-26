@@ -78,8 +78,8 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> extends Abst
    }
 
    @Override
-   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      delegate().forEachIncludingExpired(action);
+   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
+      delegate().forEachIncludingExpired(segments, action);
    }
 
    @Override
