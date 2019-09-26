@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.metadata.Metadata;
@@ -50,7 +51,9 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = getDefaultStandaloneCacheConfig(false);
       configurePersistence(cb);
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(cb);
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(global, cb);
       loader = TestingUtil.getFirstLoader(manager.getCache());
       writer = TestingUtil.getFirstWriter(manager.getCache());
       executor = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS,

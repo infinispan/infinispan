@@ -39,6 +39,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
    public void testConfigBuilder() {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
             .transport().defaultTransport()
+            .globalState().persistentLocation(tmpDirectory)
             .build();
 
       Configuration cacheConfig = new ConfigurationBuilder().persistence().addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDataDirectory)

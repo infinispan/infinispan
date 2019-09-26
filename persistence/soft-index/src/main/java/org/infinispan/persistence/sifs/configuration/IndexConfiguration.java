@@ -10,7 +10,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 public class IndexConfiguration implements ConfigurationInfo {
 
-   public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", "Infinispan-SoftIndexFileStore-Index").immutable().autoPersist(false).xmlName("path").build();
+   public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", null, String.class).immutable().autoPersist(false).xmlName("path").build();
    public static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder("indexQueueLength", 1000).immutable().autoPersist(false).xmlName("max-queue-length").build();
    public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).xmlName("segments").build();
    public static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", 0).immutable().autoPersist(false).build();

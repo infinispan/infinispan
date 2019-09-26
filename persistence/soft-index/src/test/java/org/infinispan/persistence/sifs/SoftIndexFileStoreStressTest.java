@@ -71,7 +71,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
             .maxFileSize(1000);
 
       timeService = new EmbeddedTimeService();
-      store.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller, timeService));
+      store.init(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller, timeService));
       TestingUtil.inject(factory, timeService);
       store.start();
       executorService = Executors.newFixedThreadPool(THREADS + 1);

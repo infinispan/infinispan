@@ -7,6 +7,7 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -27,12 +28,14 @@ public class InitializationContextImpl implements InitializationContext {
    private final MarshalledEntryFactory marshalledEntryFactory;
    private final MarshallableEntryFactory marshallableEntryFactory;
    private final ExecutorService executorService;
+   private final GlobalConfiguration globalConfiguration;
 
 
    public InitializationContextImpl(StoreConfiguration configuration, Cache cache, KeyPartitioner keyPartitioner,
                                     PersistenceMarshaller marshaller, TimeService timeService,
                                     ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
-                                    MarshallableEntryFactory marshallableEntryFactory, ExecutorService executorService) {
+                                    MarshallableEntryFactory marshallableEntryFactory, ExecutorService executorService,
+                                    GlobalConfiguration globalConfiguration) {
       this.configuration = configuration;
       this.cache = cache;
       this.keyPartitioner = keyPartitioner;
@@ -42,6 +45,7 @@ public class InitializationContextImpl implements InitializationContext {
       this.marshalledEntryFactory = marshalledEntryFactory;
       this.marshallableEntryFactory = marshallableEntryFactory;
       this.executorService = executorService;
+      this.globalConfiguration = globalConfiguration;
    }
 
    @Override
@@ -93,5 +97,10 @@ public class InitializationContextImpl implements InitializationContext {
    @Override
    public PersistenceMarshaller getPersistenceMarshaller() {
       return marshaller;
+   }
+
+   @Override
+   public GlobalConfiguration getGlobalConfiguration() {
+      return globalConfiguration;
    }
 }

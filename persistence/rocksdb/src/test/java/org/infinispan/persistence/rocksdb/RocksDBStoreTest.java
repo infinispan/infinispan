@@ -70,15 +70,15 @@ public class RocksDBStoreTest extends BaseStoreTest {
    protected RocksDBStoreConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder lcb) {
       RocksDBStoreConfigurationBuilder cfg = lcb.addStore(RocksDBStoreConfigurationBuilder.class);
       cfg.segmented(segmented);
-      cfg.location(tmpDirectory + "/data");
-      cfg.expiredLocation(tmpDirectory + "/expiry");
+      cfg.location(tmpDirectory);
+      cfg.expiredLocation(tmpDirectory);
       cfg.clearThreshold(2);
       return cfg;
    }
 
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
+   protected AdvancedLoadWriteStore createStore() {
       clearTempDir();
       RocksDBStore fcs = new RocksDBStore();
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
@@ -88,7 +88,7 @@ public class RocksDBStoreTest extends BaseStoreTest {
 
       configuration = cb.build();
       ClassWhiteList whiteList = marshaller.getWhiteList();
-      InitializationContext ctx = PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, getMarshaller(), timeService, whiteList);
+      InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), configuration, getMarshaller(), timeService, whiteList);
       Cache cache = ctx.getCache();
       HashFunctionPartitioner partitioner = new HashFunctionPartitioner();
       partitioner.init(cache.getCacheConfiguration().clustering().hash());

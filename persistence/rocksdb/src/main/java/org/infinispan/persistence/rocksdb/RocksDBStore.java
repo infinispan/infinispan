@@ -1,7 +1,10 @@
 package org.infinispan.persistence.rocksdb;
 
+import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,7 +37,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.internal.PersistenceUtil;
@@ -73,8 +75,8 @@ import io.reactivex.schedulers.Schedulers;
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private static final Log log = LogFactory.getLog(RocksDBStore.class, Log.class);
-    static final String databasePropertyNameWithSuffix = "database.";
-    static final String columnFamilyPropertyNameWithSuffix = "data.";
+    static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
+    static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
 
     private RocksDBStoreConfiguration configuration;
     private BlockingQueue<ExpiryEntry> expiryEntryQueue;
@@ -109,8 +111,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         expiryEntryQueue = new LinkedBlockingQueue<>(configuration.expiryQueueSize());
 
         AdvancedCache cache = ctx.getCache().getAdvancedCache();
-        ComponentRegistry registry = cache.getComponentRegistry();
-        KeyPartitioner keyPartitioner = registry.getComponent(KeyPartitioner.class);
+        KeyPartitioner keyPartitioner = cache.getComponentRegistry().getComponent(KeyPartitioner.class);
         if (configuration.segmented()) {
             handler = new SegmentedRocksDBHandler(cache.getCacheConfiguration().clustering().hash().numSegments(),
                   keyPartitioner);
@@ -122,38 +123,34 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         Properties allProperties = configuration.properties();
         for (Map.Entry<Object, Object> entry : allProperties.entrySet()) {
             String key = entry.getKey().toString();
-            if (key.startsWith(databasePropertyNameWithSuffix)) {
+            if (key.startsWith(DATABASE_PROPERTY_NAME_WITH_SUFFIX)) {
                 if (databaseProperties == null) {
                     databaseProperties = new Properties();
                 }
-                databaseProperties.setProperty(key.substring(databasePropertyNameWithSuffix.length()), entry.getValue().toString());
-            } else if (key.startsWith(columnFamilyPropertyNameWithSuffix)) {
+                databaseProperties.setProperty(key.substring(DATABASE_PROPERTY_NAME_WITH_SUFFIX.length()), entry.getValue().toString());
+            } else if (key.startsWith(COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX)) {
                 if (columnFamilyProperties == null) {
                     columnFamilyProperties = new Properties();
                 }
-                columnFamilyProperties.setProperty(key.substring(columnFamilyPropertyNameWithSuffix.length()), entry.getValue().toString());
+                columnFamilyProperties.setProperty(key.substring(COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX.length()), entry.getValue().toString());
             }
         }
 
         try {
-            db = handler.open(getQualifiedLocation(), dataDbOptions());
-            expiredDb = openDatabase(getQualifiedExpiredLocation(), expiredDbOptions());
+            db = handler.open(getLocation(), dataDbOptions());
+            expiredDb = openDatabase(getExpirationLocation(), expiredDbOptions());
             stopped = false;
         } catch (Exception e) {
             throw new CacheConfigurationException("Unable to open database", e);
         }
     }
 
-    private String sanitizedCacheName() {
-        return ctx.getCache().getName().replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+    private Path getLocation() {
+        return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.location(), ctx.getCache().getName(), "data");
     }
 
-    private String getQualifiedLocation() {
-        return configuration.location() + sanitizedCacheName();
-    }
-
-    private String getQualifiedExpiredLocation() {
-        return configuration.expiredLocation() + sanitizedCacheName();
+    private Path getExpirationLocation() {
+        return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.expiredLocation(), ctx.getCache().getName(), "expired");
     }
 
     private WriteOptions dataWriteOptions() {
@@ -190,10 +187,10 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     /**
      * Creates database if it doesn't exist.
      */
-    protected RocksDB openDatabase(String location, Options options) throws IOException, RocksDBException {
-        File dir = new File(location);
+    protected RocksDB openDatabase(Path location, Options options) throws RocksDBException {
+        File dir = location.toFile();
         dir.mkdirs();
-        return RocksDB.open(options, location);
+        return RocksDB.open(options, location.toString());
     }
 
     @Override
@@ -215,15 +212,13 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     @Override
     public void destroy() {
         stop();
-
-        Util.recursiveFileRemove(new File(getQualifiedLocation()));
-
-        Util.recursiveFileRemove(new File(getQualifiedExpiredLocation()));
+        Util.recursiveFileRemove(getLocation().toFile());
+        Util.recursiveFileRemove(getExpirationLocation().toFile());
     }
 
     @Override
     public boolean isAvailable() {
-        return new File(getQualifiedLocation()).exists() && new File(getQualifiedExpiredLocation()).exists();
+        return getLocation().toFile().exists() && getExpirationLocation().toFile().exists();
     }
 
     @Override
@@ -579,7 +574,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
     private abstract class RocksDBHandler {
 
-        abstract RocksDB open(String location, DBOptions options) throws RocksDBException;
+        abstract RocksDB open(Path location, DBOptions options) throws RocksDBException;
 
         abstract void close();
 
@@ -815,11 +810,11 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         }
 
         @Override
-        RocksDB open(String location, DBOptions options) throws RocksDBException {
-            File dir = new File(location);
+        RocksDB open(Path location, DBOptions options) throws RocksDBException {
+            File dir = location.toFile();
             dir.mkdirs();
             List<ColumnFamilyHandle> handles = new ArrayList<>(1);
-            RocksDB rocksDB = RocksDB.open(options, location,
+            RocksDB rocksDB = RocksDB.open(options, location.toString(),
                   Collections.singletonList(newDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY)),
                   handles);
             defaultColumnFamilyHandle = handles.get(0);
@@ -892,7 +887,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             db.close();
         }
 
-        protected void reinitAllDatabases() throws IOException, RocksDBException {
+        protected void reinitAllDatabases() throws RocksDBException {
             try {
                 semaphore.acquire(Integer.MAX_VALUE);
             } catch (InterruptedException e) {
@@ -906,12 +901,12 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                 expiredDb.close();
                 // Force a GC to ensure that open file handles are released in Windows
                 System.gc();
-                String dataLocation = getQualifiedLocation();
-                Util.recursiveFileRemove(new File(dataLocation));
-                db = open(getQualifiedLocation(), dataDbOptions());
+                Path dataLocation = getLocation();
+                Util.recursiveFileRemove(dataLocation.toFile());
+                db = open(getLocation(), dataDbOptions());
 
-                String expirationLocation = getQualifiedExpiredLocation();
-                Util.recursiveFileRemove(new File(expirationLocation));
+                Path expirationLocation = getExpirationLocation();
+                Util.recursiveFileRemove(expirationLocation.toFile());
                 expiredDb = openDatabase(expirationLocation, expiredDbOptions());
             } finally {
                 semaphore.release(Integer.MAX_VALUE);
@@ -982,8 +977,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         }
 
         @Override
-        RocksDB open(String location, DBOptions options) throws RocksDBException {
-            File dir = new File(location);
+        RocksDB open(Path location, DBOptions options) throws RocksDBException {
+            File dir = location.toFile();
             dir.mkdirs();
             int segmentCount = handles.length();
             List<ColumnFamilyDescriptor> descriptors = new ArrayList<>(segmentCount + 1);
@@ -994,7 +989,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             for (int i = 0; i < segmentCount; ++i) {
                 descriptors.add(newDescriptor(byteArrayFromInt(i)));
             }
-            RocksDB rocksDB = RocksDB.open(options, location, descriptors, outHandles);
+            RocksDB rocksDB = RocksDB.open(options, location.toString(), descriptors, outHandles);
             for (int i = 0; i < segmentCount; ++i) {
                 handles.set(i, outHandles.get(i + 1));
             }

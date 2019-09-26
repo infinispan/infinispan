@@ -28,6 +28,7 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
@@ -39,22 +40,24 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  */
 public class PersistenceMockUtil {
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller) {
-      return createContext(nodeName, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
+   public static InitializationContext createContext(Class<?> testClass, Configuration configuration, PersistenceMarshaller marshaller) {
+      return createContext(testClass, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
    }
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller, TimeService timeService) {
-      return createContext(nodeName, configuration, marshaller, timeService, null);
+   public static InitializationContext createContext(Class<?> testClass, Configuration configuration, PersistenceMarshaller marshaller, TimeService timeService) {
+      return createContext(testClass, configuration, marshaller, timeService, null);
    }
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller,
+   public static InitializationContext createContext(Class<?> testClass, Configuration configuration, PersistenceMarshaller marshaller,
                                                      TimeService timeService, ClassWhiteList whiteList) {
-      Cache mockCache = mockCache(nodeName, configuration, timeService, whiteList);
+      Cache mockCache = mockCache(testClass.getSimpleName(), configuration, timeService, whiteList);
       MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(marshaller);
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(TestingUtil.tmpDirectory(testClass));
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
             SingleSegmentKeyPartitioner.getInstance(), marshaller,
             timeService, new ByteBufferFactoryImpl(), mef, mef,
-            new WithinThreadExecutor());
+            new WithinThreadExecutor(), global.build());
    }
 
    private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService, ClassWhiteList whiteList) {

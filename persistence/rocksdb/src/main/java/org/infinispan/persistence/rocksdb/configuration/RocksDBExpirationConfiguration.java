@@ -14,7 +14,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
  */
 public class RocksDBExpirationConfiguration implements ConfigurationInfo {
 
-   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("path", "Infinispan-RocksDBStore/expired").immutable().autoPersist(false).xmlName("path").build();
+   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("path", null, String.class).immutable().autoPersist(false).xmlName("path").build();
    final static AttributeDefinition<Integer> EXPIRY_QUEUE_SIZE = AttributeDefinition.builder("queueSize", 10000).immutable().autoPersist(false).build();
    private final AttributeSet attributes;
 

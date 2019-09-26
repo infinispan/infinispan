@@ -9,6 +9,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.security.Permission;
 import java.util.Collection;
 import java.util.List;
@@ -1889,4 +1890,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to configure JGroups Stack '%s'", id = 557)
    CacheConfigurationException unableToAddJGroupsStack(String name, @Cause Exception e);
 
+   @Message(value = "The store location '%s' is not a child of the global persistent location '%s'", id = 558)
+   CacheConfigurationException forbiddenStoreLocation(Path location, Path global);
 }

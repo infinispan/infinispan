@@ -8,6 +8,7 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -74,4 +75,9 @@ public interface InitializationContext {
     * Returns the persistence marshaller which should be used to marshall/unmarshall all stored bytes.
     */
    PersistenceMarshaller getPersistenceMarshaller();
+
+   /**
+    * Returns the global configuration
+    */
+   GlobalConfiguration getGlobalConfiguration();
 }

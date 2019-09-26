@@ -7,6 +7,7 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -26,18 +27,21 @@ public class DummyInitializationContext implements InitializationContext {
    MarshallableEntryFactory marshalledEntryFactory;
    ExecutorService executorService;
 
+   GlobalConfiguration globalConfiguration;
+
    public DummyInitializationContext() {
    }
 
    public DummyInitializationContext(StoreConfiguration clc, Cache cache, PersistenceMarshaller marshaller,
                                      ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshalledEntryFactory,
-                                     ExecutorService executorService) {
+                                     ExecutorService executorService, GlobalConfiguration globalConfiguration) {
       this.clc = clc;
       this.cache = cache;
       this.marshaller = marshaller;
       this.byteBufferFactory = byteBufferFactory;
       this.marshalledEntryFactory = marshalledEntryFactory;
       this.executorService = executorService;
+      this.globalConfiguration = globalConfiguration;
    }
 
    @Override
@@ -89,5 +93,10 @@ public class DummyInitializationContext implements InitializationContext {
    @Override
    public PersistenceMarshaller getPersistenceMarshaller() {
       return marshaller;
+   }
+
+   @Override
+   public GlobalConfiguration getGlobalConfiguration() {
+      return globalConfiguration;
    }
 }

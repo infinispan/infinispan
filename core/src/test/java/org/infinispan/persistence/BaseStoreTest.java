@@ -583,7 +583,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    protected final InitializationContext createContext(Configuration configuration) {
-      return PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, getMarshaller(), timeService);
+      return PersistenceMockUtil.createContext(getClass(), configuration, getMarshaller(), timeService);
    }
 
    protected final void assertContains(Object k, boolean expected) {

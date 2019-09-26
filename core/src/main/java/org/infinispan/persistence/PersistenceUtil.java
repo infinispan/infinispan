@@ -1,5 +1,7 @@
 package org.infinispan.persistence;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +12,7 @@ import java.util.function.Predicate;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -33,7 +36,6 @@ import io.reactivex.schedulers.Schedulers;
 public class PersistenceUtil {
 
    private static Log log = LogFactory.getLog(PersistenceUtil.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    public static KeyFilter notNull(KeyFilter filter) {
       return filter == null ? KeyFilter.ACCEPT_ALL_FILTER : filter;
@@ -187,5 +189,31 @@ public class PersistenceUtil {
          IntFunction<Publisher<R>> publisherFunction) {
       return org.infinispan.persistence.internal.PersistenceUtil.parallelizePublisher(segments, Schedulers.from(executor),
             publisherFunction);
+   }
+
+   /**
+    * Replace unwanted characters from cache names so they can be used as filenames
+    */
+   public static String sanitizedCacheName(String cacheName) {
+      return cacheName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+   }
+
+   public static Path getQualifiedLocation(GlobalConfiguration globalConfiguration, String location, String cacheName, String qualifier) {
+      Path persistentLocation = Paths.get(globalConfiguration.globalState().persistentLocation());
+      if (location == null) {
+         return persistentLocation.resolve(Paths.get(sanitizedCacheName(cacheName), qualifier));
+      } else {
+         Path path = Paths.get(location);
+         if (path.isAbsolute()) {
+            // Ensure that the path lives under the global persistent location
+            if (path.startsWith(persistentLocation)) {
+               return Paths.get(location, sanitizedCacheName(cacheName), qualifier);
+            } else {
+               throw log.forbiddenStoreLocation(path, persistentLocation);
+            }
+         } else {
+            return persistentLocation.resolve(path.resolve(Paths.get(sanitizedCacheName(cacheName), qualifier)));
+         }
+      }
    }
 }

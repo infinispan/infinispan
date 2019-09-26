@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
@@ -72,7 +73,9 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(false);
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      return TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder(), false);
    }
 
    public void testTwoCachesSameCacheStore() {
@@ -201,9 +204,11 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testRemoveCache() {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence(), true);
-      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
+      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(global, cb);
       try {
          final String cacheName = "to-be-removed";
          local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());
@@ -219,9 +224,11 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testRemoveCacheWithPassivation() {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence().passivation(true), true);
-      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
+      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(global, cb);
       try {
          final String cacheName = "to-be-removed";
          local.defineConfiguration(cacheName, local.getDefaultCacheConfiguration());

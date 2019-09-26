@@ -3,6 +3,8 @@ package org.infinispan.tools.store.migrator.file;
 import static org.infinispan.tools.store.migrator.Element.LOCATION;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -21,7 +23,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 public class SoftIndexFileStoreIterator implements StoreIterator {
 
    private final MarshallableEntryFactory entryFactory;
-   private final String location;
+   private final Path location;
 
    public SoftIndexFileStoreIterator(StoreProperties props) {
       props.required(Element.LOCATION);
@@ -30,7 +32,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
       if (!file.exists() || !file.isDirectory())
          throw new CacheException(String.format("Unable to read directory at '%s'", location));
 
-      this.location = location;
+      this.location = Paths.get(location);
       this.entryFactory = SerializationConfigUtil.getEntryFactory(props);
    }
 
@@ -51,7 +53,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
       int file = -1;
       int offset = 0;
 
-      SoftIndexIterator(String location) {
+      SoftIndexIterator(Path location) {
          this.fileProvider = new FileProvider(location, 1000);
          this.iterator = fileProvider.getFileIterator();
       }

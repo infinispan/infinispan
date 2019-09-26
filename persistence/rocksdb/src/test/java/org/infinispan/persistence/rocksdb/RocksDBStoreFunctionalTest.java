@@ -43,7 +43,7 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
       cb.read(cacheManager.getDefaultCacheConfiguration());
       new File(tmpDirectory).mkdirs();
       RocksDBStoreConfigurationBuilder storeConfigurationBuilder = createStoreBuilder(cb.persistence());
-      storeConfigurationBuilder.addProperty(RocksDBStore.databasePropertyNameWithSuffix + "unknown", "some_value");
+      storeConfigurationBuilder.addProperty(RocksDBStore.DATABASE_PROPERTY_NAME_WITH_SUFFIX + "unknown", "some_value");
       Configuration c = cb.build();
       String cacheName = "rocksdb-unknown-properties";
       cacheManager.defineConfiguration(cacheName, c);
@@ -69,11 +69,11 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
       RocksDBStoreConfigurationBuilder storeConfigurationBuilder = createStoreBuilder(cb.persistence());
       String dbOptionName = "max_background_compactions";
       String dbOptionValue = "2";
-      storeConfigurationBuilder.addProperty(RocksDBStore.databasePropertyNameWithSuffix + dbOptionName, dbOptionValue);
+      storeConfigurationBuilder.addProperty(RocksDBStore.DATABASE_PROPERTY_NAME_WITH_SUFFIX + dbOptionName, dbOptionValue);
 
       String columnFamilyOptionName = "write_buffer_size";
       String columnFamilyOptionValue = "96MB";
-      storeConfigurationBuilder.addProperty(RocksDBStore.columnFamilyPropertyNameWithSuffix + columnFamilyOptionName, columnFamilyOptionValue);
+      storeConfigurationBuilder.addProperty(RocksDBStore.COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX + columnFamilyOptionName, columnFamilyOptionValue);
 
       Configuration c = cb.build();
       String cacheName = "rocksdb-known-properties";
