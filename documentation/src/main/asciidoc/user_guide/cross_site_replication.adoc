@@ -201,6 +201,26 @@ Both the local and the backup call(if the "backupFailurePolicy" is set to "FAIL"
 ===== Asynchronous local cluster
 In the case of asynchronous local clusters, the backup data is sent during the commit phase. If the backup call fails and the "backupFailurePolicy" is set to "FAIL" then the user is notified through an exception.
 
+==== Replication of expired cache entries across sites
+You can configure {brandname} to expire entries, which controls the amount of
+time entries remain in the cache.
+
+* `lifespan` expiration is suitable for cross-site replication because entries
+expire without the need for {brandname} to determine if the entries have
+expired in clusters on other sites.
+
+* `max-idle` expiration does not work with cross-site replication because
+{brandname} cannot determine if cache entries have reached the idle timeout in
+clusters on other sites.
+
+[IMPORTANT]
+====
+When expiring entries, {brandname} replicates a command that removes expired
+entries across clusters. As of this release {brandname} also replicates this 
+command across sites, which is not necessary and will be removed in a future
+release.
+====
+
 === Taking a site offline
 If backing up to a site fails for a certain number of times during a time interval, then it is possible to automatically mark that site as offline. When a site is marked as offline the local site won't try to backup data to it anymore. In order to be taken online a system administrator intervention being required.
 
