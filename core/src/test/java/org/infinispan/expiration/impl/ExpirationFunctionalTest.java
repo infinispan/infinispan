@@ -81,6 +81,10 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
    }
 
+   protected void processExpiration() {
+      expirationManager.processExpiration();
+   }
+
    public ExpirationFunctionalTest withStorage(StorageType storage) {
       this.storage = storage;
       return this;
@@ -106,7 +110,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
       if (cacheMode.isClustered()) {
          assertEquals(SIZE, cache.size());
-         expirationManager.processExpiration();
+         processExpiration();
       }
 
       assertEquals(0, cache.size());
@@ -162,7 +166,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
          cache.getAdvancedCache().getDataContainer().executeTask(KeyFilter.ACCEPT_ALL_FILTER,
                (k, ice) -> invocationCount.incrementAndGet());
          assertEquals(SIZE, invocationCount.get());
-         expirationManager.processExpiration();
+         processExpiration();
       }
       cache.getAdvancedCache().getDataContainer()
            .executeTask(KeyFilter.ACCEPT_ALL_FILTER, (k, ice) -> {

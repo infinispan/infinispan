@@ -116,8 +116,15 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
    }
 
    @Override
-   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      iteratorIncludingExpired().forEachRemaining(ice -> action.accept(ice, keyPartitioner.getSegment(ice.getKey())));
+   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
+      if (segments == null || !segments.isEmpty()) {
+         iteratorIncludingExpired().forEachRemaining(ice -> {
+            int segment = keyPartitioner.getSegment(ice.getKey());
+            if (segments == null || segments.contains(segment)) {
+               action.accept(ice, segment);
+            }
+         });
+      }
    }
 
    @Override

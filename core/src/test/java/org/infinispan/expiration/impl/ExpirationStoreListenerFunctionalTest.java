@@ -48,7 +48,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    @Override
    public void testSimpleExpirationLifespan() throws Exception {
       super.testSimpleExpirationLifespan();
-      expirationManager.processExpiration();
+      processExpiration();
       assertExpiredEvents(SIZE);
    }
 
@@ -59,7 +59,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       }
       timeService.advance(2);
       // We have to process expiration for store and max idle
-      expirationManager.processExpiration();
+      processExpiration();
       assertEquals(0, cache.size());
       assertExpiredEvents(SIZE);
    }
@@ -74,7 +74,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       timeService.advance(11);
       assertNull(cache.get(key));
       // Stores do not expire entries on load, thus we need to purge them
-      expirationManager.processExpiration();
+      processExpiration();
 
       assertEquals(1, listener.getInvocationCount());
 

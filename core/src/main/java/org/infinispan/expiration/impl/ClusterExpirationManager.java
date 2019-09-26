@@ -11,6 +11,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -63,12 +65,14 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    @Inject protected DistributionManager distributionManager;
 
    private AdvancedCache<K, V> cache;
+   private Address localAddress;
 
    @Override
    public void start() {
       super.start();
       // Data container entries are retrieved directly, so we don't need to worry about an encodings
       this.cache = AbstractDelegatingCache.unwrapCache(cacheRef.wired()).getAdvancedCache();
+      this.localAddress = cache.getCacheManager().getAddress();
    }
 
    @Override
@@ -83,7 +87,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             // We limit it so there is only so many async expiration removals done at the same time
             List<CompletableFuture> futures = new ArrayList<>(MAX_ASYNC_EXPIRATIONS);
             long currentTimeMillis = timeService.wallClockTime();
-            dataContainer.running().forEachIncludingExpired((ice, segment) -> {
+            LocalizedCacheTopology topology = distributionManager.getCacheTopology();
+            IntSet segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+            dataContainer.running().forEachIncludingExpired(segments, (ice, segment) -> {
                if (ice.canExpire()) {
                   // Have to synchronize on the entry to make sure we see the value and metadata at the same time
                   boolean expiredMortal;
