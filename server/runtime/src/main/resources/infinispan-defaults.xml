@@ -10,6 +10,7 @@
    <cache-container shutdown-hook="DONT_REGISTER">
       <global-state>
          <persistent-location path="${infinispan.server.data.path}"/>
+         <shared-persistent-location path="${infinispan.server.data.path}"/>
          <overlay-configuration-storage/>
       </global-state>
       <local-cache-configuration name="org.infinispan.LOCAL">
