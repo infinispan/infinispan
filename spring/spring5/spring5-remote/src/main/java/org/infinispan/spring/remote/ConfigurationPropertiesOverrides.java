@@ -2,6 +2,7 @@ package org.infinispan.spring.remote;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES;
@@ -41,6 +42,11 @@ public class ConfigurationPropertiesOverrides {
       return this.overridingProperties.isEmpty();
    }
 
+   boolean containsProperty(String key) {
+      String prop = overridingProperties.getProperty(key);
+      return prop != null && !prop.isEmpty();
+   }
+
    /**
     * @param TransportFactory
     * @deprecated since 10.0. This method has no effect
@@ -67,6 +73,13 @@ public class ConfigurationPropertiesOverrides {
     */
    public void setMarshaller(final String marshaller) {
       this.overridingProperties.setProperty(MARSHALLER, marshaller);
+   }
+
+   /**
+    * @param whiteListRegex
+    */
+   public void setClassWhiteList(final String whiteListRegex) {
+      this.overridingProperties.setProperty(JAVA_SERIAL_WHITELIST, whiteListRegex);
    }
 
    /**

@@ -75,6 +75,7 @@ public final class Util {
    public static final String[] EMPTY_STRING_ARRAY = new String[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
    public static final byte[][] EMPTY_BYTE_ARRAY_ARRAY = new byte[0][];
+   public static final String GENERIC_JBOSS_MARSHALLING_CLASS = "org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller";
 
    private static final Log log = LogFactory.getLog(Util.class);
 
@@ -1208,7 +1209,7 @@ public final class Util {
 
    public static Marshaller getJBossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
       try {
-         Class<?> marshallerClass = classLoader.loadClass("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
+         Class<?> marshallerClass = classLoader.loadClass(GENERIC_JBOSS_MARSHALLING_CLASS);
          return Util.newInstanceOrNull(marshallerClass.asSubclass(Marshaller.class),
                new Class[]{ClassLoader.class, ClassWhiteList.class}, classLoader, classWhiteList);
       } catch (ClassNotFoundException e) {
