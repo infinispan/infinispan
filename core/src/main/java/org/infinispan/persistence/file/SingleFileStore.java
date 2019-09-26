@@ -107,9 +107,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       try {
          // open the data file
          String location = configuration.location();
-         if (location == null || location.trim().length() == 0)
-            location = "Infinispan-SingleFileStore";
-
+         if (location == null || location.trim().length() == 0) {
+            location = ctx.getGlobalConfiguration().globalState().persistentLocation();
+         }
          file = new File(location, ctx.getCache().getName() + ".dat");
          if (!file.exists()) {
             File dir = file.getParentFile();

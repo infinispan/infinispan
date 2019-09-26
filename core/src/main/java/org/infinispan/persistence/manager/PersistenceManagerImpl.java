@@ -1208,7 +1208,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          InitializationContextImpl ctx =
                new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
-                     byteBufferFactory, marshalledEntryFactory, marshallableEntryFactory, persistenceExecutor);
+                     byteBufferFactory, marshalledEntryFactory, marshallableEntryFactory, persistenceExecutor, globalConfiguration);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class FileProvider {
    private final File dataDir;
    private final int openFileLimit;
    private final ArrayBlockingQueue<Record> recordQueue;
-   private final ConcurrentMap<Integer, Record> openFiles = new ConcurrentHashMap<Integer, Record>();
+   private final ConcurrentMap<Integer, Record> openFiles = new ConcurrentHashMap<>();
    private final AtomicInteger currentOpenFiles = new AtomicInteger(0);
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private final Set<Integer> logFiles = new HashSet<Integer>();
@@ -44,10 +45,10 @@ public class FileProvider {
 
    private int nextFileId = 0;
 
-   public FileProvider(String dataDir, int openFileLimit) {
+   public FileProvider(Path dataDir, int openFileLimit) {
       this.openFileLimit = openFileLimit;
-      this.recordQueue = new ArrayBlockingQueue<Record>(openFileLimit);
-      this.dataDir = new File(dataDir);
+      this.recordQueue = new ArrayBlockingQueue<>(openFileLimit);
+      this.dataDir = dataDir.toFile();
       this.dataDir.mkdirs();
    }
 

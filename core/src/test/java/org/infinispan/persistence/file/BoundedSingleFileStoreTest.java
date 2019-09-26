@@ -53,7 +53,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
                   .maxEntries(1);
 
       marshaller = new TestObjectStreamMarshaller();
-      store.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));
+      store.init(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller));
       store.start();
    }
 
@@ -70,7 +70,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testStoreSizeExceeded() throws Exception {
+   public void testStoreSizeExceeded() {
       assertStoreSize(0, 0);
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       try {

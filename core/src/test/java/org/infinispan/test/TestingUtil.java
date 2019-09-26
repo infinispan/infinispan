@@ -1317,8 +1317,7 @@ public class TestingUtil {
     * @return an absolute path
     */
    public static String tmpDirectory(Class<?> test) {
-      String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
-      return prefix + separator + TEST_PATH + separator + test.getSimpleName();
+      return tmpDirectory() + separator + TEST_PATH + separator + test.getSimpleName();
    }
 
    /**
@@ -1327,8 +1326,11 @@ public class TestingUtil {
     * @return an absolute path
     */
    public static String tmpDirectory(String folder) {
-      String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
-      return prefix + separator + TEST_PATH + separator + folder;
+      return tmpDirectory() + separator + TEST_PATH + separator + folder;
+   }
+
+   public static String tmpDirectory() {
+      return System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
    }
 
    public static String k(Method method, int index) {

@@ -3,6 +3,7 @@ package org.infinispan.persistence.jpa;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
@@ -46,7 +47,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       return TestCacheManagerFactory.createCacheManager(true);
    }
 
-   protected JpaStore createCacheStore() {
+   protected JpaStore createCacheStore(GlobalConfiguration gc) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
             .persistenceUnitName(PERSISTENCE_UNIT_NAME)
@@ -54,7 +55,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
       JpaStore store = new JpaStore();
       store.init(new DummyInitializationContext(builder.persistence().stores().get(0).create(), cm.getCache(),
-            marshaller, null, entryFactory, new WithinThreadExecutor()));
+            marshaller, null, entryFactory, new WithinThreadExecutor(), gc));
       store.start();
 
       assertNotNull(store.getEntityManagerFactory());
@@ -70,7 +71,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
          cm = createCacheManager();
          marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
          entryFactory = new MarshalledEntryFactoryImpl(marshaller);
-         cs = createCacheStore();
+         cs = createCacheStore(cm.getCacheManagerConfiguration());
          cs.clear();
       } catch (Exception e) {
          log.warn("Error during test setup", e);

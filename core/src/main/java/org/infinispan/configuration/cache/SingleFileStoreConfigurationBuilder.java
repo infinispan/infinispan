@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Single file cache store configuration builder.
@@ -82,6 +83,11 @@ public class SingleFileStoreConfigurationBuilder
    public SingleFileStoreConfigurationBuilder fragmentationFactor(float fragmentationFactor) {
       attributes.attribute(FRAGMENTATION_FACTOR).set(fragmentationFactor);
       return this;
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      super.validate(globalConfig);
    }
 
    @Override

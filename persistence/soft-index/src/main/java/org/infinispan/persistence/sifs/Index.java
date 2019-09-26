@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ class Index {
    private static final int DIRTY = 0xD112770C;
    private static final int INDEX_FILE_HEADER_SIZE = 30;
 
-   private final String indexDir;
+   private final Path indexDir;
    private final FileProvider fileProvider;
    private final Compactor compactor;
    private final int minNodeSize;
@@ -42,7 +43,7 @@ class Index {
    private final Segment[] segments;
    private final TimeService timeService;
 
-   public Index(FileProvider fileProvider, String indexDir, int segments, int minNodeSize, int maxNodeSize,
+   public Index(FileProvider fileProvider, Path indexDir, int segments, int minNodeSize, int maxNodeSize,
                 IndexQueue indexQueue, TemporaryTable temporaryTable, Compactor compactor,
                 TimeService timeService) throws IOException {
       this.fileProvider = fileProvider;
@@ -51,7 +52,7 @@ class Index {
       this.indexDir = indexDir;
       this.minNodeSize = minNodeSize;
       this.maxNodeSize = maxNodeSize;
-      new File(indexDir).mkdirs();
+      indexDir.toFile().mkdirs();
 
       this.segments = new Segment[segments];
       for (int i = 0; i < segments; ++i) {
@@ -166,7 +167,7 @@ class Index {
          this.indexQueue = indexQueue;
          this.temporaryTable = temporaryTable;
 
-         this.indexFileFile = new File(indexDir, "index." + id);
+         this.indexFileFile = new File(indexDir.toFile(), "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);

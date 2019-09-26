@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
@@ -130,7 +131,9 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
                   .storeName(storeName)
                   .create();
       store.init(new DummyInitializationContext(dummyConfiguration, null, marshaller, new ByteBufferFactoryImpl(),
-                                                new MarshalledEntryFactoryImpl(marshaller), Executors.newScheduledThreadPool(1, getTestThreadFactory("PersistenceExecutorThreadFactory"))));
+                                                new MarshalledEntryFactoryImpl(marshaller),
+                                                Executors.newScheduledThreadPool(1, getTestThreadFactory("PersistenceExecutorThreadFactory")),
+            new GlobalConfigurationBuilder().build()));
       store.start();
       return store;
    }

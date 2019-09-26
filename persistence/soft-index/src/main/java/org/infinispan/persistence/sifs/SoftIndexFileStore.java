@@ -1,7 +1,10 @@
 package org.infinispan.persistence.sifs;
 
+import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,9 +125,11 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    private MarshallableEntryFactory marshallableEntryFactory;
    private TimeService timeService;
    private int maxKeyLength;
+   private InitializationContext ctx;
 
    @Override
    public void init(InitializationContext ctx) {
+      this.ctx = ctx;
       configuration = ctx.getConfiguration();
       marshaller = ctx.getPersistenceMarshaller();
       marshallableEntryFactory = ctx.getMarshallableEntryFactory();
@@ -142,11 +147,11 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength());
-      fileProvider = new FileProvider(configuration.dataLocation(), configuration.openFilesLimit());
+      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit());
       compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
       logAppender = new LogAppender(storeQueue, indexQueue, temporaryTable, compactor, fileProvider, configuration.syncWrites(), configuration.maxFileSize());
       try {
-         index = new Index(fileProvider, configuration.indexLocation(), configuration.indexSegments(),
+         index = new Index(fileProvider, getIndexLocation(), configuration.indexSegments(),
                configuration.minNodeSize(), configuration.maxNodeSize(),
                indexQueue, temporaryTable, compactor, timeService);
       } catch (IOException e) {
@@ -188,6 +193,14 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                }).blockingSubscribe();
       }
       logAppender.setSeqId(maxSeqId.get() + 1);
+   }
+
+   private Path getDataLocation() {
+      return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.dataLocation(), ctx.getCache().getName(), "data");
+   }
+
+   protected Path getIndexLocation() {
+      return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.indexLocation(), ctx.getCache().getName(), "index");
    }
 
    protected boolean isSeqIdOld(long seqId, Object key, byte[] serializedKey) throws IOException {

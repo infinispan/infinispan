@@ -101,7 +101,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .enable()
             .threadPoolSize(10);
       dummyCfg.slow(slow);
-      InitializationContext ctx = PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller);
+      InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
       DummyInMemoryStore underlying = new DummyInMemoryStore();
       underlying.init(ctx);
       underlying.start();
@@ -251,7 +251,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(m.getName());
          Configuration configuration = builder.build();
-         InitializationContext ctx = PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, marshaller);
+         InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), configuration, marshaller);
          writer.init(ctx);
          writer.start();
          underlying.init(ctx);
@@ -507,7 +507,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
       writer = new AdvancedAsyncCacheWriter(underlying);
       InitializationContext ctx =
-            PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller);
+            PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
       writer.init(ctx);
       writer.start();
       underlying.init(ctx);

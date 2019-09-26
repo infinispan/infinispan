@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -49,14 +50,20 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
       return r;
    }
 
+   private GlobalConfigurationBuilder globalConfig() {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      return global;
+   }
+
    /**
     * when a node that persisted KEY wakes up, it can't rewrite existing value.
     */
    public void testStartStopOfBackupDoesntRewriteValue(Method m) throws Exception {
       final List<ConfigurationBuilder> configs = configs(2, m);
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createClusteredCacheManager(configs.get(0)),
-            TestCacheManagerFactory.createClusteredCacheManager(configs.get(1))) {
+            TestCacheManagerFactory.createClusteredCacheManager(globalConfig(), configs.get(0)),
+            TestCacheManagerFactory.createClusteredCacheManager(globalConfig(), configs.get(1))) {
          @Override
          public void call() {
             final EmbeddedCacheManager cacheManager0 = cms[0];
@@ -75,7 +82,7 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
             assertEquals("VALUE V2", cache0.get("KEY"));
 
             withCacheManager(new CacheManagerCallable(
-                  TestCacheManagerFactory.createClusteredCacheManager(configs.get(1))) {
+                  TestCacheManagerFactory.createClusteredCacheManager(globalConfig(), configs.get(1))) {
                @Override
                public void call() {
                   Cache<String, String> newCache = cm.getCache();
@@ -93,8 +100,8 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
    public void testStartStopOfBackupResurrectsDeletedKey(Method m) throws Exception {
       final List<ConfigurationBuilder> configs = configs(2, m);
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createClusteredCacheManager(configs.get(0)),
-            TestCacheManagerFactory.createClusteredCacheManager(configs.get(1))) {
+            TestCacheManagerFactory.createClusteredCacheManager(globalConfig(), configs.get(0)),
+            TestCacheManagerFactory.createClusteredCacheManager(globalConfig(), configs.get(1))) {
          @Override
          public void call() {
             final EmbeddedCacheManager cacheManager0 = cms[0];
@@ -115,7 +122,7 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
             assertEquals(null, cache0.get("KEY2"));
 
             withCacheManager(new CacheManagerCallable(
-                  TestCacheManagerFactory.createClusteredCacheManager(configs.get(1))) {
+                  TestCacheManagerFactory.createClusteredCacheManager(globalConfig(), configs.get(1))) {
                @Override
                public void call() {
                   Cache<String, String> newCache = cm.getCache();

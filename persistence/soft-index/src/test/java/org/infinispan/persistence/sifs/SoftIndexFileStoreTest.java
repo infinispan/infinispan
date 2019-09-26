@@ -5,8 +5,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.File;
-
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -48,7 +46,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
    }
 
    @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
+   protected AdvancedLoadWriteStore createStore() {
       clearTempDir();
       store = new SoftIndexFileStore() {
          boolean firstTime = true;
@@ -73,11 +71,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
          public void stop() {
             super.stop();
             if (!keepIndex) {
-               for (File f : new File(tmpDirectory).listFiles()) {
-                  if (!f.isDirectory()) {
-                     f.delete();
-                  }
-               }
+               Util.recursiveFileRemove(getIndexLocation().toFile());
             }
          }
       };
@@ -85,7 +79,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
             .getDefaultCacheConfiguration(false);
       builder.persistence()
             .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .indexLocation(tmpDirectory).dataLocation(tmpDirectory + "/data")
+            .indexLocation(tmpDirectory).dataLocation(tmpDirectory)
             .maxFileSize(1000);
 
       store.init(createContext(builder.build()));

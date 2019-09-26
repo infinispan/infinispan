@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 
 public class DataConfiguration implements ConfigurationInfo {
-   public static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", "Infinispan-SoftIndexFileStore-Data").immutable().autoPersist(false).xmlName("path").build();
+   public static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", null, String.class).immutable().autoPersist(false).xmlName("path").build();
    public static final AttributeDefinition<Integer> MAX_FILE_SIZE = AttributeDefinition.builder("maxFileSize", 16 * 1024 * 1024).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> SYNC_WRITES = AttributeDefinition.builder("syncWrites", false).immutable().autoPersist(false).build();
    private final AttributeSet attributes;

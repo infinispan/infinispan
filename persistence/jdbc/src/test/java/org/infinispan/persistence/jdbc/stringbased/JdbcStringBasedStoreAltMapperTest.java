@@ -62,13 +62,13 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
       marshaller = new TestObjectStreamMarshaller();
-      cacheStore.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));
+      cacheStore.init(PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller));
       cacheStore.start();
       tableManager = (TableManager) ReflectionUtil.getValue(cacheStore, "tableManager");
    }
 
    @AfterMethod
-   public void clearStore() throws Exception {
+   public void clearStore() {
       cacheStore.clear();
       assertRowCount(0);
    }

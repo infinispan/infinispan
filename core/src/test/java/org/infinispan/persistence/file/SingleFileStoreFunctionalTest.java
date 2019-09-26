@@ -1,6 +1,7 @@
 package org.infinispan.persistence.file;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -64,7 +65,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
       List<StoreConfiguration> storeConfigs = holder.getDefaultConfigurationBuilder().build().persistence().stores();
       assertEquals(1, storeConfigs.size());
       SingleFileStoreConfiguration fileStoreConfig = (SingleFileStoreConfiguration) storeConfigs.get(0);
-      assertEquals("Infinispan-SingleFileStore", fileStoreConfig.location());
+      assertNull(fileStoreConfig.location());
       assertEquals(-1, fileStoreConfig.maxEntries());
    }
 
