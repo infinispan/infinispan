@@ -151,6 +151,14 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
+    * @param whiteListRegex
+    * @see ConfigurationPropertiesOverrides#setClassWhiteList(String)
+    */
+   public void setClassWhiteList(final String whiteListRegex) {
+      this.configurationPropertiesOverrides.setClassWhiteList(whiteListRegex);
+   }
+
+   /**
     * @param asyncExecutorFactory
     * @see ConfigurationPropertiesOverrides#setAsyncExecutorFactory(String)
     */

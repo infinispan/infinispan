@@ -3,6 +3,7 @@ package org.infinispan.integrationtests.spring.boot.session.remote;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.integrationtests.spring.boot.session.configuration.WebConfig;
 import org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean;
 import org.infinispan.spring.remote.session.configuration.EnableInfinispanRemoteHttpSession;
@@ -18,13 +19,14 @@ import org.springframework.util.SocketUtils;
 @Import(WebConfig.class)
 public class RemoteConfiguration {
 
-   public static final int SERVER_PORT = SocketUtils.findAvailableTcpPort();
+   static final int SERVER_PORT = SocketUtils.findAvailableTcpPort();
 
    @Bean
    public SpringRemoteCacheManagerFactoryBean springCacheManager() {
       SpringRemoteCacheManagerFactoryBean factoryBean = new SpringRemoteCacheManagerFactoryBean();
       factoryBean.setServerList(Arrays.asList(new InetSocketAddress("localhost", SERVER_PORT)));
+      factoryBean.setMarshaller(JavaSerializationMarshaller.class.getName());
+      factoryBean.setClassWhiteList("java.time.*,java.util.*,org.springframework.*,org.infinispan.spring.remote.*");
       return factoryBean;
    }
-
 }
