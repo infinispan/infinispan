@@ -15,7 +15,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.File;
 import java.net.URLEncoder;
 import java.util.Set;
-
 import java.util.stream.IntStream;
 
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -122,7 +121,8 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       assertPersistence("cache2", false);
 
-      response = client.newRequest(url + "cache1?action=config").method(GET).send();
+      String mediaList = "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+      response = client.newRequest(url + "cache1?action=config").method(GET).header("Accept", mediaList).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).bodyNotEmpty();
       String cache1Cfg = response.getContentAsString();
