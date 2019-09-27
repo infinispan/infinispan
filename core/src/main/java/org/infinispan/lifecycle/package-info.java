@@ -1,5 +1,5 @@
 /**
- * Component lifecycle.
+ * Module and component lifecycle.
  *
  * @public
  */

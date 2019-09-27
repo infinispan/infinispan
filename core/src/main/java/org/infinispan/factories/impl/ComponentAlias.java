@@ -1,6 +1,7 @@
 package org.infinispan.factories.impl;
 
 public final class ComponentAlias {
+
    private final String componentName;
 
    public static ComponentAlias of(Class<?> componentType) {
@@ -17,5 +18,10 @@ public final class ComponentAlias {
 
    public String getComponentName() {
       return componentName;
+   }
+
+   @Override
+   public String toString() {
+      return "ComponentAlias(" + componentName + ')';
    }
 }
