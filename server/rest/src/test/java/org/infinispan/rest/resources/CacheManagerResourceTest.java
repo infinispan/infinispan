@@ -85,8 +85,9 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testCacheConfigs() throws Exception {
+      String accept = "text/plain; q=0.9, application/json; q=0.6";
       String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/cache-configs", restServer().getPort());
-      ContentResponse response = client.newRequest(url).send();
+      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getContentAsString();
