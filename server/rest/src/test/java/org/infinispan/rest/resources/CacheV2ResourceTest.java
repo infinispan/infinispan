@@ -15,7 +15,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.File;
 import java.net.URLEncoder;
 import java.util.Set;
-
 import java.util.stream.IntStream;
 
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -247,7 +246,21 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       response = client.newRequest(url).method(GET).send();
       Set keys = new ObjectMapper().readValue(response.getContentAsString(), Set.class);
       assertEquals(entries, keys.size());
-      assertTrue(IntStream.range(0, entries).allMatch(i -> keys.contains(String.valueOf(i))));
+      assertTrue(IntStream.range(0, entries).allMatch(keys::contains));
+   }
+
+   @Test
+   public void testGetAllKeysTextPlainCache() throws Exception {
+      String cache = "___protobuf_metadata";
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s?action=%s", restServer().getPort(), cache, "keys");
+
+      putStringValueInCache(cache, "file1.proto", "message A{}");
+      putStringValueInCache(cache, "file2.proto", "message B{}");
+
+      ContentResponse response = client.newRequest(url).method(GET).send();
+      String contentAsString = response.getContentAsString();
+      Set keys = new ObjectMapper().readValue(contentAsString, Set.class);
+      assertEquals(2, keys.size());
    }
 
    private void registerSchema() throws Exception {
