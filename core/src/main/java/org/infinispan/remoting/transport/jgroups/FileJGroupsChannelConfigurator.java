@@ -19,13 +19,14 @@ import org.jgroups.conf.XmlConfigurator;
 public class FileJGroupsChannelConfigurator implements JGroupsChannelConfigurator {
    private final String name;
    private final String path;
-   final List<ProtocolConfiguration> stack;
+   private final Properties properties;
+   private final List<ProtocolConfiguration> stack;
 
    public FileJGroupsChannelConfigurator(String name, String path, InputStream is, Properties properties) throws IOException {
       this.name = name;
       this.path = path;
       this.stack = XmlConfigurator.getInstance(is).getProtocolStack();
-      this.stack.forEach(c -> StringPropertyReplacer.replaceProperties(c.getProperties(), properties));
+      this.properties = properties;
    }
 
    @Override
@@ -35,6 +36,7 @@ public class FileJGroupsChannelConfigurator implements JGroupsChannelConfigurato
 
    @Override
    public List<ProtocolConfiguration> getProtocolStack() {
+      this.stack.forEach(c -> StringPropertyReplacer.replaceProperties(c.getProperties(), properties));
       return stack;
    }
 
