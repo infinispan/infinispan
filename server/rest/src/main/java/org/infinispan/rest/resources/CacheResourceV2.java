@@ -6,12 +6,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -147,7 +149,7 @@ public class CacheResourceV2 extends CacheResource {
 
       if (sourceType.match(APPLICATION_JSON)) {
          invocationHelper.getJsonReader().readJson(cfgBuilder, StandardConversions.convertTextToObject(bytes, sourceType));
-      } else if (sourceType.match(MediaType.APPLICATION_XML)) {
+      } else if (sourceType.match(APPLICATION_XML)) {
          ConfigurationBuilderHolder builderHolder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8));
          cfgBuilder = builderHolder.getCurrentConfigurationBuilder();
       } else {
@@ -184,7 +186,7 @@ public class CacheResourceV2 extends CacheResource {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
 
-      MediaType accept = CacheManagerResource.getAccept(request);
+      MediaType accept = negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML);
       responseBuilder.contentType(accept);
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
          responseBuilder.status(NOT_FOUND).build();

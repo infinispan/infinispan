@@ -6,6 +6,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
@@ -39,7 +40,6 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
-import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
 import org.infinispan.stats.CacheContainerStats;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -114,13 +114,13 @@ public class CacheManagerResource implements ResourceHandler {
 
       GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
 
-      MediaType format = CacheManagerResource.getAccept(request);
+      MediaType format = MediaTypeUtils.negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML);
 
       try {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          parserRegistry.serialize(baos, globalConfiguration, emptyMap());
-         if (format.match(MediaType.APPLICATION_XML)) {
-            responseBuilder.contentType(MediaType.APPLICATION_XML);
+         if (format.match(APPLICATION_XML)) {
+            responseBuilder.contentType(APPLICATION_XML);
             responseBuilder.entity(baos.toByteArray());
          } else {
             responseBuilder.contentType(APPLICATION_JSON);
@@ -204,16 +204,6 @@ public class CacheManagerResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
-   static MediaType getAccept(RestRequest restRequest) {
-      String acceptHeader = restRequest.getAcceptHeader();
-      if (acceptHeader == null || acceptHeader.equals(MediaType.MATCH_ALL_TYPE)) return MediaType.APPLICATION_JSON;
-
-      MediaType accept = MediaType.fromString(acceptHeader);
-      if (!MediaType.APPLICATION_XML.match(accept) && !MediaType.APPLICATION_JSON.match(accept)) {
-         throw new UnacceptableDataFormatException("Only JSON and xml are supported");
-      }
-      return accept;
-   }
 
    private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(restRequest);

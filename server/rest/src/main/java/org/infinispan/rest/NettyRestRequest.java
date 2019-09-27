@@ -138,7 +138,8 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public String getAcceptHeader() {
-      return request.headers().get(HttpHeaderNames.ACCEPT);
+      String accept = request.headers().get(HttpHeaderNames.ACCEPT);
+      return accept == null ? MediaType.MATCH_ALL_TYPE : accept;
    }
 
    @Override

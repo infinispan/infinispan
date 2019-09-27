@@ -1,28 +1,24 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.DateUtils;
@@ -36,11 +32,9 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
-import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
-import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
 import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.EntrySetFormatter;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
@@ -80,14 +74,10 @@ public class CacheResource implements ResourceHandler {
    private CompletionStage<RestResponse> getCacheKeys(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
 
-      String accept = request.getAcceptHeader();
-      if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      MediaType contentType = negotiateMediaType(cache, request);
 
-      MediaType contentType = negotiateMediaType(accept, cacheName, request);
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
-            .getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request);
-
-      Charset mediaCharset = Charset.fromMediaType(accept);
+      Charset mediaCharset = Charset.fromMediaType(contentType.toString());
       Charset charset = mediaCharset == null ? Charset.UTF8 : mediaCharset;
       return CompletableFuture.supplyAsync(() -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
@@ -182,10 +172,11 @@ public class CacheResource implements ResourceHandler {
 
    CompletionStage<RestResponse> getCacheValue(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
-      String accept = request.getAcceptHeader();
-      if (accept == null) accept = MediaType.MATCH_ALL_TYPE;
+
       MediaType keyContentType = request.keyContentType();
-      MediaType requestedMediaType = negotiateMediaType(accept, cacheName, request);
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+
+      MediaType requestedMediaType = negotiateMediaType(cache, request);
 
       Object key = request.variables().get("cacheKey");
       if (key == null) throw new NoKeyException();
@@ -276,34 +267,6 @@ public class CacheResource implements ResourceHandler {
       final Metadata metadata = CacheOperationsHelper.createMetadata(SecurityActions.getCacheConfiguration(cache), ttl, idleTime);
       responseBuilder.header("etag", calcETAG(data));
       return cache.putAsync(key, data, metadata).thenApply(o -> responseBuilder.build());
-   }
-
-   private MediaType tryNarrowMediaType(MediaType negotiated, AdvancedCache<?, ?> cache) {
-      if (!negotiated.matchesAll()) return negotiated;
-      MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
-
-      if (storageMediaType == null) return negotiated;
-      if (storageMediaType.equals(MediaType.APPLICATION_OBJECT)) return TEXT_PLAIN;
-      if (storageMediaType.match(MediaType.APPLICATION_PROTOSTREAM)) return APPLICATION_JSON;
-
-      return negotiated;
-   }
-
-   private MediaType negotiateMediaType(String accept, String cacheName, RestRequest restRequest) throws UnacceptableDataFormatException {
-      try {
-         AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
-         DataConversion valueDataConversion = cache.getValueDataConversion();
-
-         Optional<MediaType> negotiated = MediaType.parseList(accept)
-               .filter(valueDataConversion::isConversionSupported)
-               .findFirst();
-
-         return negotiated.map(m -> tryNarrowMediaType(m, cache))
-               .orElseThrow(() -> Log.REST.unsupportedDataFormat(accept));
-
-      } catch (EncodingException e) {
-         throw new UnacceptableDataFormatException();
-      }
    }
 
 }
