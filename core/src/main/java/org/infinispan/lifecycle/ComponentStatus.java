@@ -8,26 +8,32 @@ package org.infinispan.lifecycle;
  * @since 4.0
  */
 public enum ComponentStatus {
+
    /**
     * Object has been instantiated, but start() has not been called.
     */
    INSTANTIATED,
+
    /**
     * The <code>start()</code> method has been called but not yet completed.
     */
    INITIALIZING,
+
    /**
     * The <code>start()</code> method has been completed and the component is running.
     */
    RUNNING,
+
    /**
     * The <code>stop()</code> method has been called but has not yet completed.
     */
    STOPPING,
+
    /**
     * The <code>stop()</code> method has completed and the component has terminated.
     */
    TERMINATED,
+
    /**
     * The component is in a failed state due to a problem with one of the other lifecycle transition phases.
     */
@@ -38,21 +44,11 @@ public enum ComponentStatus {
    }
 
    public boolean startAllowed() {
-      switch (this) {
-         case INSTANTIATED:
-            return true;
-         default:
-            return false;
-      }
+      return this == ComponentStatus.INSTANTIATED;
    }
 
    public boolean needToInitializeBeforeStart() {
-      switch (this) {
-         case TERMINATED:
-            return true;
-         default:
-            return false;
-      }
+      return this == ComponentStatus.TERMINATED;
    }
 
    public boolean stopAllowed() {
@@ -65,7 +61,6 @@ public enum ComponentStatus {
          default:
             return true;
       }
-
    }
 
    public boolean allowInvocations() {
@@ -83,5 +78,4 @@ public enum ComponentStatus {
    public boolean isStopping() {
       return this == ComponentStatus.STOPPING;
    }
-
 }
