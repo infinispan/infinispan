@@ -1,8 +1,6 @@
 [id='cloud_discovery-{context}']
 = Cloud Discovery Mechanisms
-Running {brandname} on hosted services means using certain discovery mechanisms
-to adapt to different network settings between cloud providers. For instance,
-Amazon EC2 does not allow UDP multicast.
+Running {brandname} on hosted services requires using discovery mechanisms that are adapted to network constraints that individual cloud providers impose. For instance, Amazon EC2 does not allow UDP multicast.
 
 {brandname} can use the following cloud discovery mechanisms:
 
