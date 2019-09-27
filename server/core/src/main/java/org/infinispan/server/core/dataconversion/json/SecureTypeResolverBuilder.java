@@ -8,7 +8,9 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 
 /**
  * Builder that can produce {@link SecureTypeIdResolver} from an existing TypeIdResolver.
@@ -20,13 +22,14 @@ public class SecureTypeResolverBuilder extends ObjectMapper.DefaultTypeResolverB
    private final ClassWhiteList whiteList;
 
    protected SecureTypeResolverBuilder(ObjectMapper.DefaultTyping defaultTyping, ClassWhiteList whiteList) {
-      super(defaultTyping);
+      super(defaultTyping, LaissezFaireSubTypeValidator.instance);
       this.whiteList = whiteList;
    }
 
-   protected TypeIdResolver idResolver(MapperConfig<?> config, JavaType baseType,
+   protected TypeIdResolver idResolver(MapperConfig<?> config,
+                                       JavaType baseType, PolymorphicTypeValidator subtypeValidator,
                                        Collection<NamedType> subtypes, boolean forSer, boolean forDeser) {
-      TypeIdResolver result = super.idResolver(config, baseType, subtypes, forSer, forDeser);
+      TypeIdResolver result = super.idResolver(config, baseType, subtypeValidator, subtypes, forSer, forDeser);
       return new SecureTypeIdResolver(result, whiteList);
    }
 }
