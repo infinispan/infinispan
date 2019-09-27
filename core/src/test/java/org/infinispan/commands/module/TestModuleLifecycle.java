@@ -16,6 +16,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentAccessor;
+import org.infinispan.factories.impl.DynamicModuleMetadataProvider;
+import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.factories.impl.WireContext;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -28,15 +30,15 @@ import org.testng.AssertJUnit;
  * @since 9.4
  */
 @InfinispanModule(name = "core-tests", requiredModules = "core")
-public final class TestModuleLifecycle implements ModuleLifecycle {
+public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModuleMetadataProvider {
+
    private TestGlobalConfiguration testGlobalConfiguration;
 
    @Override
-   public void addDynamicMetadata(ModuleBuilder moduleBuilder,
-                                  GlobalConfiguration globalConfiguration) {
+   public void registerDynamicMetadata(ModuleMetadataBuilder.ModuleBuilder moduleBuilder, GlobalConfiguration globalConfiguration) {
       testGlobalConfiguration = globalConfiguration.module(TestGlobalConfiguration.class);
-      HashMap<String, String> defaultFactoryNames = new HashMap<>();
       if (testGlobalConfiguration != null) {
+         HashMap<String, String> defaultFactoryNames = new HashMap<>();
          List<String> componentNames = new ArrayList<>(testGlobalConfiguration.globalTestComponents().keySet());
          List<String> cacheComponentNames = new ArrayList<>(testGlobalConfiguration.cacheTestComponentNames());
          for (String componentName : cacheComponentNames) {
@@ -76,7 +78,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
       }
    }
 
-   static class TestGlobalComponentFactory implements ComponentFactory {
+   private static final class TestGlobalComponentFactory implements ComponentFactory {
       private final TestGlobalConfiguration testGlobalConfiguration;
 
       TestGlobalComponentFactory(TestGlobalConfiguration testGlobalConfiguration) {
@@ -89,12 +91,12 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
       }
    }
 
-   static class TestCacheComponentFactory implements ComponentFactory {
+   private static final class TestCacheComponentFactory implements ComponentFactory {
       private final TestGlobalConfiguration testCacheConfiguration;
-      private HashMap<String, String> defaultFactoryNames;
+      private final HashMap<String, String> defaultFactoryNames;
 
       private String cacheName;
-      BasicComponentRegistry cacheComponentRegistry;
+      private BasicComponentRegistry cacheComponentRegistry;
 
       TestCacheComponentFactory(TestGlobalConfiguration testCacheConfiguration,
                                 HashMap<String, String> defaultFactoryNames) {
@@ -118,7 +120,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
       }
    }
 
-   private static class GlobalFactoryComponentAccessor extends ComponentAccessor<TestGlobalComponentFactory> {
+   private static final class GlobalFactoryComponentAccessor extends ComponentAccessor<TestGlobalComponentFactory> {
       private final TestGlobalConfiguration testGlobalConfiguration;
 
       GlobalFactoryComponentAccessor(TestGlobalConfiguration testGlobalConfiguration) {
@@ -133,9 +135,9 @@ public final class TestModuleLifecycle implements ModuleLifecycle {
       }
    }
 
-   private static class CacheFactoryComponentAccessor extends ComponentAccessor<TestCacheComponentFactory> {
+   private static final class CacheFactoryComponentAccessor extends ComponentAccessor<TestCacheComponentFactory> {
       private final TestGlobalConfiguration testGlobalConfiguration;
-      private HashMap<String, String> defaultFactoryNames;
+      private final HashMap<String, String> defaultFactoryNames;
 
       CacheFactoryComponentAccessor(TestGlobalConfiguration testGlobalConfiguration,
                                     HashMap<String, String> defaultFactoryNames) {

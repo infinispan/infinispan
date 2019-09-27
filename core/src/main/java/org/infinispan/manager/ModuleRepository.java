@@ -10,9 +10,10 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.impl.ComponentAccessor;
+import org.infinispan.factories.impl.DynamicModuleMetadataProvider;
 import org.infinispan.factories.impl.MBeanMetadata;
+import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.modules.ModuleMetadataBuilder;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 
@@ -22,6 +23,7 @@ import org.infinispan.util.DependencyGraph;
  * <b>NOTE:</b> Not public API: It exists in package {@code org.infinispan.manager}
  * so that only {@code DefaultCacheManager} can instantiate it.
  *
+ * @private
  * @author Dan Berindei
  * @since 10.0
  */
@@ -60,7 +62,7 @@ public final class ModuleRepository {
    /**
     * Package-private
     */
-   static final class Builder implements ModuleLifecycle.ModuleBuilder {
+   static final class Builder implements ModuleMetadataBuilder.ModuleBuilder {
       private final List<ModuleMetadataBuilder> modules;
       private final List<ModuleLifecycle> moduleLifecycles = new ArrayList<>();
       private final Map<String, ComponentAccessor> components = new HashMap<>();
@@ -82,11 +84,16 @@ public final class ModuleRepository {
 
       ModuleRepository build(GlobalConfiguration globalConfiguration) {
          for (ModuleMetadataBuilder module : modules) {
+            // register static metadata
             module.registerMetadata(this);
 
             ModuleLifecycle moduleLifecycle = module.newModuleLifecycle();
             moduleLifecycles.add(moduleLifecycle);
-            moduleLifecycle.addDynamicMetadata(this, globalConfiguration);
+
+            // register dynamic metadata
+            if (moduleLifecycle instanceof DynamicModuleMetadataProvider) {
+               ((DynamicModuleMetadataProvider) moduleLifecycle).registerDynamicMetadata(this, globalConfiguration);
+            }
          }
          return new ModuleRepository(moduleLifecycles, components, factoryNames, mbeans);
       }

@@ -23,8 +23,8 @@ public class Model {
    final Map<String, ParsedType> parsedTypes;
    final Map<String, Package> packages;
 
-   public Model(Module module, Map<String, AnnotatedType> annotatedTypes, Map<String, ParsedType> parsedTypes,
-                Map<String, Package> packages) {
+   Model(Module module, Map<String, AnnotatedType> annotatedTypes, Map<String, ParsedType> parsedTypes,
+         Map<String, Package> packages) {
       this.module = module;
       this.annotatedTypes = annotatedTypes;
       this.parsedTypes = parsedTypes;
@@ -37,8 +37,7 @@ public class Model {
       final String packageName;
       final String classPrefix;
 
-      public Module(InfinispanModule moduleAnnotation, String moduleClassName, String packageName,
-                    String classPrefix) {
+      public Module(InfinispanModule moduleAnnotation, String moduleClassName, String packageName, String classPrefix) {
          this.moduleAnnotation = moduleAnnotation;
          this.moduleClassName = moduleClassName;
          this.packageName = packageName;
@@ -46,14 +45,13 @@ public class Model {
       }
    }
 
-   public static class ParsedType {
+   static class ParsedType {
       final TypeElement typeElement;
       final String qualifiedName;
       final String packageName;
       final List<String> code;
 
-      public ParsedType(TypeElement typeElement, String qualifiedName, String packageName,
-                        List<String> code) {
+      ParsedType(TypeElement typeElement, String qualifiedName, String packageName, List<String> code) {
          this.typeElement = typeElement;
          this.qualifiedName = qualifiedName;
          this.packageName = packageName;
@@ -70,8 +68,7 @@ public class Model {
       Component component;
       MComponent mComponent;
 
-      public AnnotatedType(TypeElement typeElement, String qualifiedName, String binaryName,
-                           String packageName) {
+      AnnotatedType(TypeElement typeElement, String qualifiedName, String binaryName, String packageName) {
          this.typeElement = typeElement;
          this.binaryName = binaryName;
          this.qualifiedName = qualifiedName;
@@ -110,34 +107,33 @@ public class Model {
       }
    }
 
-   public static class LifecycleMethod {
+   static class LifecycleMethod {
       final String name;
       final int priority;
 
-      public LifecycleMethod(String name, int priority) {
+      LifecycleMethod(String name, int priority) {
          this.name = name;
          this.priority = priority;
       }
    }
 
-   public static class InjectMethod {
+   static class InjectMethod {
       final String name;
       final List<InjectField> parameters;
 
-      public InjectMethod(String name,
-                          List<InjectField> parameters) {
+      InjectMethod(String name, List<InjectField> parameters) {
          this.name = name;
          this.parameters = parameters;
       }
    }
 
-   public static class InjectField {
+   static class InjectField {
       final String name;
       final String typeName;
       final String componentName;
       final boolean isComponentRef;
 
-      public InjectField(String name, String typeName, String componentName, boolean isComponentRef) {
+      InjectField(String name, String typeName, String componentName, boolean isComponentRef) {
          this.name = name;
          this.typeName = typeName;
          this.componentName = componentName;
@@ -145,27 +141,27 @@ public class Model {
       }
    }
 
-   public static class MComponent {
+   static class MComponent {
       final MBean mbean;
       final String superBinaryName;
 
       List<MAttribute> attributes = new ArrayList<>();
       List<MOperation> operations = new ArrayList<>();
 
-      public MComponent(MBean mbean, String superBinaryName) {
+      MComponent(MBean mbean, String superBinaryName) {
          this.mbean = mbean;
          this.superBinaryName = superBinaryName;
       }
    }
 
-   public static class MAttribute {
+   static class MAttribute {
       final String name;
       final ManagedAttribute attribute;
       final boolean useSetter;
       final String type;
       final boolean is;
 
-      public MAttribute(String name, ManagedAttribute attribute, boolean useSetter, String type, boolean is) {
+      MAttribute(String name, ManagedAttribute attribute, boolean useSetter, String type, boolean is) {
          this.name = name;
          this.attribute = attribute;
          this.useSetter = useSetter;
@@ -174,13 +170,13 @@ public class Model {
       }
    }
 
-   public static class MOperation {
+   static class MOperation {
       final String name;
       final ManagedOperation operation;
       final String returnType;
       final List<MParameter> parameters;
 
-      public MOperation(String name, ManagedOperation operation, String returnType, List<MParameter> parameters) {
+      MOperation(String name, ManagedOperation operation, String returnType, List<MParameter> parameters) {
          this.name = name;
          this.operation = operation;
          this.returnType = returnType;
@@ -188,12 +184,12 @@ public class Model {
       }
    }
 
-   public static class MParameter {
+   static class MParameter {
       final String name;
       final String type;
       final String description;
 
-      public MParameter(String name, String type, String description) {
+      MParameter(String name, String type, String description) {
          this.name = name;
          this.type = type;
          this.description = description;
