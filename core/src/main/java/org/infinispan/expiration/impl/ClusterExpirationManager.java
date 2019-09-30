@@ -2,10 +2,14 @@ package org.infinispan.expiration.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
@@ -57,7 +61,11 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private static final int MAX_ASYNC_EXPIRATIONS = 5;
+   /**
+    * Defines the maximum number of allowed concurrent expirations. Any expirations over this must wait until
+    * another has completed before processing
+    */
+   private static final int MAX_CONCURRENT_EXPIRATIONS = 100;
 
    @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
    @Inject protected ComponentRef<CommandsFactory> cf;
@@ -66,63 +74,28 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    private AdvancedCache<K, V> cache;
    private Address localAddress;
+   private long timeout;
+   private String cacheName;
 
    @Override
    public void start() {
       super.start();
       // Data container entries are retrieved directly, so we don't need to worry about an encodings
       this.cache = AbstractDelegatingCache.unwrapCache(cacheRef.wired()).getAdvancedCache();
+      this.cacheName = cache.getName();
       this.localAddress = cache.getCacheManager().getAddress();
+      this.timeout = cache.getCacheConfiguration().clustering().remoteTimeout();
    }
 
    @Override
    public void processExpiration() {
-      long start = 0;
+
       if (!Thread.currentThread().isInterrupted()) {
-         try {
-            if (trace) {
-               log.trace("Purging data container of expired entries");
-               start = timeService.time();
-            }
-            // We limit it so there is only so many async expiration removals done at the same time
-            List<CompletableFuture> futures = new ArrayList<>(MAX_ASYNC_EXPIRATIONS);
-            long currentTimeMillis = timeService.wallClockTime();
-            LocalizedCacheTopology topology = distributionManager.getCacheTopology();
-            IntSet segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
-            dataContainer.running().forEachIncludingExpired(segments, (ice, segment) -> {
-               if (ice.canExpire()) {
-                  // Have to synchronize on the entry to make sure we see the value and metadata at the same time
-                  boolean expiredMortal;
-                  boolean expiredTransient;
-                  V value;
-                  long lifespan;
-                  long maxIdle;
-                  synchronized (ice) {
-                     value = ice.getValue();
-                     lifespan = ice.getLifespan();
-                     maxIdle = ice.getMaxIdle();
-                     expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, ice.getCreated(), currentTimeMillis);
-                     expiredTransient = ExpiryHelper.isExpiredTransient(maxIdle, ice.getLastUsed(), currentTimeMillis);
-                  }
-                  // We check lifespan first as this is much less expensive to remove than max idle.
-                  if (expiredMortal) {
-                     addAndWaitIfFull(handleLifespanExpireEntry(ice.getKey(), value, lifespan, false), futures);
-                  } else if (expiredTransient) {
-                     addAndWaitIfFull(actualRemoveMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false), futures);
-                  }
-               }
-            });
-            if (!futures.isEmpty()) {
-               // Make sure that all of the futures are complete before returning
-               futures.forEach(CompletableFuture::join);
-            }
-            if (trace) {
-               log.tracef("Purging data container completed in %s",
-                       Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
-            }
-         } catch (Exception e) {
-            log.exceptionPurgingDataContainer(e);
-         }
+         LocalizedCacheTopology topology;
+         // Purge all contents until we know we did so with a stable topology
+         do {
+            topology = distributionManager.getCacheTopology();
+         } while (purgeInMemoryContents(topology));
       }
 
       if (!Thread.currentThread().isInterrupted()) {
@@ -130,13 +103,113 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   private void addAndWaitIfFull(CompletableFuture future, List<CompletableFuture> futures) {
-      futures.add(future);
-      if (futures.size() == MAX_ASYNC_EXPIRATIONS) {
-         // Wait for them to complete
-         futures.forEach(CompletableFuture::join);
-         futures.clear();
+   /**
+    * Purges in memory contents removing any expired entries.
+    * @return true if there was a topology change
+    */
+   private boolean purgeInMemoryContents(LocalizedCacheTopology topology) {
+      long start = 0;
+      int removedEntries = 0;
+      AtomicInteger errors = new AtomicInteger();
+      try {
+         if (trace) {
+            log.tracef("Purging data container on cache %s for topology %d", cacheName, topology.getTopologyId());
+            start = timeService.time();
+         }
+         // We limit it so there is only so many non blocking expiration removals done at the same time
+         BlockingQueue<CompletableFuture<?>> expirationPermits = new ArrayBlockingQueue<>(MAX_CONCURRENT_EXPIRATIONS);
+         long currentTimeMillis = timeService.wallClockTime();
+
+         IntSet segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+
+         for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.running().iteratorIncludingExpired(segments);
+              purgeCandidates.hasNext();) {
+            InternalCacheEntry<K, V> ice = purgeCandidates.next();
+            if (ice.canExpire()) {
+               // Have to synchronize on the entry to make sure we see the value and metadata at the same time
+               boolean expiredMortal;
+               boolean expiredTransient;
+               V value;
+               long lifespan;
+               long maxIdle;
+               synchronized (ice) {
+                  value = ice.getValue();
+                  lifespan = ice.getLifespan();
+                  maxIdle = ice.getMaxIdle();
+                  expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, ice.getCreated(), currentTimeMillis);
+                  expiredTransient = ExpiryHelper.isExpiredTransient(maxIdle, ice.getLastUsed(), currentTimeMillis);
+               }
+               if (expiredMortal || expiredTransient) {
+                  // Any expirations over the max must check for another to finish before it can proceed
+                  if (++removedEntries > MAX_CONCURRENT_EXPIRATIONS && !pollForCompletion(expirationPermits, start, removedEntries, errors)) {
+                     return false;
+                  }
+                  CompletableFuture<?> stage;
+                  // If the entry is expired both wrt lifespan and wrt maxIdle, we perform lifespan expiration as it is cheaper
+                  if (expiredMortal) {
+                     stage = handleLifespanExpireEntry(ice.getKey(), value, lifespan, false);
+                  } else {
+                     stage = actualRemoveMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false);
+                  }
+                  stage.whenComplete((obj, t) -> {
+                     expirationPermits.add(stage);
+                  });
+               }
+            }
+            // Short circuit if topology has changed
+            if (distributionManager.getCacheTopology() != topology) {
+               printResults("Purging data container on cache %s stopped due to topology change. Total time was: %s and removed %d entries with %d errors", start, removedEntries, errors);
+               return true;
+            }
+         }
+         // We wait for any pending expiration to complete before returning
+         int expirationsLeft = Math.min(removedEntries, MAX_CONCURRENT_EXPIRATIONS);
+         for (int i = 0; i < expirationsLeft; ++i) {
+            if (!pollForCompletion(expirationPermits, start, removedEntries, errors)) {
+               return false;
+            }
+         }
+         printResults("Purging data container on cache %s completed in %s and removed %d entries with %d errors", start, removedEntries, errors);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         printResults("Purging data container on cache %s was interrupted. Total time was: %s and removed %d entries with %d errors", start, removedEntries, errors);
+      } catch (Throwable t) {
+         log.exceptionPurgingDataContainer(t);
       }
+      return false;
+   }
+
+   private void printResults(String message, long start, int removedEntries, AtomicInteger errors) {
+      if (trace) {
+         log.tracef(message, cacheName, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)), removedEntries, errors.get());
+      }
+   }
+
+   /**
+    * Polls for an expiration to complete, returning whether an expiration completed in the time allotted. If an
+    * expiration has completed it will also verify it is had errored and update the count and log the message.
+    * @param queue the queue to poll from to find a completed expiration
+    * @param start the start time of the processing
+    * @param removedEntries the current count of expired entries
+    * @param errors value to increment when an error occurs
+    * @return true if an expiration completed
+    * @throws InterruptedException if the polling is interrupted
+    */
+   private boolean pollForCompletion(BlockingQueue<CompletableFuture<?>> queue, long start, int removedEntries,
+         AtomicInteger errors) throws InterruptedException, TimeoutException {
+      CompletableFuture<?> future;
+      if ((future = queue.poll(timeout * 3, TimeUnit.MILLISECONDS)) != null) {
+         try {
+            // This shouldn't block
+            future.get(100, TimeUnit.MILLISECONDS);
+         } catch (ExecutionException e) {
+            errors.incrementAndGet();
+            log.exceptionPurgingDataContainer(e.getCause());
+         }
+         return true;
+      }
+      printResults("Purging data container on cache %s stopped due to waiting for prior removal (could be a bug or misconfiguration). Total time was: %s and removed %d entries", start, removedEntries, errors);
+      return false;
    }
 
    // Skip locking is required in case if the entry was found expired due to a write, which would already

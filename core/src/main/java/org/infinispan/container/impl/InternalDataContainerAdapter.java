@@ -8,7 +8,6 @@ import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.commons.util.FilterSpliterator;
@@ -112,18 +111,6 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
       while (iter.hasNext()) {
          InternalCacheEntry<K, V> ice = iter.next();
          remove(ice.getKey());
-      }
-   }
-
-   @Override
-   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      if (segments == null || !segments.isEmpty()) {
-         iteratorIncludingExpired().forEachRemaining(ice -> {
-            int segment = keyPartitioner.getSegment(ice.getKey());
-            if (segments == null || segments.contains(segment)) {
-               action.accept(ice, segment);
-            }
-         });
       }
    }
 
