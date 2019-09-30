@@ -67,7 +67,7 @@ class WrappedMessageTagHandler implements TagHandler {
             descriptor = serCtx.getDescriptorByName(typeName);
             break;
          }
-         case WrappedMessage.WRAPPED_DESCRIPTOR_ID: {
+         case WrappedMessage.WRAPPED_DESCRIPTOR_TYPE_ID: {
             Integer typeId = (Integer) value;
             descriptor = serCtx.getDescriptorByTypeId(typeId);
             break;
