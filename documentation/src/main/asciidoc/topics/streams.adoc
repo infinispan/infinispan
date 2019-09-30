@@ -127,8 +127,7 @@ One option would be to use the
 link:{javadocroot}/org/infinispan/stream/CacheCollectors.html[CacheCollectors]
 class which allows for a `Supplier<Collector>` to be provided.  This instance could then use the
 link:{jdkdocroot}/java/util/stream/Collectors.html[Collectors]
-to supply a `Collector` which is not serialized. You can read more details about how the
-collector peforms in a distributed fashion at link:user_guide.html#distributed_stream_execution[distributed execution].
+to supply a `Collector` which is not serialized.
 
 [source,java]
 ----
@@ -161,9 +160,9 @@ Map<Object, String> jbossValues = map.entrySet().stream()
 ----
 
 The recommended and most performant way is to use an
-link:user_guide.html#advanced_externalizers[AdvancedExternalizer]
-as this provides the smallest payload.  Unfortunately this means you cannot
-use lamdbas as advanced externalizers require defining the class before hand.
+`AdvancedExternalizer` as this provides the smallest payload.  Unfortunately
+this means you cannot use lamdbas as advanced externalizers require defining
+the class before hand.
 
 You can use an advanced externalizer as shown below:
 
