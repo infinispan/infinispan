@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
-import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -24,7 +23,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -208,24 +206,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
             map.forEach(biConsumer);
          }
       });
-   }
-
-   @Override
-   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      IntSet targetSegments;
-      if (segments == null) {
-         targetSegments = IntSets.immutableRangeSet(maps.length());
-      } else {
-         targetSegments = segments;
-      }
-
-      for (PrimitiveIterator.OfInt iter = targetSegments.iterator(); iter.hasNext(); ) {
-         int segment = iter.nextInt();
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(segment);
-         if (map != null) {
-            map.forEach((k, ice) -> action.accept(ice, segment));
-         }
-      }
    }
 
    @Override

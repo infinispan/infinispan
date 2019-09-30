@@ -3,7 +3,6 @@ package org.infinispan.container.impl;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -75,11 +74,6 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> extends Abst
    @Override
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired(IntSet segments) {
       return delegate().iteratorIncludingExpired(segments);
-   }
-
-   @Override
-   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      delegate().forEachIncludingExpired(segments, action);
    }
 
    @Override
