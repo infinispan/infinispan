@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.protostream.SerializationContext;
@@ -41,6 +42,47 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
 
    private RemoteCache<Object, Object> userCache;
 
+   private StorageType storageType;
+   private long evictionSize = -1;
+
+   @Override
+   protected String parameters() {
+      return "[" + storageType + ":" + evictionSize + "]";
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "STORAGE-TYPE", "EVICTION_SIZE");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), storageType, evictionSize);
+   }
+
+   public Object[] factory() {
+      return new Object[] {
+            new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP),
+            // Disabled until https://issues.jboss.org/browse/ISPN-10700 is fixed
+//            new MultiServerStoreQueryTest().storageType(StorageType.BINARY),
+            new MultiServerStoreQueryTest().storageType(StorageType.OBJECT),
+            new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP).evictionSize(1),
+            // Disabled until https://issues.jboss.org/browse/ISPN-10700 is fixed
+//            new MultiServerStoreQueryTest().storageType(StorageType.BINARY).evictionSize(1),
+            new MultiServerStoreQueryTest().storageType(StorageType.OBJECT).evictionSize(1),
+      };
+   }
+
+   MultiServerStoreQueryTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
+   MultiServerStoreQueryTest evictionSize(long size) {
+      evictionSize = size;
+      return this;
+   }
+
    public Configuration getLockCacheConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false).build();
    }
@@ -65,6 +107,10 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
             .addProperty("default.locking_cachename", LUCENE_LOCKING_CACHE)
             .addProperty("default.data_cachename", LUCENE_DATA_CACHE)
             .addProperty("default.metadata_cachename", LUCENE_METADATA_CACHE);
+      builder.memory().storageType(storageType);
+      if (evictionSize > 0) {
+         builder.memory().size(evictionSize);
+      }
       if (USE_PERSISTENCE)
          builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(storeName);
 
