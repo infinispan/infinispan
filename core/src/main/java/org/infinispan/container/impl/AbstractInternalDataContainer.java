@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -477,18 +476,6 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       @Override
       public Spliterator<InternalCacheEntry<K, V>> spliterator() {
          return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.CONCURRENT);
-      }
-   }
-
-   @Override
-   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
-      if (segments == null || !segments.isEmpty()) {
-         iteratorIncludingExpired().forEachRemaining(ice -> {
-            int segment = keyPartitioner.getSegment(ice.getKey());
-            if (segments == null || segments.contains(segment)) {
-               action.accept(ice, segment);
-            }
-         });
       }
    }
 

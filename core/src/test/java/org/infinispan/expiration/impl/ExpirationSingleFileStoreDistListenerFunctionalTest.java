@@ -51,6 +51,8 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
 
    @Override
    protected void processExpiration() {
+      // Invoking process expiration only removes primary owned entries - so we need to invoke it on the extra cache
+      // in addition to the original cache
       super.processExpiration();
       TestingUtil.extractComponent(extraCache, InternalExpirationManager.class).processExpiration();
    }
