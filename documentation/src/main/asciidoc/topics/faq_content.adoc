@@ -95,19 +95,17 @@ A lot of the code, designs and ideas in {brandname} are from JBoss Cache, and ha
 === How is this related to JSR 107, the JCACHE specification?
 {brandname} core engineers are on the link:http://jcp.org/en/jsr/detail?id=107[JSR 107] expert group and starting with version 7.0.0, {brandname} provides a certified compatible implementation of version 1.0.0 of the specification.
 
-Have a look at link:../user_guide/user_guide.html#using_infinispan_as_a_jsr107_jcache_provider[Using {brandname} as a JSR107 (JCache) provider] for details.
-
 === Can I use {brandname} with Hibernate?
 Yes, you can combine one or more of these integrations in the same application:
 
 *  _Using {brandname} as a database replacement_: using Hibernate OGM you can replace the RDBMS and store your entities and relations directly in {brandname}, interacting with it through the well known JPA 2.1 interface, with some limitations in the query capabilities. Hibernate OGM also automates mapping, encoding and decoding of JPA entities to Protobuf.
 For more details see link:http://hibernate.org/ogm/[Hibernate OGM] .
 
-*  _Caching database access_: Hibernate can cache frequently loaded entities and queries in {brandname}, taking advantage of state of the art eviction algorithms, and clustering if needed but it provides a good performance boost in non-clustered deployments too. See link:../user_guide/user_guide.html#using_infinispan_as_jpa_hibernate_second_level_cache_provider[Using {brandname} as JPA/Hibernate Second Level Cache Provider] for details on how to do this.
+*  _Caching database access_: Hibernate can cache frequently loaded entities and queries in {brandname}, taking advantage of state of the art eviction algorithms, and clustering if needed but it provides a good performance boost in non-clustered deployments too.
 
 *  _Storing Lucene indexes_: When using Hibernate Search to provide full-text capabilities to your Hibernate/JPA enabled application, you need to store an Apache Lucene index separately from the database. You can store the index in {brandname}: this is ideal for clustered applications since it's otherwise tricky to share the index with correct locking on shared file systems, but is an interesting option for non-clustered deployments as well as it can combine the benefits of in-memory performance with reliability and write-through to any CacheStore supported by {brandname}.
 
-*  _Using full-text queries on {brandname}_: If you liked the powerful full-text and data mining capabilities of Hibernate Search, but don't need JPA or a database, you can use the indexing and query engine only: the {brandname} Query module reuses Hibernate Search internally, depending on some Hibernate libraries but exposing the Search capabilities only. See link:../user_guide/user_guide.html#querying_infinispan[Querying {brandname}] .
+*  _Using full-text queries on {brandname}_: If you liked the powerful full-text and data mining capabilities of Hibernate Search, but don't need JPA or a database, you can use the indexing and query engine only: the {brandname} Query module reuses Hibernate Search internally, depending on some Hibernate libraries but exposing the Search capabilities only.
 
 * A _combination of multiple such integrations_: you can use Hibernate OGM as an
 interface to perform CRUD operations on some {brandname} caches configured for resiliency, while also activating Hibernate 2nd level caching using some different
@@ -130,7 +128,7 @@ It should work with most Java SE 8 implementations, including those from IBM, HP
 
 By default, {brandname} stores data by reference. So once clients store some data, clients can still modify entries via original object references. This means that since client references are valid, clients can make changes to entries in the cache using those references, but these modifications are only local and you still need to call one of the cache's put/replace... methods in order for changes to replicate.
 
-Obviously, allowing clients to modify cache contents directly, without any cache invocation, has some risks and that's why {brandname} offers the possibility to store data by value instead. The way store-by-value is enabled is by link:../user_guide/user_guide.html#store_as_binary[enabling {brandname} to store data in binary format] and forcing it to do these binary transformations eagerly.
+Obviously, allowing clients to modify cache contents directly, without any cache invocation, has some risks and that's why {brandname} offers the possibility to store data by value instead. The way store-by-value is enabled is by enabling {brandname} to store data in binary format and forcing it to do these binary transformations eagerly.
 
 The reason {brandname} stores data by-reference instead of by-value is performance. Storing data by reference is quicker than doing it by value because it does not have the penalty of having to transform keys and values into their binary format.
 
@@ -138,9 +136,6 @@ The reason {brandname} stores data by-reference instead of by-value is performan
 While we haven't extensively tested {brandname} on anything other than Java, there is no reason why it cannot be used in any other environment that sits atop a JVM. We encourage you to try, and we'd love to hear your experiences on using {brandname} from other JVM languages.
 
 === Cache Loader and Cache Store questions
-
-==== Cache loaders and cache stores - what's the difference?
-Please read link:../user_guide/user_guide.html#persistence[Persistence] for information about the persistence SPI.
 
 ==== Are modifications to asynchronous cache stores coalesced or aggregated?
 Modifications are coalesced or aggregated for the interval that the modification processor thread is currently applying.
@@ -153,7 +148,7 @@ The reverse process, known as _activation_, occurs when a thread attempts to acc
 Activation involves loading the entry into memory, and then _removing_ it from the cache store.
 With passivation enabled, the cache uses the cache store as an overflow tank, akin to link:http://en.wikipedia.org/wiki/Paging[swapping memory pages to disk] in link:http://en.wikipedia.org/wiki/Virtual_memory[virtual memory] implementations in operating systems.
 
-If passivation is disabled, the cache store behaves as a link:../glossary/glossary.html#write_through[write-through] (or link:../glossary/glossary.html#write_behind[write-behind] if asynchronous) cache, where all entries in memory are also maintained in the cache store.
+If passivation is disabled, the cache store behaves as a write-through (or write-behind if asynchronous) cache, where all entries in memory are also maintained in the cache store.
 The effect of this is that the cache store will always contain a superset of what is in memory.
 
 ==== What if I get IOException "Unsupported protocol version 48" with JdbcStringBasedCacheStore?
@@ -282,7 +277,7 @@ There are 3 main configuration settings (modes of usage) that affect the behavio
 [options="header"]
 |===============
 | Config / Mode of usage | Description
-| _API_ | Usage of link:../user_guide/user_guide.html#asynchronous_api[Asynchronous API] , i.e. methods of the Cache interface like e.g. putAsync(key, val)
+| _API_ | Usage of Asynchronous API, i.e. methods of the Cache interface like e.g. putAsync(key, val)
 | _Replication_ | Configuring a clustered cache to replicate data asychronously. In {brandname} XML configuration this is done by using <sync> or <async> sub-elements under link:http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html[&lt;clustering&gt;] element.
 |===============
 
@@ -301,7 +296,7 @@ Switching to asynchronous mode in each of these areas causes loss of some consis
 |===============
 
 ==== Grouping API vs Key Affinity Service
-The key affinity (for keys generated with the link:../user_guide/user_guide.html#key_affinity_service[Key Affinity Service] ) might be lost during topology changes. E.g. if k1 maps to node N1 and another node is added to the system, k1 can me migrated to N2 (affinity is lost). With link:../user_guide/user_guide.html#the_grouping_api[grouping API] you have the guarantee that the same node (you don't know/control which node) hosts all the data from the same group even after topology changes.
+The key affinity (for keys generated with the Key Affinity Service) might be lost during topology changes. E.g. if k1 maps to node N1 and another node is added to the system, k1 can me migrated to N2 (affinity is lost). With grouping API you have the guarantee that the same node (you don't know/control which node) hosts all the data from the same group even after topology changes.
 
 === Listener questions
 
@@ -372,9 +367,6 @@ include::code_examples/GetClassLoader.java[]
 ==== Best practices implementing java.io.Externalizable
 If you decide to implement link:{jdkdocroot}/java/io/Externalizable.html[Externalizable] interface, please make sure that the link:{jdkdocroot}/java/io/Externalizable.html#readExternal(java.io.ObjectInput)[readExternal()] method is thread safe, otherwise you run the risk of potential getting corrupted data and link:{jdkdocroot}/java/lang/OutOfMemoryError.html[OutOfMemoryException] , as seen in link:http://community.jboss.org/message/609296#609296[this forum post] .
 
-==== Does {brandname} support storing Non-Serializable objects?
-See the link:../user_guide/user_guide.html[User Guide's] chapter on marshalling for more information.
-
 ==== Do Externalizer implementations need to access internal Externalizer implementations?
 No, they don't. Here's an example of what should not be done:
 
@@ -442,9 +434,6 @@ java.io.EOFException: Read past end of file
 
 The current logic is for the state receiver to back off in these scenarios and retry after a few seconds. Quite often, after the retry the state generator might have already finished dealing with the other node and hence the state receiver will be able to fully receive the state.
 
-==== How do I get more information on marshalling and unmarshalling exceptions?
-See the section on troubleshooting marshalling in the link:../user_guide/user_guide.html[User Guide].
-
 ==== Why am I getting invalid data passed to readExternal?
 If you are using Cache.putAsync() you may find your object is modified after serialization starts, thus corrupting the datastream passed to readExternal . To solve this, make sure you synchronize access to the object.
 
@@ -484,9 +473,6 @@ To find an example on how to bind Cache or CacheManager to the java: namespace, 
 === Hibernate 2nd Level Cache questions
 ==== Can I use {brandname} as a remote JPA or Hibernate second level cache?
 See link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan-remote[Remote {brandname} Caching] section in Hibernate documentation.
-
-==== Is it possible to use the {brandname} 2nd level cache outside of a J2EE server, and if so how do I set up the transaction manager lookup?
-The User Guide provides link:../user_guide/user_guide.html#using_infinispan_as_jpa_hibernate_second_level_cache_provider[details] on configuring a transaction manager outside of Java EE. The User Guide also provides link:../user_guide/user_guide.html#implementing_standalone_jpa_jta_hibernate_application_outside_j2ee_server_using_infinispan_2nd_level_cache[details] on how to use Atomikos, JTOM and Bitronix.
 
 ==== What are the pitfalls of not using a non-JTA transaction factory such as JDBCTransactionFactory with Hibernate when {brandname} is used as 2nd level cache provider?
 The problem is that Hibernate will create a Transaction instance via java.sql.Connection and {brandname} will create a transaction via whatever TransactionManager returned by hibernate.transaction.manager_lookup_class . If hibernate.transaction.manager_lookup_class has not been populated, it will default to the dummy transaction manager.

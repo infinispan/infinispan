@@ -44,7 +44,7 @@ completely.
 Previously the JDBC PooledConnectionFactory provided c3p0 and HikariCP based connection pools.
 From 10.0 we only provide a PooledConnectionFactory based upon the link:https://agroal.github.io/[Agroal project].
 This means that it is no longer possible to utilise `c3p0.properties` and `hikari.properties` files to configure the pool,
-instead an agroal compatiblet properties file can be provided. See link:../user_guide/user_guide.html#jdbc_cache_store[Connection Management] for more details.
+instead an agroal compatiblet properties file can be provided.
 
 === XML configuration changes
 Several configuration elements and attributes that were deprecated since 9.0 have been removed:
@@ -133,9 +133,6 @@ When using multi-tenancy in the Wildfly based server, it's necessary to specify 
 Compatibility mode has been deprecated and will be removed in the next {brandname} version.
 
 To use a cache from multiple endpoints, it is recommended to store data in binary format and to configure the MediaType for keys and values.
-ifndef::productized[]
-See link:http://infinispan.org/docs/dev/user_guide/user_guide.html#endpoint_interop[Embedded/Remote Interoperability] for more information.
-endif::productized[]
 
 
 If storing data as unmarshalled objects is still desired, the equivalent of compatibility mode is to configure keys and values to store object content:
@@ -192,8 +189,7 @@ ifndef::productized[]
 The AdvancedCacheLoader SPI has been enhanced to provide an alternative method to process and instead allows reactive streams based publishKeys and publishEntries methods which provide benefits in performance, threading and ease of use. Note this change will only affect you if you wish take advantage of it in any custom CacheLoaders you may have implemented.
 
 === Partition Handling Configuration
-In 9.3 the default MergePolicy is now MergePolicy.NONE, opposed to MergePolicy.PREFERRED_ALWAYS. See link:../user_guide/user_guide.html#merge-policies[here]
-for a detailed description of the different merge policies.
+In 9.3 the default MergePolicy is now MergePolicy.NONE, opposed to MergePolicy.PREFERRED_ALWAYS.
 
 === Stat Changes
 We have reverted the stat changes introduced in 9.1, so average values for read, write and removals are once again returned
@@ -243,11 +239,11 @@ Average values for read, write and removals are now returned in Nanoseconds, opp
 
 === (FineGrained)AtomicMap reimplemented
 
-Infinispan now contains a new implementation of both `AtomicMap` and `FineGrainedAtomicMap`, but the semantics has been preserved. The new implementation does not use `DeltaAware` interface but the link:../user_guide/user_guide.html#functional_map_api[Functional API] instead.
+Infinispan now contains a new implementation of both `AtomicMap` and `FineGrainedAtomicMap`, but the semantics has been preserved. The new implementation does not use `DeltaAware` interface but the Functional API instead.
 
 There are no changes needed for `AtomicMap`, but it now supports non-transactional use case as well.
 
-`FineGrainedAtomicMap` now uses the link:../user_guide/user_guide.html#grouping[Grouping API] and therefore you need to link:../user_guide/user_guide.html#how_do_i_use_the_grouping_api[enable groups in configuration]. Also it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore the cache size or iteration/streaming results may differ. Note that fine grained atomic maps are still supported on transactional caches only.
+`FineGrainedAtomicMap` now uses the Grouping API and therefore you need to enable groups in configuration. Also it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore the cache size or iteration/streaming results may differ. Note that fine grained atomic maps are still supported on transactional caches only.
 
 === RemoteCache keySet/entrySet/values
 
@@ -269,7 +265,7 @@ Set<K> keysCopy = remoteCache.keySet().stream().collect(Collectors.toSet());
 
 Interfaces `DeltaAware`, `Delta` and `CopyableDeltaAware` have been deprecated. Method `AdvancedCache.applyDelta()` has been deprecated and the implementation does not allow custom set of locked keys. `ApplyDeltaCommand` and its uses in interceptor stack are deprecated.
 
-Any partial updates to an entry should be replaced using the link:../user_guide/user_guide.html#functional_map_api[Functional API].
+Any partial updates to an entry should be replaced using the Functional API.
 
 === {brandname} Query Configuration
 
@@ -286,8 +282,7 @@ This index storage option is mostly useful for single node integration testing o
 TableManipulation::batchSize and JpaStoreConfiguration::batchSize have been deprecated and replaced by the higher level AbstractStoreConfiguration::maxBatchSize.
 
 === Partition Handling changes
-In Infinispan 9.1 partition handling has been improved to allow for automatic
-link:../user_guide/user_guide.html#conflict-manager[conflict resolution on partition merges]. Consequently,
+In Infinispan 9.1 partition handling has been improved to allow for automatic conflict resolution on partition merges. Consequently,
 PartitionHandlingConfiguration::enabled has been deprecated in favour of PartitionHandlingConfiguration::whenSplit.
 Configuring whenSplit to the DENY_READ_WRITES strategy is equivalent to setting enabled to true, whilst specifying
 ALLOW_READ_WRITES is equivalent to disabling partition handling (default).
@@ -346,8 +341,7 @@ it will never act as base template for other caches.
 === Marshalling Enhancements and Store Compatibility
 Internally Infinispan 9.x has introduced many improvements to its marshalling codebase in order to improve performance
 and allow for greater flexibility. Consequently, data marshalled and persisted by Infinispan 8.x is no longer compatible with Infinispan 9.0.
-To aid you in migrating your existing stores to 9.0, we have provided a link:../user_guide/user_guide.html#jdbc_migrator[Store Migrator],
-however at present this only allows the migration of JDBC stores.
+To aid you in migrating your existing stores to 9.0, we have provided a Store Migrator, however at present this only allows the migration of JDBC stores.
 
 === New Cloud module for library mode
 In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
@@ -432,7 +426,7 @@ The JDBC Mixed and Binary stores have been removed due to the poor performance a
 Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
 deserialised, updated, serialised and then re-inserted back into the db.  If you were previously using one of the removed
 stores, we have provided a migrator tool to assist in migrating data from an existing binary table to a JDBC string based
-store. See link:../user_guide/user_guide.html#jdbc_migrator[JDBC Migrator Guide] for more details.
+store.
 
 === @Store Annotation Introduced
 A new annotation, `@Store`, has been added for persistence stores. This allows a store's properties to be
@@ -593,7 +587,7 @@ In order to use all of the latest features, make sure you change the namespace d
 === Transaction
 
 The default transaction enlistment model has changed ( link:https://issues.jboss.org/browse/ISPN-1284[ISPN-1284] ) from link:{jdkdocroot}/javax/transaction/xa/XAResource.html[`XAResource`] to link:{jdkdocroot}/javax/transaction/Synchronization.html[`Synchronization`].
-Also now, if the `XAResource` enlistment is used, then link:../user_guide/user_guide.html#transaction_recovery[recovery] is enabled by default.
+Also now, if the `XAResource` enlistment is used, then recovery is enabled by default.
 
 In practical terms, if you were using the default values, this should not cause any backward compatibility issues but an increase in performance of about 5-7%. However in order to use the old configuration defaults, you need to configure the following:
 
@@ -614,11 +608,11 @@ builder.transaction().useSynchronization(false).recovery().enabled(false)
 
 === Cache Loader and Store configuration
 
-Cache Loader and Store configuration has changed greatly in Infinispan 5.2. Please refer to the link:../user_guide/user_guide.html#cache_loaders_and_stores[Cache Loaders and Stores] documentation.
+Cache Loader and Store configuration has changed greatly in Infinispan 5.2.
 
 === Virtual Nodes and Segments
 
-The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has been replaced by Segments. Please refer to the link:../user_guide/user_guide.html#clustering_modes[Clustering modes] documentation for details.
+The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has been replaced by Segments.
 
 ==  Upgrading from 5.0 to 5.1
 === API
@@ -783,4 +777,3 @@ The above pattern has always been the intention of this API anyway.
 
 Since upgrading to JGroups 3.x, `-Dbind.address` is ignored. This should be replaced with `-Djgroups.bind_addr`.
 endif::productized[]
-
