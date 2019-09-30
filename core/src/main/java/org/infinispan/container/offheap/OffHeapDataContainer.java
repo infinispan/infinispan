@@ -3,7 +3,6 @@ package org.infinispan.container.offheap;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.FilterIterator;
@@ -102,13 +101,6 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpired(IntSet segments) {
       return new FilterIterator<>(iteratorIncludingExpired(),
             ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
-   }
-
-   @Override
-   public void forEachIncludingExpired(IntSet segments, ObjIntConsumer<? super InternalCacheEntry<WrappedBytes, WrappedBytes>> action) {
-      if (segments == null || segments.contains(0)) {
-         map.values().forEach(e -> action.accept(e, 0));
-      }
    }
 
    @Override

@@ -166,7 +166,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Caught exception purging data container!", id = 26)
-   void exceptionPurgingDataContainer(@Cause Exception e);
+   void exceptionPurgingDataContainer(@Cause Throwable e);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Could not acquire lock for eviction of %s", id = 27)
