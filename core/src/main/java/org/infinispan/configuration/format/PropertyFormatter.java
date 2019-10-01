@@ -9,8 +9,6 @@ import java.util.Properties;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  *
@@ -20,14 +18,12 @@ import org.infinispan.util.logging.LogFactory;
  * @since 6.0
  */
 public class PropertyFormatter {
-
-   private static final Log log = LogFactory.getLog(PropertyFormatter.class);
    private static Method plainToString = null;
    static {
       try {
          plainToString = Object.class.getMethod("toString");
       } catch (Exception e) {
-         log.error("Error while initializing", e);
+         // Ignore
       }
    }
 

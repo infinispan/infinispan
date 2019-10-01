@@ -7,8 +7,8 @@ import static org.infinispan.configuration.cache.BackupConfiguration.REPLICATION
 import static org.infinispan.configuration.cache.BackupConfiguration.SITE;
 import static org.infinispan.configuration.cache.BackupConfiguration.STRATEGY;
 import static org.infinispan.configuration.cache.BackupConfiguration.USE_TWO_PHASE_COMMIT;
+import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -18,16 +18,12 @@ import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AttributeSet attributes;
    private XSiteStateTransferConfigurationBuilder stateTransferBuilder;
    private TakeOfflineConfigurationBuilder takeOfflineBuilder;
@@ -152,12 +148,12 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       takeOfflineBuilder.validate();
       stateTransferBuilder.validate();
       if (attributes.attribute(SITE).get() == null)
-         throw log.backupMissingSite();
+         throw CONFIG.backupMissingSite();
       if (attributes.attribute(FAILURE_POLICY).get() == BackupFailurePolicy.CUSTOM && (attributes.attribute(FAILURE_POLICY_CLASS).get() == null)) {
-         throw log.missingBackupFailurePolicyClass();
+         throw CONFIG.missingBackupFailurePolicyClass();
       }
       if (attributes.attribute(USE_TWO_PHASE_COMMIT).get() && attributes.attribute(STRATEGY).get() == BackupConfiguration.BackupStrategy.ASYNC) {
-         throw log.twoPhaseCommitAsyncBackup();
+         throw CONFIG.twoPhaseCommitAsyncBackup();
       }
    }
 

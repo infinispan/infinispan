@@ -1,5 +1,7 @@
 package org.infinispan.commons.dataconversion;
 
+import static org.infinispan.commons.logging.Log.CONTAINER;
+
 import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
@@ -39,7 +41,7 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
       } catch (InterruptedException | IOException | ClassNotFoundException e) {
          throw new CacheException(e);
       }
-      throw logger.unsupportedContent(content);
+      throw CONTAINER.unsupportedContent(content);
    }
 
 }

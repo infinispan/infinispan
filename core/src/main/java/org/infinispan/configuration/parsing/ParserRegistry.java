@@ -3,6 +3,7 @@ package org.infinispan.configuration.parsing;
 import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -32,20 +33,18 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.serializing.ConfigurationHolder;
 import org.infinispan.configuration.serializing.Serializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * ParserRegistry is a namespace-mapping-aware meta-parser which provides a way to delegate the
@@ -59,7 +58,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 public class ParserRegistry implements NamespaceMappingParser {
-   private static final Log log = LogFactory.getLog(ParserRegistry.class);
    private final WeakReference<ClassLoader> cl;
    private final ConcurrentMap<QName, NamespaceParserPair> parserMappings;
    private final Properties properties;
@@ -81,7 +79,7 @@ public class ParserRegistry implements NamespaceMappingParser {
 
          Namespace[] namespaces = parser.getNamespaces();
          if (namespaces == null) {
-            throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
+            throw CONFIG.parserDoesNotDeclareNamespaces(parser.getClass().getName());
          }
 
          boolean skipParser = defaultOnly;
@@ -99,7 +97,7 @@ public class ParserRegistry implements NamespaceMappingParser {
                QName qName = new QName(ns.uri(), ns.root());
                NamespaceParserPair existing = parserMappings.putIfAbsent(qName, new NamespaceParserPair(ns, parser));
                if (existing != null && !parser.getClass().equals(existing.parser.getClass())) {
-                  log.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existing.parser.getClass().getName());
+                  CONFIG.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existing.parser.getClass().getName());
                }
             }
          }
@@ -219,7 +217,7 @@ public class ParserRegistry implements NamespaceMappingParser {
          parser = parserMappings.get(new QName(baseUri, name.getLocalPart()));
          // See if we can get a default parser instead
          if (parser == null || !isSupportedNamespaceVersion(parser.namespace, uri.substring(lastColon + 1)))
-            throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
+            throw CONFIG.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
       }
       Schema oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(name.getNamespaceURI()));

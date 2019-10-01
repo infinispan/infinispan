@@ -1,6 +1,7 @@
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.util.concurrent.CompletableFutures.uncheckedAwait;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
@@ -112,7 +113,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Override
    public CompletableFuture<Configuration> createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (cacheManager.cacheExists(cacheName)) {
-         throw log.cacheExists(cacheName);
+         throw CONFIG.cacheExists(cacheName);
       } else {
          return getOrCreateCache(cacheName, configuration, flags);
       }
@@ -126,7 +127,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Override
    public CompletableFuture<Configuration> createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (cacheManager.cacheExists(cacheName)) {
-         throw log.cacheExists(cacheName);
+         throw CONFIG.cacheExists(cacheName);
       } else {
          return getOrCreateCache(cacheName, template, flags);
       }
@@ -153,7 +154,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       } else {
          configuration = configurationManager.getConfiguration(template, true);
          if (configuration == null) {
-            throw log.undeclaredConfiguration(template, cacheName);
+            throw CONFIG.undeclaredConfiguration(template, cacheName);
          }
       }
       return createCache(cacheName, template, configuration, flags);
@@ -165,7 +166,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          CacheState state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
          return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state).thenApply((v) -> configuration);
       } catch (Exception e) {
-         throw log.configurationSerializationFailed(cacheName, configuration, e);
+         throw CONFIG.configurationSerializationFailed(cacheName, configuration, e);
       }
    }
 

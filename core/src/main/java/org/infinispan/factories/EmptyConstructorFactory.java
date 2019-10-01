@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
@@ -65,6 +67,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
       else if (componentName.equals(DataOperationOrderer.class.getName()))
          return new DataOperationOrderer();
 
-      throw log.factoryCannotConstructComponent(componentName);
+      throw CONTAINER.factoryCannotConstructComponent(componentName);
    }
 }

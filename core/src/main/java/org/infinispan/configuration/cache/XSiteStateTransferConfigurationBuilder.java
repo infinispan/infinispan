@@ -5,14 +5,13 @@ import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.MAX_RETRIES;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.WAIT_TIME;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configuration Builder to configure the state transfer between sites.
@@ -22,7 +21,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class XSiteStateTransferConfigurationBuilder extends AbstractConfigurationChildBuilder
       implements Builder<XSiteStateTransferConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(XSiteStateTransferConfigurationBuilder.class);
    private final BackupConfigurationBuilder backupConfigurationBuilder;
    private final AttributeSet attributes;
 
@@ -36,10 +34,10 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    @Override
    public void validate() {
       if (attributes.attribute(TIMEOUT).get() <= 0) {
-         throw log.invalidXSiteStateTransferTimeout();
+         throw CONFIG.invalidXSiteStateTransferTimeout();
       }
       if (attributes.attribute(WAIT_TIME).get() <= 0) {
-         throw log.invalidXSiteStateTransferWaitTime();
+         throw CONFIG.invalidXSiteStateTransferWaitTime();
       }
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.List;
@@ -61,7 +62,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
                if (ctx.lookupEntry(key) == null) {
                   // We have read the entry using functional command on remote node and now we want
                   // the full entry, but we cannot provide the same version as the already read one.
-                  throw log.writeSkewOnRead(key, key, seenVersion, newVersion);
+                  throw CONTAINER.writeSkewOnRead(key, key, seenVersion, newVersion);
                } else {
                   // We have retrieved remote entry despite being already wrapped: that can happen
                   // for GetKeysInGroupCommand which does not know what entries will it fetch.
@@ -128,7 +129,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
       // TODO: version seen or looked up remote version?
       EntryVersion lastVersionSeen = tx.getVersionsRead().get(key);
       if (lastVersionSeen != null && lastVersionSeen.compareTo(version) != InequalVersionComparisonResult.EQUAL) {
-         throw log.writeSkewOnRead(key, key, lastVersionSeen, version);
+         throw CONTAINER.writeSkewOnRead(key, key, lastVersionSeen, version);
       }
       tx.addVersionRead(key, version);
    }

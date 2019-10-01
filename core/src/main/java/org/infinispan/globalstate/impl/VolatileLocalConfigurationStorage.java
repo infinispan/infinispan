@@ -1,6 +1,7 @@
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAPH;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT))
-         throw log.globalStateDisabled();
+         throw CONFIG.globalStateDisabled();
    }
 
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -60,7 +61,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          SecurityActions.defineConfiguration(cacheManager, name, configuration);
          log.debugf("Defined cache '%s' on '%s' using %s", name, cacheManager.getAddress(), configuration);
       } else if (!existing.matches(configuration)) {
-         throw log.incompatibleClusterConfiguration(name, configuration, existing);
+         throw CONFIG.incompatibleClusterConfiguration(name, configuration, existing);
       } else {
          log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
       }

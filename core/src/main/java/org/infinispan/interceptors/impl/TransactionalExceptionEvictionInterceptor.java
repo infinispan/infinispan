@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -222,7 +224,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       }
 
       if (changeAmount != 0 && !increaseSize(changeAmount)) {
-         throw log.containerFull(maxSize);
+         throw CONTAINER.containerFull(maxSize);
       }
 
       if (!command.isOnePhaseCommit()) {

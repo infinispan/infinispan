@@ -1,5 +1,7 @@
 package org.infinispan.commons.util;
 
+import static org.infinispan.commons.logging.Log.CONTAINER;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -70,14 +72,14 @@ public abstract class AbstractFileLookup implements FileLookup {
 
             InputStream streamToBeReturned = getAsInputStreamFromClassLoader(insideJarFilePath, cl);
             if (streamToBeReturned == null) {
-               throw log.unableToLoadFileUsingScheme(scheme);
+               throw CONTAINER.unableToLoadFileUsingScheme(scheme);
             }
             return streamToBeReturned;
          }
          default:
             InputStream streamToBeReturned = getAsInputStreamFromClassLoader(uri.toString(), cl);
             if(streamToBeReturned == null) {
-               throw log.unableToLoadFileUsingScheme(scheme);
+               throw CONTAINER.unableToLoadFileUsingScheme(scheme);
             }
             return streamToBeReturned;
       }

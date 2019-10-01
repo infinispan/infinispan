@@ -1,5 +1,7 @@
 package org.infinispan.expiration.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,7 +81,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
          // Set up the eviction timer task
          long expWakeUpInt = configuration.expiration().wakeUpInterval();
          if (expWakeUpInt <= 0) {
-            log.notStartingEvictionThread();
+            CONTAINER.notStartingEvictionThread();
             enabled = false;
          } else {
             expirationTask = executor.scheduleWithFixedDelay(new ScheduledTask(),
@@ -110,7 +112,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                           Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
             }
          } catch (Exception e) {
-            log.exceptionPurgingDataContainer(e);
+            CONTAINER.exceptionPurgingDataContainer(e);
          }
       }
 

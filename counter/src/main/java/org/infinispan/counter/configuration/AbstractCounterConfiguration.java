@@ -1,11 +1,11 @@
 package org.infinispan.counter.configuration;
 
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.logging.Log;
 
 /**
  * Base counter configuration with its name, initial value and {@link Storage} mode.
@@ -19,12 +19,11 @@ public abstract class AbstractCounterConfiguration implements ConfigurationInfo 
          .xmlName("initial-value")
          .immutable()
          .build();
-   private static final Log log = LogFactory.getLog(AbstractCounterConfiguration.class, Log.class);
    static final AttributeDefinition<Storage> STORAGE = AttributeDefinition.builder("storage", Storage.VOLATILE)
          .xmlName("storage")
          .validator(value -> {
             if (value == null) {
-               throw log.invalidStorageMode();
+               throw CONTAINER.invalidStorageMode();
             }
          })
          .immutable()
@@ -33,7 +32,7 @@ public abstract class AbstractCounterConfiguration implements ConfigurationInfo 
          .xmlName("name")
          .validator(value -> {
             if (value == null) {
-               throw log.missingCounterName();
+               throw CONTAINER.missingCounterName();
             }
          })
          .immutable()

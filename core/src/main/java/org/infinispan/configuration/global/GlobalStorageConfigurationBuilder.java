@@ -1,20 +1,16 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalStorageConfiguration.CONFIGURATION_STORAGE_SUPPLIER;
+import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.lang.invoke.MethodHandles;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalStorageConfiguration> {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-
    private final AttributeSet attributes;
    private ConfigurationStorage storage = ConfigurationStorage.VOLATILE;
 
@@ -36,7 +32,7 @@ public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    public void validate() {
       if (storage.equals(ConfigurationStorage.CUSTOM) && attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).isNull()) {
-         throw log.customStorageStrategyNotSet();
+         throw CONFIG.customStorageStrategyNotSet();
       }
    }
 

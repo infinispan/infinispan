@@ -1,5 +1,7 @@
 package org.infinispan.upgrade;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +82,7 @@ public class RollingUpgradeManager {
             return m;
          }
       }
-      throw log.unknownMigrator(name);
+      throw CONTAINER.unknownMigrator(name);
    }
 
    /**

@@ -1,5 +1,7 @@
 package org.infinispan.counter.impl.listener;
 
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -272,7 +274,7 @@ public class CounterManagerNotificationManager {
             topologyReceived.countDown();
          }
          if (!topologyReceived.await(cache.getCacheConfiguration().clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS)) {
-            throw log.unableToFetchCaches();
+            throw CONTAINER.unableToFetchCaches();
          }
          registered = true;
       }

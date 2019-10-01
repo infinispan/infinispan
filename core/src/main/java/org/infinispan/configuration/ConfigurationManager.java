@@ -1,5 +1,7 @@
 package org.infinispan.configuration;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -13,8 +15,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * It manages all the configuration for a specific container.
@@ -26,8 +26,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.1
  */
 public class ConfigurationManager {
-   private static final Log log = LogFactory.getLog(ConfigurationManager.class);
-
    private final GlobalConfiguration globalConfiguration;
    private final ConcurrentMap<String, Configuration> namedConfiguration;
 
@@ -62,7 +60,7 @@ public class ConfigurationManager {
       if (defaultCacheName != null) {
          return namedConfiguration.get(defaultCacheName);
       } else {
-         throw log.noSuchCacheConfiguration(cacheName);
+         throw CONFIG.noSuchCacheConfiguration(cacheName);
       }
    }
 
@@ -84,7 +82,7 @@ public class ConfigurationManager {
                         match = builder.build();
                      }
                   } else
-                     throw log.configurationNameMatchesMultipleWildcards(name);
+                     throw CONFIG.configurationNameMatchesMultipleWildcards(name);
                }
             }
          }

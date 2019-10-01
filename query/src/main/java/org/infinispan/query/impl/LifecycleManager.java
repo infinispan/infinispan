@@ -4,6 +4,7 @@ import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
+import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -12,6 +13,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -87,12 +89,10 @@ import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneWildcardQueryExternalizer;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.impl.massindex.IndexWorker;
-import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
@@ -102,8 +102,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @InfinispanModule(name = "query", requiredModules = "core", optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
-
-   private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
    /**
     * Optional integer system property that sets value of {@link BooleanQuery#setMaxClauseCount}.
@@ -175,7 +173,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
    private void createQueryInterceptorIfNeeded(BasicComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
                                                SearchIntegrator searchIntegrator, KeyTransformationHandler keyTransformationHandler) {
-      log.registeringQueryInterceptor(cache.getName());
+      CONTAINER.registeringQueryInterceptor(cache.getName());
 
       ComponentRef<QueryInterceptor> queryInterceptorRef = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptorRef != null) {
@@ -252,7 +250,7 @@ public class LifecycleManager implements ModuleLifecycle {
    private void checkIndexableClasses(SearchIntegrator searchFactory, Set<Class<?>> indexedEntities) {
       for (Class<?> c : indexedEntities) {
          if (searchFactory.getIndexBinding(new PojoIndexedTypeIdentifier(c)) == null) {
-            throw log.classNotIndexable(c.getName());
+            throw CONTAINER.classNotIndexable(c.getName());
          }
       }
    }
@@ -478,15 +476,15 @@ public class LifecycleManager implements ModuleLifecycle {
             try {
                maxClauseCount = Integer.parseInt(maxClauseCountProp);
             } catch (NumberFormatException e) {
-               log.failedToParseSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP, e);
+               CONTAINER.failedToParseSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP, e);
                throw e;
             }
             int currentMaxClauseCount = BooleanQuery.getMaxClauseCount();
             if (maxClauseCount > currentMaxClauseCount) {
-               log.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);
+               CONTAINER.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);
                BooleanQuery.setMaxClauseCount(maxClauseCount);
             } else {
-               log.ignoringBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount, currentMaxClauseCount);
+               CONTAINER.ignoringBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount, currentMaxClauseCount);
             }
          }
       }

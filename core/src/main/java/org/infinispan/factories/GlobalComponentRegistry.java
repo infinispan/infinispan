@@ -1,6 +1,7 @@
 package org.infinispan.factories;
 
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -253,7 +254,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       basicComponentRegistry.getComponent(ModuleInitializer.class).running();
 
       if (versionLogged.compareAndSet(false, true)) {
-         log.version(Version.printVersion());
+         CONTAINER.version(Version.printVersion());
       }
    }
 
@@ -298,7 +299,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          try {
             l.cacheManagerStopping(this);
          } catch (Throwable t) {
-            log.moduleStopError(l.getClass().getName(), t);
+            CONTAINER.moduleStopError(l.getClass().getName(), t);
          }
       }
    }
@@ -312,7 +313,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             try {
                l.cacheManagerStopped(this);
             } catch (Throwable t) {
-               log.moduleStopError(l.getClass().getName(), t);
+               CONTAINER.moduleStopError(l.getClass().getName(), t);
             }
          }
       }

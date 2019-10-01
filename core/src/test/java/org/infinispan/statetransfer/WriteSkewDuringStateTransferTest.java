@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
+import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -45,7 +46,6 @@ import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -210,7 +210,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
                } catch (TimeoutException e) {
-                  throw log.failedWaitingForTopology(currentTopologyId + 2);
+                  throw CLUSTER.failedWaitingForTopology(currentTopologyId + 2);
                }
             }
          }
@@ -275,7 +275,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             } catch (TimeoutException e) {
-               throw LogFactory.getLog(getClass()).failedWaitingForTopology(currentTopology + 1);
+               throw CLUSTER.failedWaitingForTopology(currentTopology + 1);
             }
          }
 
@@ -303,7 +303,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             } catch (TimeoutException e) {
-               throw LogFactory.getLog(getClass()).failedWaitingForTopology(currentTopology + 2);
+               throw CLUSTER.failedWaitingForTopology(currentTopology + 2);
             }
          }
 

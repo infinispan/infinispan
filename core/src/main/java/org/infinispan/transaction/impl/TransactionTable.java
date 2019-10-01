@@ -1,6 +1,8 @@
 package org.infinispan.transaction.impl;
 
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.util.logging.Log.CLUSTER;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -371,12 +373,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
       if (!running) {
          // Assume that we wouldn't get this far if the cache was already stopped
-         throw log.cacheIsStopping(cacheName);
+         throw CONTAINER.cacheIsStopping(cacheName);
       }
 
       int viewId = rpcManager.getTransport().getViewId();
       if (transactionOriginatorChecker.isOriginatorMissing(globalTx, rpcManager.getTransport().getMembers())) {
-         throw log.remoteTransactionOriginatorNotInView(globalTx);
+         throw CLUSTER.remoteTransactionOriginatorNotInView(globalTx);
       }
 
       RemoteTransaction newTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
@@ -388,7 +390,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             return existing;
          } else {
             if (isTransactionCompleted(gtx)) {
-               throw log.remoteTransactionAlreadyCompleted(gtx);
+               throw CLUSTER.remoteTransactionAlreadyCompleted(gtx);
             }
             if (trace)
                log.tracef("Created and registered remote transaction %s", newTransaction);
@@ -431,7 +433,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       if (current == null) {
          if (!running) {
             // Assume that we wouldn't get this far if the cache was already stopped
-            throw log.cacheIsStopping(cacheName);
+            throw CONTAINER.cacheIsStopping(cacheName);
          }
          GlobalTransaction tx = gtxFactory.get();
          current = txFactory.newLocalTransaction(transaction, tx, implicitTransaction, currentTopologyId);

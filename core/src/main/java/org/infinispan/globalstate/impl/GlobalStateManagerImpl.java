@@ -1,6 +1,7 @@
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.globalstate.ScopedPersistentState.GLOBAL_SCOPE;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.invoke.MethodHandles;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
@@ -27,8 +27,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * GlobalStateManagerImpl. This global component manages persistent state across restarts as well as global configurations.
@@ -47,7 +45,6 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    public static final String VERSION = "@version";
    public static final String TIMESTAMP = "@timestamp";
    public static final String VERSION_MAJOR = "version-major";
-   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Inject GlobalConfiguration globalConfiguration;
    @Inject TimeService timeService;
@@ -82,10 +79,10 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
          globalLockFile = new FileOutputStream(lockFile);
          globalLock = globalLockFile.getChannel().tryLock();
          if (globalLock == null) {
-            throw log.globalStateCannotAcquireLockFile(null, lockFile);
+            throw CONTAINER.globalStateCannotAcquireLockFile(null, lockFile);
          }
       } catch (IOException | OverlappingFileLockException e) {
-         throw log.globalStateCannotAcquireLockFile(e, lockFile);
+         throw CONTAINER.globalStateCannotAcquireLockFile(e, lockFile);
       }
    }
 
@@ -104,13 +101,13 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
          ScopedPersistentState state = globalState;
          // We proceed only if we can write to the file
          if (!stateFile.canWrite()) {
-            throw log.nonWritableStateFile(stateFile);
+            throw CONTAINER.nonWritableStateFile(stateFile);
          }
          // Validate the state before proceeding
          if (!state.containsProperty(VERSION) || !state.containsProperty(VERSION_MAJOR) || !state.containsProperty(TIMESTAMP)) {
-            throw log.invalidPersistentState(GLOBAL_SCOPE);
+            throw CONTAINER.invalidPersistentState(GLOBAL_SCOPE);
          }
-         log.globalStateLoad(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
+         CONTAINER.globalStateLoad(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
 
          stateProviders.forEach(provider -> provider.prepareForRestore(state));
       } else {
@@ -129,7 +126,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
          // ask any state providers to contribute to the global state
          stateProviders.forEach(provider -> provider.prepareForPersist(state));
          writeScopedState(state);
-         log.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
+         CONTAINER.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
       }
    }
 
@@ -142,7 +139,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
                w.printf("%s=%s%n", Util.unicodeEscapeString(key), Util.unicodeEscapeString(value));
             });
          } catch (IOException e) {
-            throw log.failedWritingGlobalState(e, stateFile);
+            throw CONTAINER.failedWritingGlobalState(e, stateFile);
          }
       }
    }
@@ -170,7 +167,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
          }
          return Optional.of(state);
       } catch (IOException e) {
-         throw log.failedReadingPersistentState(e, stateFile);
+         throw CONTAINER.failedReadingPersistentState(e, stateFile);
       }
    }
 

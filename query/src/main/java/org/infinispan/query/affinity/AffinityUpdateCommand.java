@@ -1,5 +1,7 @@
 package org.infinispan.query.affinity;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +44,7 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    @Override
    public CompletableFuture<Object> invokeAsync() {
       if (queryInterceptor.isStopping()) {
-         throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
+         throw CONTAINER.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
       List<LuceneWork> luceneWorks = searchFactory.getWorkSerializer().toLuceneWorks(serializedModel);
       KeyTransformationHandler handler = queryInterceptor.getKeyTransformationHandler();

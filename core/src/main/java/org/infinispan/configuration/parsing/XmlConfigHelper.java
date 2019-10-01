@@ -1,5 +1,7 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +24,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.BeanUtils;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.w3c.dom.Element;
 
 /**
@@ -33,8 +33,6 @@ import org.w3c.dom.Element;
  * @since 4.0
  */
 public class XmlConfigHelper {
-   private static final Log log = LogFactory.getLog(XmlConfigHelper.class);
-
    @SuppressWarnings({"rawtypes", "unchecked"})
    public static Object valueConverter(Class klass, String value) {
       if (klass == Character.class) {
@@ -118,9 +116,6 @@ public class XmlConfigHelper {
             continue;
          }
          catch (NoSuchMethodException me) {
-            // this is ok, but certainly log this as a warning
-            // this is hugely noisy!
-            //if (log.isWarnEnabled()) log.warn("Unrecognised attribute " + propName + ".  Please check your configuration.  Ignoring!!");
          }
          catch (Exception e) {
             throw new CacheConfigurationException("Unable to invoke setter " + setter + " on " + objectClass, e);
@@ -132,19 +127,18 @@ public class XmlConfigHelper {
             if (setter.equals(m.getName()) || fluentSetter.equals(m.getName())) {
                Class<?> paramTypes[] = m.getParameterTypes();
                if (paramTypes.length != 1) {
-                  log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
+                  CONFIG.tracef("Rejecting setter %s on class %s due to incorrect number of parameters", m, objectClass);
                   continue; // try another param with the same name.
                }
 
                Class<?> parameterType = paramTypes[0];
 
                if (parameterType.equals(Class.class)) {
-                  log.tracef("Rejecting setter %s on class %s due to class parameter is type class", m, objectClass);
+                  CONFIG.tracef("Rejecting setter %s on class %s due to class parameter is type class", m, objectClass);
                    continue; // try another param with the same name.
                }
 
                Object parameter = valueConverter(parameterType, (String) attribs.get(propName));
-               //if (log.isDebugEnabled()) log.debug("Invoking setter method: " + setter + " with parameter \"" + parameter + "\" of type " + parameter.getClass());
 
                try {
                   m.invoke(target, parameter);
@@ -169,7 +163,7 @@ public class XmlConfigHelper {
 
    public static void showUnrecognizedAttributes(Map<Object, Object> attribs) {
       for(Object propName : attribs.keySet()) {
-         log.unrecognizedAttribute((String) propName);
+         CONFIG.unrecognizedAttribute((String) propName);
       }
    }
 

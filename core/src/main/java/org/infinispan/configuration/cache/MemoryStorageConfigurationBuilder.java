@@ -4,24 +4,20 @@ import static org.infinispan.configuration.cache.MemoryStorageConfiguration.ADDR
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.EVICTION_STRATEGY;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.EVICTION_TYPE;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.SIZE;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.util.logging.Log;
 
 /**
  * @since 10.0
  */
 public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryStorageConfiguration>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(MemoryStorageConfigurationBuilder.class, Log.class);
-
    private AttributeSet attributes;
    private StorageType storageType = StorageType.OBJECT;
 
@@ -91,7 +87,7 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
    public void validate() {
       if (storageType != StorageType.OBJECT) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
-            throw log.groupingOnlyCompatibleWithObjectStorage(storageType);
+            throw CONFIG.groupingOnlyCompatibleWithObjectStorage(storageType);
          }
       }
 
@@ -99,7 +95,7 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
       EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
       if (evictionType == EvictionType.MEMORY) {
          if (storageType == StorageType.OBJECT) {
-            throw log.offHeapMemoryEvictionNotSupportedWithObject();
+            throw CONFIG.offHeapMemoryEvictionNotSupportedWithObject();
          }
       }
 
@@ -108,14 +104,14 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
          if (size > 0) {
             EvictionStrategy newStrategy = EvictionStrategy.REMOVE;
             evictionStrategy(newStrategy);
-            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, newStrategy);
+            CONFIG.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, newStrategy);
          } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL &&
                !getBuilder().template()) {
-            log.passivationWithoutEviction();
+            CONFIG.passivationWithoutEviction();
          }
       } else {
          if (size <= 0) {
-            throw log.invalidEvictionSize();
+            throw CONFIG.invalidEvictionSize();
          }
          if (strategy.isExceptionBased()) {
             TransactionConfigurationBuilder transactionConfiguration = getBuilder().transaction();
@@ -123,7 +119,7 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
             if (transactionMode == null || !transactionMode.isTransactional() ||
                   transactionConfiguration.useSynchronization() ||
                   transactionConfiguration.use1PcForAutoCommitTransactions()) {
-               throw log.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
+               throw CONFIG.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
             }
          }
       }

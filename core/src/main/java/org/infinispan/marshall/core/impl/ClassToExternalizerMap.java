@@ -1,5 +1,7 @@
 package org.infinispan.marshall.core.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.Arrays;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -203,7 +205,7 @@ public final class ClassToExternalizerMap {
          if (ext != null) {
             AdvancedExternalizer prev = reverse.get(ext.getId());
             if (prev != null && !prev.equals(ext))
-               throw log.duplicateExternalizerIdFound(
+               throw CONTAINER.duplicateExternalizerIdFound(
                      ext.getId(), prev.getClass().getName());
 
             reverse.put(ext.getId(), ext);

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.impl.connectionfactory;
 
+import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -52,13 +54,13 @@ public class ManagedConnectionFactory extends ConnectionFactory {
             log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
          }
          if (dataSource == null) {
-            log.connectionInJndiNotFound(datasourceName);
+            PERSISTENCE.connectionInJndiNotFound(datasourceName);
             throw new PersistenceException(String.format(
                   "Could not find a connection in jndi under the name '%s'", datasourceName));
          }
       }
       catch (NamingException e) {
-         log.namingExceptionLookingUpConnection(datasourceName, e);
+         PERSISTENCE.namingExceptionLookingUpConnection(datasourceName, e);
          throw new PersistenceException(e);
       }
       finally {
@@ -67,7 +69,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
                ctx.close();
             }
             catch (NamingException e) {
-               log.failedClosingNamingCtx(e);
+               PERSISTENCE.failedClosingNamingCtx(e);
             }
          }
       }
@@ -83,7 +85,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       try {
          connection = dataSource.getConnection();
       } catch (SQLException e) {
-         log.sqlFailureRetrievingConnection(e);
+         PERSISTENCE.sqlFailureRetrievingConnection(e);
          throw new PersistenceException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
       }
       if (trace) {
@@ -99,7 +101,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          if (conn != null) // Could be null if getConnection failed
             conn.close();
       } catch (SQLException e) {
-         log.sqlFailureClosingConnection(conn, e);
+         PERSISTENCE.sqlFailureClosingConnection(conn, e);
       }
    }
 }

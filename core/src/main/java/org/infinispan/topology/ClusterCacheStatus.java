@@ -1,6 +1,6 @@
 package org.infinispan.topology;
 
-import static org.infinispan.util.logging.LogFactory.CLUSTER;
+import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
@@ -196,7 +196,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @Override
    public synchronized void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode) {
-      LogFactory.CLUSTER.cacheRecoveredAfterMerge(cacheName, currentTopology, availabilityMode);
+      Log.CLUSTER.cacheRecoveredAfterMerge(cacheName, currentTopology, availabilityMode);
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRecoveredAfterMerge(
          currentTopology.getMembers(), currentTopology.getTopologyId()));
       this.currentTopology = currentTopology;
@@ -227,14 +227,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (persistentState.isPresent()) {
          if (!joinInfo.getPersistentStateChecksum().isPresent()) {
             if (status == ComponentStatus.INSTANTIATED) {
-               throw log.nodeWithoutPersistentStateJoiningCacheWithState(joiner, cacheName);
+               throw CLUSTER.nodeWithoutPersistentStateJoiningCacheWithState(joiner, cacheName);
             }
          } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
-            throw log.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
+            throw CLUSTER.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
          }
       } else {
          if (joinInfo.getPersistentStateChecksum().isPresent()) {
-            throw log.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
+            throw CLUSTER.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
          }
       }
 
@@ -360,7 +360,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                "for cache %s, we don't have a rebalance in progress", member, cacheName));
       }
 
-      log.rebalancePhaseConfirmedOnNode(currentTopology.getPhase(), cacheName, member, receivedTopologyId);
+      CLUSTER.rebalancePhaseConfirmedOnNode(currentTopology.getPhase(), cacheName, member, receivedTopologyId);
       rebalanceConfirmationCollector.confirmPhase(member, receivedTopologyId);
    }
 
@@ -751,7 +751,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (getExpectedMembers().size() > persistedCH.getMembers().size()) {
          List<Address> extraneousMembers = new ArrayList<>(getExpectedMembers());
          extraneousMembers.removeAll(persistedCH.getMembers());
-         throw log.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
+         throw CLUSTER.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
       }
       CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, persistedCH, null,
             CacheTopology.Phase.NO_REBALANCE, persistedCH.getMembers(), persistentUUIDManager.mapAddresses(persistedCH.getMembers()));
@@ -1081,7 +1081,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          log.debugf("Cache %s queueing conflict resolution with members %s", cacheName, topology.getMembers());
 
-         LogFactory.CLUSTER.startingConflictResolution(cacheName, currentTopology);
+         Log.CLUSTER.startingConflictResolution(cacheName, currentTopology);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionStarting(
                currentTopology.getMembers(), currentTopology.getTopologyId()));
 
@@ -1089,7 +1089,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          DefaultConflictManager<?, ?> conflictManager = (DefaultConflictManager) ConflictManagerFactory.get(cache);
          manager.resolveConflicts(topology, preferredNodes).whenComplete((Void, t) -> {
             if (t == null) {
-               LogFactory.CLUSTER.finishedConflictResolution(cacheName, currentTopology);
+               Log.CLUSTER.finishedConflictResolution(cacheName, currentTopology);
                eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFinished(
                   topology.getMembers(), topology.getTopologyId()));
                future.complete(null);
@@ -1097,7 +1097,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                // TODO Add log event for cancel/restart
                if (cancelledLocally.get()) {
                   // We have explicitly cancelled the request, therefore return and do nothing
-                  LogFactory.CLUSTER.cancelledConflictResolution(cacheName, topology);
+                  Log.CLUSTER.cancelledConflictResolution(cacheName, topology);
                   eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionCancelled(
                      topology.getMembers(), topology.getTopologyId()));
                   cancelConflictResolutionPhase(topology);
@@ -1109,7 +1109,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                   }
 
                   // TODO When CR fails because a node left the cluster, the new CR can start before we cancel the old one
-                  LogFactory.CLUSTER.failedConflictResolution(cacheName, topology, rootCause);
+                  Log.CLUSTER.failedConflictResolution(cacheName, topology, rootCause);
                   eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFailed(
                      topology.getMembers(), topology.getTopologyId(), rootCause.getMessage()));
                   // If a node is suspected then we can't restart the CR until a new view is received, so we leave conflictResolution != null

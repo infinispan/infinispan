@@ -1,5 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
@@ -19,8 +21,6 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * One of the assumptions people made on consistent hashing involves thinking
@@ -53,7 +53,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
 
-   private static final Log log = LogFactory.getLog(SyncConsistentHashFactory.class);
    public static final float OWNED_SEGMENTS_ALLOWED_VARIATION = 1.10f;
    public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.05f;
 
@@ -74,7 +73,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    public DefaultConsistentHash fromPersistentState(ScopedPersistentState state) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
-         throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
+         throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
       return new DefaultConsistentHash(state);
    }
 

@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.impl;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.util.Set;
 
 import net.jcip.annotations.GuardedBy;
@@ -76,6 +78,6 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
 
    @Override
    protected void onTimeout() {
-      completeExceptionally(log.requestTimedOut(requestId, target.toString()));
+      completeExceptionally(CLUSTER.requestTimedOut(requestId, target.toString()));
    }
 }

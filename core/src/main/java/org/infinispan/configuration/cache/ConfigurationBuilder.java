@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
 import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -19,12 +20,8 @@ import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(ConfigurationBuilder.class, Log.class);
-
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final EncodingConfigurationBuilder encoding;
@@ -229,7 +226,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
             || invocationBatching.isEnabled()
             || indexing.enabled()
             || memory.create().storageType() == StorageType.BINARY) {
-         throw log.notSupportedInSimpleCache();
+         throw CONFIG.notSupportedInSimpleCache();
       }
    }
 

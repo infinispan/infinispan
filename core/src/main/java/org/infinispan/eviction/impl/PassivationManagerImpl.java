@@ -2,6 +2,7 @@ package org.infinispan.eviction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
          CompletionStage<Void> stage = passivationPersistenceManager.passivate(marshalledEntry, keyPartitioner.getSegment(key));
          return stage.handle((v, t) -> {
             if (t != null) {
-               log.unableToPassivateEntry(key, t);
+               CONTAINER.unableToPassivateEntry(key, t);
                return false;
             }
             if (statsEnabled) {
@@ -104,7 +105,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
             persistenceManager.writeToAllNonTxStoresSync(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
             if (statsEnabled) passivations.getAndIncrement();
          } catch (CacheException e) {
-            log.unableToPassivateEntry(key, e);
+            CONTAINER.unableToPassivateEntry(key, e);
          }
          CompletionStages.join(notifier.notifyCacheEntryPassivated(key, null, false,
                ImmutableContext.INSTANCE, null));
@@ -131,13 +132,13 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
    public void passivateAll() throws PersistenceException {
       if (enabled && !skipOnStop) {
          long start = timeService.time();
-         log.passivatingAllEntries();
+         CONTAINER.passivatingAllEntries();
 
          int count = container.sizeIncludingExpired();
          Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e ->
             marshalledEntryFactory.create(e.getKey(), e.getValue(), e.getMetadata(), e.getExpiryTime(), e.getLastUsed()));
          CompletionStages.join(persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0));
-         log.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
+         CONTAINER.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
    }
 

@@ -1,5 +1,7 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -108,14 +110,14 @@ public class ConfigurationBuilderHolder {
    public void validate() {
       globalConfigurationBuilder.defaultCacheName().ifPresent(name -> {
          if (!namedConfigurationBuilders.containsKey(name))
-            throw Parser.log.missingDefaultCacheDeclaration(name);
+            throw CONFIG.missingDefaultCacheDeclaration(name);
       });
    }
 
    public void addJGroupsStack(FileJGroupsChannelConfigurator stack) {
       String name = stack.getName();
       if (jgroupsBuilder.getStack(name) != null) {
-         throw Parser.log.duplicateJGroupsStack(name);
+         throw CONFIG.duplicateJGroupsStack(name);
       }
       jgroupsBuilder.addStackFile(name).fileChannelConfigurator(stack);
    }
@@ -123,7 +125,7 @@ public class ConfigurationBuilderHolder {
    public void addJGroupsStack(EmbeddedJGroupsChannelConfigurator stack, String extend) {
       String name = stack.getName();
       if (jgroupsBuilder.getStack(name) != null) {
-         throw Parser.log.duplicateJGroupsStack(name);
+         throw CONFIG.duplicateJGroupsStack(name);
       }
 
       if (extend == null) {
@@ -132,7 +134,7 @@ public class ConfigurationBuilderHolder {
       } else {
          // See if the parent exists
          if (jgroupsBuilder.getStack(extend) == null) {
-            throw Parser.log.missingJGroupsStack(extend);
+            throw CONFIG.missingJGroupsStack(extend);
          } else {
             JGroupsChannelConfigurator baseStack = jgroupsBuilder.getStack(extend);
             jgroupsBuilder.addStack(stack.getName()).channelConfigurator(EmbeddedJGroupsChannelConfigurator.combine(baseStack, stack));

@@ -1,5 +1,7 @@
 package org.infinispan.security.impl;
 
+import static org.infinispan.util.logging.Log.SECURITY;
+
 import java.security.AccessControlException;
 import java.security.Principal;
 import java.security.acl.Group;
@@ -91,7 +93,7 @@ public class AuthorizationHelper {
                }
             } catch (SecurityException e) {
                audit.audit(subject, context, name, perm, AuditResponse.DENY);
-               throw log.unauthorizedAccess(Util.prettyPrintSubject(subject), perm.toString());
+               throw SECURITY.unauthorizedAccess(Util.prettyPrintSubject(subject), perm.toString());
             }
          }
       }

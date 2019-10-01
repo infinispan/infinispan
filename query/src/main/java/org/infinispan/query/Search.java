@@ -1,5 +1,7 @@
 package org.infinispan.query;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -16,10 +18,8 @@ import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.impl.SearchManagerImpl;
-import org.infinispan.query.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is the entry point for the Infinispan query API. It's allows you the locate the {@link SearchManager} for a
@@ -31,8 +31,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  */
 public final class Search {
-
-   private static final Log log = LogFactory.getLog(Search.class, Log.class);
 
    private Search() {
       // prevent instantiation
@@ -71,7 +69,7 @@ public final class Search {
       ensureAccessPermissions(advancedCache);
       EmbeddedQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(EmbeddedQueryEngine.class);
       if (queryEngine == null) {
-         throw log.queryModuleNotInitialised();
+         throw CONTAINER.queryModuleNotInitialised();
       }
       return new EmbeddedQueryFactory(queryEngine);
    }

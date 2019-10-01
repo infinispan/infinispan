@@ -2,6 +2,7 @@ package org.infinispan.configuration.serializing;
 
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
 import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,8 +75,6 @@ import org.infinispan.security.Role;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 
@@ -86,7 +85,6 @@ import org.jgroups.conf.ProtocolStackConfigurator;
  * @since 9.0
  */
 public class Serializer extends AbstractStoreSerializer implements ConfigurationSerializer<ConfigurationHolder> {
-   private static final Log log = LogFactory.getLog(Serializer.class);
    private static final Map<String, Element> THREAD_POOL_FACTORIES;
 
    static {
@@ -264,7 +262,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             ConfigurationSerializer<Object> serializer = Util.getInstanceStrict(serializedWith.value());
             serializer.serialize(writer, entry.getValue());
          } catch (InstantiationException | IllegalAccessException e) {
-            throw log.unableToInstantiateSerializer(serializedWith.value());
+            throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
          }
       }
 
@@ -676,7 +674,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
                serializer = Util.getInstanceStrict(serializedWith.value());
                serializer.serialize(writer, configuration);
             } catch (Exception e) {
-               throw log.unableToInstantiateSerializer(serializedWith.value());
+               throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
             }
          }
       }

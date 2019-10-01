@@ -1,5 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.persistence.remote.logging.Log.CONFIG;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -328,7 +330,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                if (reader.getSchema().since(10, 0)) {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                } else {
-                  log.ignoreXmlAttribute(attribute.getLocalName());
+                  CONFIG.ignoreXmlAttribute(attribute.getLocalName());
                }
                break;
             }
@@ -354,7 +356,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                builder.port(Integer.parseInt(value));
                break;
             case OUTBOUND_SOCKET_BINDING:
-               log.ignoreXmlAttribute(attribute);
+               CONFIG.ignoreXmlAttribute(attribute);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -399,7 +401,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                if (!reader.getSchema().since(9, 1)) {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                } else {
-                  log.ignoreXmlAttribute(attribute);
+                  CONFIG.ignoreXmlAttribute(attribute);
                }
                break;
             }

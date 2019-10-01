@@ -1,7 +1,9 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.remoting.transport.jgroups.JGroupsAddressCache.fromJGroupsAddress;
-import static org.infinispan.util.logging.LogFactory.CLUSTER;
+import static org.infinispan.util.logging.Log.CLUSTER;
+import static org.infinispan.util.logging.Log.CONTAINER;
+import static org.infinispan.util.logging.Log.XSITE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -400,8 +402,7 @@ public class JGroupsTransport implements Transport {
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
 
-      if (log.isInfoEnabled())
-         log.startingJGroupsChannel(configuration.transport().clusterName());
+      CLUSTER.startingJGroupsChannel(configuration.transport().clusterName());
 
       initChannel();
 
@@ -507,8 +508,7 @@ public class JGroupsTransport implements Transport {
          // the channel was already started externally, we need to initialize our member list
          receiveClusterView(channel.getView());
       }
-      if (log.isInfoEnabled())
-         log.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
+      CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
    }
 
    private void waitForInitialNodes() {
@@ -527,14 +527,14 @@ public class JGroupsTransport implements Transport {
             remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
          }
       } catch (InterruptedException e) {
-         log.interruptedWaitingForCoordinator(e);
+         CLUSTER.interruptedWaitingForCoordinator(e);
          Thread.currentThread().interrupt();
       } finally {
          viewUpdateLock.unlock();
       }
 
       if (remainingNanos <= 0) {
-         throw log.timeoutWaitingForInitialNodes(initialClusterSize, channel.getView().getMembers());
+         throw CLUSTER.timeoutWaitingForInitialNodes(initialClusterSize, channel.getView().getMembers());
       }
 
       log.debugf("Initial cluster size of %d nodes reached", initialClusterSize);
@@ -559,10 +559,10 @@ public class JGroupsTransport implements Transport {
                disconnectChannel = lookup.shouldDisconnect();
                closeChannel = lookup.shouldClose();
             } catch (ClassCastException e) {
-               log.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
+               CLUSTER.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
                throw new CacheException(e);
             } catch (Exception e) {
-               log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
+               CLUSTER.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
                throw new CacheException(e);
             }
          }
@@ -572,7 +572,7 @@ public class JGroupsTransport implements Transport {
             try {
                channel = configurator.createChannel();
             } catch (Exception e) {
-               throw log.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
+               throw CLUSTER.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
             }
          }
 
@@ -585,15 +585,15 @@ public class JGroupsTransport implements Transport {
                //ignore, we check confs later for various states
             }
             if (confs.isEmpty()) {
-               throw log.jgroupsConfigurationNotFound(cfg);
+               throw CLUSTER.jgroupsConfigurationNotFound(cfg);
             } else if (confs.size() > 1) {
-               log.ambiguousConfigurationFiles(Util.toStr(confs));
+               CLUSTER.ambiguousConfigurationFiles(Util.toStr(confs));
             }
             try {
                URL url = confs.iterator().next();
                channel = new JChannel(url.openStream());
             } catch (Exception e) {
-               throw log.errorCreatingChannelFromConfigFile(cfg, e);
+               throw CLUSTER.errorCreatingChannelFromConfigFile(cfg, e);
             }
          }
 
@@ -602,7 +602,7 @@ public class JGroupsTransport implements Transport {
             try {
                channel = new JChannel(new ByteArrayInputStream(cfg.getBytes()));
             } catch (Exception e) {
-               throw log.errorCreatingChannelFromXML(cfg, e);
+               throw CLUSTER.errorCreatingChannelFromXML(cfg, e);
             }
          }
 
@@ -611,18 +611,18 @@ public class JGroupsTransport implements Transport {
             try {
                channel = new JChannel(new ByteArrayInputStream(cfg.getBytes()));
             } catch (Exception e) {
-               throw log.errorCreatingChannelFromConfigString(cfg, e);
+               throw CLUSTER.errorCreatingChannelFromConfigString(cfg, e);
             }
          }
       }
 
       if (channel == null) {
-         log.unableToUseJGroupsPropertiesProvided(props);
+         CLUSTER.unableToUseJGroupsPropertiesProvided(props);
          try {
             URL url = fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader());
             channel = new JChannel(url.openStream());
          } catch (Exception e) {
-            throw log.errorCreatingChannelFromConfigFile(DEFAULT_JGROUPS_CONFIGURATION_FILE, e);
+            throw CLUSTER.errorCreatingChannelFromConfigFile(DEFAULT_JGROUPS_CONFIGURATION_FILE, e);
          }
       }
    }
@@ -731,7 +731,7 @@ public class JGroupsTransport implements Transport {
       String clusterName = configuration.transport().clusterName();
       try {
          if (disconnectChannel && channel != null && channel.isConnected()) {
-            log.disconnectJGroups(clusterName);
+            CLUSTER.disconnectJGroups(clusterName);
 
             // Unregistering before disconnecting/closing because
             // after that the cluster name is null
@@ -745,11 +745,11 @@ public class JGroupsTransport implements Transport {
             channel.close();
          }
       } catch (Exception toLog) {
-         log.problemClosingChannel(toLog, clusterName);
+         CLUSTER.problemClosingChannel(toLog, clusterName);
       }
 
       if (requests != null) {
-         requests.forEach(request -> request.cancel(log.cacheManagerIsStopping()));
+         requests.forEach(request -> request.cancel(CONTAINER.cacheManagerIsStopping()));
       }
 
       // Don't keep a reference to the channel, but keep the address and physical address
@@ -1003,7 +1003,7 @@ public class JGroupsTransport implements Transport {
       try {
          requests.addRequest(request);
          if (!running) {
-            request.cancel(log.cacheManagerIsStopping());
+            request.cancel(CONTAINER.cacheManagerIsStopping());
          }
       } catch (Throwable t) {
          // Removes the request and the scheduled task, if necessary
@@ -1062,7 +1062,7 @@ public class JGroupsTransport implements Transport {
          if (running) {
             throw new CacheException(e);
          } else {
-            throw log.cacheManagerIsStopping();
+            throw CONTAINER.cacheManagerIsStopping();
          }
       }
    }
@@ -1203,7 +1203,7 @@ public class JGroupsTransport implements Transport {
          reachableSites.addAll(sitesUp);
          reachableSites.removeAll(sitesDown);
          log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
-         log.receivedXSiteClusterView(reachableSites);
+         XSITE.receivedXSiteClusterView(reachableSites);
          sitesView = Collections.unmodifiableSet(reachableSites);
       } finally {
          viewUpdateLock.unlock();
@@ -1296,7 +1296,7 @@ public class JGroupsTransport implements Transport {
             processResponse(src, buffer, offset, length, requestId);
             break;
          default:
-            log.invalidMessageType(type, src);
+            CLUSTER.invalidMessageType(type, src);
       }
    }
 
@@ -1318,7 +1318,7 @@ public class JGroupsTransport implements Transport {
             bytes = marshaller.objectToBuffer(new ExceptionResponse(e));
          } catch (Throwable tt) {
             if (channel.isConnected()) {
-               log.errorSendingResponse(requestId, target, command);
+               CLUSTER.errorSendingResponse(requestId, target, command);
             }
             return;
          }
@@ -1334,7 +1334,7 @@ public class JGroupsTransport implements Transport {
          channel.send(message);
       } catch (Throwable t) {
          if (channel.isConnected()) {
-            log.errorSendingResponse(requestId, target, command);
+            CLUSTER.errorSendingResponse(requestId, target, command);
          }
       }
    }
@@ -1369,7 +1369,7 @@ public class JGroupsTransport implements Transport {
             invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
          }
       } catch (Throwable t) {
-         log.errorProcessingRequest(requestId, src);
+         CLUSTER.errorProcessingRequest(requestId, src);
          Exception e = t instanceof Exception ? ((Exception) t) : new CacheException(t);
          sendResponse(src, new ExceptionResponse(e), requestId, null);
       }
@@ -1392,7 +1392,7 @@ public class JGroupsTransport implements Transport {
          Address address = fromJGroupsAddress(src);
          requests.addResponse(requestId, address, response);
       } catch (Throwable t) {
-         log.errorProcessingResponse(requestId, src);
+         CLUSTER.errorProcessingResponse(requestId, src);
       }
    }
 

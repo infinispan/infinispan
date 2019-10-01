@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -25,7 +27,7 @@ public class ClusteringDependentLogicFactory extends AbstractNamedCacheComponent
       } else if (cacheMode.isScattered()) {
          cdl = new ClusteringDependentLogic.ScatteredLogic();
       } else {
-         throw log.factoryCannotConstructComponent(componentName);
+         throw CONTAINER.factoryCannotConstructComponent(componentName);
       }
       MemoryConfiguration memoryConfiguration = configuration.memory();
       PersistenceConfiguration persistenceConfiguration = configuration.persistence();

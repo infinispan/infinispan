@@ -1,5 +1,7 @@
 package org.infinispan.conflict;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +52,7 @@ public class EntryMergePolicyFactoryRegistry {
 
    public void addMergePolicyFactory(EntryMergePolicyFactory factory) {
       if(factory == null)
-         throw log.unableToAddNullEntryMergePolicyFactory();
+         throw CONTAINER.unableToAddNullEntryMergePolicyFactory();
 
       factories.add(0, factory);
    }

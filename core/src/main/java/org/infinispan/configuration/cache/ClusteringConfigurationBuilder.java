@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_LI
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.INVALIDATION_BATCH_SIZE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,8 +19,6 @@ import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Defines clustered characteristics of the cache.
@@ -29,8 +28,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBuilder implements
       ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(ClusteringConfigurationBuilder.class, Log.class);
-
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
@@ -154,19 +151,19 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       }
       if (cacheMode().isScattered()) {
          if (hash().numOwners() != 1 && hash().isNumOwnersSet()) {
-            throw log.scatteredCacheNeedsSingleOwner();
+            throw CONFIG.scatteredCacheNeedsSingleOwner();
          }
          hash().numOwners(1);
          org.infinispan.transaction.TransactionMode transactionMode = transaction().transactionMode();
          if (transactionMode != null && transactionMode.isTransactional()) {
-            throw log.scatteredCacheIsNonTransactional();
+            throw CONFIG.scatteredCacheIsNonTransactional();
          }
       }
       if (!cacheMode().isScattered() && attributes.attribute(INVALIDATION_BATCH_SIZE).isModified()) {
-         throw log.invalidationBatchSizeAppliesOnNonScattered();
+         throw CONFIG.invalidationBatchSizeAppliesOnNonScattered();
       }
       if (!cacheMode().isScattered() && (attributes.attribute(BIAS_ACQUISITION).isModified() || attributes.attribute(BIAS_LIFESPAN).isModified())) {
-         throw log.biasedReadsAppliesOnlyToScattered();
+         throw CONFIG.biasedReadsAppliesOnlyToScattered();
       } else if (attributes.attribute(BIAS_ACQUISITION).get() == BiasAcquisition.ON_READ) {
          throw new UnsupportedOperationException("Not implemented yet");
       }
@@ -175,7 +172,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       if (cacheMode().isClustered() && globalConfig.transport().transport() == null && !builder.template()) {
-         throw log.missingTransportConfiguration();
+         throw CONFIG.missingTransportConfiguration();
       }
 
       for (ConfigurationChildBuilder validatable : Arrays

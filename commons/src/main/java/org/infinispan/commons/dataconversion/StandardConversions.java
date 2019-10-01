@@ -6,6 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -17,8 +18,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -29,8 +28,6 @@ import org.infinispan.protostream.SerializationContext;
  * @since 9.2
  */
 public final class StandardConversions {
-
-   private static final Log log = LogFactory.getLog(StandardConversions.class);
 
    /**
     * Convert text content to a different encoding.
@@ -43,7 +40,7 @@ public final class StandardConversions {
    public static Object convertTextToText(Object source, MediaType sourceType, MediaType destinationType) {
       if (source == null) return null;
       if (sourceType == null) throw new NullPointerException("MediaType cannot be null!");
-      if (!sourceType.match(MediaType.TEXT_PLAIN)) throw log.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
+      if (!sourceType.match(MediaType.TEXT_PLAIN)) throw CONTAINER.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
 
       boolean asString = destinationType.hasStringType();
 
@@ -93,7 +90,7 @@ public final class StandardConversions {
          byte[] bytesSource = (byte[]) source;
          return new String(bytesSource, sourceType.getCharset());
       }
-      throw log.invalidTextContent(source);
+      throw CONTAINER.invalidTextContent(source);
    }
 
    /**
@@ -130,7 +127,7 @@ public final class StandardConversions {
    public static Object convertOctetStreamToJava(byte[] source, MediaType destination, Marshaller marshaller) {
       if (source == null) return null;
       if (!destination.match(MediaType.APPLICATION_OBJECT)) {
-         throw log.invalidMediaType(APPLICATION_OBJECT_TYPE, destination.toString());
+         throw CONTAINER.invalidMediaType(APPLICATION_OBJECT_TYPE, destination.toString());
       }
       String classType = destination.getClassType();
       if (classType == null) return source;
@@ -144,7 +141,7 @@ public final class StandardConversions {
       try {
          return marshaller.objectFromByteBuffer(source);
       } catch (IOException | ClassNotFoundException e) {
-         throw log.conversionNotSupported(source, MediaType.APPLICATION_OCTET_STREAM_TYPE, destination.toString());
+         throw CONTAINER.conversionNotSupported(source, MediaType.APPLICATION_OCTET_STREAM_TYPE, destination.toString());
       }
    }
 
@@ -393,7 +390,7 @@ public final class StandardConversions {
          }
          return URLEncoder.encode(asString, mediaType.getCharset().toString());
       } catch (UnsupportedEncodingException e) {
-         throw log.errorEncoding(content, APPLICATION_WWW_FORM_URLENCODED);
+         throw CONTAINER.errorEncoding(content, APPLICATION_WWW_FORM_URLENCODED);
       }
    }
 
@@ -406,7 +403,7 @@ public final class StandardConversions {
          }
          return URLDecoder.decode(content.toString(), UTF_8.toString());
       } catch (UnsupportedEncodingException e) {
-         throw log.cannotDecodeFormURLContent(content);
+         throw CONTAINER.cannotDecodeFormURLContent(content);
       }
    }
 

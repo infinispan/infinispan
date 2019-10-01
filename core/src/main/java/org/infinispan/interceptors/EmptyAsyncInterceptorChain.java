@@ -1,13 +1,13 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Dan Berindei
@@ -16,8 +16,6 @@ import org.infinispan.util.logging.LogFactory;
 public class EmptyAsyncInterceptorChain implements AsyncInterceptorChain {
    public static final EmptyAsyncInterceptorChain INSTANCE = new EmptyAsyncInterceptorChain();
 
-   private static final Log log = LogFactory.getLog(EmptyAsyncInterceptorChain.class);
-
    @Override
    public List<AsyncInterceptor> getInterceptors() {
       return Collections.emptyList();
@@ -25,12 +23,12 @@ public class EmptyAsyncInterceptorChain implements AsyncInterceptorChain {
 
    @Override
    public void addInterceptor(AsyncInterceptor interceptor, int position) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public void removeInterceptor(int position) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
@@ -40,40 +38,40 @@ public class EmptyAsyncInterceptorChain implements AsyncInterceptorChain {
 
    @Override
    public void removeInterceptor(Class<? extends AsyncInterceptor> clazz) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public boolean addInterceptorAfter(AsyncInterceptor toAdd,
          Class<? extends AsyncInterceptor> afterInterceptor) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public boolean addInterceptorBefore(AsyncInterceptor toAdd,
          Class<? extends AsyncInterceptor> beforeInterceptor) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public boolean replaceInterceptor(AsyncInterceptor replacingInterceptor,
          Class<? extends AsyncInterceptor> toBeReplacedInterceptorType) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public void appendInterceptor(AsyncInterceptor ci, boolean isCustom) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
-      throw log.interceptorStackNotSupported();
+      throw CONTAINER.interceptorStackNotSupported();
    }
 
    @Override

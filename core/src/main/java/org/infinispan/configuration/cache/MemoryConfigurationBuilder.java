@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -7,11 +9,9 @@ import java.util.List;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.util.logging.Log;
 
 /**
  * Controls the data container for the cache.
@@ -19,9 +19,6 @@ import org.infinispan.util.logging.Log;
  * @author William Burns
  */
 public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryConfiguration>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(MemoryConfigurationBuilder.class, Log.class);
-
    private MemoryStorageConfigurationBuilder memoryStorageConfigurationBuilder;
    private final List<ConfigurationBuilderInfo> elements;
 
@@ -165,7 +162,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       StorageType type = memoryStorageConfigurationBuilder.storageType();
       if (type != StorageType.OBJECT) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
-            throw log.groupingOnlyCompatibleWithObjectStorage(type);
+            throw CONFIG.groupingOnlyCompatibleWithObjectStorage(type);
          }
       }
 
@@ -174,7 +171,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (evictionType == EvictionType.MEMORY) {
          switch (type) {
             case OBJECT:
-               throw log.offHeapMemoryEvictionNotSupportedWithObject();
+               throw CONFIG.offHeapMemoryEvictionNotSupportedWithObject();
          }
       }
 
@@ -183,14 +180,14 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
          if (size > 0) {
             EvictionStrategy newStrategy = EvictionStrategy.REMOVE;
             evictionStrategy(newStrategy);
-            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, newStrategy);
+            CONFIG.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, newStrategy);
          } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL &&
                !getBuilder().template()) {
-            log.passivationWithoutEviction();
+            CONFIG.passivationWithoutEviction();
          }
       } else {
          if (size <= 0) {
-            throw log.invalidEvictionSize();
+            throw CONFIG.invalidEvictionSize();
          }
          if (strategy.isExceptionBased()) {
             TransactionConfigurationBuilder transactionConfiguration = getBuilder().transaction();
@@ -198,7 +195,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
             if (transactionMode == null || !transactionMode.isTransactional() ||
                   transactionConfiguration.useSynchronization() ||
                   transactionConfiguration.use1PcForAutoCommitTransactions()) {
-               throw log.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
+               throw CONFIG.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
             }
          }
       }

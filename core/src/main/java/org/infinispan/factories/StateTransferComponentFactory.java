@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.impl.DefaultConflictManager;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -53,6 +55,6 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
          return new DefaultConflictManager<>();
       }
 
-      throw log.factoryCannotConstructComponent(componentName);
+      throw CONTAINER.factoryCannotConstructComponent(componentName);
    }
 }

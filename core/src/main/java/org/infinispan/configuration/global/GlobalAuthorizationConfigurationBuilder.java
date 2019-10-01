@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.AUDIT_LOGGER;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ROLES;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.security.Principal;
 import java.util.HashMap;
@@ -17,8 +18,6 @@ import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.impl.LoggingAuditLogger;
 import org.infinispan.security.impl.NullAuditLogger;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * GlobalAuthorizationConfigurationBuilder.
@@ -27,7 +26,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalAuthorizationConfiguration> {
-   public static final Log log = LogFactory.getLog(GlobalAuthorizationConfigurationBuilder.class);
    private final AttributeSet attributes;
    private final PrincipalRoleMapperConfigurationBuilder roleMapper;
    private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<>();
@@ -83,7 +81,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    public void validate() {
       roleMapper.validate();
       if (attributes.attribute(ENABLED).get() && roleMapper.mapper() == null) {
-         throw log.invalidPrincipalRoleMapper();
+         throw CONFIG.invalidPrincipalRoleMapper();
       }
    }
 

@@ -1,10 +1,9 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
-import org.infinispan.query.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Transaction related helper. Wraps a (possibly {@code null}) {@link TransactionManager} and performs transaction
@@ -14,8 +13,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public final class TransactionHelper {
-
-   private static final Log log = LogFactory.getLog(TransactionHelper.class, Log.class);
 
    private final TransactionManager transactionManager;
 
@@ -28,7 +25,7 @@ public final class TransactionHelper {
          try {
             transactionManager.resume(transaction);
          } catch (Exception e) {
-            throw log.unableToResumeSuspendedTx(transaction, e);
+            throw CONTAINER.unableToResumeSuspendedTx(transaction, e);
          }
       }
    }
@@ -40,7 +37,7 @@ public final class TransactionHelper {
       try {
          return transactionManager.suspend();
       } catch (Exception e) {
-         throw log.unableToSuspendTx(e);
+         throw CONTAINER.unableToSuspendTx(e);
       }
    }
 }

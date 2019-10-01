@@ -1,5 +1,7 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -145,7 +147,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
-            throw log.degradedModeKeyUnavailable(dataCommand.getKey());
+            throw CONTAINER.degradedModeKeyUnavailable(dataCommand.getKey());
          } else if (t instanceof AllOwnersLostException) {
             // Scattered cache throws AllOwnersLostException even if there's no need to fail with AvailabilityException\
             // Dist caches should never throw AllOwnersLostException
@@ -204,7 +206,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
-            throw log.degradedModeKeysUnavailable(getAllCommand.getKeys());
+            throw CONTAINER.degradedModeKeysUnavailable(getAllCommand.getKeys());
          }
       }
 
@@ -226,7 +228,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
          if (result.size() != getAllCommand.getKeys().size()) {
             Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());
             missingKeys.removeAll(result.keySet());
-            throw log.degradedModeKeysUnavailable(missingKeys);
+            throw CONTAINER.degradedModeKeysUnavailable(missingKeys);
          }
       }
    }

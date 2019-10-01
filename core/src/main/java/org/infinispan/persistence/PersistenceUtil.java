@@ -1,5 +1,7 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -209,7 +211,7 @@ public class PersistenceUtil {
             if (path.startsWith(persistentLocation)) {
                return Paths.get(location, sanitizedCacheName(cacheName), qualifier);
             } else {
-               throw log.forbiddenStoreLocation(path, persistentLocation);
+               throw PERSISTENCE.forbiddenStoreLocation(path, persistentLocation);
             }
          } else {
             return persistentLocation.resolve(path.resolve(Paths.get(sanitizedCacheName(cacheName), qualifier)));

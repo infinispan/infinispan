@@ -1,5 +1,7 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -105,7 +107,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          synchronized (globalJmxRegistration) {
             if (globalJmxRegistration.jmxDomain == null) {
                if (!tmpJmxDomain.equals(globalConfig.globalJmxStatistics().domain()) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
-                  throw log.jmxMBeanAlreadyRegistered(tmpJmxDomain, globalConfig.globalJmxStatistics().domain());
+                  throw CONTAINER.jmxMBeanAlreadyRegistered(tmpJmxDomain, globalConfig.globalJmxStatistics().domain());
                }
                // Set manager component's jmx domain so that other caches under same manager
                // can see it, particularly important when jmx is only enabled at the cache level

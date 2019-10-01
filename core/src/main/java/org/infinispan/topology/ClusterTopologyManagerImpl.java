@@ -4,7 +4,7 @@ package org.infinispan.topology;
 import static java.lang.String.format;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
-import static org.infinispan.util.logging.LogFactory.CLUSTER;
+import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.Collections;
@@ -583,7 +583,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          while ((viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) &&
                clusterManagerStatus.isRunning()) {
             if (nanosTimeout <= 0) {
-               throw log.coordinatorTimeoutWaitingForView(joinerViewId, transport.getViewId(), clusterManagerStatus);
+               throw CLUSTER.coordinatorTimeoutWaitingForView(joinerViewId, transport.getViewId(), clusterManagerStatus);
             }
             nanosTimeout = clusterStateChanged.awaitNanos(nanosTimeout);
          }

@@ -11,6 +11,7 @@ import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -415,7 +416,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             AsyncInterceptorChain chain = cache.wired().getAsyncInterceptorChain();
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
-               log.persistenceWithoutCacheLoaderInterceptor();
+               PERSISTENCE.persistenceWithoutCacheLoaderInterceptor();
             } else {
                chain.removeInterceptor(loaderInterceptor.getClass());
             }
@@ -423,7 +424,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             if (writerInterceptor == null) {
                writerInterceptor = chain.findInterceptorWithClass(TransactionalStoreInterceptor.class);
                if (writerInterceptor == null) {
-                  log.persistenceWithoutCacheWriteInterceptor();
+                  PERSISTENCE.persistenceWithoutCacheWriteInterceptor();
                } else {
                   chain.removeInterceptor(writerInterceptor.getClass());
                }
@@ -535,7 +536,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
          }
       } catch (Exception e) {
-         log.exceptionPurgingDataContainer(e);
+         PERSISTENCE.exceptionPurgingDataContainer(e);
       }
    }
 
@@ -1354,7 +1355,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   }
                }
             } else {
-               throw log.storeStartupAttemptsExceeded(storeName, e);
+               throw PERSISTENCE.storeStartupAttemptsExceeded(storeName, e);
             }
          }
       }

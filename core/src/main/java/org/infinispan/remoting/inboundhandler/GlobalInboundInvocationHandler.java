@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -76,7 +77,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
             handleReplicableCommand(origin, command, reply, order);
          }
       } catch (Throwable t) {
-         log.exceptionHandlingCommand(command, t);
+         CLUSTER.exceptionHandlingCommand(command, t);
          reply.reply(exceptionHandlingCommand(t));
       }
    }
@@ -132,10 +133,10 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          Object returnValue = command.performInLocalSite(receiver);
          reply.reply(SuccessfulResponse.create(returnValue));
       } catch (InterruptedException e) {
-         log.shutdownHandlingCommand(command);
+         CLUSTER.shutdownHandlingCommand(command);
          reply.reply(shuttingDownResponse());
       } catch (Throwable throwable) {
-         log.exceptionHandlingCommand(command, throwable);
+         CLUSTER.exceptionHandlingCommand(command, throwable);
          reply.reply(exceptionHandlingCommand(throwable));
       }
    }
@@ -159,10 +160,10 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
             throwable = throwable.getCause();
          }
          if (throwable instanceof InterruptedException || throwable instanceof IllegalLifecycleStateException) {
-            log.shutdownHandlingCommand(command);
+            CLUSTER.shutdownHandlingCommand(command);
             reply.reply(shuttingDownResponse());
          } else {
-            log.exceptionHandlingCommand(command, throwable);
+            CLUSTER.exceptionHandlingCommand(command, throwable);
             reply.reply(exceptionHandlingCommand(throwable));
          }
       }

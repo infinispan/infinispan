@@ -1,5 +1,7 @@
 package org.infinispan.counter.util;
 
+import static org.infinispan.commons.logging.Log.CONTAINER;
+
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
@@ -7,8 +9,6 @@ import java.util.function.LongConsumer;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Storage;
@@ -20,8 +20,6 @@ import org.infinispan.counter.api.Storage;
  * @since 9.2
  */
 public final class EncodeUtil {
-
-   private static final Log log = LogFactory.getLog(EncodeUtil.class, Log.class);
 
    /*
    00000000
@@ -61,7 +59,7 @@ public final class EncodeUtil {
          case UNBOUNDED_COUNTER:
             return CounterType.UNBOUNDED_STRONG;
          default:
-            throw log.invalidCounterTypeEncoded();
+            throw CONTAINER.invalidCounterTypeEncoded();
       }
    }
 

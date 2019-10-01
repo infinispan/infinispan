@@ -1,6 +1,7 @@
 package org.infinispan.conflict.impl;
 
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
+import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -202,11 +203,11 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private Stream<Map<Address, CacheEntry<K, V>>> getConflicts(LocalizedCacheTopology topology) {
       if (trace) log.tracef("getConflicts isStateTransferInProgress=%s, topology=%s", stateConsumer.running().isStateTransferInProgress(), topology);
       if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.running().isStateTransferInProgress()) {
-         throw log.getConflictsStateTransferInProgress(cacheName);
+         throw CLUSTER.getConflictsStateTransferInProgress(cacheName);
       }
 
       if (!streamInProgress.compareAndSet(false, true))
-         throw log.getConflictsAlreadyInProgress();
+         throw CLUSTER.getConflictsAlreadyInProgress();
 
       conflictSpliterator = new ReplicaSpliterator(topology);
       if (!running) {

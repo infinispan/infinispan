@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -40,7 +42,7 @@ public class BuiltinJGroupsChannelConfigurator extends FileJGroupsChannelConfigu
       try (InputStream xml = FileLookupFactory.newInstance().lookupFileStrict(path, BuiltinJGroupsChannelConfigurator.class.getClassLoader())) {
          return new BuiltinJGroupsChannelConfigurator(name, path, xml, properties);
       } catch (IOException e) {
-         throw JGroupsTransport.log.jgroupsConfigurationNotFound(path);
+         throw CONFIG.jgroupsConfigurationNotFound(path);
       }
    }
 

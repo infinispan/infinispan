@@ -1,6 +1,7 @@
 package org.infinispan.counter.impl.manager;
 
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
+import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.Map;
@@ -106,7 +107,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (tClass.isAssignableFrom(rClass)) {
          return tClass.cast(retVal);
       }
-      throw log.invalidCounterType(tClass.getSimpleName(), rClass.getSimpleName());
+      throw CONTAINER.invalidCounterType(tClass.getSimpleName(), rClass.getSimpleName());
    }
 
    @ManagedOperation(
@@ -198,7 +199,7 @@ public class EmbeddedCounterManager implements CounterManager {
    public long getValue(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw log.undefinedCounter(counterName);
+         throw CONTAINER.undefinedCounter(counterName);
       }
       if (configuration.type() == CounterType.WEAK) {
          return getWeakCounter(counterName).getValue();
@@ -215,7 +216,7 @@ public class EmbeddedCounterManager implements CounterManager {
    public void reset(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw log.undefinedCounter(counterName);
+         throw CONTAINER.undefinedCounter(counterName);
       }
       if (configuration.type() == CounterType.WEAK) {
          awaitCounterOperation(getWeakCounter(counterName).reset());
@@ -232,7 +233,7 @@ public class EmbeddedCounterManager implements CounterManager {
    public Properties getCounterConfiguration(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw log.undefinedCounter(counterName);
+         throw CONTAINER.undefinedCounter(counterName);
       }
       return PropertyFormatter.getInstance().format(configuration);
    }
@@ -295,14 +296,14 @@ public class EmbeddedCounterManager implements CounterManager {
 
    private void checkStarted() {
       if (!started) {
-         throw log.managerNotStarted();
+         throw CONTAINER.managerNotStarted();
       }
    }
 
    private Object createCounter(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw log.undefinedCounter(counterName);
+         throw CONTAINER.undefinedCounter(counterName);
       }
 
       //puts the listeners in there (topology and for counter's event)

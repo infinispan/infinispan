@@ -1,8 +1,8 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
+import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.lang.invoke.MethodHandles;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
@@ -10,8 +10,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * GlobalStateConfigurationBuilder. Configures filesystem paths where global state is stored.
@@ -20,8 +18,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.1
  */
 public class GlobalStateConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalStateConfiguration> {
-
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AttributeSet attributes;
 
    private GlobalStatePathConfigurationBuilder persistentLocation;
@@ -125,7 +121,7 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    @Override
    public void validate() {
       if (attributes.attribute(ENABLED).get() && persistentLocation.getLocation() == null) {
-         log.missingGlobalStatePersistentLocation();
+         CONFIG.missingGlobalStatePersistentLocation();
       }
       storageConfiguration.validate();
    }

@@ -14,6 +14,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
+import static org.infinispan.persistence.remote.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,8 +30,6 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * RemoteStoreConfigurationBuilder. Configures a
@@ -41,7 +40,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RemoteStoreConfiguration, RemoteStoreConfigurationBuilder> implements
       RemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(RemoteStoreConfigurationBuilder.class, Log.class);
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private final SecurityConfigurationBuilder security;
@@ -238,13 +236,13 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       }
 
       if (attributes.attribute(HOTROD_WRAPPING).get() && attributes.attribute(MARSHALLER).get() != null) {
-         throw log.cannotEnableHotRodWrapping();
+         throw CONFIG.cannotEnableHotRodWrapping();
       }
 
       ProtocolVersion version = attributes.attribute(PROTOCOL_VERSION).get();
       ProtocolVersion minimumVersion = ProtocolVersion.PROTOCOL_VERSION_23;
       if (attributes.attribute(SEGMENTED).get() && version.compareTo(minimumVersion) < 0) {
-         throw log.segmentationNotSupportedInThisVersion(minimumVersion);
+         throw CONFIG.segmentationNotSupportedInThisVersion(minimumVersion);
       }
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,8 +19,6 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Default implementation of {@link ConsistentHashFactory}.
@@ -31,8 +31,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<DefaultConsistentHash> {
-
-   private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
 
    @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
@@ -55,7 +53,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    public DefaultConsistentHash fromPersistentState(ScopedPersistentState state) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
-         throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
+         throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
       return new DefaultConsistentHash(state);
    }
 

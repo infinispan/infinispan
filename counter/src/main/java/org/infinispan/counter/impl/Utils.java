@@ -1,10 +1,10 @@
 package org.infinispan.counter.impl;
 
-import org.infinispan.commons.logging.LogFactory;
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.exception.CounterConfigurationException;
-import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.Param;
 
 /**
@@ -14,10 +14,6 @@ import org.infinispan.functional.Param;
  * @since 9.0
  */
 public final class Utils {
-
-   //use utils log?
-   private static final Log log = LogFactory.getLog(Utils.class, Log.class);
-
    private Utils() {
    }
 
@@ -33,9 +29,9 @@ public final class Utils {
     */
    public static void validateStrongCounterBounds(long lowerBound, long initialValue, long upperBound) {
       if (lowerBound > initialValue || initialValue > upperBound) {
-         throw log.invalidInitialValueForBoundedCounter(lowerBound, upperBound, initialValue);
+         throw CONTAINER.invalidInitialValueForBoundedCounter(lowerBound, upperBound, initialValue);
       } else if (lowerBound == upperBound) {
-         throw log.invalidSameLowerAndUpperBound(lowerBound, upperBound);
+         throw CONTAINER.invalidSameLowerAndUpperBound(lowerBound, upperBound);
       }
    }
 

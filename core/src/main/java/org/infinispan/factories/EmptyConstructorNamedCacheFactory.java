@@ -1,6 +1,8 @@
 package org.infinispan.factories;
 
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
@@ -199,6 +201,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return ComponentAlias.of(L1Manager.class);
       }
 
-      throw log.factoryCannotConstructComponent(componentName);
+      throw CONTAINER.factoryCannotConstructComponent(componentName);
    }
 }

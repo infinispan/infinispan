@@ -2,16 +2,13 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.InvocationBatchingConfiguration.ENABLED;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<InvocationBatchingConfiguration> {
-
-   private static final Log log = LogFactory.getLog(InvocationBatchingConfigurationBuilder.class);
 
    private final AttributeSet attributes;
 
@@ -42,9 +39,9 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
    @Override
    public void validate() {
       if (isEnabled()  && getBuilder().transaction().transactionMode() != null && getBuilder().transaction().transactionMode().equals(NON_TRANSACTIONAL))
-         throw log.invocationBatchingNeedsTransactionalCache();
+         throw CONFIG.invocationBatchingNeedsTransactionalCache();
       if (isEnabled() && getBuilder().transaction().recovery().isEnabled() && !getBuilder().transaction().useSynchronization())
-         throw log.invocationBatchingCannotBeRecoverable();
+         throw CONFIG.invocationBatchingCannotBeRecoverable();
    }
 
    @Override

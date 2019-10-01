@@ -37,12 +37,4 @@ public class AnyScopeComponentFactory implements ComponentFactory {
    public <T> T construct(Class<T> componentType) {
       throw new UnsupportedOperationException();
    }
-
-   protected void assertTypeConstructable(Class<?> requestedType, Class<?>... ableToConstruct) {
-      boolean canConstruct = false;
-      for (Class<?> c : ableToConstruct) {
-         canConstruct = canConstruct || requestedType.isAssignableFrom(c);
-      }
-      if (!canConstruct) throw log.factoryCannotConstructComponent(requestedType.getName());
-   }
 }

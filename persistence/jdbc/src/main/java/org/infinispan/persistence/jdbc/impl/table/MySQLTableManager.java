@@ -9,10 +9,10 @@ import org.infinispan.util.logging.LogFactory;
  * @author Ryan Emerson
  */
 class MySQLTableManager extends AbstractTableManager {
-   private static final Log LOG = LogFactory.getLog(MySQLTableManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(MySQLTableManager.class, Log.class);
 
    MySQLTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
-      super(connectionFactory, config, metaData, cacheName, "`", LOG);
+      super(connectionFactory, config, metaData, cacheName, "`", log);
    }
 
    @Override

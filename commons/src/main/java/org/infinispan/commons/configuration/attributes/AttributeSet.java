@@ -1,5 +1,7 @@
 package org.infinispan.commons.configuration.attributes;
 
+import static org.infinispan.commons.logging.Log.CONFIG;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -7,9 +9,6 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of {@link AttributeDefinition}s.
@@ -20,7 +19,6 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 7.2
  */
 public class AttributeSet implements AttributeListener<Object>, Matchable<AttributeSet> {
-   private static final Log log = LogFactory.getLog(AttributeSet.class);
    private final Class<?> klass;
    private final String name;
    private final Map<String, Attribute<?>> attributes;
@@ -55,7 +53,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       }
       for (AttributeDefinition<?> def : attributeDefinitions) {
          if (attributes.containsKey(def.name())) {
-            throw log.attributeSetDuplicateAttribute(def.name(), name);
+            throw CONFIG.attributeSetDuplicateAttribute(def.name(), name);
          }
          Attribute<Object> attribute = (Attribute<Object>) def.toAttribute();
          if (!attribute.isImmutable())
@@ -109,7 +107,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       if (attribute != null)
          return attribute;
       else
-         throw log.noSuchAttribute(def.name(), name);
+         throw CONFIG.noSuchAttribute(def.name(), name);
    }
 
    /**
@@ -315,14 +313,14 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
 
    public AttributeSet checkProtection() {
       if (!protect) {
-         throw log.unprotectedAttributeSet(name);
+         throw CONFIG.unprotectedAttributeSet(name);
       }
       return this;
    }
 
    public void reset() {
       if (protect) {
-         throw log.protectedAttributeSet(name);
+         throw CONFIG.protectedAttributeSet(name);
       }
       for (Attribute<?> attribute : attributes.values()) {
          attribute.reset();

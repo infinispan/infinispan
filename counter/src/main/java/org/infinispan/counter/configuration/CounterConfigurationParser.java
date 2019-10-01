@@ -2,6 +2,7 @@ package org.infinispan.counter.configuration;
 
 import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
+import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -12,7 +13,6 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -23,7 +23,6 @@ import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.Schema;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.logging.Log;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -37,13 +36,11 @@ import org.kohsuke.MetaInfServices;
 @Namespace(uri = "urn:infinispan:config:counters:*", root = "counters", since = "9.0")
 public class CounterConfigurationParser implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(CounterConfigurationParser.class, Log.class);
-
    @Override
    public void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
          throws XMLStreamException {
       if (!holder.inScope(ParserScope.CACHE_CONTAINER)) {
-         throw log.invalidScope(holder.getScope());
+         throw CONTAINER.invalidScope(holder.getScope());
       }
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
 

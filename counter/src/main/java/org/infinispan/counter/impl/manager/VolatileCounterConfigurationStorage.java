@@ -1,13 +1,13 @@
 package org.infinispan.counter.impl.manager;
 
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import java.util.Collections;
 import java.util.Map;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A volatile implementation of {@link CounterConfigurationStorage}.
@@ -18,8 +18,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.2
  */
 public class VolatileCounterConfigurationStorage implements CounterConfigurationStorage {
-
-   private static final Log log = LogFactory.getLog(VolatileCounterConfigurationStorage.class, Log.class);
 
    @Override
    public Map<String, CounterConfiguration> loadAll() {
@@ -39,7 +37,7 @@ public class VolatileCounterConfigurationStorage implements CounterConfiguration
    @Override
    public void validatePersistence(CounterConfiguration configuration) {
       if (configuration.storage() == Storage.PERSISTENT) {
-         throw log.invalidPersistentStorageMode();
+         throw CONTAINER.invalidPersistentStorageMode();
       }
    }
 

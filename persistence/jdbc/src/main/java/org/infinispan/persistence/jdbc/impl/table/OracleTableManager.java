@@ -21,13 +21,13 @@ import org.infinispan.util.logging.LogFactory;
  */
 class OracleTableManager extends AbstractTableManager {
 
-   private static final Log LOG = LogFactory.getLog(OracleTableManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(OracleTableManager.class, Log.class);
 
    private static final int MAX_INDEX_IDENTIFIER_SIZE = 30;
    private static final String INDEX_PREFIX = "IDX";
 
    OracleTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
-      super(connectionFactory, config, metaData, cacheName, LOG);
+      super(connectionFactory, config, metaData, cacheName, log);
    }
 
    @Override
@@ -40,8 +40,8 @@ class OracleTableManager extends AbstractTableManager {
          rs = metaData.getTables(null, schemaPattern, tableName.getName(), new String[]{"TABLE"});
          return rs.next();
       } catch (SQLException e) {
-         if (LOG.isTraceEnabled())
-            LOG.tracef(e, "SQLException occurs while checking the table %s", tableName);
+         if (log.isTraceEnabled())
+            log.tracef(e, "SQLException occurs while checking the table %s", tableName);
          return false;
       } finally {
          JdbcUtil.safeClose(rs);

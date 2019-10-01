@@ -8,6 +8,7 @@ import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
 import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -1258,7 +1259,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean startBatch() {
       if (!batchingEnabled) {
-         throw log.invocationBatchingNotEnabled();
+         throw CONFIG.invocationBatchingNotEnabled();
       }
       return batchContainer.startBatch();
    }
@@ -1266,7 +1267,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public void endBatch(boolean successful) {
       if (!batchingEnabled) {
-         throw log.invocationBatchingNotEnabled();
+         throw CONFIG.invocationBatchingNotEnabled();
       }
       batchContainer.endBatch(successful);
    }

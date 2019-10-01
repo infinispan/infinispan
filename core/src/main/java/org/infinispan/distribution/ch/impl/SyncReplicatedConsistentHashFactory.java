@@ -1,5 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
@@ -13,8 +15,6 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * {@link SyncConsistentHashFactory} adapted for replicated caches, so that the primary owner of a key
@@ -24,7 +24,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.2
  */
 public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
-   private static final Log log = LogFactory.getLog(SyncReplicatedConsistentHashFactory.class);
    public static final float OWNED_SEGMENTS_ALLOWED_VARIATION = 1.10f;
    public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.20f;
 
@@ -41,7 +40,7 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
    public ReplicatedConsistentHash fromPersistentState(ScopedPersistentState state) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!ReplicatedConsistentHash.class.getName().equals(consistentHashClass))
-         throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
+         throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
       return new ReplicatedConsistentHash(state);
    }
 

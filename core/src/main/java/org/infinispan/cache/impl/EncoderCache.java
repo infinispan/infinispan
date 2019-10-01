@@ -1,5 +1,7 @@
 package org.infinispan.cache.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.lang.annotation.Annotation;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -45,8 +47,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.util.WriteableCacheCollectionMapper;
 import org.infinispan.util.WriteableCacheSetMapper;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Cache decoration that makes use of the {@link Encoder} and {@link Wrapper} to convert between storage value and
@@ -56,8 +56,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
-
-   private static Log log = LogFactory.getLog(EncoderCache.class);
 
    @Inject InternalEntryFactory entryFactory;
    @Inject BasicComponentRegistry componentRegistry;
@@ -558,7 +556,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private void checkSubclass(Class<?> configured, Class<?> required) {
       if (!required.isAssignableFrom(configured)) {
-         throw log.invalidEncodingClass(configured, required);
+         throw CONTAINER.invalidEncodingClass(configured, required);
       }
    }
 

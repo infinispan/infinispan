@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.MERGE_POLICY;
 import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.WHEN_SPLIT;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
@@ -11,8 +12,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Controls how the cache handles partitioning and/or multiple node failures.
@@ -21,8 +20,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public class PartitionHandlingConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<PartitionHandlingConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(PartitionHandlingConfigurationBuilder.class);
-
    private final AttributeSet attributes;
 
    public PartitionHandlingConfigurationBuilder(ClusteringConfigurationBuilder builder) {
@@ -60,7 +57,7 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
    @Override
    public void validate() {
       if (attributes.attribute(WHEN_SPLIT).get() != PartitionHandling.ALLOW_READ_WRITES && clustering().cacheMode().isInvalidation())
-         throw log.invalidationPartitionHandlingNotSuported();
+         throw CONFIG.invalidationPartitionHandlingNotSuported();
    }
 
    @Override

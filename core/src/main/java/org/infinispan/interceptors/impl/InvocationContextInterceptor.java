@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -94,10 +95,10 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       switch (status) {
          case FAILED:
          case TERMINATED:
-            throw log.cacheIsTerminated(getCacheNamePrefix(), status.toString());
+            throw CONTAINER.cacheIsTerminated(getCacheNamePrefix(), status.toString());
          case STOPPING:
             if (stoppingAndNotAllowed(status, ctx)) {
-               throw log.cacheIsStopping(getCacheNamePrefix());
+               throw CONTAINER.cacheIsStopping(getCacheNamePrefix());
             }
          default:
             // Allow the command to run

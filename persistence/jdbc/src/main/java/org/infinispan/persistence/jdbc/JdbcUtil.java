@@ -1,12 +1,11 @@
 package org.infinispan.persistence.jdbc;
 
+import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Contains common methods used by JDBC CacheStores.
@@ -14,15 +13,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  */
 public class JdbcUtil {
-
-   private static final Log log = LogFactory.getLog(JdbcUtil.class, Log.class);
-
    public static void safeClose(Statement ps) {
       if (ps != null) {
          try {
             ps.close();
          } catch (SQLException e) {
-            log.sqlFailureUnexpected(e);
+            PERSISTENCE.sqlFailureUnexpected(e);
          }
       }
    }
@@ -32,7 +28,7 @@ public class JdbcUtil {
          try {
             connection.close();
          } catch (SQLException e) {
-            log.sqlFailureClosingConnection(connection, e);
+            PERSISTENCE.sqlFailureClosingConnection(connection, e);
          }
       }
    }
@@ -42,7 +38,7 @@ public class JdbcUtil {
          try {
             rs.close();
          } catch (SQLException e) {
-            log.sqlFailureUnexpected(e);
+            PERSISTENCE.sqlFailureUnexpected(e);
          }
       }
    }

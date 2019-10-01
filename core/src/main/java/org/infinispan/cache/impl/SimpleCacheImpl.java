@@ -1,5 +1,8 @@
 package org.infinispan.cache.impl;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.AbstractSet;
@@ -1030,13 +1033,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean startBatch() {
       // invocation batching implies CacheImpl
-      throw log.invocationBatchingNotEnabled();
+      throw CONFIG.invocationBatchingNotEnabled();
    }
 
    @Override
    public void endBatch(boolean successful) {
       // invocation batching implies CacheImpl
-      throw log.invocationBatchingNotEnabled();
+      throw CONFIG.invocationBatchingNotEnabled();
    }
 
    @Override
@@ -1227,12 +1230,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public boolean lock(K... keys) {
-      throw log.lockOperationsNotSupported();
+      throw CONTAINER.lockOperationsNotSupported();
    }
 
    @Override
    public boolean lock(Collection<? extends K> keys) {
-      throw log.lockOperationsNotSupported();
+      throw CONTAINER.lockOperationsNotSupported();
    }
 
    @Override
@@ -1252,10 +1255,10 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          ComponentStatus status = getStatus();
          switch (status) {
             case STOPPING:
-               throw log.cacheIsStopping(name);
+               throw CONTAINER.cacheIsStopping(name);
             case TERMINATED:
             case FAILED:
-               throw log.cacheIsTerminated(name, status.toString());
+               throw CONTAINER.cacheIsTerminated(name, status.toString());
             default:
                throw new IllegalStateException("Status: " + status);
          }

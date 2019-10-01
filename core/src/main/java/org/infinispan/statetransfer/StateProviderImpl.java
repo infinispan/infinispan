@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -197,7 +198,7 @@ public class StateProviderImpl implements StateProvider {
          try {
             stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
          } catch (TimeoutException e) {
-            throw log.failedWaitingForTopology(requestTopologyId);
+            throw CLUSTER.failedWaitingForTopology(requestTopologyId);
          }
          cacheTopology = distributionManager.getCacheTopology();
       }
