@@ -14,16 +14,16 @@ import org.jboss.logging.Logger.Level;
 @ProtoTypeId(ProtoStreamTypeIds.EVENT_LOG_LEVEL)
 public enum EventLogLevel {
 
-   @ProtoEnumValue(number = 1)
+   @ProtoEnumValue(number = 0)
    INFO(Level.INFO),
 
-   @ProtoEnumValue(number = 2)
+   @ProtoEnumValue(number = 1)
    WARN(Level.WARN),
 
-   @ProtoEnumValue(number = 3)
+   @ProtoEnumValue(number = 2)
    ERROR(Level.ERROR),
 
-   @ProtoEnumValue(number = 4)
+   @ProtoEnumValue(number = 3)
    FATAL(Level.FATAL);
 
    private final Level loggerLevel;

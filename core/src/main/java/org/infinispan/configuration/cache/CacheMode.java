@@ -19,49 +19,49 @@ public enum CacheMode {
    /**
     * Data is not replicated.
     */
-   @ProtoEnumValue(number = 1)
+   @ProtoEnumValue(number = 0)
    LOCAL,
 
    /**
     * Data replicated synchronously.
     */
-   @ProtoEnumValue(number = 2)
+   @ProtoEnumValue(number = 1)
    REPL_SYNC,
 
    /**
     * Data replicated asynchronously.
     */
-   @ProtoEnumValue(number = 3)
+   @ProtoEnumValue(number = 2)
    REPL_ASYNC,
 
    /**
     * Data invalidated synchronously.
     */
-   @ProtoEnumValue(number = 4)
+   @ProtoEnumValue(number = 3)
    INVALIDATION_SYNC,
 
    /**
     * Data invalidated asynchronously.
     */
-   @ProtoEnumValue(number = 5)
+   @ProtoEnumValue(number = 4)
    INVALIDATION_ASYNC,
 
    /**
     * Synchronous DIST
     */
-   @ProtoEnumValue(number = 6)
+   @ProtoEnumValue(number = 5)
    DIST_SYNC,
 
    /**
     * Async DIST
     */
-   @ProtoEnumValue(number = 7)
+   @ProtoEnumValue(number = 6)
    DIST_ASYNC,
 
    /**
     * Synchronous scattered cache
     */
-   @ProtoEnumValue(number = 8)
+   @ProtoEnumValue(number = 7)
    SCATTERED_SYNC;
 
    private static CacheMode[] cachedValues = values();

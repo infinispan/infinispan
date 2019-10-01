@@ -13,10 +13,10 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.EXECUTION_MODE)
 public enum ExecutionMode {
 
-   @ProtoEnumValue(number = 1)
+   @ProtoEnumValue(number = 0)
    LOCAL(LocalRunner.INSTANCE, false),
 
-   @ProtoEnumValue(number = 2)
+   @ProtoEnumValue(number = 1)
    DISTRIBUTED(DistributedRunner.INSTANCE, true);
 
    private final ScriptRunner runner;

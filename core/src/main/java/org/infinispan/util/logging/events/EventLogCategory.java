@@ -13,15 +13,15 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.EVENT_LOG_CATEGORY)
 public enum EventLogCategory {
 
-   @ProtoEnumValue(number = 1)
+   @ProtoEnumValue(number = 0)
    LIFECYCLE,
 
-   @ProtoEnumValue(number = 2)
+   @ProtoEnumValue(number = 1)
    CLUSTER,
 
-   @ProtoEnumValue(number = 3)
+   @ProtoEnumValue(number = 2)
    SECURITY,
 
-   @ProtoEnumValue(number = 4)
+   @ProtoEnumValue(number = 3)
    TASKS
 }
