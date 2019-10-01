@@ -3,11 +3,9 @@ package org.infinispan.test.integration.as;
 import static java.io.File.separator;
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
@@ -36,8 +34,8 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class InfinispanStoreRocksDBIT {
    private static String baseDir = tmpDirectory(InfinispanStoreRocksDBIT.class);
-   private static String dataDir = baseDir + File.separator + "data";
-   private static String expiredDir = baseDir + File.separator + "expired";
+   private static String dataDir = baseDir + separator + "data";
+   private static String expiredDir = baseDir + separator + "expired";
 
    private EmbeddedCacheManager cm;
 
@@ -71,7 +69,7 @@ public class InfinispanStoreRocksDBIT {
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.defaultCacheName("default");
+      gcb.globalState().persistentLocation(baseDir).defaultCacheName("default");
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence()
             .addStore(RocksDBStoreConfigurationBuilder.class)
