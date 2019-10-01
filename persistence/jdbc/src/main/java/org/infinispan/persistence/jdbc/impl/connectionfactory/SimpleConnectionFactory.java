@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.impl.connectionfactory;
 
+import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -75,7 +77,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
             connectionCount--;
          }
       } catch (SQLException e) {
-         log.failureClosingConnection(e);
+         PERSISTENCE.failureClosingConnection(e);
       }
    }
 

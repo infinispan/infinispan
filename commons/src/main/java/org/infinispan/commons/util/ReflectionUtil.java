@@ -1,5 +1,7 @@
 package org.infinispan.commons.util;
 
+import static org.infinispan.commons.logging.Log.CONTAINER;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -391,7 +393,7 @@ public class ReflectionUtil {
       if (clazz != null && clazz.isAssignableFrom(obj.getClass()))
          return clazz.cast(obj);
 
-      throw log.unableToUnwrap(obj, clazz);
+      throw CONTAINER.unableToUnwrap(obj, clazz);
    }
 
    public static <T> T unwrapAny(Class<T> clazz, Object... objs) {
@@ -402,7 +404,7 @@ public class ReflectionUtil {
          }
       }
 
-      throw log.unableToUnwrapAny(Arrays.toString(objs), clazz);
+      throw CONTAINER.unableToUnwrapAny(Arrays.toString(objs), clazz);
    }
 
    public static int getIntAccessibly(Field f, Object instance) {

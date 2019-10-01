@@ -1,5 +1,7 @@
 package org.infinispan.persistence.async;
 
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -159,9 +161,9 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
             executor.shutdown();
          }
          if (!executor.awaitTermination(1, TimeUnit.SECONDS))
-            log.errorAsyncStoreNotStopped();
+            PERSISTENCE.errorAsyncStoreNotStopped();
       } catch (InterruptedException e) {
-         log.interruptedWaitingAsyncStorePush(e);
+         PERSISTENCE.interruptedWaitingAsyncStorePush(e);
          Thread.currentThread().interrupt();
       }
    }
@@ -384,7 +386,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                      return;
                   }
                } catch (Exception e) {
-                  log.unexpectedErrorInAsyncStoreCoordinator(e);
+                  PERSISTENCE.unexpectedErrorInAsyncStoreCoordinator(e);
                }
             }
          } finally {
@@ -486,7 +488,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                }
             }
          }
-         log.unableToProcessAsyncModifications(maxRetries);
+         PERSISTENCE.unableToProcessAsyncModifications(maxRetries);
       }
    }
 }

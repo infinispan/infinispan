@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.impl;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
@@ -164,6 +166,6 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
                                              .filter(Objects::nonNull)
                                              .map(Object::toString)
                                              .collect(Collectors.joining(","));
-      completeExceptionally(log.requestTimedOut(requestId, targetsWithoutResponses));
+      completeExceptionally(CLUSTER.requestTimedOut(requestId, targetsWithoutResponses));
    }
 }

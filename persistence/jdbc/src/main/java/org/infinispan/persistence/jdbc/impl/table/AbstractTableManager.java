@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.impl.table;
 
+import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
+
 import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -188,7 +190,7 @@ public abstract class AbstractTableManager implements TableManager {
          statement = conn.createStatement();
          statement.executeUpdate(sql);
       } catch (SQLException e) {
-         log.errorCreatingTable(sql, e);
+         PERSISTENCE.errorCreatingTable(sql, e);
          throw new PersistenceException(e);
       } finally {
          JdbcUtil.safeClose(statement);

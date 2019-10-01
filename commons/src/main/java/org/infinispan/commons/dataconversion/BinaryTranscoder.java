@@ -5,12 +5,11 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 
@@ -20,7 +19,6 @@ import org.infinispan.commons.marshall.WrappedByteArray;
  * @since 10.0
  */
 public final class BinaryTranscoder extends OneToManyTranscoder {
-   private static final Log log = LogFactory.getLog(BinaryTranscoder.class);
 
    private final AtomicReference<Marshaller> marshallerRef;
 
@@ -62,9 +60,9 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
          if (destinationType.match(APPLICATION_WWW_FORM_URLENCODED)) {
             return convertToUrlEncoded(content, contentType);
          }
-         throw log.unsupportedContent(content);
+         throw CONTAINER.unsupportedContent(content);
       } catch (InterruptedException | IOException | EncodingException | ClassNotFoundException e) {
-         throw log.unsupportedContent(content);
+         throw CONTAINER.unsupportedContent(content);
       }
    }
 
@@ -81,7 +79,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
          }
          return StandardConversions.convertJavaToOctetStream(content, contentType, getMashaller());
       } catch (EncodingException | InterruptedException | IOException e) {
-         throw log.unsupportedContent(content);
+         throw CONTAINER.unsupportedContent(content);
       }
    }
 
@@ -98,7 +96,7 @@ public final class BinaryTranscoder extends OneToManyTranscoder {
       if (contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
          return content;
       }
-      throw log.unsupportedContent(content);
+      throw CONTAINER.unsupportedContent(content);
    }
 
 }

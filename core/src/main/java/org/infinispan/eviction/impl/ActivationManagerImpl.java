@@ -2,6 +2,7 @@ package org.infinispan.eviction.impl;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.LongAdder;
@@ -69,7 +70,7 @@ public class ActivationManagerImpl implements ActivationManager {
             activations.increment();
          }
       } catch (CacheException e) {
-         log.unableToRemoveEntryAfterActivation(key, e);
+         CONTAINER.unableToRemoveEntryAfterActivation(key, e);
       }
    }
 
@@ -98,7 +99,7 @@ public class ActivationManagerImpl implements ActivationManager {
          }
 
       } catch (CacheException e) {
-         log.unableToRemoveEntryAfterActivation(key, e);
+         CONTAINER.unableToRemoveEntryAfterActivation(key, e);
       }
    }
 
@@ -119,7 +120,7 @@ public class ActivationManagerImpl implements ActivationManager {
             pendingActivations.decrement();
          }
          if (throwable != null) {
-            log.unableToRemoveEntryAfterActivation(key, throwable);
+            CONTAINER.unableToRemoveEntryAfterActivation(key, throwable);
          } else if (statisticsEnabled && removed == Boolean.TRUE) {
             activations.increment();
          }

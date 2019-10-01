@@ -56,6 +56,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -98,6 +99,13 @@ import org.jgroups.View;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   String LOG_ROOT = "org.infinispan.";
+   Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
+   Log CLUSTER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CLUSTER");
+   Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
+   Log PERSISTENCE = Logger.getMessageLogger(Log.class, LOG_ROOT + "PERSISTENCE");
+   Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
+   Log XSITE = Logger.getMessageLogger(Log.class, LOG_ROOT + "XSITE");
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unable to load %s from cache loader", id = 1)
@@ -111,13 +119,13 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Property %s could not be replaced as intended!", id = 3)
 //   void propertyCouldNotBeReplaced(String line);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unexpected error reading properties", id = 4)
-   void errorReadingProperties(@Cause IOException e);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Detected write skew on key [%s]. Another process has changed the entry since we last read it! Unable to copy entry for update.", id = 5)
-   void unableToCopyEntryForUpdate(Object key);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unexpected error reading properties", id = 4)
+//   void errorReadingProperties(@Cause IOException e);
+//
+//   @LogMessage(level = WARN)
+//   @Message(value = "Detected write skew on key [%s]. Another process has changed the entry since we last read it! Unable to copy entry for update.", id = 5)
+//   void unableToCopyEntryForUpdate(Object key);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Failed remote execution on node %s", id = 6)
@@ -127,9 +135,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Failed local execution ", id = 7)
 //   void localExecutionFailed(@Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Can not select %s random members for %s", id = 8)
-   void cannotSelectRandomMembers(int numNeeded, List<Address> members);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Can not select %s random members for %s", id = 8)
+//   void cannotSelectRandomMembers(int numNeeded, List<Address> members);
 
 //   @LogMessage(level = INFO)
 //   @Message(value = "DistributionManager not yet joined the cluster. Cannot do anything about other concurrent joiners.", id = 14)
@@ -933,19 +941,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while processing prepare", id = 255)
    void errorProcessingPrepare(@Cause Throwable e);
 
-/*
-   @LogMessage(level = ERROR)
-   @Message(value = "Configurator SAXParse error", id = 256)
-   void configuratorSAXParseError(@Cause Exception e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Configurator SAX error", id = 257)
-   void configuratorSAXError(@Cause Exception e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Configurator general error", id = 258)
-   void configuratorError(@Cause Exception e);
- */
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Configurator SAXParse error", id = 256)
+//   void configuratorSAXParseError(@Cause Exception e);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Configurator SAX error", id = 257)
+//   void configuratorSAXError(@Cause Exception e);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Configurator general error", id = 258)
+//   void configuratorError(@Cause Exception e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Async store executor did not stop properly", id = 259)
@@ -1199,8 +1205,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Cannot configure async properties for an sync cache. Set the cache mode to async first.", id = 341)
 //   IllegalStateException asyncPropertiesConfigOnSyncCache();
 
-   @Message(value = "Cannot configure sync properties for an async cache. Set the cache mode to sync first.", id = 342)
-   IllegalStateException syncPropertiesConfigOnAsyncCache();
+//   @Message(value = "Cannot configure sync properties for an async cache. Set the cache mode to sync first.", id = 342)
+//   IllegalStateException syncPropertiesConfigOnAsyncCache();
 
    @Message(value = "Must have a transport set in the global configuration in " +
          "order to define a clustered cache", id = 343)
@@ -1892,4 +1898,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The store location '%s' is not a child of the global persistent location '%s'", id = 558)
    CacheConfigurationException forbiddenStoreLocation(Path location, Path global);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cannot marshall '%s'", id = 559)
+   void cannotMarshall(Class<?> aClass, @Cause Throwable t);
 }

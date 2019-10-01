@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.util.logging.Log.XSITE;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -196,11 +198,11 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          TransactionTable txTable = txTable();
          GlobalTransaction localTxId = remote2localTx.remove(globalTransaction);
          if (localTxId == null) {
-            throw log.unableToFindRemoteSiteTransaction(globalTransaction);
+            throw XSITE.unableToFindRemoteSiteTransaction(globalTransaction);
          }
          LocalTransaction localTx = txTable.getLocalTransaction(localTxId);
          if (localTx == null) {
-            throw log.unableToFindLocalTransactionFromRemoteSiteTransaction(globalTransaction);
+            throw XSITE.unableToFindLocalTransactionFromRemoteSiteTransaction(globalTransaction);
          }
          TransactionManager txManager = txManager();
          txManager.resume(localTx.getTransaction());

@@ -1,6 +1,7 @@
 package org.infinispan.scattered.impl;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -468,7 +469,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          .whenComplete((response, throwable) -> {
             try {
                if (throwable != null) {
-                  throw log.exceptionProcessingEntryRetrievalValues(throwable);
+                  throw CONTAINER.exceptionProcessingEntryRetrievalValues(throwable);
                } else {
                   applyValues(address, keys, response);
                }

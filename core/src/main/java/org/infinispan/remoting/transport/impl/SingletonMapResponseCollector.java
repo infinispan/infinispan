@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.impl;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -14,8 +16,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)}.
@@ -25,7 +25,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SingletonMapResponseCollector
       extends ValidSingleResponseCollector<Map<Address, Response>> {
-   private static final Log log = LogFactory.getLog(SingletonMapResponseCollector.class);
    private static final SingletonMapResponseCollector VALID_ONLY = new SingletonMapResponseCollector(false);
    private static final SingletonMapResponseCollector IGNORE_LEAVERS = new SingletonMapResponseCollector(true);
 
@@ -51,7 +50,7 @@ public class SingletonMapResponseCollector
    @Override
    protected Map<Address, Response> targetNotFound(Address sender) {
       if (!ignoreLeavers) {
-         throw log.remoteNodeSuspected(sender);
+         throw CLUSTER.remoteNodeSuspected(sender);
       }
       return Collections.singletonMap(sender, CacheNotFoundResponse.INSTANCE);
    }

@@ -1,5 +1,7 @@
 package org.infinispan.commands.tx;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -46,9 +48,9 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
             // The transaction was already committed on this node
             return null;
          case ABORTED:
-            throw log.remoteTransactionAlreadyRolledBack(globalTx);
+            throw CONTAINER.remoteTransactionAlreadyRolledBack(globalTx);
          case EXPIRED:
-            throw log.remoteTransactionStatusMissing(globalTx);
+            throw CONTAINER.remoteTransactionStatusMissing(globalTx);
          default:  // NOT_COMPLETED
             throw new IllegalStateException("Remote transaction not found: " + globalTx);
       }

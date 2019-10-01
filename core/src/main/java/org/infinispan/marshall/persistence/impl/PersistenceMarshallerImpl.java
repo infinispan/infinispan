@@ -1,5 +1,7 @@
 package org.infinispan.marshall.persistence.impl;
 
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,8 +31,6 @@ import org.infinispan.marshall.protostream.impl.UserMarshallerBytes;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A Protostream based {@link PersistenceMarshaller} implementation that is responsible
@@ -48,8 +48,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class PersistenceMarshallerImpl implements PersistenceMarshaller {
-
-   private static final Log log = LogFactory.getLog(PersistenceMarshallerImpl.class, Log.class);
    private static final int PROTOSTREAM_DEFAULT_BUFFER_SIZE = 4096;
    private static final BufferSizePredictor BUFFER_SIZE_PREDICTOR = new BufferSizePredictor() {
       @Override
@@ -80,7 +78,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    public void start() {
       userMarshaller = createUserMarshaller();
       if (userMarshaller != null) {
-         log.startingUserMarshaller(userMarshaller.getClass().getName());
+         PERSISTENCE.startingUserMarshaller(userMarshaller.getClass().getName());
          userMarshaller.start();
       }
 
@@ -103,7 +101,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          try {
             PrivateGlobalConfiguration privateGlobalCfg = globalConfig.module(PrivateGlobalConfiguration.class);
             if (privateGlobalCfg == null || !privateGlobalCfg.isServerMode()) {
-               log.jbossMarshallingDetected();
+               PERSISTENCE.jbossMarshallingDetected();
             }
             return clazz.getConstructor(GlobalComponentRegistry.class).newInstance(gcr);
          } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
@@ -178,7 +176,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          byte[] bytes = baos.toByteArray();
          return new ByteBufferImpl(bytes, 0, bytes.length);
       } catch (Throwable t) {
-         log.warnf(t, "Cannot marshall %s", o.getClass().getName());
+         PERSISTENCE.cannotMarshall(o.getClass(), t);
          if (t instanceof MarshallingException)
             throw (MarshallingException) t;
          throw new MarshallingException(t.getMessage(), t.getCause());

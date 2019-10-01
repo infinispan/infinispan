@@ -1,15 +1,15 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.util.Set;
 
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.remoting.transport.impl.RequestRepository;
 
 /**
  * Request implementation that waits for a response from a single target site.
@@ -18,8 +18,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.1
  */
 public class SingleSiteRequest<T> extends AbstractRequest<T> {
-   private static final Log log = LogFactory.getLog(SingleSiteRequest.class);
-
    private final String site;
 
    SingleSiteRequest(ResponseCollector<T> wrapper, long requestId, RequestRepository repository, String site) {
@@ -60,7 +58,7 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
 
    @Override
    protected void onTimeout() {
-      completeExceptionally(log.requestTimedOut(requestId, site));
+      completeExceptionally(CLUSTER.requestTimedOut(requestId, site));
    }
 
    public void sitesUnreachable(String unreachableSite) {

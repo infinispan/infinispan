@@ -1,10 +1,9 @@
 package org.infinispan.commons.configuration.attributes;
 
+import static org.infinispan.commons.logging.Log.CONFIG;
+
 import java.util.HashMap;
 import java.util.HashSet;
-
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * CollectionAttributeCopier. This {@link AttributeCopier} can handle a handful of "known"
@@ -14,7 +13,6 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 7.2
  */
 public class CollectionAttributeCopier<T> implements AttributeCopier<T> {
-   private static final Log log = LogFactory.getLog(CollectionAttributeCopier.class);
    public static final AttributeCopier<Object> INSTANCE = new CollectionAttributeCopier<>();
 
    @SuppressWarnings("unchecked")
@@ -29,7 +27,7 @@ public class CollectionAttributeCopier<T> implements AttributeCopier<T> {
       } else if (HashMap.class.equals(klass)) {
          return (T) new HashMap<>((HashMap<?, ?>)attribute);
       } else {
-         throw log.noAttributeCopierForType(klass);
+         throw CONFIG.noAttributeCopierForType(klass);
       }
    }
 

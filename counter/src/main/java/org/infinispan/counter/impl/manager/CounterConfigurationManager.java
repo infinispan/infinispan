@@ -2,6 +2,7 @@ package org.infinispan.counter.impl.manager;
 
 import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToConfig;
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
+import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,7 +21,6 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
-import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopeFilter;
@@ -33,7 +33,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Stores all the defined counter's configuration.
@@ -48,7 +47,6 @@ import org.infinispan.util.logging.LogFactory;
 public class CounterConfigurationManager {
 
    public static final String COUNTER_SCOPE = "counter";
-   private static final Log log = LogFactory.getLog(CounterConfigurationManager.class, Log.class);
    private final AtomicBoolean counterCacheStarted = new AtomicBoolean(false);
    private final EmbeddedCacheManager cacheManager;
    private final List<AbstractCounterConfiguration> configuredCounters;
@@ -225,7 +223,7 @@ public class CounterConfigurationManager {
             break;
          case WEAK:
             if (configuration.concurrencyLevel() < 1) {
-               throw log.invalidConcurrencyLevel(configuration.concurrencyLevel());
+               throw CONTAINER.invalidConcurrencyLevel(configuration.concurrencyLevel());
             }
             break;
       }

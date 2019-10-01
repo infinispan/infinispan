@@ -1,10 +1,10 @@
 package org.infinispan.counter.configuration;
 
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.logging.Log;
 
 /**
  * Base counter configuration builder.
@@ -17,7 +17,6 @@ import org.infinispan.counter.logging.Log;
 abstract class AbstractCounterConfigurationBuilder<T extends AbstractCounterConfiguration, S extends AbstractCounterConfigurationBuilder<T, S>>
       implements CounterConfigurationBuilder<T, S> {
 
-   private static final Log log = LogFactory.getLog(AbstractCounterConfigurationBuilder.class, Log.class);
    final AttributeSet attributes;
    private final CounterManagerConfigurationBuilder builder;
 
@@ -49,7 +48,7 @@ abstract class AbstractCounterConfigurationBuilder<T extends AbstractCounterConf
       attributes.attributes().forEach(Attribute::validate);
       if (!builder.isGlobalStateEnabled() &&
             attributes.attribute(AbstractCounterConfiguration.STORAGE).get() == Storage.PERSISTENT) {
-         throw log.invalidPersistentStorageMode();
+         throw CONTAINER.invalidPersistentStorageMode();
       }
    }
 

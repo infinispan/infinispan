@@ -1,5 +1,7 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -22,9 +24,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.query.dsl.embedded.impl.HsQueryRequest;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-import org.infinispan.query.logging.Log;
 import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Wraps the query to be executed in a cache represented either as a String or as a {@link HSQuery} form together with
@@ -33,8 +33,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.2
  */
 public final class QueryDefinition {
-
-   private static final Log log = LogFactory.getLog(QueryDefinition.class, Log.class);
 
    private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final String queryString;
@@ -169,24 +167,24 @@ public final class QueryDefinition {
 
    public void setSort(Sort sort) {
       if (queryString != null) {
-         throw log.sortNotSupportedWithQueryString();
+         throw CONTAINER.sortNotSupportedWithQueryString();
       }
       hsQuery.sort(sort);
       this.sort = sort;
    }
 
    public void filter(Filter filter) {
-      if (queryString != null) throw log.filterNotSupportedWithQueryString();
+      if (queryString != null) throw CONTAINER.filterNotSupportedWithQueryString();
       hsQuery.filter(filter);
    }
 
    public FullTextFilter enableFullTextFilter(String name) {
-      if (queryString != null) throw log.filterNotSupportedWithQueryString();
+      if (queryString != null) throw CONTAINER.filterNotSupportedWithQueryString();
       return hsQuery.enableFullTextFilter(name);
    }
 
    public void disableFullTextFilter(String name) {
-      if (queryString != null) throw log.filterNotSupportedWithQueryString();
+      if (queryString != null) throw CONTAINER.filterNotSupportedWithQueryString();
       hsQuery.disableFullTextFilter(name);
    }
 

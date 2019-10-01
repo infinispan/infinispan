@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -36,11 +38,11 @@ public abstract class AbstractTransport implements Transport {
          if (response instanceof ExceptionResponse) {
             ExceptionResponse exceptionResponse = (ExceptionResponse) response;
             Exception e = exceptionResponse.getException();
-            if (e instanceof SuspectException) throw log.thirdPartySuspected(sender, (SuspectException) e);
+            if (e instanceof SuspectException) throw CLUSTER.thirdPartySuspected(sender, (SuspectException) e);
             if (e instanceof AvailabilityException || e instanceof OutdatedTopologyException) throw (CacheException) e;
 
             // if we have any application-level exceptions make sure we throw them!!
-            throw log.remoteException(sender, e);
+            throw CLUSTER.remoteException(sender, e);
          } else if (!ignoreCacheNotFoundResponse && response instanceof CacheNotFoundResponse) {
             throw new SuspectException("Cache not running on node " + sender, sender);
          }

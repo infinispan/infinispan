@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
@@ -25,6 +27,6 @@ public class LockManagerFactory extends AbstractNamedCacheComponentFactory imple
       } else if (LockManager.class.getName().equals(componentName)) {
          return new DefaultLockManager();
       }
-      throw log.factoryCannotConstructComponent(componentName);
+      throw CONTAINER.factoryCannotConstructComponent(componentName);
    }
 }

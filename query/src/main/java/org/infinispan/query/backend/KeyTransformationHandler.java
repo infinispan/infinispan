@@ -1,5 +1,7 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
@@ -10,8 +12,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultTransformer;
-import org.infinispan.query.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
@@ -33,8 +33,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public final class KeyTransformationHandler {
-
-   private static final Log log = LogFactory.getLog(KeyTransformationHandler.class, Log.class);
 
    private final Map<Class<?>, Class<? extends Transformer>> transformerTypes = new ConcurrentHashMap<>();
 
@@ -101,7 +99,7 @@ public final class KeyTransformationHandler {
             if (t != null) {
                return t.fromString(keyAsString);
             } else {
-               throw log.noTransformerForKey(keyClassName);
+               throw CONTAINER.noTransformerForKey(keyClassName);
             }
       }
       throw new CacheException("Unknown key type metadata: " + type);
@@ -112,7 +110,7 @@ public final class KeyTransformationHandler {
       try {
          keyClass = Util.loadClassStrict(keyClassName, classLoader);
       } catch (ClassNotFoundException e) {
-         log.keyClassNotFound(keyClassName, e);
+         CONTAINER.keyClassNotFound(keyClassName, e);
          return null;
       }
       return getTransformer(keyClass);
@@ -165,7 +163,7 @@ public final class KeyTransformationHandler {
          if (t != null) {
             return "T:" + key.getClass().getName() + ":" + t.toString(key);
          } else {
-            throw log.noTransformerForKey(key.getClass().getName());
+            throw CONTAINER.noTransformerForKey(key.getClass().getName());
          }
       }
    }
@@ -183,7 +181,7 @@ public final class KeyTransformationHandler {
          try {
             return transformerClass.newInstance();
          } catch (Exception e) {
-            log.couldNotInstantiaterTransformerClass(transformerClass, e);
+            CONTAINER.couldNotInstantiaterTransformerClass(transformerClass, e);
          }
       }
       return null;
@@ -196,7 +194,7 @@ public final class KeyTransformationHandler {
          transformerClass = transformableAnnotation != null ? transformableAnnotation.transformer() : null;
          if (transformerClass != null) {
             if (transformerClass == DefaultTransformer.class) {
-               log.typeIsUsingDefaultTransformer(keyClass);
+               CONTAINER.typeIsUsingDefaultTransformer(keyClass);
             }
             registerTransformer(keyClass, transformerClass);
          }

@@ -1,9 +1,7 @@
 package org.infinispan.commons.dataconversion;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
+import static org.infinispan.commons.logging.Log.CONTAINER;
 
 /**
  * Encoder to/from UTF-8 content using the java string encoding mechanism.
@@ -11,8 +9,6 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 9.1
  */
 public class UTF8Encoder implements Encoder {
-
-   private static final Log log = LogFactory.getLog(UTF8Encoder.class);
 
    public static final UTF8Encoder INSTANCE = new UTF8Encoder();
 
@@ -22,7 +18,7 @@ public class UTF8Encoder implements Encoder {
          return String.class.cast(content).getBytes(UTF_8);
       }
 
-      throw log.unsupportedContent(content);
+      throw CONTAINER.unsupportedContent(content);
    }
 
    @Override

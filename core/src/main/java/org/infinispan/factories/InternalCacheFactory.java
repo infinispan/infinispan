@@ -1,8 +1,8 @@
 package org.infinispan.factories;
 
 import static java.util.Objects.requireNonNull;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -51,8 +51,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 /**
@@ -67,7 +65,6 @@ import org.infinispan.xsite.XSiteAdminOperations;
  * @since 4.0
  */
 public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFactory {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    /**
     * This implementation clones the configuration passed in before using it.
@@ -213,7 +210,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    private static void checkCanRun(Cache<?, ?> cache, String cacheName) {
       ComponentStatus status = cache.getStatus();
       if (status == ComponentStatus.FAILED || status == ComponentStatus.TERMINATED) {
-         throw log.cacheIsTerminated(cacheName, status.toString());
+         throw CONTAINER.cacheIsTerminated(cacheName, status.toString());
       }
    }
 

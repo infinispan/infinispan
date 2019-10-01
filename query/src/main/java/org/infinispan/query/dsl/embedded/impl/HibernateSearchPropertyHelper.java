@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,8 +38,6 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
-import org.infinispan.query.logging.Log;
-import org.jboss.logging.Logger;
 
 /**
  * Uses the Hibernate Search metadata to resolve property paths. This relies on the Hibernate Search annotations. If
@@ -50,8 +50,6 @@ import org.jboss.logging.Logger;
  * @since 9.0
  */
 public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
-
-   private static final Log log = Logger.getMessageLogger(Log.class, HibernateSearchPropertyHelper.class.getName());
 
    private static final String ES_DATE_BRIDGE_CLASS_NAME = "org.hibernate.search.elasticsearch.bridge.builtin.impl.ElasticsearchDateBridge";
 
@@ -111,7 +109,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
             TwoWayStringBridge unwrapped = ((TwoWayString2FieldBridgeAdaptor) bridge).unwrap(TwoWayStringBridge.class);
             if (unwrapped instanceof BooleanBridge) {
                if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
-                  throw log.getInvalidBooleanLiteralException(value);
+                  throw CONTAINER.getInvalidBooleanLiteralException(value);
                }
             }
             return unwrapped.stringToObject(value);
@@ -198,7 +196,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    private EntityIndexBinding getEntityIndexBinding(Class<?> entityType) {
       EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding == null) {
-         throw log.notAnIndexedEntityException(entityType.getCanonicalName());
+         throw CONTAINER.notAnIndexedEntityException(entityType.getCanonicalName());
       }
       return indexBinding;
    }

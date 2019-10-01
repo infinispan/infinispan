@@ -11,9 +11,6 @@ import org.jboss.logging.NDC;
  * @since 4.0
  */
 public class LogFactory {
-   public static final String LOG_ROOT = "org.infinispan.";
-
-   public static Log CLUSTER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CLUSTER");
 
    public static Log getLog(Class<?> clazz) {
       return Logger.getMessageLogger(Log.class, clazz.getName());
@@ -24,11 +21,11 @@ public class LogFactory {
    }
 
    public static <T> T getLog(String category, Class<T> logClass) {
-      return Logger.getMessageLogger(logClass, LOG_ROOT + category);
+      return Logger.getMessageLogger(logClass, Log.LOG_ROOT + category);
    }
 
    public static Logger getLogger(String category) {
-      return Logger.getLogger(LOG_ROOT + category);
+      return Logger.getLogger(Log.LOG_ROOT + category);
    }
 
    public static void pushNDC(String cacheName, boolean isTrace) {

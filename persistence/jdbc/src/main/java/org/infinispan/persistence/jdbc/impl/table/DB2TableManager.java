@@ -15,10 +15,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 class DB2TableManager extends AbstractTableManager {
 
-   private static final Log LOG = LogFactory.getLog(DB2TableManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(DB2TableManager.class, Log.class);
 
    DB2TableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
-      super(connectionFactory, config, metaData, cacheName, LOG);
+      super(connectionFactory, config, metaData, cacheName, log);
    }
 
    @Override

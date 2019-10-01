@@ -12,6 +12,7 @@ import javax.naming.NamingException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -26,6 +27,9 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   Log CONFIG = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
+   Log PERSISTENCE = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "PERSISTENCE");
+
    @LogMessage(level = ERROR)
    @Message(value = "Exception while marshalling object: %s", id = 65)
    void errorMarshallingObject(@Cause Throwable ioe, Object obj);
@@ -34,33 +38,33 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed clearing cache store", id = 8001)
    void failedClearingJdbcCacheStore(@Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "I/O failure while integrating state into store", id = 8002)
-   void ioErrorIntegratingState(@Cause IOException e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "I/O failure while integrating state into store", id = 8002)
+//   void ioErrorIntegratingState(@Cause IOException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "SQL failure while integrating state into store", id = 8003)
    void sqlFailureIntegratingState(@Cause SQLException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Class not found while integrating state into store", id = 8004)
-   void classNotFoundIntegratingState(@Cause ClassNotFoundException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "I/O Error while storing string keys to database", id = 8005)
-   void ioErrorStoringKeys(@Cause IOException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "SQL Error while storing string keys to database", id = 8006)
-   void sqlFailureStoringKeys(@Cause SQLException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "SQL error while fetching all StoredEntries", id = 8007)
-   void sqlFailureFetchingAllStoredEntries(@Cause SQLException e);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "I/O failure while marshalling bucket: %s", id = 8008)
-   void errorMarshallingBucket(@Cause IOException ioe, Object bucket);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Class not found while integrating state into store", id = 8004)
+//   void classNotFoundIntegratingState(@Cause ClassNotFoundException e);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "I/O Error while storing string keys to database", id = 8005)
+//   void ioErrorStoringKeys(@Cause IOException e);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "SQL Error while storing string keys to database", id = 8006)
+//   void sqlFailureStoringKeys(@Cause SQLException e);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "SQL error while fetching all StoredEntries", id = 8007)
+//   void sqlFailureFetchingAllStoredEntries(@Cause SQLException e);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "I/O failure while marshalling bucket: %s", id = 8008)
+//   void errorMarshallingBucket(@Cause IOException ioe, Object bucket);
 
    @LogMessage(level = ERROR)
    @Message(value = "I/O error while unmarshalling from stream", id = 8009)
@@ -74,9 +78,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while creating table; used DDL statement: '%s'", id = 8011)
    void errorCreatingTable(String sql, @Cause SQLException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Sql failure while loading key: %s", id = 8014)
-   void sqlFailureLoadingKey(String keyHashCode, @Cause SQLException e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Sql failure while loading key: %s", id = 8014)
+//   void sqlFailureLoadingKey(String keyHashCode, @Cause SQLException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Could not find a connection in jndi under the name '%s'", id = 8015)

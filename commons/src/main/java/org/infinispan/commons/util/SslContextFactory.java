@@ -1,5 +1,7 @@
 package org.infinispan.commons.util;
 
+import static org.infinispan.commons.logging.Log.SECURITY;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,9 +16,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 /**
  * SslContextFactory.
  *
@@ -24,7 +23,6 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 5.3
  */
 public class SslContextFactory {
-   private static final Log log = LogFactory.getLog(SslContextFactory.class);
    private static final String DEFAULT_KEYSTORE_TYPE = "JKS";
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
    private static final String CLASSPATH_RESOURCE = "classpath:";
@@ -72,7 +70,7 @@ public class SslContextFactory {
          sslContext.init(keyManagers, trustManagers, null);
          return sslContext;
       } catch (Exception e) {
-         throw log.sslInitializationException(e);
+         throw SECURITY.sslInitializationException(e);
       }
    }
 
@@ -89,7 +87,7 @@ public class SslContextFactory {
             ks.load(null);
             ks.setEntry(keyAlias, entry, passParam);
          } else {
-            throw log.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+            throw SECURITY.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
          }
       }
       KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -120,7 +118,7 @@ public class SslContextFactory {
             String fileName = keyStoreFileName.substring(keyStoreFileName.indexOf(":") + 1);
             is = Util.getResourceAsStream(fileName, classLoader);
             if (is == null) {
-               throw log.cannotFindResource(keyStoreFileName);
+               throw SECURITY.cannotFindResource(keyStoreFileName);
             }
          } else {
             is = new BufferedInputStream(new FileInputStream(keyStoreFileName));

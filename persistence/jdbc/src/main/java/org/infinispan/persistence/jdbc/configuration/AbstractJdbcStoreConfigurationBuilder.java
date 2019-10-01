@@ -4,6 +4,7 @@ import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreCon
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DB_MINOR_VERSION;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DIALECT;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.MANAGE_CONNECTION_FACTORY;
+import static org.infinispan.persistence.jdbc.logging.Log.PERSISTENCE;
 
 import java.lang.reflect.Constructor;
 
@@ -12,17 +13,13 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
-import org.infinispan.persistence.jdbc.logging.Log;
 
 public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJdbcStoreConfiguration, S extends AbstractJdbcStoreConfigurationBuilder<T, S>> extends
       AbstractStoreConfigurationBuilder<T, S> implements JdbcStoreConfigurationChildBuilder<S>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(AbstractJdbcStoreConfigurationBuilder.class, Log.class);
    protected ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> connectionFactory;
 
    public AbstractJdbcStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
@@ -100,9 +97,9 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
       super.validate();
       boolean manageConnectionFactory = attributes.attribute(MANAGE_CONNECTION_FACTORY).get();
       if (manageConnectionFactory && connectionFactory == null) {
-         throw log.missingConnectionFactory();
+         throw PERSISTENCE.missingConnectionFactory();
       } else if (!manageConnectionFactory && connectionFactory != null) {
-         throw log.unmanagedConnectionFactory();
+         throw PERSISTENCE.unmanagedConnectionFactory();
       }
 
       if (connectionFactory != null) {

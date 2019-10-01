@@ -1,5 +1,7 @@
 package org.infinispan.commands;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -100,7 +102,7 @@ public class CreateCacheCommand extends BaseRpcCommand implements InitializableC
             stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1, remainingTime,
                   TimeUnit.NANOSECONDS);
          } catch (TimeoutException ignored) {
-            throw log.creatingTmpCacheTimedOut(cacheNameToCreate, cacheManager.getAddress());
+            throw CONTAINER.creatingTmpCacheTimedOut(cacheNameToCreate, cacheManager.getAddress());
          }
          cacheTopology = distributionManager.getCacheTopology();
       }

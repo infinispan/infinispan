@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 import static java.util.Collections.emptyMap;
+import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -171,7 +172,7 @@ public class QueryEngine<TypeMetadata> {
 
    private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.getProjectedPaths() == null) {
-         throw log.groupingAndAggregationQueriesMustUseProjections();
+         throw CONTAINER.groupingAndAggregationQueriesMustUseProjections();
       }
 
       LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<>();
@@ -179,13 +180,13 @@ public class QueryEngine<TypeMetadata> {
       if (parsingResult.getGroupBy() != null) {
          for (PropertyPath<?> p : parsingResult.getGroupBy()) {
             if (p instanceof AggregationPropertyPath) {
-               throw log.cannotHaveAggregationsInGroupByClause();  // should not really be possible because this was validated during parsing
+               throw CONTAINER.cannotHaveAggregationsInGroupByClause();  // should not really be possible because this was validated during parsing
             }
             // Duplicates in 'group by' are accepted and silently discarded. This behaviour is similar to SQL.
             if (!columns.containsKey(p)) {
                if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityMetadata(), p.asArrayPath())) {
                   // this constraint will be relaxed later: https://issues.jboss.org/browse/ISPN-6015
-                  throw log.multivaluedPropertyCannotBeUsedInGroupBy(p.toString());
+                  throw CONTAINER.multivaluedPropertyCannotBeUsedInGroupBy(p.toString());
                }
                Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityMetadata(), p.asArrayPath());
                int idx = columns.size();
@@ -201,7 +202,7 @@ public class QueryEngine<TypeMetadata> {
          if (!(p instanceof AggregationPropertyPath)) {
             // this must be an already processed 'group by' field, or else it's an invalid query
             if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
-               throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
+               throw CONTAINER.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
             }
          }
          if (c == null) {
@@ -217,7 +218,7 @@ public class QueryEngine<TypeMetadata> {
             if (!(p instanceof AggregationPropertyPath)) {
                // this must be an already processed 'group by' field, or else it's an invalid query
                if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
-                  throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
+                  throw CONTAINER.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
                }
             }
             if (c == null) {
@@ -395,7 +396,7 @@ public class QueryEngine<TypeMetadata> {
          public ValueExpr visit(PropertyValueExpr propertyValueExpr) {
             RowPropertyHelper.ColumnMetadata c = columns.get(propertyValueExpr.getPropertyPath());
             if (c == null) {
-               throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toQueryString());
+               throw CONTAINER.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toQueryString());
             }
             return new PropertyValueExpr(c.getColumnName(), propertyValueExpr.isRepeated(), propertyValueExpr.getPrimitiveType());
          }
@@ -512,7 +513,7 @@ public class QueryEngine<TypeMetadata> {
    private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
                                               long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.hasGroupingOrAggregations()) {
-         throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
+         throw CONTAINER.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
 
       boolean isFullTextQuery;
@@ -527,7 +528,7 @@ public class QueryEngine<TypeMetadata> {
          for (SortField sortField : parsingResult.getSortFields()) {
             PropertyPath<?> p = sortField.getPath();
             if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityMetadata(), p.asArrayPath())) {
-               throw log.multivaluedPropertyCannotBeUsedInOrderBy(p.toString());
+               throw CONTAINER.multivaluedPropertyCannotBeUsedInOrderBy(p.toString());
             }
          }
       }
@@ -535,7 +536,7 @@ public class QueryEngine<TypeMetadata> {
       if (parsingResult.getProjectedPaths() != null) {
          for (PropertyPath<?> p : parsingResult.getProjectedPaths()) {
             if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityMetadata(), p.asArrayPath())) {
-               throw log.multivaluedPropertyCannotBeProjected(p.asStringPath());
+               throw CONTAINER.multivaluedPropertyCannotBeProjected(p.asStringPath());
             }
          }
       }
@@ -732,7 +733,7 @@ public class QueryEngine<TypeMetadata> {
    public HsQueryRequest createHsQuery(String queryString, IndexedTypeMap<CustomTypeMetadata> metadata, Map<String, Object> nameParameters) {
       IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
       if (parsingResult.hasGroupingOrAggregations()) {
-         throw log.groupAggregationsNotSupported();
+         throw CONTAINER.groupAggregationsNotSupported();
       }
       LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, nameParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
@@ -751,7 +752,7 @@ public class QueryEngine<TypeMetadata> {
 
    public <E> CacheQuery<E> buildCacheQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory, ExecutorService asyncExecutor, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
       if (!isIndexed) {
-         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
       if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
          return new ClusteredCacheQueryImpl<>(queryDefinition, asyncExecutor, cache, keyTransformationHandler, indexedTypeMap);
@@ -767,7 +768,7 @@ public class QueryEngine<TypeMetadata> {
                                             ExecutorService asyncExecutor,
                                             Class<?>... classes) {
       if (!isIndexed) {
-         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
 
       if (log.isDebugEnabled()) {
@@ -776,7 +777,7 @@ public class QueryEngine<TypeMetadata> {
 
       IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
       if (parsingResult.hasGroupingOrAggregations()) {
-         throw log.groupAggregationsNotSupported();
+         throw CONTAINER.groupAggregationsNotSupported();
       }
       LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, emptyMap());
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
@@ -816,7 +817,7 @@ public class QueryEngine<TypeMetadata> {
       }
 
       if (!isIndexed) {
-         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
 
       LuceneQueryParsingResult luceneParsingResult = transformParsingResult(ickleParsingResult, namedParameters);

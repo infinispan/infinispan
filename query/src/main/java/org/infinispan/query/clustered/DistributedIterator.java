@@ -1,5 +1,7 @@
 package org.infinispan.query.clustered;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -11,9 +13,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
-import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Iterates on a distributed query.
@@ -24,8 +24,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.1
  */
 class DistributedIterator<E> implements ResultIterator<E> {
-
-   private static final Log log = LogFactory.getLog(DistributedIterator.class, Log.class);
 
    protected final AdvancedCache<?, ?> cache;
 
@@ -63,7 +61,7 @@ class DistributedIterator<E> implements ResultIterator<E> {
             mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs);
          }
       } catch (IOException e) {
-         throw log.unexpectedIOException(e);
+         throw CONTAINER.unexpectedIOException(e);
       }
    }
 

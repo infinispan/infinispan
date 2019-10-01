@@ -1,5 +1,7 @@
 package org.infinispan.marshall.core;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -440,14 +442,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    AdvancedExternalizer getExternalizer(ClassToExternalizerMap class2ExternalizerMap, Class<?> clazz) {
       if (class2ExternalizerMap == null) {
-         throw log.cacheManagerIsStopping();
+         throw CONTAINER.cacheManagerIsStopping();
       }
       return class2ExternalizerMap.get(clazz);
    }
 
    AdvancedExternalizer getExternalizer(IdToExternalizerMap id2ExternalizerMap, int i) {
       if (id2ExternalizerMap == null) {
-         throw log.cacheManagerIsStopping();
+         throw CONTAINER.cacheManagerIsStopping();
       }
       return id2ExternalizerMap.get(i);
    }

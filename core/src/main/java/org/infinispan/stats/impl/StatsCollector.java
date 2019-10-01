@@ -1,5 +1,7 @@
 package org.infinispan.stats.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -379,7 +381,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          if (componentName.equals(StatsCollector.class.getName())) {
             return new StatsCollector();
          } else {
-            throw log.factoryCannotConstructComponent(componentName);
+            throw CONTAINER.factoryCannotConstructComponent(componentName);
          }
       }
    }

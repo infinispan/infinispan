@@ -1,5 +1,7 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -81,7 +83,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
          jmxDomain = JmxUtil.buildJmxDomain(globalConfig.globalJmxStatistics().domain(), mBeanServer, groupName);
          String configJmxDomain = globalConfig.globalJmxStatistics().domain();
          if (!jmxDomain.equals(configJmxDomain) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
-            throw log.jmxMBeanAlreadyRegistered(groupName, configJmxDomain);
+            throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, configJmxDomain);
          }
       }
 

@@ -1,14 +1,13 @@
 package org.infinispan.security;
 
+import static org.infinispan.util.logging.Log.SECURITY;
+
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * CachePermissionCollection.
@@ -17,22 +16,21 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public class CachePermissionCollection extends PermissionCollection {
-   private static final Log log = LogFactory.getLog(CachePermissionCollection.class);
    private static final long serialVersionUID = -3709477547317792941L;
    private final List<Permission> perms;
    private int mask = 0;
 
    public CachePermissionCollection() {
-      perms = new ArrayList<Permission>();
+      perms = new ArrayList<>();
    }
 
    @Override
    public void add(Permission permission) {
       if (permission.getClass() != CachePermission.class)
-         throw log.invalidPermission(permission);
+         throw SECURITY.invalidPermission(permission);
 
      if (isReadOnly())
-         throw log.readOnlyPermissionCollection();
+         throw SECURITY.readOnlyPermissionCollection();
 
      CachePermission p = (CachePermission)permission;
 

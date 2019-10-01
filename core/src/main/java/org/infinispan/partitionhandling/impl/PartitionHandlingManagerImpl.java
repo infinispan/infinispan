@@ -1,6 +1,7 @@
 package org.infinispan.partitionhandling.impl;
 
 import static org.infinispan.commons.util.EnumUtil.EMPTY_BIT_SET;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -117,14 +118,14 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Override
    public void checkClear() {
       if (!isBulkOperationAllowed(true)) {
-         throw log.clearDisallowedWhilePartitioned();
+         throw CONTAINER.clearDisallowedWhilePartitioned();
       }
    }
 
    @Override
    public void checkBulkRead() {
       if (!isBulkOperationAllowed(false)) {
-         throw log.partitionDegraded();
+         throw CONTAINER.partitionDegraded();
       }
    }
 
@@ -267,9 +268,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (!operationAllowed) {
          if (trace) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
          if (EnumUtil.containsAny(flagBitSet, FlagBitSets.FORCE_WRITE_LOCK)) {
-            throw log.degradedModeLockUnavailable(key);
+            throw CONTAINER.degradedModeLockUnavailable(key);
          } else {
-            throw log.degradedModeKeyUnavailable(key);
+            throw CONTAINER.degradedModeKeyUnavailable(key);
          }
       } else {
          if (trace) log.tracef("Key %s is available.", key);

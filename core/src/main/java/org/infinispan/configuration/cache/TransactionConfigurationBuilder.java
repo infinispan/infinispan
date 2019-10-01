@@ -12,8 +12,8 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSA
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
+import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +33,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
@@ -43,7 +41,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AttributeSet attributes;
    private final RecoveryConfigurationBuilder recovery;
 
@@ -259,30 +256,30 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       Attribute<Long> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       Attribute<Long> completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
       if (reaperWakeUpInterval.get()< 0)
-         throw log.invalidReaperWakeUpInterval(reaperWakeUpInterval.get());
+         throw CONFIG.invalidReaperWakeUpInterval(reaperWakeUpInterval.get());
       if (completedTxTimeout.get() < 0)
-         throw log.invalidCompletedTxTimeout(completedTxTimeout.get());
+         throw CONFIG.invalidCompletedTxTimeout(completedTxTimeout.get());
       CacheMode cacheMode = clustering().cacheMode();
       if(attributes.attribute(TRANSACTION_PROTOCOL).get() == TransactionProtocol.TOTAL_ORDER) {
          //total order only supports transactional caches
          if(transactionMode() != TransactionMode.TRANSACTIONAL) {
-            throw log.invalidTxModeForTotalOrder(transactionMode());
+            throw CONFIG.invalidTxModeForTotalOrder(transactionMode());
          }
 
          //total order only supports replicated and distributed mode
          if(!cacheMode.isReplicated() && !cacheMode.isDistributed()) {
-            throw log.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
+            throw CONFIG.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
          }
 
          if (lockingMode() != LockingMode.OPTIMISTIC) {
-            throw log.invalidLockingModeForTotalOrder(lockingMode());
+            throw CONFIG.invalidLockingModeForTotalOrder(lockingMode());
          }
       }
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
-         log.transactionNotificationsDisabled();
+         CONFIG.transactionNotificationsDisabled();
       }
       if (attributes.attribute(TRANSACTION_MODE).get() == TransactionMode.TRANSACTIONAL && !cacheMode.isSynchronous()) {
-         throw log.unsupportedAsyncCacheMode(cacheMode);
+         throw CONFIG.unsupportedAsyncCacheMode(cacheMode);
       }
       recovery.validate();
    }

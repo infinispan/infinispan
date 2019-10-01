@@ -3,6 +3,7 @@ package org.infinispan.commons.dataconversion;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
+import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,8 +17,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -34,8 +33,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.MEDIA_TYPE)
 @SerializeWith(value = MediaType.MediaTypeExternalizer.class)
 public final class MediaType {
-
-   private static final Log log = LogFactory.getLog(MediaType.class);
 
    public static final String APPLICATION_JSON_TYPE = "application/json";
    public static final String APPLICATION_OCTET_STREAM_TYPE = "application/octet-stream";
@@ -133,7 +130,7 @@ public final class MediaType {
 
    @ProtoFactory
    public static MediaType fromString(String tree) {
-      if (tree == null || tree.isEmpty()) throw log.missingMediaType();
+      if (tree == null || tree.isEmpty()) throw CONTAINER.missingMediaType();
       int separatorIdx = tree.indexOf(';');
       boolean emptyParams = separatorIdx == -1;
       String types = emptyParams ? tree : tree.substring(0, separatorIdx);
@@ -147,7 +144,7 @@ public final class MediaType {
          return emptyParams ? MediaType.MATCH_ALL : new MediaType("*", "*", paramMap);
       }
       if (types.indexOf('/') == -1) {
-         throw log.invalidMediaTypeSubtype();
+         throw CONTAINER.invalidMediaTypeSubtype();
       }
 
       String[] typeSubtype = types.split("/");
@@ -167,7 +164,7 @@ public final class MediaType {
       try {
          return Double.parseDouble(weightValue);
       } catch (NumberFormatException nf) {
-         throw log.invalidWeight(weightValue);
+         throw CONTAINER.invalidWeight(weightValue);
       }
    }
 
@@ -178,7 +175,7 @@ public final class MediaType {
       String[] parameters = params.split(";");
 
       for (String p : parameters) {
-         if (!p.contains("=")) throw log.invalidMediaTypeParam(p);
+         if (!p.contains("=")) throw CONTAINER.invalidMediaTypeParam(p);
          String[] nameValue = p.split("=");
          String paramName = nameValue[0].trim();
          String paramValue = nameValue[1].trim();
@@ -200,7 +197,7 @@ public final class MediaType {
 
    private static void checkValidQuotes(String paramValue) {
       if (!checkStartAndEnd(paramValue, '\'') && !checkStartAndEnd(paramValue, '\"')) {
-         throw log.unquotedMediaTypeParam();
+         throw CONTAINER.unquotedMediaTypeParam();
       }
    }
 
@@ -286,7 +283,7 @@ public final class MediaType {
       if (token == null) throw new NullPointerException("type and subtype cannot be null");
       for (char c : token.toCharArray()) {
          if (c < 0x20 || c > 0x7F || INVALID_TOKENS.indexOf(c) > 0) {
-            throw log.invalidCharMediaType(c, token);
+            throw CONTAINER.invalidCharMediaType(c, token);
          }
       }
       return token;

@@ -1,5 +1,7 @@
 package org.infinispan.remoting.rpc;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.List;
@@ -305,7 +307,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
                options.responseFilter(), options.deliverOrder(),
                configuration.clustering().cacheMode().isDistributed());
       } catch (Exception e) {
-         log.unexpectedErrorReplicating(e);
+         CLUSTER.unexpectedErrorReplicating(e);
          if (statisticsEnabled) replicationFailures.incrementAndGet();
          return rethrowAsCacheException(e);
       }
@@ -325,7 +327,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          log.trace("Replication exception", throwable);
          throw ((CacheException) throwable);
       } else {
-         log.unexpectedErrorReplicating(throwable);
+         CLUSTER.unexpectedErrorReplicating(throwable);
          throw new CacheException(throwable);
       }
    }
@@ -439,7 +441,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    private <T> T errorReplicating(Throwable t) {
-      log.unexpectedErrorReplicating(t);
+      CLUSTER.unexpectedErrorReplicating(t);
       if (statisticsEnabled) replicationFailures.incrementAndGet();
       return rethrowAsCacheException(t);
    }

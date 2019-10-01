@@ -1,5 +1,7 @@
 package org.infinispan.persistence.file;
 
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -114,7 +116,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (!file.exists()) {
             File dir = file.getParentFile();
             if (!dir.mkdirs() && !dir.exists()) {
-               throw log.directoryCannotBeCreated(dir.getAbsolutePath());
+               throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
             }
          }
          channel = new RandomAccessFile(file, "rw").getChannel();
@@ -199,7 +201,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
          // sanity check
          if (fe.size < KEY_POS + fe.keyLen + fe.dataLen + fe.metadataLen) {
-            throw log.errorReadingFileStore(file.getPath(), filePos);
+            throw PERSISTENCE.errorReadingFileStore(file.getPath(), filePos);
          }
 
          // update file pointer

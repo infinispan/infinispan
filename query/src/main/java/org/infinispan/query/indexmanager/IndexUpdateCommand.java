@@ -1,15 +1,15 @@
 package org.infinispan.query.indexmanager;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.indexes.spi.IndexManager;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ModuleCommandIds;
-import org.infinispan.query.logging.Log;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -20,8 +20,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
  */
 public class IndexUpdateCommand extends AbstractUpdateCommand {
 
-   private static final Log log = LogFactory.getLog(IndexUpdateCommand.class, Log.class);
-
    public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX;
 
    public IndexUpdateCommand(ByteString cacheName) {
@@ -31,7 +29,7 @@ public class IndexUpdateCommand extends AbstractUpdateCommand {
    @Override
    public CompletableFuture<Object> invokeAsync() {
       if (queryInterceptor.isStopping()) {
-         throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
+         throw CONTAINER.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
       IndexManager indexManager = searchFactory.getIndexManager(indexName);
       if (indexManager == null) {

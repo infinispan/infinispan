@@ -9,6 +9,7 @@ import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PURG
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHARED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRANSACTIONAL;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -27,13 +28,9 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
       extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(AbstractStoreConfigurationBuilder.class);
 
    protected final AttributeSet attributes;
    protected final AsyncStoreConfigurationBuilder<S> async;
@@ -180,27 +177,27 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
       if (!shared && !fetchPersistentState && !purgeOnStartup
             && builder.clustering().cacheMode().isClustered() && !getBuilder().template())
-         log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
+         CONFIG.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
 
       if (fetchPersistentState && attributes.attribute(FETCH_PERSISTENT_STATE).isModified() &&
             clustering().cacheMode().isInvalidation()) {
-         throw log.attributeNotAllowedInInvalidationMode(FETCH_PERSISTENT_STATE.name());
+         throw CONFIG.attributeNotAllowedInInvalidationMode(FETCH_PERSISTENT_STATE.name());
       }
 
       if (shared) {
          if (!builder.clustering().cacheMode().isClustered())
-            throw log.sharedStoreWithLocalCache();
+            throw CONFIG.sharedStoreWithLocalCache();
 
          if (!preload && builder.indexing().enabled()
                && builder.indexing().indexLocalOnly() && !getBuilder().template())
-            log.localIndexingWithSharedCacheLoaderRequiresPreload();
+            CONFIG.localIndexingWithSharedCacheLoaderRequiresPreload();
       }
 
       if (transactional && !builder.transaction().transactionMode().isTransactional())
-         throw log.transactionalStoreInNonTransactionalCache();
+         throw CONFIG.transactionalStoreInNonTransactionalCache();
 
       if (transactional && builder.persistence().passivation())
-         throw log.transactionalStoreInPassivatedCache();
+         throw CONFIG.transactionalStoreInPassivatedCache();
    }
 
    private void validateStoreWithAnnotations() {
@@ -212,16 +209,16 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
             boolean segmented = attributes.attribute(SEGMENTED).get();
             if (segmented && !SegmentedAdvancedLoadWriteStore.class.isAssignableFrom(storeKlass) &&
                   !AbstractSegmentedStoreConfiguration.class.isAssignableFrom(configKlass)) {
-               throw log.storeNotSegmented(storeKlass);
+               throw CONFIG.storeNotSegmented(storeKlass);
             }
             if (!storeProps.shared() && attributes.attribute(SHARED).get()) {
-               throw log.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
+               throw CONFIG.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
             }
          } else {
-            log.warnStoreAnnotationMissing(storeKlass.getSimpleName());
+            CONFIG.warnStoreAnnotationMissing(storeKlass.getSimpleName());
          }
       } else {
-         log.warnConfigurationForAnnotationMissing(attributes.getName());
+         CONFIG.warnConfigurationForAnnotationMissing(attributes.getName());
       }
    }
 

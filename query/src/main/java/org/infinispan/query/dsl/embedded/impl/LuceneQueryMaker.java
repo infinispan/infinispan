@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
@@ -281,7 +283,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          }
       } else {
          if (fullTextTermExpr.getFuzzySlop() != null) {
-            throw log.getPrefixWildcardOrRegexpQueriesCannotBeFuzzy(fullTextTermExpr.toQueryString());
+            throw CONTAINER.getPrefixWildcardOrRegexpQueriesCannotBeFuzzy(fullTextTermExpr.toQueryString());
          }
 
          if (questionPos == -1 && asteriskPos == text.length() - 1) {

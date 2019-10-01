@@ -1,12 +1,6 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -19,14 +13,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.remoting.transport.Address;
+
 /**
  * Based on {@link DefaultConsistentHashFactory}.
  *
  * @since 9.0
  */
 public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactory<ScatteredConsistentHash> {
-
-   private static final Log log = LogFactory.getLog(ScatteredConsistentHashFactory.class);
 
    @Override
    public ScatteredConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
@@ -49,7 +47,7 @@ public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactor
    public ScatteredConsistentHash fromPersistentState(ScopedPersistentState state) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!ScatteredConsistentHash.class.getName().equals(consistentHashClass))
-         throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
+         throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
       return new ScatteredConsistentHash(state);
    }
 

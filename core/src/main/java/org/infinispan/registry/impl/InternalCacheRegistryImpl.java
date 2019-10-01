@@ -1,6 +1,7 @@
 package org.infinispan.registry.impl;
 
-import java.lang.invoke.MethodHandles;
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,8 +19,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * InternalCacheRegistryImpl.
@@ -29,8 +28,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-
    @Inject EmbeddedCacheManager cacheManager;
    @Inject CacheManagerJmxRegistration cacheManagerJmxRegistration;
    @Inject ConfigurationManager configurationManager;
@@ -50,7 +47,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       boolean configPresent = configurationManager.getConfiguration(name, true) != null;
       // check if it already has been defined. Currently we don't support existing user-defined configuration.
       if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && configPresent) {
-         throw log.existingConfigForInternalCache(name);
+         throw CONFIG.existingConfigForInternalCache(name);
       }
       // Don't redefine
       if (configPresent) {

@@ -16,6 +16,7 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.PERSIS
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TOPOLOGY_CHANGED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSACTION_COMPLETED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSACTION_REGISTERED;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -1065,7 +1066,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       if (foundMethods && l.clustered()) {
          if (l.observation() == Listener.Observation.PRE) {
-            throw log.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
+            throw CONTAINER.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
          } else if (cacheMode.isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
          } else if (cacheMode.isDistributed() || cacheMode.isScattered()) {
@@ -1357,7 +1358,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       if (foundMethods && l.clustered()) {
          if (l.observation() == Listener.Observation.PRE) {
-            throw log.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
+            throw CONTAINER.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
          } else if (cacheMode.isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
          } else if (isClusterListenerAvailable(cacheMode)) {

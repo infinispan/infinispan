@@ -1,5 +1,7 @@
 package org.infinispan.stream.impl;
 
+import static org.infinispan.util.logging.Log.CLUSTER;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +116,7 @@ public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStre
 
    private void checkPartitionStatus() {
       if (isPartitionDegraded()) {
-         throw log.partitionDegraded();
+         throw CLUSTER.partitionDegraded();
       }
    }
 

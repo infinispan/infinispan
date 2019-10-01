@@ -1,6 +1,7 @@
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.commons.util.Util.renameTempFile;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,7 +42,7 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
       if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT) && !globalConfiguration.globalState().enabled())
-         throw log.globalStateDisabled();
+         throw CONFIG.globalStateDisabled();
    }
 
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -102,10 +103,10 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          try {
             renameTempFile(temp, getPersistentFileLock(), persistentFile);
          } catch (Exception e) {
-            throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+            throw CONFIG.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
          }
       } catch (Exception e) {
-         throw log.errorPersistingGlobalConfiguration(e);
+         throw CONFIG.errorPersistingGlobalConfiguration(e);
       }
    }
 

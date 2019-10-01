@@ -1,5 +1,7 @@
 package org.infinispan.counter.configuration;
 
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -8,9 +10,7 @@ import java.util.Set;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.counter.logging.Log;
 
 /**
  * The {@link org.infinispan.counter.api.CounterManager} configuration builder.
@@ -25,7 +25,6 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
 
    private static final CounterManagerConfiguration DEFAULT = new CounterManagerConfigurationBuilder(null).create();
 
-   private static final Log log = LogFactory.getLog(CounterManagerConfigurationBuilder.class, Log.class);
    private final AttributeSet attributes = CounterManagerConfiguration.attributeDefinitionSet();
    private final List<AbstractCounterConfigurationBuilder> defaultCounters;
    private final GlobalConfigurationBuilder builder;
@@ -95,7 +94,7 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
       Set<String> counterNames = new HashSet<>();
       for (AbstractCounterConfigurationBuilder builder : defaultCounters) {
          if (!counterNames.add(builder.name())) {
-            throw log.duplicatedCounterName(builder.name());
+            throw CONTAINER.duplicatedCounterName(builder.name());
          }
       }
    }

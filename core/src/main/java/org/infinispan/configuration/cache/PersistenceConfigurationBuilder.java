@@ -7,6 +7,7 @@ import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIV
 import static org.infinispan.configuration.parsing.Element.CLUSTER_LOADER;
 import static org.infinispan.configuration.parsing.Element.FILE_STORE;
 import static org.infinispan.configuration.parsing.Element.STORE;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -24,16 +25,12 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configuration for cache stores.
  *
  */
 public class PersistenceConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<PersistenceConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(PersistenceConfigurationBuilder.class);
-
    private final List<StoreConfigurationBuilder<?, ?>> stores = new ArrayList<>(2);
    private final AttributeSet attributes;
 
@@ -202,19 +199,19 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          StoreConfiguration storeConfiguration = b.create();
          if (storeConfiguration.shared()) {
             if (b.persistence().passivation()) {
-               throw log.passivationStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
+               throw CONFIG.passivationStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
             }
          } else if (storeConfiguration.transactional() && !isLocalCache) {
-            throw log.clusteredTransactionalStoreMustBeShared(storeConfiguration.getClass().getSimpleName());
+            throw CONFIG.clusteredTransactionalStoreMustBeShared(storeConfiguration.getClass().getSimpleName());
          }
          if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {
-            throw log.transactionalStoreCannotBeAsync(storeConfiguration.getClass().getSimpleName());
+            throw CONFIG.transactionalStoreCannotBeAsync(storeConfiguration.getClass().getSimpleName());
          }
          if (storeConfiguration.fetchPersistentState())
             numFetchPersistentState++;
       }
       if (numFetchPersistentState > 1)
-         throw log.onlyOneFetchPersistentStoreAllowed();
+         throw CONFIG.onlyOneFetchPersistentStoreAllowed();
 
       // If a store is present, the reaper expiration thread must be enabled.
       if (!stores.isEmpty()) {
@@ -223,11 +220,11 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          if (!reaperEnabled || wakeupInterval < 0) {
             builder.expiration().enableReaper();
             if (wakeupInterval < 0) {
-               log.debug("Store present and expiration reaper wakeup was less than 0 - explicitly enabling and setting " +
+               CONFIG.debug("Store present and expiration reaper wakeup was less than 0 - explicitly enabling and setting " +
                        "wakeup interval to 1 minute.");
                builder.expiration().wakeUpInterval(1, TimeUnit.MINUTES);
             } else {
-               log.debug("Store present however expiration reaper was not enabled - explicitly enabling.");
+               CONFIG.debug("Store present however expiration reaper was not enabled - explicitly enabling.");
             }
          }
       }

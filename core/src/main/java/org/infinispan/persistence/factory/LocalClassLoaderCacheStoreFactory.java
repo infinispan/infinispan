@@ -18,7 +18,7 @@ public class LocalClassLoaderCacheStoreFactory implements CacheStoreFactory {
 
    @Override
    public <T> T createInstance(StoreConfiguration cfg) {
-      Class classBasedOnConfigurationAnnotation = ConfigurationForClassExtractor.getClassBasedOnConfigurationAnnotation(cfg, log);
+      Class classBasedOnConfigurationAnnotation = ConfigurationForClassExtractor.getClassBasedOnConfigurationAnnotation(cfg);
       try {
          //getInstance is heavily used, so refactoring it might be risky. However we can safely catch
          //and ignore the exception. Returning null is perfectly legal here.

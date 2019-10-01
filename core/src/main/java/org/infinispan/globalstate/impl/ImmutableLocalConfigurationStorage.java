@@ -1,5 +1,7 @@
 package org.infinispan.globalstate.impl;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -30,17 +32,17 @@ public class ImmutableLocalConfigurationStorage implements LocalConfigurationSto
 
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      throw log.immutableConfiguration();
+      throw CONFIG.immutableConfiguration();
    }
 
    @Override
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      throw log.immutableConfiguration();
+      throw CONFIG.immutableConfiguration();
    }
 
    @Override
    public CompletableFuture<Void> removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      throw log.immutableConfiguration();
+      throw CONFIG.immutableConfiguration();
    }
 
    @Override

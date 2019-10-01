@@ -5,6 +5,7 @@ import static org.infinispan.persistence.jdbc.configuration.TableManipulationCon
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DROP_ON_EXIT;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.FETCH_SIZE;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TABLE_NAME_PREFIX;
+import static org.infinispan.persistence.jdbc.logging.Log.CONFIG;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,9 +17,7 @@ import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.persistence.jdbc.logging.Log;
 
 /**
  * TableManipulationConfigurationBuilder.
@@ -29,8 +28,6 @@ import org.infinispan.persistence.jdbc.logging.Log;
 public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>>
       extends AbstractJdbcStoreConfigurationChildBuilder<B>
       implements Builder<TableManipulationConfiguration>, Self<S>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(TableManipulationConfigurationBuilder.class, Log.class);
    private final AttributeSet attributes;
    private final DataColumnConfigurationBuilder dataColumn = new DataColumnConfigurationBuilder();
    private final IdColumnConfigurationBuilder idColumn = new IdColumnConfigurationBuilder();
@@ -184,7 +181,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       for(AttributeDefinition<?> definition : definitions) {
          String value = attributes.attribute(definition).asObject();
          if(value == null || value.isEmpty()) {
-            throw log.tableManipulationAttributeNotSet(definition.name());
+            throw CONFIG.tableManipulationAttributeNotSet(definition.name());
          }
       }
    }

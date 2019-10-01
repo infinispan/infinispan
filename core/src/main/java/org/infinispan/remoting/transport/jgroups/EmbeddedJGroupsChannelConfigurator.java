@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +77,7 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
             RELAY2 relay2 = (RELAY2) protocol;
             if (relay2 != null) {
                if (remoteSites.size() == 0) {
-                  throw JGroupsTransport.log.jgroupsRelayWithoutRemoteSites(name);
+                  throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
                }
                for (Map.Entry<String, JGroupsChannelConfigurator> remoteSite : remoteSites.entrySet()) {
                   JGroupsChannelConfigurator remoteSiteChannel = remoteSite.getValue();
@@ -92,7 +94,7 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
 
             } else {
                if (remoteSites.size() > 0) {
-                  throw JGroupsTransport.log.jgroupsRemoteSitesWithoutRelay(name);
+                  throw CONFIG.jgroupsRemoteSitesWithoutRelay(name);
                }
             }
          }
@@ -103,7 +105,7 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
 
    public void addRemoteSite(String remoteSite, JGroupsChannelConfigurator stackConfigurator) {
       if (remoteSites.containsKey(remoteSite)) {
-         throw JGroupsTransport.log.duplicateRemoteSite(remoteSite, name);
+         throw CONFIG.duplicateRemoteSite(remoteSite, name);
       } else {
          remoteSites.put(remoteSite, stackConfigurator);
       }
@@ -155,7 +157,7 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
                break;
             case INSERT_AFTER:
                if (stackPosition == null) {
-                  throw JGroupsTransport.log.jgroupsInsertAfterRequiresPosition(protocolName);
+                  throw CONFIG.jgroupsInsertAfterRequiresPosition(protocolName);
                }
                position = findProtocol(stackPosition, actualStack);
                assertExisting(mode, stackPosition, position);
@@ -170,13 +172,13 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
 
    private static void assertNoStackPosition(EmbeddedJGroupsChannelConfigurator.StackCombine mode, String stackAfter) {
       if (stackAfter != null) {
-         throw JGroupsTransport.log.jgroupsNoStackPosition(mode.name());
+         throw CONFIG.jgroupsNoStackPosition(mode.name());
       }
    }
 
    private static void assertExisting(EmbeddedJGroupsChannelConfigurator.StackCombine mode, String protocolName, int position) {
       if (position < 0) {
-         throw JGroupsTransport.log.jgroupsNoSuchProtocol(protocolName, mode.name());
+         throw CONFIG.jgroupsNoSuchProtocol(protocolName, mode.name());
       }
    }
 

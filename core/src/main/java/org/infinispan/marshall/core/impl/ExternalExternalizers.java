@@ -1,5 +1,7 @@
 package org.infinispan.marshall.core.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -45,7 +47,7 @@ public final class ExternalExternalizers {
             id = config.getKey();
 
          if (id < 0)
-            throw log.foreignExternalizerUsingNegativeId(ext, id);
+            throw CONTAINER.foreignExternalizerUsingNegativeId(ext, id);
 
          if (id < lowerBound || id > upperBound)
             continue;
@@ -57,11 +59,6 @@ public final class ExternalExternalizers {
       }
 
       return exts;
-   }
-
-   private static void checkForeignIdLimit(int id, AdvancedExternalizer<?> ext) {
-      if (id < 0)
-         throw log.foreignExternalizerUsingNegativeId(ext, id);
    }
 
    private static final class ForeignAdvancedExternalizer implements AdvancedExternalizer<Object> {

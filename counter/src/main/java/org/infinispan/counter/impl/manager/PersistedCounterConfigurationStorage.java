@@ -2,6 +2,7 @@ package org.infinispan.counter.impl.manager;
 
 import static org.infinispan.commons.util.Util.renameTempFile;
 import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToConfig;
+import static org.infinispan.counter.logging.Log.CONTAINER;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,7 +59,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       try {
          doLoadAll();
       } catch (IOException | XMLStreamException e) {
-         throw log.errorReadingCountersConfiguration(e);
+         throw CONTAINER.errorReadingCountersConfiguration(e);
       }
       return storage;
    }
@@ -73,7 +74,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       try {
          doStoreAll();
       } catch (IOException | XMLStreamException e) {
-         throw log.errorPersistingCountersConfiguration(e);
+         throw CONTAINER.errorPersistingCountersConfiguration(e);
       }
    }
 
@@ -102,7 +103,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       try {
          renameTempFile(temp, getFileLock(), persistentFile);
       } catch (Exception e) {
-          throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+          throw CONTAINER.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
       }
    }
 

@@ -10,10 +10,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 class SQLiteTableManager extends AbstractTableManager {
 
-   private static final Log LOG = LogFactory.getLog(SQLiteTableManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(SQLiteTableManager.class, Log.class);
 
    SQLiteTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
-      super(connectionFactory, config, metaData, cacheName, LOG);
+      super(connectionFactory, config, metaData, cacheName, log);
    }
 
    @Override

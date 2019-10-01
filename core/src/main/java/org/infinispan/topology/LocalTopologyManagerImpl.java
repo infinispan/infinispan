@@ -1,6 +1,8 @@
 package org.infinispan.topology;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.util.logging.Log.CLUSTER;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,10 +15,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.IllegalLifecycleStateException;
-import org.infinispan.commons.util.Version;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.eviction.PassivationManager;
@@ -37,7 +41,6 @@ import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -48,7 +51,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -566,7 +568,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          // The view future should never complete with an exception
          throw new CacheException(e.getCause());
       } catch (TimeoutException e) {
-         throw log.timeoutWaitingForView(viewId, transport.getViewId());
+         throw CLUSTER.timeoutWaitingForView(viewId, transport.getViewId());
       }
    }
 
@@ -798,7 +800,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public void prepareForRestore(ScopedPersistentState state) {
       if (!state.containsProperty("uuid")) {
-         throw log.invalidPersistentState(ScopedPersistentState.GLOBAL_SCOPE);
+         throw CONFIG.invalidPersistentState(ScopedPersistentState.GLOBAL_SCOPE);
       }
       persistentUUID = PersistentUUID.fromString(state.getProperty("uuid"));
    }

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jpa;
 
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -822,7 +824,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                marshallerEntryFactory.create(key, entity) :
                marshallerEntryFactory.create(key, entity, metadata, metaEntity.getCreated(), metaEntity.getLastUsed());
       } catch (Exception e) {
-         log.errorExecutingParallelStoreTask(e);
+         PERSISTENCE.errorExecutingParallelStoreTask(e);
          throw e;
       }
    }

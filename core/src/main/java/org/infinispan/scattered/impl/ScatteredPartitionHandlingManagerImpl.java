@@ -1,5 +1,7 @@
 package org.infinispan.scattered.impl;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.List;
 
 import org.infinispan.commons.util.EnumUtil;
@@ -26,7 +28,7 @@ public class ScatteredPartitionHandlingManagerImpl extends PartitionHandlingMana
       if (isKeyOperationAllowed(isWrite, flagBitSet, cacheTopology, key))
          return;
       if (trace) log.tracef("Partition is in %s mode, access is not allowed for key %s", availabilityMode, key);
-      throw log.degradedModeKeyUnavailable(key);
+      throw CONTAINER.degradedModeKeyUnavailable(key);
    }
 
    @Override

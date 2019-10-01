@@ -13,10 +13,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 class PostgresTableManager extends AbstractTableManager {
 
-   private static final Log LOG = LogFactory.getLog(PostgresTableManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(PostgresTableManager.class, Log.class);
 
    PostgresTableManager(ConnectionFactory connectionFactory, TableManipulationConfiguration config, DbMetaData metaData, String cacheName) {
-      super(connectionFactory, config, metaData, cacheName, LOG);
+      super(connectionFactory, config, metaData, cacheName, log);
    }
 
    @Override

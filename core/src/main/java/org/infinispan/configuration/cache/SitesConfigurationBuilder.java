@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.SitesConfiguration.DISABLE_BACKUPS;
 import static org.infinispan.configuration.cache.SitesConfiguration.IN_USE_BACKUP_SITES;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,15 +16,12 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.Element;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<SitesConfiguration>, ConfigurationBuilderInfo {
-   private final static Log log = LogFactory.getLog(SitesConfigurationBuilder.class);
    private final AttributeSet attributes;
    private final List<BackupConfigurationBuilder> backups = new ArrayList<>(2);
    private final BackupForBuilder backupForBuilder;
@@ -101,7 +99,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
 
       for (BackupConfigurationBuilder bcb : backups) {
          if (!backupNames.add(bcb.site())) {
-            throw log.multipleSitesWithSameName(bcb.site());
+            throw CONFIG.multipleSitesWithSameName(bcb.site());
          }
          bcb.validate();
       }
@@ -112,7 +110,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
             if (bcb.site().equals(site)) found = true;
          }
          if (!found) {
-            throw log.siteMustBeInBackups(site);
+            throw CONFIG.siteMustBeInBackups(site);
          }
       }
    }

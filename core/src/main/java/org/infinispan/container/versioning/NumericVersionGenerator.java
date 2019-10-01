@@ -1,5 +1,7 @@
 package org.infinispan.container.versioning;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -88,7 +90,7 @@ public class NumericVersionGenerator implements VersionGenerator {
          return createNumericVersion(counter);
       }
 
-      throw log.unexpectedInitialVersion(initialVersion.getClass().getName());
+      throw CONTAINER.unexpectedInitialVersion(initialVersion.getClass().getName());
    }
 
    @Override

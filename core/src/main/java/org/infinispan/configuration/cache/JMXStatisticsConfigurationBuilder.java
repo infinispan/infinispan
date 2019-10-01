@@ -3,8 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.AVAILABLE;
 import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ELEMENT_DEFINITION;
 import static org.infinispan.configuration.cache.JMXStatisticsConfiguration.ENABLED;
-
-import java.lang.invoke.MethodHandles;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
@@ -12,8 +11,6 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 /**
  * Determines whether statistics are gather and reported.
  *
@@ -21,7 +18,6 @@ import org.infinispan.util.logging.LogFactory;
  *
  */
 public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<JMXStatisticsConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AttributeSet attributes;
 
    JMXStatisticsConfigurationBuilder(ConfigurationBuilder builder) {
@@ -79,7 +75,7 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
       Attribute<Boolean> available = attributes.attribute(AVAILABLE);
       if (enabled.isModified() && available.isModified()) {
          if (enabled.get() && !available.get()) {
-            throw log.statisticsEnabledNotAvailable();
+            throw CONFIG.statisticsEnabledNotAvailable();
          }
       }
    }

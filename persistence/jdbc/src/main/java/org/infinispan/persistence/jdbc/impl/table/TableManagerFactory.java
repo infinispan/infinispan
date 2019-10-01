@@ -19,7 +19,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TableManagerFactory {
 
-   private static final Log LOG = LogFactory.getLog(TableManagerFactory.class, Log.class);
+   private static final Log log = LogFactory.getLog(TableManagerFactory.class, Log.class);
    public static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
    public static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
@@ -73,8 +73,8 @@ public class TableManagerFactory {
             minorVersion = metaData.getDatabaseMinorVersion();
 
             String version = majorVersion + "." + minorVersion;
-            if (LOG.isDebugEnabled()) {
-               LOG.debugf("Guessing database version as '%s'.  If this is incorrect, please specify both the correct " +
+            if (log.isDebugEnabled()) {
+               log.debugf("Guessing database version as '%s'.  If this is incorrect, please specify both the correct " +
                                 "major and minor version of your database using the 'databaseMajorVersion' and " +
                                 "'databaseMinorVersion' attributes in your configuration.", version);
             }
@@ -83,8 +83,8 @@ public class TableManagerFactory {
             if (databaseType != null)
                return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
          } catch (SQLException e) {
-            if (LOG.isDebugEnabled())
-               LOG.debug("Unable to retrieve DB Major and Minor versions from JDBC metadata.", e);
+            if (log.isDebugEnabled())
+               log.debug("Unable to retrieve DB Major and Minor versions from JDBC metadata.", e);
          } finally {
             connectionFactory.releaseConnection(connection);
          }
@@ -95,21 +95,21 @@ public class TableManagerFactory {
          String dbProduct = connection.getMetaData().getDatabaseProductName();
          return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
       } catch (Exception e) {
-         if (LOG.isDebugEnabled())
-            LOG.debug("Unable to guess dialect from JDBC metadata.", e);
+         if (log.isDebugEnabled())
+            log.debug("Unable to guess dialect from JDBC metadata.", e);
       } finally {
          connectionFactory.releaseConnection(connection);
       }
 
-      if (LOG.isDebugEnabled())
-         LOG.debug("Unable to detect database dialect using connection metadata.  Attempting to guess on driver name.");
+      if (log.isDebugEnabled())
+         log.debug("Unable to detect database dialect using connection metadata.  Attempting to guess on driver name.");
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
          return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
       } catch (Exception e) {
-         if (LOG.isDebugEnabled())
-            LOG.debug("Unable to guess database dialect from JDBC driver name.", e);
+         if (log.isDebugEnabled())
+            log.debug("Unable to guess database dialect from JDBC driver name.", e);
       } finally {
          connectionFactory.releaseConnection(connection);
       }
@@ -118,8 +118,8 @@ public class TableManagerFactory {
          throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(DatabaseType.values()));
       }
 
-      if (LOG.isDebugEnabled())
-         LOG.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
+      if (log.isDebugEnabled())
+         log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
       return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
    }
 

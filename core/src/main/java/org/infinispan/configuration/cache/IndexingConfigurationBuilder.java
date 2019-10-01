@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONF
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Map;
 import java.util.Properties;
@@ -17,16 +18,11 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
-
    private final AttributeSet attributes;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
@@ -159,14 +155,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       if (enabled()) {
          //Indexing is not conceptually compatible with Invalidation mode
          if (clustering().cacheMode().isInvalidation()) {
-            throw log.invalidConfigurationIndexingWithInvalidation();
+            throw CONFIG.invalidConfigurationIndexingWithInvalidation();
          }
          if (indexedEntities().isEmpty() && !getBuilder().template()) {
             //TODO [anistor] This does not take into account eventual programmatically defined entity mappings
-            log.noIndexableClassesDefined();
+            CONFIG.noIndexableClassesDefined();
          }
          if (attributes.attribute(INDEX).get() == Index.ALL && !clustering().cacheMode().isReplicated()) {
-            log.allIndexingInNonReplicatedCache();
+            CONFIG.allIndexingInNonReplicatedCache();
          }
       }
       //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
@@ -180,7 +176,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             String clazz = "org.infinispan.query.Search";
             Util.loadClassStrict( clazz, globalConfig.classLoader() );
          } catch (ClassNotFoundException e) {
-            throw log.invalidConfigurationIndexingWithoutModule();
+            throw CONFIG.invalidConfigurationIndexingWithoutModule();
          }
       }
    }

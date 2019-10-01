@@ -1,13 +1,13 @@
 package org.infinispan.counter.configuration;
 
+import static org.infinispan.counter.logging.Log.CONTAINER;
+
 import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.serializing.SerializedWith;
-import org.infinispan.counter.logging.Log;
 
 /**
  * The {@link org.infinispan.counter.api.CounterManager} configuration.
@@ -19,20 +19,18 @@ import org.infinispan.counter.logging.Log;
  */
 @SerializedWith(CounterConfigurationSerializer.class)
 public class CounterManagerConfiguration {
-
-   private static final Log log = LogFactory.getLog(CounterManagerConfiguration.class, Log.class);
    static final AttributeDefinition<Reliability> RELIABILITY = AttributeDefinition
          .builder("reliability", Reliability.AVAILABLE)
          .validator(value -> {
             if (value == null) {
-               throw log.invalidReliabilityMode();
+               throw CONTAINER.invalidReliabilityMode();
             }
          })
          .immutable().build();
    static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners", 2)
          .validator(value -> {
             if (value < 1) {
-               throw log.invalidNumOwners(value);
+               throw CONTAINER.invalidNumOwners(value);
             }
          })
          .immutable().build();

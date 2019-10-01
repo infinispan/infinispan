@@ -1,5 +1,7 @@
 package org.infinispan.commons.executors;
 
+import static org.infinispan.commons.logging.Log.CONFIG;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -8,8 +10,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.concurrent.CallerRunsRejectOnShutdownPolicy;
 
 /**
@@ -17,8 +17,6 @@ import org.infinispan.commons.util.concurrent.CallerRunsRejectOnShutdownPolicy;
  */
 public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
    public static final int DEFAULT_KEEP_ALIVE_MILLIS = 60000;
-
-   private static final Log log = LogFactory.getLog(BlockingThreadPoolExecutorFactory.class);
 
    private final int maxThreads;
    private final int coreThreads;
@@ -63,20 +61,20 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
    @Override
    public void validate() {
       if (coreThreads < 0)
-         throw log.illegalValueThreadPoolParameter("core threads", ">= 0");
+         throw CONFIG.illegalValueThreadPoolParameter("core threads", ">= 0");
 
       if (maxThreads <= 0)
-         throw log.illegalValueThreadPoolParameter("max threads", "> 0");
+         throw CONFIG.illegalValueThreadPoolParameter("max threads", "> 0");
 
       if (maxThreads < coreThreads)
-         throw log.illegalValueThreadPoolParameter(
+         throw CONFIG.illegalValueThreadPoolParameter(
                "max threads and core threads", "max threads >= core threads");
 
       if (keepAlive < 0)
-         throw log.illegalValueThreadPoolParameter("keep alive time", ">= 0");
+         throw CONFIG.illegalValueThreadPoolParameter("keep alive time", ">= 0");
 
       if (queueLength < 0)
-         throw log.illegalValueThreadPoolParameter("work queue length", ">= 0");
+         throw CONFIG.illegalValueThreadPoolParameter("work queue length", ">= 0");
    }
 
    @Override
