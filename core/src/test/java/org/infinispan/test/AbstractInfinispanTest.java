@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -447,6 +448,10 @@ public abstract class AbstractInfinispanTest {
          clazz = clazz.getSuperclass();
       }
       return fields;
+   }
+
+   protected ExecutorService getDefaultExecutorService() {
+      return defaultExecutorService;
    }
 
    private class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {

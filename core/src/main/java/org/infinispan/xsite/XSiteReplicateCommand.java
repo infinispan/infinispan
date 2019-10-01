@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.util.ByteString;
 
@@ -17,7 +19,7 @@ public abstract class XSiteReplicateCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public abstract Object performInLocalSite(BackupReceiver receiver) throws Throwable;
+   public abstract CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder);
 
    public String getOriginSite() {
       return originSite;

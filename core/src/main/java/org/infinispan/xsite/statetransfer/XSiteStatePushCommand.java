@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -37,9 +38,9 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand implements Init
    }
 
    @Override
-   public Object performInLocalSite(BackupReceiver receiver) throws Throwable {
-      receiver.handleStateTransferState(this);
-      return null;
+   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+      assert !preserveOrder;
+      return receiver.handleStateTransferState(this);
    }
 
    public XSiteStatePushCommand() {

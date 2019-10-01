@@ -4,8 +4,8 @@ import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUT
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
@@ -25,6 +25,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
@@ -95,12 +96,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       if (handler != null) { //not a local cache.
          handler.registerXSiteCommandReceiver(reply != Reply.NO_OP);
       }
-      if (order.preserveOrder()) {
-         runXSiteReplicableCommand(command, receiver, reply);
-      } else {
-         //the remote site commands may need to be forwarded to the appropriate owners
-         remoteCommandsExecutor.execute(() -> runXSiteReplicableCommand(command, receiver, reply));
-      }
+      command.performInLocalSite(receiver, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
    }
 
    private void handleCacheRpcCommand(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder mode) {
@@ -128,68 +124,78 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       commandsFactory.initializeReplicableCommand(command, true);
    }
 
-   private void runXSiteReplicableCommand(XSiteReplicateCommand command, BackupReceiver receiver, Reply reply) {
-      try {
-         Object returnValue = command.performInLocalSite(receiver);
-         reply.reply(SuccessfulResponse.create(returnValue));
-      } catch (InterruptedException e) {
-         CLUSTER.shutdownHandlingCommand(command);
-         reply.reply(shuttingDownResponse());
-      } catch (Throwable throwable) {
-         CLUSTER.exceptionHandlingCommand(command, throwable);
-         reply.reply(exceptionHandlingCommand(throwable));
-      }
-   }
-
    private void handleReplicableCommand(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
       if (trace) {
          log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]", command, origin);
       }
+      Runnable runnable = new ReplicableCommandRunner(command, reply, globalComponentRegistry, order.preserveOrder());
       if (order.preserveOrder() || !command.canBlock()) {
-         runReplicableCommand(command, reply, order.preserveOrder());
+         //we must/can run in this thread
+         runnable.run();
       } else {
-         remoteCommandsExecutor.execute(() -> runReplicableCommand(command, reply, order.preserveOrder()));
+         remoteCommandsExecutor.execute(runnable);
       }
    }
 
-   private void runReplicableCommand(ReplicableCommand command, Reply reply, boolean preserveOrder) {
-      try {
-         invokeReplicableCommand(command, reply, preserveOrder);
-      } catch (Throwable throwable) {
-         if (throwable.getCause() != null && throwable instanceof CompletionException) {
-            throwable = throwable.getCause();
+   private static class ReplicableCommandRunner extends ResponseConsumer implements Runnable {
+
+      private final GlobalComponentRegistry globalComponentRegistry;
+      private final boolean preserveOrder;
+
+      private ReplicableCommandRunner(ReplicableCommand command, Reply reply,
+            GlobalComponentRegistry globalComponentRegistry, boolean preserveOrder) {
+         super(command, reply);
+         this.globalComponentRegistry = globalComponentRegistry;
+         this.preserveOrder = preserveOrder;
+      }
+
+      @Override
+      public void run() {
+         try {
+            globalComponentRegistry.wireDependencies(command);
+            CompletableFuture<Object> future = command.invokeAsync().whenComplete(this);
+            if (preserveOrder) {
+               future.join();
+            }
+         } catch (Throwable throwable) {
+            accept(null, throwable);
          }
-         if (throwable instanceof InterruptedException || throwable instanceof IllegalLifecycleStateException) {
-            CLUSTER.shutdownHandlingCommand(command);
-            reply.reply(shuttingDownResponse());
+      }
+   }
+
+   private static class ResponseConsumer implements BiConsumer<Object, Throwable> {
+
+      final ReplicableCommand command;
+      private final Reply reply;
+
+      private ResponseConsumer(ReplicableCommand command, Reply reply) {
+         this.command = command;
+         this.reply = reply;
+      }
+
+      @Override
+      public void accept(Object retVal, Throwable throwable) {
+         reply.reply(convertToResponse(retVal, throwable));
+      }
+
+      private Response convertToResponse(Object retVal, Throwable throwable) {
+         if (throwable != null) {
+            throwable = CompletableFutures.extractException(throwable);
+            if (throwable instanceof InterruptedException || throwable instanceof IllegalLifecycleStateException) {
+               CLUSTER.shutdownHandlingCommand(command);
+               return shuttingDownResponse();
+            } else {
+               CLUSTER.exceptionHandlingCommand(command, throwable);
+               return exceptionHandlingCommand(throwable);
+            }
          } else {
-            CLUSTER.exceptionHandlingCommand(command, throwable);
-            reply.reply(exceptionHandlingCommand(throwable));
+            if (retVal == null || retVal instanceof Response) {
+               return (Response) retVal;
+            } else {
+               return SuccessfulResponse.create(retVal);
+            }
          }
       }
-   }
-
-   private void invokeReplicableCommand(ReplicableCommand command, Reply reply, boolean preserveOrder)
-         throws Throwable {
-      globalComponentRegistry.wireDependencies(command);
-
-      CompletableFuture<Object> future = command.invokeAsync();
-      if (preserveOrder) {
-         Object retVal = future.join();
-         sendResponse(reply, retVal);
-      } else {
-         future.whenComplete((retVal, throwable) -> sendResponse(reply, retVal));
-      }
-   }
-
-   private void sendResponse(Reply reply, Object retVal) {
-      Response response;
-      if (retVal == null || retVal instanceof Response) {
-         response = (Response) retVal;
-      } else {
-         response = SuccessfulResponse.create(retVal);
-      }
-      reply.reply(response);
    }
 
 }

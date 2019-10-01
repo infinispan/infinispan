@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +18,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BlockingLocalTopologyManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -86,27 +88,29 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                                    public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
                                       return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
                                          @Override
-                                         public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
+                                         public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
                                             log.debugf("Applying state: %s", cmd);
                                             if (!discard.get()) {
-                                               delegate.handleStateTransferState(cmd);
-                                               return;
+                                               return delegate.handleStateTransferState(cmd);
                                             }
                                             DistributionManager manager = delegate.getCache().getAdvancedCache().getDistributionManager();
                                             synchronized (addressSet) {
                                                //discard the state message when all member has received at least one chunk!
                                                if (addressSet.size() == 3) {
                                                   checkPoint.trigger("before-block");
-                                                  checkPoint.awaitStrict("blocked", 30, TimeUnit.SECONDS);
-                                                  delegate.handleStateTransferState(cmd);
-                                                  return;
+                                                  try {
+                                                     checkPoint.awaitStrict("blocked", 30, TimeUnit.SECONDS);
+                                                  } catch (InterruptedException | TimeoutException e) {
+                                                     return CompletableFutures.completedExceptionFuture(e);
+                                                  }
+                                                  return delegate.handleStateTransferState(cmd);
                                                }
                                                for (XSiteState state : cmd.getChunk()) {
                                                   addressSet.add(manager.getCacheTopology().getDistribution(state.key())
                                                         .primary());
                                                }
                                             }
-                                            delegate.handleStateTransferState(cmd);
+                                            return delegate.handleStateTransferState(cmd);
                                          }
                                       };
                                    }
@@ -157,9 +161,9 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                                    public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
                                       return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
                                          @Override
-                                         public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
+                                         public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
                                             checkPoint.trigger("before-chunk");
-                                            delegate.handleStateTransferState(cmd);
+                                            return delegate.handleStateTransferState(cmd);
                                          }
                                       };
                                    }
