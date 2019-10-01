@@ -80,8 +80,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.core</groupId>
-         <artifactId>wildfly-controller</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-runtime</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
