@@ -70,7 +70,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
             }
             return StandardConversions.convertJavaToOctetStream(unmarshalled, MediaType.APPLICATION_OBJECT, marshaller);
          } catch (IOException | InterruptedException e) {
-            throw logger.unsupportedContent(content);
+            throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
          }
       }
       if (destinationType.match(MediaType.TEXT_PLAIN)) {
@@ -93,18 +93,18 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
             if (content instanceof WrappedByteArray) return content;
             return StandardConversions.convertJavaToOctetStream(content, MediaType.APPLICATION_OBJECT, marshaller);
          } catch (IOException | InterruptedException e) {
-            throw logger.unsupportedContent(content);
+            throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
          }
       }
 
-      throw logger.unsupportedContent(content);
+      throw logger.unsupportedContent(JBossMarshallingTranscoder.class.getSimpleName(), content);
    }
 
    private byte[] marshall(Object o) {
       try {
          return marshaller.objectToByteBuffer(o);
       } catch (InterruptedException | IOException e) {
-         throw logger.errorTranscoding(e);
+         throw logger.errorTranscoding(JBossMarshallingTranscoder.class.getSimpleName(), e);
       }
    }
 
@@ -112,8 +112,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
       try {
          return o instanceof byte[] ? marshaller.objectFromByteBuffer((byte[]) o) : o;
       } catch (IOException | ClassNotFoundException e) {
-         throw logger.errorTranscoding(e);
+         throw logger.errorTranscoding(JBossMarshallingTranscoder.class.getSimpleName(), e);
       }
    }
-
 }

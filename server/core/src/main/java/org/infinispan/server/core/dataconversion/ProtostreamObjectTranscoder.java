@@ -53,9 +53,9 @@ public class ProtostreamObjectTranscoder implements Transcoder {
             return ProtobufUtil.toByteArray(ctx, decoded);
          }
       } catch (IOException e) {
-         throw log.errorTranscoding(e);
+         throw log.errorTranscoding(ProtostreamObjectTranscoder.class.getSimpleName(), e);
       }
-      throw log.unsupportedContent(content);
+      throw log.unsupportedContent(ProtostreamObjectTranscoder.class.getSimpleName(), content);
    }
 
    @Override

@@ -113,7 +113,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
       if (destinationType.match(TEXT_PLAIN)) {
          return convertCharset(content, contentCharset, destinationCharset, outputString);
       }
-      throw logger.unsupportedContent(content);
+      throw logger.unsupportedContent(JsonTranscoder.class.getSimpleName(), content);
    }
 
    private Object convertTextToJson(Object content, Charset contentCharset, Charset destinationCharset, boolean asString) throws IOException {
