@@ -1,7 +1,5 @@
 package org.infinispan.jboss.marshalling.commons;
 
-import java.util.List;
-
 import org.infinispan.commons.configuration.ClassWhiteList;
 
 /**
@@ -25,14 +23,6 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
       super();
       baseCfg.setClassResolver(
             new DefaultContextClassResolver(classLoader != null ? classLoader : this.getClass().getClassLoader()));
-   }
-
-   /**
-    * @deprecated Use {@link #GenericJBossMarshaller(ClassWhiteList)} instead
-    */
-   @Deprecated
-   public GenericJBossMarshaller(List<String> whitelist) {
-      this(new ClassWhiteList(whitelist));
    }
 
    public GenericJBossMarshaller(ClassWhiteList classWhiteList) {
