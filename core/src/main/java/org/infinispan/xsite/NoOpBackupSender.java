@@ -12,7 +12,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 
 /**
@@ -36,33 +37,24 @@ public class NoOpBackupSender implements BackupSender {
    }
 
    @Override
-   public BackupResponse backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction) {
-      return BackupSenderImpl.EMPTY_RESPONSE;
+   public InvocationStage backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction,
+         Transaction transaction) {
+      return SyncInvocationStage.completedNullStage();
    }
 
    @Override
-   public void processResponses(BackupResponse backupResponse, VisitableCommand command) {
-      // no-op
+   public InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) {
+      return SyncInvocationStage.completedNullStage();
    }
 
    @Override
-   public BackupResponse backupWrite(WriteCommand command) {
-      return BackupSenderImpl.EMPTY_RESPONSE;
+   public InvocationStage backupCommit(CommitCommand command, Transaction transaction) {
+      return SyncInvocationStage.completedNullStage();
    }
 
    @Override
-   public BackupResponse backupCommit(CommitCommand command) {
-      return BackupSenderImpl.EMPTY_RESPONSE;
-   }
-
-   @Override
-   public BackupResponse backupRollback(RollbackCommand command) {
-      return BackupSenderImpl.EMPTY_RESPONSE;
-   }
-
-   @Override
-   public void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) {
-      // no-op
+   public InvocationStage backupRollback(RollbackCommand command, Transaction transaction) {
+      return SyncInvocationStage.completedNullStage();
    }
 
    @Override

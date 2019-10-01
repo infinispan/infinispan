@@ -1,7 +1,6 @@
 package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * An extension of {@link LockPromise} that contains a key associated to the lock.
@@ -21,7 +20,7 @@ public interface KeyAwareLockPromise extends LockPromise {
          return true;
       }
 
-      public void lock() throws InterruptedException, TimeoutException {/*no-op*/}
+      public void lock() {/*no-op*/}
 
       public void addListener(LockListener listener) {
          listener.onEvent(LockState.ACQUIRED);

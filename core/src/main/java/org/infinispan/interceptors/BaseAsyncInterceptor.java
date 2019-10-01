@@ -61,7 +61,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             return nextInterceptor.visitCommand(ctx, command);
          }
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -85,7 +85,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          }
          return function.apply(ctx, command, rv);
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -110,7 +110,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          action.accept(ctx, command, rv);
          return rv;
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -135,7 +135,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          // No exception
          return rv;
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -166,9 +166,9 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             throwable = t;
          }
          action.accept(ctx, command, rv, throwable);
-         return throwable == null ? rv : new SimpleAsyncInvocationStage(throwable);
+         return throwable == null ? rv : new ExceptionSyncInvocationStage(throwable);
       } catch (Throwable t) {
-         return new SimpleAsyncInvocationStage(t);
+         return new ExceptionSyncInvocationStage(t);
       }
    }
 
@@ -200,7 +200,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          }
          return function.apply(ctx, command, rv, throwable);
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -337,7 +337,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             );
          }
       }
-      return new SimpleAsyncInvocationStage(throwable);
+      return new ExceptionSyncInvocationStage(throwable);
    }
 
    /**

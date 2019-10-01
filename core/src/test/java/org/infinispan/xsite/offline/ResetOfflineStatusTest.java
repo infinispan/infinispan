@@ -70,7 +70,7 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
             cache(LON, 0).put(KEYS[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
-            //expectedorigin/origin/
+            //expected
          }
       }
 

@@ -6,8 +6,10 @@ import java.util.concurrent.ExecutionException;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationCallback;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.TraceException;
 
@@ -26,10 +28,6 @@ public class SimpleAsyncInvocationStage extends InvocationStage {
    @SuppressWarnings("unchecked")
    public SimpleAsyncInvocationStage(CompletionStage<?> future) {
       this.future = (CompletableFuture<Object>) future;
-   }
-
-   public SimpleAsyncInvocationStage(Throwable throwable) {
-      this.future = CompletableFutures.completedExceptionFuture(throwable);
    }
 
    @Override
@@ -69,10 +67,19 @@ public class SimpleAsyncInvocationStage extends InvocationStage {
          try {
             return function.apply(ctx, command, rv, throwable);
          } catch (Throwable t) {
-            return new SimpleAsyncInvocationStage(t);
+            return new ExceptionSyncInvocationStage(t);
          }
       }
       return new QueueAsyncInvocationStage(ctx, command, future, function);
+   }
+
+   @Override
+   public Object thenReturn(InvocationContext ctx, VisitableCommand command, Object returnValue) {
+      if (future.isDone()) {
+         return future.isCompletedExceptionally() ? this : returnValue;
+      }
+      return new QueueAsyncInvocationStage(ctx, command, future,
+            (InvocationSuccessFunction) (rCtx, rCommand, rv) -> returnValue);
    }
 
    @Override

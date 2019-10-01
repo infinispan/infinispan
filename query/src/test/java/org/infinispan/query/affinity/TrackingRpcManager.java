@@ -19,6 +19,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -117,6 +118,11 @@ class TrackingRpcManager implements RpcManager {
    @Override
    public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
       return delegate.invokeXSite(sites, command);
+   }
+
+   @Override
+   public XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command) {
+      return delegate.invokeXSite(backup, command);
    }
 
    @Override

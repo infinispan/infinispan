@@ -207,6 +207,11 @@ public class MockTransport implements Transport {
    }
 
    @Override
+   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public boolean isCoordinator() {
       return localAddress.equals(members.get(0));
    }

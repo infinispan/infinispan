@@ -175,7 +175,26 @@ public interface Transport extends Lifecycle {
    }
 
 
+   /**
+    * @deprecated since 10.0. Use {@link #backupRemotely(XSiteBackup, XSiteReplicateCommand)} instead.
+    */
+   @Deprecated
    BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception;
+
+   /**
+    * Sends a cross-site request to a remote site.
+    * <p>
+    * Currently, no reply values are supported. Or the request completes successfully or it throws an {@link
+    * Exception}.
+    * <p>
+    * If {@link XSiteBackup#isSync()} returns {@code false}, the {@link XSiteResponse} is only completed when the an
+    * ACK from the remote site is received. The invoker needs to make sure not to wait for the {@link XSiteResponse}.
+    *
+    * @param backup     The remote site.
+    * @param rpcCommand The command to send.
+    * @return A {@link XSiteResponse} that is completed when the request is completed.
+    */
+   XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand);
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.

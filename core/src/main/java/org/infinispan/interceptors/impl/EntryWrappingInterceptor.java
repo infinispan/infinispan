@@ -63,6 +63,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -723,7 +724,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private Object commitEntriesFinally(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) {
       // Do not commit if the command will be retried
       if (t instanceof OutdatedTopologyException)
-         return new SimpleAsyncInvocationStage(t);
+         return new ExceptionSyncInvocationStage(t);
 
       return delayedValue(commitContextEntries(rCtx, null), rv, t);
    }

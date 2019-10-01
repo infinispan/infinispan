@@ -5,7 +5,6 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.replaceField;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -14,9 +13,7 @@ import static org.testng.Assert.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -29,18 +26,16 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsBackupResponse;
+import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.util.ControlledTimeService;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.testng.annotations.Test;
@@ -153,60 +148,55 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       replaceField(timeService, "timeService", rpcManager, RpcManagerImpl.class);
       Transport originalTransport = rpcManager.getTransport();
 
-      List<BackupResponse> responses = new ArrayList<>(3);
-      List<CompletableFuture<ValidResponse>> asyncFutures = new ArrayList<>(2);
+      List<XSiteResponse> responses = new ArrayList<>(3);
+      List<CompletableFuture<Void>> asyncFutures = new ArrayList<>(2);
+      List<CompletableFuture<Void>> syncFutures = new ArrayList<>(2);
 
       try {
          Transport mockTransport = mock(Transport.class);
-         when(mockTransport.backupRemotely(anyCollection(), any(XSiteReplicateCommand.class)))
+         when(mockTransport.backupRemotely(any(XSiteBackup.class), any(XSiteReplicateCommand.class)))
                .then(invocationOnMock -> {
-                  Collection<XSiteBackup> arg1 = invocationOnMock.getArgument(0);
-                  Map<XSiteBackup, CompletableFuture<ValidResponse>> siteResponses = new HashMap<>();
-                  for (XSiteBackup b : arg1) {
-                     if (b.isSync()) {
-                        siteResponses.put(b, CompletableFutures.completedNull());
-                     } else {
-                        CompletableFuture<ValidResponse> f = new CompletableFuture<>();
-                        asyncFutures.add(f);
-                        siteResponses.put(b, f);
-                     }
+                  XSiteBackup arg1 = invocationOnMock.getArgument(0);
+                  CompletableFuture<Void> cf = new CompletableFuture<>();
+                  XSiteResponseImpl rsp = new XSiteResponseImpl(timeService, arg1);
+                  if (arg1.isSync()) {
+                     syncFutures.add(cf);
+                  } else {
+                     asyncFutures.add(cf);
                   }
-                  return new JGroupsBackupResponse(siteResponses, timeService);
+                  cf.whenComplete(rsp);
+                  return rsp;
                });
 
          rpcManager.setTransport(mockTransport);
 
-         List<XSiteBackup> remoteSites = new ArrayList<>(2);
-         remoteSites.add(newBackup("Site1", true));
-         remoteSites.add(newBackup("Site2", false));
+         XSiteBackup site1 = newBackup("Site1", true);
+         XSiteBackup site2 = newBackup("Site2", false);
 
-         responses.add(rpcManager.invokeXSite(remoteSites, mock(XSiteReplicateCommand.class)));
 
-         remoteSites.clear();
-         remoteSites.add(newBackup("Site3", false));
-         responses.add(rpcManager.invokeXSite(remoteSites, mock(XSiteReplicateCommand.class)));
-
-         remoteSites.clear();
-         remoteSites.add(newBackup("Site4", true));
-
-         responses.add(rpcManager.invokeXSite(remoteSites, mock(XSiteReplicateCommand.class)));
-
+         responses.add(rpcManager.invokeXSite(site1, mock(XSiteReplicateCommand.class)));
+         responses.add(rpcManager.invokeXSite(site2, mock(XSiteReplicateCommand.class)));
+         responses.add(rpcManager.invokeXSite(site2, mock(XSiteReplicateCommand.class)));
+         responses.add(rpcManager.invokeXSite(site1, mock(XSiteReplicateCommand.class)));
       } finally {
          rpcManager.setTransport(originalTransport);
       }
 
-      assertEquals(responses.size(), 3);
+      assertEquals(responses.size(), 4);
       assertEquals(asyncFutures.size(), 2);
 
       //in the end, we end up with 2 sync request and 2 async requests
       timeService.advance(10);
-      responses.get(0).waitForBackupToFinish();
       asyncFutures.get(0).complete(null);
+      syncFutures.get(0).complete(null);
+      responses.get(0).toCompletableFuture().join();
 
       timeService.advance(20);
-      responses.get(1).waitForBackupToFinish();
-      responses.get(2).waitForBackupToFinish();
       asyncFutures.get(1).complete(null);
+      syncFutures.get(1).complete(null);
+      responses.get(1).toCompletableFuture().join();
+      responses.get(2).toCompletableFuture().join();
+      responses.get(3).toCompletableFuture().join();
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName rpcManagerName = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");

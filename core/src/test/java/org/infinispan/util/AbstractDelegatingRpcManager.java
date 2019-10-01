@@ -23,6 +23,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -175,6 +176,11 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    @Override
    public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
       return realOne.invokeXSite(sites, command);
+   }
+
+   @Override
+   public XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command) {
+      return realOne.invokeXSite(backup, command);
    }
 
    @Override

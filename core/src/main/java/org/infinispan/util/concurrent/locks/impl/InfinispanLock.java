@@ -16,6 +16,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -409,7 +410,7 @@ public class InfinispanLock {
       public InvocationStage toInvocationStage(Supplier<TimeoutException> timeoutSupplier) {
          if (notifier.isDone()) {
             return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage,
-                  SimpleAsyncInvocationStage::new, timeoutSupplier);
+                  ExceptionSyncInvocationStage::new, timeoutSupplier);
          }
          return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(state -> {
             Object rv = checkState(state, () -> null, throwable -> throwable, timeoutSupplier);
