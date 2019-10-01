@@ -393,6 +393,11 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-server-runtime</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-spring5-embedded</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
