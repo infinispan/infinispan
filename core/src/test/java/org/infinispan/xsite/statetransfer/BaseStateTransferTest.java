@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -41,6 +42,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.ExceptionRunnable;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -58,7 +60,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
    private static final String VALUE = "value";
 
-   public BaseStateTransferTest() {
+   BaseStateTransferTest() {
       this.cleanup = CleanupPhase.AFTER_METHOD;
       this.cacheMode = CacheMode.DIST_SYNC;
    }
@@ -768,33 +770,32 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       BackupReceiverRepositoryWrapper(BackupReceiverRepository delegate, BackupListener listener) {
          super(delegate);
-         if (listener == null) {
-            throw new NullPointerException("Listener must not be null.");
-         }
-         this.listener = listener;
+         this.listener = Objects.requireNonNull(listener, "Listener must not be null.");
       }
 
       @Override
       public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
          return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
             @Override
-            public Object handleRemoteCommand(VisitableCommand command) throws Throwable {
-               listener.beforeCommand(command);
+            public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
                try {
-                  return super.handleRemoteCommand(command);
+                  listener.beforeCommand(command);
+                  return super.handleRemoteCommand(command, preserveOrder);
+               } catch (Exception e) {
+                  return CompletableFutures.completedExceptionFuture(e);
                } finally {
                   listener.afterCommand(command);
                }
             }
 
             @Override
-            public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
-               listener.beforeState(cmd);
+            public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
                try {
-                  super.handleStateTransferState(cmd);
-               } finally {
-                  listener.afterState(cmd);
+                  listener.beforeState(cmd);
+               } catch (Exception e) {
+                  return CompletableFutures.completedExceptionFuture(e);
                }
+               return super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd));
             }
          };
       }

@@ -4,6 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.util.concurrent.CompletionStage;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commands.VisitableCommand;
@@ -49,18 +51,18 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
       assertNull(brWrapper.received);
    }
 
-   public class BackupReceiverWrapper extends BackupReceiverDelegator {
+   public static class BackupReceiverWrapper extends BackupReceiverDelegator {
 
       volatile VisitableCommand received;
 
-      public BackupReceiverWrapper(BackupReceiver br) {
+      BackupReceiverWrapper(BackupReceiver br) {
          super(br);
       }
 
       @Override
-      public Object handleRemoteCommand(VisitableCommand command) throws Throwable {
+      public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
          received = command;
-         return super.handleRemoteCommand(command);
+         return super.handleRemoteCommand(command, preserveOrder);
       }
    }
 

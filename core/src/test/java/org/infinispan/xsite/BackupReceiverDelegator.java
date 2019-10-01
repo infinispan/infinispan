@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -28,17 +30,17 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public Object handleRemoteCommand(VisitableCommand command) throws Throwable {
-      return delegate.handleRemoteCommand(command);
+   public CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+      return delegate.handleRemoteCommand(command, preserveOrder);
    }
 
    @Override
-   public void handleStateTransferControl(XSiteStateTransferControlCommand command) throws Exception {
-      delegate.handleStateTransferControl(command);
+   public CompletionStage<Void> handleStateTransferControl(XSiteStateTransferControlCommand command) {
+      return delegate.handleStateTransferControl(command);
    }
 
    @Override
-   public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
-      delegate.handleStateTransferState(cmd);
+   public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+      return delegate.handleStateTransferState(cmd);
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -16,17 +18,17 @@ public interface BackupReceiver {
 
    Cache getCache();
 
-   Object handleRemoteCommand(VisitableCommand command) throws Throwable;
+   CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
 
    /**
     * It handles the state transfer control from a remote site. The control command must be broadcast to the entire
     * cluster in which the cache exists.
     */
-   void handleStateTransferControl(XSiteStateTransferControlCommand command) throws Exception;
+   CompletionStage<Void> handleStateTransferControl(XSiteStateTransferControlCommand command);
 
    /**
     * It handles the state transfer state from a remote site. It is possible to have a single node applying the state or
     * forward the state to respective primary owners.
     */
-   void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception;
+   CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd);
 }

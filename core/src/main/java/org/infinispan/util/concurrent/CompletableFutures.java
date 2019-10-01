@@ -30,6 +30,7 @@ public class CompletableFutures {
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
    private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
+   private static final Function<?, ?> TO_NULL = o -> null;
 
    @SuppressWarnings("unchecked")
    public static <K,V> CompletableFuture<Map<K, V>> completedEmptyMap() {
@@ -58,7 +59,7 @@ public class CompletableFutures {
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {
-      CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+      CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
       return all.thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
    }
 
@@ -126,5 +127,10 @@ public class CompletableFutures {
          return cause;
       }
       return t;
+   }
+
+   public static  <T, R> Function<T, R> toNullFunction() {
+      //noinspection unchecked
+      return (Function<T, R>) TO_NULL;
    }
 }

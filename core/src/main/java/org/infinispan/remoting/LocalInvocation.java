@@ -1,6 +1,8 @@
 package org.infinispan.remoting;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
@@ -10,6 +12,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Simulates a remote invocation on the local node. This is needed because the transport does not redirect to itself the
@@ -18,7 +21,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class LocalInvocation implements Callable<Response> {
+public class LocalInvocation implements Callable<Response>, Function<Object, Response> {
 
    private final ResponseGenerator responseGenerator;
    private final CacheRpcCommand command;
@@ -75,5 +78,24 @@ public class LocalInvocation implements Callable<Response> {
    @Override
    public int hashCode() {
       return command.hashCode();
+   }
+
+   public CompletableFuture<Response> callAsync() {
+      commandsFactory.initializeReplicableCommand(command, false);
+      command.setOrigin(self);
+      try {
+         return command.invokeAsync().thenApply(this);
+      } catch (Throwable throwable) {
+         return CompletableFutures.completedExceptionFuture(throwable);
+      }
+   }
+
+   @Override
+   public Response apply(Object retVal) {
+      if (retVal instanceof Response) {
+         return (Response) retVal;
+      } else {
+         return responseGenerator.getResponse(command, retVal);
+      }
    }
 }
