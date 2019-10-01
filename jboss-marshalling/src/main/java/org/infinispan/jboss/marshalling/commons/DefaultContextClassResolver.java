@@ -13,15 +13,15 @@ import org.jboss.marshalling.ContextClassResolver;
  */
 public class DefaultContextClassResolver extends ContextClassResolver {
 
-   private WeakReference<ClassLoader> defaultClassLoader;
+   private final WeakReference<ClassLoader> defaultClassLoader;
 
    public DefaultContextClassResolver(ClassLoader defaultClassLoader) {
-      this.defaultClassLoader = new WeakReference<ClassLoader>(defaultClassLoader);
+      this.defaultClassLoader = new WeakReference<>(defaultClassLoader);
    }
 
    @Override
    protected ClassLoader getClassLoader() {
-      ClassLoader defaultLoader = this.defaultClassLoader.get();
+      ClassLoader defaultLoader = defaultClassLoader.get();
       return defaultLoader != null ? defaultLoader : super.getClassLoader();
    }
 }
