@@ -28,8 +28,6 @@ public class FlagBitSets {
    public static final long PUT_FOR_X_SITE_STATE_TRANSFER = EnumUtil.bitSetOf(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
    public static final long SKIP_SHARED_CACHE_STORE = EnumUtil.bitSetOf(Flag.SKIP_SHARED_CACHE_STORE);
    public static final long SKIP_OWNERSHIP_CHECK = EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK);
-   @Deprecated
-   public static final long DELTA_WRITE = EnumUtil.bitSetOf(Flag.DELTA_WRITE);
    public static final long IGNORE_RETURN_VALUES = EnumUtil.bitSetOf(Flag.IGNORE_RETURN_VALUES);
    public static final long SKIP_XSITE_BACKUP = EnumUtil.bitSetOf(Flag.SKIP_XSITE_BACKUP);
    public static final long SKIP_LISTENER_NOTIFICATION = EnumUtil.bitSetOf(Flag.SKIP_LISTENER_NOTIFICATION);
