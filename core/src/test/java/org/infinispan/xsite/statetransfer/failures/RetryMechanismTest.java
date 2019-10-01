@@ -8,6 +8,7 @@ import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATU
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -209,9 +210,9 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
          return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
             @Override
-            public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
+            public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
                counter.getAndIncrement();
-               super.handleStateTransferState(cmd);
+               return super.handleStateTransferState(cmd);
             }
          };
       }
