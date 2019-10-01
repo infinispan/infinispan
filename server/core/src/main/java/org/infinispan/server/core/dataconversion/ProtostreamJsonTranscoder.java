@@ -57,9 +57,9 @@ public class ProtostreamJsonTranscoder implements Transcoder {
             return ProtobufUtil.fromCanonicalJSON(ctx, reader);
          }
       } catch (IOException e) {
-         throw log.errorTranscoding(e);
+         throw log.errorTranscoding(ProtostreamJsonTranscoder.class.getSimpleName(), e);
       }
-      throw log.unsupportedContent(content);
+      throw log.unsupportedContent(ProtostreamJsonTranscoder.class.getSimpleName(), content);
    }
 
    private Object addTypeIfNeeded(Object content) {
