@@ -2398,6 +2398,11 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-runtime</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring5-common</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
