@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.util.ByteString;
@@ -33,8 +34,8 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public Object performInLocalSite(BackupReceiver receiver) throws Throwable {
-      return receiver.handleRemoteCommand(command);
+   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+      return receiver.handleRemoteCommand(command, preserveOrder);
    }
 
    @Override

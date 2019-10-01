@@ -1,16 +1,18 @@
 package org.infinispan.xsite.statetransfer;
 
+import static org.infinispan.util.concurrent.CompletableFutures.completedNull;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -47,9 +49,9 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand impl
    }
 
    @Override
-   public Object performInLocalSite(BackupReceiver receiver) throws Throwable {
-      receiver.handleStateTransferControl(this);
-      return null;
+   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+      assert !preserveOrder;
+      return receiver.handleStateTransferControl(this);
    }
 
    @Override
@@ -89,7 +91,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand impl
          default:
             throw new IllegalStateException("Unknown control command: " + control);
       }
-      return CompletableFutures.completedNull();
+      return completedNull();
    }
 
    @Override
@@ -126,7 +128,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand impl
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(ObjectInput input) throws IOException {
       control = Objects.requireNonNull(MarshallUtil.unmarshallEnum(input, StateTransferControl::valueOf));
       switch (control) {
          case START_SEND:

@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.MBEAN_COMPONENT_NAME;
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
@@ -17,6 +18,7 @@ import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.mockito.ArgumentMatchers;
@@ -83,7 +85,8 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(Boolean.TRUE, mBeanServer.getAttribute(objName, "StatisticsEnabled"));
 
       XSiteReplicateCommand command = mock(XSiteReplicateCommand.class);
-      when(command.performInLocalSite(ArgumentMatchers.any(BackupReceiver.class))).thenReturn(null);
+      when(command.performInLocalSite(ArgumentMatchers.any(BackupReceiver.class), anyBoolean()))
+            .thenReturn(CompletableFutures.completedNull());
       when(command.getCacheName()).thenReturn(ByteString.fromString(getDefaultCacheName()));
 
       //check if it is collected
