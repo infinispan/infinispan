@@ -16,19 +16,19 @@ public enum CounterState {
    /**
     * The counter value is valid.
     */
-   @ProtoEnumValue(number = 1)
+   @ProtoEnumValue(number = 0)
    VALID,
 
    /**
     * The counter value has reached its min threshold, i.e. no thresholds has been reached.
     */
-   @ProtoEnumValue(number = 2)
+   @ProtoEnumValue(number = 1)
    LOWER_BOUND_REACHED,
 
    /**
     * The counter value has reached its max threshold.
     */
-   @ProtoEnumValue(number = 3)
+   @ProtoEnumValue(number = 2)
    UPPER_BOUND_REACHED;
 
    private static final CounterState[] CACHED_VALUES = CounterState.values();
