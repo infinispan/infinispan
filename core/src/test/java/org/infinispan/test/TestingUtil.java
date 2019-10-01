@@ -94,8 +94,8 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.GlobalMarshaller;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -1023,8 +1023,8 @@ public class TestingUtil {
       return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
    }
 
-   public static PersistenceMarshaller extractPersistenceMarshaller(EmbeddedCacheManager cm) {
-      return cm.getGlobalComponentRegistry().getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+   public static PersistenceMarshallerImpl extractPersistenceMarshaller(EmbeddedCacheManager cm) {
+      return cm.getGlobalComponentRegistry().getComponent(PersistenceMarshallerImpl.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
    }
 
    public static AsyncInterceptorChain extractInterceptorChain(Cache cache) {

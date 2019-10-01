@@ -7,6 +7,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
  * Provides the starting point for implementing a {@link org.infinispan.commons.marshall.Marshaller} that uses Protobuf
@@ -21,6 +22,12 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
 
    public ProtoStreamMarshaller() {
       this(ProtobufUtil.newSerializationContext());
+   }
+
+   public ProtoStreamMarshaller(SerializationContextInitializer contextInitializer) {
+      this();
+      contextInitializer.registerSchema(serializationContext);
+      contextInitializer.registerMarshallers(serializationContext);
    }
 
    public ProtoStreamMarshaller(SerializationContext serializationContext) {
@@ -39,8 +46,7 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
       return ProtobufUtil.fromWrappedByteArray(getSerializationContext(), buf, offset, length);
    }
 
-   @Override
-   public boolean isMarshallable(Object o) {
+   public static boolean isMarshallable(SerializationContext ctx, Object o) {
       // our marshaller can handle all of these primitive/scalar types as well even if we do not
       // have a per-type marshaller defined in our SerializationContext
       return o instanceof String ||
@@ -55,7 +61,12 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
             o instanceof Character ||
             o instanceof java.util.Date ||
             o instanceof java.time.Instant ||
-            getSerializationContext().canMarshall(o.getClass());
+            ctx.canMarshall(o.getClass());
+   }
+
+   @Override
+   public boolean isMarshallable(Object o) {
+      return isMarshallable(getSerializationContext(), o);
    }
 
    @Override
