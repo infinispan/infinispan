@@ -15,6 +15,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -167,8 +168,22 @@ public interface RpcManager {
     * @param sites   The sites to where the command is sent.
     * @param command The {@link XSiteReplicateCommand} to send.
     * @return The {@link BackupResponse} with the responses.
+    * @deprecated since 10.0. Use {@link #invokeXSite(XSiteBackup, XSiteReplicateCommand)}
     */
+   @Deprecated
    BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception;
+
+   /**
+    * Sends the {@link XSiteReplicateCommand} to a remote site.
+    * <p>
+    * If {@link XSiteBackup#isSync()} returns {@code false}, the {@link XSiteResponse} is only completed when the an
+    * ACK from the remote site is received. The invoker needs to make sure not to wait for the {@link XSiteResponse}.
+    *
+    * @param backup  The site to where the command is sent.
+    * @param command The command to send.
+    * @return A {@link XSiteResponse} that is completed when the request is completed.
+    */
+   XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command);
 
    /**
     * @return a reference to the underlying transport.

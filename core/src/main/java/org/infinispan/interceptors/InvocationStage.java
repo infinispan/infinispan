@@ -166,4 +166,13 @@ public abstract class InvocationStage {
    public static InvocationStage completedNullStage() {
       return SyncInvocationStage.COMPLETED_NULL_STAGE;
    }
+
+   /**
+    * Overrides the return value of this {@link InvocationStage} if it is completed successfully.
+    *
+    * The result may be either {@code rv}, a new {@link InvocationStage} or {@code this}
+    */
+   public Object thenReturn(InvocationContext ctx, VisitableCommand command, Object returnValue) {
+      return thenApply(ctx, command, (rCtx, rCommand, rv) -> returnValue);
+   }
 }

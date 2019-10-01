@@ -51,6 +51,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -86,6 +87,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
    private final AttributeListener<Long> updateRpcOptions = this::updateRpcOptions;
+   private final XSiteResponse.XSiteResponseCompleted xSiteResponseCompleted = this::registerXSiteTime;
 
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
@@ -429,6 +431,28 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          asyncXSiteCounter.add(asyncCount);
       }
       return response;
+   }
+
+   @Override
+   public XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command) {
+      if (!statisticsEnabled) {
+         return t.backupRemotely(backup, command);
+      }
+      if (!backup.isSync()) {
+         asyncXSiteCounter.increment();
+      }
+      XSiteResponse rsp = t.backupRemotely(backup, command);
+      rsp.whenCompleted(xSiteResponseCompleted);
+      return rsp;
+   }
+
+   private void registerXSiteTime(XSiteBackup backup, long sendDurationNanos, long durationNanos, Throwable ignored) {
+      long durationMillis = TimeUnit.NANOSECONDS.toMillis(durationNanos);
+      if (backup.isSync()) {
+         syncXSiteReplicationTime.record(durationMillis);
+      } else {
+         asyncXSiteReplicationTime.record(durationMillis);
+      }
    }
 
    private void registerXsiteReplicationTime(long durationMillis) {

@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.xsite;
 
-import javax.transaction.Transaction;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -11,8 +9,8 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationSuccessAction;
-import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -31,18 +29,14 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
    protected static final boolean trace = log.isTraceEnabled();
-   private final InvocationSuccessAction<ClearCommand> handleClearReturn = this::handleClearReturn;
+   private final InvocationSuccessFunction<ClearCommand> handleClearReturn = this::handleClearReturn;
 
    @Override
-   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
       if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
          return invokeNext(ctx, command);
       }
-      return invokeNextThenAccept(ctx, command, handleClearReturn);
-   }
-
-   private void handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) throws Throwable {
-      backupSender.processResponses(backupSender.backupWrite(rCommand), rCommand);
+      return invokeNextThenApply(ctx, command, handleClearReturn);
    }
 
    @Override
@@ -55,24 +49,20 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
          return invokeNext(ctx, command);
       }
 
-      BackupResponse backupResponse = backupSender.backupPrepare(command, ctx.getCacheTransaction());
-      return processBackupResponse(ctx, command, backupResponse);
+      InvocationStage stage = backupSender.backupPrepare(command, ctx.getCacheTransaction(), ctx.getTransaction());
+      return invokeNextAndWaitForCrossSite(ctx, command, stage);
    }
 
-   protected Object processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
-         BackupResponse backupResponse) {
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         Transaction transaction = ((TxInvocationContext) rCtx).getTransaction();
-         backupSender.processResponses(backupResponse, rCommand, transaction);
-      });
+   Object invokeNextAndWaitForCrossSite(TxInvocationContext ctx, VisitableCommand command, InvocationStage stage) {
+      return invokeNextThenApply(ctx, command, stage::thenReturn);
    }
 
-   protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {
+   boolean isTxFromRemoteSite(GlobalTransaction gtx) {
       LocalTransaction remoteTx = txTable.getLocalTransaction(gtx);
       return remoteTx != null && remoteTx.isFromRemoteSite();
    }
 
-   protected boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
+   boolean shouldInvokeRemoteTxCommand(TxInvocationContext ctx) {
       // ISPN-2362: For backups, we should only replicate to the remote site if there are modifications to replay.
       boolean shouldBackupRemotely =
             ctx.isOriginLocal() && ctx.hasModifications() && !ctx.getCacheTransaction().isFromStateTransfer();
@@ -80,11 +70,16 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
       return shouldBackupRemotely;
    }
 
-   protected final boolean skipXSiteBackup(FlagAffectedCommand command) {
+   static boolean skipXSiteBackup(FlagAffectedCommand command) {
       return command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP);
    }
 
    protected Log getLog() {
       return log;
+   }
+
+   private Object handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) throws Throwable {
+      InvocationStage stage = backupSender.backupWrite(rCommand, rCommand);
+      return stage.thenReturn(ctx, rCommand, rv);
    }
 }

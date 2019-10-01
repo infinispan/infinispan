@@ -9,6 +9,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 
@@ -25,21 +26,13 @@ public interface BackupSender {
    /**
     * Prepares a transaction on the remote site.
     */
-   BackupResponse backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction) throws Exception;
+   InvocationStage backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction, Transaction transaction) throws Exception;
 
-   /**
-    * Processes the responses of a backup command. It might throw an exception in the case the replication to the
-    * remote site fail, based on the configured {@link CustomFailurePolicy}.
-    */
-   void processResponses(BackupResponse backupResponse, VisitableCommand command) throws Throwable;
+   InvocationStage backupCommit(CommitCommand command, Transaction transaction) throws Exception;
 
-   BackupResponse backupWrite(WriteCommand command) throws Exception;
+   InvocationStage backupRollback(RollbackCommand command, Transaction transaction) throws Exception;
 
-   BackupResponse backupCommit(CommitCommand command) throws Exception;
-
-   BackupResponse backupRollback(RollbackCommand command) throws Exception;
-
-   void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable;
+   InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) throws Exception;
 
    OfflineStatus getOfflineStatus(String siteName);
 

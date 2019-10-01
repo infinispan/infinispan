@@ -29,7 +29,8 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshallableFunctions;
 
@@ -42,8 +43,8 @@ import org.infinispan.marshall.core.MarshallableFunctions;
  */
 public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
 
-   private final InvocationSuccessAction<DataWriteCommand> handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
-   private final InvocationSuccessAction<WriteCommand> handleMultipleKeysWriteReturn = this::handleMultipleKeysWriteReturn;
+   private final InvocationSuccessFunction<DataWriteCommand> handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
+   private final InvocationSuccessFunction<WriteCommand> handleMultipleKeysWriteReturn = this::handleMultipleKeysWriteReturn;
 
    @Inject CommandsFactory commandsFactory;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
@@ -100,7 +101,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
 
@@ -119,14 +120,14 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
 
-   private Object handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   private Object handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       if (skipXSiteBackup(command)) {
          return invokeNext(ctx, command);
       }
-      return invokeNextThenAccept(ctx, command, handleSingleKeyWriteReturn);
+      return invokeNextThenApply(ctx, command, handleSingleKeyWriteReturn);
    }
 
-   private void handleSingleKeyWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) throws Throwable {
+   private Object handleSingleKeyWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) throws Throwable {
       int segment = dataWriteCommand.getSegment();
       if (dataWriteCommand.isSuccessful() &&
             clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment).isPrimary()) {
@@ -139,12 +140,13 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
             crossSiteCommand = commandsFactory.buildPutKeyValueCommand(dataWriteCommand.getKey(), entry.getValue(),
                   segment, entry.getMetadata(), dataWriteCommand.getFlagsBitSet());
          }
-         backupSender.processResponses(backupSender.backupWrite(crossSiteCommand), dataWriteCommand);
+         InvocationStage stage = backupSender.backupWrite(crossSiteCommand, dataWriteCommand);
+         return stage.thenReturn(ctx, dataWriteCommand, rv);
       }
+      return rv;
    }
 
-   private Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command)
-         throws Throwable {
+   private Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command) {
       if (trace) log.tracef("Processing %s", command);
       if (skipXSiteBackup(command)) {
          return invokeNext(ctx, command);
@@ -153,16 +155,16 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(),
                readWriteKeyCommand.getSegment(), readWriteKeyCommand.getParams(), readWriteKeyCommand.getKeyDataConversion(), readWriteKeyCommand.getValueDataConversion());
       }
-      return invokeNextThenAccept(ctx, command, handleMultipleKeysWriteReturn);
+      return invokeNextThenApply(ctx, command, handleMultipleKeysWriteReturn);
    }
 
-   private void handleMultipleKeysWriteReturn(InvocationContext ctx, WriteCommand writeCommand, Object rv) throws Throwable {
+   private Object handleMultipleKeysWriteReturn(InvocationContext ctx, WriteCommand writeCommand, Object rv) throws Throwable {
       if (trace) log.tracef("Processing post %s", writeCommand);
       if (!writeCommand.isSuccessful()) {
          if (trace) {
             log.tracef("Command %s is not succesful, not replicating", writeCommand);
          }
-         return;
+         return rv;
       }
       Map<Object, Object> map = new HashMap<>(); // must support null values
       LocalizedCacheTopology localizedCacheTopology = clusteringDependentLogic.getCacheTopology();
@@ -182,11 +184,12 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          }
       }
       if (map.isEmpty()) {
-         return;
+         return rv;
       }
       //TODO: Converters
       WriteOnlyManyEntriesCommand crossSiteCommand = commandsFactory.buildWriteOnlyManyEntriesCommand(map,
             MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()), DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
-      backupSender.processResponses(backupSender.backupWrite(crossSiteCommand), writeCommand);
+      InvocationStage stage = backupSender.backupWrite(crossSiteCommand, writeCommand);
+      return stage.thenReturn(ctx, writeCommand, rv);
    }
 }

@@ -1,11 +1,10 @@
 package org.infinispan.remoting.transport;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -24,13 +23,12 @@ public class RetryOnFailureXSiteCommand {
    public static final RetryPolicy NO_RETRY = new MaxRetriesPolicy(0);
    private static final Log log = LogFactory.getLog(RetryOnFailureXSiteCommand.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final boolean debug = log.isDebugEnabled();
-   private final Collection<XSiteBackup> backups;
+   private final XSiteBackup xSiteBackup;
    private final XSiteReplicateCommand command;
    private final RetryPolicy retryPolicy;
 
-   private RetryOnFailureXSiteCommand(Collection<XSiteBackup> backups, XSiteReplicateCommand command, RetryPolicy retryPolicy) {
-      this.backups = backups;
+   private RetryOnFailureXSiteCommand(XSiteBackup backup, XSiteReplicateCommand command, RetryPolicy retryPolicy) {
+      this.xSiteBackup = backup;
       this.command = command;
       this.retryPolicy = retryPolicy;
    }
@@ -45,34 +43,26 @@ public class RetryOnFailureXSiteCommand {
     *                   the last exception occurred is thrown.
     */
    public void execute(RpcManager rpcManager, long waitTimeBetweenRetries, TimeUnit unit) throws Throwable {
-      if (backups.isEmpty()) {
-         if (debug) {
-            log.debugf("Executing '%s' but backup list is empty.", this);
-         }
-         return;
-      }
-
       assertNotNull(rpcManager, "RpcManager");
       assertNotNull(unit, "TimeUnit");
       assertGreaterThanZero(waitTimeBetweenRetries, "WaitTimeBetweenRetries");
 
       do {
-         if (trace) {
-            log.tracef("Sending %s to %s", command, backups);
-         }
-         BackupResponse response = rpcManager.invokeXSite(backups, command);
-         response.waitForBackupToFinish();
-         Throwable throwable = extractThrowable(response);
-         if (throwable == null) {
+         try {
+            CompletionStage<Void> response = rpcManager.invokeXSite(xSiteBackup, command);
+            response.toCompletableFuture().join();
             if (trace) {
-               log.trace("Successfull Response received.");
+               log.trace("Successful Response received.");
             }
             return;
-         } else if (!retryPolicy.retry(throwable, rpcManager)) {
-            if (trace) {
-               log.tracef("Exception Response received. Exception is %s", throwable);
+         } catch (Throwable throwable) {
+            throwable = CompletableFutures.extractException(throwable);
+            if (!retryPolicy.retry(throwable, rpcManager)) {
+               if (trace) {
+                  log.tracef("Exception Response received. Exception is %s", throwable);
+               }
+               throw throwable;
             }
-            throw throwable;
          }
          unit.sleep(waitTimeBetweenRetries);
       } while (true);
@@ -92,13 +82,13 @@ public class RetryOnFailureXSiteCommand {
       assertNotNull(backup, "XSiteBackup");
       assertNotNull(command, "XSiteReplicateCommand");
       assertNotNull(retryPolicy, "RetryPolicy");
-      return new RetryOnFailureXSiteCommand(Collections.singletonList(backup), command, retryPolicy);
+      return new RetryOnFailureXSiteCommand(backup, command, retryPolicy);
    }
 
    @Override
    public String toString() {
       return "RetryOnLinkFailureXSiteCommand{" +
-            "backups=" + backups +
+            "backup=" + xSiteBackup +
             ", command=" + command +
             '}';
    }
@@ -113,12 +103,6 @@ public class RetryOnFailureXSiteCommand {
       if (value <= 0) {
          throw new IllegalArgumentException(field + " must be greater that zero but instead it is " + value);
       }
-   }
-
-   private static Throwable extractThrowable(BackupResponse response) {
-      Map<?, Throwable> errorMap = response.getFailedBackups();
-      //noinspection ThrowableResultOfMethodCallIgnored
-      return errorMap.isEmpty() ? null : errorMap.values().iterator().next();
    }
 
    public interface RetryPolicy {

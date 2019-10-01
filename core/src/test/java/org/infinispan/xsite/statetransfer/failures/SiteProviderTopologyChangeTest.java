@@ -7,9 +7,9 @@ import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManagerDefaultCache;
 
-import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -17,8 +17,9 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.xsite.XSiteBackup;
@@ -178,14 +179,20 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
                                    }
 
                                    @Override
-                                   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
+                                   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
                                       if (rpcCommand instanceof XSiteStatePushCommand) {
                                          if (firstChunk.compareAndSet(false, true)) {
                                             checkPoint.trigger("before-second-chunk");
-                                            checkPoint.awaitStrict("second-chunk", 30, TimeUnit.SECONDS);
+                                            try {
+                                               checkPoint.awaitStrict("second-chunk", 30, TimeUnit.SECONDS);
+                                            } catch (InterruptedException | TimeoutException e) {
+                                               XSiteResponseImpl rsp = new XSiteResponseImpl(TIME_SERVICE, backup);
+                                               rsp.completeExceptionally(e);
+                                               return rsp;
+                                            }
                                          }
                                       }
-                                      return super.backupRemotely(backups, rpcCommand);
+                                      return super.backupRemotely(backup, rpcCommand);
                                    }
                                 };
                              }

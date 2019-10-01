@@ -71,6 +71,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
@@ -79,6 +80,7 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
+import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -336,6 +338,31 @@ public class JGroupsTransport implements Transport {
          }
       }
       return new JGroupsBackupResponse(backupCalls, timeService);
+   }
+
+   @Override
+   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+      Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(backup.getSiteName()));
+      long requestId = requests.newRequestId();
+      logRequest(requestId, rpcCommand, recipient, "backup");
+      SingleSiteRequest<ValidResponse> request =
+            new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, backup.getSiteName());
+      addRequest(request);
+
+      DeliverOrder order = backup.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
+      long timeout = backup.getTimeout();
+      XSiteResponseImpl xSiteResponse = new XSiteResponseImpl(timeService, backup);
+      try {
+         sendCommand(recipient, rpcCommand, request.getRequestId(), order, false, false);
+         if (timeout > 0) {
+            request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
+         }
+         request.whenComplete(xSiteResponse);
+      } catch (Throwable t) {
+         request.cancel(true);
+         xSiteResponse.completeExceptionally(t);
+      }
+      return xSiteResponse;
    }
 
    @Override

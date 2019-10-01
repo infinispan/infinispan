@@ -4,7 +4,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 
 /**
  * @author Dan Berindei
@@ -44,7 +43,7 @@ public class SyncInvocationStage extends InvocationStage {
       try {
          return function.apply(ctx, command, rv);
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -69,7 +68,7 @@ public class SyncInvocationStage extends InvocationStage {
       try {
          return function.apply(ctx, command, rv, null);
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -78,7 +77,7 @@ public class SyncInvocationStage extends InvocationStage {
       try {
          return function.apply(ctx, command, rv, null);
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -92,7 +91,7 @@ public class SyncInvocationStage extends InvocationStage {
       try {
          return makeStage(function.apply(ctx, command, rv));
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -102,7 +101,7 @@ public class SyncInvocationStage extends InvocationStage {
          action.accept(ctx, command, rv);
          return this;
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -117,7 +116,7 @@ public class SyncInvocationStage extends InvocationStage {
          action.accept(ctx, command, rv, null);
          return this;
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
    }
 
@@ -126,8 +125,13 @@ public class SyncInvocationStage extends InvocationStage {
       try {
          return makeStage(function.apply(ctx, command, rv, null));
       } catch (Throwable throwable) {
-         return new SimpleAsyncInvocationStage(throwable);
+         return new ExceptionSyncInvocationStage(throwable);
       }
+   }
+
+   @Override
+   public Object thenReturn(InvocationContext ctx, VisitableCommand command, Object returnValue) {
+      return returnValue;
    }
 
    @Override
