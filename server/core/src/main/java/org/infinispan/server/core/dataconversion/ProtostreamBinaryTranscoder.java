@@ -26,7 +26,7 @@ public class ProtostreamBinaryTranscoder extends OneToManyTranscoder {
    @Override
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       if (!(content instanceof byte[])) {
-         throw log.unsupportedContent(content);
+         throw log.unsupportedContent(ProtostreamBinaryTranscoder.class.getSimpleName(), content);
       }
       return content;
    }

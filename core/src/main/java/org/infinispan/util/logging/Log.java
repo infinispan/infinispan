@@ -1692,14 +1692,14 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Invalid binary format: '%s'", id = 494)
 //   EncodingException invalidBinaryFormat(Object content);
 
-   @Message(value = "Error transcoding content", id = 495)
-   EncodingException errorTranscoding(@Cause Throwable cause);
+   @Message(value = "%s error transcoding content", id = 495)
+   EncodingException errorTranscoding(String transcoderName, @Cause Throwable cause);
 
 //   @Message(value = "Error transcoding content '%s'", id = 496)
 //   EncodingException errorTranscodingContent(@Cause Throwable cause, Object content);
 
-   @Message(value = "Unsupported content '%s' during transcoding", id = 497)
-   EncodingException unsupportedContent(Object content);
+   @Message(value = "%s encountered unsupported content '%s' during transcoding", id = 497)
+   EncodingException unsupportedContent(String transcoderName, Object content);
 
 
    @LogMessage(level = WARN)
