@@ -16,6 +16,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -38,7 +39,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("hibernate.search.default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 
    //Extension point to override configuration
@@ -78,13 +79,11 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    }
 
    private void store(final String key, final Object value, final Cache<Object, Object> cache) throws Exception {
-      Callable<Void> callable = new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache.put(key, value);
-            return null;
-         }
+      Callable<Void> callable = () -> {
+         cache.put(key, value);
+         return null;
       };
+
       if (transactionsEnabled()) {
          withTx(cache.getAdvancedCache().getTransactionManager(), callable);
       }

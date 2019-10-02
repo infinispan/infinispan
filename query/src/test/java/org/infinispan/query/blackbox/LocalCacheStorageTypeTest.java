@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -51,6 +52,6 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
       cfg.memory()
             .storageType(storageType);
       enhanceConfig(cfg);
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 }

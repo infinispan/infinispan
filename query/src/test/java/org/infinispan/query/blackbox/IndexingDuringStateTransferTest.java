@@ -29,6 +29,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -64,7 +65,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       builder.memory()
             .storageType(StorageType.OBJECT);
       builder.clustering().hash().numSegments(1).numOwners(2).consistentHashFactory(chf);
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 
    public void testPut() {
@@ -130,7 +131,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
 
       // add new node, cache(0) will lose ownership of the segment
       chf.setOwnerIndexes(1, 2);
-      addClusterEnabledCacheManager(builder).getCache();
+      addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, builder).getCache();
 
       // wait until the node discards old entries
       eventuallyEquals(null, () -> cache(0).getAdvancedCache().getDataContainer().get(KEY));

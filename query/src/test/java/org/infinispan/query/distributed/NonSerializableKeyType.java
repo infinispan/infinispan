@@ -6,6 +6,8 @@ import java.io.ObjectOutput;
 
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 
@@ -16,9 +18,11 @@ import org.infinispan.query.Transformer;
 @Transformable(transformer = NonSerializableKeyType.CustomTransformer.class)
 public class NonSerializableKeyType {
 
-   public final String keyValue;
+   @ProtoField(number = 1)
+   final String keyValue;
 
-   public NonSerializableKeyType(final String keyValue) {
+   @ProtoFactory
+   NonSerializableKeyType(final String keyValue) {
       this.keyValue = keyValue;
    }
 

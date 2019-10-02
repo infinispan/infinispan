@@ -72,7 +72,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .addIndexedEntity(getModelFactory().getTransactionImplClass())
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 
    protected boolean testNullCollections() {

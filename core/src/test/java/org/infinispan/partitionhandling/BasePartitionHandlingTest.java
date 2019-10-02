@@ -27,6 +27,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -78,8 +79,12 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
-      createClusteredCaches(numMembersInCluster, TestDataSCI.INSTANCE, dcc, new TransportFlags().withFD(true).withMerge(true));
+      createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
+   }
+
+   protected SerializationContextInitializer serializationContextInitializer() {
+      return TestDataSCI.INSTANCE;
    }
 
    protected BasePartitionHandlingTest partitionHandling(PartitionHandling partitionHandling) {

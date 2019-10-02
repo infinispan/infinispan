@@ -21,6 +21,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.impl.model.TheEntity;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -73,7 +74,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Book.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 
    @BeforeClass(alwaysRun = true)

@@ -6,6 +6,9 @@
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container default-cache="JDBCBased_LocalIndex">
+      <serialization>
+         <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
+      </serialization>
       <transport cluster="MyCluster"/>
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />

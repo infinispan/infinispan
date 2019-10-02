@@ -6,6 +6,8 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed(index="indexA")
 public class TestEntity implements Serializable {
@@ -27,6 +29,7 @@ public class TestEntity implements Serializable {
       this.note = e.getNote();
    }
 
+   @ProtoFactory
    public TestEntity(String name, String surname, long id, String note) {
       this.name = name;
       this.surname = surname;
@@ -34,18 +37,22 @@ public class TestEntity implements Serializable {
       this.note = note;
    }
 
+   @ProtoField(number = 1)
    public String getName() {
       return name;
    }
 
+   @ProtoField(number = 2)
    public String getSurname() {
       return surname;
    }
 
+   @ProtoField(number = 3, defaultValue = "0")
    public long getId() {
       return id;
    }
 
+   @ProtoField(number = 4)
    public String getNote() {
       return note;
    }

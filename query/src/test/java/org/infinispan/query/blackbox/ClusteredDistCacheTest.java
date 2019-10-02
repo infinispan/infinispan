@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -27,7 +28,7 @@ public class ClusteredDistCacheTest extends ClusteredCacheTest {
 
       cacheCfg.memory().storageType(storageType);
       enhanceConfig(cacheCfg);
-      List<Cache<Object, Person>> caches = createClusteredCaches(3, cacheCfg);
+      List<Cache<Object, Person>> caches = createClusteredCaches(3, QueryTestSCI.INSTANCE, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
       cache3 = caches.get(2);

@@ -11,6 +11,7 @@ import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -35,7 +36,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder c = buildConfiguration();
-      createCluster(c, NUM_NODES);
+      createCluster(QueryTestSCI.INSTANCE, c, NUM_NODES);
       waitForClusterToForm();
    }
 

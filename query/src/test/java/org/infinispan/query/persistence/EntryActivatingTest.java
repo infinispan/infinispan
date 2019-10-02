@@ -21,6 +21,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -104,7 +105,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT")
          ;
-      cm = TestCacheManagerFactory.createCacheManager(cfg);
+      cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();
       store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
       search = Search.getSearchManager(cache);

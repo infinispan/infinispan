@@ -16,6 +16,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -59,7 +60,7 @@ public class PutAllTest extends SingleCacheManagerTest {
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cfg.memory()
             .storageType(storageType);
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 
    public void testOverwriteNotIndexedValue() {

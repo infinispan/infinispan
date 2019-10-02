@@ -19,6 +19,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -99,7 +100,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
             .addIndexedEntity(Entity2.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, builder);
       Configuration nonIndexed = nonIndexed();
       cm.defineConfiguration("LuceneIndexesMetadata", nonIndexed);
       cm.defineConfiguration("LuceneIndexesData", nonIndexed);
