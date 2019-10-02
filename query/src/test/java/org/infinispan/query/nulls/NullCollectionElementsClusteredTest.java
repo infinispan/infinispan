@@ -25,6 +25,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ProjectionConstants;
@@ -176,7 +180,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
             .addIndexedEntity(Foo.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(2, cfg);
+      createClusteredCaches(2, SCI.INSTANCE, cfg);
 
       cache1 = cache(0);
       cache2 = cache(1);
@@ -210,13 +214,24 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
    public static class Foo implements Serializable {
       private String bar;
 
-      public Foo(String bar) {
+      @ProtoFactory
+      Foo(String bar) {
          this.bar = bar;
       }
 
       @Field(name = "bar", store = Store.YES)
+      @ProtoField(number = 1)
       public String getBar() {
          return bar;
       }
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = Foo.class,
+         schemaFileName = "test.query.nulls.NullCollectionElementsClusteredTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.NullCollectionElementsClusteredTest")
+   interface SCI extends SerializationContextInitializer {
+      SCI INSTANCE = new SCIImpl();
    }
 }

@@ -20,6 +20,10 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -101,7 +105,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
           builder.invocationBatching().disable();
        }
 
-       return TestCacheManagerFactory.createCacheManager(builder);
+       return TestCacheManagerFactory.createCacheManager(SCI.INSTANCE, builder);
     }
 
     private List searchByName(String name, Cache c) {
@@ -128,20 +132,24 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
         @Field (store = Store.YES)
         private final String surname;
 
-        public SEntity(long id, String name, String surname) {
+        @ProtoFactory
+        SEntity(long id, String name, String surname) {
             this.id = id;
             this.name = name;
             this.surname = surname;
         }
 
+        @ProtoField(number = 1, defaultValue = "0")
         public long getId() {
             return id;
         }
 
+        @ProtoField(number = 2)
         public String getName() {
             return name;
         }
 
+        @ProtoField(number = 3)
         public String getSurname() {
             return surname;
         }
@@ -173,4 +181,12 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
        Util.recursiveFileRemove(TMP_DIR);
     }
 
+   @AutoProtoSchemaBuilder(
+         includeClasses = SEntity.class,
+         schemaFileName = "test.query.persistence.InconsistentIndexesAfterRestartTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.InconsistentIndexesAfterRestartTest")
+   interface SCI extends SerializationContextInitializer {
+      InconsistentIndexesAfterRestartTest.SCI INSTANCE = new SCIImpl();
+   }
 }

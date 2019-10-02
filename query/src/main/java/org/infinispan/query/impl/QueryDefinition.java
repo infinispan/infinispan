@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -38,13 +39,14 @@ public final class QueryDefinition {
    private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final String queryString;
    private HSQuery hsQuery;
+   private Query luceneQuery;
    private int maxResults = 100;
    private int firstResult;
    private Set<String> sortableFields;
    private Class<?> indexedType;
+   private Sort sort;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
-   private transient Sort sort;
 
    public QueryDefinition(String queryString, SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
       if (queryString == null) {
@@ -55,6 +57,17 @@ public final class QueryDefinition {
       }
       this.queryString = queryString;
       this.queryEngineProvider = queryEngineProvider;
+      this.luceneQuery = null;
+   }
+
+   private QueryDefinition(Query query, Sort sort) {
+      if (query == null) {
+         throw new IllegalArgumentException("query cannot be null");
+      }
+      this.luceneQuery = query;
+      this.sort = sort;
+      this.queryString = null;
+      this.queryEngineProvider = null;
    }
 
    public QueryDefinition(HSQuery hsQuery) {
@@ -87,19 +100,25 @@ public final class QueryDefinition {
 
    public void initialize(AdvancedCache<?, ?> cache) {
       if (hsQuery == null) {
-         QueryEngine queryEngine = getQueryEngine(cache);
-         HsQueryRequest hsQueryRequest;
-         if (indexedType != null && sortableFields != null) {
-            IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
-            hsQueryRequest = queryEngine.createHsQuery(queryString, metadata, namedParameters);
+         if (luceneQuery != null) {
+            hsQuery = ComponentRegistryUtils.getSearchIntegrator(cache).createHSQuery(luceneQuery);
+            if (sort != null)
+               hsQuery.sort(sort);
          } else {
-            hsQueryRequest = queryEngine.createHsQuery(queryString, null, namedParameters);
+            QueryEngine queryEngine = getQueryEngine(cache);
+            HsQueryRequest hsQueryRequest;
+            if (indexedType != null && sortableFields != null) {
+               IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
+               hsQueryRequest = queryEngine.createHsQuery(queryString, metadata, namedParameters);
+            } else {
+               hsQueryRequest = queryEngine.createHsQuery(queryString, null, namedParameters);
+            }
+            hsQuery = hsQueryRequest.getHsQuery();
+            sort = hsQueryRequest.getSort();
+            hsQuery.projection(hsQueryRequest.getProjections());
          }
-         hsQuery = hsQueryRequest.getHsQuery();
-         sort = hsQueryRequest.getSort();
          hsQuery.firstResult(firstResult);
          hsQuery.maxResults(maxResults);
-         hsQuery.projection(hsQueryRequest.getProjections());
       }
    }
 
@@ -207,7 +226,8 @@ public final class QueryDefinition {
             output.writeObject(queryDefinition.queryEngineProvider);
          } else {
             output.writeBoolean(false);
-            output.writeObject(queryDefinition.hsQuery);
+            output.writeObject(queryDefinition.hsQuery.getLuceneQuery());
+            output.writeObject(queryDefinition.sort);
          }
          output.writeInt(queryDefinition.firstResult);
          output.writeInt(queryDefinition.maxResults);
@@ -232,7 +252,9 @@ public final class QueryDefinition {
             SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
             queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
          } else {
-            queryDefinition = new QueryDefinition((HSQuery) input.readObject());
+            Query query = (Query) input.readObject();
+            Sort sort = (Sort) input.readObject();
+            queryDefinition = new QueryDefinition(query, sort);
          }
          queryDefinition.setFirstResult(input.readInt());
          queryDefinition.setMaxResults(input.readInt());

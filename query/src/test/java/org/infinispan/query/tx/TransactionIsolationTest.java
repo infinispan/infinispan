@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
+
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
@@ -26,6 +27,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
@@ -55,7 +57,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("hibernate.search.default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      createClusteredCaches(2, builder);
+      createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }
 
    public void testDuringTransactionPrimary() throws Exception {

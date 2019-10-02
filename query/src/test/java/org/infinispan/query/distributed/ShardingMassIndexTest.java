@@ -2,9 +2,6 @@ package org.infinispan.query.distributed;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -13,6 +10,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -26,7 +24,6 @@ import org.testng.annotations.Test;
 public class ShardingMassIndexTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 3;
-   protected List<Cache<Integer, Object>> caches = new ArrayList<>(NUM_NODES);
 
    @Override
    @SuppressWarnings("unchecked")
@@ -44,20 +41,16 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      List<Cache<Integer, Object>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
-
+      createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
       waitForClusterToForm(getDefaultCacheName());
-
-      for (Cache cache : cacheList) {
-         caches.add(cache);
-      }
    }
 
    public void testReindex() throws Exception {
-      caches.get(0).put(1, new Car("mazda", "red", 200));
-      caches.get(0).put(2, new Car("mazda", "blue", 200));
-      caches.get(0).put(3, new Car("audi", "blue", 170));
-      caches.get(0).put(4, new Car("audi", "black", 170));
+      Cache<Integer, Object> cache = cache(0);
+      cache.put(1, new Car("mazda", "red", 200));
+      cache.put(2, new Car("mazda", "blue", 200));
+      cache.put(3, new Car("audi", "blue", 170));
+      cache.put(4, new Car("audi", "black", 170));
 
       checkIndex(4, Car.class);
 
@@ -65,22 +58,21 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
 
       checkIndex(4, Car.class);
 
-      caches.get(0).clear();
+      cache.clear();
       runMassIndexer();
 
       checkIndex(0, Car.class);
    }
 
    protected void checkIndex(int expectedNumber, Class<?> entity) {
-      for (Cache<?, ?> c : caches) {
+      for (Cache<?, ?> c : caches()) {
          SearchManager searchManager = Search.getSearchManager(c);
          assertEquals(searchManager.getQuery(new MatchAllDocsQuery(), entity).getResultSize(), expectedNumber);
       }
    }
 
    protected void runMassIndexer() throws Exception {
-      Cache cache = caches.get(0);
-      SearchManager searchManager = Search.getSearchManager(cache);
+      SearchManager searchManager = Search.getSearchManager(cache(0));
       searchManager.getMassIndexer().start();
    }
 }

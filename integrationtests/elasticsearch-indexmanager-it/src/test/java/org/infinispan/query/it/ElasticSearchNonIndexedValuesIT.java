@@ -7,6 +7,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.api.AnotherTestEntity;
 import org.infinispan.query.api.NonIndexedValuesTest;
 import org.infinispan.query.api.TestEntity;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -24,7 +25,7 @@ public class ElasticSearchNonIndexedValuesIT extends NonIndexedValuesTest {
                 .addIndexedEntity(TestEntity.class)
                 .addIndexedEntity(AnotherTestEntity.class);
         ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
-        return TestCacheManagerFactory.createCacheManager(cacheCfg);
+        return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cacheCfg);
     }
 
     protected boolean isTransactional() {

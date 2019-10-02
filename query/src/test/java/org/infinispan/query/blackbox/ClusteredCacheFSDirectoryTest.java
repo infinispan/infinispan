@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -30,8 +31,8 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
 
    @Override
    protected void createCacheManagers() {
-      addClusterEnabledCacheManager(buildCacheConfig("index1"));
-      addClusterEnabledCacheManager(buildCacheConfig("index2"));
+      addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, buildCacheConfig("index1"));
+      addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, buildCacheConfig("index2"));
       waitForClusterToForm();
       cache1 = cache(0);
       cache2 = cache(1);

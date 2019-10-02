@@ -16,6 +16,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -30,7 +31,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
    protected void createCacheManagers() throws Throwable {
       createCluster(holder -> {
          String defaultName = "default";
-         holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName);
+         holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName).serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
          cacheCfg.indexing()

@@ -321,6 +321,17 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createCacheManager(CacheMode mode, boolean indexing) {
+      return createCacheManager(null, mode, indexing);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(SerializationContextInitializer sci, CacheMode mode, boolean indexing) {
+      GlobalConfigurationBuilder globalBuilder = mode.isClustered() ?
+            new GlobalConfigurationBuilder().clusteredDefault() :
+            new GlobalConfigurationBuilder().nonClusteredDefault();
+
+      if (sci != null)
+         globalBuilder.serialization().addContextInitializer(sci);
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
             .clustering()
@@ -330,9 +341,9 @@ public class TestCacheManagerFactory {
             .addProperty("lucene_version", "LUCENE_CURRENT")
       ;
       if (mode.isClustered()) {
-         return createClusteredCacheManager(builder);
+         return createClusteredCacheManager(globalBuilder, builder);
       } else {
-         return createCacheManager(builder);
+         return createCacheManager(globalBuilder, builder);
       }
    }
 

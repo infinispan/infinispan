@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -20,7 +21,7 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
    protected void createCacheManagers() throws Throwable {
       createCluster(holder -> {
          String defaultName = "default";
-         holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName);
+         holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName).serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
          cacheCfg.indexing()

@@ -38,7 +38,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      createClusteredCaches(NUM_NODES, cfgBuilder);
+      createClusteredCaches(NUM_NODES, DslSCI.INSTANCE, cfgBuilder);
    }
 
    public void testEventFilter() {

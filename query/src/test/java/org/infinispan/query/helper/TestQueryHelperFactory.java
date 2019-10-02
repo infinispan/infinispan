@@ -24,6 +24,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -97,6 +98,7 @@ public class TestQueryHelperFactory {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
          GlobalConfigurationBuilder globalConfigurationBuilder = holder.getGlobalConfigurationBuilder().clusteredDefault();
          globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i).defaultCacheName(defaultCacheName);
+         globalConfigurationBuilder.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
          holderConsumer.accept(holder);
          holder.newConfigurationBuilder(defaultCacheName).read(builder.build());

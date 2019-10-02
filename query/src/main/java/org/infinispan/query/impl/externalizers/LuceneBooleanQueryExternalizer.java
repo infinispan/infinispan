@@ -46,14 +46,14 @@ public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<Boolean
    }
 
    private void appendReadClause(ObjectInput input, BooleanQuery.Builder builder) throws IOException, ClassNotFoundException {
-      final Occur occur = (Occur) input.readObject();
+      final Occur occur = BooleanClause.Occur.valueOf(input.readUTF());
       Query q = (Query) input.readObject();
       BooleanClause clause = new BooleanClause(q, occur);
       builder.add(clause);
    }
 
    private void writeClause(final ObjectOutput output, final BooleanClause booleanClause) throws IOException {
-      output.writeObject(booleanClause.getOccur());
+      output.writeUTF(booleanClause.getOccur().name());
       output.writeObject(booleanClause.getQuery());
    }
 

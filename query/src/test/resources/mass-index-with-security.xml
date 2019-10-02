@@ -5,6 +5,9 @@
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container name="MassIndexingWithSecurity" default-cache="default" statistics="true">
+      <serialization>
+         <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
+      </serialization>
       <security>
          <authorization>
             <identity-role-mapper/>

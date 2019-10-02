@@ -10,6 +10,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.test.Person;
+import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -43,6 +44,6 @@ public class CustomSearchWorkCreatorTest extends SingleCacheManagerTest {
               .addIndexedEntity(Person.class)
               .addProperty("default.directory_provider", "local-heap")
               .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
 }

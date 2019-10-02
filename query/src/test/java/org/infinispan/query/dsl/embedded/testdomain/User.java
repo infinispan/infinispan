@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -11,7 +13,10 @@ import java.util.Set;
 public interface User {
 
    enum Gender {
-      MALE, FEMALE
+      @ProtoEnumValue(number = 0)
+      MALE,
+      @ProtoEnumValue(number = 1)
+      FEMALE
    }
 
    int getId();

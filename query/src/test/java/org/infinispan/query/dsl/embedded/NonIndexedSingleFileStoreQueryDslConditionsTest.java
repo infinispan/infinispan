@@ -40,6 +40,6 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
       // ensure the data container contains minimal data so the store will need to be accessed to get the rest
       cfg.locking().concurrencyLevel(1).memory().size(1L);
 
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
    }
 }

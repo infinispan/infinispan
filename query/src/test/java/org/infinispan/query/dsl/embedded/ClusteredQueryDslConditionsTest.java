@@ -55,7 +55,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       defaultConfiguration.clustering()
             .stateTransfer().fetchInMemoryState(true);
-      createClusteredCaches(2, defaultConfiguration);
+      createClusteredCaches(2, DslSCI.INSTANCE, defaultConfiguration);
 
       ConfigurationBuilder cfg = initialCacheConfiguration();
       IndexingConfigurationBuilder indexingConfigurationBuilder = cfg.clustering()

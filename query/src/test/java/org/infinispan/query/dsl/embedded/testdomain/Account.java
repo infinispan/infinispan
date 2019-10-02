@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -11,7 +13,14 @@ import java.util.List;
 public interface Account extends Serializable {
 
    enum Currency {
-      EUR, GBP, USD, BRL
+      @ProtoEnumValue(number = 0)
+      EUR,
+      @ProtoEnumValue(number = 1)
+      GBP,
+      @ProtoEnumValue(number = 2)
+      USD,
+      @ProtoEnumValue(number = 3)
+      BRL
    }
 
    int getId();
