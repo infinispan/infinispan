@@ -7,22 +7,25 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.aesh.AeshRuntimeRunner;
 import org.aesh.command.AeshCommandRuntimeBuilder;
+import org.aesh.command.Command;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.registry.CommandRegistryException;
 import org.aesh.command.settings.SettingsBuilder;
+import org.aesh.command.shell.Shell;
 import org.aesh.readline.ReadlineConsole;
 import org.aesh.terminal.Connection;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
@@ -32,6 +35,7 @@ import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
 import org.infinispan.cli.impl.CliManProvider;
 import org.infinispan.cli.impl.CliMode;
+import org.infinispan.cli.impl.CliRuntimeRunner;
 import org.infinispan.cli.impl.ContextAwareCommandInvocationProvider;
 import org.infinispan.cli.impl.ContextAwareQuitHandler;
 import org.infinispan.cli.impl.ContextImpl;
@@ -55,6 +59,7 @@ public class CLI {
    private CliMode mode = CliMode.INTERACTIVE;
    private String inputFile;
    private Connection terminalConnection;
+   private Shell shell;
 
    public CLI() {
       this(System.out, System.err, System.getProperties());
@@ -195,6 +200,11 @@ public class CLI {
       AeshCommandRegistryBuilder registryBuilder = AeshCommandRegistryBuilder.builder();
       try {
          registryBuilder.command(Batch.class);
+         List<Class<? extends Command>> commands = new ArrayList<>();
+         for (CliCommand command : ServiceFinder.load(CliCommand.class, this.getClass().getClassLoader())) {
+            commands.add(command.getClass());
+         }
+         registryBuilder.commands(commands);
       } catch (CommandRegistryException e) {
          throw new RuntimeException(e);
       }
@@ -205,12 +215,14 @@ public class CLI {
             .commandInvocationProvider(new ContextAwareCommandInvocationProvider(context))
             .commandNotFoundHandler(new CliCommandNotFoundHandler())
             .completerInvocationProvider(new ContextAwareCompleterInvocationProvider(context))
-            .commandRegistry(initializeCommands())
-            .aeshContext(context);
+            .aeshContext(context)
+            .commandRegistry(registryBuilder.create());
+      if (shell != null) {
+         runtimeBuilder.shell(shell);
+      }
 
-      AeshRuntimeRunner runner = AeshRuntimeRunner.builder();
-      runner
-            .interactive(false)
+      CliRuntimeRunner cliRunner = CliRuntimeRunner.builder();
+      cliRunner
             .commandRuntime(runtimeBuilder.build())
             .args(new String[]{"run", inputFile})
             .execute();
@@ -270,8 +282,6 @@ public class CLI {
       out.printf("Usage: cli [OPTION]...\n");
       out.printf("  -c, --connect=URL         %s\n", MSG.cliHelpConnect(Version.getBrandName()));
       out.printf("                            %s\n", MSG.cliHelpConnectHTTP());
-      out.printf("                            %s\n", MSG.cliHelpConnectJMXRMI());
-      out.printf("                            %s\n", MSG.cliHelpConnectJMXRemoting());
       out.printf("  -f, --file=FILE           %s\n", MSG.cliHelpFile());
       out.printf("  -h, --help                %s\n", MSG.cliHelpHelp());
       out.printf("  --trustall                %s\n", MSG.cliHelpTrustAll());
@@ -299,7 +309,16 @@ public class CLI {
       this.terminalConnection = terminalConnection;
    }
 
+   /**
+    * For using a custom shell in tests
+    */
+   public void setShell(Shell shell) {
+      this.shell = shell;
+   }
+
    public void stop() {
-      console.stop();
+      if (console != null) {
+         console.stop();
+      }
    }
 }

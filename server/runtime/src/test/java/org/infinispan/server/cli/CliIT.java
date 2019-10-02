@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.CLI;
 import org.infinispan.server.test.AeshTestConnection;
+import org.infinispan.server.test.AeshTestShell;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
@@ -26,7 +27,7 @@ public class CliIT {
 
 
    @Test
-   public void testCLI() {
+   public void testCliInteractive() {
       CLI cli = new CLI();
       AeshTestConnection terminal = new AeshTestConnection();
       cli.setTerminalConnection(terminal);
@@ -47,17 +48,39 @@ public class CliIT {
       terminal.assertContains("person.proto");
       terminal.readln("cache qcache");
       terminal.assertContains("//containers/default/caches/qcache]>");
-      for(String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
+      for (String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
          terminal.readln("put --encoding=application/json --file=" + this.getClass().getResource("/cli/" + person + ".json").getPath() + " " + person);
       }
       terminal.clear();
       terminal.readln("ls");
-      for(String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
+      for (String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
          terminal.assertContains(person);
       }
       terminal.clear();
       terminal.readln("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
       terminal.assertContains("\"total_results\" : 3,");
+      cli.stop();
+   }
+
+   @Test
+   public void testCliBatch() {
+      CLI cli = new CLI();
+      AeshTestShell shell = new AeshTestShell();
+      cli.setShell(shell);
+      cli.run(new String[]{"-f", this.getClass().getResource("/cli/batch.cli").getPath()});
+      shell.assertContains("Hi CLI");
+      shell.assertContains("batch1");
+      cli.stop();
+   }
+
+   @Test
+   public void testCliBatchPreconnect() {
+      CLI cli = new CLI();
+      AeshTestShell shell = new AeshTestShell();
+      cli.setShell(shell);
+      cli.run(new String[]{"--connect=http://localhost:11222", "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
+      shell.assertContains("Hi CLI");
+      shell.assertContains("batch2");
       cli.stop();
    }
 }
