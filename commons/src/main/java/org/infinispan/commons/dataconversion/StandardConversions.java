@@ -20,6 +20,8 @@ import java.util.Arrays;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 
 /**
  * Utilities to convert between text/plain, octet-stream, java-objects and url-encoded contents.
@@ -158,7 +160,7 @@ public final class StandardConversions {
    public static byte[] convertJavaToOctetStream(Object source, MediaType sourceMediaType, Marshaller marshaller) throws IOException, InterruptedException {
       if (source == null) return null;
       if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
-         throw new EncodingException("destination MediaType not conforming to application/x-java-object!");
+         throw new EncodingException("sourceMediaType not conforming to application/x-java-object!");
       }
 
       Object decoded = decodeObjectContent(source, sourceMediaType);
@@ -166,6 +168,28 @@ public final class StandardConversions {
       if (decoded instanceof String && isJavaString(sourceMediaType))
          return ((String) decoded).getBytes(StandardCharsets.UTF_8);
       return marshaller.objectToByteBuffer(source);
+   }
+
+   /**
+    * Converts a java object to a sequence of bytes using a ProtoStream {@link SerializationContext}.
+    *
+    * @param source source the java object to convert.
+    * @param sourceMediaType the MediaType matching application/x-application-object describing the source.
+    * @return byte[] representation of the java object.
+    * @throws EncodingException if the sourceMediaType is not a application/x-java-object or if the conversion is
+    * not supported.
+    */
+   public static byte[] convertJavaToProtoStream(Object source, MediaType sourceMediaType, SerializationContext ctx) throws IOException, InterruptedException {
+      if (source == null) return null;
+      if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
+         throw new EncodingException("sourceMediaType not conforming to application/x-java-object!");
+      }
+
+      Object decoded = decodeObjectContent(source, sourceMediaType);
+      if (decoded instanceof byte[]) return (byte[]) decoded;
+      if (decoded instanceof String && isJavaString(sourceMediaType))
+         return ((String) decoded).getBytes(StandardCharsets.UTF_8);
+      return ProtobufUtil.toWrappedByteArray(ctx, source);
    }
 
    private static boolean isJavaString(MediaType mediaType) {

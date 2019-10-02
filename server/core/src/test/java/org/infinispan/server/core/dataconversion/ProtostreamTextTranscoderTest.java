@@ -18,19 +18,20 @@ public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
    @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-      transcoder = new ProtostreamTextTranscoder(ProtobufUtil.newSerializationContext());
+      transcoder = new ProtostreamTranscoder(ProtobufUtil.newSerializationContext(), ProtostreamTextTranscoderTest.class.getClassLoader());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 
    @Test
    @Override
-   public void testTranscoderTranscode() {
+   public void testTranscoderTranscode() throws Exception {
       Object transcoded = transcoder.transcode(dataSrc, MediaType.TEXT_PLAIN, MediaType.APPLICATION_PROTOSTREAM);
       assertTrue(transcoded instanceof byte[], "Must be byte[]");
 
       Object transcodedBack = transcoder.transcode(transcoded, MediaType.APPLICATION_PROTOSTREAM, MediaType.TEXT_PLAIN);
 
-      assertTrue(transcodedBack instanceof String, "Must be instance of String");
-      assertEquals(dataSrc, transcodedBack, "Must be equal strings");
+      // Must be String as byte[] as sent over the wire by hotrod
+      assertTrue(transcodedBack instanceof byte[], "Must be instance of byte[]");
+      assertEquals(dataSrc, new String((byte[]) transcodedBack, MediaType.TEXT_PLAIN.getCharset().name()), "Must be equal strings");
    }
 }

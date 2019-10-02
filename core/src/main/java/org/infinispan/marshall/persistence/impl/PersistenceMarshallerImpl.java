@@ -71,6 +71,10 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    public PersistenceMarshallerImpl() {
    }
 
+   public SerializationContext getSerializationContext() {
+      return serializationContext;
+   }
+
    @Start
    @Override
    public void start() {

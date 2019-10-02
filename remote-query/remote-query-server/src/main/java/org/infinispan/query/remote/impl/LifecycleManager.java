@@ -58,9 +58,7 @@ import org.infinispan.query.remote.impl.persistence.PersistenceContextInitialize
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
-import org.infinispan.server.core.dataconversion.ProtostreamJsonTranscoder;
-import org.infinispan.server.core.dataconversion.ProtostreamObjectTranscoder;
-import org.infinispan.server.core.dataconversion.ProtostreamTextTranscoder;
+import org.infinispan.server.core.dataconversion.ProtostreamTranscoder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -71,7 +69,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@InfinispanModule(name = "remote-query-server", requiredModules = "core")
+@InfinispanModule(name = "remote-query-server", requiredModules = "server-core")
 public final class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
@@ -119,9 +117,9 @@ public final class LifecycleManager implements ModuleLifecycle {
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerWrapper(ProtobufWrapper.INSTANCE);
-      encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
-      encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
-      encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx, classLoader));
+
+      // Override SerializationContext so that QueryRequest and ___protobuf_metadata schemas are handled
+      encoderRegistry.getTranscoder(ProtostreamTranscoder.class).setCtx(serCtx);
    }
 
    private void processProtostreamSerializationContextInitializers(ClassLoader classLoader, SerializationContext serCtx) {

@@ -41,7 +41,7 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
       dataSrc = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", PROTO_DEFINITIONS));
-      transcoder = new ProtostreamJsonTranscoder(serCtx);
+      transcoder = new ProtostreamTranscoder(serCtx, ProtostreamTranscoder.class.getClassLoader());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 
