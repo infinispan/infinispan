@@ -1,0 +1,19 @@
+= Choosing a Server Protocol
+
+Choosing the right protocol depends on a number of factors.
+
+[cols="20,^20,^20,^20",options="header"]
+|============================================================
+|                    | Hot Rod    | HTTP / REST     | Memcached
+| Topology-aware     | [green]*Y* | [red]*N*        | [red]*N*
+| Hash-aware         | [green]*Y* | [red]*N*        | [red]*N*
+| Encryption         | [green]*Y* | [green]*Y*      | [red]*N*
+| Authentication     | [green]*Y* | [green]*Y*      | [red]*N*
+| Conditional ops    | [green]*Y* | [green]*Y*      | [green]*Y*
+| Bulk ops           | [green]*Y* | [red]*N*        | [red]*N*
+| Transactions       | [red]*N*   | [red]*N*        | [red]*N*
+| Listeners          | [green]*Y* | [red]*N*        | [red]*N*
+| Query              | [green]*Y* | [green]*Y*      | [red]*N*
+| Execution          | [green]*Y* | [red]*N*        | [red]*N*
+| Cross-site failover| [green]*Y* | [red]*N*        | [red]*N*
+|============================================================

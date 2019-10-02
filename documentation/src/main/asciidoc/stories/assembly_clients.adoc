@@ -1,0 +1,9 @@
+[id='client_server']
+:context: client_server
+= Client/Server
+
+include::{topics}/con_server_client_overview.adoc[leveloffset=+1]
+include::{topics}/con_server_using_client_mode.adoc[leveloffset=+1]
+include::{topics}/con_server_using_embedded_mode.adoc[leveloffset=+1]
+include::{topics}/con_server_modules.adoc[leveloffset=+1]
+include::{topics}/ref_server_protocols.adoc[leveloffset=+1]
