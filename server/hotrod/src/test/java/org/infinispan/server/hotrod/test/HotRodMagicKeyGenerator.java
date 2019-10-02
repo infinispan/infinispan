@@ -3,7 +3,8 @@ package org.infinispan.server.hotrod.test;
 import java.util.Random;
 
 import org.infinispan.Cache;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.distribution.LocalizedCacheTopology;
 
 /**
@@ -18,20 +19,15 @@ public class HotRodMagicKeyGenerator {
       LocalizedCacheTopology cacheTopology = cache.getAdvancedCache().getDistributionManager().getCacheTopology();
       Random r = new Random();
 
-      GenericJBossMarshaller sm = new GenericJBossMarshaller();
+      Marshaller marshaller = new ProtoStreamMarshaller();
       for (int i = 0; i < 1000; i++) {
          String candidate = String.valueOf(r.nextLong());
-         byte[] candidateBytes = sm.objectToByteBuffer(candidate, 64);
+         byte[] candidateBytes = marshaller.objectToByteBuffer(candidate, 64);
          if (cacheTopology.isReadOwner(candidateBytes)) {
             return candidateBytes;
          }
       }
 
       throw new RuntimeException("Unable to find a key local to node " + cache);
-   }
-
-   public static String getStringObject(byte[] bytes) throws Exception {
-      GenericJBossMarshaller sm = new GenericJBossMarshaller();
-      return ((String) sm.objectFromByteBuffer(bytes));
    }
 }

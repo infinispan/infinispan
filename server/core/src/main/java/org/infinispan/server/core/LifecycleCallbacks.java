@@ -42,7 +42,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
       ClassLoader classLoader = globalConfiguration.classLoader();
-      Marshaller marshaller = jbossMarshaller(classLoader, classWhiteList);
+      Marshaller jbossMarshaller = getJbossMarshaller(classLoader, classWhiteList);
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classWhiteList);
@@ -52,10 +52,10 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
       encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
 
-      if (marshaller != null) {
-         encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, marshaller));
+      if (jbossMarshaller != null) {
+         encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, jbossMarshaller));
          BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
-         transcoder.overrideMarshaller(marshaller);
+         transcoder.overrideMarshaller(jbossMarshaller);
       }
    }
 
@@ -66,7 +66,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       return builder;
    }
 
-   Marshaller jbossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
+   public static Marshaller getJbossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
       try {
          Class<?> marshallerClass = classLoader.loadClass("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
          return Util.newInstanceOrNull(marshallerClass.asSubclass(Marshaller.class),

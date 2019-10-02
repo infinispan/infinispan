@@ -213,7 +213,7 @@ public class CounterConfiguration {
       }
    }
 
-   private static class Externalize implements AdvancedExternalizer<CounterConfiguration> {
+   public static class Externalize implements AdvancedExternalizer<CounterConfiguration> {
 
       @Override
       public Set<Class<? extends CounterConfiguration>> getTypeClasses() {

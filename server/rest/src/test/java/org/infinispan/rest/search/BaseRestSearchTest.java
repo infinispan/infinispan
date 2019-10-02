@@ -27,7 +27,9 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -65,8 +67,10 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() {
+      GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalCfg.serialization().addContextInitializer(RestTestSCI.INSTANCE);
       ConfigurationBuilder builder = getConfigBuilder();
-      createClusteredCaches(getNumNodes(), builder, isServerMode(), CACHE_NAME, "default");
+      createClusteredCaches(getNumNodes(), globalCfg, builder, isServerMode(), CACHE_NAME, "default");
       waitForClusterToForm(CACHE_NAME);
    }
 

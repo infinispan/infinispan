@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -43,6 +44,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.core.LifecycleCallbacks;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -531,8 +533,9 @@ public class HotRodTestingUtil {
    }
 
    public static byte[] marshall(Object obj) {
+
       try {
-         return obj == null ? null : new GenericJBossMarshaller().objectToByteBuffer(obj, 64);
+         return obj == null ? null : getMarshaller().objectToByteBuffer(obj, 64);
       } catch (IOException | InterruptedException e) {
          throw new CacheException(e);
       }
@@ -541,10 +544,16 @@ public class HotRodTestingUtil {
 
    public static <T> T unmarshall(byte[] key) {
       try {
-         return (T) new GenericJBossMarshaller().objectFromByteBuffer(key);
+         return (T) getMarshaller().objectFromByteBuffer(key);
       } catch (IOException | ClassNotFoundException e) {
          throw new CacheException(e);
       }
+   }
+
+   private static Marshaller getMarshaller() {
+      // Must check for GenericJbossMarshaller as infinispan-jboss-marshalling still used by client
+      Marshaller marshaller = LifecycleCallbacks.getJbossMarshaller(HotRodTestingUtil.class.getClassLoader(), null);
+      return marshaller != null ? marshaller : new JavaSerializationMarshaller();
    }
 
    public static void withClientListener(HotRodClient client, TestClientListener listener,
