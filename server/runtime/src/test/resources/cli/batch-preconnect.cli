@@ -1,0 +1,9 @@
+echo Hi CLI
+ls
+cd caches
+ls
+create cache --template=org.infinispan.DIST_SYNC batch2
+cd batch2
+put k1 batch2
+get k1
+ls

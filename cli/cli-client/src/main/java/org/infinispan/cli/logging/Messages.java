@@ -45,12 +45,6 @@ public interface Messages {
    @Message("Server HTTP http://[username[:password]]@host:port")
    String cliHelpConnectHTTP();
 
-   @Message("Embedded JMX over RMI jmx://[username[:password]]@host:port[/container[/cache]]")
-   String cliHelpConnectJMXRMI();
-
-   @Message("Embedded JMX over JBoss remoting remoting://[username[:password]]@host:port[/container[/cache]]")
-   String cliHelpConnectJMXRemoting();
-
    @Message("Reads input from the specified file instead of using interactive mode. If FILE is '-', then commands will be read from stdin.")
    String cliHelpFile();
 

@@ -9,7 +9,8 @@ public class ConnectionActivator implements ContextAwareCommandActivator {
 
    @Override
    public boolean isActivated(ParsedCommand command) {
-      return context.isConnected();
+      // In batch mode context is null
+      return context == null || context.isConnected();
    }
 
    @Override

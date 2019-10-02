@@ -189,7 +189,7 @@ public class StringPropertyReplacer {
 
       // Collect the trailing characters
       if (start != chars.length)
-         buffer.append(string.substring(start, chars.length));
+         buffer.append(string, start, chars.length);
 
       // Done
       return buffer.toString();
