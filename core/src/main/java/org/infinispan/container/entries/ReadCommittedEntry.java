@@ -6,6 +6,7 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COMMITTE
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 
 import java.util.concurrent.CompletionStage;
@@ -53,6 +54,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       EXPIRED(1 << 5),
       SKIP_LOOKUP(1 << 6),
       READ(1 << 7),
+      LOADED(1 << 8),
       ;
 
       final short mask;
@@ -243,6 +245,16 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
+   public boolean isLoaded() {
+      return isFlagSet(LOADED);
+   }
+
+   @Override
+   public void setLoaded(boolean loaded) {
+      setFlag(loaded, LOADED);
+   }
+
+   @Override
    public void resetCurrentValue() {
       // noop, the entry is removed from context
    }
@@ -295,7 +307,6 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public String toString() {
-
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
             "key=" + toStr(key) +
             ", value=" + toStr(value) +
