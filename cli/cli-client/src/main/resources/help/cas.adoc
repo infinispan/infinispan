@@ -1,0 +1,44 @@
+CAS(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+cas - compares and swaps the value of a counter
+
+
+SYNOPSIS
+--------
+*cas* [OPTIONS] ['NAME']
+
+
+DESCRIPTION
+-----------
+The *cas* command performs a 'compare-and-swap' operation on a counter.
+
+
+OPTIONS
+-------
+
+*--expect*='nnn'::
+The expected value
+
+*--value*='nnn'::
+The new value
+
+*-q, --quiet*='[true|false]'::
+Whether the value of the counter should be printed.
+
+
+EXAMPLES
+--------
+
+`cas --expect=10 --value=20 cnt_a`
+
+Sets the value of the counter 'cnt_a' to `20` only if its current value is `10`
+
+
+SEE ALSO
+--------
+add(1), cas(1), reset(1)

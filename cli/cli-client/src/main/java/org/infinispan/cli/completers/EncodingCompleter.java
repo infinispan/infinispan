@@ -15,7 +15,8 @@ public class EncodingCompleter extends ListCompleter {
    private static final List<String> ENCODINGS = Arrays.asList(
          MediaType.TEXT_PLAIN_TYPE,
          MediaType.APPLICATION_JSON_TYPE,
-         MediaType.APPLICATION_XML_TYPE
+         MediaType.APPLICATION_XML_TYPE,
+         MediaType.APPLICATION_OCTET_STREAM_TYPE
    );
 
    @Override

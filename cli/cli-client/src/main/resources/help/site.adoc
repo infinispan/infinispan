@@ -1,0 +1,96 @@
+SITE(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+site - manages backup sites
+
+
+SYNOPSIS
+--------
+*site status* [OPTIONS]
+
+*site bring-online* [OPTIONS]
+
+*site take-offline* [OPTIONS]
+
+*site push-site-state* [OPTIONS]
+
+*site cancel-push-state* [OPTIONS]
+
+*site cancel-receive-state* [OPTIONS]
+
+*site push-site-status* [OPTIONS]
+
+
+DESCRIPTION
+-----------
+Manages backup sites status and operations.
+
+
+BRING-ONLINE OPTIONS
+--------------------
+Brings a site online for the specified cache
+
+*-c, --cache*='CACHENAME'::
+The cache name
+
+*-s, --site*='SITENAME'::
+The name of the site
+
+
+TAKE-OFFLINE OPTIONS
+--------------------
+Takes a site offline for the specified cache
+
+*-c, --cache*='CACHENAME'::
+The cache name
+
+*-s, --site*='SITENAME'::
+The name of the site
+
+
+PUSH-SITE-STATE OPTIONS
+-----------------------
+Pushes state to a remote site
+
+*-c, --cache*='CACHENAME'::
+The cache name
+
+*-s, --site*='SITENAME'::
+The name of the site
+
+
+CANCEL-PUSH-STATE OPTIONS
+-------------------------
+Cancels pushing state to a remote site
+
+*-c, --cache*='CACHENAME'::
+The cache name
+
+*-s, --site*='SITENAME'::
+The name of the site
+
+
+CANCEL-RECEIVE-STATE OPTIONS
+----------------------------
+Cancels receiving state from a remote site
+
+*-c, --cache*='CACHENAME'::
+The cache name
+
+*-s, --site*='SITENAME'::
+The name of the site
+
+
+PUSH-SITE-STATUS
+----------------
+Shows information about the current push status
+
+*-c, --cache*='CACHENAME'::
+The cache name
+
+*-s, --site*='SITENAME'::
+The name of the site

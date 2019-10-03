@@ -1,6 +1,8 @@
 package org.infinispan.client.rest.configuration;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 
 /**
  * SslConfiguration.
@@ -22,9 +24,11 @@ public class SslConfiguration {
    private final char[] trustStorePassword;
    private final String sniHostName;
    private final String protocol;
+   private final TrustManager[] trustManagers;
+   private final HostnameVerifier hostnameVerifier;
 
    SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
-                    SSLContext sslContext,
+                    SSLContext sslContext, TrustManager[] trustManagers, HostnameVerifier hostnameVerifier,
                     String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String protocol) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
@@ -33,6 +37,8 @@ public class SslConfiguration {
       this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       this.keyAlias = keyAlias;
       this.sslContext = sslContext;
+      this.hostnameVerifier = hostnameVerifier;
+      this.trustManagers = trustManagers;
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePath = trustStorePath;
       this.trustStoreType = trustStoreType;
@@ -69,6 +75,14 @@ public class SslConfiguration {
       return sslContext;
    }
 
+   public TrustManager[] trustManagers() {
+      return trustManagers;
+   }
+
+   public HostnameVerifier hostnameVerifier() {
+      return hostnameVerifier;
+   }
+
    public String trustStoreFileName() {
       return trustStoreFileName;
    }
@@ -101,6 +115,7 @@ public class SslConfiguration {
             ", keyStoreType='" + keyStoreType + '\'' +
             ", keyAlias='" + keyAlias + '\'' +
             ", sslContext=" + sslContext +
+            ", trustManagers=" + trustManagers +
             ", trustStoreFileName='" + trustStoreFileName + '\'' +
             ", trustStoreType='" + trustStoreType + '\'' +
             ", sniHostName='" + sniHostName + '\'' +

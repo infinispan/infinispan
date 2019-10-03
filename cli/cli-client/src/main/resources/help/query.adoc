@@ -1,0 +1,40 @@
+QUERY(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+query - retrieves entries from a cache using an Ickle query
+
+
+SYNOPSIS
+--------
+*query* [OPTIONS] QUERY
+
+
+DESCRIPTION
+-----------
+The *query* command retrieves an entry from a cache.
+
+
+CREATE CACHE OPTIONS
+--------------------
+*-f, --file*='FILE'::
+A file containing a JSON or XML configuration.
+
+*-t, --template*='TEMPLATE'::
+The configuration template to use.
+
+*-p, --permanent*='[true|false]'::
+Whether the cache should be made permanent in the server so that it survives restarts.
+
+
+CREATE COUNTER OPTIONS
+----------------------
+*-t, --type*='[weak|strong]'
+The type of counter.
+
+SEE ALSO
+--------
+get(1)

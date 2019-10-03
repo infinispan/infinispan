@@ -2,6 +2,8 @@ package org.infinispan.client.rest.impl.okhttp;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
@@ -23,6 +25,11 @@ public class RestResponseOkHttp implements RestResponse {
    @Override
    public int getStatus() {
       return response.code();
+   }
+
+   @Override
+   public Map<String, List<String>> headers() {
+      return response.headers().toMultimap();
    }
 
    @Override

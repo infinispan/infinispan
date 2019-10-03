@@ -1,0 +1,58 @@
+CREATE(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+create - creates a cache or counter
+
+
+SYNOPSIS
+--------
+*create cache* [OPTIONS] NAME
+
+*create counter* [OPTIONS] NAME
+
+
+DESCRIPTION
+-----------
+Creates a cache or a counter on the server.
+
+
+CREATE CACHE OPTIONS
+--------------------
+*-f, --file*='FILE'::
+A file containing a JSON or XML configuration.
+
+*-t, --template*='TEMPLATE'::
+The configuration template to use.
+
+*-p, --permanent*='[true|false]'::
+Whether the cache should be made permanent in the server so that it survives restarts.
+
+
+CREATE COUNTER OPTIONS
+----------------------
+*-t, --type*='[weak|strong]'::
+The type of counter.
+
+*-s, --storage*='[PERSISTENT|VOLATILE]'::
+Sets whether the counter should be *PERSISTENT* or *VOLATILE*.
+
+*-c, --concurrency-level*='nnn'::
+Sets the concurrency level of the counter
+
+*-i, --initial-value*='nnn'::
+Sets the initial value of the counter
+
+*-l, --lower-bound*='nnn'::
+Sets the lower bound of the counter. Only valid for *strong* counters
+
+*-u, --upper-bound*='nnn'::
+Sets the upper bound of the counter. Only valid for *strong* counters
+
+
+SEE ALSO
+--------
+drop(1)

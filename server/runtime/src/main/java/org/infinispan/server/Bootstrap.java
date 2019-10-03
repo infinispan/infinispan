@@ -70,6 +70,11 @@ public class Bootstrap extends Main {
          case "--cluster-name":
             properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, parameter);
             break;
+         case "-j":
+            parameter = args.next();
+         case "--cluster-stack":
+            properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, parameter);
+            break;
          case "-o":
             parameter = args.next();
             // Fall through

@@ -1,0 +1,25 @@
+DROP(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+drop - drops (deletes) a cache or counter
+
+
+SYNOPSIS
+--------
+*drop cache* NAME
+
+*drop counter* NAME
+
+
+DESCRIPTION
+-----------
+Drops (deletes) a cache or a counter from the server.
+
+
+SEE ALSO
+--------
+create(1)

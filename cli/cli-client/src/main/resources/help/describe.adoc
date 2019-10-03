@@ -1,0 +1,110 @@
+DESCRIBE(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+describe - describes a resource
+
+
+SYNOPSIS
+--------
+*describe* ['PATH']
+
+
+DESCRIPTION
+-----------
+The *describe* command retrieves and shows information about the specified resource or
+the currently selected one. The information displayed depends on the type of the resource.
+
+
+EXAMPLES
+--------
+`describe //containers/default`
+
+Shows information about a container:
+```
+{
+  "name" : "default",
+  "version" : "10.0.0-SNAPSHOT",
+  "coordinator" : true,
+  "cache_configuration_names" : [ "org.infinispan.REPL_ASYNC", "___protobuf_metadata", "org.infinispan.DIST_SYNC", "org.infinispan.LOCAL", "org.infinispan.INVALIDATION_SYNC", "org.infinispan.REPL_SYNC", "org.infinispan.SCATTERED_SYNC", "mycache", "org.infinispan.INVALIDATION_ASYNC", "org.infinispan.DIST_ASYNC" ],
+  "cluster_name" : "cluster",
+  "physical_addresses" : "[172.17.0.1:7800]",
+  "cache_manager_status" : "RUNNING",
+  "created_cache_count" : "1",
+  "running_cache_count" : "1",
+  "node_address" : "host-29389",
+  "cluster_members" : [ "host-29389" ],
+  "cluster_members_physical_addresses" : [ "172.17.0.1:7800" ],
+  "cluster_size" : 1,
+  "defined_caches" : [ {
+    "name" : "mycache",
+    "started" : true
+  }, {
+    "name" : "___protobuf_metadata",
+    "started" : true
+  } ],
+  "coordinator_address" : "host-29389"
+}
+```
+
+`describe //containers/default`
+
+Shows information about a cache:
+```
+{
+  "distributed-cache" : {
+    "mode" : "SYNC",
+    "remote-timeout" : 17500,
+    "state-transfer" : {
+      "timeout" : 60000
+    },
+    "transaction" : {
+      "mode" : "NONE"
+    },
+    "locking" : {
+      "concurrency-level" : 1000,
+      "acquire-timeout" : 15000,
+      "striping" : false
+    }
+  }
+}
+```
+
+`describe //containers/default/caches/mycache/k1`
+
+Shows information about a cache key:
+```
+{
+"cluster-backup-owners" : [ "" ],
+"cluster-node-name" : [ "host-29389" ],
+"cluster-primary-owner" : [ "host-29389" ],
+"cluster-server-address" : [ "[172.17.0.1:7800]" ],
+"connection" : [ "keep-alive" ],
+"content-length" : [ "0" ],
+"content-type" : [ "application/octet-stream" ],
+"etag" : [ "1461965704" ],
+"last-modified" : [ "Thu, 1 Jan 1970 01:00:00 +0100" ]
+}
+```
+
+`describe //containers/default/counters/cnt1`
+
+Shows information about a counter:
+```
+{
+  "strong-counter" : {
+    "name" : "cnt1",
+    "initial-value" : 0,
+    "storage" : "PERSISTENT",
+    "lower-bound" : -9223372036854775808,
+    "upper-bound" : 100
+  }
+}
+```
+
+SEE ALSO
+--------
+cd(1), ls(1)

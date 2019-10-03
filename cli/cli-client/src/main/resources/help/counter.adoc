@@ -1,0 +1,26 @@
+COUNTER(1)
+==========
+:doctype: manpage
+
+
+NAME
+----
+counter - selects a counter making it the default for subsequent operations
+
+
+SYNOPSIS
+--------
+*counter* ['NAME']
+
+
+DESCRIPTION
+-----------
+The *counter* command selects an existing counter, making it the default for subsequent
+counter manipulation operations such as *inc* and *dec*.
+If the command is invoked without specifying an argument, the name of the currently
+selected counter will be shown.
+
+
+SEE ALSO
+--------
+add(1), cas(1), inc(1), dec(1)

@@ -1,4 +1,0 @@
-.SH SYNOPSIS
-.B commit
-.SH DESCRIPTION
-Commits an existing transaction.

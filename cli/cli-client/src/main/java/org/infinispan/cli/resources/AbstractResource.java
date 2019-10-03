@@ -35,7 +35,7 @@ public abstract class AbstractResource implements Resource {
    }
 
    @Override
-   public Resource getChild(String name) {
+   public Resource getChild(String name) throws IOException {
       if (Resource.PARENT.equals(name)) {
          return parent;
       } else {
@@ -44,7 +44,7 @@ public abstract class AbstractResource implements Resource {
    }
 
    @Override
-   public Resource getChild(String... name) {
+   public Resource getChild(String... name) throws IOException {
       if (name.length == 1) {
          return getChild(name[0]);
       } else {

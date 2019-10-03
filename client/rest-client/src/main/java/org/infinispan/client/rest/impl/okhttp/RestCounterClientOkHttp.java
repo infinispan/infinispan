@@ -5,6 +5,7 @@ import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCounterClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 
 import okhttp3.Request;
@@ -25,8 +26,10 @@ public class RestCounterClientOkHttp implements RestCounterClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> create() {
-      return null;
+   public CompletionStage<RestResponse> create(RestEntity configuration) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(counterUrl).post(((RestEntityAdaptorOkHttp) configuration).toRequestBody());
+      return client.execute(builder);
    }
 
    @Override
@@ -39,7 +42,7 @@ public class RestCounterClientOkHttp implements RestCounterClient {
    @Override
    public CompletionStage<RestResponse> configuration() {
       Request.Builder builder = new Request.Builder();
-      builder.url(counterUrl).delete();
+      builder.url(counterUrl + "/config");
       return client.execute(builder);
    }
 
@@ -75,6 +78,20 @@ public class RestCounterClientOkHttp implements RestCounterClient {
    public CompletionStage<RestResponse> reset() {
       Request.Builder builder = new Request.Builder();
       builder.url(counterUrl + "?action=reset");
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> compareAndSet(long expect, long value) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(counterUrl + "?action=compareAndSet&expect=" + expect + "&update=" + value);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> compareAndSwap(long expect, long value) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(counterUrl + "?action=compareAndSet&expect=" + expect + "&update=" + value);
       return client.execute(builder);
    }
 }

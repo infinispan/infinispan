@@ -1,0 +1,35 @@
+CONNECT(1)
+==========
+:doctype: manpage
+
+
+NAME
+----
+connect - connects to a ${infinispan.brand.name} server
+
+
+SYNOPSIS
+--------
+*connect* ['OPTIONS'] ['CONNECTION']
+
+
+DESCRIPTION
+-----------
+The *connect* command connects to a running ${infinispan.brand.name} server.
+If the command is invoked without specifying an argument, the CLI will default
+to http://localhost:11222. If the connection requires authentication, the CLI
+will prompt for credentials.
+
+
+OPTIONS
+-------
+*-u, --username*='USERNAME'::
+The username to use when connecting if the server requires credentials.
+
+*-p, --password*='PASSWORD'::
+The password to use when connecting if the server requires credentials.
+
+
+SEE ALSO
+--------
+disconnect(1)

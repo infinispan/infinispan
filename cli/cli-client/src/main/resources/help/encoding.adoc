@@ -1,0 +1,32 @@
+ENCODING(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+encoding - sets/shows the encoding used to put/get entries to/from the server.
+
+
+SYNOPSIS
+--------
+*encoding* ['ENCODING']
+
+
+DESCRIPTION
+-----------
+The *encoding* command is used to set a default encoding to be used
+for subsequent *put*/*get* operations on a cache. When invoked
+without arguments it shows the currently selected encoding.
+Encodings must use the standard MIME types (IANA media types) naming
+convention. Examples of valid encodings are:
+
+* `text/plain`
+* `application/json`
+* `application/xml`
+* `application/octet-stream`
+
+
+SEE ALSO
+--------
+get(1), put(1)

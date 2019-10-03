@@ -5,41 +5,39 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.completer.CompleterInvocation;
-import org.aesh.command.completer.OptionCompleter;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.man.AeshFileDisplayer;
 import org.aesh.command.man.FileParser;
 import org.aesh.command.man.TerminalPage;
 import org.aesh.command.man.parser.ManFileParser;
 import org.aesh.command.option.Arguments;
-import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.settings.ManProvider;
 import org.aesh.terminal.utils.ANSI;
 import org.aesh.terminal.utils.Config;
+import org.infinispan.cli.completers.HelpCompleter;
+import org.infinispan.cli.impl.CliManProvider;
+import org.kohsuke.MetaInfServices;
 
-@CommandDefinition(name = "help", description = "Shows help about commands")
+@MetaInfServices(Command.class)
+@CommandDefinition(name = Help.CMD, description = "Shows help about commands")
 public class Help extends AeshFileDisplayer {
 
-   @Arguments(completer = ManCompleter.class)
+   public static final String CMD = "help";
+   @Arguments(completer = HelpCompleter.class)
    private final List<String> manPages;
 
    private final ManFileParser fileParser;
-   private CommandRegistry<? extends CommandInvocation> registry;
    private final ManProvider manProvider;
 
-   public Help(ManProvider manProvider) {
+   public Help() {
       super();
-      this.manProvider = manProvider;
+      this.manProvider = new CliManProvider();
       manPages = new ArrayList<>();
       fileParser = new ManFileParser();
-   }
-
-   public void setRegistry(CommandRegistry<? extends CommandInvocation> registry) {
-      this.registry = registry;
    }
 
    @Override
@@ -93,19 +91,4 @@ public class Help extends AeshFileDisplayer {
 
       return CommandResult.SUCCESS;
    }
-
-   public class ManCompleter implements OptionCompleter {
-      @Override
-      public void complete(CompleterInvocation completerData) {
-         List<String> completeValues = new ArrayList<>();
-         if (registry != null) {
-            for (String command : registry.getAllCommandNames()) {
-               if (command.startsWith(completerData.getGivenCompleteValue()))
-                  completeValues.add(command);
-            }
-            completerData.setCompleterValues(completeValues);
-         }
-      }
-   }
-
 }

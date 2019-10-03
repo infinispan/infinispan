@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -18,19 +19,53 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
+import org.infinispan.cli.commands.Abort;
+import org.infinispan.cli.commands.Add;
+import org.infinispan.cli.commands.Begin;
+import org.infinispan.cli.commands.Cache;
+import org.infinispan.cli.commands.Cas;
+import org.infinispan.cli.commands.Cd;
+import org.infinispan.cli.commands.ClearCache;
+import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.commands.CommandInputLine;
+import org.infinispan.cli.commands.Container;
+import org.infinispan.cli.commands.Counter;
+import org.infinispan.cli.commands.Create;
+import org.infinispan.cli.commands.Describe;
+import org.infinispan.cli.commands.Drop;
+import org.infinispan.cli.commands.Encoding;
+import org.infinispan.cli.commands.End;
+import org.infinispan.cli.commands.Evict;
+import org.infinispan.cli.commands.Get;
+import org.infinispan.cli.commands.Grant;
+import org.infinispan.cli.commands.Ls;
+import org.infinispan.cli.commands.Put;
+import org.infinispan.cli.commands.Query;
+import org.infinispan.cli.commands.Remove;
+import org.infinispan.cli.commands.Reset;
+import org.infinispan.cli.commands.Revoke;
+import org.infinispan.cli.commands.Rollback;
+import org.infinispan.cli.commands.Schema;
+import org.infinispan.cli.commands.Shutdown;
+import org.infinispan.cli.commands.Site;
+import org.infinispan.cli.commands.Start;
+import org.infinispan.cli.commands.Stats;
+import org.infinispan.cli.commands.Upgrade;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.CachesResource;
 import org.infinispan.cli.resources.ContainerResource;
 import org.infinispan.cli.resources.ContainersResource;
+import org.infinispan.cli.resources.CounterResource;
 import org.infinispan.cli.resources.CountersResource;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.cli.resources.RootResource;
 import org.infinispan.cli.util.IterableJsonReader;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestQueryMode;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
@@ -38,12 +73,14 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public class RestConnection implements Connection, Closeable {
+   public static String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
    private final RestClientConfigurationBuilder builder;
    private final ObjectMapper mapper;
 
@@ -53,7 +90,6 @@ public class RestConnection implements Connection, Closeable {
    private Collection<String> availableConfigurations;
    private Collection<String> availableContainers;
    private Collection<String> availableCaches;
-   private Collection<String> availableCounters;
    private Collection<String> clusterMembers;
    private RestClient client;
    private boolean connected;
@@ -84,46 +120,22 @@ public class RestConnection implements Connection, Closeable {
    }
 
    private void connectInternal() throws IOException {
-      serverVersion = (String) parseResponse(() -> client.server().info(), Map.class).get("version");
+
+      serverVersion = (String) parseBody(fetch(() -> client.server().info()), Map.class).get("version");
       connected = true;
-      availableContainers = parseResponse(() -> client.cacheManagers(), List.class);
+      availableContainers = parseBody(fetch(() -> client.cacheManagers()), List.class);
       activeResource = Resource.getRootResource(this)
             .getChild(ContainersResource.NAME, availableContainers.iterator().next());
       refreshServerInfo();
    }
 
-   private <T> T parseResponse(Supplier<CompletionStage<RestResponse>> responseSupplier, Class<T> returnClass) throws IOException {
-      return parseResponse(responseSupplier.get(), returnClass);
+   private RestResponse fetch(Supplier<CompletionStage<RestResponse>> responseFutureSupplier) throws IOException {
+      return fetch(responseFutureSupplier.get());
    }
 
-   private <T> T parseResponse(CompletionStage<RestResponse> responseFuture, Class<T> returnClass) throws IOException {
+   private RestResponse fetch(CompletionStage<RestResponse> responseFuture) throws IOException {
       try {
-         RestResponse response = responseFuture.toCompletableFuture().get(10, TimeUnit.SECONDS);
-         switch (response.getStatus()) {
-            case 200:
-               if (returnClass == InputStream.class) {
-                  return (T) response.getBodyAsStream();
-               } else if (returnClass == String.class) {
-                  if (MediaType.APPLICATION_JSON.equals(response.contentType())) {
-                     Object object = mapper.readValue(response.getBody(), Object.class);
-                     return (T) mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
-                  } else {
-                     return (T) response.getBody();
-                  }
-               } else {
-                  return mapper.readValue(response.getBody(), returnClass);
-               }
-            case 204:
-               return null;
-            case 401:
-               throw MSG.unauthorized(response.getBody());
-            case 403:
-               throw MSG.forbidden(response.getBody());
-            case 404:
-               throw MSG.notFound(response.getBody());
-            default:
-               throw MSG.error(response.getBody());
-         }
+         return responseFuture.toCompletableFuture().get(10, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new IOException(e);
@@ -134,7 +146,53 @@ public class RestConnection implements Connection, Closeable {
       }
    }
 
-   private Resource pathToResource(String path) {
+   private Map<String, List<String>> parseHeaders(RestResponse response) throws IOException {
+      response = handleResponseStatus(response);
+      if (response != null) {
+         return response.headers();
+      } else {
+         return Collections.emptyMap();
+      }
+   }
+
+   private <T> T parseBody(RestResponse response, Class<T> returnClass) throws IOException {
+      response = handleResponseStatus(response);
+      if (response != null) {
+         if (returnClass == InputStream.class) {
+            return (T) response.getBodyAsStream();
+         } else if (returnClass == String.class) {
+            if (MediaType.APPLICATION_JSON.equals(response.contentType())) {
+               Object object = mapper.readValue(response.getBody(), Object.class);
+               return (T) mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+            } else {
+               return (T) response.getBody();
+            }
+         } else {
+            return mapper.readValue(response.getBody(), returnClass);
+         }
+      } else {
+         return null;
+      }
+   }
+
+   private RestResponse handleResponseStatus(RestResponse response) throws IOException {
+      switch (response.getStatus()) {
+         case 200:
+            return response;
+         case 204:
+            return null;
+         case 401:
+            throw MSG.unauthorized(response.getBody());
+         case 403:
+            throw MSG.forbidden(response.getBody());
+         case 404:
+            throw MSG.notFound(response.getBody());
+         default:
+            throw MSG.error(response.getBody());
+      }
+   }
+
+   private Resource pathToResource(String path) throws IOException {
       if (Resource.THIS.equals(path)) {
          return activeResource;
       } else if (Resource.PARENT.equals(path)) {
@@ -160,25 +218,53 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public String execute(List<CommandInputLine> commands) throws IOException {
       StringBuilder sb = new StringBuilder();
+      ResponseMode responseMode = ResponseMode.BODY;
       for (CommandInputLine command : commands) {
          CompletionStage<RestResponse> response = null;
          switch (command.name()) {
-            case "cache":
+            case Add.CMD: {
+               RestCounterClient counter;
+               if (command.hasArg(Add.COUNTER)) {
+                  counter = client.counter(command.arg(Add.COUNTER));
+               } else {
+                  counter = client.counter(activeResource.findAncestor(CounterResource.class).getName());
+               }
+               response = counter.add(command.longOption(Add.DELTA));
+               if (command.boolOption(CliCommand.QUIET)) {
+                  responseMode = ResponseMode.QUIET;
+               }
+               break;
+            }
+            case Cache.CMD:
                activeResource = activeResource
                      .findAncestor(ContainerResource.class)
-                     .getChild(CachesResource.NAME, command.arg("name"));
+                     .getChild(CachesResource.NAME, command.arg(CliCommand.NAME));
                break;
-            case "cd":
-               String path = command.arg("name");
+            case Cas.CMD: {
+               RestCounterClient counter;
+               if (command.hasArg(Cas.COUNTER)) {
+                  counter = client.counter(command.arg(Cas.COUNTER));
+               } else {
+                  counter = client.counter(activeResource.findAncestor(CounterResource.class).getName());
+               }
+               if (command.boolOption(CliCommand.QUIET)) {
+                  response = counter.compareAndSet(command.longOption(Cas.EXPECT), command.longOption(Cas.VALUE));
+               } else {
+                  response = counter.compareAndSwap(command.longOption(Cas.EXPECT), command.longOption(Cas.VALUE));
+               }
+               break;
+            }
+            case Cd.CMD:
+               String path = command.arg(CliCommand.PATH);
                activeResource = pathToResource(path);
                break;
-            case "clearcache": {
-               activeResource
-                     .findAncestor(ContainerResource.class)
-                     .getChild(CachesResource.NAME)
-                     .getChild(command.arg("name"));
-               if (command.hasArg("name")) {
-                  response = client.cache(command.arg("name")).clear();
+            case ClearCache.CMD: {
+               if (command.hasArg(CliCommand.NAME)) {
+                  activeResource
+                        .findAncestor(ContainerResource.class)
+                        .getChild(CachesResource.NAME)
+                        .getChild(command.arg(CliCommand.NAME));
+                  response = client.cache(command.arg(CliCommand.NAME)).clear();
                } else {
                   CacheResource resource = activeResource.findAncestor(CacheResource.class);
                   if (resource != null) {
@@ -187,146 +273,234 @@ public class RestConnection implements Connection, Closeable {
                }
                break;
             }
-            case "container": {
+            case Container.CMD: {
                activeResource = activeResource
                      .findAncestor(RootResource.class)
-                     .getChild(ContainersResource.NAME, command.arg("name"));
+                     .getChild(ContainersResource.NAME, command.arg(CliCommand.NAME));
                break;
             }
-            case "counter": {
+            case Counter.CMD: {
                activeResource = activeResource
                      .findAncestor(ContainerResource.class)
-                     .getChild(CountersResource.NAME, command.arg("name"));
+                     .getChild(CountersResource.NAME, command.arg(CliCommand.NAME));
                break;
             }
-            case "create": {
-               switch (command.arg("type")) {
-                  case "cache":
-                     RestCacheClient cache = client.cache(command.arg("name"));
-                     boolean permanent = Boolean.parseBoolean(command.option("permanent"));
+            case Create.CMD: {
+               switch (command.arg(Create.TYPE)) {
+                  case Create.Cache.CMD: {
+                     RestCacheClient cache = client.cache(command.arg(Create.NAME));
+                     boolean permanent = command.boolOption(Create.Cache.PERMANENT);
                      CacheContainerAdmin.AdminFlag flags = permanent ? CacheContainerAdmin.AdminFlag.PERMANENT : null;
-                     if (command.hasArg("template")) {
-                        response = cache.createWithTemplate(command.arg("template"), flags);
+                     if (command.hasArg(Create.Cache.TEMPLATE)) {
+                        response = cache.createWithTemplate(command.arg(Create.Cache.TEMPLATE), flags);
                      } else {
-                        RestEntity entity = entityFromFile(new File(command.arg("file")));
+                        RestEntity entity = entityFromFile(new File(command.arg(Create.Cache.FILE)));
                         response = cache.createWithConfiguration(entity, flags);
                      }
                      break;
-                  case "counter":
-                     response = client.counter(command.arg("name")).create();
+                  }
+                  case Create.Counter.CMD: {
+                     ObjectNode counter = mapper.createObjectNode();
+                     ObjectNode node = counter
+                           .putObject(command.option(Create.Counter.COUNTER_TYPE) + "-counter")
+                           .put(Create.Counter.INITIAL_VALUE, command.longOption(Create.Counter.INITIAL_VALUE))
+                           .put(Create.Counter.CONCURRENCY_LEVEL, command.intOption(Create.Counter.CONCURRENCY_LEVEL))
+                           .put(Create.Counter.STORAGE, command.option(Create.Counter.STORAGE));
+                     if (command.hasOption(Create.Counter.UPPER_BOUND)) {
+                        node.put(Create.Counter.UPPER_BOUND, command.longOption(Create.Counter.UPPER_BOUND));
+                     }
+                     if (command.hasOption(Create.Counter.LOWER_BOUND)) {
+                        node.put(Create.Counter.LOWER_BOUND, command.longOption(Create.Counter.LOWER_BOUND));
+                     }
+                     response = client.counter(command.arg(CliCommand.NAME)).create(RestEntity.create(MediaType.APPLICATION_JSON, counter.toString()));
                      break;
+                  }
                }
                break;
             }
-            case "describe": {
+            case Describe.CMD: {
                Resource resource = activeResource;
-               if (command.hasArg("name")) {
-                  resource = pathToResource(command.arg("name"));
+               if (command.hasArg(CliCommand.NAME)) {
+                  resource = pathToResource(command.arg(CliCommand.NAME));
                }
                return resource.describe();
             }
-            case "drop": {
-               switch (command.arg("type")) {
-                  case "cache":
-                     response = client.cache(command.arg("name")).delete();
+            case Drop.CMD: {
+               switch (command.arg(CliCommand.TYPE)) {
+                  case Drop.Cache.CMD:
+                     response = client.cache(command.arg(CliCommand.NAME)).delete();
                      break;
-                  case "counter":
-                     response = client.counter(command.arg("name")).delete();
+                  case Drop.Counter.CMD:
+                     response = client.counter(command.arg(CliCommand.NAME)).delete();
                      break;
                }
                break;
             }
-            case "encoding": {
-               if (command.hasArg("type")) {
-                  encoding = MediaType.fromString(command.arg("type"));
+            case Encoding.CMD: {
+               if (command.hasArg(CliCommand.TYPE)) {
+                  encoding = MediaType.fromString(command.arg(CliCommand.TYPE));
                } else {
                   sb.append(encoding);
                }
                break;
             }
-            case "get": {
+            case Get.CMD: {
                RestCacheClient cache;
-               if (command.hasArg("cache")) {
-                  cache = client.cache(command.arg("cache"));
+               if (command.hasArg(CliCommand.CACHE)) {
+                  cache = client.cache(command.arg(CliCommand.CACHE));
                } else {
                   cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
                }
-               response = cache.get(command.arg("key"));
+               response = cache.get(command.arg(CliCommand.KEY));
                break;
             }
-            case "ls":
+            case Ls.CMD: {
+               Resource resource = activeResource;
+               if (command.hasArg(CliCommand.PATH)) {
+                  resource = pathToResource(command.arg(CliCommand.PATH));
+               }
                StringJoiner j = new StringJoiner("\n");
-               for (String item : activeResource.getChildrenNames()) {
+               for (String item : resource.getChildrenNames()) {
                   j.add(item);
                }
                return j.toString();
-            case "query": {
+            }
+            case Query.CMD: {
                RestCacheClient cache;
-               if (command.hasArg("cache")) {
-                  cache = client.cache(command.arg("cache"));
+               if (command.hasArg(CliCommand.CACHE)) {
+                  cache = client.cache(command.arg(CliCommand.CACHE));
                } else {
                   cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
                }
-               response = cache.query(command.arg("query"));
+               response = cache.query(
+                     command.arg(Query.QUERY),
+                     command.intOption(Query.MAX_RESULTS),
+                     command.intOption(Query.OFFSET),
+                     RestQueryMode.valueOf(command.option(Query.QUERY_MODE))
+               );
                break;
             }
-            case "remove": {
+            case Put.CMD: {
                RestCacheClient cache;
-               if (command.hasArg("cache")) {
-                  cache = client.cache(command.arg("cache"));
-               } else {
-                  cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
-               }
-               response = cache.remove(command.arg("key"));
-               break;
-            }
-            case "put": {
-               RestCacheClient cache;
-               if (command.hasArg("cache")) {
-                  cache = client.cache(command.arg("cache"));
+               if (command.hasOption(CliCommand.CACHE)) {
+                  cache = client.cache(command.option(CliCommand.CACHE));
                } else {
                   cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
                }
                RestEntity value;
-               MediaType putEncoding = command.hasArg("encoding") ? MediaType.fromString(command.arg("encoding")) : encoding;
-               if (command.hasArg("file")) {
-                  value = RestEntity.create(putEncoding, new File(command.arg("file")));
+               MediaType putEncoding = command.hasOption(Put.ENCODING) ? MediaType.fromString(command.option(Put.ENCODING)) : encoding;
+               if (command.hasOption(CliCommand.FILE)) {
+                  value = RestEntity.create(putEncoding, new File(command.option(CliCommand.FILE)));
                } else {
-                  value = RestEntity.create(putEncoding, command.arg("value"));
+                  value = RestEntity.create(putEncoding, command.arg(CliCommand.VALUE));
                }
-               response = cache.put(command.arg("key"), value);
+               if (command.boolOption(Put.IF_ABSENT)) {
+                  response = cache.post(command.arg(CliCommand.KEY), value, command.longOption(Put.TTL), command.longOption(Put.MAX_IDLE));
+               } else {
+                  response = cache.put(command.arg(CliCommand.KEY), value, command.longOption(Put.TTL), command.longOption(Put.MAX_IDLE));
+               }
                break;
             }
-            case "shutdown": {
-               response = client.server().stop().thenApply(f -> {
-                        try {
-                           close();
-                        } catch (Exception e) {
-                        }
-                        return f;
+            case Remove.CMD: {
+               RestCacheClient cache;
+               if (command.hasArg(CliCommand.CACHE)) {
+                  cache = client.cache(command.arg(CliCommand.CACHE));
+               } else {
+                  cache = client.cache(activeResource.findAncestor(CacheResource.class).getName());
+               }
+               response = cache.remove(command.arg(CliCommand.KEY));
+               break;
+            }
+            case Reset.CMD: {
+               RestCounterClient counter;
+               if (command.hasArg(Reset.COUNTER)) {
+                  counter = client.counter(command.arg(Reset.COUNTER));
+               } else {
+                  counter = client.counter(activeResource.findAncestor(CounterResource.class).getName());
+               }
+               response = counter.reset();
+               break;
+            }
+            case Schema.CMD: {
+               RestCacheClient cache = client.cache(PROTOBUF_METADATA_CACHE_NAME);
+               if (command.hasArg(CliCommand.FILE)) {
+                  RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, new File(command.arg(CliCommand.FILE)));
+                  response = cache.put(command.arg(CliCommand.KEY), value);
+               } else {
+                  response = cache.get(command.arg(CliCommand.KEY));
+               }
+               break;
+            }
+            case Shutdown.CMD: {
+               response = client.server().stop();
+               break;
+            }
+            case Site.CMD: {
+               RestCacheClient cache = client.cache(command.arg(Site.CACHE));
+               switch (command.arg(Site.OP)) {
+                  case Site.STATUS: {
+                     if (command.hasArg(Site.NAME)) {
+                        response = cache.backupStatus(command.arg(Site.NAME));
+                     } else {
+                        response = cache.xsiteBackups();
                      }
-               );
+                     break;
+                  }
+                  case Site.BRING_ONLINE: {
+                     response = cache.bringSiteOnline(command.arg(Site.NAME));
+                     break;
+                  }
+                  case Site.TAKE_OFFLINE: {
+                     response = cache.takeSiteOffline(command.arg(Site.NAME));
+                     break;
+                  }
+                  case Site.PUSH_SITE_STATE: {
+                     response = cache.pushSiteState(command.arg(Site.NAME));
+                     break;
+                  }
+                  case Site.CANCEL_PUSH_STATE: {
+                     response = cache.cancelPushState(command.arg(Site.NAME));
+                     break;
+                  }
+                  case Site.CANCEL_RECEIVE_STATE: {
+                     response = cache.cancelReceiveState(command.arg(Site.NAME));
+                     break;
+                  }
+                  case Site.PUSH_SITE_STATUS: {
+                     response = cache.pushStateStatus();
+                     break;
+                  }
+                  case Site.CLEAR_PUSH_STATE_STATUS: {
+                     response = cache.clearPushStateStatus();
+                     break;
+                  }
+               }
                break;
             }
-            case "stats":
-            case "abort":
-            case "begin":
-            case "end":
-            case "evict":
-            case "export":
-            case "grant":
-            case "revoke":
-            case "rollback":
-            case "site":
-            case "start":
-            case "upgrade":
+            case Stats.CMD:
+            case Abort.CMD:
+            case Begin.CMD:
+            case End.CMD:
+            case Evict.CMD:
+            case Grant.CMD:
+            case Revoke.CMD:
+            case Rollback.CMD:
+            case Start.CMD:
+            case Upgrade.CMD:
             default:
                break;
          }
          if (response != null) {
-            String s = parseResponse(response, String.class);
-            if (s != null) {
-               sb.append(s);
+            RestResponse r = fetch(response);
+            switch (responseMode) {
+               case BODY:
+                  sb.append(parseBody(r, String.class));
+                  break;
+               case QUIET:
+                  break;
+               case HEADERS:
+                  sb.append(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(parseHeaders(r)));
+                  break;
             }
          }
       }
@@ -356,8 +530,8 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Collection<String> getAvailableCounters(String container) {
-      return availableCounters;
+   public Collection<String> getAvailableCounters(String container) throws IOException {
+      return parseBody(fetch(() -> client.counters()), List.class);
    }
 
    @Override
@@ -366,9 +540,26 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public Collection<String> getAvailableSchemas(String container) throws IOException {
+      List<String> schemas = new ArrayList<>();
+      getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME).forEach(s -> schemas.add(s));
+      return schemas;
+   }
+
+   @Override
+   public Collection<String> getAvailableSites(String container, String cache) throws IOException {
+      CompletionStage<RestResponse> response = client.cache(cache).xsiteBackups();
+      return null;
+   }
+
+   @Override
    public Iterable<String> getCacheKeys(String container, String cache) throws IOException {
-      CompletionStage<RestResponse> response = client.cache(cache).keys();
-      return new IterableJsonReader(parseResponse(response, InputStream.class), s -> s == null || "_value".equals(s));
+      return new IterableJsonReader(parseBody(fetch(() -> client.cache(cache).keys()), InputStream.class), s -> s == null || "_value".equals(s));
+   }
+
+   @Override
+   public Iterable<String> getCounterValue(String container, String counter) throws IOException {
+      return Collections.singletonList(parseBody(fetch(() -> client.counter(counter).get()), String.class));
    }
 
    @Override
@@ -378,12 +569,18 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public String describeContainer(String container) throws IOException {
-      return parseResponse(client.cacheManager(container).info(), String.class);
+      return parseBody(fetch(() -> client.cacheManager(container).info()), String.class);
    }
 
    @Override
    public String describeCache(String container, String cache) throws IOException {
-      return parseResponse(client.cache(cache).configuration(), String.class);
+      return parseBody(fetch(() -> client.cache(cache).configuration()), String.class);
+   }
+
+   @Override
+   public String describeKey(String container, String cache, String key) throws IOException {
+      Map<String, List<String>> headers = parseHeaders(fetch(() -> client.cache(cache).head(key)));
+      return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(headers);
    }
 
    @Override
@@ -393,7 +590,7 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public String describeCounter(String container, String counter) throws IOException {
-      return parseResponse(client.counter(counter).configuration(), String.class);
+      return parseBody(fetch(() -> client.counter(counter).configuration()), String.class);
    }
 
    @Override
@@ -415,19 +612,20 @@ public class RestConnection implements Connection, Closeable {
       try {
          ContainerResource container = getActiveContainer();
          String containerName = container.getName();
-         Map cacheManagerInfo = parseResponse(() -> client.cacheManager(containerName).info(), Map.class);
+         Map cacheManagerInfo = parseBody(fetch(() -> client.cacheManager(containerName).info()), Map.class);
          List<Map<String, Object>> definedCaches = (List<Map<String, Object>>) cacheManagerInfo.get("defined_caches");
          availableCaches = new ArrayList<>();
          definedCaches.forEach(m -> availableCaches.add((String) m.get("name")));
-         List configurationList = parseResponse(() -> client.cacheManager(containerName).cacheConfigurations(), List.class);
+         definedCaches.remove(PROTOBUF_METADATA_CACHE_NAME);
+         List configurationList = parseBody(fetch(() -> client.cacheManager(containerName).cacheConfigurations()), List.class);
          availableConfigurations = new ArrayList<>(configurationList.size());
          for (Object item : configurationList) {
             availableConfigurations.add(((Map<String, String>) item).get("name"));
          }
-         availableCounters = new ArrayList<>();
+
          String nodeAddress = (String) cacheManagerInfo.get("node_address");
          String clusterName = (String) cacheManagerInfo.get("cluster_name");
-         clusterMembers = (Collection<String>)cacheManagerInfo.get("cluster_members");
+         clusterMembers = (Collection<String>) cacheManagerInfo.get("cluster_members");
          if (nodeAddress != null) {
             serverInfo = nodeAddress + "@" + clusterName;
          } else {
@@ -460,4 +658,6 @@ public class RestConnection implements Connection, Closeable {
    public String toString() {
       return serverInfo;
    }
+
+   enum ResponseMode {QUIET, BODY, HEADERS}
 }

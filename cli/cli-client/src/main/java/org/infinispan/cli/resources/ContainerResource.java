@@ -16,7 +16,7 @@ public class ContainerResource extends AbstractResource {
 
    @Override
    public Iterable<String> getChildrenNames() {
-      return Arrays.asList(CachesResource.NAME, CountersResource.NAME, ConfigurationsResource.NAME);
+      return Arrays.asList(CachesResource.NAME, CountersResource.NAME, ConfigurationsResource.NAME, SchemasResource.NAME);
    }
 
    @Override
@@ -30,6 +30,8 @@ public class ContainerResource extends AbstractResource {
             return new CountersResource(this);
          case ConfigurationsResource.NAME:
             return new ConfigurationsResource(this);
+         case SchemasResource.NAME:
+            return new SchemasResource(this);
          default:
             throw Messages.MSG.noSuchResource(name);
       }

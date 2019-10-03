@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.net.ssl.SSLContext;
-
 import org.aesh.command.CommandResult;
+import org.aesh.command.invocation.CommandInvocation;
+import org.aesh.command.registry.CommandRegistry;
 import org.aesh.command.shell.Shell;
 import org.aesh.io.FileResource;
 import org.aesh.readline.AeshContext;
@@ -40,7 +40,8 @@ public class ContextImpl implements Context, AeshContext {
    private final Properties properties;
    private org.aesh.io.Resource cwd;
    private ReadlineConsole console;
-   private SSLContext sslContext;
+   private SSLContextSettings sslContext;
+   private CommandRegistry<? extends CommandInvocation> registry;
 
    public ContextImpl(Properties properties) {
       this.properties = properties;
@@ -66,12 +67,7 @@ public class ContextImpl implements Context, AeshContext {
    }
 
    @Override
-   public SSLContext getSslContext() {
-      return sslContext;
-   }
-
-   @Override
-   public void setSslContext(SSLContext sslContext) {
+   public void setSslContext(SSLContextSettings sslContext) {
       this.sslContext = sslContext;
    }
 
@@ -170,6 +166,7 @@ public class ContextImpl implements Context, AeshContext {
       refreshPrompt();
    }
 
+   @Override
    public CommandResult execute(Shell shell, List<CommandInputLine> commands) {
       try {
          String response = connection.execute(commands);
@@ -190,6 +187,16 @@ public class ContextImpl implements Context, AeshContext {
    public void setConsole(ReadlineConsole console) {
       this.console = console;
       refreshPrompt();
+   }
+
+   @Override
+   public CommandRegistry<? extends CommandInvocation> getRegistry() {
+      return registry;
+   }
+
+   @Override
+   public void setRegistry(CommandRegistry<? extends CommandInvocation> registry) {
+      this.registry = registry;
    }
 
    @Override

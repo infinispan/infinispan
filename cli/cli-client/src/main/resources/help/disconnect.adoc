@@ -1,0 +1,24 @@
+DISCONNECT(1)
+=============
+:doctype: manpage
+
+
+NAME
+----
+disconnect - disconnects from a ${infinispan.brand.name} server
+
+
+SYNOPSIS
+--------
+*disconnect*
+
+
+DESCRIPTION
+-----------
+The *disconnect* command disconnects from a ${infinispan.brand.name} server.
+Use the *connect*
+
+
+SEE ALSO
+--------
+connect(1)

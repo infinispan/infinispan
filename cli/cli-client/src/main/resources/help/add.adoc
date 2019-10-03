@@ -1,0 +1,46 @@
+ADD(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+add - adds/subtracts a delta to/from a counter
+
+
+SYNOPSIS
+--------
+*add* [OPTIONS] ['NAME']
+
+
+DESCRIPTION
+-----------
+The *add* adds or subtracts a value ('delta') to/from a counter. If no delta is specified, the counter is incremented by
+1.
+
+
+OPTIONS
+-------
+
+*--delta*='nnn'::
+The delta to add/subtract from the counter's value. Defaults
+
+*-q, --quiet*='[true|false]'::
+Whether the value of the counter should be printed.
+
+
+EXAMPLES
+--------
+
+`add --delta=10 cnt_a`
+
+Adds `10` to the current value of the counter 'cnt_a'
+
+`add --delta=-5 cnt_a`
+
+Subtracts `5` from the current value of the counter 'cnt_a'
+
+
+SEE ALSO
+--------
+cas(1), reset(1)

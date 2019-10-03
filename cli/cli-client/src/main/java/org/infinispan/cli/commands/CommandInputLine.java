@@ -10,8 +10,8 @@ import java.util.Map;
  **/
 public class CommandInputLine {
    private final String name;
-   private final HashMap<String, String> options;
-   private final HashMap<String, String> arguments;
+   private final HashMap<String, Object> options;
+   private final HashMap<String, Object> arguments;
 
    public CommandInputLine(String name) {
       this.name = name;
@@ -24,35 +24,76 @@ public class CommandInputLine {
       return this;
    }
 
-   public CommandInputLine option(String name, boolean value) {
-      this.options.put(name, Boolean.toString(value));
-      return this;
-   }
-
-   public CommandInputLine optionalArg(String name, String value) {
+   public CommandInputLine optionalArg(String name, Object value) {
       if (value != null) {
          this.arguments.put(name, value);
       }
       return this;
    }
 
+   public CommandInputLine option(String name, String value) {
+      if (value != null) {
+         this.options.put(name, value);
+      }
+      return this;
+   }
+
+   public CommandInputLine option(String name, Integer value) {
+      if (value != null) {
+         this.options.put(name, value);
+      }
+      return this;
+   }
+
+   public CommandInputLine option(String name, Long value) {
+      if (value != null) {
+         this.options.put(name, value);
+      }
+      return this;
+   }
+
+   public CommandInputLine option(String name, boolean value) {
+      this.options.put(name, Boolean.valueOf(value));
+      return this;
+   }
+
    public String arg(String arg) {
-      return arguments.get(arg);
+      return (String) arguments.get(arg);
    }
 
    public String option(String option) {
-      return options.get(option);
+      return (String) options.get(option);
+   }
+
+   public int intOption(String option) {
+      return (Integer) options.get(option);
+   }
+
+   public long longOption(String option) {
+      return (Long) options.get(option);
+   }
+
+   public boolean boolOption(String option) {
+      return (Boolean) options.get(option);
+   }
+
+   public boolean hasArg(String arg) {
+      return arguments.containsKey(arg);
+   }
+
+   public boolean hasOption(String option) {
+      return options.containsKey(option);
    }
 
    public String toString() {
       StringBuilder sb = new StringBuilder(name);
-      for (Map.Entry<String, String> option : options.entrySet()) {
-         sb.append("--");
+      for (Map.Entry<String, Object> option : options.entrySet()) {
+         sb.append(" --");
          sb.append(option.getKey());
          sb.append("=");
          sb.append(option.getValue());
       }
-      for (String argument : arguments.values()) {
+      for (Object argument : arguments.values()) {
          sb.append(" ");
          sb.append(argument);
       }
@@ -61,9 +102,5 @@ public class CommandInputLine {
 
    public String name() {
       return name;
-   }
-
-   public boolean hasArg(String arg) {
-      return arguments.containsKey(arg);
    }
 }

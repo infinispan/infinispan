@@ -1,0 +1,47 @@
+PUT(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+put - puts an entry in a cache
+
+
+SYNOPSIS
+--------
+*put* [OPTIONS] `KEY` [`VALUE`]
+
+
+DESCRIPTION
+-----------
+The *put* command puts an entry in a cache. The first argument is compulsory and
+indicates the key of the entry. The second argument is optional when the
+
+
+OPTIONS
+-------
+*-c, --cache*='NAME'::
+The name of the cache. If not specified, the currently selected cache will be used.
+
+*-e, --encoding*='ENCODING'::
+The encoding to use when putting the trname of the cache.
+If not specified, the currently selected cache will be used.
+
+*-f, --file*='FILE'::
+The file to be used to supply the value.
+
+*-l, --ttl*='TTL'::
+The time-to-live of the entry in seconds. If 0 or not specified, the default expiration for the cache will be used.
+If a negative value, the entry never expires.
+
+*-i, --max-idle*='MAXIDLE'::
+The maximum idle time of the entry in seconds. If 0 or not specified, the default expiration for the cache will be used.
+If a negative value, the entry never expires.
+
+*-a, --if-absent*=[true|false]::
+Only puts an entry if it doesn't already exist.
+
+SEE ALSO
+--------
+get(1), remove(1)
