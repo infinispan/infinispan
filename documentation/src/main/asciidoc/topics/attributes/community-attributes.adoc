@@ -61,7 +61,6 @@ include::transaction-attributes.adoc[]
 //:infinispanversion: 10.0
 //:infinispancomponentversion: 10.0.0-SNAPSHOT
 
-//:brandcli: cli
 //:moduleprefix: ispn
 //:infinispanslot: ispn-10.0
 

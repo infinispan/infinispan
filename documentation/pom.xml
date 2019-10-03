@@ -179,7 +179,6 @@
                                 <wildflydocroot>${wildfly.docroot}</wildflydocroot>
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
-                                <brandcli>${infinispan.brand.cli}</brandcli>
                                 <download_url>${download.url}</download_url>
                             </attributes>
                         </configuration>
@@ -248,7 +247,6 @@
                                         <wildflydocroot>${wildfly.docroot}</wildflydocroot>
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
-                                        <brandcli>${infinispan.brand.cli}</brandcli>
                                         <download_url>${download.url}</download_url>
                                     </attributes>
                                 </configuration>

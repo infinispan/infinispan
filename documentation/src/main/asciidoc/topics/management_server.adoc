@@ -5,7 +5,7 @@ You can use the +CLI+ to perform management operations on a standalone node or a
 
 [source,options=nowrap,subs=attributes+]
 ----
-$ bin/{brandcli}.sh
+$ bin/cli.sh
 [disconnected /] connect
 [standalone@localhost:9990 /] cd subsystem=datagrid-infinispan
 [standalone@localhost:9990 subsystem=datagrid-infinispan] cd cache-container=local
