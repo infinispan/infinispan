@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 
@@ -149,6 +150,15 @@ public class RestCacheManager<V> {
          return "0.0.0.0";
       }
       return dm.getCacheTopology().getDistribution(key).primary().toString();
+   }
+
+   public String getBackupOwners(String cacheName, Object key, RestRequest restRequest) {
+      DistributionManager dm = SecurityActions.getDistributionManager(getCache(cacheName, restRequest));
+      if (dm == null) {
+         //this is a local cache
+         return "0.0.0.0";
+      }
+      return dm.getCacheTopology().getDistribution(key).writeBackups().stream().map(a -> a.toString()).collect(Collectors.joining(" "));
    }
 
    public EmbeddedCacheManager getInstance() {
