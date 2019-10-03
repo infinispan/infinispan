@@ -26,6 +26,7 @@ public class ConfigurationProperties {
    private static final String ICH = "infinispan.client.hotrod.";
    public static final String SERVER_LIST = ICH + "server_list";
    public static final String MARSHALLER = ICH + "marshaller";
+   public static final String CONTEXT_INITIALIZERS = ICH + "context-initializers";
    public static final String ASYNC_EXECUTOR_FACTORY = ICH + "async_executor_factory";
    public static final String CLIENT_INTELLIGENCE = ICH + "client_intelligence";
    public static final String DEFAULT_EXECUTOR_FACTORY_POOL_SIZE = ICH + "default_executor_factory.pool_size";
@@ -131,11 +132,19 @@ public class ConfigurationProperties {
    }
 
    public String getMarshaller() {
-      return props.getProperty(MARSHALLER, "org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
+      return props.getProperty(MARSHALLER);
    }
 
    public void setMarshaller(String marshaller) {
       props.setProperty(MARSHALLER, marshaller);
+   }
+
+   public String getContextInitializers() {
+      return props.getProperty(CONTEXT_INITIALIZERS);
+   }
+
+   public void setContextInitializers(String contextInitializers) {
+      props.setProperty(CONTEXT_INITIALIZERS, contextInitializers);
    }
 
    public String getAsyncExecutorFactory() {
