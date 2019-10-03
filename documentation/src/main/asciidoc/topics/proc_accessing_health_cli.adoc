@@ -6,14 +6,14 @@ Standalone::
 +
 [source,options=nowrap,subs=attributes+]
 ----
-$ bin/{brandcli}.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
+$ bin/cli.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
 ----
 
 Domain Mode::
 +
 [source,options=nowrap,subs=attributes+]
 ----
-$ bin/{brandcli}.sh -c "/host=master/server=${servername}/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
+$ bin/cli.sh -c "/host=master/server=${servername}/subsystem=datagrid-infinispan/cache-container=clustered/health=HEALTH:read-resource(include-runtime=true)"
 ----
 +
 Where `${servername}` is the name of the {brandname} server instance.
