@@ -117,4 +117,60 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> delete();
 
    CompletionStage<RestResponse> query(String query);
+
+   /**
+    * @return the status of all backup sites
+    */
+   CompletionStage<RestResponse> xsiteBackups();
+
+   /**
+    * @return the status of a single backup site
+    */
+   CompletionStage<RestResponse> backupStatus(String site);
+
+   /**
+    *  Take a backup site offline
+    */
+   CompletionStage<RestResponse> takeSiteOffline(String site);
+
+   /**
+    * Bring back a backup site online
+    */
+   CompletionStage<RestResponse> bringSiteOnline(String site);
+
+   /**
+    * Starts the state push to a backup site
+    */
+   CompletionStage<RestResponse> pushSiteState(String site);
+
+   /**
+    * Cancels the state push
+    */
+   CompletionStage<RestResponse> cancelPushState(String site);
+
+   /**
+    * Cancel the receiving state on a backup site
+    */
+   CompletionStage<RestResponse> cancelReceiveState(String site);
+
+   /**
+    * Obtain the status of a state push to a backup site
+    */
+   CompletionStage<RestResponse> pushStateStatus();
+
+   /**
+    * Get the configuration used to automatically take a backup site offline
+    */
+   CompletionStage<RestResponse> getXSiteTakeOfflineConfig(String site);
+
+   /**
+    * Updates the configuration used to automatically take a backup site offline
+    */
+   CompletionStage<RestResponse> updateXSiteTakeOfflineConfig(String site, int afterFailures, long minTimeToWait);
+
+   /**
+    * Clear the status of a state push in a site
+    */
+   CompletionStage<RestResponse> clearPushStateStatus();
+
 }

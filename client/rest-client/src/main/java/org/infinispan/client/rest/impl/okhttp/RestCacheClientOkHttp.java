@@ -12,6 +12,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.api.CacheContainerAdmin;
 
+import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 
@@ -137,6 +138,84 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    public CompletionStage<RestResponse> query(String query) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=search&query=" + sanitize(query)).get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> xsiteBackups() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/", cacheUrl));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> backupStatus(String site) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/%s", cacheUrl, site));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> takeSiteOffline(String site) {
+      return executeXSiteOperation(site, "take-offline");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> bringSiteOnline(String site) {
+      return executeXSiteOperation(site, "bring-online");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> pushSiteState(String site) {
+      return executeXSiteOperation(site, "start-push-state");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> cancelPushState(String site) {
+      return executeXSiteOperation(site, "cancel-push-state");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> cancelReceiveState(String site) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, "cancel-receive-state"));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> pushStateStatus() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups?action=push-state-status", cacheUrl));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> clearPushStateStatus() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/local?action=clear-push-state-status", cacheUrl));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> getXSiteTakeOfflineConfig(String site) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/%s/take-offline-config", cacheUrl, site));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> updateXSiteTakeOfflineConfig(String site, int afterFailures, long minTimeToWait) {
+      Request.Builder builder = new Request.Builder();
+      String url = String.format("%s/x-site/backups/%s/take-offline-config", cacheUrl, site);
+      String body = String.format("{\"afterFailures\":%d,\"minTimeToWait\":%d}", afterFailures, minTimeToWait);
+      builder.url(url);
+      builder.method("PUT", RequestBody.create(MediaType.parse("application/json"), body));
+      return client.execute(builder);
+   }
+
+   private CompletionStage<RestResponse> executeXSiteOperation(String site, String action) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s/x-site/backups/%s?action=%s", cacheUrl, site, action));
       return client.execute(builder);
    }
 }

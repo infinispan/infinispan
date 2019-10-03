@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -41,6 +43,7 @@ import org.infinispan.xsite.status.SiteStatus;
 public class XSiteAdminOperations {
 
    public static final String ONLINE = "online";
+   public static final String FAILED = "failed";
    public static final String OFFLINE = "offline";
    public static final String SUCCESS = "ok";
    private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
@@ -97,71 +100,89 @@ public class XSiteAdminOperations {
          return "Incorrect site name: " + site;
       log.tracef("This node's status is %s", offlineStatus);
 
+      Map<Address, String> statuses = nodeStatus(site);
+      List<Address> online = new ArrayList<>(statuses.size());
+      List<Address> offline = new ArrayList<>(statuses.size());
+      List<Address> failed = new ArrayList<>(statuses.size());
+      statuses.forEach((a, s) -> {
+         if (s.equals(FAILED)) failed.add(a);
+         if (s.equals(OFFLINE)) offline.add(a);
+         if (s.equals(ONLINE)) online.add(a);
+      });
+
+      if (!failed.isEmpty()) return rpcError(failed, "Could not query nodes ");
+      if (offline.isEmpty()) return ONLINE;
+      if (online.isEmpty()) return OFFLINE;
+
+      return "Site appears online on nodes:" + online + " and offline on nodes: " + offline;
+   }
+
+   /**
+    * Obtain the status of the nodes from a site
+    *
+    * @param site The name of the backup site
+    * @return a Map&lt;String, String&gt; with the Address and the status of each node in the site
+    */
+   public Map<Address, String> nodeStatus(String site) {
+      //also consider local node
+      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
+      if (offlineStatus == null)
+         throw new IllegalArgumentException("Incorrect site name: " + site);
+      log.tracef("This node's status is %s", offlineStatus);
       XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.SITE_STATUS, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
-      List<Address> online = new ArrayList<>(responses.size());
-      List<Address> offline = new ArrayList<>(responses.size());
-      List<Address> failed = new ArrayList<>(responses.size());
+      Map<Address, String> statusMap = new HashMap<>();
       for (Map.Entry<Address, Response> e : responses.entrySet()) {
          if (!e.getValue().isSuccessful() || !e.getValue().isValid()) {
             if (e.getValue() != CacheNotFoundResponse.INSTANCE) {
                //the node can be shutting down.
-               failed.add(e.getKey());
+               statusMap.put(e.getKey(), FAILED);
             }
             continue;
          }
          SuccessfulResponse response = (SuccessfulResponse) e.getValue();
          log.tracef("Got status %s from node %s", response.getResponseValue(), e.getKey());
          if (response.getResponseValue() == XSiteAdminCommand.Status.OFFLINE) {
-            offline.add(e.getKey());
+            statusMap.put(e.getKey(), OFFLINE);
          } else if (response.getResponseValue() == XSiteAdminCommand.Status.ONLINE) {
-            online.add(e.getKey());
+            statusMap.put(e.getKey(), ONLINE);
          } else {
             throw new IllegalStateException("Unknown response: " + response.getResponseValue());
          }
       }
-      if (!failed.isEmpty()) {
-         return rpcError(failed, "Could not query nodes ");
-      }
 
       if (offlineStatus.isOffline()) {
-         offline.add(rpcManager.getAddress());
+         statusMap.put(rpcManager.getAddress(), OFFLINE);
       } else {
-         online.add(rpcManager.getAddress());
+         statusMap.put(rpcManager.getAddress(), ONLINE);
       }
 
-      if (offline.isEmpty()) {
-         return ONLINE;
-      }
-      if (online.isEmpty()) {
-         return OFFLINE;
-      }
-      return "Site appears online on nodes:" + online + " and offline on nodes: " + offline;
+      return statusMap;
    }
 
-   @ManagedOperation(description = "Returns the the status(offline/online) of all the configured backup sites.", displayName = "Returns the the status(offline/online) of all the configured backup sites.")
-   public String status() {
-      //also consider local node
+   /**
+    * Returns a Map&lt;String,String&gt; with each site and the status
+    */
+   public Map<String, String> siteStatuses() throws CacheException {
       Map<String, Boolean> localNodeStatus = backupSender.status();
       XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
       List<Address> errors = checkForErrors(responses);
-      if (!errors.isEmpty()) {
-         return rpcError(errors, "Failure invoking 'status()' on nodes: ");
-      }
+      if (!errors.isEmpty()) throw new CacheException("Failure invoking 'status()' on nodes: " + errors);
+
       //<site name, nodes where it failed>
       Map<String, List<Address>> result = new HashMap<>();
-      for (Map.Entry<String, Boolean> e : localNodeStatus.entrySet()) {
+      for (Entry<String, Boolean> e : localNodeStatus.entrySet()) {
          ArrayList<Address> failedSites = new ArrayList<>();
          result.put(e.getKey(), failedSites);
          if (!e.getValue()) {
             failedSites.add(rpcManager.getAddress());
          }
       }
-      for (Map.Entry<Address, Response> response : responses.entrySet()) {
+      for (Entry<Address, Response> response : responses.entrySet()) {
          @SuppressWarnings("unchecked")
          Map<String, Boolean> status = (Map<String, Boolean>) ((SuccessfulResponse) response.getValue()).getResponseValue();
-         for (Map.Entry<String, Boolean> entry : status.entrySet()) {
+         for (Entry<String, Boolean> entry : status.entrySet()) {
             List<Address> addresses = result.get(entry.getKey());
             if (addresses == null)
                throw new IllegalStateException("All sites must be defined on all the nodes of the cluster!");
@@ -172,23 +193,29 @@ public class XSiteAdminOperations {
       }
 
       int clusterSize = rpcManager.getTransport().getMembers().size();
+      return result.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
+               List<Address> value = e.getValue();
+               if (value.isEmpty()) return XSiteAdminOperations.ONLINE;
+               if (value.size() == clusterSize) return XSiteAdminOperations.OFFLINE;
+               return "mixed, offline on nodes: " + value;
+            }
+      ));
+   }
+
+   @ManagedOperation(description = "Returns the the status(offline/online) of all the configured backup sites.", displayName = "Returns the the status(offline/online) of all the configured backup sites.")
+   public String status() {
+      Map<String, String> statuses = siteStatuses();
 
       StringBuilder resultStr = new StringBuilder();
       //now generate the final response
       boolean first = true;
-      for (Map.Entry<String, List<Address>> e : result.entrySet()) {
+      for (Entry<String, String> e : statuses.entrySet()) {
          if (!first) {
             resultStr.append("\n");
          } else first = false;
          resultStr.append(e.getKey()).append("[");
-         List<Address> value = e.getValue();
-         if (value.isEmpty()) {
-            resultStr.append("ONLINE");
-         } else if (value.size() == clusterSize) {
-            resultStr.append("OFFLINE");
-         } else {
-            resultStr.append("MIXED, offline on nodes: ").append(value);
-         }
+         String value = e.getValue();
+         resultStr.append(value.toUpperCase());
          resultStr.append("]");
       }
       return resultStr.toString();
@@ -245,6 +272,15 @@ public class XSiteAdminOperations {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null) return incorrectSiteName(site);
       return String.valueOf(offlineStatus.getTakeOffline().afterFailures());
+   }
+
+   public OfflineStatus getOfflineStatus(String site) {
+      return backupSender.getOfflineStatus(site);
+   }
+
+   public boolean checkSite(String site) {
+      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
+      return offlineStatus != null;
    }
 
    @ManagedOperation(description = "Brings the given site back online on all the cluster.", displayName = "Brings the given site back online on all the cluster.")
