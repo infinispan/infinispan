@@ -4,7 +4,6 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.DEFAULT_CACHE_NAME;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IDLE_TIMEOUT;
-import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IGNORED_CACHES;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IO_THREADS;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.PORT;
@@ -15,8 +14,6 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_KEEPALIVE;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_NODELAY;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.WORKER_THREADS;
-
-import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -39,12 +36,6 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    protected ProtocolServerConfigurationBuilder(int port) {
       this(port, ProtocolServerConfiguration.attributeDefinitionSet());
-   }
-
-   @Override
-   public S ignoredCaches(Set<String> ignoredCaches) {
-      attributes.attribute(IGNORED_CACHES).set(ignoredCaches);
-      return this.self();
    }
 
    @Override

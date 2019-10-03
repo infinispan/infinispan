@@ -811,6 +811,37 @@ include::rest_examples/get_v2_server_cachemanagers.adoc[]
 
 The response will contain an array with the names of the cache managers configured in the server.
 
+[[rest_v2_cache_ignore]]
+=== Ignoring caches
+
+A cache can be excluded temporarily from receiving requests from clients,
+returning a code 503 (service unavailable) for REST clients or
+a Server Error (code 0x85) for Hot Rod clients.
+
+To ignore a cache, use an empty `POST` request with the cache manager name and the cache name:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_server_cache_ignore_add.adoc[]
+----
+
+To remove the cache from the ignore list, use a `DELETE` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_server_cache_ignore_delete.adoc[]
+----
+
+Finally, to check the caches that are ignored, do a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_server_cache_ignore_list.adoc[]
+----
+
+TIP: Currently {brandname} only supports a single cache manager per server, but for future compatibility the
+name must be provided in the requests above.
+
 [[rest_v2_server_config]]
 === Obtaining Server Configuration
 
@@ -874,7 +905,7 @@ include::rest_examples/get_v2_server_threads.adoc[]
 
 The response is the current thread dump in `text/plain` format.
 
-[rest_v2_server_stop]]
+[[rest_v2_server_stop]]
 === Stopping {brandname} Servers
 
 To stop a {brandname} server, invoke a `GET` request:

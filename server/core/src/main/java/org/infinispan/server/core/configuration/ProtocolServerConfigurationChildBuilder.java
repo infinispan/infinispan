@@ -1,7 +1,5 @@
 package org.infinispan.server.core.configuration;
 
-import java.util.Set;
-
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 
@@ -75,11 +73,6 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
     * Sets the number of worker threads
     */
    S workerThreads(int workerThreads);
-
-   /**
-    * Sets the caches to be ignored
-    */
-   S ignoredCaches(Set<String> ignoredCaches);
 
    /**
     * Indicates whether transport implementation should or should not be started.

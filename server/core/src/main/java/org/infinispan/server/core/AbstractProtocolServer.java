@@ -4,10 +4,10 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import io.netty.util.concurrent.DefaultThreadFactory;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
@@ -21,6 +21,8 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
 import org.infinispan.tasks.TaskManager;
+
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -85,7 +87,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    @Override
    public final void start(A configuration, EmbeddedCacheManager cacheManager) {
       try {
-         configuration.ignoredCaches().forEach(this::ignoreCache);
+         initialize(cacheManager);
          startInternal(configuration, cacheManager);
       } catch (RuntimeException t) {
          stop();

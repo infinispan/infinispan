@@ -3,11 +3,13 @@ package org.infinispan.server;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -315,6 +317,29 @@ public class Server implements ServerManagement {
    @Override
    public Set<String> cacheManagerNames() {
       return cacheManagers.keySet();
+   }
+
+   @Override
+   public DefaultCacheManager getCacheManager(String name) {
+      return cacheManagers.get(name);
+   }
+
+   @Override
+   public CompletionStage<Void> ignoreCache(String cacheManager, String cache) {
+      ProtocolServer protocolServer = protocolServers.values().iterator().next();
+      return protocolServer.ignoreCache(cache);
+   }
+
+   @Override
+   public CompletionStage<Boolean> unIgnoreCache(String cacheManager, String cache) {
+      ProtocolServer protocolServer = protocolServers.values().iterator().next();
+      return protocolServer.unignore(cache);
+   }
+
+   @Override
+   public CompletionStage<Collection<String>> ignoredCaches(String cacheManager) {
+      ProtocolServer protocolServer = protocolServers.values().iterator().next();
+      return protocolServer.getIgnoredCaches(cacheManager);
    }
 
    public ConfigurationBuilderHolder getConfigurationBuilderHolder() {
