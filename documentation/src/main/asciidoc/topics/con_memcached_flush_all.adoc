@@ -1,0 +1,3 @@
+= Flush All
+
+Even in a clustered environment, flush_all command leads to the clearing of the {brandname} Memcached server where the call lands. There is  no attempt to propagate this flush to other nodes in the cluster. This is done so that the `flush_all` with delay use case can be reproduced with the {brandname} Memcached server. The aim of passing a delay to `flush_all` is so that different Memcached servers can be flushed at different times, and hence avoid overloading the database with requests as a result of all Memcached servers being empty. For more info, check the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol section on flush_all] .

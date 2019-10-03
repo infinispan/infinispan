@@ -1,0 +1,3 @@
+= Talking To {brandname} Memcached Servers From Non-Java Clients
+
+This section shows how to talk to {brandname} Memcached server via a non-Java client, such as a Python script.
