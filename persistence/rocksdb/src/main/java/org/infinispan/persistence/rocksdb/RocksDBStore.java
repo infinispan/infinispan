@@ -899,8 +899,10 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                 }
                 db.close();
                 expiredDb.close();
-                // Force a GC to ensure that open file handles are released in Windows
-                System.gc();
+                if (System.getProperty("os.name").startsWith("Windows")) {
+                    // Force a GC to ensure that open file handles are released in Windows.
+                    System.gc();
+                }
                 Path dataLocation = getLocation();
                 Util.recursiveFileRemove(dataLocation.toFile());
                 db = open(getLocation(), dataDbOptions());
