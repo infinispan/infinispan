@@ -406,6 +406,192 @@ To obtain a list of caches available in a {brandname} cluster, invoke a `GET` re
 include::rest_examples/get_v2_list_caches.adoc[]
 ----
 
+[[rest_v2_cache_xsite]]
+=== Cross site replication
+
+Use the REST API to monitor and control Cross Site (x-site) replication on your {brandname} cluster.
+See link:../xsite/xsite.html[Cross Site replication] for more details about this feature.
+
+==== Getting status of all backup sites
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/
+----
+
+The response contains each site followed by a description of the status.
+Example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "NYC": "online",
+  "LON": "offline"
+}
+----
+
+.Returned Status
+|===
+|Value |Description
+
+|`online`
+|All nodes in the backup site are online
+
+|`offline`
+|All node in the backup site are offline
+
+|`mixed`
+|Some nodes in the backup site are online and others offline. It will include in the status the nodes that are offline. E.g.: `mixed, offline on nodes: Node1, Node2`
+|===
+
+==== Getting status of a backup site
+
+To obtain the status of a single backup site:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}
+----
+
+The response contains each node in the backup site with the status.
+Example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "NodeA":"offline",
+  "NodeB":"online"
+}
+----
+
+.Returned Status
+|===
+|Value |Description
+
+|`online`
+|The node is online
+
+|`offline`
+|The node is offline
+
+|`failed`
+|Failed to obtain status, the remote cache could be shutting down or a network error occurred during the request
+|===
+
+==== Taking a backup site offline
+
+To take a backup site `siteName` offline, for the cache `cacheName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=take-offline
+----
+
+==== Bringing a backup site online
+
+To take a backup site `siteName` online, for the cache `cacheName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=bring-online
+----
+
+==== Starting a state push to a backup site
+
+To start pushing state of a cache `cacheName` to a remote backup site `siteName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=start-push-state
+----
+
+==== Cancelling an ongoing state push to a backup site
+
+To cancel a state push of the cache `cacheName` to a remote backup site `siteName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-push-state
+----
+
+==== Getting the status of a state push
+
+To obtain the status of an ongoing state push of cache `cacheName` to backup `siteName` execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-push-state
+----
+
+The response will be a JSON document with each destination site name and the state transfer status.
+Example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+   "NYC":"CANCELED",
+   "LON":"OK"
+}
+----
+
+The possible statuses are `SENDING`, `OK`, `ERROR` and `CANCELLING`
+
+==== Tuning the take offline parameters of a remote site
+
+A remote site can be automatically marked as offline in case some conditions are met.
+To check the configured parameters, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
+----
+
+The response include two fields, `afterFailures` and `minTimeToWait`:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "afterFailures": 2,
+  "minTimeToWait": 1000
+}
+----
+
+To change those parameters, execute a PUT request:
+
+[source,options="nowrap",subs=attributes+]
+----
+PUT /v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
+----
+
+with a body containing the new values, e.g.:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+  "afterFailures": 4,
+  "minTimeToWait": 5000
+}
+----
+
+==== Cancelling the receiving state on a site
+
+The main use for this method is when the link between the sites is broken and the receiver site keeps it state transfer state forever.
+
+To set the cluster to normal state in the scope of `cacheName` for state pushed from site `siteName` execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-receive-state
+----
+
+==== Clearing the state transfer status of a pushing site
+
+To clear the state transfer status of a (sending) site, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/x-site/local?action=clear-push-state-status
+----
 
 [[rest_v2_cache_manager_operations]]
 == Interacting with Cache Managers
