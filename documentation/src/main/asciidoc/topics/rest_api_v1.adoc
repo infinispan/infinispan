@@ -49,6 +49,7 @@ It is possible to obtain additional information by appending the "extended" para
 This will return the following custom headers:
 
 * Cluster-Primary-Owner: the node name of the primary owner for this key
+* Cluster-Backup-Owners: the node names of the backup owners for this key
 * Cluster-Node-Name: the JGroups node name of the server that has handled the request
 * Cluster-Physical-Address: the physical JGroups address of the server that has handled the request.
 

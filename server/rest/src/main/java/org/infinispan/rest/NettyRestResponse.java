@@ -30,6 +30,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class NettyRestResponse implements RestResponse {
    private final static String CACHE_CONTROL_HEADER = "Cache-Control";
    private final static String CLUSTER_PRIMARY_OWNER_HEADER = "Cluster-Primary-Owner";
+   private final static String CLUSTER_BACKUP_OWNERS_HEADER = "Cluster-Backup-Owners";
    private final static String CLUSTER_NODE_NAME_HEADER = "Cluster-Node-Name";
    private final static String CLUSTER_SERVER_ADDRESS_HEADER = "Cluster-Server-Address";
    private final static String CONTENT_LENGTH_HEADER = "Content-Length";
@@ -208,6 +209,11 @@ public class NettyRestResponse implements RestResponse {
 
       public Builder clusterPrimaryOwner(String primaryOwner) {
          setHeader(CLUSTER_PRIMARY_OWNER_HEADER, primaryOwner);
+         return this;
+      }
+
+      public Builder clusterBackupOwners(String primaryOwner) {
+         setHeader(CLUSTER_BACKUP_OWNERS_HEADER, primaryOwner);
          return this;
       }
 
