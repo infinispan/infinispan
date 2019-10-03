@@ -10,11 +10,13 @@ import org.aesh.command.invocation.CommandInvocation;
  * @since 10.0
  **/
 @GroupCommandDefinition(
-      name = "batch",
+      name = Batch.CMD,
       description = "",
       groupCommands = {
+            Add.class,
             Cache.class,
-            CD.class,
+            Cas.class,
+            Cd.class,
             ClearCache.class,
             Connect.class,
             Container.class,
@@ -31,11 +33,17 @@ import org.aesh.command.invocation.CommandInvocation;
             Query.class,
             Remove.class,
             Replace.class,
+            Reset.class,
             Run.class,
+            Schema.class,
             Shutdown.class,
+            Site.class,
             Version.class
       })
 public class Batch implements Command {
+
+   public static final String CMD = "batch";
+
    @Override
    public CommandResult execute(CommandInvocation invocation) {
       return CommandResult.SUCCESS;

@@ -1,0 +1,26 @@
+CONTAINER(1)
+============
+:doctype: manpage
+
+
+NAME
+----
+container - selects a container making it the default for subsequent operations
+
+
+SYNOPSIS
+--------
+*container* ['NAME']
+
+
+DESCRIPTION
+-----------
+The *container* command selects an existing container, making it the default. This is
+equivalent to navigating the resource tree using `cd /containers/NAME`.
+If the command is invoked without specifying an argument, the name of the currently
+selected container will be shown.
+
+
+SEE ALSO
+--------
+cd(1), clear(1), container(1), get(1), put(1), remove(1)

@@ -29,11 +29,17 @@ public interface Connection extends Closeable {
 
    Collection<String> getAvailableContainers();
 
-   Collection<String> getAvailableCounters(String container);
+   Collection<String> getAvailableCounters(String container) throws IOException;
 
    Collection<String> getAvailableCacheConfigurations(String container);
 
+   Collection<String> getAvailableSchemas(String container) throws IOException;
+
+   Collection<String> getAvailableSites(String container, String cache) throws IOException;
+
    Iterable<String> getCacheKeys(String container, String cache) throws IOException;
+
+   Iterable<String> getCounterValue(String container, String counter) throws IOException;
 
    boolean isConnected();
 
@@ -41,7 +47,9 @@ public interface Connection extends Closeable {
 
    String describeCache(String container, String cache) throws IOException;
 
-   String describeConfiguration(String container, String counter);
+   String describeKey(String container, String cache, String key) throws IOException;
+
+   String describeConfiguration(String container, String configuration) throws IOException;
 
    String describeCounter(String container, String counter) throws IOException;
 

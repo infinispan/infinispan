@@ -118,6 +118,9 @@ public class RestClientConfiguration {
       if (security.ssl().sslContext() != null)
          properties.put(RestClientConfigurationProperties.SSL_CONTEXT, security.ssl().sslContext());
 
+      if (security.ssl().trustManagers() != null)
+         properties.put(RestClientConfigurationProperties.TRUST_MANAGERS, security.ssl().trustManagers());
+
       properties.setProperty(RestClientConfigurationProperties.USE_AUTH, Boolean.toString(security.authentication().enabled()));
 
       if (security.authentication().mechanism() != null)

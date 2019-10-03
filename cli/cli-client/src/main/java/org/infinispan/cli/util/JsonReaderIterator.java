@@ -25,6 +25,7 @@ public class JsonReaderIterator implements Iterator<String>, AutoCloseable {
       this.predicate = predicate;
    }
 
+   @Override
    public boolean hasNext() {
       if (eof) {
          return false;

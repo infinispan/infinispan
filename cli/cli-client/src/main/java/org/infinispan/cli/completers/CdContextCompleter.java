@@ -51,7 +51,11 @@ public class CdContextCompleter implements OptionCompleter {
                if (parts[i].isEmpty()) {
                   resource = resource.findAncestor(RootResource.class);
                } else {
-                  resource = resource.getChild(parts[i]);
+                  try {
+                     resource = resource.getChild(parts[i]);
+                  } catch (IOException e) {
+                     // Ignore
+                  }
                }
             }
             Iterable<String> all = getChildrenNames(resource);

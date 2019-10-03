@@ -1,0 +1,23 @@
+RESET(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+reset - resets a counter
+
+
+SYNOPSIS
+--------
+*reset* ['NAME']
+
+
+DESCRIPTION
+-----------
+The *reset* command resets a counter to its initial value.
+
+
+SEE ALSO
+--------
+add(1), cas(1)

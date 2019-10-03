@@ -11,6 +11,6 @@ import org.aesh.command.settings.ManProvider;
 public class CliManProvider implements ManProvider {
    @Override
    public InputStream getManualDocument(String commandName) {
-      return this.getClass().getClassLoader().getResourceAsStream("help/" + commandName + ".txt");
+      return this.getClass().getClassLoader().getResourceAsStream("help/" + commandName + ".adoc");
    }
 }

@@ -22,6 +22,15 @@ public class CacheResource extends AbstractResource {
    }
 
    @Override
+   public Resource getChild(String name) {
+      if (Resource.PARENT.equals(name)) {
+         return parent;
+      } else {
+         return new CacheKeyResource(this, name);
+      }
+   }
+
+   @Override
    public String describe() throws IOException {
       return getConnection().describeCache(getParent().getParent().getName(), name);
    }

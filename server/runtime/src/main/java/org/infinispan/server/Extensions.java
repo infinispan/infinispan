@@ -1,5 +1,6 @@
 package org.infinispan.server;
 
+import java.sql.Driver;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +30,7 @@ public class Extensions {
       load(classLoader, CacheEventConverterFactory.class, converterFactories);
       load(classLoader, CacheEventFilterConverterFactory.class, filterConverterFactories);
       load(classLoader, KeyValueFilterConverterFactory.class, keyValueFilterConverterFactories);
+      load(classLoader, Driver.class);
    }
 
    public void apply(HotRodServer server) {
@@ -55,6 +57,12 @@ public class Extensions {
          } else {
             Server.log.unnamedFactoryClass(t.getClass().getName());
          }
+      }
+   }
+
+   private <T> void load(ClassLoader classLoader, Class<T> contract) {
+      for (T t : ServiceFinder.load(contract, classLoader)) {
+         Server.log.loadedExtension(t.getClass().getName());
       }
    }
 }

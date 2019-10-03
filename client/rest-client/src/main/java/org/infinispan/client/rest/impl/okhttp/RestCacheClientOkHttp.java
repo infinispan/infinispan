@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestQueryMode;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.api.CacheContainerAdmin;
 
@@ -57,9 +58,26 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       return client.execute(builder);
    }
 
+   @Override
    public CompletionStage<RestResponse> post(String key, RestEntity value) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "/" + sanitize(key)).post(((RestEntityAdaptorOkHttp) value).toRequestBody());
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> post(String key, String value, long ttl, long maxIdle) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key)).post(RequestBody.create(TEXT_PLAIN, value));
+      addExpirationHeaders(builder, ttl, maxIdle);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> post(String key, RestEntity value, long ttl, long maxIdle) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key)).post(((RestEntityAdaptorOkHttp) value).toRequestBody());
+      addExpirationHeaders(builder, ttl, maxIdle);
       return client.execute(builder);
    }
 
@@ -70,6 +88,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       return client.execute(builder);
    }
 
+   @Override
    public CompletionStage<RestResponse> put(String key, RestEntity value) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "/" + sanitize(key)).put(((RestEntityAdaptorOkHttp) value).toRequestBody());
@@ -77,9 +96,41 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> put(String key, String value, long ttl, long maxIdle) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key)).put(RequestBody.create(TEXT_PLAIN, value));
+      addExpirationHeaders(builder, ttl, maxIdle);
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> put(String key, RestEntity value, long ttl, long maxIdle) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key)).put(((RestEntityAdaptorOkHttp) value).toRequestBody());
+      addExpirationHeaders(builder, ttl, maxIdle);
+      return client.execute(builder);
+   }
+
+   private void addExpirationHeaders(Request.Builder builder, long ttl, long maxIdle) {
+      if (ttl != 0) {
+         builder.addHeader("timeToLiveSeconds", Long.toString(ttl));
+      }
+      if (maxIdle != 0) {
+         builder.addHeader("maxIdleTimeSeconds", Long.toString(maxIdle));
+      }
+   }
+
+   @Override
    public CompletionStage<RestResponse> get(String key) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "/" + sanitize(key));
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> head(String key) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key) + "?extended").head();
       return client.execute(builder);
    }
 
@@ -138,6 +189,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    public CompletionStage<RestResponse> query(String query) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=search&query=" + sanitize(query)).get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> query(String query, int maxResults, int offset, RestQueryMode queryMode) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s?action=search&query=%s&max_results=%d&offset=%d&query_mode=%s", cacheUrl, sanitize(query), maxResults, offset, queryMode.name())).get();
       return client.execute(builder);
    }
 

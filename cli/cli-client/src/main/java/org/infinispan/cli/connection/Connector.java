@@ -1,6 +1,6 @@
 package org.infinispan.cli.connection;
 
-import javax.net.ssl.SSLContext;
+import org.infinispan.cli.impl.SSLContextSettings;
 
 /**
  * Connector.
@@ -9,5 +9,5 @@ import javax.net.ssl.SSLContext;
  * @since 5.2
  */
 public interface Connector {
-   Connection getConnection(String connectionString, SSLContext sslContext);
+   Connection getConnection(String connectionString, SSLContextSettings sslContext);
 }

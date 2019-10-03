@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -41,7 +42,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
          poolConfig = (PooledConnectionFactoryConfiguration) config;
       } else {
          throw new PersistenceException("ConnectionFactoryConfiguration passed in must be an instance of " +
-                                              "PooledConnectionFactoryConfiguration");
+               "PooledConnectionFactoryConfiguration");
       }
 
       try {
@@ -51,6 +52,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
             dataSource = AgroalDataSource.from(new AgroalPropertiesReader(PROPERTIES_PREFIX).readProperties(propsFile));
          } else {
             // Default Agroal configuration with metrics disabled
+            Class<?> driverClass = Util.loadClass(poolConfig.driverClass(), null);
             String password = poolConfig.password() != null ? poolConfig.password() : "";
             AgroalDataSourceConfigurationSupplier configuration = new AgroalDataSourceConfigurationSupplier()
                   .connectionPoolConfiguration(cp -> cp
@@ -58,7 +60,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
                         .acquisitionTimeout(Duration.ofSeconds(30))
                         .connectionFactoryConfiguration(cf -> cf
                               .jdbcUrl(poolConfig.connectionUrl())
-                              .connectionProviderClassName(poolConfig.driverClass())
+                              .connectionProviderClass(driverClass)
                               .jdbcTransactionIsolation(AgroalConnectionFactoryConfiguration.TransactionIsolation.UNDEFINED)
                               .principal(new NamePrincipal(poolConfig.username()))
                               .credential(new SimplePassword(password))

@@ -1,5 +1,6 @@
 package org.infinispan.cli.commands;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
@@ -11,9 +12,10 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@MetaInfServices(CliCommand.class)
-@CommandDefinition(name = "connect", description = "Connects to a remote server")
+@MetaInfServices(Command.class)
+@CommandDefinition(name = Connect.CMD, description = "Connects to a remote server")
 public class Connect extends CliCommand {
+   public static final String CMD = "connect";
    @Argument(description = "The connection string")
    String connectionString;
 

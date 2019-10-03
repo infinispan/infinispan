@@ -186,7 +186,7 @@ public class Server implements ServerManagement {
    }
 
    private void parseConfiguration(URL config) {
-      ParserRegistry parser = new ParserRegistry(this.getClass().getClassLoader(), false, properties);
+      ParserRegistry parser = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       try {
          // load the defaults first
          URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
@@ -246,7 +246,7 @@ public class Server implements ServerManagement {
       try {
          // Load any server extensions
          extensions = new Extensions();
-         extensions.load(this.getClass().getClassLoader());
+         extensions.load(Thread.currentThread().getContextClassLoader());
 
          // Start the cache manager(s)
          DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);

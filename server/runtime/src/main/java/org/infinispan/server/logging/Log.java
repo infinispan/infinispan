@@ -108,6 +108,6 @@ public interface Log extends BasicLogger {
    void unnamedFactoryClass(String name);
 
    @LogMessage(level = Logger.Level.INFO)
-   @Message(value = "Loaded extension factory '%s'", id = 80027)
+   @Message(value = "Loaded extension '%s'", id = 80027)
    void loadedExtension(String name);
 }

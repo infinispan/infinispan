@@ -1,0 +1,24 @@
+CLEARCACHE(1)
+============
+:doctype: manpage
+
+
+NAME
+----
+clearcache - clears a cache from all content
+
+
+SYNOPSIS
+--------
+*clearcache* ['NAME']
+
+
+DESCRIPTION
+-----------
+The *clearcache* command removes all entries from a cache. Unless a cache name has been specified as an argument,
+the currently selected cache will be used.
+
+
+SEE ALSO
+--------
+cache(1)

@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
  * @since 10.0
  **/
 public interface RestCounterClient {
-   CompletionStage<RestResponse> create();
+   CompletionStage<RestResponse> create(RestEntity configuration);
 
    CompletionStage<RestResponse> delete();
 
@@ -22,4 +22,8 @@ public interface RestCounterClient {
    CompletionStage<RestResponse> decrement();
 
    CompletionStage<RestResponse> reset();
+
+   CompletionStage<RestResponse> compareAndSet(long expect, long value);
+
+   CompletionStage<RestResponse> compareAndSwap(long expect, long value);
 }

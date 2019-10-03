@@ -30,12 +30,12 @@ public interface Resource {
    /**
     * Returns a resource representing the named child
     */
-   Resource getChild(String name);
+   Resource getChild(String name) throws IOException;
 
    /**
     * Returns a resource representing the named child
     */
-   Resource getChild(String... name);
+   Resource getChild(String... name) throws IOException;
 
    /**
     * Finds the resource of the specified type within the ancestors of this resource

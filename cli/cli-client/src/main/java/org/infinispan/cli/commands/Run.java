@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
@@ -16,20 +17,22 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@MetaInfServices(CliCommand.class)
-@CommandDefinition(name = "run", description = "Reads and executes commands from one or more files")
+@MetaInfServices(Command.class)
+@CommandDefinition(name = Run.CMD, description = "Reads and executes commands from one or more files")
 public class Run extends CliCommand {
+   public static final String CMD = "run";
+
    @Arguments(required = true, completer = FileOptionCompleter.class)
    private List<Resource> arguments;
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      if (arguments != null && arguments.size() > 0 && arguments.get(0).isLeaf()) {
+      if (arguments != null && arguments.size() > 0) {
          for (Resource resource : arguments) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(resource.read()))) {
+            try (BufferedReader br = new BufferedReader("-".equals(resource.getName()) ? new InputStreamReader(System.in) : new InputStreamReader(resource.read()))) {
                for (String line = br.readLine(); line != null; line = br.readLine()) {
                   if (!line.startsWith("#")) {
-                     invocation.executeCommand("batch " + line);
+                     invocation.executeCommand(Batch.CMD + " " + line);
                   }
                }
             } catch (Exception e) {

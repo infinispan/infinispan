@@ -1,0 +1,26 @@
+CACHE(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+cache - selects a cache making it the default for subsequent operations
+
+
+SYNOPSIS
+--------
+*cache* ['NAME']
+
+
+DESCRIPTION
+-----------
+The *cache* command selects an existing cache, making it the default for subsequent
+cache manipulation operations such as *get* and *put*.
+If the command is invoked without specifying an argument, the name of the currently
+selected cache will be shown.
+
+
+SEE ALSO
+--------
+cd(1), clear(1), container(1), get(1), put(1), remove(1)

@@ -1,5 +1,6 @@
 package org.infinispan.cli.commands;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
@@ -12,16 +13,18 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@MetaInfServices(CliCommand.class)
-@CommandDefinition(name = "clearcache", description = "Clears the cache", activator = ConnectionActivator.class)
+@MetaInfServices(Command.class)
+@CommandDefinition(name = ClearCache.CMD, description = "Clears the cache", activator = ConnectionActivator.class)
 public class ClearCache extends CliCommand {
 
+   public static final String CMD = "clearcache";
    @Argument(description = "The name of the cache", completer = CacheCompleter.class)
    String name;
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine("clearcache").optionalArg("name", name);
+      CommandInputLine cmd = new CommandInputLine(CMD)
+            .optionalArg(NAME, name);
       return invocation.execute(cmd);
    }
 }

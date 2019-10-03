@@ -1,5 +1,6 @@
 package org.infinispan.cli.commands;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
@@ -13,18 +14,19 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@MetaInfServices(CliCommand.class)
-@CommandDefinition(name = "get", description = "Gets an entry from the cache", activator = ConnectionActivator.class)
+@MetaInfServices(Command.class)
+@CommandDefinition(name = Get.CMD, description = "Gets an entry from the cache", activator = ConnectionActivator.class, aliases = "cat")
 public class Get extends CliCommand {
+   public static final String CMD = "get";
    @Argument(required = true)
    String key;
 
-   @Option(completer = CacheCompleter.class)
+   @Option(completer = CacheCompleter.class, shortName = 'c')
    String cache;
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine("get").arg("key", key).optionalArg("cache", cache);
+      CommandInputLine cmd = new CommandInputLine(CMD).arg("key", key).optionalArg("cache", cache);
       return invocation.execute(cmd);
    }
 }

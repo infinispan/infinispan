@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -30,15 +29,15 @@ import org.aesh.readline.ReadlineConsole;
 import org.aesh.terminal.Connection;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.Batch;
-import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
-import org.infinispan.cli.impl.CliManProvider;
 import org.infinispan.cli.impl.CliMode;
 import org.infinispan.cli.impl.CliRuntimeRunner;
 import org.infinispan.cli.impl.ContextAwareCommandInvocationProvider;
 import org.infinispan.cli.impl.ContextAwareQuitHandler;
 import org.infinispan.cli.impl.ContextImpl;
+import org.infinispan.cli.impl.SSLContextSettings;
+import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Version;
@@ -165,8 +164,7 @@ public class CLI {
             KeyStore keyStore = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, trustStorePath, trustStorePassword.toCharArray());
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(keyStore);
-            SSLContext sslContext = SSLContext.getDefault();
-            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+            SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, trustManagerFactory.getTrustManagers(), null, null);
             context.setSslContext(sslContext);
          } catch (Exception e) {
             stdErr.println(MSG.keyStoreError(trustStorePath, e));
@@ -174,13 +172,7 @@ public class CLI {
             return;
          }
       } else if (trustAll) {
-         SSLContext sslContext = null;
-         try {
-            sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, new TrustManager[]{new ZeroSecurityTrustManager()}, null);
-         } catch (Exception e) {
-            // This won't happen
-         }
+         SSLContextSettings sslContext = SSLContextSettings.getInstance("TLS", null, new TrustManager[]{new ZeroSecurityTrustManager()}, null, new ZeroSecurityHostnameVerifier());
          context.setSslContext(sslContext);
       }
       if (connectionString != null) {
@@ -201,7 +193,7 @@ public class CLI {
       try {
          registryBuilder.command(Batch.class);
          List<Class<? extends Command>> commands = new ArrayList<>();
-         for (CliCommand command : ServiceFinder.load(CliCommand.class, this.getClass().getClassLoader())) {
+         for (Command command : ServiceFinder.load(Command.class, this.getClass().getClassLoader())) {
             commands.add(command.getClass());
          }
          registryBuilder.commands(commands);
@@ -221,14 +213,15 @@ public class CLI {
          runtimeBuilder.shell(shell);
       }
 
-      CliRuntimeRunner cliRunner = CliRuntimeRunner.builder();
+      CliRuntimeRunner cliRunner = CliRuntimeRunner.builder("batch", runtimeBuilder.build());
       cliRunner
-            .commandRuntime(runtimeBuilder.build())
             .args(new String[]{"run", inputFile})
             .execute();
    }
 
    private void interactiveRun() {
+      CommandRegistry commandRegistry = initializeCommands();
+      context.setRegistry(commandRegistry);
       SettingsBuilder settings = SettingsBuilder.builder();
       settings
             .enableAlias(true)
@@ -239,9 +232,7 @@ public class CLI {
             .commandInvocationProvider(new ContextAwareCommandInvocationProvider(context))
             .commandNotFoundHandler(new CliCommandNotFoundHandler())
             .completerInvocationProvider(new ContextAwareCompleterInvocationProvider(context))
-            .commandRegistry(initializeCommands())
-            .enableMan(true)
-            .manProvider(new CliManProvider())
+            .commandRegistry(commandRegistry)
             .aeshContext(context)
             .quitHandler(new ContextAwareQuitHandler(context));
       if (terminalConnection != null) {
@@ -259,9 +250,9 @@ public class CLI {
 
    private CommandRegistry initializeCommands() {
       AeshCommandRegistryBuilder<CommandInvocation> registryBuilder = AeshCommandRegistryBuilder.builder();
-      Collection<CliCommand> commands = ServiceFinder.load(CliCommand.class, this.getClass().getClassLoader());
+      Collection<? extends Command> commands = ServiceFinder.load(Command.class, this.getClass().getClassLoader());
       try {
-         for (CliCommand command : commands) {
+         for (Command command : commands) {
             registryBuilder.command(command);
          }
       } catch (CommandRegistryException e) {

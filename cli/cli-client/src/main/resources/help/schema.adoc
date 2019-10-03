@@ -1,0 +1,25 @@
+SCHEMA(1)
+=========
+:doctype: manpage
+
+
+NAME
+----
+schema - manipulates protobuf schemas
+
+
+SYNOPSIS
+--------
+*schema* [OPTIONS] `NAME` [`VALUE`]
+
+
+DESCRIPTION
+-----------
+The *schema* command allows manipulation (upload, retrieve) of protobuf schemas.
+
+
+OPTIONS
+-------
+*-u, --upload*='FILE'::
+Uploads the specified file as a protobuf schema with the given name.
+

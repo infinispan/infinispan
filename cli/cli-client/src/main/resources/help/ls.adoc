@@ -1,0 +1,24 @@
+LS(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+ls - shows child resources of a resource.
+
+
+SYNOPSIS
+--------
+*ls* ['PATH']
+
+
+DESCRIPTION
+-----------
+The *ls* shows a list of child resources of the currently selected resource or the named
+resource specified as an argument.
+
+
+SEE ALSO
+--------
+cd(1)

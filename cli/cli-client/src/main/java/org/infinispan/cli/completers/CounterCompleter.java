@@ -1,6 +1,8 @@
 package org.infinispan.cli.completers;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;
@@ -12,8 +14,9 @@ import org.infinispan.cli.resources.ContainerResource;
  **/
 public class CounterCompleter extends ListCompleter {
    @Override
-   Collection<String> getAvailableItems(Context context) {
+   Collection<String> getAvailableItems(Context context) throws IOException {
       Connection connection = context.getConnection();
-      return connection.getAvailableCounters(connection.getActiveResource().findAncestor(ContainerResource.class).getName());
+      ContainerResource container = connection.getActiveResource().findAncestor(ContainerResource.class);
+      return container != null ? connection.getAvailableCounters(container.getName()) : Collections.emptyList();
    }
 }

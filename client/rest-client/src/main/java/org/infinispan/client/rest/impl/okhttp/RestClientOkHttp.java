@@ -11,7 +11,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
@@ -61,7 +63,11 @@ public class RestClientOkHttp implements RestClient {
 
       SSLContext sslContext = configuration.security().ssl().sslContext();
       if (sslContext != null) {
-         builder.sslSocketFactory(sslContext.getSocketFactory());
+         builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) configuration.security().ssl().trustManagers()[0]);
+         HostnameVerifier hostnameVerifier = configuration.security().ssl().hostnameVerifier();
+         if (hostnameVerifier != null) {
+            builder.hostnameVerifier(hostnameVerifier);
+         }
       }
 
       switch (configuration.protocol()) {

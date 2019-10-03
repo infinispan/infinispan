@@ -34,6 +34,7 @@ public class ReaderIterator implements Iterator<String>, AutoCloseable {
       this.regex = regex;
    }
 
+   @Override
    public boolean hasNext() {
       if (eof) {
          return false;

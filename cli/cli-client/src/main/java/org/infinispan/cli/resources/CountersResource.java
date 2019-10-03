@@ -1,5 +1,7 @@
 package org.infinispan.cli.resources;
 
+import java.io.IOException;
+
 import org.infinispan.cli.logging.Messages;
 
 /**
@@ -14,12 +16,12 @@ public class CountersResource extends AbstractResource {
    }
 
    @Override
-   public Iterable<String> getChildrenNames() {
+   public Iterable<String> getChildrenNames() throws IOException {
       return getConnection().getAvailableCounters(getParent().getName());
    }
 
    @Override
-   public Resource getChild(String name) {
+   public Resource getChild(String name) throws IOException {
       if (Resource.PARENT.equals(name)) {
          return parent;
       } else if (getConnection().getAvailableCounters(getParent().getName()).contains(name)) {

@@ -1,0 +1,30 @@
+GET(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+get - retrieves a cache entry
+
+
+SYNOPSIS
+--------
+*get* [OPTIONS] KEY
+
+
+DESCRIPTION
+-----------
+The *get* command retrieves an entry from a cache.
+
+
+OPTIONS
+-------
+
+*-c, --cache*='NAME'::
+The name of the cache. If not specified, the currently selected cache will be used.
+
+
+SEE ALSO
+--------
+query(1), put(1)

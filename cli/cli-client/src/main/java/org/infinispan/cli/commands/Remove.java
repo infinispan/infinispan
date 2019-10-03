@@ -1,5 +1,6 @@
 package org.infinispan.cli.commands;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
@@ -13,9 +14,10 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@MetaInfServices(CliCommand.class)
-@CommandDefinition(name = "remove", description = "Removes an entry form the cache", aliases = "rm", activator = ConnectionActivator.class)
+@MetaInfServices(Command.class)
+@CommandDefinition(name = Remove.CMD, description = "Removes an entry form the cache", aliases = "rm", activator = ConnectionActivator.class)
 public class Remove extends CliCommand {
+   public static final String CMD = "remove";
    @Argument(required = true)
    String key;
 
@@ -24,7 +26,7 @@ public class Remove extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine("remove").arg("key", key).optionalArg("cache", cache);
+      CommandInputLine cmd = new CommandInputLine(CMD).arg("key", key).optionalArg("cache", cache);
       return invocation.execute(cmd);
    }
 }

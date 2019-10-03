@@ -1,5 +1,6 @@
 package org.infinispan.cli.commands;
 
+import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
@@ -12,16 +13,19 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@MetaInfServices(CliCommand.class)
-@CommandDefinition(name = "counter", description = "Selects a counter", activator = ConnectionActivator.class)
+@MetaInfServices(Command.class)
+@CommandDefinition(name = Counter.CMD, description = "Selects a counter", activator = ConnectionActivator.class)
 public class Counter extends CliCommand {
+
+   public static final String CMD = "counter";
 
    @Argument(description = "The name of the counter", completer = CounterCompleter.class, required = true)
    String name;
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      CommandInputLine cmd = new CommandInputLine("counter").arg("name", name);
+      CommandInputLine cmd = new CommandInputLine(CMD)
+            .arg(NAME, name);
       return invocation.execute(cmd);
    }
 }

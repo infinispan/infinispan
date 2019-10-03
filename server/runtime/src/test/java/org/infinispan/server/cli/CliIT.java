@@ -39,11 +39,25 @@ public class CliIT {
       terminal.readln("connect");
       terminal.assertContains("//containers/default]>");
       terminal.clear();
-      terminal.readln("create cache --file=" + this.getClass().getResource("/cli/qcache.xml").getPath() + " qcache");
-      terminal.readln("cd caches/___protobuf_metadata");
-      terminal.assertContains("//containers/default/caches/___protobuf_metadata]>");
-      terminal.readln("put --file=" + this.getClass().getResource("/cli/person.proto").getPath() + " person.proto");
+
+      terminal.readln("create cache --template=org.infinispan.DIST_SYNC dcache");
+      terminal.readln("cd caches/dcache");
+      terminal.assertContains("//containers/default/caches/dcache]>");
+      terminal.readln("put k1 v1");
       terminal.clear();
+      terminal.readln("ls");
+      terminal.assertContains("k1");
+      terminal.readln("get k1");
+      terminal.assertContains("v1");
+      terminal.readln("put --ttl=10 k2 v2");
+      terminal.clear();
+      terminal.readln("describe k2");
+      terminal.assertContains("\"timetoliveseconds\" : [ \"10\" ]");
+
+      terminal.readln("create cache --file=" + this.getClass().getResource("/cli/qcache.xml").getPath() + " qcache");
+      terminal.readln("schema -u=" + this.getClass().getResource("/cli/person.proto").getPath() + " person.proto");
+      terminal.clear();
+      terminal.readln("cd /containers/default/schemas");
       terminal.readln("ls");
       terminal.assertContains("person.proto");
       terminal.readln("cache qcache");
@@ -59,6 +73,23 @@ public class CliIT {
       terminal.clear();
       terminal.readln("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
       terminal.assertContains("\"total_results\" : 3,");
+
+      terminal.clear();
+      terminal.readln("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
+      terminal.readln("cd /containers/default/counters/cnt1");
+      terminal.readln("describe");
+      terminal.assertContains("\"upper-bound\" : 100");
+      terminal.clear();
+      terminal.readln("add");
+      terminal.assertContains("1");
+      terminal.clear();
+      terminal.readln("reset");
+      terminal.readln("ls");
+      terminal.assertContains("0");
+      terminal.clear();
+      terminal.readln("add --delta=100");
+      terminal.assertContains("100");
+
       cli.stop();
    }
 

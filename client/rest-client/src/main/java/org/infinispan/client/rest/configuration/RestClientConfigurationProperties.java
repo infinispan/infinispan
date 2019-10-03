@@ -37,6 +37,7 @@ public class RestClientConfigurationProperties {
    public static final String TRUST_STORE_PASSWORD = ICR + "trust_store_password";
    public static final String SSL_PROTOCOL = ICR + "ssl_protocol";
    public static final String SSL_CONTEXT = ICR + "ssl_context";
+   public static final String TRUST_MANAGERS = ICR + "trust_managers";
 
    // Authentication properties
    public static final String USE_AUTH = ICR + "use_auth";

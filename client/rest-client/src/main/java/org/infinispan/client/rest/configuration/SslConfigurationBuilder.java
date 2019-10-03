@@ -3,7 +3,9 @@ package org.infinispan.client.rest.configuration;
 import java.util.List;
 import java.util.Properties;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
@@ -28,6 +30,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private SSLContext sslContext;
    private String sniHostName;
    private String protocol;
+   private TrustManager[] trustManagers;
+   private HostnameVerifier hostnameVerifier;
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -109,8 +113,27 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return enable();
    }
 
+   /**
+    * Sets an {@link SSLContext}
+    */
    public SslConfigurationBuilder sslContext(SSLContext sslContext) {
       this.sslContext = sslContext;
+      return enable();
+   }
+
+   /**
+    * Sets the {@link TrustManager}s used to create the {@link SSLContext}t
+    */
+   public SslConfigurationBuilder trustManagers(TrustManager[] trustManagers) {
+      this.trustManagers = trustManagers;
+      return enable();
+   }
+
+   /**
+    * Sets the {@link HostnameVerifier} to use when validating certificates against hostnames
+    */
+   public SslConfigurationBuilder hostnameVerifier(HostnameVerifier hostnameVerifier) {
+      this.hostnameVerifier = hostnameVerifier;
       return enable();
    }
 
@@ -196,6 +219,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             if (keyStoreFileName != null || trustStoreFileName != null) {
                throw new IllegalStateException("SSLContext and stores are mutually exclusive");
             }
+            if (trustManagers == null) {
+               throw new IllegalStateException("SSLContext requires configuration of the TrustManagers");
+            }
          }
       }
    }
@@ -204,7 +230,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    public SslConfiguration create() {
       return new SslConfiguration(enabled,
             keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias,
-            sslContext,
+            sslContext, trustManagers, hostnameVerifier,
             trustStoreFileName, trustStorePath, trustStoreType, trustStorePassword,
             sniHostName, protocol);
    }
@@ -218,6 +244,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.keyStoreCertificatePassword = template.keyStoreCertificatePassword();
       this.keyAlias = template.keyAlias();
       this.sslContext = template.sslContext();
+      this.hostnameVerifier = template.hostnameVerifier();
+      this.trustManagers = template.trustManagers();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePath = template.trustStorePath();
       this.trustStoreType = template.trustStoreType();
