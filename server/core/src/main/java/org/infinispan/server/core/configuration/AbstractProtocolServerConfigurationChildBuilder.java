@@ -1,7 +1,5 @@
 package org.infinispan.server.core.configuration;
 
-import java.util.Set;
-
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 
 /**
@@ -87,12 +85,6 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    @Override
    public S workerThreads(int workerThreads) {
       builder.workerThreads(workerThreads);
-      return self();
-   }
-
-   @Override
-   public S ignoredCaches(Set<String> ignoredCaches) {
-      builder.ignoredCaches(ignoredCaches);
       return self();
    }
 

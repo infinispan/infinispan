@@ -55,7 +55,6 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
    private final Attribute<Boolean> tcpKeepAlive;
    private final Attribute<Integer> ioThreads;
    private final Attribute<Integer> workerThreads;
-   private final Attribute<Set<String>> ignoredCaches;
    private final Attribute<Boolean> startTransport;
    private final Attribute<AdminOperationsHandler> adminOperationsHandler;
    private final Attribute<Boolean> zeroCapacityNode;
@@ -75,7 +74,6 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
       host = attributes.attribute(HOST);
       port = attributes.attribute(PORT);
       idleTimeout = attributes.attribute(IDLE_TIMEOUT);
-      ignoredCaches = attributes.attribute(IGNORED_CACHES);
       recvBufSize = attributes.attribute(RECV_BUF_SIZE);
       sendBufSize = attributes.attribute(SEND_BUF_SIZE);
       startTransport = attributes.attribute(START_TRANSPORT);
@@ -137,10 +135,6 @@ public abstract class ProtocolServerConfiguration implements ConfigurationInfo {
 
    public int workerThreads() {
       return workerThreads.get();
-   }
-
-   public Set<String> ignoredCaches() {
-      return ignoredCaches.get();
    }
 
    public boolean startTransport() {

@@ -1,0 +1,1 @@
+DELETE /v2/server/ignored-caches/{cache-manager}/{cache}

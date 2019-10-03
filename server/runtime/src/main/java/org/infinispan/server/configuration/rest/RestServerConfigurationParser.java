@@ -2,9 +2,6 @@ package org.infinispan.server.configuration.rest;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.net.ssl.SSLContext;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -101,15 +98,6 @@ public class RestServerConfigurationParser implements ConfigurationParser {
             }
             case COMPRESSION_LEVEL: {
                builder.compressionLevel(Integer.parseInt(value));
-               break;
-            }
-            case IGNORED_CACHES: {
-               Set<String> ignoredCaches = new HashSet<>();
-               String[] values = reader.getListAttributeValue(i);
-               for (String v : values) {
-                  ignoredCaches.add(v);
-               }
-               builder.ignoredCaches(ignoredCaches);
                break;
             }
             case SOCKET_BINDING: {

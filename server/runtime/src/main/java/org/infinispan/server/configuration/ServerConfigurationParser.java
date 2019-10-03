@@ -868,8 +868,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
             builder.workerThreads(Integer.parseInt(value));
             break;
          }
-         case IGNORED_CACHES:
-            break;
          default:
             throw ParseUtils.unexpectedAttribute(reader, index);
       }

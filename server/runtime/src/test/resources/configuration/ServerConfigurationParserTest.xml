@@ -104,7 +104,7 @@
             </encryption>
          </hotrod-connector>
          <rest-connector socket-binding="rest" io-threads="11" worker-threads="3"
-                         ignored-caches="cache1 cache2" name="rest" context-path="rest" extended-headers="NEVER"
+                         name="rest" context-path="rest" extended-headers="NEVER"
                          max-content-length="3" compression-level="3">
             <authentication security-realm="default" mechanisms="DIGEST BASIC"/>
             <cors-rules>

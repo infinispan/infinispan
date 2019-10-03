@@ -3,7 +3,6 @@ package org.infinispan.rest.configuration;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -87,14 +86,6 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
 
    public Path staticResources() {
       return staticResources;
-   }
-
-   /**
-    * @deprecated Use {@link #ignoredCaches()} instead.
-    */
-   @Deprecated
-   public Set<String> getIgnoredCaches() {
-      return ignoredCaches();
    }
 
    public String contextPath() {

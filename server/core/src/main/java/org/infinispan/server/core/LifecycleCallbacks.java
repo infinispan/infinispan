@@ -1,15 +1,21 @@
 package org.infinispan.server.core;
 
+import java.util.EnumSet;
+
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryTranscoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
 import org.infinispan.server.core.dataconversion.JavaSerializationTranscoder;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
@@ -25,9 +31,15 @@ import org.infinispan.server.core.dataconversion.XMLTranscoder;
  */
 @InfinispanModule(name = "server-core", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
+   static final String SERVER_STATE_CACHE = "org.infinispan.SERVER_STATE";
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
+      InternalCacheRegistry cacheRegistry = basicComponentRegistry.getComponent(InternalCacheRegistry.class).running();
+      cacheRegistry.registerInternalCache(SERVER_STATE_CACHE, getServerStateCacheConfig(globalConfiguration).build(),
+            EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
+
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
       ClassLoader classLoader = globalConfiguration.classLoader();
       Marshaller marshaller = jbossMarshaller(classLoader, classWhiteList);
@@ -45,6 +57,13 @@ public class LifecycleCallbacks implements ModuleLifecycle {
          BinaryTranscoder transcoder = encoderRegistry.getTranscoder(BinaryTranscoder.class);
          transcoder.overrideMarshaller(marshaller);
       }
+   }
+
+   private ConfigurationBuilder getServerStateCacheConfig(GlobalConfiguration globalConfiguration) {
+      CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(cacheMode);
+      return builder;
    }
 
    Marshaller jbossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {

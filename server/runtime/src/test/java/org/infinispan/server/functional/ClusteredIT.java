@@ -37,7 +37,8 @@ import org.junit.runners.Suite;
       HotRodTransactionalCacheOperations.class,
       HotRodCacheQueries.class,
       HotRodCacheContinuousQueries.class,
-      HotRodListenerWithDslFilter.class
+      HotRodListenerWithDslFilter.class,
+      IgnoreCaches.class
 })
 public class ClusteredIT {
 

@@ -18,4 +18,10 @@ public interface RestServerClient {
    CompletionStage<RestResponse> memory();
 
    CompletionStage<RestResponse> env();
+
+   CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName);
+
+   CompletionStage<RestResponse> unIgnoreCache(String cacheManagerName, String cacheName);
+
+   CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName);
 }

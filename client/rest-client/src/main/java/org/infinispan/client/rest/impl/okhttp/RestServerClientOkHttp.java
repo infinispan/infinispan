@@ -5,6 +5,9 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestServerClient;
 
+import okhttp3.FormBody;
+import okhttp3.Request;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -46,5 +49,27 @@ public class RestServerClientOkHttp implements RestServerClient {
    @Override
    public CompletionStage<RestResponse> env() {
       return client.execute(baseServerURL, "env");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName) {
+      return ignoreCacheOp(cacheManagerName, cacheName, "POST");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> unIgnoreCache(String cacheManagerName, String cacheName) {
+      return ignoreCacheOp(cacheManagerName, cacheName, "DELETE");
+   }
+
+   private CompletionStage<RestResponse> ignoreCacheOp(String cacheManagerName, String cacheName, String method) {
+      String url = String.format("%s/ignored-caches/%s/%s", baseServerURL, cacheManagerName, cacheName);
+      Request.Builder builder = new Request.Builder().url(url).method(method, new FormBody.Builder().build());
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName) {
+      String url = String.format("%s/ignored-caches/%s", baseServerURL, cacheManagerName);
+      return client.execute(new Request.Builder().url(url));
    }
 }
