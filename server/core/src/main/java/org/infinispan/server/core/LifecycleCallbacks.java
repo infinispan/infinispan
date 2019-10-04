@@ -16,7 +16,7 @@ import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
@@ -43,7 +43,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       cacheRegistry.registerInternalCache(SERVER_STATE_CACHE, getServerStateCacheConfig(globalConfiguration).build(),
             EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
 
-      SerializationContext serCtx = gcr.getComponent(PersistenceMarshallerImpl.class, KnownComponentNames.PERSISTENCE_MARSHALLER).getSerializationContext();
+      SerializationContext serCtx = gcr.getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER).getSerializationContext();
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
       ClassLoader classLoader = globalConfiguration.classLoader();
       Marshaller jbossMarshaller = getJbossMarshaller(classLoader, classWhiteList);

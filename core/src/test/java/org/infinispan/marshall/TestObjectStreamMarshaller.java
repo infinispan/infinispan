@@ -15,6 +15,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -113,6 +114,11 @@ public class TestObjectStreamMarshaller implements PersistenceMarshaller {
    @Override
    public void register(SerializationContextInitializer initializer) {
       marshaller.register(initializer);
+   }
+
+   @Override
+   public SerializationContext getSerializationContext() {
+      return marshaller.getSerializationContext();
    }
 
    @Override

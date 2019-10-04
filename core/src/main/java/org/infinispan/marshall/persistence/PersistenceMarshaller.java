@@ -22,4 +22,9 @@ public interface PersistenceMarshaller extends Marshaller, StreamAwareMarshaller
     * @throws NullPointerException if initializer is null.
     */
    void register(SerializationContextInitializer initializer);
+
+   /**
+    * @return {@link SerializationContext} of the PersistenceMarshaller.
+    */
+   SerializationContext getSerializationContext();
 }
