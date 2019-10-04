@@ -44,7 +44,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.server.core.LifecycleCallbacks;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -552,7 +551,7 @@ public class HotRodTestingUtil {
 
    private static Marshaller getMarshaller() {
       // Must check for GenericJbossMarshaller as infinispan-jboss-marshalling still used by client
-      Marshaller marshaller = LifecycleCallbacks.getJbossMarshaller(HotRodTestingUtil.class.getClassLoader(), null);
+      Marshaller marshaller = Util.getJBossMarshaller(HotRodTestingUtil.class.getClassLoader(), null);
       return marshaller != null ? marshaller : new JavaSerializationMarshaller();
    }
 

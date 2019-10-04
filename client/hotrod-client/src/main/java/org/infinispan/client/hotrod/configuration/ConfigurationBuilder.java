@@ -467,12 +467,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    // Method that handles default marshaller - needed as a placeholder
    private void handleNullMarshaller() {
-      try {
-         // First see if infinispan-jboss-marshalling is in the class path - if so we can use the generic marshaller
-         // We have to use the commons class loader, since marshalling is its dependency
-         marshallerClass = Class.forName("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller", true, ConfigurationBuilder.class.getClassLoader())
-               .asSubclass(Marshaller.class);
-      } catch (ClassNotFoundException e) {
+      // First see if infinispan-jboss-marshalling is in the class path - if so we can use the generic marshaller
+      marshaller = Util.getJBossMarshaller(ConfigurationBuilder.class.getClassLoader(), null);
+      if (marshaller == null) {
          // Otherwise we use the protostream marshaller
          marshaller = new ProtoStreamMarshaller();
       }
