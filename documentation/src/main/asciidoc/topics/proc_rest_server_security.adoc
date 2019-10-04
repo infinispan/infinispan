@@ -1,0 +1,16 @@
+[[rest_security]]
+= Security
+
+The REST server is protected by authentication. Before usage it is necessary to create an application login.
+
+
+.Procedure
+
+When running using docker, login is achieved by using the `APP_USER` and `APP_PASS` command line arguments. When running
+locally, this can be done with:
+
+
+[source]
+----
+bin/add-user.sh -u user -p changeme -a
+----

@@ -1,0 +1,3 @@
+= Client-Side Code
+
+Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works fine (and is used in the integration tests), or you can use the java.net API.

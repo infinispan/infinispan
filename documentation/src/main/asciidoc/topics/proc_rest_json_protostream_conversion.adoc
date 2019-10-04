@@ -1,0 +1,41 @@
+[[rest_json_protostream_conversion]]
+= JSON/Protostream conversion
+
+When caches are indexed, or specifically configured to store _application/x-protostream_, it's possible to send and receive
+JSON documents that are automatically converted to/from protostream. In order for the conversion to work, a protobuf schema must be registered.
+
+The registration can be done via REST, by doing a POST/PUT in the ____protobuf_metadata_ cache. Example using cURL:
+
+[source,bash]
+----
+curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:8080/rest/___protobuf_metadata/schema.proto
+----
+
+When writing a JSON document, a special field *__type_* must be present in the document to identity the protobuf _Message_
+corresponding to the document.
+
+For example, consider the following schema:
+
+[source,protobuf]
+----
+message Person  {
+  required string name = 1;
+  required int32 age = 2;
+}
+----
+
+A conformant JSON document would be:
+
+
+[source,json]
+----
+{
+   "_type": "Person",
+   "name": "user1",
+   "age": 32
+}
+----
+
+include::rest_api_v1.adoc[leveloffset=+1]
+
+include::rest_api_v2.adoc[leveloffset=+1]

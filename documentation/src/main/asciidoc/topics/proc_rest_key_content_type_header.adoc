@@ -1,0 +1,50 @@
+[[rest_key_content_type]]
+= Key-Content-Type header
+
+Most REST API calls have the key included in the URL. {brandname} will assume the key is a _java.lang.String_ when handling those calls, but
+it's possible to use a specific header _Key-Content-Type_ for keys in different formats.
+
+Examples:
+
+* Specifying a byte[] key as a Base64 string:
++
+API call:
++
+`PUT /my-cache/AQIDBDM=`
++
+Header:
++
+`Key-Content-Type: application/octet-stream`
+
+
+* Specifying a byte[] key as a hexadecimal string:
++
+API call:
++
+`GET /my-cache/0x01CA03042F`
++
+Header:
++
+[source,options=nowrap]
+----
+Key-Content-Type: application/octet-stream; encoding=hex
+----
+
+* Specifying a double key:
++
+API call:
++
+`POST /my-cache/3.141456`
++
+Header:
++
+[source,options=nowrap]
+----
+Key-Content-Type: application/x-java-object;type=java.lang.Double
+----
+
+The _type_ parameter for _application/x-java-object_ is restricted to:
+
+* Primitive wrapper types
+* java.lang.String
+* Bytes, making _application/x-java-object;type=Bytes_ equivalent to _application/octet-stream;encoding=hex_

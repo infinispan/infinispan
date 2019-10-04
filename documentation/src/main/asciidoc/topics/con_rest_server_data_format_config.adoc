@@ -1,0 +1,15 @@
+[[rest_server_data_format_config]]
+= Configuration
+
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[Media Type]. There are more details in the configuration link:#encoding_media_type[here].
+
+An example of storage configuration is as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/encoding_media_type.xml[]
+----
+
+When no Media Type is configured, {brandname} assumes "application/octet-stream" for both keys and values, with the following exceptions:
+
+* If the cache is indexed, it assumes "application/x-protostream"

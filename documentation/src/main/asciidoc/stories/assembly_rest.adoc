@@ -1,0 +1,25 @@
+[[rest_server]]
+= REST Server
+
+The {brandname} Server distribution contains a module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the {brandname} data grid, built on https://github.com/netty/netty[Netty].
+
+		
+include::proc_running-rest-server.adoc[leveloffset=+2]
+include::proc_rest_server_security.adoc[leveloffset=+3]
+include::con_rest_supported_protocols.adoc[leveloffset=+2]
+include::ref_rest_server_cors.adoc[leveloffset=+2]	
+
+
+== Data Formats
+		
+include::con_rest_server-data_format_config.adoc[leveloffset=+3]
+include::ref_rest_server_data_format_support.adoc[leveloffset=+3]
+include::con_rest_accept_header.adoc[leveloffset=+3]
+include::proc_rest_json_protostream_conversion.adoc[leveloffset=+3]
+
+
+include::con_rest_client_side_code.adoc[leveloffset=+2]
+include::proc_rest_server_client_ruby.adoc[leveloffset=+3]
+include::proc_rest_server_client_python.adoc[leveloffset=+3]	
+include::ludeproc_rest_server_client_java.adoc[leveloffset=+3]	
+		

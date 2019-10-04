@@ -1,0 +1,27 @@
+[[rest_server_cors]]
+= CORS
+
+The REST server supports https://en.wikipedia.org/wiki/Cross-origin_resource_sharing[CORS] including preflight and rules based on the request origin.
+
+Example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/rest_connector_cors.xml[]
+----
+
+The rules are evaluated sequentially based on the "Origin" header set by the browser. In the example above if the origin is either "http://host1" or "https://host1" the rule "restrict host1" will apply.
+Otherwise, the next rule will be tested. Since the rule "allow ALL" permits all origins, any script coming from a different origin will be able to perform the methods specified and use the headers supplied.
+
+The <cors-rule> element can be configured as follows:
+
+|===
+| Config   | Description  | Mandatory
+
+| name  | The name of the rule | yes
+| allow-credentials | Enable CORS requests to use credentials | no
+| allowed-origins | A comma separated list used to set the CORS 'Access-Control-Allow-Origin' header to indicate the response can be shared with the origins | yes
+| allowed-methods | A comma separated list used to set the CORS 'Access-Control-Allow-Methods' header in the preflight response to specify the methods allowed for the configured origin(s) | yes
+| max-age-seconds | The amount of time CORS preflight request headers can be cached | no
+| expose-headers | A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s) | no
+|===

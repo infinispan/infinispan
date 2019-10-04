@@ -1,0 +1,14 @@
+[[rest_accept]]
+= Accept header
+
+The REST server is compliant with the link:https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
+and will negotiate the correct Media Type based on the conversions supported. For example, sending the following header when reading data:
+
+[source,options=nowrap]
+----
+Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
+----
+
+will cause {brandname} to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
+to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
+suitable for displaying automatically based on the cache configuration.

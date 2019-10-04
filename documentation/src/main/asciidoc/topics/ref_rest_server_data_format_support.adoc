@@ -1,0 +1,27 @@
+[[rest_server_data_format_support]]
+= Supported formats
+
+Data can be written and read in different formats. The storage format{brandname} can convert between those formats when required.
+
+The following "standard" formats can be converted interchangeably:
+
+* _application/x-java-object_
+* _application/octet-stream_
+* _application/x-www-form-urlencoded_
+* _text/plain_
+
+The following formats can be converted to/from the formats above:
+
+* __application/xml__
+* _application/json_
+* _application/x-jboss-marshalling_
+* _application/x-protostream_
+* _application/x-java-serialized_
+
+Finally, the following conversion is also supported:
+
+* Between _application/x-protostream_ and _application/json_
+
+All the REST API calls can provide headers describing the content written or the required format of the content
+when reading. {brandname} supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
+plus the "Key-Content-Type" with a similar effect for keys.

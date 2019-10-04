@@ -1,0 +1,11 @@
+[[rest_supported_protocols]]
+= Supported protocols
+
+The REST Server supports HTTP/1.1 and HTTP/2 protocols. It is possible to switch to HTTP/2 by either performing a link:https://http2.github.io/http2-spec/#discover-http[HTTP/1.1 Upgrade procedure] or
+by negotiating communication protocols using link:https://http2.github.io/http2-spec/#versioning[TLS/ALPN extension].
+
+[NOTE]
+====
+TLS/ALPN with JDK8 requires additional steps from the client perspective. Please refer to your client documentation. It is very likely
+that you will need Jetty ALPN Agent or OpenSSL bindings.
+====

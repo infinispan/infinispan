@@ -1,0 +1,22 @@
+[[rest_run_server]]
+= Running the REST server
+
+The REST server endpoint is part of the {brandname} Server and by default listens on port `8080`. 
+
+
+.Procedure
+
+. To run the server locally,
+link:http://infinispan.org/download/[download] the zip distribution and execute in the extracted directory:
++
+[source]
+----
+bin/standalone.sh -b 0.0.0.0
+----
++
+or alternatively, run via docker:
++
+[source]
+----
+docker run -it -p 8080:8080 -e "APP_USER=user" -e "APP_PASS=changeme" jboss/infinispan-server
+----
