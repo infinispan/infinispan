@@ -118,24 +118,6 @@
 
       <plugins>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>copy-cache-tests</id>
-                  <goals>
-                     <goal>unpack-dependencies</goal>
-                  </goals>
-                  <configuration>
-                     <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                     <includeArtifactIds>cache-tests</includeArtifactIds>
-                     <includeScope>test</includeScope>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-         <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
                <execution>
@@ -240,6 +222,10 @@
                   <configuration>
                      <summaryFile>${failsafe.summary.embedded}</summaryFile>
                      <reportsDirectory>${failsafe.reportdir.embedded}</reportsDirectory>
+                     <dependenciesToScan>
+                        <!-- TCK tests -->
+                        <dependency>javax.cache:cache-tests</dependency>
+                     </dependenciesToScan>
                      <classpathDependencyExcludes>
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache-remote</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
@@ -272,7 +258,12 @@
                   <configuration>
                      <summaryFile>${failsafe.summary.remote}</summaryFile>
                      <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
+                     <dependenciesToScan>
+                        <!-- TCK tests -->
+                        <dependency>javax.cache:cache-tests</dependency>
+                     </dependenciesToScan>
                      <classpathDependencyExcludes>
+                        <!-- Don't include the embedded JCache implementation -->
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
                      <disableXmlReport>false</disableXmlReport>
