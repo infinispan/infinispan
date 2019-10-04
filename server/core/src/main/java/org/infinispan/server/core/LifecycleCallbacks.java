@@ -22,8 +22,8 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
 import org.infinispan.server.core.dataconversion.JavaSerializationTranscoder;
 import org.infinispan.server.core.dataconversion.JsonTranscoder;
-import org.infinispan.server.core.dataconversion.XMLTranscoder;
 import org.infinispan.server.core.dataconversion.ProtostreamTranscoder;
+import org.infinispan.server.core.dataconversion.XMLTranscoder;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -46,7 +46,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       SerializationContext serCtx = gcr.getComponent(PersistenceMarshallerImpl.class, KnownComponentNames.PERSISTENCE_MARSHALLER).getSerializationContext();
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
       ClassLoader classLoader = globalConfiguration.classLoader();
-      Marshaller jbossMarshaller = getJbossMarshaller(classLoader, classWhiteList);
+      Marshaller jbossMarshaller = Util.getJBossMarshaller(classLoader, classWhiteList);
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classWhiteList);
@@ -68,15 +68,5 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode);
       return builder;
-   }
-
-   public static Marshaller getJbossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
-      try {
-         Class<?> marshallerClass = classLoader.loadClass("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
-         return Util.newInstanceOrNull(marshallerClass.asSubclass(Marshaller.class),
-               new Class[] { ClassLoader.class, ClassWhiteList.class}, classLoader, classWhiteList);
-      } catch (ClassNotFoundException e) {
-         return null;
-      }
    }
 }

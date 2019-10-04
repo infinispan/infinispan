@@ -52,6 +52,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -1203,5 +1204,15 @@ public final class Util {
          return getRootCause(cause);
       else
          return re;
+   }
+
+   public static Marshaller getJBossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
+      try {
+         Class<?> marshallerClass = classLoader.loadClass("org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller");
+         return Util.newInstanceOrNull(marshallerClass.asSubclass(Marshaller.class),
+               new Class[]{ClassLoader.class, ClassWhiteList.class}, classLoader, classWhiteList);
+      } catch (ClassNotFoundException e) {
+         return null;
+      }
    }
 }
