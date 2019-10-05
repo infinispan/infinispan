@@ -32,11 +32,11 @@ public class StaticFileResource implements ResourceHandler {
    private final Path dir;
    private final String urlPath;
 
-   private static final int CACHE_TIME = 60 * 60 * 24 * 31;
+   private static final int CACHE_MAX_AGE_SECONDS = 60 * 60 * 24 * 31;  // 1 Month
    private static final String DEFAULT_RESOURCE = "index.html";
 
    /**
-    * @param path The path to serve files from
+    * @param dir The path to serve files from
     * @param urlPath The url path to serve the files
     */
    public StaticFileResource(Path dir, String urlPath) {
@@ -89,14 +89,14 @@ public class StaticFileResource implements ResourceHandler {
       }
 
       responseBuilder.lastModified(file.lastModified());
-      responseBuilder.header("Cache-control", "private, max-age=" + CACHE_TIME);
+      responseBuilder.header("Cache-control", "private, max-age=" + CACHE_MAX_AGE_SECONDS);
       responseBuilder.header("X-Frame-Options", "sameorigin");
       responseBuilder.header("X-XSS-Protection", "1; mode=block");
       responseBuilder.header("X-Content-Type-Options", "nosniff");
 
       Date now = new Date();
       responseBuilder.addProcessedDate(now);
-      responseBuilder.header("Expires", DateUtils.toRFC1123(now.getTime() + TimeUnit.SECONDS.toMillis(CACHE_TIME)));
+      responseBuilder.header("Expires", DateUtils.toRFC1123(now.getTime() + TimeUnit.SECONDS.toMillis(CACHE_MAX_AGE_SECONDS)));
 
       String mediaType = APPLICATION_OCTET_STREAM_TYPE;
       try {
