@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.query;
+package org.infinispan.it.marshalling.jboss;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.testng.annotations.Test;
