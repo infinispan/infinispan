@@ -1,4 +1,4 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{topics}/server_protocols_memcached.adoc[leveloffset=+1]
+include::{stories}/assembly_memcached.adoc[leveloffset=+1]

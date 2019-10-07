@@ -1,3 +1,5 @@
+= Frequently Asked Questions
+
 Welcome to {brandname}'s Frequently Asked Questions document.
 We hope you find the answers to your queries here, however if you don't,
 we encourage you to connect with the {brandname} community and ask

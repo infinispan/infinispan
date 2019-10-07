@@ -1,0 +1,19 @@
+[id='persistence-{context}']
+:context: admin
+
+include::{topics}/persistence.adoc[leveloffset=+0]
+include::{topics}/persistence_sfs.adoc[leveloffset=+1]
+include::{topics}/persistence_sifs.adoc[leveloffset=+1]
+include::{topics}/persistence_jdbc.adoc[leveloffset=+1]
+include::{topics}/persistence_remote.adoc[leveloffset=+1]
+include::{topics}/persistence_cluster.adoc[leveloffset=+1]
+include::{topics}/persistence_cli.adoc[leveloffset=+1]
+include::{topics}/persistence_rocksdb.adoc[leveloffset=+1]
+include::{topics}/persistence_jpa.adoc[leveloffset=+1]
+include::{topics}/persistence_custom.adoc[leveloffset=+1]
+include::{topics}/persistence_storemigrator.adoc[leveloffset=+1]
+include::{topics}/persistence_spi.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

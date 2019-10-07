@@ -1,0 +1,12 @@
+[id='server_modules-{context}']
+:context: modules
+= {brandname} Server Modules
+
+What solutions are available after you deploy {brandname} in client-server mode?  All {brandname} server modules are based on the same pattern where the server backend creates an embedded {brandname} instance and if you start multiple backends, they can form a cluster and share/distribute state if configured to do so. The server types below primarily differ in the type of listener endpoint used to handle incoming connections.
+
+include::{topics}/con_server_modules.adoc[leveloffset=+1]
+include::{topics}/ref_server_protocols.adoc[leveloffset=+2]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

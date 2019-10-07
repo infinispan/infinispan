@@ -20,7 +20,7 @@ include::code_examples/CustomInterceptors.java[]
 
 Then one of the _addInterceptor()_ methods should be used to add the actual interceptor. For further documentation refer to link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] javadoc.
 
-== Custom interceptor design
+= Custom interceptor design
 When writing a custom interceptor, you need to abide by the following rules.
 
 * Custom interceptors must extend link:{javadocroot}/org/infinispan/interceptors/base/BaseCustomInterceptor.html[BaseCustomInterceptor]

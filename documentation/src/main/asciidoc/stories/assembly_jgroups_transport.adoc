@@ -1,4 +1,5 @@
 [id='jgroups-{context}']
+:context: configuring
 = Setting Up Cluster Transport
 {brandname} nodes rely on a transport layer to join and leave clusters as well
 as to replicate data across the network.

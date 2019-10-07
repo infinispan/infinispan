@@ -1,5 +1,4 @@
 //Directory attributes
-:images_dir: images
 :stories: ../../stories
 :topics: ../topics
 :images_dir: ../{topics}/images

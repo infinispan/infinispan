@@ -1,0 +1,14 @@
+[id='contributing']
+
+include::{topics}/contributing/basics.adoc[leveloffset=+0]
+include::{topics}/contributing/source_control.adoc[leveloffset=+0]
+include::{topics}/contributing/building.adoc[leveloffset=+0]
+include::{topics}/contributing/api.adoc[leveloffset=+0]
+include::{topics}/contributing/tests.adoc[leveloffset=+0]
+include::{topics}/contributing/help.adoc[leveloffset=+0]
+include::{topics}/contributing/configuration.adoc[leveloffset=+0]
+include::{topics}/contributing/docs.adoc[leveloffset=+0]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

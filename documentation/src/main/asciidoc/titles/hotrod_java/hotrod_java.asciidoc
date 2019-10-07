@@ -1,11 +1,10 @@
 //Directory attributes
-:images_dir: images
 :stories: ../../stories
-:topics: ../../topics
-:images_dir: {topics}/images
+:topics: ../topics
+:images_dir: ../{topics}/images
 
 //Community doc attributes
-include::{topics}/attributes/community-attributes.adoc[]
+include::../{topics}/attributes/community-attributes.adoc[]
 
 //Community title attributes
 :toc2:
@@ -15,7 +14,7 @@ include::{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Using the {brandname} Hot Rod Endpoint with Java Clients
+= Using the {brandname} Hot Rod Server
 
 //User stories
 include::stories.adoc[]

@@ -1,7 +1,4 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{topics}/server_protocols_hotrod.adoc[leveloffset=+1]
-//server_protocols_hotrod.adoc includes these topics:
-//proc_configuring_hotrod_java_client.adoc
-//server_protocols_hotrod_transaction.adoc
+include::{stories}/assembly_hotrod_java.adoc[leveloffset=+1]

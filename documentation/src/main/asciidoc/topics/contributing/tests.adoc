@@ -1,18 +1,18 @@
-== Running and Writing Tests
-Tests are written using the link:http://testng.org/[TestNG] framework. 
+= Running and Writing Tests
+Tests are written using the link:http://testng.org/[TestNG] framework.
 
-=== Running the tests
+== Running the tests
 The default run executes all tests in the functional, unit, xsite, and arquillian groups. To just run the tests with txt and xml output the command is:
 
  $ mvn test
 
-Alternatively, you can execute the tests _and_ generate a report with: 
+Alternatively, you can execute the tests _and_ generate a report with:
 
  $ mvn surefire-report:report
 
 If you are running the tests on a Unix-like operating system, the default limits per user are typically low.
 The {brandname} test suite creates a lot of processes/threads, thus you will have to increase your user's limits and reboot the system to pick up the new values.
-Open up `/etc/security/limits.conf` and add the following lines replacing the user name with your username. 
+Open up `/etc/security/limits.conf` and add the following lines replacing the user name with your username.
 
 ./etc/security/limits.conf
 ----
@@ -29,8 +29,8 @@ by updating the `MAVEN_OPTS` environment variable, e.g.
 
  $ export MAVEN_OPTS="-Xmx800m"
 
-==== Specifying which tests to run
-A single test can be executed using the test property. 
+=== Specifying which tests to run
+A single test can be executed using the test property.
 The value is the short name (not the fully qualified package name) of the test. For example:
 
  $ mvn -Dtest=FqnTest test
@@ -43,18 +43,18 @@ Patterns are also supported:
 
  $ mvn -Dtest=org/infinispan/api/* test
 
-Also, you can always pass your own Log4j configuration file via `-Dlog4.configuration` with your own logging settings. 
+Also, you can always pass your own Log4j configuration file via `-Dlog4.configuration` with your own logging settings.
 
-==== Skipping the test run
+=== Skipping the test run
 
 It is sometimes desirable to install the {brandname} package in your local repository without performing a full test run.
-To do this, simply use the `skipTests` property: 
+To do this, simply use the `skipTests` property:
 
  $ mvn -DskipTests install
 
 Note that you should _never_ use `-Dmaven.test.skip=true` since modules' test classes depend on other module test classes, and this will cause compilation errors.
 
-==== Debugging thread leaks
+=== Debugging thread leaks
 The Infinispan test suite uses TestNG/JUnit test listeners to find and report thread leaks.
 In order to debug thread leaks in the IDE, please add this listener to your default TestNG run configuration:
 
@@ -72,20 +72,20 @@ In order to make the leak report look like a test failure,
 modules using TestNG duplicate the check in a test, `TestNGSuiteChecksTest`.
 Including the test is not required to see the leak, but without it the failure looks more like a crash.
 
-==== Running tests using `@Parameters`
-If you want to execute tests relying on TestNG's `@Parameters` from an IDE (such as Eclipse or IntelliJ IDEA), please read link:http://infinispan.blogspot.com/2009/06/executing-testng-tests-relying-on.html[this blog entry] . 
+=== Running tests using `@Parameters`
+If you want to execute tests relying on TestNG's `@Parameters` from an IDE (such as Eclipse or IntelliJ IDEA), please read link:http://infinispan.blogspot.com/2009/06/executing-testng-tests-relying-on.html[this blog entry] .
 
-==== Enabling TRACE in test logs
-When you run tests, you can get TRACE logging via using the `traceTests` profile 
+=== Enabling TRACE in test logs
+When you run tests, you can get TRACE logging via using the `traceTests` profile
 
  $ mvn test -PtraceTests
 
 ecuting this will generate a GZIP file called `trace-infinispan.log.gz`.
-This file is not fully closed, so to extract the log file, execute: 
+This file is not fully closed, so to extract the log file, execute:
 
  $ gunzip -c trace-infinispan.log.gz > trace-infinispan.log
 
-==== Running tests with JDK 8
+=== Running tests with JDK 8
 While building requires at least JDK 11, the testsuite can be run with JDK 8. In order to do so, you should set the
 `JAVA8_HOME` environment variable to point to your JDK 8 installation, e.g.:
 
@@ -95,18 +95,18 @@ And enable the `java8-test` maven profile:
 
  $ mvn -Pjava8-test test
 
-==== Enabling code coverage generation
+=== Enabling code coverage generation
 When you run tests, you can enable code coverage recorder for calculating and analysing the {brandname} code coverage.
-You can do this using `coverage` and `jacocoReport` profiles. As a code coverage evaluation tool, the JaCoCo is used. 
+You can do this using `coverage` and `jacocoReport` profiles. As a code coverage evaluation tool, the JaCoCo is used.
 
  $ mvn test -Pcoverage -Dmaven.test.failure.ignore=true
 
-Please note, that `-Dmaven.test.failure.ignore=true` is used for generating JaCoCo code coverage report, even if there are test failures. 
+Please note, that `-Dmaven.test.failure.ignore=true` is used for generating JaCoCo code coverage report, even if there are test failures.
 
 Executing this will generate `jacoco.exec` file in each module's `target/` directory.
-These are the JaCoCo execution data files, which contain full data about the specific module's coverage. 
+These are the JaCoCo execution data files, which contain full data about the specific module's coverage.
 
-As soon as the coverage execution command is finished, you will need to generate the JaCoCo report, which will merge the generated `jacoco.exec` files as well as will create the code coverage report. 
+As soon as the coverage execution command is finished, you will need to generate the JaCoCo report, which will merge the generated `jacoco.exec` files as well as will create the code coverage report.
 
 For having the report in place, run the following command from your {brandname} home directory:
 
@@ -114,11 +114,11 @@ For having the report in place, run the following command from your {brandname} 
 
 The `jacoco-html/` directory will be generated in {brandname} Home directory, which will contain the code coverage report.
 
-=== Test groups
+== Test groups
 Each test should belong to one or more group.
 The group acts as a filter, and is used to select which tests are ran as part of the maven test lifecycle.
 
-==== Which group should I use?
+=== Which group should I use?
 The following test groups are used by {brandname}.
 
 TIP: If your test does not fit into one of these groups, a new group should be added.
@@ -136,10 +136,10 @@ TIP: If your test does not fit into one of these groups, a new group should be a
 
 Every test (except those not intended to be run by continuous integration) should at least be in the *functional* or *unit* groups, since these are the default test groups executed by Maven, and are run when preparing a release.
 
-=== Test permutations
+== Test permutations
 We use the term permutation to describe a test suite execution against a particular configuration.
 This allows us to test a variety of environments and configurations without rewriting the same basic test over and over again.
-For example, if we pass JVM parameter `-Dinfinispan.test.jgroups.protocol=udp` test suite is executed using UDP config. 
+For example, if we pass JVM parameter `-Dinfinispan.test.jgroups.protocol=udp` test suite is executed using UDP config.
 
  $ mvn -Dinfinispan.test.jgroups.protocol=udp test
 
@@ -148,27 +148,27 @@ This allows you to execute multiple permutations without wiping the results from
 Note that due to the way Maven operates, only one permutation can be executed per `mvn` invocation.
 So automating multiple runs requires shell scripting, or some other execution framework to make multiple calls to Maven.
 
-==== Running permutations manually or in an IDE
+=== Running permutations manually or in an IDE
 Sometimes you want to run a test using settings other than the defaults (such as UDP for `jgroups` group tests or the EmbeddedTransactionManager for `transaction` group tests).
 This can be achieved by referring to the Maven POM file to figure out which system properties are passed in to the test when doing something different.
 For example to run a `jgroups` group test in your IDE using TCP instead of the default UDP, set `-Dinfinispan.test.jgroups.protocol=tcp`.
 Or, to use JBoss JTA (Arjuna TM) instead of the EmbeddedTransactionManager in a `transaction` group test, set `-Dinfinispan.test.jta.tm=jbosstm`.
-Please refer to the POM file for more properties and permutations. 
+Please refer to the POM file for more properties and permutations.
 
-=== The Parallel Test Suite
+== The Parallel Test Suite
 {brandname} runs its unit test suite in parallel; {brandname} tests are often IO rather than processor bound, so executing them in parallel offers significant speed up in executing the entire test suite.
 
-==== Tips for writing and debugging parallel tests
+=== Tips for writing and debugging parallel tests
 There are a number of constraints and best practices that need to be followed in order to ensure correctness and keep the execution time to a minimum.
 If you follow these guidelines you will find your tests are more reliable:
 
 * _Each test class is run in a single thread_
 There is no need to synchronize unit test's fixture, as test methods will be run in sequence.
-However, multiple test classes are executed in parallel. 
+However, multiple test classes are executed in parallel.
 * _Each test class must have an unique test name_
 As a convention, the name of the test should be the fully qualified class name of the test class with the `org.infinispan` prefix removed.
 For example, given a test class `org.infinispan.mypackage.MyTest` the name of the test should be `mypackage.MyTest`.
-This convention guarantees a unique name. 
+This convention guarantees a unique name.
 
 [source,java]
 .MyTest.java
@@ -177,17 +177,17 @@ package org.infinispan.mypackage;
 @Test (testName = "mypackage.MyTest")
 public class MyTest { ... }
 
----- 
+----
 
 * Use `TestCacheManagerFactory.createXyzCacheManager` and *never* create managers using `new DefaultCacheManager()`.
-This ensures that there are no conflicts on resources e.g. a cluster created by one test won't interfere with a cluster created by another test. 
+This ensures that there are no conflicts on resources e.g. a cluster created by one test won't interfere with a cluster created by another test.
 * Where possible, extend `SingleCacheManagerTestorMultipleCacheManagersTest`.
 Tests inheriting from these template method classes will only create a cache/cluster once for all the test methods, rather than before each method.
-This helps keep the execution time down. 
+This helps keep the execution time down.
 * *Never* rely on `Thread.sleep()`. When running in heavily threaded environments this will most often not work.
 For example, if using ASYNC_REPL , don't use a `sleep(someValue)` and expect the data will be replicated to another cache instance after this delay has elapsed.
 Instead, use a ReplicationListener (look up javadocs for more information on this class).
-Generally speaking, if you expect something will happen and you don't have a guarantee when, a good approach is to try that expectation in a loop, several times, with an generous (5-10secs) timeout. For example: 
+Generally speaking, if you expect something will happen and you don't have a guarantee when, a good approach is to try that expectation in a loop, several times, with an generous (5-10secs) timeout. For example:
 
 [source,java]
 ----
@@ -199,19 +199,18 @@ while (Systet.currentTimeMillis() - startTime < timeout) {
 ----
 
 * `Thread.sleep(10)` may not work in certain OS/JRE combos (e.g. Windows XP/Sun JRE 1.5).
-Use values grater than 10 for these statements, e.g. 50. Otherwise, a `System.currentTimeMillis()` might return same value when called before and after such a sleep statement. 
+Use values grater than 10 for these statements, e.g. 50. Otherwise, a `System.currentTimeMillis()` might return same value when called before and after such a sleep statement.
 * For each cache that is create with `TestCacheManagerFactory.createXyzCacheManager()` the test harness will allocate a unique JMX domain name which can be obtained through `CacheManager.getJmxDomain()`.
 This ensures that no JMX collisions will takes place between any tests executed in parallel.
 If you want to enforce a JMX domain name, this can be done by using one of the `TestCacheManagerFactory.createCacheManagerEnforceJmxDomain` methods.
-These methods must be used with care, and you are responsible for ensuring no domain name collisions happen when the parallel suite is executed. 
+These methods must be used with care, and you are responsible for ensuring no domain name collisions happen when the parallel suite is executed.
 * Use obscure words. Insert uncommon or obscure words into the cache that has been generated with a random word generator.
 In a multi-threaded environment like {brandname}'s testsuite, grepping for these words can greatly help the debugging process.
-You may find link:http://watchout4snakes.com/creativitytools/RandomWord/RandomWordPlus.aspx[this random word generator] useful. 
+You may find link:http://watchout4snakes.com/creativitytools/RandomWord/RandomWordPlus.aspx[this random word generator] useful.
 * Use the test method name as the key. Grab the test method and use it as part of the cached key.
-You can dynamically grab the test method using code like this: 
+You can dynamically grab the test method using code like this:
 
  Thread.currentThread().getStackTrace()(1).getMethodName()
 
 TIP: Even though we've tried to reduce them to a minimum, intermittent failures might still appear from time to time.
-If you see such failures _in existing code_ please report them in the issue tracker. 
-
+If you see such failures _in existing code_ please report them in the issue tracker.

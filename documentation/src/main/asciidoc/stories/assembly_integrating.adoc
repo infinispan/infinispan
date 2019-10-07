@@ -1,0 +1,11 @@
+[id='integrating-{context}']
+:context: integration
+
+include::{topics}/integrations.adoc[leveloffset=+0]
+//topic includes the following:
+//include::{topics}/integrations_hibernate_cache.adoc[leveloffset=+2]
+//include::{topics}/integrations_spring.adoc[leveloffset=+2]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

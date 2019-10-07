@@ -1,4 +1,8 @@
-= Multi Clustered Server Tutorial
+= Talking To {brandname} Memcached Servers From Non-Java Clients
+
+This section shows how to talk to {brandname} Memcached server via a non-Java client, such as a Python script.
+
+== Multi Clustered Server Tutorial
 
 This example showcases the distribution capabilities of {brandname} Memcached severs that are not available in the original Memcached implementation.
 
@@ -39,7 +43,7 @@ Which automatically starts two nodes.
  Testing decrement 2 times in one call ['Multi_Decr_Key' : 3 ]
  Initialise at 3 ... OK
  Decrement by 2 ... OK
----- 
+----
 +
 
 . Execute the link:https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_read.py[test_memcached_read.py] script which connects to server bound to `127.0.0.1:11311` and verifies that it can read the data that was written by the writer script to the first server. If the script is executed successfully, you should see an output similar to this:

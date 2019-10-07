@@ -1,0 +1,20 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:images_dir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:stem: asciimath
+
+//Title
+= Administration Guide for {brandname} {infinispanversion}
+
+//User stories
+include::stories.adoc[]

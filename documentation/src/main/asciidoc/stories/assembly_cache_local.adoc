@@ -1,5 +1,5 @@
 [id='local_caches-{context}']
-:context: concepts
+:context: configuring
 
 include::{topics}/con_caches_local.adoc[leveloffset=+0]
 include::{topics}/con_caches_simple.adoc[leveloffset=+1]

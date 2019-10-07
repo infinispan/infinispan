@@ -47,12 +47,12 @@ no more than 33% of memory with living data when using {brandname} to store and 
 
 When considering large heaps, make sure there's enough CPU to perform garbage collection efficiently.
 
-== Java Virtual Machine settings
+= Java Virtual Machine settings
 
 Java Virtual Machine tuning might be divided into sections like memory or GC.
 Below is a list of helpful configuration parameters and a guide how to adjust them.
 
-=== Memory settings
+== Memory settings
 
 Adjusting memory size is one of the most crucial step in {brandname} tuning. The most commonly used JVM flags are:
 
@@ -64,7 +64,7 @@ Adjusting memory size is one of the most crucial step in {brandname} tuning. The
 Using `Xms` equal to `Xmx` will prevent JVM from dynamically sizing memory and might decrease GC pauses caused by resizing.
 It is a good practice to specify `Xmn` parameter. This guaranteed proper behavior during load peak (in such case {brandname} generates lots of small, short living objects).
 
-=== Garbage collection
+== Garbage collection
 
 The main goal is to minimize the amount of time when JVM is paused. Having said that, CMS is a suggested GC for {brandname} applications.
 
@@ -77,14 +77,14 @@ The most frequently used JVM flags are:
 * `-XX:+DisableExplicitGC` - Prevent explicit garbage collections.
 * `-XX:+UseG1GC` - Turn on G1 Garbage Collector.
 
-=== Other settings
+== Other settings
 
 There are two additional parameters which are suggested to be used:
 
 * `-server` - Enables server mode for the JVM.
 * `-XX:+ UseLargePages` - Instructs the JVM to allocate memory in Large Pages. These pages must be configured at the OS level for this parameter to function successfully.
 
-=== Example configuration
+== Example configuration
 
 In most of the cases we suggest using CMS. However when using the latest JVM, G1 might perform slightly better.
 
@@ -109,7 +109,7 @@ In most of the cases we suggest using CMS. However when using the latest JVM, G1
 -XX:+UseG1GC
 ----
 
-== Network configuration
+= Network configuration
 
 {brandname} uses TCP/IP for sending packets over the network (for both cluster communication when using TCP stack or when communication with Hot Rod clients)
 
@@ -119,7 +119,7 @@ The recommended values are:
 * send window size - 640 KB
 * receive window size - 25 MB
 
-== Number of threads
+= Number of threads
 
 {brandname} tunes its thread pools according to the available CPU cores. Under Linux this
 will also take into consideration taskset / CGroup quotas. It is possible to override the
@@ -128,7 +128,7 @@ detected value by specifying the system property ``infinispan.activeprocessorcou
 NOTE: Java 10 and later can limit the number of active processor using the VM flag
 ``-XX:ActiveProcessorCount=xx``.
 
-== Number of threads (Server mode only)
+= Number of threads (Server mode only)
 
 Hot Rod Server uses worker threads which are activated by a client's requests.
 It's important to match the number of worker threads to the number of concurrent client requests:
@@ -139,7 +139,7 @@ It's important to match the number of worker threads to the number of concurrent
 include::config_examples/hot_rod_worker_threads.xml[]
 ----
 
-== Cache Store performance
+= Cache Store performance
 
 In order to achieve the best performance, please follow the recommendations below when using Cache Stores:
 
@@ -150,11 +150,11 @@ In order to achieve the best performance, please follow the recommendations belo
 ** Use PRIMARY_KEY on `id` column
 ** Configure batch-size, fetch-size, etc
 
-== Hints for program developers
+= Hints for program developers
 
 There are also several hints for developers which can be easily applied to the client application and will boost up the performance.
 
-=== Ignore return values
+== Ignore return values
 
 When you're not interested in returning value of the `#put(k, v)` or `#remove(k)` method, use `Flag.IGNORE_RETURN_VALUES` flag as shown below:
 
@@ -172,7 +172,7 @@ It is also possible to set this flag using ConfigurationBuilder
 include::code_examples/ConfigurationBuilderUnreliableReturnValues.java[]
 ----
 
-=== Use `Externalizer` for marshalling
+== Use `Externalizer` for marshalling
 
 {brandname} uses JBoss Marshalling to transfer objects over the wire. The most efficient way to marshall user data is to provide an AdvancedExternalizer.
 This solutions prevents JBoss Marshalling from sending class name over the network and allows to save some bandwidth:
@@ -197,14 +197,14 @@ include::config_examples/advanced_externalizer_book_example.xml[]
 include::code_examples/AdvancedExternalizerAddBookExternalizer.java[]
 ----
 
-=== Storing Strings efficiently
+== Storing Strings efficiently
 
 If your strings are mostly ASCII, convert them to `UTF-8` and store them as `byte[]`:
 
 * Using `String#getBytes("UTF-8")` allows to decrease size of the object
 * Consider using G1 GC with additional JVM flag -`XX:+UseStringDeduplication`. This allows to decrease memory footprint (see http://openjdk.java.net/jeps/192[JEP 192] for details).
 
-=== Use simple cache for local caches
+== Use simple cache for local caches
 
 When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using {brandname} API.
 

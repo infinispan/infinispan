@@ -1,7 +1,4 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{topics}/integrations.adoc[leveloffset=+1]
-//topic includes the following:
-//include::{topics}/integrations_hibernate_cache.adoc[leveloffset=+2]
-//include::{topics}/integrations_spring.adoc[leveloffset=+2]
+include::{stories}/assembly_integrating.adoc[leveloffset=+1]

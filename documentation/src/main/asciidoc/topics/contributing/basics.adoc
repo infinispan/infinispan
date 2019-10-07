@@ -1,23 +1,23 @@
-==  The Basics
+=  The Basics
 In this chapter we quickly walk through the basics on contributing; future chapters go into more depth.
 
-=== Pre-requisites
+== Pre-requisites
 |=============
 | Java 11   | {brandname} is baselined on Java 8 but needs to be built with Java 11 (we build with OpenJDK)
 | Maven 3.5 | The {brandname} build uses Maven, and you should be using at least Maven 3.5
 | Git       | The {brandname} source code is stored in Git.
 |=============
 
-=== Java compatibility
+== Java compatibility
 
 {brandname} can run with Java 8 or greater. However it *must* be compiled at least with Java 11.
 
-=== Issue Management
+== Issue Management
 
 {brandname} uses JIRA for issue management, hosted on link:http://issues.jboss.org/browse/ISPN[issues.jboss.org].
 You can log in using your jboss.org username and password.
 
-==== Reporting Issues
+=== Reporting Issues
 If you need to create a new issue then follow these steps.
 
 . Choose between
@@ -32,7 +32,7 @@ If you need to create a new issue then follow these steps.
 . If the issue has been discussed on the forums or the mailing list, enter a reference in the _Forum Reference_ field
 . Finally, hit _Create_
 
-==== Versioning Guidelines
+=== Versioning Guidelines
 
 [WARNING]
 ====
@@ -59,7 +59,7 @@ If the issue pertains to a bug in the current release, then the Final version sh
 For example, a bug found in 4.1.0.Alpha2 (but not in 4.1.0.Alpha1) should be marked as fixed in 4.1.0.Alpha3, but not in 4.1.0.Final.
 For example, see link:https://issues.jboss.org/browse/ISPN-416[ISPN-416].
 
-=== Version control
+== Version control
 {brandname} uses link:http://git-scm.com[git], hosted on link:http://github.com[GitHub], for version control.
 You can find the upstream git repository at link:https://github.com/infinispan[]. To clone the repository:
 
@@ -73,11 +73,11 @@ or to clone your fork:
 $ git clone git@github.com:YOUR_GITHB_USERNAME/infinispan.git
 ----
 
-==== Setting up your IDE
+=== Setting up your IDE
 Maven supports generating IDE configuration files for easy setup of a project.
 This is tested on Eclipse, IntelliJ IDEA and Netbeans.
 
-===== Eclipse
+==== Eclipse
 Before we import the project, we need to clone the project as described above.
 
 . Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7.
@@ -113,8 +113,8 @@ Some modules use Scala, if you plan contributing to one of these modules it's wo
 . infinispan-server-memcached
 . infinispan-server-rest
 
-===== IntelliJ IDEA
-====== Importing
+==== IntelliJ IDEA
+===== Importing
 
 When you start link:http://www.jetbrains.com/idea/[IntelliJ IDEA], you will be greeted by a screen as shown below:
 
@@ -128,7 +128,7 @@ After entering your Github credentials, you will then be prompted to enter the g
 
 image::{images_dir}/idea-12-git.png[]
 
-====== Compiler settings
+===== Compiler settings
 
 From {brandname} 5.0 onwards, annotation processing is used to allow log messages to be internationalized.
 This processing can be done directly from IntelliJ as part of compilation but it requires some set up:
@@ -144,7 +144,7 @@ If these issues do crop up then simply run `mvn clean install -DskipTests` on th
 
 TIP: If you are running a multi-core environment (e.g. quad-core or above) then you can follow the instructions on making use of parallelized compilation in IntelliJ 12. Information on how to do this can be found link:http://blogs.jetbrains.com/idea/2012/12/intellij-idea-12-compiler-twice-as-fast/[here] .
 
-====== Scala Plugin
+===== Scala Plugin
 You will need to download the Scala plugin for IntelliJ as well. This can be done in _Project Settings -> Plugins -> Browse Repositories_.
 Then run a search for 'Scala'. JetBrains themselves are the vendor for this plugin and more information on it can be found link:http://confluence.jetbrains.net/display/SCA/Scala+Plugin+for+IntelliJ+IDEA[here] .
 
@@ -154,27 +154,27 @@ You will then have to configure the Scala plugin to use the Scala compiler for S
 
 image::{images_dir}/idea-12-scala2.png[]
 
-====== Code Style
+===== Code Style
 Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/master/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
 
-=== Builds
+== Builds
 {brandname} uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
 For more information, read <<_building_infinispan,the Maven chapter>>.
 
-==== Continuous Integration
+=== Continuous Integration
 {brandname} uses link:http://www.jetbrains.com/teamcity[TeamCity] for continuous integration.
 TeamCity polls GitHub for updates and runs whenever updates are available.
 You can check the status of the latest builds link:http://ci.infinispan.org/overview.html[here] .
 
-=== Testing
+== Testing
 {brandname} uses link:http://testng.org/doc/index.html[TestNG] for unit and functional tests, and all {brandname} tests are run in parallel.
 For more information see the chapter on the test suite; this chapter gives advice on writing tests which can safely execute in parallel.
 
-=== Communicating with other {brandname} contributors
+== Communicating with other {brandname} contributors
 {brandname} contributors use a mix of technologies to communicate.
 Visit link:http://infinispan.org/community/[this page] to learn more.
 
-=== Style Requirements
+== Style Requirements
 {brandname} uses the link:http://en.wikipedia.org/wiki/Indent_style#K.26R_style[K&amp;R code style] for all Java source files, with two exceptions:
 
 . use 3 spaces instead of a tab character for indentations.
@@ -184,17 +184,17 @@ In addition, sure all link:http://en.wikipedia.org/wiki/Newline[new line charact
 
 All patches or code committed must adhere to this style. Code style settings which can be imported into IntelliJ IDEA and Eclipse are committed in the project sources, in link:https://github.com/infinispan/infinispan/blob/master/ide-settings/[ide-settings] .
 
-==== Spelling
+=== Spelling
 Ensure correct spelling in code, comments, Javadocs, etc. (use _American English_ spelling).
 It is recommended that you use a spellchecker plugin for your IDE.
 
-==== Check-in comments
+=== Check-in comments
 
 Please ensure any commit comments use <<_comments, this format>> if related to a task or issue in JIRA.
 This helps JIRA pick out these checkins and display them on the issue, making it very useful for back/forward porting fixes.
 If your comment does not follow this format, your commit may not be merged into upstream.
 
-=== Logging
+== Logging
 {brandname} follows the JBoss logging standards, which can be found link:https://community.jboss.org/wiki/LoggingStandards[here] .
 
 From {brandname} 5.0 onwards, {brandname} uses JBoss Logging to abstract over the logging backend.
