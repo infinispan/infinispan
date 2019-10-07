@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -119,6 +120,11 @@ public class TestObjectStreamMarshaller implements PersistenceMarshaller {
    @Override
    public SerializationContext getSerializationContext() {
       return marshaller.getSerializationContext();
+   }
+
+   @Override
+   public Marshaller getUserMarshaller() {
+      return marshaller.getUserMarshaller();
    }
 
    @Override

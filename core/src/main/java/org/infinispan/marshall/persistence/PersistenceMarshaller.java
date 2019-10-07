@@ -27,4 +27,10 @@ public interface PersistenceMarshaller extends Marshaller, StreamAwareMarshaller
     * @return {@link SerializationContext} of the PersistenceMarshaller.
     */
    SerializationContext getSerializationContext();
+
+   /**
+    * @return a custom marshaller configured by {@link SerializationContext} if one exists, otherwise the default
+    * ProtoStream based marshaller is returned.
+    */
+   Marshaller getUserMarshaller();
 }
