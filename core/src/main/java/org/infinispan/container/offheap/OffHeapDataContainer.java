@@ -10,7 +10,7 @@ import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
-import org.infinispan.container.impl.InternalDataContainerAdapter;
+import org.infinispan.container.impl.NonSegmentedUtils;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 
@@ -95,7 +95,7 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
 
    @Override
    public void removeSegments(IntSet segments) {
-      InternalDataContainerAdapter.removeSegmentEntries(this, segments, listeners, keyPartitioner);
+      NonSegmentedUtils.removeSegmentEntries(this, segments, listeners, keyPartitioner);
    }
 
    @Override

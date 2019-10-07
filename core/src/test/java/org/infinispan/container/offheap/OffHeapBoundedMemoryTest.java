@@ -11,7 +11,6 @@ import org.infinispan.commons.util.MemoryUnit;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -42,11 +41,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    }
 
    private static DataContainer getContainer(AdvancedCache cache) {
-      DataContainer container = cache.getDataContainer();
-      if (container instanceof InternalDataContainerAdapter) {
-         return ((InternalDataContainerAdapter) container).delegate();
-      }
-      return container;
+      return cache.getDataContainer();
    }
 
    /**
