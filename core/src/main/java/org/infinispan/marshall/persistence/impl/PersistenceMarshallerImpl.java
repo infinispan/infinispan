@@ -120,7 +120,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    }
 
    public Marshaller getUserMarshaller() {
-      return userMarshaller;
+      return userMarshaller == null ? this : userMarshaller;
    }
 
    @Override
