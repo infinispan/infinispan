@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.query;
+package org.infinispan.it.marshalling.jboss;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;

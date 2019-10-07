@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.query;
+package org.infinispan.it.marshalling.jboss;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 

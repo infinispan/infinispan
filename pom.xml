@@ -143,6 +143,7 @@
       <module>integrationtests/wildfly-modules</module>
       <module>integrationtests/as-lucene-directory</module>
       <module>integrationtests/endpoints-interop-it</module>
+      <module>integrationtests/jboss-marshalling-it</module>
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
