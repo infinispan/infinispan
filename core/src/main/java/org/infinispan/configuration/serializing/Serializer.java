@@ -441,11 +441,14 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeAdvancedSerializers(XMLExtendedStreamWriter writer, SerializationConfiguration config) throws XMLStreamException {
       Map<Integer, AdvancedExternalizer<?>> externalizers = config.advancedExternalizers();
-      for (Entry<Integer, AdvancedExternalizer<?>> externalizer : externalizers.entrySet()) {
-         writer.writeStartElement(Element.ADVANCED_EXTERNALIZER);
-         writer.writeAttribute(Attribute.ID, Integer.toString(externalizer.getKey()));
-         writer.writeAttribute(Attribute.CLASS, externalizer.getValue().getClass().getName());
-         writer.writeEndElement();
+      boolean userExternalizerExists = externalizers.entrySet().stream().anyMatch(entry -> entry.getKey() >= AdvancedExternalizer.USER_EXT_ID_MIN);
+      if (userExternalizerExists) {
+         for (Entry<Integer, AdvancedExternalizer<?>> externalizer : externalizers.entrySet()) {
+            writer.writeStartElement(Element.ADVANCED_EXTERNALIZER);
+            writer.writeAttribute(Attribute.ID, Integer.toString(externalizer.getKey()));
+            writer.writeAttribute(Attribute.CLASS, externalizer.getValue().getClass().getName());
+            writer.writeEndElement();
+         }
       }
    }
 
