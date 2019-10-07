@@ -234,7 +234,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    @Override
    public void removeSegments(IntSet segments) {
-      InternalDataContainerAdapter.removeSegmentEntries(this, segments, listeners, keyPartitioner);
+      NonSegmentedUtils.removeSegmentEntries(this, segments, listeners, keyPartitioner);
    }
 
    @Override

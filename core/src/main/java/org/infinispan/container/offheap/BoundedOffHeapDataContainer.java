@@ -13,7 +13,7 @@ import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.InternalDataContainerAdapter;
+import org.infinispan.container.impl.NonSegmentedUtils;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
@@ -155,8 +155,10 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
       // Don't have to do anything here
    }
 
+   private static final int REMOVE_SEGMENT_BATCH_SIZE = 32;
+
    @Override
    public void removeSegments(IntSet segments) {
-      InternalDataContainerAdapter.removeSegmentEntries(this, segments, listeners, keyPartitioner);
+      NonSegmentedUtils.removeSegmentEntries(this, segments, listeners, keyPartitioner);
    }
 }
