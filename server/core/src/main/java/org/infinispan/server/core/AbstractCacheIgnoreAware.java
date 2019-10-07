@@ -3,10 +3,12 @@ package org.infinispan.server.core;
 import static org.infinispan.server.core.LifecycleCallbacks.SERVER_STATE_CACHE;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
 import org.infinispan.multimap.api.embedded.MultimapCache;
@@ -40,7 +42,8 @@ public class AbstractCacheIgnoreAware implements CacheIgnoreAware {
 
    public boolean isCacheIgnored(String cacheName) {
       try {
-         return stateCache.containsEntry(IGNORED_CACHES_KEY, cacheName).get();
+         Optional<CacheEntry<String, Collection<String>>> values = stateCache.getEntry(IGNORED_CACHES_KEY).get();
+         return values.map(entry -> entry.getValue().contains(cacheName)).orElse(false);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
