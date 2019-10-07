@@ -1,0 +1,8 @@
+[id='extending-{context}']
+:context: admin
+
+include::{topics}/extending.adoc[leveloffset=+0]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

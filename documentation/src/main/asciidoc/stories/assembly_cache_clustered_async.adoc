@@ -1,5 +1,5 @@
 [id='async_comm-{context}']
-:context: clustering
+:context: configuring
 = Asynchronous Communication with Clustered Caches
 
 include::{topics}/con_async_communication.adoc[leveloffset=+1]

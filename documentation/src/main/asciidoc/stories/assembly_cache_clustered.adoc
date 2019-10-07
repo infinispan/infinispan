@@ -1,5 +1,5 @@
 [id='clustered_caches-{context}']
-:context: concepts
+:context: configuring
 = Clustered Caches
 Clustered caches store data across multiple {brandname} nodes using JGroups
 technology as the transport layer to pass data across the network.

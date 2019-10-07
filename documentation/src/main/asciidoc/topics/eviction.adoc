@@ -25,7 +25,7 @@ to be turned on. If size is too large you can run out of memory. The `size`
 attribute will probably take some tuning in each use case.
 
 [[eviction_enabling]]
-== Enabling Eviction
+= Enabling Eviction
 
 Eviction is configured by adding the
 link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<memory />`]
@@ -36,7 +36,7 @@ API programmatic approach.
 All cache entry are evicted by piggybacking on user threads that are hitting the cache.
 
 [[eviction_strategy]]
-=== Eviction strategy
+== Eviction strategy
 
 Strategies control how the eviction is handled.
 
@@ -67,7 +67,7 @@ that always run with 2 phase commit, that is no 1 phase commit or synchronizatio
 optimizations allowed.
 
 [[eviction_types]]
-=== Eviction types
+== Eviction types
 
 Eviction type applies only when the size is set to something greater than 0.
 The eviction type below determines when the container will decide to remove
@@ -85,7 +85,7 @@ the configured `size`.  This type does not work with `OBJECT` storage type
 below.
 
 [[eviction_storage_type]]
-=== Storage type
+== Storage type
 
 {brandname} allows the user to configure in what form their data is stored.  Each
 form supports the same features of {brandname}, however eviction can be limited
@@ -110,7 +110,7 @@ WARNING: Both `BINARY` and `OFF-HEAP` violate equality and hashCode that they ar
 dictated by the resulting byte[] they generate instead of the object instance.
 
 [[eviction_defaults]]
-=== More defaults
+== More defaults
 
 By default when no `<memory />` element is specified, no eviction takes place,
 `OBJECT` storage type is used, and a strategy of `NONE` is assumed.
@@ -134,7 +134,7 @@ Supplied strategy column means that the attribute wasn't supplied)
 |===============
 
 [[expiration_anchor]]
-== Expiration
+= Expiration
 
 Similar to, but unlike eviction, is expiration. Expiration allows you to attach
 lifespan and/or maximum idle times to entries. Entries that exceed these times
@@ -169,7 +169,7 @@ link:#expiration_maxidle_clustered[Clustered Max Idle].
 ====
 
 [[expiration_settings]]
-=== Difference between Eviction and Expiration
+== Difference between Eviction and Expiration
 
 Both Eviction and Expiration are means of cleaning the cache of unused entries
 and thus guarding the heap against `OutOfMemory` exceptions, so now a brief

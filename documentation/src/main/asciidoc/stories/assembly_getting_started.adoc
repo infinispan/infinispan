@@ -1,0 +1,10 @@
+[id='starting-{context}']
+:context: getting_started
+
+include::{topics}/installation.adoc[leveloffset=+0]
+include::{topics}/create_project.adoc[leveloffset=+0]
+include::{topics}/gui_demo.adoc[leveloffset=+0]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

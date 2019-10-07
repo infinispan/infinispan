@@ -10,12 +10,10 @@ include::{topics}/con_memcached_client_encoding.adoc[leveloffset=+2]
 
 == Command Clarification
 
-include::con_memcached_flush_all.adoc[leveloffset=+2]
-include::con_memcached_unsupported_features.adoc[leveloffset=+2]
-include::con_memcached_servers_from_non_java_clients.adoc[leveloffset=+2]
-include::proc_memcached_multi_clustered_server_tutorial.adoc[leveloffset+=3]
+include::{topics}/ref_memcached_flush_all.adoc[leveloffset=+2]
+include::{topics}/ref_memcached_unsupported.adoc[leveloffset=+2]
+include::{topics}/proc_memcached_multi_clustered_server_tutorial.adoc[leveloffset+=2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
 ifndef::parent-context[:!context:]
-

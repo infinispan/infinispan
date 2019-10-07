@@ -1,11 +1,11 @@
 [[documentation_guidelines]]
-== Documentation Guidelines
+= Documentation Guidelines
 
 Welcome to {brandname} documentation. This is a place where anyone can
 contribute and share their knowledge.
 
 [[documentation_guidelines_source_files]]
-=== Working with Documentation Source Files
+== Working with Documentation Source Files
 
 All you need to do is fork {brandname} to edit the documentation source files.
 You can then submit your changes in a _pull request_ as you would any other
@@ -15,7 +15,7 @@ See the `README` file in the _documentation/src/main/asciidoc_ directory for
 information on what you need to edit and build the documentation.
 
 [[documentation_guidelines_style_guide]]
-=== Style Guide
+== Style Guide
 
 Infinispan is the community project on which Red Hat Data Grid is based. For
 this reason, we follow link:https://redhat-documentation.github.io/[Guidelines
@@ -26,7 +26,7 @@ Writer's Guide] also has some excellent resources on writing effective
 documentation.
 
 [[documentation_guidelines_format_reference]]
-=== AsciiDoc Format Reference
+== AsciiDoc Format Reference
 
 Tips for which AsciiDoc markup to use when formatting text.
 
@@ -64,7 +64,7 @@ Underline (`[.underline]#value#`)::
 |===
 
 [[documentation_guidelines_general]]
-=== General Guidelines
+== General Guidelines
 
 * Always use `++{brandname}++` to refer to the product. Never abbreviate the product name to something like "ISPN".
 * Prefer active voice to passive voice.
@@ -110,7 +110,7 @@ This is a note that you should read.
 ----
 
 [[documentation_guidelines_section_ids]]
-=== Section IDs
+== Section IDs
 
 When creating anchors for section IDs, use the following format:
 
@@ -125,14 +125,14 @@ To create anchors for reusable content, use this format:
 Learn more about content reuse in the link:https://redhat-documentation.github.io/modular-docs/#reusing-modules[Modular Documentation Reference Guide].
 
 [[documentation_guidelines_xrefs]]
-=== Cross References
+== Cross References
 
 To reference a section within the same book, use `link:#`:
 
 `++link:#anchor_name[Link Text]++`
 
 [[documentation_guidelines_images]]
-=== Diagrams, Screenshots, and Other Media
+== Diagrams, Screenshots, and Other Media
 
 * Images should be saved as *PNG* or *JPG*, with a width of at least *660 px*, at *110 dpi*. Try to keep file size less than *300 KB*.
 * Screenshots supplement the text, not replace it.  *Do not use images as the sole means to convey information or context*.
@@ -144,7 +144,7 @@ To reference a section within the same book, use `link:#`:
 * Save all images under `documentation/src/main/asciidoc/${your_document}/images`
 
 [[documentation_guidelines_images_include]]
-==== Including Images
+=== Including Images
 Insert images using the `image::` or `image:` directive.
 
 * Example 1: Image title in title case (which automatically appends a Figure #).
@@ -161,7 +161,7 @@ This is an inline image. image:icon.png[Alt text] Cool!
 ----
 
 [[documentation_guidelines_code_blocks]]
-=== Code Samples
+== Code Samples
 
 Include code samples in blocks such as the following:
 

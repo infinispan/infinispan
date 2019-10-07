@@ -2,13 +2,6 @@
 = Using {brandname} with Spring
 {brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
 
-[[spring_boot_starter]]
-//Infinispan only: Refer to GitHub.
-ifndef::productized[]
-== Spring Boot Starter
-Check out the {brandname} link:https://github.com/infinispan/infinispan-spring-boot[Spring Boot Starter on GitHub] to quickly get up and running.
-endif::productized[]
-
 [[spring_cache_provider]]
 == Setting Up {brandname} as a Spring Cache Provider
 {brandname} implements the Spring SPI to offer high-performance, in-memory caching capabilities.

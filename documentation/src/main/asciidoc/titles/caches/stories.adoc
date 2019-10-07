@@ -1,7 +1,0 @@
-//Reference user stories or topics.
-//Please review authoring guidelines in the Contributors Guide.
-
-include::{stories}/assembly_cache_modes.adoc[leveloffset=+1]
-include::{stories}/assembly_cache_local.adoc[leveloffset=+1]
-include::{stories}/assembly_cache_clustered.adoc[leveloffset=+1]
-include::{stories}/assembly_cache_clustered_async.adoc[leveloffset=+1]

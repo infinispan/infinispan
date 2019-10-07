@@ -1,4 +1,0 @@
-//Reference user stories or topics.
-//Please review authoring guidelines in the Contributors Guide.
-
-include::{topics}/query.adoc[leveloffset=+1]

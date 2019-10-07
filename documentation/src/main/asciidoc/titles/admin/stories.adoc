@@ -1,0 +1,9 @@
+//Reference user stories or topics.
+//Please review authoring guidelines in the Contributors Guide.
+
+include::{stories}/assembly_eviction.adoc[leveloffset=+1]
+include::{stories}/assembly_persistence.adoc[leveloffset=+1]
+include::{stories}/assembly_partition_handling.adoc[leveloffset=+1]
+include::{stories}/assembly_extending.adoc[leveloffset=+1]
+include::{stories}/assembly_custom_interceptors.adoc[leveloffset=+1]
+include::{stories}/assembly_rolling_up_k8s.adoc[leveloffset=+1]
