@@ -1,8 +1,0 @@
-= Health Monitoring
-
-{brandname} server has special endpoints for monitoring cluster health. The API is exposed via:
-
-* Programmatically (using `embeddedCacheManager.getHealth()`)
-* JMX
-* CLI
-* REST (using https://docs.jboss.org/author/display/WFLY10/The+HTTP+management+API[WildFly HTTP Management API])
