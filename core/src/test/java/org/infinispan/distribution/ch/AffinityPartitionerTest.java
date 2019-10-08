@@ -42,7 +42,8 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
 
       cacheManagers.stream().map(cm -> cm.getCache().getAdvancedCache()).forEach(advancedCache -> {
          LocalizedCacheTopology cacheTopology = advancedCache.getDistributionManager().getCacheTopology();
-         advancedCache.getDataContainer().keySet().forEach(key -> {
+         advancedCache.getDataContainer().forEach(ice -> {
+            Object key = ice.getKey();
             int keySegmentId = ((AffinityKey) key).segmentId;
             assertEquals(cacheTopology.getSegment(key), keySegmentId);
          });

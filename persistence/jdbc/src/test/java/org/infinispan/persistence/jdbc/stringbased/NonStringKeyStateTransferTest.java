@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestDataSCI;
@@ -56,7 +57,8 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
          cm2 = createCacheManager(false, CacheMode.DIST_SYNC);
          Cache<Person, String> c2 = cm2.getCache();
          assert c2.size() > 0;
-         for (Object key: c2.getAdvancedCache().getDataContainer().keySet()) {
+         for (InternalCacheEntry entry : c2.getAdvancedCache().getDataContainer()) {
+            Object key = entry.getKey();
             assert key instanceof Person: "expected key to be person but obtained " + key;
          }
       } finally {

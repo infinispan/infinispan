@@ -3,16 +3,11 @@ package org.infinispan.container.impl;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.lang.invoke.MethodHandles;
-import java.util.AbstractCollection;
-import java.util.AbstractSet;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +15,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -29,7 +23,6 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -45,7 +38,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
-import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
@@ -332,150 +324,6 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             log.tracef("Return next null");
          }
          return null;
-      }
-   }
-
-   @Override
-   public Set<K> keySet() {
-      // This automatically immutable
-      return new AbstractSet<K>() {
-         @Override
-         public boolean contains(Object o) {
-            return containsKey(o);
-         }
-
-         @Override
-         public Iterator<K> iterator() {
-            return new IteratorMapper<>(iteratorIncludingExpired(), Map.Entry::getKey);
-         }
-
-         @Override
-         public int size() {
-            return AbstractInternalDataContainer.this.size();
-         }
-
-         @Override
-         public Spliterator<K> spliterator() {
-            return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.CONCURRENT);
-         }
-      };
-   }
-
-   @Override
-   public Collection<V> values() {
-      return new Values();
-   }
-
-   /**
-    * Minimal implementation needed for unmodifiable Collection
-    * @deprecated This is to removed when {@link #entrySet()} is removed
-    */
-   @Deprecated
-   protected class Values extends AbstractCollection<V> {
-      @Override
-      public Iterator<V> iterator() {
-         return new ValueIterator<>(AbstractInternalDataContainer.this.iteratorIncludingExpired());
-      }
-
-      @Override
-      public int size() {
-         return AbstractInternalDataContainer.this.sizeIncludingExpired();
-      }
-
-      @Override
-      public Spliterator<V> spliterator() {
-         return Spliterators.spliterator(this, Spliterator.CONCURRENT);
-      }
-   }
-
-   /**
-    * @deprecated This is to removed when {@link #entrySet()} is removed
-    */
-   @Deprecated
-   private static class ValueIterator<K, V> implements Iterator<V> {
-      Iterator<InternalCacheEntry<K, V>> currentIterator;
-
-      private ValueIterator(Iterator<InternalCacheEntry<K, V>> it) {
-         currentIterator = it;
-      }
-
-      @Override
-      public boolean hasNext() {
-         return currentIterator.hasNext();
-      }
-
-      @Override
-      public void remove() {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public V next() {
-         return currentIterator.next().getValue();
-      }
-   }
-
-   @Override
-   public Set<InternalCacheEntry<K, V>> entrySet() {
-      return new EntrySet();
-   }
-
-   /**
-    * @deprecated this class is to be removed when {@link #entrySet()} is removed
-    */
-   @Deprecated
-   private class ImmutableEntryIterator extends EntryIterator {
-      ImmutableEntryIterator(Iterator<InternalCacheEntry<K, V>> it){
-         super(it);
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> next() {
-         return CoreImmutables.immutableInternalCacheEntry(super.next());
-      }
-   }
-
-   /**
-    * Minimal implementation needed for unmodifiable Set
-    *
-    */
-   private class EntrySet extends AbstractSet<InternalCacheEntry<K, V>> {
-
-      @Override
-      public boolean contains(Object o) {
-         if (!(o instanceof Map.Entry)) {
-            return false;
-         }
-
-         @SuppressWarnings("rawtypes")
-         Map.Entry e = (Map.Entry) o;
-         InternalCacheEntry ice = AbstractInternalDataContainer.this.get(e.getKey());
-         if (ice == null) {
-            return false;
-         }
-         return ice.getValue().equals(e.getValue());
-      }
-
-      @Override
-      public Iterator<InternalCacheEntry<K, V>> iterator() {
-         return new ImmutableEntryIterator(AbstractInternalDataContainer.this.iteratorIncludingExpired());
-      }
-
-      @Override
-      public int size() {
-         return AbstractInternalDataContainer.this.sizeIncludingExpired();
-      }
-
-      @Override
-      public String toString() {
-         return stream()
-               .map(Object::toString)
-               .collect(Collectors.joining(",", "[", "]"));
-      }
-
-      @Override
-      public Spliterator<InternalCacheEntry<K, V>> spliterator() {
-         return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.CONCURRENT);
       }
    }
 

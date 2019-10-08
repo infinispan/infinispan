@@ -1,14 +1,11 @@
 package org.infinispan.container.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -21,8 +18,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -173,11 +168,6 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
    }
 
    @Override
-   public Set<K> keySet() {
-      return Collections.unmodifiableSet(entries.keySet());
-   }
-
-   @Override
    public Iterator<InternalCacheEntry<K, V>> iterator() {
       return new EntryIterator(entries.values().iterator());
    }
@@ -235,45 +225,6 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
    @Override
    public void removeSegments(IntSet segments) {
       throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void executeTask(final KeyFilter<? super K> filter, final BiConsumer<? super K, InternalCacheEntry<K, V>> action)
-         throws InterruptedException {
-      if (filter == null)
-         throw new IllegalArgumentException("No filter specified");
-      if (action == null)
-         throw new IllegalArgumentException("No action specified");
-
-      forEach(e -> {
-         if (filter.accept(e.getKey())) {
-            action.accept(e.getKey(), e);
-         }
-      });
-      //TODO figure out the way how to do interruption better (during iteration)
-      if(Thread.currentThread().isInterrupted()){
-         throw new InterruptedException();
-      }
-   }
-
-   @Override
-   public void executeTask(final KeyValueFilter<? super K, ? super V> filter, final BiConsumer<? super K, InternalCacheEntry<K, V>> action)
-         throws InterruptedException {
-      if (filter == null)
-         throw new IllegalArgumentException("No filter specified");
-      if (action == null)
-         throw new IllegalArgumentException("No action specified");
-
-      long now = timeService.wallClockTime();
-      forEach(e -> {
-         if (filter.accept(e.getKey(), e.getValue(), e.getMetadata())) {
-            action.accept(e.getKey(), e);
-         }
-      });
-      //TODO figure out the way how to do interruption better (during iteration)
-      if(Thread.currentThread().isInterrupted()){
-         throw new InterruptedException();
-      }
    }
 
    @Override

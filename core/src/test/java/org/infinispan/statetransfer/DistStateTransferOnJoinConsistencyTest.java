@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -149,9 +151,9 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       addClusterEnabledCacheManager(builder);
       log.info("Added a new node");
 
-      DataContainer dc0 = advancedCache(0).getDataContainer();
-      DataContainer dc1 = advancedCache(1).getDataContainer();
-      DataContainer dc2 = advancedCache(2).getDataContainer();
+      DataContainer<Object, Object> dc0 = advancedCache(0).getDataContainer();
+      DataContainer<Object, Object> dc1 = advancedCache(1).getDataContainer();
+      DataContainer<Object, Object> dc2 = advancedCache(2).getDataContainer();
 
       // wait for state transfer on node C to progress to the point where data segments are about to be applied
       if (!applyStateStartedLatch.await(15, TimeUnit.SECONDS)) {
@@ -209,9 +211,9 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2));
 
       // at this point state transfer is fully done
-      log.infof("Data container of NodeA has %d keys: %s", dc0.size(), dc0.entrySet());
-      log.infof("Data container of NodeB has %d keys: %s", dc1.size(), dc1.entrySet());
-      log.infof("Data container of NodeC has %d keys: %s", dc2.size(), dc2.entrySet());
+      log.tracef("Data container of NodeA has %d keys: %s", dc0.size(), StreamSupport.stream(dc0.spliterator(), false).map(ice -> ice.getKey().toString()).collect(Collectors.joining(",")));
+      log.tracef("Data container of NodeB has %d keys: %s", dc1.size(), StreamSupport.stream(dc1.spliterator(), false).map(ice -> ice.getKey().toString()).collect(Collectors.joining(",")));
+      log.tracef("Data container of NodeC has %d keys: %s", dc2.size(), StreamSupport.stream(dc2.spliterator(), false).map(ice -> ice.getKey().toString()).collect(Collectors.joining(",")));
 
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer

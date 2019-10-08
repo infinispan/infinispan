@@ -306,8 +306,7 @@ public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest> ex
       c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
       for (Cache<Object, String> c : caches) {
          DataContainer dc = c.getAdvancedCache().getDataContainer();
-         assertEquals("Data container " + c + " should be empty, instead it contains keys " +
-                            dc.keySet(), 0, dc.size());
+         assertEquals(0, dc.size());
          CacheLoader store = TestingUtil.getFirstLoader(c);
          for (int i = 0; i < 5; i++) {
             String key = "k" + i;

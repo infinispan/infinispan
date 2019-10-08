@@ -2,6 +2,7 @@ package org.infinispan.cache.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -31,20 +33,18 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
-import org.infinispan.commons.util.Version;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
-import org.infinispan.commons.util.CloseableIteratorSetAdapter;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.container.DataContainer;
@@ -513,8 +513,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean containsValue(Object value) {
       Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
-      for (V v : getDataContainer().values()) {
-         if (Objects.equals(v, value)) return true;
+      for (InternalCacheEntry<K, V> ice : getDataContainer()) {
+         if (Objects.equals(ice.getValue(), value)) return true;
       }
       return false;
    }
@@ -1671,8 +1671,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   protected abstract class EntrySetBase<T extends Entry<K, V>> implements CacheSet<T> {
-      private final Set<? extends Entry<K, V>> delegate = getDataContainer().entrySet();
+   protected abstract class EntrySetBase<T extends Entry<K, V>> extends AbstractSet<T> implements CacheSet<T> {
+      private final DataContainer<K, V> delegate = getDataContainer();
 
       @Override
       public int size() {
@@ -1686,17 +1686,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public boolean contains(Object o) {
-         return delegate.contains(o);
+         return delegate.get(o) != null;
       }
 
       @Override
       public Object[] toArray() {
-         return delegate.toArray();
-      }
-
-      @Override
-      public <U> U[] toArray(U[] a) {
-         return delegate.toArray(a);
+         return StreamSupport.stream(delegate.spliterator(), false).toArray();
       }
 
       @Override
@@ -1706,11 +1701,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
             return SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue());
          }
          return false;
-      }
-
-      @Override
-      public boolean containsAll(Collection<?> c) {
-         return delegate.containsAll(c);
       }
 
       @Override
@@ -1817,11 +1807,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   protected class Values extends CloseableIteratorCollectionAdapter<V> implements CacheCollection<V> {
-      public Values() {
-         super(getDataContainer().values());
-      }
-
+   protected class Values extends AbstractSet<V> implements CacheCollection<V> {
       @Override
       public boolean retainAll(Collection<?> c) {
          Set<Object> retained = new HashSet<>(c.size());
@@ -1877,6 +1863,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       }
 
       @Override
+      public CloseableSpliterator<V> spliterator() {
+         return Closeables.spliterator(new SpliteratorMapper<>(getDataContainer().spliterator(), Map.Entry::getValue));
+      }
+
+      @Override
       public int size() {
          return SimpleCacheImpl.this.size();
       }
@@ -1907,11 +1898,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return () -> StreamSupport.stream(spliterator, parallel);
    }
 
-   protected class KeySet extends CloseableIteratorSetAdapter<K> implements CacheSet<K> {
-      public KeySet() {
-         super(getDataContainer().keySet());
-      }
-
+   protected class KeySet extends AbstractSet<K> implements CacheSet<K> {
       @Override
       public boolean retainAll(Collection<?> c) {
          Set<Object> retained = new HashSet<>(c.size());

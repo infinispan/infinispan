@@ -129,6 +129,10 @@ When using multi-tenancy in the Wildfly based server, it's necessary to specify 
 Off Heap memory containers now will dynamically resize based on number of entries in the container. Due to this the
 address count configuration value  is now deprecated for APIs and has been removed from the xml parser.
 
+
+=== Deprecated methods from DataContainer removed
+The deprecated methods keySet, values, entrySet and executeTask has been removed.
+
 == Upgrading from 9.3 to 9.4
 
 === Client/Server changes

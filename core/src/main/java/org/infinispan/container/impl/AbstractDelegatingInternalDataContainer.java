@@ -1,11 +1,8 @@
 package org.infinispan.container.impl;
 
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.util.IntSet;
@@ -13,8 +10,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -211,31 +206,5 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    @Override
    public void resize(long newSize) {
       delegate().resize(newSize);
-   }
-
-   // Deprecated methods
-   @Override
-   public Set<K> keySet() {
-      return delegate().keySet();
-   }
-
-   @Override
-   public Collection<V> values() {
-      return delegate().values();
-   }
-
-   @Override
-   public Set<InternalCacheEntry<K, V>> entrySet() {
-      return delegate().entrySet();
-   }
-
-   @Override
-   public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
-      delegate().executeTask(filter, action);
-   }
-
-   @Override
-   public void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
-      delegate().executeTask(filter, action);
    }
 }

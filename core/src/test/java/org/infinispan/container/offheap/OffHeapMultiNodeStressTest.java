@@ -16,9 +16,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.filter.KeyFilter;
+import org.infinispan.container.DataContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -126,9 +125,7 @@ public class OffHeapMultiNodeStressTest extends MultipleCacheManagersTest {
                for (int j = 0; j < EXECUTECOUNT; ++j) {
                   DataContainer<WrappedByteArray, WrappedByteArray> container =
                         castDC(bchm.getAdvancedCache().getDataContainer());
-                  container.executeTask(KeyFilter.ACCEPT_ALL_FILTER, (k, e) -> {
-                     assertEquals(k, e.getKey());
-                  });
+                  container.forEach(ice -> assertEquals(ice, container.get(ice.getKey())));
                }
                return null;
             });

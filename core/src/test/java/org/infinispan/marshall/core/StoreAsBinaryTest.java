@@ -132,16 +132,16 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       CountMarshallingPojo key = new CountMarshallingPojo();
       cache1.put(key, "value");
 
-      DataContainer dc1 = extractComponent(cache1, InternalDataContainer.class);
+      DataContainer<Object, String> dc1 = extractComponent(cache1, InternalDataContainer.class);
 
-      Object o = dc1.keySet().iterator().next();
+      Object o = dc1.iterator().next().getKey();
 
       assertEquals("value", cache1.get(key));
 
 
       // now on cache 2
-      DataContainer dc2 = extractComponent(cache2, InternalDataContainer.class);
-      o = dc2.keySet().iterator().next();
+      DataContainer<Object, String> dc2 = extractComponent(cache2, InternalDataContainer.class);
+      o = dc2.iterator().next().getKey();
       assertEquals("value", cache2.get(key));
    }
 
