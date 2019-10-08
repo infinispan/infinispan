@@ -1,0 +1,14 @@
+= Custom Server Task Implementations
+Custom server tasks are classes that extend the `org.infinispan.tasks.ServerTask` interface, defined in `infinispan-tasks-api` module.
+
+Server task implementations typically include the following method calls:
+
+* `setTaskContext()` allows access to execution context information including task parameters, cache references on which tasks are executed, and so on. In most cases, implementations store this information locally and use it when tasks are actually executed.
+* `getName()` returns unique names for tasks. Clients invoke tasks with the names.
+* `getExecutionMode()` determines if the task is invoked on a single node in a cluster of N nodes or is invoked on N nodes. For example, server tasks that invoke stream processing need to be executed on a single node because stream processing is distributed to all nodes.
+* `call()` in the `java.util.concurrent.Callable` interface is invoked when users invoke server tasks.
+
+.Reference
+* link:{javadocroot}/org/infinispan/tasks/ServerTask.html[`org.infinispan.tasks.ServerTask`]
+//dnaro: ref to J8 docs. need to update?
+* http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html?is-external=true#call--[`call()`]
