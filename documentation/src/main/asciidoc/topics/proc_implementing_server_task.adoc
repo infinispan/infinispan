@@ -1,0 +1,76 @@
+= Creating and Deploying Server Tasks
+Learn how to implement and deploy server tasks to {brandname} servers.
+
+Review the following example `HelloTask` class implementation that takes the name of a person to greet as a parameter:
+
+[source,java]
+----
+package example;
+
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
+
+public class HelloTask implements ServerTask<String> {
+
+   private TaskContext ctx;
+
+   @Override
+   public void setTaskContext(TaskContext ctx) {
+      this.ctx = ctx;
+   }
+
+   @Override
+   public String call() throws Exception {
+      String name = (String) ctx.getParameters().get().get("name");
+      return "Hello " + name;
+   }
+
+   @Override
+   public String getName() {
+      return "hello-task";
+   }
+
+}
+----
+
+To deploy the `HelloTask` class to {brandname} server, do the following:
+
+. Package the `HelloTask` class in a JAR file.
++
+[NOTE]
+====
+Server task implementations must adhere to https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html[service loader pattern] requirements. For example, implementations must have a zero-argument constructor.
+====
++
+. Add a `META-INF/services/org.infinispan.tasks.ServerTask` file to the JAR.
++
+The file must contain the fully qualified names of server tasks, for example:
++
+[source]
+----
+example.HelloTask
+----
++
+. Place the JAR file in the `{server_home}/server/lib` directory of your {brandname} server.
+. Execute `HelloTask` as follows:
++
+[source, java]
+----
+// Add configuration for a locally running server.
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.addServer().host("127.0.0.1").port(11222);
+
+// Connect to the server.
+RemoteCacheManager cacheManager = new RemoteCacheManager(builder.build());
+
+// Obtain the remote cache.
+RemoteCache<String, String> cache = cacheManager.getCache();
+
+// Create task parameters.
+Map<String, String> parameters = new HashMap<>();
+parameters.put("name", "developer");
+
+// Execute the server task.
+String greet = cache.execute("hello-task", parameters);
+System.out.println(greet);
+----

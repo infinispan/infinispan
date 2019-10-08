@@ -1,0 +1,11 @@
+[id='server_tasks-{context}']
+:context: server
+= Implementing Server Tasks
+Create custom {brandname} server jobs that you can invoke from clients.
+
+include::{topics}/ref_server_task.adoc[leveloffset=+1]
+include::{topics}/proc_implementing_server_task.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
