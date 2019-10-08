@@ -33,17 +33,12 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
       AutoInstantiableFactory {
 
-   public static final String SEGMENTATION_FEATURE = "data-segmentation";
-
-   private final static String SUB_COMPONENT_NAME = "DataContainerDelegate";
-
    @Override
    @SuppressWarnings("unchecked")
    public Object construct(String componentName) {
       ClusteringConfiguration clusteringConfiguration = configuration.clustering();
 
-      boolean shouldSegment = globalConfiguration.features().isAvailable(SEGMENTATION_FEATURE) &&
-            clusteringConfiguration.cacheMode().needsStateTransfer();
+      boolean shouldSegment = clusteringConfiguration.cacheMode().needsStateTransfer();
       int level = configuration.locking().concurrencyLevel();
 
       MemoryConfiguration memoryConfiguration = configuration.memory();

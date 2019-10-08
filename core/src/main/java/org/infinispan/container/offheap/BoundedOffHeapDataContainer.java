@@ -11,9 +11,7 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.NonSegmentedUtils;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
@@ -32,13 +30,6 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
 
    public BoundedOffHeapDataContainer(long maxSize, EvictionType type) {
       super(1, maxSize, type);
-   }
-
-   @Override
-   public void start() {
-      super.start();
-      // Force the start up of segment 0
-      addSegments(IntSets.immutableSet(0));
    }
 
    @Override
@@ -152,13 +143,11 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
 
    @Override
    public void addSegments(IntSet segments) {
-      // Don't have to do anything here
+      throw new UnsupportedOperationException();
    }
-
-   private static final int REMOVE_SEGMENT_BATCH_SIZE = 32;
 
    @Override
    public void removeSegments(IntSet segments) {
-      NonSegmentedUtils.removeSegmentEntries(this, segments, listeners, keyPartitioner);
+      throw new UnsupportedOperationException();
    }
 }

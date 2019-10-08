@@ -4,14 +4,11 @@ package org.infinispan.factories;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.commons.util.Features;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
@@ -56,13 +53,8 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_ASYNC)
             .memory().storageType(StorageType.OFF_HEAP).build();
 
-      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
-      if (segmentationAvailable) {
-         assertEquals(DefaultSegmentedDataContainer.class, component.getClass());
-      } else {
-         assertEquals(OffHeapDataContainer.class, component.getClass());
-      }
+      assertEquals(DefaultSegmentedDataContainer.class, component.getClass());
    }
 
    @Test
@@ -78,13 +70,8 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .l1().enable()
             .memory().storageType(StorageType.OFF_HEAP).build();
 
-      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
-      if (segmentationAvailable) {
-         assertEquals(L1SegmentedDataContainer.class, component.getClass());
-      } else {
-         assertEquals(OffHeapDataContainer.class, component.getClass());
-      }
+      assertEquals(L1SegmentedDataContainer.class, component.getClass());
    }
 
    @Test
@@ -92,13 +79,8 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
             .cacheMode(CacheMode.DIST_ASYNC).build();
 
-      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
-      if (segmentationAvailable) {
-         assertEquals(DefaultSegmentedDataContainer.class, component.getClass());
-      } else {
-         assertEquals(DefaultDataContainer.class, component.getClass());
-      }
+      assertEquals(DefaultSegmentedDataContainer.class, component.getClass());
    }
 
    @Test
@@ -107,13 +89,8 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .cacheMode(CacheMode.DIST_ASYNC)
             .l1().enable().build();
 
-      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
-      if (segmentationAvailable) {
-         assertEquals(L1SegmentedDataContainer.class, component.getClass());
-      } else {
-         assertEquals(DefaultDataContainer.class, component.getClass());
-      }
+      assertEquals(L1SegmentedDataContainer.class, component.getClass());
    }
 
    @Test
@@ -130,13 +107,8 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().evictionStrategy(EvictionStrategy.REMOVE).size(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
-      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
-      if (segmentationAvailable) {
-         assertEquals(BoundedSegmentedDataContainer.class, component.getClass());
-      } else {
-         assertEquals(DefaultDataContainer.class, component.getClass());
-      }
+      assertEquals(BoundedSegmentedDataContainer.class, component.getClass());
    }
 
    @Test
@@ -154,26 +126,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
             .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
-      boolean segmentationAvailable = new Features().isAvailable(DataContainerFactory.SEGMENTATION_FEATURE);
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
-      if (segmentationAvailable) {
-         assertEquals(SegmentedBoundedOffHeapDataContainer.class, component.getClass());
-      } else {
-         assertEquals(BoundedOffHeapDataContainer.class, component.getClass());
-      }
-   }
-
-   @Test
-   public void testNotAvailableFeature() {
-      Features features = mock(Features.class);
-      dataContainerFactory.globalConfiguration = mock(GlobalConfiguration.class);
-      when(dataContainerFactory.globalConfiguration.features()).thenReturn(features);
-      when(features.isAvailable(DataContainerFactory.SEGMENTATION_FEATURE)).thenReturn(false);
-
-      dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
-            .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
-
-      assertEquals(BoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
+      assertEquals(SegmentedBoundedOffHeapDataContainer.class, component.getClass());
    }
 }

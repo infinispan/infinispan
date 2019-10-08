@@ -129,6 +129,10 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
 
    public void testRemoveSegments() {
       Cache<String, String> cache = cache(0);
+      if (cache.getCacheConfiguration().clustering().cacheMode() == CacheMode.LOCAL) {
+         // Local caches don't support removing segments
+         return;
+      }
 
       String key = "some-key";
       String value = "some-value";

@@ -309,9 +309,11 @@ public class StateConsumerImpl implements StateConsumer {
       distributionManager.setCacheTopology(cacheTopology);
 
       IntSet newWriteSegments = getOwnedSegments(newWriteCh);
-      // Owned segments
-      dataContainer.addSegments(newWriteSegments);
-      CompletionStages.join(persistenceManager.addSegments(newWriteSegments));
+      if (!configuration.clustering().cacheMode().isInvalidation()) {
+         // Owned segments
+         dataContainer.addSegments(newWriteSegments);
+         CompletionStages.join(persistenceManager.addSegments(newWriteSegments));
+      }
 
       // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
       // Tracking is stopped once the subsequent rebalance completes
@@ -1020,6 +1022,10 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    protected void removeStaleData(final IntSet removedSegments) throws InterruptedException {
+      // Invalidation doesn't ever remove stale data
+      if (configuration.clustering().cacheMode().isInvalidation()) {
+         return;
+      }
       log.debugf("Removing no longer owned entries for cache %s", cacheName);
       if (keyInvalidationListener != null) {
          keyInvalidationListener.beforeInvalidation(removedSegments, IntSets.immutableEmptySet());

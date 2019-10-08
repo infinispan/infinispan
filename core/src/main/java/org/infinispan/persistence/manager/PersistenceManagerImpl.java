@@ -12,7 +12,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,7 +48,6 @@ import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
@@ -61,7 +59,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.impl.InternalExpirationManager;
-import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -1180,15 +1177,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private void createLoadersAndWriters() {
-      Features features = globalConfiguration.features();
       for (StoreConfiguration cfg : configuration.persistence().stores()) {
 
          final Object bareInstance;
          if (cfg.segmented()) {
-            if (!features.isAvailable(DataContainerFactory.SEGMENTATION_FEATURE)) {
-               throw org.infinispan.commons.logging.LogFactory.getLog(MethodHandles.lookup().lookupClass())
-                     .featureDisabled(DataContainerFactory.SEGMENTATION_FEATURE);
-            }
             if (cfg instanceof AbstractSegmentedStoreConfiguration) {
                bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
             } else {
