@@ -1,23 +1,22 @@
 package org.infinispan.container.offheap;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.commons.util.Util;
 
 /**
- * Holder for read write locks that provides ability to retrieve them by offset and hashCode
+ * Holder for stamped locks that provides ability to retrieve them by offset and hashCode
  * Note that locks protect entries
  * @author wburns
  * @since 9.0
  */
 public class StripedLock {
-   private final ReadWriteLock[] locks;
+   private final StampedLock[] locks;
 
    public StripedLock(int lockCount) {
-      locks = new ReadWriteLock[Util.findNextHighestPowerOfTwo(lockCount)];
+      locks = new StampedLock[Util.findNextHighestPowerOfTwo(lockCount)];
       for (int i = 0; i< locks.length; ++i) {
-         locks[i] = new ReentrantReadWriteLock();
+         locks[i] = new StampedLock();
       }
    }
 
@@ -27,7 +26,7 @@ public class StripedLock {
     * @param offset the offset of the lock to find
     * @return the lock at the given offset
     */
-   public ReadWriteLock getLockWithOffset(int offset) {
+   public StampedLock getLockWithOffset(int offset) {
       if (offset >= locks.length) {
          throw new ArrayIndexOutOfBoundsException();
       }
@@ -38,8 +37,8 @@ public class StripedLock {
     * Locks all write locks.  Ensure that {@link StripedLock#unlockAll()} is called in a proper finally block
     */
    public void lockAll() {
-      for (ReadWriteLock rwLock : locks) {
-         rwLock.writeLock().lock();
+      for (StampedLock rwLock : locks) {
+         rwLock.asWriteLock().lock();
       }
    }
 
@@ -47,8 +46,8 @@ public class StripedLock {
     * Unlocks all write locks, useful after {@link StripedLock#lockAll()} was invoked.
     */
    void unlockAll() {
-      for (ReadWriteLock rwLock : locks) {
-         rwLock.writeLock().unlock();
+      for (StampedLock rwLock : locks) {
+         rwLock.asWriteLock().unlock();
       }
    }
 }
