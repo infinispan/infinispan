@@ -35,7 +35,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -51,7 +50,6 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -285,8 +283,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
          if (stProvider != null) {
             try {
-               CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-               Flowable.fromPublisher(stProvider.entryPublisher(filter::accept, true, true))
+               Flowable.fromPublisher(stProvider.entryPublisher(k -> !dataContainer.containsKey(k), true, true))
                      .blockingForEach(me -> {
                         int segmentId = keyPartitioner.getSegment(me.getKey());
                         if (finalCompletedSegments.contains(segmentId)) {

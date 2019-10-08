@@ -74,7 +74,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
          cache().put(i, i);
       }
 
-      int keysInDataContainer = cache().getAdvancedCache().getDataContainer().keySet().size();
+      int keysInDataContainer = cache().getAdvancedCache().getDataContainer().size();
 
       assertTrue(keysInDataContainer != numKeys); // some keys got evicted
 
@@ -139,11 +139,12 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       }
 
       AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
-      DataContainer dc = flagCache.getDataContainer();
+      DataContainer<Object, Object> dc = flagCache.getDataContainer();
       assertFalse("Data Container should not have all keys", numKeys == dc.size());
       Set<Object> keySet = flagCache.keySet();
       assertEquals(dc.size(), keySet.size());
-      for (Object key : dc.keySet()) {
+      for (InternalCacheEntry<Object, Object> entry : dc) {
+         Object key = entry.getKey();
          assertTrue("Key: " + key + " was not found!", keySet.contains(key));
       }
    }
@@ -175,18 +176,17 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       }
 
       AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
-      DataContainer dc = flagCache.getDataContainer();
+      DataContainer<Object, Object> dc = flagCache.getDataContainer();
       assertFalse("Data Container should not have all keys", numKeys == dc.size());
       Set<Map.Entry<Object, Object>> entrySet = flagCache.entrySet();
       assertEquals(dc.size(), entrySet.size());
 
-      Set<InternalCacheEntry> entries = dc.entrySet();
       Map<Object, Object> map = new HashMap<>(entrySet.size());
       for (Map.Entry<Object, Object> entry : entrySet) {
          map.put(entry.getKey(), entry.getValue());
       }
 
-      for (InternalCacheEntry entry : entries) {
+      for (InternalCacheEntry entry : dc) {
          assertEquals("Key/Value mismatch!", entry.getValue(), map.get(entry.getKey()));
       }
    }
@@ -211,13 +211,13 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       }
 
       AdvancedCache<Object, Object> flagCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
-      DataContainer dc = flagCache.getDataContainer();
+      DataContainer<Object, Object> dc = flagCache.getDataContainer();
       assertFalse("Data Container should not have all keys", numKeys == dc.size());
       Collection<Object> values = flagCache.values();
       assertEquals(dc.size(), values.size());
 
-      Collection<Object> dcValues = dc.values();
-      for (Object dcValue : dcValues) {
+      for (InternalCacheEntry<Object, Object> entry : dc) {
+         Object dcValue = entry.getValue();
          assertTrue("Value: " + dcValue + " was not found!", values.contains(dcValue));
       }
    }
@@ -228,7 +228,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
          cache().put(i, i);
       }
 
-      int keysInDataContainer = cache().getAdvancedCache().getDataContainer().keySet().size();
+      int keysInDataContainer = cache().getAdvancedCache().getDataContainer().size();
 
       assertTrue(keysInDataContainer != numKeys); // some keys got evicted
 

@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -199,7 +201,8 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       for (int i = 0; i < getCacheManagers().size(); i++) {
          Cache<String, String> testCache = manager(i).getCache(TEST_CACHE_NAME);
          DataContainer<String, String> dataContainer = testCache.getAdvancedCache().getDataContainer();
-         log.debugf("DC on %s has %d keys: %s", address(i), dataContainer.size(), dataContainer.keySet());
+         log.debugf("DC on %s has %d keys: %s", address(i), dataContainer.size(),
+               StreamSupport.stream(dataContainer.spliterator(), false).map(Map.Entry::getKey).collect(Collectors.joining(",")));
          Set<String> keySet = testCache.keySet();
          log.debugf("Cache %s has %d keys: %s", address(i), keySet.size(), keySet);
       }

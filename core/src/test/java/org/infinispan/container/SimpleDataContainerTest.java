@@ -7,12 +7,13 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -205,7 +206,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("k3");
       expected.add("k4");
 
-      for (String o : dc.keySet()) assertTrue(expected.remove(o));
+      for (InternalCacheEntry<String, String> entry : dc) {
+         String o = entry.getKey();
+         assertTrue(expected.remove(o));
+      }
 
       assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
@@ -243,7 +247,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("k3");
       expected.add("k4");
 
-      for (String o : dc.keySet()) assertTrue(expected.remove(o));
+      for (InternalCacheEntry<String, String> entry : dc) {
+         String o = entry.getKey();
+         assertTrue(expected.remove(o));
+      }
 
       assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
@@ -261,7 +268,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("v3");
       expected.add("v4");
 
-      for (String o : dc.values()) assertTrue(expected.remove(o));
+      for (InternalCacheEntry<String, String> entry : dc) {
+         String o = entry.getValue();
+         assertTrue(expected.remove(o));
+      }
 
       assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
@@ -280,7 +290,9 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k4")));
 
       Set<Map.Entry> actual = new HashSet<>();
-      for (Map.Entry<String, String> o : dc.entrySet()) assertTrue(actual.add(o));
+      for (Map.Entry<String, String> o : dc) {
+         assertTrue(actual.add(o));
+      }
 
       assertEquals("Expected to see keys " + expected + " but only saw " + actual, expected, actual);
    }
@@ -289,7 +301,8 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       for (int i = 0; i < 10; i++) dc.put(String.valueOf(i), "value", new EmbeddedMetadata.Builder().build());
 
       int i = 0;
-      for (Object key : dc.keySet()) {
+      for (InternalCacheEntry<String, String> entry : dc) {
+         Object key = entry.getKey();
          dc.peek(key); // calling get in this situations will result on corruption the iteration.
          i++;
       }
@@ -309,20 +322,20 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Map.Entry<String, String> k3 = CoreImmutables.immutableInternalCacheEntry(dc.get("k3"));
       expected.add(k3);
 
-      List<Map.Entry<String, String>> results = Arrays.asList(dc.entrySet().stream().toArray(Map.Entry[]::new));
+      List<Map.Entry<String, String>> results = StreamSupport.stream(dc.spliterator(), false).collect(Collectors.toList());
       assertEquals(3, results.size());
       assertArrayAndSetContainSame(expected, results);
 
       timeService.advance(101);
 
-      results = Arrays.asList(dc.entrySet().stream().toArray(Map.Entry[]::new));
+      results = StreamSupport.stream(dc.spliterator(), false).collect(Collectors.toList());
       assertEquals(2, results.size());
       expected.remove(k1);
       assertArrayAndSetContainSame(expected, results);
 
       timeService.advance(100);
 
-      results = Arrays.asList(dc.entrySet().stream().toArray(Map.Entry[]::new));
+      results = StreamSupport.stream(dc.spliterator(), false).collect(Collectors.toList());
       assertEquals(1, results.size());
       expected.remove(k3);
       assertArrayAndSetContainSame(expected, results);

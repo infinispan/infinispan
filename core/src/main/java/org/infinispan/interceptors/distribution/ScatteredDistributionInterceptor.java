@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -904,21 +905,22 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    }
 
    protected Object handleClear(InvocationContext ctx, VisitableCommand command, Object ignored) {
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
-      List<InternalCacheEntry<Object, Object>> copyEntries = null;
       if (cacheNotifier.hasListener(CacheEntryRemoved.class)) {
-         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         copyEntries = new ArrayList<>(dataContainer.entrySet());
-      }
+         Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iteratorIncludingExpired();
 
-      dataContainer.clear();
-
-      if (copyEntries != null) {
-         for (InternalCacheEntry entry : copyEntries) {
-            aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, (ClearCommand) command));
+         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         while (iterator.hasNext()) {
+            InternalCacheEntry entry = iterator.next();
+            // Iterator doesn't support remove
+            dataContainer.remove(entry.getKey());
+            aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(),
+                  entry.getMetadata(), false, ctx, (ClearCommand) command));
          }
+         return aggregateCompletionStage.freeze();
+      } else {
+         dataContainer.clear();
+         return CompletableFutures.completedNull();
       }
-      return delayedNull(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null);
    }
 
    @Override

@@ -15,6 +15,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.CacheImplementor;
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.infinispan.Cache;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Name;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
@@ -77,9 +78,9 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
          RegionFactory regionFactory = ((CacheImplementor) sessionFactory.getCache()).getRegionFactory();
          TestRegionFactory factory = TestRegionFactoryProvider.load().wrap(regionFactory);
          Cache<Object, Object> cache = factory.getCacheManager().getCache(Person.class.getName());
-         Iterator<Object> iterator = cache.getAdvancedCache().getDataContainer().keySet().iterator();
+         Iterator<InternalCacheEntry<Object, Object>> iterator = cache.getAdvancedCache().getDataContainer().iterator();
          assertTrue(iterator.hasNext());
-         Object key = iterator.next();
+         Object key = iterator.next().getKey();
          assertEquals(keyClassName, key.getClass().getSimpleName());
 
          withTxSession(false, sessionFactory, s -> {

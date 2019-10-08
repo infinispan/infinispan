@@ -1,5 +1,7 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
+import java.util.stream.StreamSupport;
+
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
@@ -27,7 +29,7 @@ public class WriteSkewWithPersistenceTest extends WriteSkewTest {
    protected void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException {
       // Make sure that all entries are evicted from DC
       DataContainer<Object, Object> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
-      Object[] keys = dataContainer.entrySet().stream().map(InternalCacheEntry::getKey).toArray(Object[]::new);
+      Object[] keys = StreamSupport.stream(dataContainer.spliterator(), false).map(InternalCacheEntry::getKey).toArray(Object[]::new);
       for (Object key : keys) {
          dataContainer.evict(key);
       }
