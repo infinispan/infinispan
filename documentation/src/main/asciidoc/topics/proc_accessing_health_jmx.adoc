@@ -1,4 +1,12 @@
-= Accessing Health API using JMX
+= Accessing the Health API via JMX
+Retrieve {brandname} cluster health statistics via JMX.
 
-At first you need to connect to the {brandname} Server using JMX (use JConsole or other tool for this).
-Next, navigate to object name `jboss.datagrid-infinispan:type=CacheManager,name="clustered",component=CacheContainerHealth`.
+.Procedure
+. Connect to {brandname} server using any JMX capable tool such as JConsole and navigate to the following object:
++
+[source,options="nowrap",subs=attributes+]
+----
+org.infinispan:type=CacheManager,name="default",component=CacheContainerHealth
+----
++
+. Select available MBeans to retrieve cluster health statistics.

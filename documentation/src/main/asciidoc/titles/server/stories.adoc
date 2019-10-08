@@ -3,8 +3,8 @@
 
 include::{stories}/assembly_getting_started_server.adoc[leveloffset=+1]
 include::{stories}/assembly_configuring_server.adoc[leveloffset=+1]
-include::{stories}/assembly_scripting_server.adoc[leveloffset=+1]
 include::{stories}/assembly_monitoring_server_health.adoc[leveloffset=+1]
+include::{stories}/assembly_scripting_server.adoc[leveloffset=+1]
 include::{stories}/assembly_server_multitenancy.adoc[leveloffset=+1]
 include::{stories}/assembly_server_security.adoc[leveloffset=+1]
 include::{stories}/assembly_monitoring.adoc[leveloffset=+1]

@@ -1,28 +1,30 @@
-= Accessing Health API using REST
+= Accessing the Health API via REST
+Get {brandname} cluster health via the REST API.
 
-The REST interface lets you access the same set of resources as the CLI. However, the HTTP Management API requires authentication so you must first add credentials with the `add-user.sh` script.
-
-After you set up credentials, access the Health API via REST as in the following examples:
-
-Standalone::
+.Procedure
+* Invoke a `GET` request to retrieve cluster health.
 +
 [source,bash]
 ----
-include::rest_examples/curl_standalone_health.adoc[]
+include::rest_examples/get_v2_cluster_health.adoc[]
 ----
 
-Domain Mode::
-+
-[source,bash]
-----
-include::rest_examples/curl_domain_health.adoc[]
-----
-+
-Where `${servername}` is the name of the {brandname} server instance.
+{brandname} responds with a `JSON` document such as the following:
 
-The following is a sample result for the REST invocation:
+[source,json,options="nowrap",subs=attributes+]
+----
+include::rest_examples/rest_cache_health_response.json[]
+----
+
+[TIP]
+====
+Get cache manager status as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-include::rest_examples/server_health_rest.adoc[]
+include::rest_examples/get_v2_health_status.adoc[]
 ----
+====
+
+.Reference
+See the _REST v2 (version 2) API_ documentation for more information.

@@ -4,8 +4,8 @@
         "health_status":"HEALTHY",
         "number_of_nodes":2,
         "node_names":[
-            "CacheManagerResourceTest-NodeA-36229",
-            "CacheManagerResourceTest-NodeB-28703"
+            "NodeA-36229",
+            "NodeB-28703"
         ]
     },
     "cache_health":[
@@ -19,7 +19,7 @@
         },
         {
             "status":"HEALTHY",
-            "cache_name":"CacheManagerResourceTest"
+            "cache_name":"mycache"
         },
         {
             "status":"HEALTHY",
