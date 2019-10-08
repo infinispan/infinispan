@@ -108,7 +108,15 @@ to pause a node and subsequently resume it.
 
 ## Testsuite Categories
 
-Tests are annotated with JUnit's `@Category` annotation
+Tests are annotated with JUnit's `@Category` annotation. The following categories are available:
+
+* `org.infinispan.server.test.category.Persistence`
+* `org.infinispan.server.test.category.Resilience`
+* `org.infinispan.server.test.category.Security`
+
+The default is to run all categories, but this can be overridden by setting the `defaultJUnitGroups` system property, e.g.
+
+`mvn -DdefaultExcludedJUnitGroups=org.infinispan.server.test.category.Persistence ...`
 
 ## Testsuite Properties
 
@@ -116,7 +124,33 @@ The following is a list of properties which affect the build:
 
 * `org.infinispan.test.server.baseImageName` the base image to use for the server. Defaults to `jboss/base-jdk:11`.
 * `org.infinispan.test.server.driver`  the driver to use, `EMBEDDED` or `CONTAINER`. Defaults to the `EMBEDDED` driver.
+* `org.infinispan.test.server.extension.libs` locates artifact defined by G:A:V, you can pass a list of libraries (comma separeted) to be copied to the server. Only needed for container mode.
+* `org.infinispan.test.server.jdbc.databases` database name to be used during persistence tests.
+* `org.infinispan.test.server.jdbc.database.url` JDBC URL. If it's a external database
+* `org.infinispan.test.server.jdbc.database.username` database username. If it's a external database
+* `org.infinispan.test.server.jdbc.database.password` database password. If it's a external database
+* `org.infinispan.test.server.jdbc.database.driverClass` database jdbc driver name. If it's a external database
+* `org.infinispan.test.server.jdbc.image.tag` Docker image version to be used during persistence tests.
+
 
 ## JMX
 
 Servers started by the testsuite drivers will have JMX enabled and tests can obtain MBeans by going through the driver API.
+
+## JDBC Tests
+
+The JDBC tests can run against either standalone or containerized databases. 
+The default is to test against containerized versions of H2, MySQL and PostgreSQL. 
+You can specify a different set of databases by setting the system property `org.infinispan.test.server.jdbc.databases`, e.g.:
+
+`mvn -Dorg.infinispan.test.server.jdbc.databases=h2,mysql,postgres,mariadb,oracle,db2,sql_server ...`
+
+In order for the test to work, for each supplied database name `id` there must be a `src/test/resources/database/id.properties` file which describes the database types and configuration.
+
+To add JDBC drivers to the servers in order to run tests against specific databases, use the `org.infinispan.test.server.extension.libs` system property:
+
+`mvn -Dorg.infinispan.test.server.extension.libs=com.h2database:h2:1.4.199,com.oracle.jdbc:ojdbc8:jar:18.3.0.0 ...`
+
+To pass in the address of external databases, use the `org.infinispan.server.test.database.id.address` system property, replacing `id` with the name of your database:
+
+`mvn -Dorg.infinispan.server.test.database.db2.address=10.1.2.3 ...`

@@ -3,6 +3,7 @@ package org.infinispan.server.test;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -14,9 +15,12 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.util.Version;
 import org.infinispan.test.Exceptions;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
@@ -35,8 +39,11 @@ import com.github.dockerjava.api.model.Network;
  * @since 10.0
  **/
 public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
+   private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    private final List<GenericContainer> containers;
+   private static final String EXTRA_LIBS = "org.infinispan.test.server.extension.libs";
+   private String name;
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
@@ -55,6 +62,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
 
    @Override
    protected void start(String name, File rootDir, String configurationFile) {
+      this.name = name;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
       String baseImageName = System.getProperty("org.infinispan.test.server.baseImageName", "jboss/base-jdk:11");
@@ -90,11 +98,13 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                         .label("version", Version.getVersion())
                         .label("release", Version.getVersion())
                         .label("architecture", "x86_64")
-                        .user("jboss")
+                        .user("root")
                         .copy("build", INFINISPAN_SERVER_HOME)
                         .copy("test", INFINISPAN_SERVER_HOME + "/server")
                         .copy("src/test/resources/bin", INFINISPAN_SERVER_HOME + "/bin")
+                        .run("chown", "-R", "jboss:jboss", INFINISPAN_SERVER_HOME)
                         .workDir(INFINISPAN_SERVER_HOME)
+                        .user("jboss")
                         .cmd(
                               args.toArray(new String[]{})
                         )
@@ -106,23 +116,21 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                               9999   // JMX Remoting
                         )
                         .build());
-      CountdownLatchLoggingConsumer latch;
-      if (configuration.numServers() > 1) {
-         latch = new CountdownLatchLoggingConsumer(configuration.numServers(), ".*ISPN080001.*");
-      } else {
-         latch = new CountdownLatchLoggingConsumer(1, ".*ISPN080001.*");
-      }
+      CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(configuration.numServers(), ".*ISPN080001.*");
       for (int i = 0; i < configuration.numServers(); i++) {
          GenericContainer container = new GenericContainer(image);
-
+         containers.add(container);
          // Create directories which we will bind the container to
          createServerHierarchy(rootDir, Integer.toString(i),
                (hostDir, dir) -> {
                   String containerDir = String.format("%s/server/%s", INFINISPAN_SERVER_HOME, dir);
+                  if ("lib".equals(dir)) {
+                     copyArtifactsToUserLibDir(hostDir);
+                  }
                   container.withFileSystemBind(hostDir.getAbsolutePath(), containerDir);
                   hostDir.setWritable(true, false);
                });
-         containers.add(container);
+         log.infof("Starting container %s-%d", name, i);
          container
                .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)))
                .withLogConsumer(latch)
@@ -132,10 +140,26 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       Exceptions.unchecked(() -> latch.await(10, TimeUnit.SECONDS));
    }
 
+   private void copyArtifactsToUserLibDir(File libDir) {
+      String propertyArtifacts = System.getProperty(EXTRA_LIBS);
+      String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.artifacts();
+      if (artifacts != null && artifacts.length > 0) {
+         MavenResolvedArtifact[] archives = Maven.resolver().resolve(artifacts).withoutTransitivity().asResolvedArtifact();
+         for (MavenResolvedArtifact archive : archives) {
+            Exceptions.unchecked(() -> {
+               Path source = archive.asFile().toPath();
+               Files.copy(source, libDir.toPath().resolve(source.getFileName()));
+            });
+         }
+      }
+   }
+
    @Override
    protected void stop() {
-      for (GenericContainer container : containers) {
-         container.stop();
+      for (int i = 0; i < containers.size(); i++) {
+         log.infof("Stopping container %s-%d", name, i);
+         containers.get(i).stop();
+         log.infof("Stopped container %s-%d", name, i);
       }
       containers.clear();
    }

@@ -12,6 +12,7 @@ public class InfinispanServerTestConfiguration {
    private int numServers = 2;
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private Properties properties = new Properties();
+   private String[] artifacts;
 
    public InfinispanServerTestConfiguration(String configurationFile) {
       this.configurationFile = configurationFile;
@@ -43,6 +44,15 @@ public class InfinispanServerTestConfiguration {
       return this;
    }
 
+   /**
+    * Extra libs
+    * @param artifacts
+    */
+   public InfinispanServerTestConfiguration artifacts(String... artifacts) {
+      this.artifacts = artifacts;
+      return this;
+   }
+
    public String configurationFile() {
       return configurationFile;
    }
@@ -57,5 +67,9 @@ public class InfinispanServerTestConfiguration {
 
    public Properties properties() {
       return properties;
+   }
+
+   public String[] artifacts() {
+      return artifacts;
    }
 }

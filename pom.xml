@@ -426,6 +426,7 @@
       <versionx.org.apache.maven.resolver.maven-resolver-spi>${version.apache.maven.resolver}</versionx.org.apache.maven.resolver.maven-resolver-spi>
       <versionx.org.apache.maven.resolver.maven-resolver-transport-file>${version.apache.maven.resolver}</versionx.org.apache.maven.resolver.maven-resolver-transport-file>
       <versionx.org.apache.maven.resolver.maven-resolver-transport-http>${version.apache.maven.resolver}</versionx.org.apache.maven.resolver.maven-resolver-transport-http>
+      <versionx.org.apache.maven.resolver.maven-resolver-transport-wagon>${version.apache.maven.resolver}</versionx.org.apache.maven.resolver.maven-resolver-transport-wagon>
       <versionx.org.apache.maven.resolver.maven-resolver-util>${version.apache.maven.resolver}</versionx.org.apache.maven.resolver.maven-resolver-util>
       <versionx.org.apache.maven.shared.maven-shared-utils>3.2.1</versionx.org.apache.maven.shared.maven-shared-utils>
       <versionx.org.apache.maven.wagon.wagon-file>${version.apache.maven.wagon}</versionx.org.apache.maven.wagon.wagon-file>
@@ -706,7 +707,7 @@
       <versionx.org.springframework.spring-web>${version.spring5}</versionx.org.springframework.spring-web>
       <versionx.org.springframework.spring-webmvc>${version.spring5}</versionx.org.springframework.spring-webmvc>
       <versionx.org.syslog4j.syslog4j>0.9.30</versionx.org.syslog4j.syslog4j>
-      <versionx.org.testcontainers.testcontainers>1.12.1</versionx.org.testcontainers.testcontainers>
+      <versionx.org.testcontainers.testcontainers>1.12.2</versionx.org.testcontainers.testcontainers>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.tukaani.xz>1.0</versionx.org.tukaani.xz>
       <versionx.org.twdata.maven.mojo-executor>2.2.0</versionx.org.twdata.maven.mojo-executor>
@@ -1872,6 +1873,12 @@
             <groupId>org.apache.maven.resolver</groupId>
             <artifactId>maven-resolver-transport-http</artifactId>
             <version>${versionx.org.apache.maven.resolver.maven-resolver-transport-http}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.maven.resolver</groupId>
+            <artifactId>maven-resolver-transport-wagon</artifactId>
+            <version>${versionx.org.apache.maven.resolver.maven-resolver-transport-wagon}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

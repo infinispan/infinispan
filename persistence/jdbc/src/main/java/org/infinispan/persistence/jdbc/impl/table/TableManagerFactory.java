@@ -131,6 +131,8 @@ public class TableManagerFactory {
       name = name.toLowerCase();
       if (name.contains("mysql")) {
          type = DatabaseType.MYSQL;
+      } else if (name.contains("mariadb")) {
+         type = DatabaseType.MARIA_DB;
       } else if (name.contains("postgres")) {
          type = DatabaseType.POSTGRES;
       } else if (name.contains("derby")) {

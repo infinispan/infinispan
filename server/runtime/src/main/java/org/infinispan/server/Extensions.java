@@ -48,6 +48,12 @@ public class Extensions {
       }
    }
 
+   private <T> void load(ClassLoader classLoader, Class<T> contract) {
+      for (T t : ServiceFinder.load(contract, classLoader)) {
+         Server.log.loadedExtension(t.getClass().getName());
+      }
+   }
+
    private <T> void load(ClassLoader classLoader, Class<T> contract, Map<String, T> map) {
       for (T t : ServiceFinder.load(contract, classLoader)) {
          NamedFactory name = t.getClass().getAnnotation(NamedFactory.class);
@@ -57,12 +63,6 @@ public class Extensions {
          } else {
             Server.log.unnamedFactoryClass(t.getClass().getName());
          }
-      }
-   }
-
-   private <T> void load(ClassLoader classLoader, Class<T> contract) {
-      for (T t : ServiceFinder.load(contract, classLoader)) {
-         Server.log.loadedExtension(t.getClass().getName());
       }
    }
 }

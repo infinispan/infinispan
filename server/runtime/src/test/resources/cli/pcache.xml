@@ -1,0 +1,22 @@
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:10.0 http://www.infinispan.org/schemas/infinispan-config-10.0.xsd"
+            xmlns="urn:infinispan:config:10.0">
+   <cache-container>
+      <distributed-cache name="pcache">
+         <encoding>
+            <key media-type="application/x-protostream"/>
+            <value media-type="application/x-protostream"/>
+         </encoding>
+         <persistence>
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:10.0">
+               <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
+               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+                  <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+                  <data-column name="DATA_COLUMN" type="BINARY" />
+                  <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+               </string-keyed-table>
+            </string-keyed-jdbc-store>
+         </persistence>
+      </distributed-cache>
+   </cache-container>
+</infinispan>

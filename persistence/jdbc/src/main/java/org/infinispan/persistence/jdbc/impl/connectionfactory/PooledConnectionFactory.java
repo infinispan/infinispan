@@ -51,8 +51,8 @@ public class PooledConnectionFactory extends ConnectionFactory {
          if (propsFile != null) {
             dataSource = AgroalDataSource.from(new AgroalPropertiesReader(PROPERTIES_PREFIX).readProperties(propsFile));
          } else {
-            // Default Agroal configuration with metrics disabled
             Class<?> driverClass = Util.loadClass(poolConfig.driverClass(), null);
+            // Default Agroal configuration with metrics disabled
             String password = poolConfig.password() != null ? poolConfig.password() : "";
             AgroalDataSourceConfigurationSupplier configuration = new AgroalDataSourceConfigurationSupplier()
                   .connectionPoolConfiguration(cp -> cp
