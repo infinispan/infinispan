@@ -15,7 +15,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiFunction;
 import java.util.function.LongConsumer;
 import java.util.stream.LongStream;
@@ -269,8 +269,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       return getOffset(hashCode, memoryLookup == this.memoryLookup ? memoryShift : oldMemoryShift);
    }
 
-   Lock getWriteLock(int hashCode) {
-      return locks.getLockWithOffset(getLockOffset(hashCode)).writeLock();
+   StampedLock getStampedLock(int hashCode) {
+      return locks.getLockWithOffset(getLockOffset(hashCode));
    }
 
    private int getLockOffset(int hashCode) {
@@ -422,15 +422,16 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          PrimitiveIterator.OfInt iterator = pendingBlocks.iterator();
          while (iterator.hasNext()) {
             int offset = iterator.nextInt();
-            Lock lock = locks.getLockWithOffset(offset).writeLock();
+            StampedLock lock = locks.getLockWithOffset(offset);
 
+            long stamp;
             if (tryLock) {
                // If we can't get it - just assume another person is working on it - so try next one
-               if (!lock.tryLock()) {
+               if ((stamp = lock.tryWriteLock()) == 0) {
                   continue;
                }
             } else {
-               lock.lock();
+               stamp = lock.writeLock();
             }
             try {
                // Only run it now that we have lock if someone else just didn't finish it
@@ -438,7 +439,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
                   transfer(offset);
                }
             } finally {
-               lock.unlock();
+               lock.unlockWrite(stamp);
             }
          }
       }
@@ -490,7 +491,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    public void close() {
       locks.lockAll();
       try {
-         clear();
+         actualClear();
          memoryLookup.deallocate();
          memoryLookup = null;
       } finally {
@@ -515,8 +516,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       int lockOffset = getLockOffset(hashCode);
       InternalCacheEntry<WrappedBytes, WrappedBytes> result;
       InternalCacheEntry<WrappedBytes, WrappedBytes> prev;
-      Lock lock = locks.getLockWithOffset(lockOffset).writeLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
       try {
          checkDeallocation();
 
@@ -543,7 +544,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
             performRemove(bucketAddress, actualAddress, key, null, memoryOffset, false);
          }
       } finally {
-         lock.unlock();
+         stampedLock.unlockWrite(writeStamp);
       }
       if (prev == null && result != null) {
          checkResize();
@@ -564,8 +565,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    private InternalCacheEntry<WrappedBytes, WrappedBytes> peekOrGet(WrappedBytes k, boolean peek) {
       int hashCode = k.hashCode();
       int lockOffset = getLockOffset(hashCode);
-      Lock lock = locks.getLockWithOffset(lockOffset).readLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long readStamp = stampedLock.readLock();
       try {
          checkDeallocation();
          MemoryAddressHash memoryLookup;
@@ -576,7 +577,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          }
          return lockedPeekOrGet(memoryLookup, k, hashCode, peek);
       } finally {
-         lock.unlock();
+         stampedLock.unlockRead(readStamp);
       }
    }
 
@@ -640,8 +641,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       InternalCacheEntry<WrappedBytes, WrappedBytes> returnedValue;
       int hashCode = key.hashCode();
       int lockOffset = getLockOffset(hashCode);
-      Lock lock = locks.getLockWithOffset(lockOffset).writeLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
       try {
          checkDeallocation();
          ensureTransferred(lockOffset);
@@ -651,7 +652,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          long newAddress = offHeapEntryFactory.create(key, hashCode, value.getValue(), value.getMetadata());
          returnedValue = performPut(address, 0, newAddress, key, memoryOffset, true, false);
       } finally {
-         lock.unlock();
+         stampedLock.unlockWrite(writeStamp);
       }
       // If we added a new entry, check the resize
       if (returnedValue == null) {
@@ -748,8 +749,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       }
       int hashCode = key.hashCode();
       int lockOffset = getLockOffset(hashCode);
-      Lock lock = locks.getLockWithOffset(lockOffset).writeLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
       try {
          checkDeallocation();
          ensureTransferred(lockOffset);
@@ -761,13 +762,13 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          }
          return performRemove(address, 0, (WrappedBytes) key, null, memoryOffset,true);
       } finally {
-         lock.unlock();
+         stampedLock.unlockWrite(writeStamp);
       }
    }
 
    /**
     * This method is designed to be called by an outside class. The write lock for the given key must
-    * be acquired via the lock returned from {@link #getWriteLock(int)} using the key's hash code.
+    * be acquired via the lock returned from {@link #getStampedLock(int)} using the key's hash code.
     * This method will avoid some additional lookups as the memory address is already acquired and not return
     * the old entry.
     * @param key key to remove
@@ -845,39 +846,44 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    public void clear() {
       locks.lockAll();
       try {
-         checkDeallocation();
-         if (trace) {
-            log.trace("Clearing off heap data");
-         }
-         LongConsumer removeEntries = address -> {
-            while (address != 0) {
-               long nextAddress = offHeapEntryFactory.getNext(address);
-               entryRemoved(address);
-               address = nextAddress;
-            }
-         };
-         int pointerCount = memoryLookup.getPointerCount();
-         memoryLookup.removeAll().forEach(removeEntries);
-         memoryLookup.deallocate();
-         memoryLookup = null;
-         if (listener != null) {
-            boolean resized = listener.resize(-pointerCount);
-            assert resized : "Resize of negative pointers should always work!";
-         }
-         if (oldMemoryLookup != null) {
-            oldMemoryLookup.removeAll().forEach(removeEntries);
-            transferComplete();
-         }
-
-         // Initialize to beginning again
-         sizeMemoryBuckets(INITIAL_SIZE);
-
-         size.set(0);
-         if (trace) {
-            log.trace("Cleared off heap data");
-         }
+         actualClear();
       } finally {
          locks.unlockAll();
+      }
+   }
+
+   @GuardedBy("locks#lockAll")
+   private void actualClear() {
+      checkDeallocation();
+      if (trace) {
+         log.trace("Clearing off heap data");
+      }
+      LongConsumer removeEntries = address -> {
+         while (address != 0) {
+            long nextAddress = offHeapEntryFactory.getNext(address);
+            entryRemoved(address);
+            address = nextAddress;
+         }
+      };
+      int pointerCount = memoryLookup.getPointerCount();
+      memoryLookup.removeAll().forEach(removeEntries);
+      memoryLookup.deallocate();
+      memoryLookup = null;
+      if (listener != null) {
+         boolean resized = listener.resize(-pointerCount);
+         assert resized : "Resize of negative pointers should always work!";
+      }
+      if (oldMemoryLookup != null) {
+         oldMemoryLookup.removeAll().forEach(removeEntries);
+         transferComplete();
+      }
+
+      // Initialize to beginning again
+      sizeMemoryBuckets(INITIAL_SIZE);
+
+      size.set(0);
+      if (trace) {
+         log.trace("Cleared off heap data");
       }
    }
 
@@ -903,8 +909,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       }
       int hashCode = key.hashCode();
       int lockOffset = getLockOffset(hashCode);
-      Lock lock = locks.getLockWithOffset(lockOffset).writeLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
       try {
          checkDeallocation();
          ensureTransferred(lockOffset);
@@ -913,7 +919,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          long address = memoryLookup.getMemoryAddressOffset(memoryOffset);
          return address != 0 && performRemove(address, 0, (WrappedBytes) key, (WrappedBytes) innerValue, memoryOffset, true) != null;
       } finally {
-         lock.unlock();
+         stampedLock.unlockWrite(writeStamp);
       }
    }
 
@@ -922,8 +928,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          InternalCacheEntry<WrappedBytes, WrappedBytes> newValue) {
       int hashCode = key.hashCode();
       int lockOffset = getLockOffset(hashCode);
-      Lock lock = locks.getLockWithOffset(lockOffset).writeLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
       try {
          checkDeallocation();
          ensureTransferred(lockOffset);
@@ -932,7 +938,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          long address = memoryLookup.getMemoryAddressOffset(memoryOffset);
          return address != 0 && performReplace(address, key, hashCode, memoryOffset, oldValue, newValue) != null;
       } finally {
-         lock.unlock();
+         stampedLock.unlockWrite(writeStamp);
       }
    }
 
@@ -941,8 +947,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          InternalCacheEntry<WrappedBytes, WrappedBytes> value) {
       int hashCode = key.hashCode();
       int lockOffset = getLockOffset(hashCode);
-      Lock lock = locks.getLockWithOffset(lockOffset).writeLock();
-      lock.lock();
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
       try {
          checkDeallocation();
          ensureTransferred(lockOffset);
@@ -954,7 +960,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          }
          return performReplace(address, key, hashCode, memoryOffset, null, value);
       } finally {
-         lock.unlock();
+         stampedLock.unlockWrite(writeStamp);
       }
    }
 
@@ -1099,8 +1105,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       boolean readNextBucket() {
          boolean foundValue = false;
          int lockOffset = getLockOffset(bucketPosition);
-         Lock readLock = locks.getLockWithOffset(lockOffset).readLock();
-         readLock.lock();
+         StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+         long readStamp = stampedLock.readLock();
          try {
             checkDeallocation();
             MemoryAddressHash memoryAddressHash;
@@ -1144,7 +1150,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
                bucketLockStop += getBucketRegionSize(bucketCount);
             }
          } finally {
-            readLock.unlock();
+            stampedLock.unlockRead(readStamp);
          }
          return foundValue;
       }

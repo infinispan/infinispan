@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -53,7 +54,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
    protected final boolean useCount;
    protected final int numSegments;
 
-   protected long currentSize;
+   // Must be updated inside lruLock#writeLock - but can be read outside of lock
+   protected volatile long currentSize;
    protected long firstAddress;
    protected long lastAddress;
 
@@ -153,10 +155,15 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
     * If the LRU list head changes, we release both locks and try again.
     */
    private void ensureSize() {
+      // Try reading outside of lock first to allow for less locking for insert that doesn't require eviction
+      if (currentSize <= maxSize) {
+         return;
+      }
 
       while (true) {
          long addressToRemove;
-         Lock entryWriteLock;
+         StampedLock stampedLock;
+         long writeStamp;
          OffHeapConcurrentMap map;
          lruLock.lock();
          try {
@@ -173,8 +180,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             if (map != null) {
                int hashCode = offHeapEntryFactory.getHashCode(firstAddress);
                // This is always non null
-               entryWriteLock = map.getWriteLock(hashCode);
-               if (entryWriteLock.tryLock()) {
+               stampedLock = map.getStampedLock(hashCode);
+               if ((writeStamp = stampedLock.tryWriteLock()) != 0) {
                   addressToRemove = firstAddress;
                } else {
                   addressToRemove = 0;
@@ -192,7 +199,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
          // write lock and then acquire the lruLock, since they have to be acquired in that order (exception using
          // try lock as above)
          if (addressToRemove == 0) {
-            entryWriteLock.lock();
+            writeStamp = stampedLock.writeLock();
             try {
                lruLock.lock();
                try {
@@ -205,8 +212,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
                   OffHeapConcurrentMap protectedMap = getMapThatContainsKey(key);
                   if (protectedMap == map) {
                      int hashCode = offHeapEntryFactory.getHashCode(firstAddress);
-                     Lock innerLock = map.getWriteLock(hashCode);
-                     if (innerLock == entryWriteLock) {
+                     StampedLock innerLock = map.getStampedLock(hashCode);
+                     if (innerLock == stampedLock) {
                         addressToRemove = firstAddress;
                      }
                   }
@@ -215,7 +222,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
                }
             } finally {
                if (addressToRemove == 0) {
-                  entryWriteLock.unlock();
+                  stampedLock.unlockWrite(writeStamp);
                }
             }
          }
@@ -232,7 +239,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
                // underlying map
                AbstractInternalDataContainer.handleEviction(ice, orderer, passivator.running(), evictionManager, this, null);
             } finally {
-               entryWriteLock.unlock();
+               stampedLock.unlockWrite(writeStamp);
             }
          }
       }
