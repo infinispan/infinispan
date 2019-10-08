@@ -265,6 +265,8 @@
                      <classpathDependencyExcludes>
                         <!-- Don't include the embedded JCache implementation -->
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>org.jboss.weld:weld-core</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>org.jboss.weld.se:weld-se-core</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
                      <disableXmlReport>false</disableXmlReport>
                      <systemPropertyVariables>
