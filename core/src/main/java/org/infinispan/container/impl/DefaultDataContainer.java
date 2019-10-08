@@ -229,12 +229,12 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    @Override
    public void addSegments(IntSet segments) {
-      // Don't have to do anything here
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public void removeSegments(IntSet segments) {
-      NonSegmentedUtils.removeSegmentEntries(this, segments, listeners, keyPartitioner);
+      throw new UnsupportedOperationException();
    }
 
    @Override
