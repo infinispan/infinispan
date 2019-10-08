@@ -121,10 +121,10 @@ public class RestServerHelper {
    }
 
    public void ignoreCache(String cacheName) {
-      restServer.ignoreCache(cacheName);
+      restServer.getCacheIgnore().ignoreCache(cacheName);
    }
 
    public void unignoreCache(String cacheName) {
-      restServer.unignore(cacheName);
+      restServer.getCacheIgnore().unignoreCache(cacheName);
    }
 }

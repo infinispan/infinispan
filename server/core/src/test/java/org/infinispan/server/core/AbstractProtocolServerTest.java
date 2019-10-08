@@ -52,7 +52,7 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       AbstractProtocolServer server = new MockProtocolServer();
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager();
       try {
-         server.start(b.build(), manager);
+         server.start(b.build(), manager, null);
          Assert.assertFalse(server.isTransportEnabled());
       } finally {
          server.stop();

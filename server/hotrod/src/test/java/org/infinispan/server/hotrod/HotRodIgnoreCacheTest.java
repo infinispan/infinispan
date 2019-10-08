@@ -14,10 +14,10 @@ public class HotRodIgnoreCacheTest extends HotRodSingleNodeTest {
       client().put("k1", "v1");
       assertStatus(client().get("k1"), OperationStatus.Success);
 
-      hotRodServer.ignoreCache(cacheName);
+      hotRodServer.getCacheIgnore().ignoreCache(cacheName);
       assertStatus(client().get("k1"), OperationStatus.ServerError);
 
-      hotRodServer.unignore(cacheName);
+      hotRodServer.getCacheIgnore().unignoreCache(cacheName);
       assertStatus(client().get("k1"), OperationStatus.Success);
    }
 }
