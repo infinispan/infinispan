@@ -3,6 +3,7 @@
 LOADER_CLASS=org.infinispan.server.loader.Loader
 MAIN_CLASS=org.infinispan.cli.CLI
 ARGUMENTS=
+PROCESS_NAME=${infinispan.brand.short-name}-cli
 
 # Use --debug to activate debug mode with an optional argument to specify the port.
 # Usage : server.sh --debug
@@ -246,6 +247,7 @@ for JAR in "$ISPN_HOME/boot"/*.jar; do
 done
 
 eval \"$JAVA\" $JAVA_OPTS \
+   -Dvisualvm.display.name=$PROCESS_NAME \
    -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
    -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
    -classpath "$CLASSPATH" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS"

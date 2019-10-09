@@ -3,6 +3,7 @@
 LOADER_CLASS=org.infinispan.server.loader.Loader
 MAIN_CLASS=org.infinispan.server.Bootstrap
 ARGUMENTS=
+PROCESS_NAME=${infinispan.brand.short-name}-server
 
 PROGNAME=`basename "$0"`
 DIRNAME=`dirname "$0"`
@@ -13,6 +14,7 @@ while true; do
    if [ "x$LAUNCH_ISPN_IN_BACKGROUND" = "x" ]; then
       # Execute the JVM in the foreground
       eval \"$JAVA\" $JAVA_OPTS \
+         -Dvisualvm.display.name=$PROCESS_NAME \
          -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
          -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
          -classpath \""$CLASSPATH"\" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS"
