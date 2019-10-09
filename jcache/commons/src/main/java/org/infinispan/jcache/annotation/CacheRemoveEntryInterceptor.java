@@ -1,5 +1,6 @@
 package org.infinispan.jcache.annotation;
 
+import javax.annotation.Priority;
 import javax.cache.annotation.CacheRemove;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -24,6 +25,7 @@ import org.infinispan.jcache.logging.Log;
  */
 @Interceptor
 @CacheRemove
+@Priority(Interceptor.Priority.LIBRARY_AFTER)
 public class CacheRemoveEntryInterceptor extends AbstractCacheRemoveEntryInterceptor {
 
    private static final Log log = LogFactory.getLog(CacheRemoveEntryInterceptor.class, Log.class);

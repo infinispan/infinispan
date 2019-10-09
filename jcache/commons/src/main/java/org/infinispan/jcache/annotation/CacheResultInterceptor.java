@@ -1,5 +1,6 @@
 package org.infinispan.jcache.annotation;
 
+import javax.annotation.Priority;
 import javax.cache.annotation.CacheResult;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -31,6 +32,7 @@ import org.infinispan.jcache.logging.Log;
  */
 @Interceptor
 @CacheResult
+@Priority(Interceptor.Priority.LIBRARY_AFTER)
 public class CacheResultInterceptor extends AbstractCacheResultInterceptor {
 
    private static final long serialVersionUID = 5275055951121834315L;

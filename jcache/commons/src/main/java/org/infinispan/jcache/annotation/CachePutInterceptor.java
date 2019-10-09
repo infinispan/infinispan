@@ -1,5 +1,6 @@
 package org.infinispan.jcache.annotation;
 
+import javax.annotation.Priority;
 import javax.cache.annotation.CachePut;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -17,6 +18,7 @@ import org.infinispan.jcache.logging.Log;
  */
 @Interceptor
 @CachePut
+@Priority(Interceptor.Priority.LIBRARY_AFTER)
 public class CachePutInterceptor extends AbstractCachePutInterceptor {
 
    private static final Log log = LogFactory.getLog(CachePutInterceptor.class, Log.class);

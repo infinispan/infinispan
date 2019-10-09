@@ -1,5 +1,6 @@
 package org.infinispan.jcache.annotation;
 
+import javax.annotation.Priority;
 import javax.cache.annotation.CacheRemoveAll;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -8,7 +9,6 @@ import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
-
 
 /**
  * <p>{@link javax.cache.annotation.CacheRemoveAll} interceptor implementation. This interceptor uses the following algorithm describes in
@@ -23,13 +23,14 @@ import org.infinispan.jcache.logging.Log;
  */
 @Interceptor
 @CacheRemoveAll
+@Priority(Interceptor.Priority.LIBRARY_AFTER)
 public class CacheRemoveAllInterceptor extends AbstractCacheRemoveAllInterceptor {
 
    private static final Log log = LogFactory.getLog(CacheRemoveAllInterceptor.class, Log.class);
 
    @Inject
    public CacheRemoveAllInterceptor(DefaultCacheResolver cacheResolver,
-                                    CacheKeyInvocationContextFactory contextFactory) {
+         CacheKeyInvocationContextFactory contextFactory) {
       super(cacheResolver, contextFactory);
    }
 
