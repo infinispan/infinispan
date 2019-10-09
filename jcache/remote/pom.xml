@@ -30,6 +30,19 @@
       </dependency>
 
       <dependency>
+         <groupId>javax.enterprise</groupId>
+         <artifactId>cdi-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi-remote</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
          <type>test-jar</type>

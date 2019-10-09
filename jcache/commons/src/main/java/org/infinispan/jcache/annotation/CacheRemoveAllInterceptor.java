@@ -9,6 +9,7 @@ import javax.interceptor.InvocationContext;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
 
+
 /**
  * <p>{@link javax.cache.annotation.CacheRemoveAll} interceptor implementation. This interceptor uses the following algorithm describes in
  * JSR-107.</p>
@@ -28,7 +29,7 @@ public class CacheRemoveAllInterceptor extends AbstractCacheRemoveAllInterceptor
 
    @Inject
    public CacheRemoveAllInterceptor(DefaultCacheResolver cacheResolver,
-         CacheKeyInvocationContextFactory contextFactory) {
+                                    CacheKeyInvocationContextFactory contextFactory) {
       super(cacheResolver, contextFactory);
    }
 

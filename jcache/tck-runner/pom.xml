@@ -81,6 +81,16 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi-remote</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-runtime</artifactId>
          <scope>test</scope>
       </dependency>
@@ -227,7 +237,9 @@
                         <dependency>javax.cache:cache-tests</dependency>
                      </dependenciesToScan>
                      <classpathDependencyExcludes>
+                        <!-- Run only with the embedded JCache/CDI classes -->
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache-remote</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>${project.groupId}:infinispan-cdi-remote</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
                      <disableXmlReport>false</disableXmlReport>
                      <systemPropertyVariables>
@@ -263,10 +275,9 @@
                         <dependency>javax.cache:cache-tests</dependency>
                      </dependenciesToScan>
                      <classpathDependencyExcludes>
-                        <!-- Don't include the embedded JCache implementation -->
+                        <!-- Run only with the remote JCache/CDI classes -->
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
-                        <classpathDependencyExcludes>org.jboss.weld:weld-core</classpathDependencyExcludes>
-                        <classpathDependencyExcludes>org.jboss.weld.se:weld-se-core</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>${project.groupId}:infinispan-cdi-remote</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
                      <disableXmlReport>false</disableXmlReport>
                      <systemPropertyVariables>
