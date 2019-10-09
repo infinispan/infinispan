@@ -586,21 +586,16 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case NAME: {
-               builder.globalJmxStatistics().cacheManagerName(value);
-               break;
-            }
-            case ALIASES: {
-               ignoreAttribute(reader, attribute);
+               builder.cacheManagerName(value);
                break;
             }
             case DEFAULT_CACHE: {
                builder.defaultCacheName(value);
                break;
             }
-            case JNDI_NAME: {
-               ignoreAttribute(reader, attribute);
-               break;
-            }
+            case ALIASES:
+            case JNDI_NAME:
+            case MODULE:
             case START: {
                ignoreAttribute(reader, attribute);
                break;
@@ -641,12 +636,8 @@ public class Parser implements ConfigurationParser {
                builder.stateTransferThreadPool().read(createThreadPoolConfiguration(value, STATE_TRANSFER_EXECUTOR, holder));
                break;
             }
-            case MODULE: {
-               ignoreAttribute(reader, attribute);
-               break;
-            }
             case STATISTICS: {
-               builder.globalJmxStatistics().enabled(Boolean.parseBoolean(value));
+               builder.cacheContainer().statistics(Boolean.parseBoolean(value));
                break;
             }
             case SHUTDOWN_HOOK: {

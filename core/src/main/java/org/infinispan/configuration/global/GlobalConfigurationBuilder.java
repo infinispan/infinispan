@@ -36,7 +36,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.modules = new LinkedHashMap<>();
    }
 
-   CacheContainerConfigurationBuilder cacheContainer() {
+   public CacheContainerConfigurationBuilder cacheContainer() {
       return cacheContainerConfiguration;
    }
 

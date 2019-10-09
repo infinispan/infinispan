@@ -358,7 +358,7 @@
     <xs:attribute name="module" type="xs:string" default="org.jboss.as.clustering.infinispan">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
-    <xs:attribute name="statistics" type="xs:boolean" default="true">
+    <xs:attribute name="statistics" type="xs:boolean" default="false">
       <xs:annotation>
         <xs:documentation>Determines whether or not the cache container should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
