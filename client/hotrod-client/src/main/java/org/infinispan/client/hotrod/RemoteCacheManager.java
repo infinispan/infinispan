@@ -66,6 +66,7 @@ import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.counter.api.CounterManager;
 import org.wildfly.security.WildFlyElytronProvider;
 
@@ -342,7 +343,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
 
       // Print version to help figure client version run
-      log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
+      log.version(Version.printVersion());
 
       started = true;
    }
