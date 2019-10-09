@@ -13,7 +13,7 @@
          <shared-persistent-location path="${infinispan.server.data.path}"/>
          <overlay-configuration-storage/>
       </global-state>
-      <local-cache-configuration name="org.infinispan.LOCAL">
+      <local-cache-configuration name="org.infinispan.LOCAL" statistics="true">
          <locking acquire-timeout="15000" striping="false" concurrency-level="1000"/>
          <memory>
             <object/>
