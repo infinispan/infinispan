@@ -104,7 +104,7 @@
 
         <exec executable="bash" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
             <arg value="-c"/>
-            <arg value="lsof -t -i TCP:${hotrod.port}"/>
+            <arg value="lsof -t -i TCP:${hotrod.port} -s TCP:LISTEN"/>
             <redirector>
                 <outputfilterchain>
                     <prefixlines prefix=" "/>
