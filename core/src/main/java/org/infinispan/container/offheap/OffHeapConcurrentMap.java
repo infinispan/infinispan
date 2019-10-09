@@ -186,8 +186,6 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       /**
        * Invoked when an entry is about to be removed.  You can read values from this but after this method is completed
        * this memory address may be freed. The write lock will already be acquired for the given segment the key mapped to.
-       * <p>
-       * This method <b>MUST</b> free the removedAddress before returning
        * @param removedAddress the address about to be removed
        */
       void entryRemoved(long removedAddress);
@@ -196,8 +194,6 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
        * Invoked when an entry is about to be replaced with a new one.  The old and new address are both addressable,
        * however oldAddress may be freed after this method returns.  The write lock will already be acquired for the given
        * segment the key mapped to.
-       * <p>
-       * This method <b>MUST</b> free the oldAddress before returning
        * @param newAddress the address just created that will be the new entry
        * @param oldAddress the old address for this entry that will be soon removed
        */
@@ -222,18 +218,16 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    private void entryRemoved(long removedAddress) {
       if (listener != null) {
          listener.entryRemoved(removedAddress);
-      } else {
-         allocator.deallocate(removedAddress, offHeapEntryFactory.getSize(removedAddress, false));
       }
+      allocator.deallocate(removedAddress, offHeapEntryFactory.getSize(removedAddress, false));
    }
 
    @GuardedBy("locks#writeLock")
    private void entryReplaced(long newAddress, long oldAddress) {
       if (listener != null) {
          listener.entryReplaced(newAddress, oldAddress);
-      } else {
-         allocator.deallocate(oldAddress, offHeapEntryFactory.getSize(oldAddress, false));
       }
+      allocator.deallocate(oldAddress, offHeapEntryFactory.getSize(oldAddress, false));
    }
 
    @GuardedBy("locks#readLock")
