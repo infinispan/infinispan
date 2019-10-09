@@ -1058,8 +1058,8 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       int bucketPosition;
       // -1 symbolizes it is the first time the iterator is used
       int bucketCount = -1;
+      int bucketLockShift;
       int bucketLockStop;
-      int resizeBucketShift;
 
       Queue<InternalCacheEntry<WrappedBytes, WrappedBytes>> values = new ArrayDeque<>();
 
@@ -1098,7 +1098,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
        */
       boolean readNextBucket() {
          boolean foundValue = false;
-         int lockOffset = getLockOffset(bucketPosition, bucketCount);
+         int lockOffset = getLockOffset(bucketPosition);
          Lock readLock = locks.getLockWithOffset(lockOffset).readLock();
          readLock.lock();
          try {
@@ -1113,19 +1113,14 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
             if (bucketCount == -1) {
                bucketCount = pointerCount;
                bucketLockStop = getBucketRegionSize(bucketCount);
+               bucketLockShift = Integer.numberOfTrailingZeros(bucketLockStop);
             } else if (bucketCount > pointerCount) {
                // If bucket count is greater than pointer count - it means we had a clear in the middle of iterating
                // Just return without adding anymore values
                bucketPosition = bucketCount;
                return false;
             } else if (bucketCount < pointerCount) {
-               // This means we had a resize and the new bucket count is larger than before - thus we may have to
-               // do an expensive iteration depending on the current iteration state.
-               // It is possible that we don't have to do an expensive iteration (determined in the method) - in
-               // this case we just do a normal iteration
-               if (resizeIteration(lockOffset, memoryAddressHash, pointerCount)) {
-                  return !values.isEmpty();
-               }
+               resizeIteration(pointerCount);
             }
             boolean completedLockBucket;
             // Normal iteration just keep adding entries until either we complete the lock bucket region or
@@ -1156,73 +1151,22 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
 
       /**
        * Invoked when the iteration saw a bucket size less than the current bucket size of the memory lookup. This
-       * means we had a resize during iteration. In this case this method must take a slightly different approach
-       * to find the next non empty bucket. It will first determine if we can "fix" the current bucket to be an
-       * appropriate bucket in the new lookup. If this is not possible then this method will lookup the new bucket
-       * contents by searching all valid buckets that can be mapped from the old bucket. This is simple due to buckets
-       * growing in powers of two each time. Thus if a bucket position before was 4 it must map to either bucket
-       * position 8 or 9 in the new lookup (assuming only a single resize occurred).
-       * @param lockOffset the offset identifying the read lock region and lock we currently hold
-       * @param memoryAddressHash the current bucket lookup that we should read from
-       * @param newBucketSize how large the resizing bucket size is
-       * @return whether an entry was found
+       * means we had a resize during iteration. We must update our bucket position, stop and counts properly based
+       * on how many resizes have occurred.
+       * @param newBucketSize how large the new bucket size is
        */
       @GuardedBy("locks#readLock")
-      private boolean resizeIteration(int lockOffset, MemoryAddressHash memoryAddressHash, int newBucketSize) {
-         // If the position is divisible by the old buckets size that means we are starting a lock block region fresh
-         // thus we can just use the new memory lookup as is without doing costly iteration
-         if ((bucketPosition & (getBucketRegionSize(bucketCount) - 1)) == 0) {
-            completeResizeIterationForRegion(lockOffset, newBucketSize);
-            return false;
-         } else {
-            if (resizeBucketShift == 0) {
-               // We cache this between iteration calls for the same lock region as it can be called many times
-               resizeBucketShift = 31 - Integer.numberOfTrailingZeros(bucketCount);
-            }
+      private void resizeIteration(int newBucketSize) {
+         int bucketIncreaseShift = 31 - Integer.numberOfTrailingZeros(bucketCount) - memoryShift;
 
-            // Note this is an integer that signifies in power of 2 how much larger the new bucket is than the old
-            int bucketIncreaseShift = resizeBucketShift - memoryShift;
-            int bucketIncrease = 1 << bucketIncreaseShift;
-
-            boolean foundValue = false;
-            while (!foundValue && bucketPosition < bucketLockStop) {
-               int bucketBegin = bucketPosition++ << bucketIncreaseShift;
-               for (int i = 0; i < bucketIncrease; ++i) {
-                  long address = memoryAddressHash.getMemoryAddressOffset(bucketBegin + i);
-                  if (address != 0) {
-                     long nextAddress;
-                     do {
-                        nextAddress = offHeapEntryFactory.getNext(address);
-                        values.add(offHeapEntryFactory.fromMemory(address));
-                        foundValue = true;
-                     } while ((address = nextAddress) != 0);
-                  }
-               }
-            }
-            // If we finished an old bucket worth - then we update to the new bucket pointer for the next search
-            if (bucketPosition == bucketLockStop) {
-               completeResizeIterationForRegion(lockOffset + 1, newBucketSize);
-               resizeBucketShift = 0;
-            }
-            return foundValue;
-         }
-      }
-
-      private void completeResizeIterationForRegion(int newLockOffset, int newBucketSize) {
+         bucketPosition = bucketPosition << bucketIncreaseShift;
+         bucketLockStop = bucketLockStop << bucketIncreaseShift;
+         bucketLockShift = Integer.numberOfTrailingZeros(bucketLockStop);
          bucketCount = newBucketSize;
-         int newBucketRegionSize = getBucketRegionSize(newBucketSize);
-         bucketPosition = newLockOffset * newBucketRegionSize;
-         bucketLockStop = bucketPosition + newBucketRegionSize;
       }
 
-      private int getLockOffset(int bucketPosition, int bucketCount) {
-         // First time this is invoked
-         if (bucketCount == -1) {
-            return 0;
-         }
-         // The bucketsPerLock will always be 1 or greater and a power of 2
-         int bucketsPerLock = getBucketRegionSize(bucketCount);
-         return bucketPosition >>> Integer.numberOfTrailingZeros(bucketsPerLock);
+      private int getLockOffset(int bucketPosition) {
+         return bucketPosition >>> bucketLockShift;
       }
    }
 
