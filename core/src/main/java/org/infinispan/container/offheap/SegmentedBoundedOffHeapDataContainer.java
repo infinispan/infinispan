@@ -298,7 +298,6 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
             // Current size has to be updated in the lock
             currentSize -=  removedSize;
             removeNode(removedAddress);
-            allocator.deallocate(removedAddress, offHeapEntryFactory.getSize(removedAddress, false));
          } finally {
             lruLock.unlock();
          }
@@ -315,8 +314,6 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
             currentSize += newSize;
             currentSize -= oldSize;
-            // Must only remove entry while holding lru lock now
-            allocator.deallocate(oldAddress, offHeapEntryFactory.getSize(oldAddress, false));
          } finally {
             lruLock.unlock();
          }
