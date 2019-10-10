@@ -58,13 +58,20 @@ class ResourceNode {
       insertPathInternal(this, invocation, path);
    }
 
-   @Override
-   public String toString() {
+   public String dumpTree() {
       StringBuilder stringBuilder = new StringBuilder();
       dumpTree(stringBuilder, this, 0);
       return stringBuilder.toString();
    }
 
+   @Override
+   public String toString() {
+      return "ResourceNode{" +
+            "pathItem=" + pathItem +
+            ", invocationTable=" + invocationTable +
+            ", children=" + children +
+            '}';
+   }
 
    private void dumpTree(StringBuilder builder, ResourceNode node, int ident) {
       for (int i = 0; i < ident; i++) builder.append("    ");
@@ -86,7 +93,7 @@ class ResourceNode {
 
          ResourceNode conflict = getConflicts(node, next);
          if (conflict != null) {
-            throw logger.duplicateResource(next.toString(), invocation, conflict.pathItem.toString());
+            throw logger.duplicateResource(next.toString(), invocation, conflict.toString());
          }
          if (child == null) {
             node.insert(next, invocation);
@@ -103,6 +110,10 @@ class ResourceNode {
                ResourceNode inserted = node.insert(pathItem, null);
                insertPathInternal(inserted, invocation, path.subList(1, path.size()));
             } else {
+               if (!child.pathItem.getPath().equals(pathItem.getPath())) {
+                  throw logger.duplicateResource(pathItem.toString(), invocation, child.toString());
+               }
+
                insertPathInternal(child, invocation, path.subList(1, path.size()));
             }
          }

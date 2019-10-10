@@ -79,7 +79,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot register invocation with path '%s': '*' is only allowed at the end", id = 12018)
    RegistrationException invalidPath(String path);
 
-   @Message(value = "Cannot register path '%s' for invocation '%s', since it conflicts with already registered path '%s'", id = 12019)
+   @Message(value = "Cannot register path '%s' for invocation '%s', since it conflicts with resource '%s'", id = 12019)
    RegistrationException duplicateResource(String candidate, Invocation invocation, String existingPath);
 
 }
