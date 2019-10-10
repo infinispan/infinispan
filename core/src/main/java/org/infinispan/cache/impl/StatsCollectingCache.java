@@ -46,7 +46,7 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
 
    @Override
    public Stats getStats() {
-      return new StatsImpl(statsCollector.getStatisticsEnabled() ? statsCollector : null);
+      return StatsImpl.create(statsCollector);
    }
 
    @Override

@@ -1335,7 +1335,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Stats getStats() {
-      return new StatsImpl(invoker);
+      return StatsImpl.create(config, invoker);
    }
 
    @Override
