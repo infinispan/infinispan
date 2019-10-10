@@ -1,0 +1,13 @@
+[id='xsite-{context}']
+:context: cli
+= Performing Cross-Site Replication Operations
+
+.Prerequisites
+* Start the {brandname} CLI.
+* Connect to a running {brandname} cluster.
+
+//include::{topics}/.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

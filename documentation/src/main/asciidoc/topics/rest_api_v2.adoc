@@ -24,6 +24,7 @@ include::rest_examples/post_v2_create_cache.adoc[]
 To configure the cache, you supply the configuration in `XML` or `JSON` format
 as part of the request payload.
 
+//dnaro: single source with proc_cli_creating_caches_files.adoc
 XML Configuration::
 A configuration in `XML` format must conform to the schema and include:
 +

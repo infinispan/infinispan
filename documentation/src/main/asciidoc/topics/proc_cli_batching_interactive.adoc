@@ -1,0 +1,63 @@
+= Performing Batch Operations Interactively
+Use the standard input stream, *stdin*, to perform batch operations interactively.
+
+.Procedure
+. Start the {brandname} CLI in interactive mode.
++
+----
+$ bin/cli.sh -c localhost:11222 -f -
+----
++
+[NOTE]
+====
+If you do not use the `-c` flag, you must run the `connect` command.
+
+----
+$ bin/cli.sh -f -
+connect
+----
+====
++
+. Run batch operations, for example:
++
+----
+create cache --template=org.infinispan.DIST_SYNC mybatch
+put --cache=mybatch hello world
+put --cache=mybatch hola mundo
+disconnect
+quit
+----
+
+[TIP]
+====
+Use `echo` to add commands in interactive mode.
+====
+
+The following example shows how to use `echo describe` to get cluster information:
+
+----
+$ echo describe|bin/cli.sh -c localhost:11222 -f -
+{
+  "name" : "default",
+  "version" : "10.0.0-SNAPSHOT",
+  "coordinator" : false,
+  "cache_configuration_names" : [ "org.infinispan.REPL_ASYNC", "___protobuf_metadata", "org.infinispan.DIST_SYNC", "qcache", "org.infinispan.LOCAL", "dist_cache_01", "org.infinispan.INVALIDATION_SYNC", "org.infinispan.REPL_SYNC", "org.infinispan.SCATTERED_SYNC", "mycache", "org.infinispan.INVALIDATION_ASYNC", "mybatch", "org.infinispan.DIST_ASYNC" ],
+  "cluster_name" : "cluster",
+  "physical_addresses" : "[192.168.1.7:7800]",
+  "coordinator_address" : "thundercat-34689",
+  "cache_manager_status" : "RUNNING",
+  "created_cache_count" : "4",
+  "running_cache_count" : "4",
+  "node_address" : "thundercat-47082",
+  "cluster_members" : [ "thundercat-34689", "thundercat-47082" ],
+  "cluster_members_physical_addresses" : [ "10.36.118.25:7801", "192.168.1.7:7800" ],
+  "cluster_size" : 2,
+  "defined_caches" : [ {
+    "name" : "___protobuf_metadata",
+    "started" : true
+  }, {
+    "name" : "mybatch",
+    "started" : true
+  } ]
+}
+----

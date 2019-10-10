@@ -1,0 +1,46 @@
+= Adding Cache Entries
+Add data to caches with the {brandname} CLI.
+
+.Prerequisites
+* Create a cache named "mycache".
+
+.Procedure
+. Add a key/value pair to `mycache`.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> put --cache=mycache hello world
+----
++
+[TIP]
+====
+If the CLI is in the context of a cache, do `put k1 v1` for example:
+
+----
+[//containers/default]> cd caches/mycache
+[//containers/default/caches/mycache]> put hello world
+----
+====
++
+. List keys in the cache.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> ls caches/mycache
+hello
+----
++
+. Get the value for the `hello` key.
+.. Navigate to the cache.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> cd caches/mycache
+----
+.. Use the `get` command to retrieve the key value.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default/caches/mycache]> get hello
+world
+----

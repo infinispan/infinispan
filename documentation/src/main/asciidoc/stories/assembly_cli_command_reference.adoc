@@ -1,0 +1,38 @@
+[id='command_reference-{context}']
+:context: cli
+= Command Reference
+View help pages for {brandname} CLI commands.
+
+[TIP]
+====
+Use the `-h` flag to access help pages directly from your CLI session.
+====
+
+include::{cli_help}/add.adoc[leveloffset=+1]
+include::{cli_help}/cache.adoc[leveloffset=+1]
+include::{cli_help}/cas.adoc[leveloffset=+1]
+include::{cli_help}/cd.adoc[leveloffset=+1]
+include::{cli_help}/clearcache.adoc[leveloffset=+1]
+include::{cli_help}/connect.adoc[leveloffset=+1]
+include::{cli_help}/container.adoc[leveloffset=+1]
+include::{cli_help}/counter.adoc[leveloffset=+1]
+include::{cli_help}/create.adoc[leveloffset=+1]
+include::{cli_help}/describe.adoc[leveloffset=+1]
+include::{cli_help}/disconnect.adoc[leveloffset=+1]
+include::{cli_help}/drop.adoc[leveloffset=+1]
+include::{cli_help}/encoding.adoc[leveloffset=+1]
+include::{cli_help}/get.adoc[leveloffset=+1]
+include::{cli_help}/help.adoc[leveloffset=+1]
+include::{cli_help}/ls.adoc[leveloffset=+1]
+include::{cli_help}/put.adoc[leveloffset=+1]
+include::{cli_help}/query.adoc[leveloffset=+1]
+include::{cli_help}/quit.adoc[leveloffset=+1]
+include::{cli_help}/remove.adoc[leveloffset=+1]
+include::{cli_help}/reset.adoc[leveloffset=+1]
+include::{cli_help}/schema.adoc[leveloffset=+1]
+include::{cli_help}/site.adoc[leveloffset=+1]
+include::{cli_help}/version.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -1,0 +1,21 @@
+[id='counters-{context}']
+:context: cli
+= Working with Counters
+
+[//containers/default]> create counter --concurrency-level=1 --initial-value=5 --storage=PERSISTENT --type=weak weak-counter
+
+[//containers/default]> describe counters/weak-counter
+{
+  "weak-counter" : {
+    "name" : "weak-counter",
+    "initial-value" : 5,
+    "storage" : "PERSISTENT",
+    "concurrency-level" : 1
+  }
+}
+
+--concurrency-level=  --initial-value=  --lower-bound=  --storage=  --type=  --upper-bound=
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

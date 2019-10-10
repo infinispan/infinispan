@@ -1,0 +1,30 @@
+= Shutting Down {brandname} Servers
+Use the CLI to gracefully shutdown running servers. This ensures that {brandname} passivates all entries to disk and persists state.
+
+. Connect to a {brandname} server and then run the `shutdown` command, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> shutdown
+----
++
+. Quit the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> quit
+----
+
+When you shut down servers with the CLI, {brandname} servers log the following messages:
+
+[source,options="nowrap",subs=attributes+]
+----
+INFO  [org.infinispan.SERVER] (pool-3-thread-1) ISPN080002: Infinispan Server stopping
+INFO  [org.infinispan.eviction.impl.PassivationManagerImpl] (pool-3-thread-1) ISPN000029: Passivating all entries to disk
+INFO  [org.infinispan.eviction.impl.PassivationManagerImpl] (pool-3-thread-1) ISPN000030: Passivated 7 entries in 30 milliseconds
+INFO  [org.infinispan.remoting.transport.jgroups.JGroupsTransport] (pool-3-thread-1) ISPN000080: Disconnecting JGroups channel cluster
+INFO  [org.infinispan.globalstate.impl.GlobalStateManagerImpl] (pool-3-thread-1) ISPN000390: Persisted state, version=<{brandname} version> timestamp=YYYY-MM-DDTHH:MM:SS
+INFO  [org.infinispan.SERVER] (pool-3-thread-1) ISPN080003: Infinispan Server stopped
+INFO  [org.infinispan.SERVER] (Thread-0) ISPN080002: Infinispan Server stopping
+INFO  [org.infinispan.SERVER] (Thread-0) ISPN080003: Infinispan Server stopped
+----

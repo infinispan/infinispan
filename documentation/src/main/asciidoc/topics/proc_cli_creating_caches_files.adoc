@@ -1,0 +1,39 @@
+= Creating Custom Caches
+Add caches with custom {brandname} configuration files in XML or JSON format.
+
+.Procedure
+* Add the path to your configuration file with the `--file=` option as follows:
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> create cache --file=prod_dist_cache.xml dist_cache_01
+----
+
+//dnaro: single source with rest_api_v2.adoc
+XML Configuration::
+A configuration in `XML` format must conform to the schema and include:
++
+* `<infinispan>` root element.
+* `<cache-container>` definition.
++
+The following example shows a valid `XML` configuration:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/infinispan_distributed_cache.xml[]
+----
+
+JSON Configuration::
+A configuration in `JSON` format payload:
++
+* Requires the cache definition only.
+* Must follow the structure of an `XML` configuration.
+- `XML` elements become `JSON` objects.
+- `XML` attributes become `JSON` fields.
++
+The following example shows the previous `XML` configuration in `JSON` format:
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::config_examples/infinispan_distributed_cache.json[]
+----

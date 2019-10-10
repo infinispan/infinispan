@@ -1,0 +1,20 @@
+= Deleting Cache Entries
+Remove data from caches with the {brandname} CLI.
+
+.Prerequisites
+* Create a cache named "mycache" and add entries.
+
+.Procedure
+Either delete all entries or remove specific entries as follows:
+
+* Delete all entries from a cache.
++
+----
+[//containers/default]> clearcache mycache
+----
+
+* Remove specific entries from a cache.
++
+----
+[//containers/default]> remove --cache=mycache hello
+----
