@@ -52,6 +52,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.MappingOperation;
 import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
 import org.infinispan.stream.impl.termop.SingleRunOperation;
 import org.infinispan.topology.CacheTopology;
@@ -711,7 +712,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    }
 
    static class MapHandler<OutputType, OutputStream extends BaseStream<OutputType, OutputStream>>
-         implements IntermediateOperation<Object, Stream<Object>, OutputType, OutputStream> {
+         implements MappingOperation<Object, Stream<Object>, OutputType, OutputStream> {
       final Iterable<IntermediateOperation> intermediateOperations;
       final Function<Object, ?> toKeyFunction;
 

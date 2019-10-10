@@ -1,10 +1,9 @@
 package org.infinispan.stream;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
@@ -16,7 +15,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.stream.impl.ClusterStreamManager;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -89,7 +90,7 @@ public class DistributedWriteBehindStreamIteratorTest extends BaseSetupStreamIte
    public void testBackupSegmentsOptimizationWithWriteBehindStore (boolean rehashAware) {
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
-      ClusterStreamManager clusterStreamManager = replaceWithSpy(cache1);
+      RpcManager rpcManager = replaceComponentWithSpy(cache1, RpcManager.class);
 
       for (Cache<Object, String> cache : this.<Object, String>caches(CACHE_NAME)) {
          MagicKey key = new MagicKey(cache);
@@ -118,10 +119,9 @@ public class DistributedWriteBehindStreamIteratorTest extends BaseSetupStreamIte
       // We can't stay local if we have a shared and async store - this is because write modifications are stored
       // on the primary owner, so we could miss updates
       if (asyncStore && sharedStore) {
-         verify(clusterStreamManager, times(invocationCount))
-               .remoteIterationPublisher(anyBoolean(), any(), any(), any(), anyBoolean(), anyBoolean(), any());
+         verify(rpcManager, times(invocationCount)).invokeCommand(any(Address.class), any(InitialPublisherCommand.class), any(), any());
       } else {
-         verifyZeroInteractions(clusterStreamManager);
+         verify(rpcManager, never()).invokeCommand(any(Address.class), any(InitialPublisherCommand.class), any(), any());
       }
    }
 }

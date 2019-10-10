@@ -36,6 +36,7 @@ import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -100,6 +101,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<OrderedUpdatesManager> orderedUpdatesManager;
    private ComponentRef<PerCacheInboundInvocationHandler> inboundInvocationHandler;
    private ComponentRef<PersistenceMarshaller> persistenceMarshaller;
+   private ComponentRef<PublisherHandler> publisherHandler;
    private ComponentRef<RecoveryManager> recoveryManager;
    private ComponentRef<ResponseGenerator> responseGenerator;
    private ComponentRef<RpcManager> rpcManager;
@@ -376,6 +378,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       lockManager = basicComponentRegistry.getComponent(LockManager.class);
       orderedUpdatesManager = basicComponentRegistry.getComponent(OrderedUpdatesManager.class);
       persistenceMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class);
+      publisherHandler = basicComponentRegistry.getComponent(PublisherHandler.class);
       recoveryManager = basicComponentRegistry.getComponent(RecoveryManager.class);
       responseGenerator = basicComponentRegistry.getComponent(ResponseGenerator.class);
       rpcManager = basicComponentRegistry.getComponent(RpcManager.class);
@@ -467,6 +470,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return localPublisherManager;
    }
 
+   public ComponentRef<PublisherHandler> getPublisherHandler() {
+      return publisherHandler;
+   }
+
+   @SuppressWarnings("unchecked")
    public ComponentRef<LocalStreamManager> getLocalStreamManager() {
       return localStreamManager;
    }

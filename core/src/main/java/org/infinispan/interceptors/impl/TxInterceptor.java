@@ -50,6 +50,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.configuration.cache.Configurations;
@@ -82,6 +83,7 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 /**
  * Interceptor in charge with handling transaction related operations, e.g enlisting cache as an transaction
@@ -273,7 +275,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      if (ctx.isInTxScope()) {
+      if (ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.IGNORE_TRANSACTION)) {
          // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
          boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
          command.addFlags(FlagBitSets.REMOTE_ITERATION);
@@ -288,7 +290,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      if (ctx.isInTxScope()) {
+      if (ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.IGNORE_TRANSACTION)) {
          // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
          boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
          command.addFlags(FlagBitSets.REMOTE_ITERATION);
@@ -718,6 +720,18 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          super(Caches.getCacheWithFlags(TxInterceptor.this.cache.wired(), rCommand), set);
          this.isRemoteIteration = isRemoteIteration;
          this.rCtx = rCtx;
+      }
+
+      @Override
+      public Publisher<K> localPublisher(IntSet segments) {
+         // TODO: need to implement this before these methods can be made non experimental
+         return super.localPublisher(segments);
+      }
+
+      @Override
+      public Publisher<K> localPublisher(int segment) {
+         // TODO: need to implement this before these methods can be made non experimental
+         return super.localPublisher(segment);
       }
 
       @Override

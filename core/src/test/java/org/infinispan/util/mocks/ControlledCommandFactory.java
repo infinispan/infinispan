@@ -92,7 +92,10 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
-import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -576,18 +579,33 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, R> PublisherRequestCommand<K> buildKeyPublisherCommand(boolean parallelStream,
+   public <K, R> ReductionPublisherRequestCommand<K> buildKeyReductionPublisherCommand(boolean parallelStream,
          DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
-      return actual.buildKeyPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
+      return actual.buildKeyReductionPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
             includeLoader, transformer, finalizer);
    }
 
    @Override
-   public <K, V, R> PublisherRequestCommand<K> buildEntryPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
-      return actual.buildEntryPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
+   public <K, V, R> ReductionPublisherRequestCommand<K> buildEntryReductionPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+      return actual.buildEntryReductionPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
             includeLoader, transformer, finalizer);
+   }
+
+   @Override
+   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(Object requestId, DeliveryGuarantee deliveryGuarantee, int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream, boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+      return actual.buildInitialPublisherCommand(requestId, deliveryGuarantee, batchSize, segments, keys, excludedKeys, includeLoader, entryStream, trackKeys, transformer);
+   }
+
+   @Override
+   public NextPublisherCommand buildNextPublisherCommand(Object requestId) {
+      return actual.buildNextPublisherCommand(requestId);
+   }
+
+   @Override
+   public CancelPublisherCommand buildCancelPublisherCommand(Object requestId) {
+      return actual.buildCancelPublisherCommand(requestId);
    }
 
    @Override

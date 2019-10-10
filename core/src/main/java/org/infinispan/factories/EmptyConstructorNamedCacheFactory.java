@@ -45,6 +45,7 @@ import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.scattered.impl.BiasManagerImpl;
@@ -88,7 +89,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
-                              BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class})
+                              BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -199,6 +200,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(RemoteValueRetrievedListener.class.getName())) {
          // L1Manager is currently only listener for remotely retrieved values
          return ComponentAlias.of(L1Manager.class);
+      } else if (componentName.equals(PublisherHandler.class.getName())) {
+         return new PublisherHandler();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

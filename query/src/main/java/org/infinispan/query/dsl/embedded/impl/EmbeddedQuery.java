@@ -9,6 +9,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.util.function.SerializablePredicate;
@@ -60,8 +62,8 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
-      CacheStream<Map.Entry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).entrySet().stream();
-      CacheStream<ObjectFilter.FilterResult> resultStream = entryStream.map(ickleFilter).filter(NON_NULL_PREDICATE);
+      CacheStream<CacheEntry<Object, Object>> entryStream = ((AdvancedCache<Object, Object>) cache).cacheEntrySet().stream();
+      CacheStream<ObjectFilter.FilterResult> resultStream = CacheFilters.filterAndConvertToValue(entryStream, ickleFilter);
       return Closeables.iterator(resultStream);
    }
 

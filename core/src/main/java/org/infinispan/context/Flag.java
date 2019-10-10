@@ -236,7 +236,13 @@ public enum Flag {
     * normally need to use this flag. This is helpful if there are concerns that can cause just a simple size invocation
     * from being consistent (eg. on-going transaction with modifications).
     */
-   SKIP_SIZE_OPTIMIZATION
+   SKIP_SIZE_OPTIMIZATION,
+
+   /**
+    * Flag that is used by keySet, entrySet and values methods so that they do not return transactional values. Normally
+    * an end user would not need to do this.
+    */
+   IGNORE_TRANSACTION,
    ;
 
    /**

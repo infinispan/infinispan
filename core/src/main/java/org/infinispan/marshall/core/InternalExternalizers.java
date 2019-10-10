@@ -94,7 +94,8 @@ import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEv
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.reactive.publisher.PublisherReducers;
-import org.infinispan.reactive.publisher.impl.SegmentPublisherResult;
+import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponseExternalizer;
+import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -109,6 +110,7 @@ import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.stats.impl.ClusterCacheStatsImpl;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.AbstractCacheStream;
+import org.infinispan.stream.impl.CacheStreamIntermediatePublisher;
 import org.infinispan.stream.impl.CacheStreamIntermediateReducer;
 import org.infinispan.stream.impl.EndIterator;
 import org.infinispan.stream.impl.IteratorResponses;
@@ -251,6 +253,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
       addInternalExternalizer(new TriangleAckExternalizer(), exts);
+      addInternalExternalizer(new PublisherResponseExternalizer(), exts);
       addInternalExternalizer(new IteratorResponses.IteratorResponsesExternalizer(), exts);
       addInternalExternalizer(new EndIterator.EndIteratorExternalizer(), exts);
       addInternalExternalizer(XidImpl.EXTERNALIZER, exts);
@@ -266,6 +269,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new SegmentPublisherResult.Externalizer(), exts);
       addInternalExternalizer(new PublisherReducers.PublisherReducersExternalizer(), exts);
       addInternalExternalizer(new CacheStreamIntermediateReducer.ReducerExternalizer(), exts);
+      addInternalExternalizer(new CacheStreamIntermediatePublisher.ReducerExternalizer(), exts);
       addInternalExternalizer(new ClassExternalizer(gcr.getGlobalConfiguration().classLoader()), exts);
       addInternalExternalizer(new ClusterCacheStatsImpl.DistributedCacheStatsCallableExternalizer(), exts);
       addInternalExternalizer(ThrowableExternalizer.INSTANCE, exts);

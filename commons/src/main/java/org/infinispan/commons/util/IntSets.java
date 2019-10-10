@@ -172,8 +172,7 @@ public class IntSets {
 
    /**
     * Returns a copy of the given set that supports concurrent operations. The returned set will contain all of the
-    * ints the provided set contained. The returned set only supports up to the maximum size the previous int set
-    * supported when this method is invoked or the largest int it held.
+    * ints the provided set contained. The returned mutable IntSet can store values in the range of {@code 0..maxExclusive-1}
     * @param intSet set to copy from
     * @param maxExclusive the maximum value - 1 that can be inserted into the set
     * @return concurrent copy

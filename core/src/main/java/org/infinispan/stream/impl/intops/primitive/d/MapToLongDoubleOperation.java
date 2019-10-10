@@ -4,14 +4,14 @@ import java.util.function.DoubleToLongFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.LongStream;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.Flowable;
 
 /**
  * Performs map to long operation on a {@link DoubleStream}
  */
-public class MapToLongDoubleOperation implements IntermediateOperation<Double, DoubleStream, Long, LongStream> {
+public class MapToLongDoubleOperation implements MappingOperation<Double, DoubleStream, Long, LongStream> {
    private final DoubleToLongFunction function;
 
    public MapToLongDoubleOperation(DoubleToLongFunction function) {

@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -22,7 +21,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 9.1
  */
 @Scope(Scopes.NONE)
-public class EncoderKeyMapper<K> implements InjectiveFunction<K, K> {
+public class EncoderKeyMapper<K> implements EncodingFunction<K> {
    private final DataConversion dataConversion;
 
    public EncoderKeyMapper(DataConversion dataConversion) {

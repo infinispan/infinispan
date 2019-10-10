@@ -98,6 +98,7 @@ public class DistributedStreamRehashStressTest extends StressTest {
       }));
    }
 
+   // TODO: this fails still for some reason - NEED to find out why!
    public void testStressNodesLeavingWhileMultipleIterators() throws Throwable {
       testStressNodesLeavingWhilePerformingCallable((cache, masterValues, iteration) -> {
          Map<Integer, Integer> seenValues = new HashMap<>();

@@ -3,14 +3,14 @@ package org.infinispan.stream.impl.intops.primitive.i;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.Flowable;
 
 /**
  * Performs map operation on a {@link IntStream}
  */
-public class MapIntOperation implements IntermediateOperation<Integer, IntStream, Integer, IntStream> {
+public class MapIntOperation implements MappingOperation<Integer, IntStream, Integer, IntStream> {
    private final IntUnaryOperator operator;
 
    public MapIntOperation(IntUnaryOperator operator) {

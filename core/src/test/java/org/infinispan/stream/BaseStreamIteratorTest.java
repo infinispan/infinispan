@@ -255,12 +255,12 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
             .stream()
             .iterator();
 
-   assertTrue(it.hasNext());
-   Map.Entry<Object, Object> entry = it.next();
-   Object key = entry.getKey();
-   assertEquals(values.get(key), entry.getValue());
-   // We don't support remove on stream iterator
-   Exceptions.expectException(UnsupportedOperationException.class, it::remove);
+      assertTrue(it.hasNext());
+      Map.Entry<Object, Object> entry = it.next();
+      Object key = entry.getKey();
+      assertEquals(values.get(key), entry.getValue());
+      // We don't support remove on stream iterator
+      Exceptions.expectException(UnsupportedOperationException.class, it::remove);
    }
 
    static class AssertSkipCacheStoreInterceptor extends DDAsyncInterceptor {
