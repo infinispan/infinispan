@@ -3,12 +3,12 @@ package org.infinispan.multimap.impl.function;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.Bucket;
 import org.infinispan.multimap.impl.ExternalizerIds;
 
 /**
@@ -44,7 +44,7 @@ public final class ContainsFunction<K, V> implements BaseFunction<K, V, Boolean>
    }
 
    @Override
-   public Boolean apply(EntryView.ReadWriteEntryView<K, Collection<V>> entryView) {
+   public Boolean apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       Boolean contains;
       if (value == null) {
          contains = entryView.find().isPresent();

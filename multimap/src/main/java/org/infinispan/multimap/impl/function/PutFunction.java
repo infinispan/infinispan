@@ -3,13 +3,12 @@ package org.infinispan.multimap.impl.function;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.Bucket;
 import org.infinispan.multimap.impl.ExternalizerIds;
 
 /**
@@ -30,11 +29,11 @@ public final class PutFunction<K, V> implements BaseFunction<K, V, Void> {
    }
 
    @Override
-   public Void apply(EntryView.ReadWriteEntryView<K, Collection<V>> entryView) {
-      Collection<V> newValues = new HashSet<>();
-      newValues.add(value);
-      entryView.find().map(newValues::addAll);
-      entryView.set(newValues);
+   public Void apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
+      Bucket<V> bucket = new Bucket<>();
+      bucket.add(value);
+      entryView.find().map(bucket::addAll);
+      entryView.set(bucket);
       return null;
    }
 

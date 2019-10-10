@@ -5,12 +5,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.Bucket;
 import org.infinispan.multimap.impl.ExternalizerIds;
 
 /**
@@ -26,10 +26,10 @@ public final class GetFunction<K, V> implements BaseFunction<K, V, Collection<V>
    public static final AdvancedExternalizer<GetFunction> EXTERNALIZER = new Externalizer();
 
    @Override
-   public Collection<V> apply(EntryView.ReadWriteEntryView<K, Collection<V>> entryView) {
-      Optional<Collection<V>> valuesOpt = entryView.find();
+   public Collection<V> apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
+      Optional<Bucket<V>> valuesOpt = entryView.find();
       if (valuesOpt.isPresent()) {
-         return new HashSet<>(entryView.find().get());
+         return entryView.find().get().toSet();
       } else {
          return Collections.emptySet();
       }

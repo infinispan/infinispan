@@ -7,7 +7,6 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.infinispan.util.concurrent.CompletableFutures.rethrowException;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -18,6 +17,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -67,14 +67,15 @@ import org.infinispan.util.concurrent.CompletableFutures;
  */
 public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
 
-   private final FunctionalMap.ReadWriteMap<K, Collection<V>> readWriteMap;
-   private final Cache<K, Collection<V>> cache;
+   private final FunctionalMap.ReadWriteMap<K, Bucket<V>> readWriteMap;
+   private final AdvancedCache<K, Bucket<V>> cache;
+   private final InternalEntryFactory entryFactory;
 
-   public EmbeddedMultimapCache(Cache<K, Collection<V>> cache) {
-      this.cache = cache;
-      AdvancedCache advancedCache = cache.getAdvancedCache();
-      FunctionalMapImpl<K, Collection<V>> functionalMap = FunctionalMapImpl.create(advancedCache);
+   public EmbeddedMultimapCache(Cache<K, Bucket<V>> cache) {
+      this.cache = cache.getAdvancedCache();
+      FunctionalMapImpl<K, Bucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();
    }
 
    @Override
@@ -94,7 +95,12 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    public CompletableFuture<Optional<CacheEntry<K, Collection<V>>>> getEntry(K key) {
       requireNonNull(key, "key can't be null");
       return cache.getAdvancedCache().getCacheEntryAsync(key)
-            .thenApply(Optional::ofNullable);
+            .thenApply(entry -> {
+               if (entry == null)
+                  return Optional.empty();
+
+               return Optional.of(entryFactory.create(entry.getKey(), entry.getValue().toSet(), entry.getMetadata()));
+            });
    }
 
    @Override
@@ -180,13 +186,13 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
 
    private Void removeInternal(Predicate<? super V> p) {
       cache.keySet().stream().forEach((c, key) -> c.computeIfPresent(key, (o, o1) -> {
-         Collection<V> values = (Collection<V>) o1;
-         Collection<V> newValues = new HashSet<>();
-         for (V v : values) {
+         Bucket<V> bucket = (Bucket<V>) o1;
+         Bucket<V> newBucket = new Bucket<>();
+         for (V v : bucket.values) {
             if (!p.test(v))
-               newValues.add(v);
+               newBucket.add(v);
          }
-         return newValues.isEmpty() ? null : newValues;
+         return newBucket.isEmpty() ? null : newBucket;
       }));
       return null;
    }
@@ -204,7 +210,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
       return false;
    }
 
-   public Cache<K, Collection<V>> getCache() {
+   public Cache<K, Bucket<V>> getCache() {
       return cache;
    }
 }

@@ -3,13 +3,12 @@ package org.infinispan.multimap.impl.function;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.Bucket;
 import org.infinispan.multimap.impl.ExternalizerIds;
 
 /**
@@ -46,7 +45,7 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
    }
 
    @Override
-   public Boolean apply(EntryView.ReadWriteEntryView<K, Collection<V>> entryView) {
+   public Boolean apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       Boolean removed;
       if (value == null) {
          removed = removeKey(entryView);
@@ -56,19 +55,19 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
       return removed;
    }
 
-   private Boolean removeKeyValue(EntryView.ReadWriteEntryView<K, Collection<V>> entryView) {
-      return entryView.find().map(values -> {
-               if (values.contains(value)) {
-                  Collection<V> newValues = new HashSet<>();
-                  newValues.addAll(values);
-                  newValues.remove(value);
-                  if (newValues.isEmpty()) {
+   private Boolean removeKeyValue(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
+      return entryView.find().map(bucket -> {
+               if (bucket.contains(value)) {
+                  Bucket<V> newBucket = new Bucket<>();
+                  newBucket.addAll(bucket);
+                  newBucket.remove(value);
+                  if (newBucket.isEmpty()) {
                      // If the collection is empty after remove, remove the key
                      entryView.remove();
                   } else {
-                     entryView.set(newValues);
+                     entryView.set(newBucket);
                   }
-                  return newValues.size() < values.size();
+                  return newBucket.size() < bucket.size();
                } else {
                   return Boolean.FALSE;
                }
@@ -76,7 +75,7 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
       ).orElse(Boolean.FALSE);
    }
 
-   private Boolean removeKey(EntryView.ReadWriteEntryView<K, Collection<V>> entryView) {
+   private Boolean removeKey(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       return entryView.find().map(values -> {
          entryView.remove();
          return Boolean.TRUE;
