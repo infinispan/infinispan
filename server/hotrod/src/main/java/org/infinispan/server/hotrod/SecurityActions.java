@@ -4,6 +4,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.DistributionManager;
@@ -54,9 +55,9 @@ final class SecurityActions {
    }
 
    @SuppressWarnings("unchecked")
-   static <K, V> org.infinispan.Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
+   static <K, V> Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
       GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
-      return (org.infinispan.Cache<K, V>) doPrivileged(action);
+      return (Cache<K, V>) doPrivileged(action);
    }
 
    static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
@@ -79,7 +80,7 @@ final class SecurityActions {
 
    static <K, V> AdvancedCache<K, V> getUnwrappedCache(final AdvancedCache<K, V> cache) {
       if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(() -> ((SecureCacheImpl) cache).getDelegate());
+         return doPrivileged(((SecureCacheImpl<K, V>) cache)::getDelegate);
       } else {
          return cache;
       }
@@ -91,7 +92,7 @@ final class SecurityActions {
 
    private static <K, V> AdvancedCache<K, V> unsetSubject(AdvancedCache<K, V> cache) {
       if (cache instanceof SecureCacheImpl) {
-         return new SecureCacheImpl<>(SecurityActions.getUnwrappedCache(cache));
+         return new SecureCacheImpl<>(getUnwrappedCache(cache));
       } else {
          return cache;
       }

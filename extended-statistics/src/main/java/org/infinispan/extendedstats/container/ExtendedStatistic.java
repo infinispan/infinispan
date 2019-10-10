@@ -9,7 +9,6 @@ package org.infinispan.extendedstats.container;
  * @author Pedro Ruivo
  * @since 6.0
  */
-
 public enum ExtendedStatistic {
 
    //Write transaction related statistics
@@ -123,6 +122,7 @@ public enum ExtendedStatistic {
    NUM_NODES_COMPLETE_NOTIFY(true, false), //average number of nodes involved in a tx completion notify command
    NUM_NODES_GET(true, false), //average number of nodes involved in a tx completion notify command
    RESPONSE_TIME(false, false); //average transaction response time
+
    public static final int NO_INDEX = -1;
    private static short localStatsSize = 0;
    private static short remoteStatsSize = 0;

@@ -72,11 +72,11 @@ import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-@MBean(objectName = "ClusterCacheStats", description = "General cluster statistics such as timings, hit/miss ratio, etc.")
+@MBean(objectName = ClusterCacheStats.OBJECT_NAME, description = "General cluster statistics such as timings, hit/miss ratio, etc.")
 @Scope(Scopes.NAMED_CACHE)
 public class ClusterCacheStatsImpl extends AbstractClusterStats implements ClusterCacheStats {
 
-   private static String[] LONG_ATTRIBUTES = new String[]{EVICTIONS, HITS, MISSES, OFF_HEAP_MEMORY_USED, REMOVE_HITS,
+   private static final String[] LONG_ATTRIBUTES = {EVICTIONS, HITS, MISSES, OFF_HEAP_MEMORY_USED, REMOVE_HITS,
          REMOVE_MISSES, INVALIDATIONS, PASSIVATIONS, ACTIVATIONS, CACHE_LOADER_LOADS, CACHE_LOADER_MISSES, CACHE_WRITER_STORES,
          STORES, DATA_MEMORY_USED};
 
@@ -87,7 +87,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    private double readWriteRatio;
    private double hitRatio;
 
-   public ClusterCacheStatsImpl() {
+   ClusterCacheStatsImpl() {
       super(log);
    }
 
@@ -102,7 +102,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    }
 
    @Override
-   void updateStats() throws Exception {
+   void updateStats() {
       ConcurrentMap<Address, Map<String, Number>> resultMap = new ConcurrentHashMap<>();
       TriConsumer<Address, Map<String, Number>, Throwable> triConsumer = (a, v, t) -> {
          if (t != null) {
@@ -320,7 +320,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    public long getTotalNumberOfEntries() {
       return getStores();
    }
-
 
    @Override
    @ManagedAttribute(

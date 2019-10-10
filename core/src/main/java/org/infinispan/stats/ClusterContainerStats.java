@@ -1,12 +1,15 @@
 package org.infinispan.stats;
 
 /**
- * Cluster wide container statistics
+ * Cluster wide container statistics.
  *
  * @author Ryan Emerson
  * @since 9.0
  */
 public interface ClusterContainerStats extends ClusterStats {
+
+   String OBJECT_NAME = "ClusterContainerStats";
+
    /**
     * @return the maximum amount of free memory in bytes across the cluster JVMs.
     */
