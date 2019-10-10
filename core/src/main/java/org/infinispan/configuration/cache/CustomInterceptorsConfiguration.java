@@ -30,7 +30,7 @@ public class CustomInterceptorsConfiguration implements Matchable<CustomIntercep
       subElement.addAll(interceptors);
    }
 
-   public CustomInterceptorsConfiguration() {
+   CustomInterceptorsConfiguration() {
       this(Collections.emptyList());
    }
 

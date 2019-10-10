@@ -25,7 +25,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       return new AttributeSet(Configuration.class, SIMPLE_CACHE);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new ElementDefinition<Configuration>() {
+   public static final ElementDefinition ELEMENT_DEFINITION = new ElementDefinition<Configuration>() {
       @Override
       public boolean isTopLevel() {
          return true;

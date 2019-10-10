@@ -41,7 +41,7 @@ public class GlobalAuthorizationConfiguration implements ConfigurationInfo {
             }
          }).initializer(HashMap::new).build();
 
-   static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, AUDIT_LOGGER, ROLES);
    }
 

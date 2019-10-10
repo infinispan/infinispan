@@ -15,8 +15,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Defines the local, in-VM locking and concurrency characteristics of the cache.
@@ -25,8 +23,6 @@ import org.infinispan.util.logging.LogFactory;
  *
  */
 public class LockingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<LockingConfiguration>, ConfigurationBuilderInfo {
-
-   private static final Log log = LogFactory.getLog(LockingConfigurationBuilder.class);
 
    private final AttributeSet attributes;
 

@@ -267,7 +267,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return replace(key, value, defaultMetadata);
    }
 
-
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return compute(key, remappingFunction, false);
@@ -859,7 +858,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return new LockedStreamImpl<>(cacheEntrySet().stream(), config.locking().lockAcquisitionTimeout(), TimeUnit.MILLISECONDS);
    }
 
-   @SuppressWarnings("unchecked")
    CacheSet<CacheEntry<K, V>> cacheEntrySet(long explicitFlags) {
       return cacheEntrySet(explicitFlags, invocationContextFactory.createInvocationContext(false, UNBOUNDED));
    }
@@ -1358,7 +1356,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
-   @SuppressWarnings("unchecked")
    private PutKeyValueCommand createPutCommand(K key, V value, Metadata metadata, long explicitFlags) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
@@ -1900,7 +1897,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return result;
       });
    }
-
 
    private boolean isTxInjected(InvocationContext ctx) {
       return ctx.isInTxScope() && ((TxInvocationContext) ctx).isImplicitTransaction();

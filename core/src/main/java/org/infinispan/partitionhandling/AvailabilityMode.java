@@ -16,11 +16,16 @@ import org.infinispan.marshall.core.Ids;
 * @since 7.0
 */
 public enum AvailabilityMode {
-   /** Regular operation mode */
+
+   /**
+    * Regular operation mode
+    */
    AVAILABLE,
-   /** Data can not be safely accessed because of a network split or successive nodes leaving. */
-   DEGRADED_MODE,
-   ;
+
+   /**
+    * Data can not be safely accessed because of a network split or successive nodes leaving.
+    */
+   DEGRADED_MODE;
 
    public AvailabilityMode min(AvailabilityMode other) {
       if (this == DEGRADED_MODE || other == DEGRADED_MODE)
@@ -34,7 +39,7 @@ public enum AvailabilityMode {
       return CACHED_VALUES[ordinal];
    }
 
-   public static class Externalizer extends AbstractExternalizer<AvailabilityMode> {
+   public static final class Externalizer extends AbstractExternalizer<AvailabilityMode> {
       @Override
       public Integer getId() {
          return Ids.AVAILABILITY_MODE;
@@ -42,7 +47,7 @@ public enum AvailabilityMode {
 
       @Override
       public Set<Class<? extends AvailabilityMode>> getTypeClasses() {
-         return Util.<Class<? extends AvailabilityMode>>asSet(AvailabilityMode.class);
+         return Util.asSet(AvailabilityMode.class);
       }
 
       @Override
@@ -51,7 +56,7 @@ public enum AvailabilityMode {
       }
 
       @Override
-      public AvailabilityMode readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public AvailabilityMode readObject(ObjectInput input) throws IOException {
          return MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
       }
    }

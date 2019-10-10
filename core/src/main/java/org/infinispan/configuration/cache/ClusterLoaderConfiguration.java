@@ -23,17 +23,18 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 @BuiltBy(ClusterLoaderConfigurationBuilder.class)
 @ConfigurationFor(ClusterLoader.class)
 public class ClusterLoaderConfiguration extends AbstractStoreConfiguration implements ConfigurationInfo {
-   public static final AttributeDefinition<Long> REMOTE_CALL_TIMEOUT = AttributeDefinition.builder("remoteCallTimeout", TimeUnit.SECONDS.toMillis(15)).immutable().xmlName("remote-timeout").build();
 
-   public static final AttributeSet attributeDefinitionSet() {
+   static final AttributeDefinition<Long> REMOTE_CALL_TIMEOUT = AttributeDefinition.builder("remoteCallTimeout", TimeUnit.SECONDS.toMillis(15)).immutable().xmlName("remote-timeout").build();
+
+   public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ClusterLoaderConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), REMOTE_CALL_TIMEOUT);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CLUSTER_LOADER.getLocalName());
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CLUSTER_LOADER.getLocalName());
 
    private final Attribute<Long> remoteCallTimeout;
 
-   public ClusterLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
+   ClusterLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
       super(attributes, async);
       remoteCallTimeout = attributes.attribute(REMOTE_CALL_TIMEOUT);
    }
@@ -56,5 +57,4 @@ public class ClusterLoaderConfiguration extends AbstractStoreConfiguration imple
    public String toString() {
       return "ClusterLoaderConfiguration [attributes=" + attributes + "]";
    }
-
 }

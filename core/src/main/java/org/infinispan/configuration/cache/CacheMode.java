@@ -64,7 +64,7 @@ public enum CacheMode {
    @ProtoEnumValue(number = 7)
    SCATTERED_SYNC;
 
-   private static CacheMode[] cachedValues = values();
+   private static final CacheMode[] cachedValues = values();
 
    public static CacheMode valueOf(int order) {
       return cachedValues[order];

@@ -26,7 +26,7 @@ public class StateTransferConfiguration implements Matchable<StateTransferConfig
 
    public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(STATE_TRANSFER.getLocalName());
 
-   static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StateTransferConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER);
    }
 
