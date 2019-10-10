@@ -31,10 +31,16 @@ public class ResourceManagerImplTest {
       registerHandler("/", "HandlerB", "/{pathB}");
    }
 
-   @Test(expectedExceptions = RegistrationException.class, expectedExceptionsMessageRegExp = "ISPN.*path '\\{b\\}'.*conflicts with.*'a'")
+   @Test(expectedExceptions = RegistrationException.class, expectedExceptionsMessageRegExp = "ISPN.*/path/\\{b\\}.*conflicts with.*/path/a.*")
    public void testPreventAmbiguousPaths() {
       registerHandler("/", "handler1", "/path/a");
       registerHandler("/", "handler2", "/path/{b}");
+   }
+
+   @Test(expectedExceptions = RegistrationException.class, expectedExceptionsMessageRegExp = "ISPN.*/path/\\{b\\}.*conflicts with.*/path/\\{a\\}.*")
+   public void testPreventVariableNameConflict() {
+      registerHandler("/", "handler1", "/path/{a}/");
+      registerHandler("/", "handler1", "/path/{b}/sub-path");
    }
 
    public void testAllowRegistrationForDifferentMethods() {
