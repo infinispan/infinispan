@@ -1,11 +1,15 @@
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+           xsi:schemaLocation="urn:infinispan:server:{schemaversion}
+           https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
-           socket-binding="default" security-realm="default">
+           socket-binding="default" security-realm="default"> <1>
    <hotrod-connector name="hotrod">
       <authentication>
-         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN"
-               server-name="infinispan" qop="auth"/>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 <2>
+                           SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384
+                           DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN"
+               server-name="infinispan" <3>
+               qop="auth"/> <4>
       </authentication>
    </hotrod-connector>
 </endpoints>

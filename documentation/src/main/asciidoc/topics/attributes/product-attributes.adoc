@@ -44,6 +44,8 @@ include::transaction-attributes.adoc[]
 :ProductPreviousRelease: 7
 :ProductPreviousPreviousRelease: 6
 
+:keycloak: Red Hat SSO
+
 //
 // Special characters
 //

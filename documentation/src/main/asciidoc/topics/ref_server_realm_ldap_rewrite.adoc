@@ -1,0 +1,13 @@
+[id='ldap_realm_rewriting-{context}']
+= LDAP Realm Principal Rewriting
+Some SASL authentication mechanisms, such as `GSSAPI`, `GS2-KRB5` and
+`Negotiate`, supply a username that needs to be _cleaned up_ before you can use
+it to search LDAP servers.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_ldap_realm_rewriter.xml[]
+----
+
+<1> Defines a rewriter that extracts the username from the principal using a
+regular expression.

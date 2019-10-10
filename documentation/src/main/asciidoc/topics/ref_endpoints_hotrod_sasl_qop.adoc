@@ -1,0 +1,18 @@
+[id='hotrod_endpoint_sasl_qop-{context}']
+= SASL Quality of Protection (QoP)
+If SASL mechanisms support integrity and privacy protection settings, you can
+add them to your Hot Rod connector configuration with the `qop` attribute.
+
+[%header%autowidth]
+|===
+| QoP setting | Description
+
+| `auth`
+| Authentication only.
+
+| `auth-int`
+| Authentication with integrity protection.
+
+| `auth-conf`
+| Authentication with integrity and privacy protection.
+|===

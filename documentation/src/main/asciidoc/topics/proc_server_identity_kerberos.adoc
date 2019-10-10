@@ -1,0 +1,39 @@
+[id='kerberos_identity-{context}']
+= Setting Up Kerberos Identities
+Kerberos identities use _keytab_ files that contain service principal names and encrypted keys, derived from Kerberos passwords.
+
+[NOTE]
+====
+_keytab_ files can contain both user and service account principals. However,
+{brandname} servers use service account principals only. As a result,
+{brandname} servers can provide identity to clients and allow clients to
+authenticate with Kerberos servers.
+====
+
+In most cases, you create unique principals for the Hot Rod and REST connectors. For example, you have a "datagrid" server in the "INFINISPAN.ORG" domain. In this case you should create the following service principals:
+
+* `hotrod/datagrid@INFINISPAN.ORG` identifies the Hot Rod service.
+* `HTTP/datagrid@INFINISPAN.ORG` identifies the REST service.
+
+.Procedure
+
+. Create keytab files for the Hot Rod and REST services.
++
+Linux::
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/keytab_nix_mit.adoc[]
+----
++
+Microsoft Windows::
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/keytab_win.adoc[]
+----
++
+. Copy the keytab files to the `$ISPN_HOME/server/conf` directory.
+. Add a `server-identities` definition to the {brandname} server security realm.
+. Specify the location of keytab files that provide service principals to Hot Rod and REST connectors.
+. Name the Kerberos service principals.
