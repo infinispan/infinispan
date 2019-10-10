@@ -1,0 +1,17 @@
+[id='cache_authorization-{context}']
+= Cache Authorization
+{brandname} can restrict access to data by authorizing requests to perform
+cache operations.
+
+{brandname} maps identities, or Principals of type `java.security.Principal`,
+to security roles in your configuration. For example, a Principal named 
+`reader` maps to a security role named `reader`.
+
+{brandname} lets you assign permissions to the various roles to authorize cache
+operations. For example, `Cache.get()` requires read permission while
+`Cache.put()` requires write permission.
+
+In this case, iff a client with the `reader` role attempts to write an entry,
+{brandname} denies the request and throws a security exception. However, if a
+client with the `writer` role sends a write request, {brandname} validates
+authorization and issues the client with a token for subsequent operations.

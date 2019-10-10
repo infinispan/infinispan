@@ -3,9 +3,12 @@
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
       <security-realm name="default">
-         <server-identities>
-            <ssl>
-               <keystore path="server.p12" relative-to="infinispan.server.config.path" keystore-password="secret" alias="server"/>
+         <server-identities> <1>
+            <ssl> <2>
+               <keystore path="server.p12" <3>
+                         relative-to="infinispan.server.config.path" <4>
+                         keystore-password="secret" <5>
+                         alias="server"/> <6>
             </ssl>
          </server-identities>
       </security-realm>

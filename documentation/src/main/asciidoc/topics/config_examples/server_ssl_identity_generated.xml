@@ -5,7 +5,11 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.p12" relative-to="infinispan.server.config.path" keystore-password="secret" alias="server" generate-self-signed-certificate-host="localhost"/>
+               <keystore path="server.p12"
+                         relative-to="infinispan.server.config.path"
+                         keystore-password="secret"
+                         alias="server"
+                         generate-self-signed-certificate-host="localhost"/> <1>
             </ssl>
          </server-identities>
       </security-realm>

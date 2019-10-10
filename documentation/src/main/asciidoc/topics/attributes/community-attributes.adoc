@@ -39,6 +39,12 @@ include::transaction-attributes.adoc[]
 :osweb: OpenShift Web Console
 
 //
+// Community projects
+//
+
+:keycloak: KeyCloak
+
+//
 // Titles
 //
 

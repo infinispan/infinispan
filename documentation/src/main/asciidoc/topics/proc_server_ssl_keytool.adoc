@@ -1,0 +1,14 @@
+= Creating Certificates with the Java Keytool
+Use the Java `keytool` to create a keystore that contains a CA certificate and
+a server certificate signed by the CA.
+
+.Procedure
+
+. Complete the following sequence of shell commands:
++
+[source,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/keytool.adoc[]
+----
++
+. Copy the resulting `server.p12` keystore to the `$ISPN_HOME/server/conf` directory.

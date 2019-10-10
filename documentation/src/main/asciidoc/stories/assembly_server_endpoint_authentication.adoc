@@ -1,0 +1,18 @@
+[id='endpoint_authentication']
+:context: server
+= Configuring Endpoint Authentication Mechanisms
+Configure Hot Rod and REST connectors with SASL authentication mechanisms to
+authenticate with clients.
+
+include::{topics}/proc_server_endpoint_hotrod_auth.adoc[leveloffset=+1]
+include::{topics}/ref_endpoints_hotrod_auth_config.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_hotrod_authentication.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_hotrod_sasl_qop.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_hotrod_sasl_policies.adoc[leveloffset=+2]
+include::{topics}/proc_server_endpoint_rest_auth.adoc[leveloffset=+1]
+include::{topics}/ref_endpoints_ref_auth_config.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_rest_authentication.adoc[leveloffset=+2]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

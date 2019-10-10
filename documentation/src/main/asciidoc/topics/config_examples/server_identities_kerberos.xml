@@ -3,9 +3,13 @@
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
       <security-realm name="default">
-         <server-identities>
-            <kerberos keytab-path="hotrod.keytab" principal="hotrod/datagrid@INFINISPAN.ORG" required="true"/>
-            <kerberos keytab-path="http.keytab" principal="HTTP/localhost@INFINISPAN.ORG" required="true"/>
+         <server-identities> <1>
+            <kerberos keytab-path="hotrod.keytab" <2>
+                      principal="hotrod/datagrid@INFINISPAN.ORG" <3>
+                      required="true"/> <4>
+            <kerberos keytab-path="http.keytab" <5>
+                      principal="HTTP/localhost@INFINISPAN.ORG" <6>
+                      required="true"/>
          </server-identities>
       </security-realm>
    </security-realms>
