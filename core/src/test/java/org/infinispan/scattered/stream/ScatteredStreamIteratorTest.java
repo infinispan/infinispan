@@ -12,4 +12,14 @@ public class ScatteredStreamIteratorTest extends DistributedStreamIteratorTest {
    public ScatteredStreamIteratorTest() {
       super(false, CacheMode.SCATTERED_SYNC);
    }
+
+   @Override
+   public void testNodeLeavesWhileIteratingOverContainerCausingRehashToLoseValues() {
+      // Test is ignored until https://issues.jboss.org/browse/ISPN-10864 can be fixed
+   }
+
+   @Override
+   public void waitUntilProcessingResults() {
+      // Test is ignored until https://issues.jboss.org/browse/ISPN-10864 can be fixed
+   }
 }

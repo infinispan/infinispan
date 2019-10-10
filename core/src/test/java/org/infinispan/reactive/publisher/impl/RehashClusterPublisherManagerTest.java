@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.reactive.publisher.PublisherReducers;
+import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.ExceptionRunnable;
@@ -65,6 +66,11 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       factory.setOwnerIndexes(START_SEGMENT_OWNERS);
       factory.triggerRebalance(cache(0));
       TestingUtil.waitForNoRebalance(caches());
+
+      Cache cache2 = cache(2);
+      LocalPublisherManager lpm = TestingUtil.extractComponent(cache2, LocalPublisherManager.class);
+      // Our tests mess with replacing the DataContainer - which is cached
+      ((LocalPublisherManagerImpl) lpm).resetKeyAndEntrySet();
    }
 
    @DataProvider(name = "GuaranteeParallelEntry")
@@ -152,7 +158,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
 
       // Block on about to send the remote command to node2
       RpcManager original = Mocks.blockingMock(checkPoint, RpcManager.class, cache0,
-            (stub, m) -> stub.when(m).invokeCommand(eq(cache2Address), isA(PublisherRequestCommand.class), any(), any()));
+            (stub, m) -> stub.when(m).invokeCommand(eq(cache2Address), isA(ReductionPublisherRequestCommand.class), any(), any()));
 
       int expectedAmount = caches().size();
       // If it is at most once, we don't retry the segment so the count will be off by 1
@@ -250,8 +256,8 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
 
       performOperation.run();
 
-      Long actualCount = future.get(10, TimeUnit.MINUTES)
-            .toCompletableFuture().get(10, TimeUnit.MINUTES);
+      Long actualCount = future.get(10, TimeUnit.SECONDS)
+            .toCompletableFuture().get(10, TimeUnit.SECONDS);
       // Should be 1 entry per node
       assertEquals(expectedAmount, actualCount.intValue());
    }

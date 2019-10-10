@@ -1,4 +1,4 @@
-package org.infinispan.reactive.publisher.impl;
+package org.infinispan.reactive.publisher.impl.commands.reduction;
 
 import java.util.Set;
 

@@ -15,12 +15,14 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 
 import io.reactivex.Flowable;
 
@@ -199,5 +201,11 @@ public class Mocks {
                checkPoint.trigger(AFTER_INVOCATION);
                checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
             });
+   }
+
+   public static <E> SegmentCompletionPublisher<E> blockingPublisher(SegmentCompletionPublisher<E> publisher, CheckPoint checkPoint) {
+      return (s, complete) -> {
+         blockingPublisher((Subscriber<? super E> innerSubscriber) -> publisher.subscribe(innerSubscriber, complete), checkPoint).subscribe(s);
+      };
    }
 }

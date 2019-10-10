@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.PrimitiveIterator;
 import java.util.Set;
@@ -23,6 +24,7 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -47,7 +49,7 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -55,7 +57,11 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherReducers;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.SegmentCompletionPublisher;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
@@ -91,6 +97,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final boolean writeBehindShared;
+   private final int maxSegment;
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
    protected static <R> Supplier<CacheStream<R>> supplierStreamCast(Supplier supplier) {
@@ -120,6 +127,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
       Configuration configuration = registry.getComponent(Configuration.class);
       writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
+      maxSegment = configuration.clustering().hash().numSegments();
    }
 
    /**
@@ -132,6 +140,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
       Configuration configuration = registry.getComponent(Configuration.class);
       writeBehindShared = hasWriteBehindSharedStore(configuration.persistence());
+      maxSegment = configuration.clustering().hash().numSegments();
    }
 
    boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
@@ -362,29 +371,102 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
    @Override
    public Iterator<R> iterator() {
       log.tracef("Distributed iterator invoked with rehash: %s", rehashAware);
-      if (!rehashAware) {
-         // Non rehash doesn't care about lost segments or completed ones
-         CloseableIterator<R> closeableIterator = nonRehashRemoteIterator(dm.getReadConsistentHash(), segmentsToFilter,
-               null, IdentityPublisherDecorator.getInstance(), intermediateOperations);
-         onClose(closeableIterator::close);
-         return closeableIterator;
+      Function usedTransformer;
+      if (intermediateOperations.isEmpty()) {
+         usedTransformer = MarshallableFunctions.identity();
       } else {
-         Iterable<IntermediateOperation> ops = iteratorOperation.prepareForIteration(intermediateOperations,
-               (Function) nonNullKeyFunction());
-         CloseableIterator<R> closeableIterator;
-         if (segmentCompletionListener != null && iteratorOperation != IteratorOperation.FLAT_MAP) {
-            closeableIterator = new CompletionListenerRehashIterator<>(ops, segmentCompletionListener);
-         } else {
-            closeableIterator = new RehashIterator<>(ops);
+         usedTransformer = new CacheStreamIntermediatePublisher(intermediateOperations);
+      }
+      DeliveryGuarantee deliveryGuarantee = rehashAware ? DeliveryGuarantee.EXACTLY_ONCE : DeliveryGuarantee.AT_MOST_ONCE;
+      Publisher<R> publisherToSubscribeTo;
+      SegmentCompletionPublisher<R> publisher;
+      if (toKeyFunction == null) {
+         publisher = cpm.keyPublisher(segmentsToFilter, keysToFilter, null, includeLoader,
+               deliveryGuarantee, distributedBatchSize, usedTransformer);
+      } else {
+         publisher = cpm.entryPublisher(segmentsToFilter, keysToFilter, null, includeLoader,
+               deliveryGuarantee, distributedBatchSize, usedTransformer);
+      }
+
+      CompletionSegmentTracker segmentTracker;
+      if (segmentCompletionListener != null) {
+         // Tracker relies on ordering that a segment completion occurs
+         segmentTracker = new CompletionSegmentTracker(segmentCompletionListener);
+         publisherToSubscribeTo = Flowable.<R>fromPublisher(s -> publisher.subscribe(s, segmentTracker))
+               .doOnNext(segmentTracker);
+      } else {
+         segmentTracker = null;
+         publisherToSubscribeTo = publisher;
+      }
+
+      CloseableIterator<R> realIterator = Closeables.iterator(Flowable.fromPublisher(publisherToSubscribeTo)
+            // Make sure any runtime errors are wrapped in CacheException
+            .onErrorResumeNext(RxJavaInterop.cacheExceptionWrapper()), distributedBatchSize);
+      onClose(realIterator::close);
+
+      if (segmentTracker != null) {
+         return new AbstractIterator<R>() {
+            @Override
+            protected R getNext() {
+               if (realIterator.hasNext()) {
+                  R value = realIterator.next();
+                  segmentTracker.returningObject(value);
+                  return value;
+               } else {
+                  segmentTracker.onComplete();
+               }
+               return null;
+            }
+         };
+      }
+      return realIterator;
+   }
+
+   /**
+    * Tracking class that keeps track of segment completions and maps them to a given value. This value is not actually
+    * part of these segments, but is instead the object returned immediately after the segments complete. This way
+    * we can guarantee to notify the user after all elements have been processed of which segments were completed.
+    * All methods except for accept(int) are guaranteed to be called sequentially and in a safe manner.
+    */
+   private class CompletionSegmentTracker implements IntConsumer, io.reactivex.functions.Consumer<Object> {
+      private final Consumer<Supplier<PrimitiveIterator.OfInt>> listener;
+      private final Map<Object, IntSet> awaitingNotification;
+      volatile IntSet completedSegments;
+
+      private CompletionSegmentTracker(Consumer<Supplier<PrimitiveIterator.OfInt>> listener) {
+         this.listener = Objects.requireNonNull(listener);
+         this.awaitingNotification = new HashMap<>();
+         this.completedSegments = IntSets.concurrentSet(maxSegment);
+      }
+
+
+      @Override
+      public void accept(int value) {
+         // This method can technically be called from multiple threads
+         completedSegments.set(value);
+      }
+
+      @Override
+      public void accept(Object r) {
+         if (!completedSegments.isEmpty()) {
+            log.tracef("Going to complete segments %s when %s is iterated upon", completedSegments, Util.toStr(r));
+            awaitingNotification.put(r, completedSegments);
+            completedSegments = IntSets.concurrentSet(maxSegment);
          }
-         onClose(closeableIterator::close);
-         // This cast messes up generic checking, but that is okay
-         Function<R, R> function = iteratorOperation.getFunction();
-         if (function != null) {
-            return new IteratorMapper<>(closeableIterator, function);
-         } else {
-            return closeableIterator;
+      }
+
+      public void returningObject(Object value) {
+         IntSet segments = awaitingNotification.remove(value);
+         if (segments != null) {
+            log.tracef("Notifying listeners of segments %s complete now that %s is returning", segments, Util.toStr(value));
+            listener.accept(segments::iterator);
          }
+      }
+
+      public void onComplete() {
+         log.tracef("Completing last segments of: %s", completedSegments);
+         listener.accept(completedSegments::iterator);
+         completedSegments.clear();
       }
    }
 

@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
@@ -24,7 +23,7 @@ import org.infinispan.metadata.Metadata;
  * the requested format.
  */
 @Scope(Scopes.NAMED_CACHE)
-public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements InjectiveFunction<T, T> {
+public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements EncodingFunction<T> {
    @Inject
    transient InternalEntryFactory entryFactory;
 

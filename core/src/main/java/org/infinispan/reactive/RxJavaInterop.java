@@ -6,6 +6,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.util.Util;
+import org.reactivestreams.Publisher;
+
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -74,6 +77,10 @@ public class RxJavaInterop {
       return cs;
    }
 
+   public static java.util.function.Function<CompletionStage<?>, Completable> completionStageToCompletable() {
+      return completionStageCompletableFunction;
+   }
+
    public static <E> Single<E> completionStageToSingle(CompletionStage<E> stage) {
       SingleSubject<E> ss = SingleSubject.create();
 
@@ -138,6 +145,10 @@ public class RxJavaInterop {
       return cf;
    };
 
+   public static <R> Function<? super Throwable, Publisher<R>> cacheExceptionWrapper() {
+      return (Function) wrapThrowable;
+   }
+
    private static final Function<Single<Object>, CompletionStage<Object>> singleToCompletionStage = single -> {
       CompletableFuture<Object> cf = new CompletableFuture<>();
       single.subscribe(cf::complete, cf::completeExceptionally);
@@ -172,4 +183,19 @@ public class RxJavaInterop {
    };
 
    private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
+
+   private static final java.util.function.Function<CompletionStage<?>, Completable> completionStageCompletableFunction =
+      completionStage -> {
+         CompletableSubject cs = CompletableSubject.create();
+         completionStage.whenComplete((o, throwable) -> {
+            if (throwable != null) {
+               cs.onError(throwable);
+            } else {
+               cs.onComplete();
+            }
+         });
+         return cs;
+      };
+
+   private static final Function<? super Throwable, Publisher<?>> wrapThrowable = t -> Flowable.error(Util.rewrapAsCacheException(t));
 }

@@ -68,7 +68,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.ReplicableManagerFunctionCommand;
 import org.infinispan.manager.impl.ReplicableRunnableCommand;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
-import org.infinispan.reactive.publisher.impl.PublisherRequestCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
+import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.stream.impl.StreamIteratorCloseCommand;
@@ -355,11 +358,20 @@ public class RemoteCommandsFactory {
             case UpdateLastAccessCommand.COMMAND_ID:
                command = new UpdateLastAccessCommand(cacheName);
                break;
-            case PublisherRequestCommand.COMMAND_ID:
-               command = new PublisherRequestCommand<>(cacheName);
+            case ReductionPublisherRequestCommand.COMMAND_ID:
+               command = new ReductionPublisherRequestCommand<>(cacheName);
                break;
             case MultiClusterEventCommand.COMMAND_ID:
                command = new MultiClusterEventCommand<>(cacheName);
+               break;
+            case InitialPublisherCommand.COMMAND_ID:
+               command = new InitialPublisherCommand<>(cacheName);
+               break;
+            case NextPublisherCommand.COMMAND_ID:
+               command = new NextPublisherCommand(cacheName);
+               break;
+            case CancelPublisherCommand.COMMAND_ID:
+               command = new CancelPublisherCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

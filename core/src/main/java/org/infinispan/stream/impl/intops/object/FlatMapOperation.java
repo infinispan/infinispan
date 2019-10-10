@@ -43,6 +43,6 @@ public class FlatMapOperation<I, O> implements FlatMappingOperation<I, Stream<I>
 
    @Override
    public Flowable<O> mapFlowable(Flowable<I> input) {
-      return input.flatMap(o -> RxJavaInterop.fromStream(function.apply(o)));
+      return input.concatMap(o -> RxJavaInterop.fromStream(function.apply(o)));
    }
 }

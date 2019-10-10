@@ -41,6 +41,7 @@ public class FlagBitSets {
    public static final long ROLLING_UPGRADE = EnumUtil.bitSetOf(Flag.ROLLING_UPGRADE);
    public static final long REMOTE_ITERATION = EnumUtil.bitSetOf(Flag.REMOTE_ITERATION);
    public static final long SKIP_SIZE_OPTIMIZATION = EnumUtil.bitSetOf(Flag.SKIP_SIZE_OPTIMIZATION);
+   public static final long IGNORE_TRANSACTION = EnumUtil.bitSetOf(Flag.IGNORE_TRANSACTION);
 
    /**
     * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.

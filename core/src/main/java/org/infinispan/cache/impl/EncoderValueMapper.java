@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -22,7 +21,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 9.1
  */
 @Scope(Scopes.NONE)
-public class EncoderValueMapper<V> implements Function<V, V> {
+public class EncoderValueMapper<V> implements EncodingFunction<V> {
 
    private final DataConversion dataConversion;
 

@@ -14,7 +14,6 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.util.function.SerializableFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -24,7 +23,7 @@ import io.reactivex.Flowable;
  * appropriate Reducer
  * @param <R>
  */
-public final class CacheStreamIntermediateReducer<R> implements SerializableFunction<Publisher<Object>, CompletionStage<R>>, InjectableComponent {
+public final class CacheStreamIntermediateReducer<R> implements Function<Publisher<Object>, CompletionStage<R>>, InjectableComponent {
    private final Queue<IntermediateOperation> intOps;
    private final Function<? super Publisher<Object>, ? extends CompletionStage<R>> transformer;
 

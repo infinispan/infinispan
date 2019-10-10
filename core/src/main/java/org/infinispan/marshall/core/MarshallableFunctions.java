@@ -5,7 +5,9 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -588,7 +590,7 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class Identity<T> implements Function<T, T> {
+   private static final class Identity<T> implements InjectiveFunction<T, T>, UnaryOperator<T> {
       @Override
       public T apply(T o) {
          return o;

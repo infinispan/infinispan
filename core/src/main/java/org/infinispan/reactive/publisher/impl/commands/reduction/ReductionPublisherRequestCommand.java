@@ -1,4 +1,4 @@
-package org.infinispan.reactive.publisher.impl;
+package org.infinispan.reactive.publisher.impl.commands.reduction;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,6 +16,8 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 
@@ -23,7 +25,7 @@ import org.infinispan.util.ByteString;
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  * @param <K> the key type
  */
-public class PublisherRequestCommand<K> extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
    public static final byte COMMAND_ID = 31;
 
    private LocalPublisherManager lpm;
@@ -51,13 +53,13 @@ public class PublisherRequestCommand<K> extends BaseRpcCommand implements Initia
    }
 
    // Only here for CommandIdUniquenessTest
-   private PublisherRequestCommand() { super(null); }
+   private ReductionPublisherRequestCommand() { super(null); }
 
-   public PublisherRequestCommand(ByteString cacheName) {
+   public ReductionPublisherRequestCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public PublisherRequestCommand(ByteString cacheName, boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
+   public ReductionPublisherRequestCommand(ByteString cacheName, boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
          IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          Function transformer, Function finalizer) {
       super(cacheName);

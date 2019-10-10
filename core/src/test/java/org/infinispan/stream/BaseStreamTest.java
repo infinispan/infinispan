@@ -23,6 +23,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.StringJoiner;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
@@ -45,11 +48,14 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.function.SerializableToDoubleFunction;
@@ -614,16 +620,51 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    public void testObjFlatMapIterator() {
       Cache<Integer, String> cache = getCache(0);
       int range = 10;
+      Map<Integer, IntSet> keysBySegment = log.isTraceEnabled() ? new TreeMap<>() : null;
+      KeyPartitioner kp = TestingUtil.extractComponent(cache, KeyPartitioner.class);
       // First populate the cache with a bunch of values
-      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+      IntStream.range(0, range).boxed().forEach(i -> {
+         if (keysBySegment != null) {
+            int segment = kp.getSegment(i);
+            IntSet keys = keysBySegment.computeIfAbsent(segment, IntSets::mutableEmptySet);
+            keys.set(i);
+         }
+         cache.put(i, i + "-value");
+      });
+
+      if (keysBySegment != null) {
+         log.tracef("Keys by segment are: " + keysBySegment);
+      }
 
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-      Iterator<String> iterator = createStream(entrySet).flatMap(e -> Arrays.stream(e.getValue().split("a"))).iterator();
+      StringJoiner stringJoiner = new StringJoiner(" ");
+      // Rxjava requets 128 by default for many operations - thus we have a number larger than that
+      int explosionCount = 293;
+      for (int i = 0; i < explosionCount; ++i) {
+         stringJoiner.add("special-" + String.valueOf(i));
+      }
+
+      String specialString = stringJoiner.toString();
+
+      Iterator<String> iterator = createStream(entrySet)
+            .distributedBatchSize(1)
+            .flatMap(e -> {
+               if (e.getKey() == 2) {
+                  // Make sure to test an empty stream as well
+                  return Stream.empty();
+               }
+               if (e.getKey() == 5) {
+                  // Make sure we also test a very large resulting stream without the key in it
+                  return Arrays.stream(specialString.split(" "));
+               }
+               return Arrays.stream(e.getValue().split("a"));
+            })
+            .iterator();
       List<String> list = new ArrayList<>(range * 2);
       iterator.forEachRemaining(list::add);
-      assertEquals(range * 2, list.size());
+      assertEquals((range - 2) * 2 + explosionCount, list.size());
    }
 
    public void testObjToArray1() {

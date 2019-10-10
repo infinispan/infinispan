@@ -206,7 +206,7 @@ public interface Ids {
    int SIMPLE_PUBLISHER_RESULT = 140;
    int PUBLISHER_REDUCERS = 141;
 
-   int MARSHALLED_VALUE = 142;
+   int CACHE_STREAM_INTERMEDIATE_PUBLISHER = 142;
 
    int CACHE_STREAM_INTERMEDIATE_REDUCER = 143;
 
@@ -215,6 +215,8 @@ public interface Ids {
    int EXCEPTIONS = 146;
    int IMMUTABLE_LIST_COPY = 147;
    int INTERNAL_ENUMS = 148;
+
+   int PUBLISHER_RESPONSE = 149;
 
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
