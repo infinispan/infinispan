@@ -1,0 +1,41 @@
+= CLI Resources
+The {brandname} CLI exposes different resources to:
+
+* create, modify, and manage local or clustered caches.
+* perform administrative operations for {brandname} clusters.
+
+.Cache Resources
+----
+[//containers/default]> ls
+caches
+counters
+configurations
+schemas
+----
+
+`caches`::
+{brandname} cache instances. The default cache container is empty. Use the CLI to create caches from templates or `infinispan.xml` files.
+`counters`::
+`Strong` or `Weak` counters that record the count of objects.
+//dnaro: need to ask
+`configurations`::
+Configuration files.
+`schemas`::
+Protocol Buffers (Protobuf) schemas that structure data in the cache.
+
+
+.Cluster Resources
+----
+[hostname@cluster/]> ls
+containers
+cluster
+server
+----
+
+`containers`::
+Cache containers on the {brandname} cluster.
+`cluster`::
+Lists {brandname} servers joined to the cluster.
+//dnaro: need to ask. think server is wip.
+`server`::
+Resources for managing and monitoring {brandname} servers.

@@ -1,0 +1,51 @@
+= Registering Protobuf Schemas
+Protobuf schemas contain data structures known as messages in `.proto` definition files.
+
+.Procedure
+. Create a schema file named `person.proto` with the following messages:
++
+[source,json,options="nowrap",subs=attributes+]
+----
+package org.infinispan.rest.search.entity;
+
+message Address {
+    required string street = 1;
+    required string postCode = 2;
+}
+
+message PhoneNumber {
+    required string number = 1;
+}
+
+message Person {
+    optional int32 id = 1;
+    required string name = 2;
+    required string surname = 3;
+    optional Address address = 4;
+    repeated PhoneNumber phoneNumbers = 5;
+    optional uint32 age = 6;
+    enum Gender {
+        MALE = 0;
+        FEMALE = 1;
+    }
+
+    optional Gender gender = 7;
+}
+----
++
+. Register `person.proto`.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> schema --upload=person.proto person.proto
+----
++
+. Verify `person.proto`.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> cd caches
+[//containers/default/caches/___protobuf_metadata]> ls
+person.proto
+[//containers/default/caches/___protobuf_metadata]> get person.proto
+----

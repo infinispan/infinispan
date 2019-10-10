@@ -1,0 +1,39 @@
+= Creating Caches from Templates
+Use {brandname} cache templates to add caches with recommended default settings.
+
+.Procedure
+. Create a distributed, synchronous cache from a template and name it "mycache".
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> create cache --template=org.infinispan.DIST_SYNC mycache
+----
++
+[TIP]
+====
+Press the tab key after the `--template=` argument to list available cache templates.
+====
++
+. Retrieve the cache configuration.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> describe caches/mycache
+{
+  "distributed-cache" : {
+    "mode" : "SYNC",
+    "remote-timeout" : 17500,
+    "state-transfer" : {
+      "timeout" : 60000
+    },
+    "transaction" : {
+      "mode" : "NONE"
+    },
+    "locking" : {
+      "concurrency-level" : 1000,
+      "acquire-timeout" : 15000,
+      "striping" : false
+    }
+  }
+}
+----

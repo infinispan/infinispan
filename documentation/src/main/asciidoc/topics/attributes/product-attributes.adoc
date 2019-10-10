@@ -15,6 +15,7 @@
 :stories: stories
 :topics: topics
 :images_dir: {topics}/images
+:cli_help: {topics}/cli_help
 
 //
 // Include topic-specific attributes

@@ -1,0 +1,11 @@
+= Starting the {brandname} CLI
+Start the {brandname} CLI as follows:
+
+. Open a terminal in `$ISPN_HOME`.
+. Run the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+$ bin/cli.sh
+[disconnected]>
+----

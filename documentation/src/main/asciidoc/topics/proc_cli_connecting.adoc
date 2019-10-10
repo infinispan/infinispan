@@ -1,0 +1,25 @@
+= Connecting to {brandname} Servers
+
+Do one of the following:
+
+* Run the `connect` command to connect to a {brandname} server on the default port of `11222`:
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> connect
+[hostname1@cluster//containers/default]>
+----
+
+* Specify the location of a {brandname} server. For example, connect to a local server that has a port offset of 100:
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> connect 127.0.0.1:11322
+[hostname2@cluster//containers/default]>
+----
+
+[TIP]
+====
+Press the tab key to display available commands and options. Use the `-h`
+option to display help text.
+====

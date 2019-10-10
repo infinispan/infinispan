@@ -1,0 +1,22 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:images_dir: ../{topics}/images
+:cli_help: ../../../../../cli/cli-client/src/main/resources/help/
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:stem: asciimath
+:context: cli
+
+//Title
+= Using the {brandname} Command Line Interface
+
+//User stories
+include::stories.adoc[]

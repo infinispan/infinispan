@@ -15,6 +15,7 @@ Configuring and Running::
 * link:titles/embedding/embedding.html[Embedding Infinispan]
 * link:titles/server/server.html[Running Infinispan Servers]
 * link:https://infinispan.org/infinispan-operator/master/operator.html[Running the Infinispan Operator]
+* link:titles/cli/cli.html[Using the Command Line Interface]
 * link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
 
 Developing and Integrating::
