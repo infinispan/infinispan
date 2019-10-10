@@ -48,6 +48,8 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jboss-marshalling</artifactId>
+         <!-- Prevent transitive dependency -->
+         <optional>true</optional>
       </dependency>
        <dependency>
            <groupId>org.infinispan</groupId>
