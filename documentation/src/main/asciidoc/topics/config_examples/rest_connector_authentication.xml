@@ -1,8 +1,8 @@
 <endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
            xmlns="urn:infinispan:server:{schemaversion}"
-           socket-binding="default" security-realm="default">
+           socket-binding="default" security-realm="default"> <1>
    <rest-connector name="rest">
-      <authentication mechanisms="DIGEST BASIC"/>
+      <authentication mechanisms="DIGEST BASIC"/> <2>
    </rest-connector>
 </endpoints>

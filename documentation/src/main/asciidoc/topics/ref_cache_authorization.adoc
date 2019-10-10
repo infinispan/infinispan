@@ -1,0 +1,37 @@
+[id='authorization_config-{context}']
+= Cache Authorization Configuration
+
+{brandname} configuration for cache authorization is as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+   <cache-container default-cache="secured" name="secured">
+      <security>
+         <authorization> <1>
+            <identity-role-mapper /> <2>
+            <role name="admin" permissions="ALL" /> <3>
+            <role name="reader" permissions="READ" />
+            <role name="writer" permissions="WRITE" />
+            <role name="supervisor" permissions="READ WRITE EXEC"/>
+         </authorization>
+      </security>
+      <local-cache name="secured">
+         <security>
+            <authorization roles="admin reader writer supervisor" /> <4>
+         </security>
+      </local-cache>
+   </cache-container>
+
+</infinispan>
+----
+
+<1> configures cache authorization for the cache container.
+<2> specifies an implementation of `PrincipalRoleMapper` that converts Principal names to roles.
+<3> names roles and assigns permissions that control access to data.
+<4> defines the authorized roles for the cache.
+
+.Reference
+
+* link:{configdocroot}[{brandname} Configuration]
+* link:{javadocroot}/org/infinispan/security/PrincipalRoleMapper.html[org.infinispan.security.PrincipalRoleMapper]
