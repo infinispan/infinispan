@@ -104,7 +104,7 @@
 
       <!-- org.wildfly / org.jboss.eap -->
       <appserver.groupId>org.wildfly</appserver.groupId>
-      <appserver.version>18.0.0.Beta1</appserver.version>
+      <appserver.version>18.0.0.Final</appserver.version>
 
       <!-- === Component Versions === -->
       <version.component.console>10.0.0.Alpha2</version.component.console>
