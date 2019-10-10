@@ -27,7 +27,6 @@
         <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream-processor</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -121,6 +120,7 @@
                         </Export-Package>
                        <Include-Resource>
                             {maven-resources},
+                            /proto=${project.basedir}/target/classes/proto,
                             /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                             /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                        </Include-Resource>
@@ -167,6 +167,17 @@
                     <dependency>org.infinispan:infinispan-commons-test</dependency>
                  </dependenciesToScan>
               </configuration>
+           </plugin>
+           <plugin>
+               <groupId>org.infinispan.maven-plugins</groupId>
+               <artifactId>proto-schema-compatibility</artifactId>
+               <executions>
+                   <execution>
+                       <goals>
+                           <goal>proto-schema-compatibility-check</goal>
+                       </goals>
+                   </execution>
+               </executions>
            </plugin>
         </plugins>
     </build>
