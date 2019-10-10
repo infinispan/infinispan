@@ -1,0 +1,11 @@
+[id='configure_hotrod_endpoint_auth-{context}']
+= Setting Up Hot Rod Authentication
+Configure Hot Rod connectors to authenticate with clients to {brandname} server
+security realms using specific SASL authentication mechanisms .
+
+.Procedure
+
+. Add an `authentication` definition to the Hot Rod connector configuration.
+. Specify which {brandname} security realm the Hot Rod connector uses for authentication.
+. Specify the SASL authentication mechanisms for the Hot Rod endpoint to use.
+. Configure SASL authentication properties as appropriate.

@@ -1,8 +1,13 @@
 [id='security']
 :context: server
 = Securing {brandname} Servers
+Protect {brandname} servers against network attacks and unauthorized access.
 
-include::{topics}/security_server.adoc[leveloffset=+0]
+include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
+include::{topics}/ref_cache_authorization.adoc[leveloffset=+2]
+include::assembly_server_security_realm.adoc[leveloffset=+1]
+include::assembly_server_security_identity.adoc[leveloffset=+1]
+include::assembly_server_endpoint_authentication.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

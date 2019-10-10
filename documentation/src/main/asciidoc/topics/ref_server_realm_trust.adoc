@@ -1,0 +1,22 @@
+[id='trust_store_realm-{context}']
+= Trust Store Realms
+Trust store realms use keystores that contain the public certificates of all
+clients that are allowed to connect to {brandname} server.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_truststore_realm.xml[]
+----
+
+<1> Provides an SSL server identity with a keystore that contains server certificates.
+<2> Specifies that the file is relative to the `$ISPN_HOME/server/conf` directory.
+<3> Specifies a keystore password.
+<4> Specifies a keystore alias.
+<5> Provides a keystore that contains public certificates of all clients.
+
+.Supported authentication mechanisms
+
+Trust store realms work with client-certificate authentication mechanisms:
+
+* **SASL:** `EXTERNAL`
+* **HTTP (REST):** `CLIENT_CERT`

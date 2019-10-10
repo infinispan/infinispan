@@ -5,11 +5,15 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.p12" relative-to="infinispan.server.config.path" keystore-password="secret"
-                         alias="server"/>
+               <keystore path="server.p12" <1>
+                         relative-to="infinispan.server.config.path" <2>
+                         keystore-password="secret" <3>
+                         alias="server"/> <4>
             </ssl>
          </server-identities>
-         <truststore-realm path="trust.p12" relative-to="infinispan.server.config.path" keystore-password="secret"/>
+         <truststore-realm path="trust.p12" <5>
+                           relative-to="infinispan.server.config.path"
+                           keystore-password="secret"/>
       </security-realm>
    </security-realms>
 </security>

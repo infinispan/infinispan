@@ -3,6 +3,7 @@
            xmlns="urn:infinispan:server:{schemaversion}"
            socket-binding="default" security-realm="default">
    <rest-connector name="rest">
-      <authentication mechanisms="SPNEGO" server-principal="HTTP/localhost@INFINISPAN.ORG"/>
+      <authentication mechanisms="SPNEGO" <1>
+                      server-principal="HTTP/localhost@INFINISPAN.ORG"/> <2>
    </rest-connector>
 </endpoints>

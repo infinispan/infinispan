@@ -1,0 +1,27 @@
+[id='ssl_identity-{context}']
+= Setting Up SSL Identities
+SSL identities use keystores that contain either a certificate or chain of
+certificates.
+
+[NOTE]
+====
+If security realms contain SSL identities, {brandname} servers automatically
+enable encryption for the endpoints that use those security realms.
+====
+
+.Procedure
+
+. Create a keystore for {brandname} server.
++
+[IMPORTANT]
+====
+{brandname} server supports the following keystore formats: JKS, JCEKS, PKCS12,
+BKS, BCFKS and UBER.
+
+In production environments, server certificates should be signed by a trusted
+Certificate Authority, either Root or Intermediate CA.
+====
++
+. Add the keystore to the `$ISPN_HOME/server/conf` directory.
+. Add a `server-identities` definition to the {brandname} server security realm.
+. Specify the name of the keystore along with the password and alias.

@@ -1,0 +1,11 @@
+[id='configure_rest_endpoint_auth-{context}']
+= Setting Up REST Authentication
+Configure REST connectors to authenticate with clients to {brandname} server
+security realms using specific SASL authentication mechanisms .
+
+.Procedure
+
+. Add an `authentication` definition to the REST connector configuration.
+. Specify which {brandname} security realm the REST connector uses for authentication.
+. Specify the SASL authentication mechanisms for the REST endpoint to use.
+. Configure SASL authentication properties as appropriate.
