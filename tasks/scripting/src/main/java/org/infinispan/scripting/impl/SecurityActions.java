@@ -44,13 +44,13 @@ final class SecurityActions {
    }
 
    static <K, V> CacheEntry<K, V> getCacheEntry(final AdvancedCache<K, V> cache, K key) {
-      GetCacheEntryAction<K, V> action = new GetCacheEntryAction<K, V>(cache, key);
+      GetCacheEntryAction<K, V> action = new GetCacheEntryAction<>(cache, key);
       return doPrivileged(action);
    }
 
    static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
       if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(() -> ((SecureCacheImpl) cache).getDelegate());
+         return doPrivileged(((SecureCacheImpl<K, V>) cache)::getDelegate);
       } else {
          return cache;
       }

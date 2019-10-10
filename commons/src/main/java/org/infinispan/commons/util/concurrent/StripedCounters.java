@@ -17,15 +17,14 @@ import org.infinispan.commons.util.ProcessorInfo;
  * @author Dan Berindei
  * @since 9.0
  */
-public class StripedCounters<T> {
+public final class StripedCounters<T> {
    private static final int STRIPE_COUNT = (int) (Long.highestOneBit(ProcessorInfo.availableProcessors()) << 1);
    private static final int STRIPE_MASK = STRIPE_COUNT - 1;
 
-   private T[] stripes;
-
    @SuppressWarnings("unchecked")
+   private final T[] stripes = (T[]) new Object[STRIPE_COUNT];
+
    public StripedCounters(Supplier<T> stripeSupplier) {
-      this.stripes = (T[]) new Object[STRIPE_COUNT];
       for (int i = 0; i < stripes.length; i++) {
          stripes[i] = stripeSupplier.get();
       }
@@ -54,7 +53,7 @@ public class StripedCounters<T> {
    }
 
    public T stripeForCurrentThread() {
-      return (T) stripes[threadIndex()];
+      return stripes[threadIndex()];
    }
 
    private int threadIndex() {

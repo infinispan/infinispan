@@ -34,7 +34,7 @@ final class SecurityActions {
 
    static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
       if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(() ->  ((SecureCacheImpl)cache).getDelegate() );
+         return doPrivileged(((SecureCacheImpl<K, V>) cache)::getDelegate);
       } else {
          return cache;
       }

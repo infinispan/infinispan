@@ -5,9 +5,10 @@ package org.infinispan.stats;
  *
  * @author Vladimir Blagojevic
  * @since 7.1
- *
  */
 public interface ClusterCacheStats extends Stats, ClusterStats {
+
+   String OBJECT_NAME = "ClusterCacheStats";
 
    /**
     * @return cluster wide read/writes ratio for the cache

@@ -40,12 +40,15 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class StatsImpl implements Stats {
 
-   private static final String[] Attributes = new String[]{TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
+   private static final String[] ATTRIBUTES = {TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
          OFF_HEAP_MEMORY_USED, DATA_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
          AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, AVERAGE_READ_TIME_NANOS, AVERAGE_REMOVE_TIME_NANOS, AVERAGE_WRITE_TIME_NANOS, REQUIRED_MIN_NODES};
 
    private final Map<String, Long> statsMap = new HashMap<>();
+
+   // mgmtInterceptor and source cannot be both non-null
    private final CacheMgmtInterceptor mgmtInterceptor;
+
    private final Stats source;
 
    /**
@@ -59,7 +62,7 @@ public class StatsImpl implements Stats {
       if (!configuration.jmxStatistics().available()) {
          return new StatsImpl();
       }
-      return new StatsImpl(chain);
+      return new StatsImpl(chain.findInterceptorExtending(CacheMgmtInterceptor.class));
    }
 
    /**
@@ -76,19 +79,19 @@ public class StatsImpl implements Stats {
    }
 
    /**
-    * Empty stats
+    * Empty stats.
     */
    private StatsImpl() {
-      source = null;
-      mgmtInterceptor = null;
+      this.source = null;
+      this.mgmtInterceptor = null;
       emptyStats();
    }
 
-   private StatsImpl(AsyncInterceptorChain chain) {
-      mgmtInterceptor = chain.findInterceptorExtending(CacheMgmtInterceptor.class);
-      source = null;
+   private StatsImpl(CacheMgmtInterceptor mgmtInterceptor) {
+      this.source = null;
+      this.mgmtInterceptor = mgmtInterceptor;
 
-      if (mgmtInterceptor!= null && mgmtInterceptor.getStatisticsEnabled()) {
+      if (mgmtInterceptor != null && mgmtInterceptor.getStatisticsEnabled()) {
          statsMap.put(TIME_SINCE_RESET, mgmtInterceptor.getTimeSinceReset());
          statsMap.put(TIME_SINCE_START, mgmtInterceptor.getTimeSinceStart());
          statsMap.put(NUMBER_OF_ENTRIES, (long) mgmtInterceptor.getNumberOfEntries());
@@ -115,8 +118,9 @@ public class StatsImpl implements Stats {
    }
 
    private StatsImpl(Stats other) {
-      mgmtInterceptor = null;
-      source = other;
+      this.source = other;
+      this.mgmtInterceptor = null;
+
       statsMap.put(TIME_SINCE_RESET, other.getTimeSinceReset());
       statsMap.put(TIME_SINCE_START, other.getTimeSinceStart());
       statsMap.put(NUMBER_OF_ENTRIES, (long) other.getCurrentNumberOfEntries());
@@ -140,7 +144,7 @@ public class StatsImpl implements Stats {
    }
 
    private void emptyStats() {
-      for (String key : Attributes)
+      for (String key : ATTRIBUTES)
          statsMap.put(key, -1L);
    }
 

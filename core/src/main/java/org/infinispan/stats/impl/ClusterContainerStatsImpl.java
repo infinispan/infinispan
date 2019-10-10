@@ -23,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 @Scope(Scopes.GLOBAL)
-@MBean(objectName = "ClusterContainerStats", description = "General container statistics aggregated across the cluster.")
+@MBean(objectName = ClusterContainerStats.OBJECT_NAME, description = "General container statistics aggregated across the cluster.")
 public class ClusterContainerStatsImpl extends AbstractClusterStats implements ClusterContainerStats {
 
    private static final Log log = LogFactory.getLog(ClusterContainerStatsImpl.class);
@@ -34,17 +34,16 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
    private static final String MEMORY_TOTAL = "memoryTotal";
    private static final String MEMORY_USED = "memoryUsed";
 
-   private static final String[] LONG_ATTRIBUTES = new String[]{MEMORY_AVAILABLE, MEMORY_MAX, MEMORY_TOTAL, MEMORY_USED};
+   private static final String[] LONG_ATTRIBUTES = {MEMORY_AVAILABLE, MEMORY_MAX, MEMORY_TOTAL, MEMORY_USED};
 
    private EmbeddedCacheManager cacheManager;
 
-   public ClusterContainerStatsImpl() {
+   ClusterContainerStatsImpl() {
       super(log);
    }
 
    @Inject
-   public void init(EmbeddedCacheManager cacheManager,
-                    GlobalConfiguration configuration) {
+   public void init(EmbeddedCacheManager cacheManager, GlobalConfiguration configuration) {
       this.cacheManager = cacheManager;
       this.statisticsEnabled = configuration.statistics();
    }
@@ -62,8 +61,9 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
          Map<String, Number> map = new HashMap<>();
          long available = Runtime.getRuntime().freeMemory();
          long total = Runtime.getRuntime().totalMemory();
+         long max = Runtime.getRuntime().maxMemory();
          map.put(MEMORY_AVAILABLE, available);
-         map.put(MEMORY_MAX, Runtime.getRuntime().maxMemory());
+         map.put(MEMORY_MAX, max);
          map.put(MEMORY_TOTAL, total);
          map.put(MEMORY_USED, total - available);
          successfulResponseMaps.add(map);

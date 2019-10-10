@@ -60,13 +60,13 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.topology.CacheTopology;
 
 /**
- * Captures cache management statistics
+ * Captures cache management statistics.
  *
  * @author Jerry Gauthier
  * @since 9.0
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
-public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
+public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Inject ComponentRef<AdvancedCache> cache;
    @Inject InternalDataContainer dataContainer;
    @Inject TimeService timeService;
@@ -74,8 +74,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Inject ComponentRegistry componentRegistry;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
-   private volatile AtomicLong resetNanoseconds = new AtomicLong(0);
-   private StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
+   private final AtomicLong resetNanoseconds = new AtomicLong(0);
+   private final StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
 
    @Start
    public void start() {
@@ -91,12 +91,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
       return visitDataReadCommand(ctx, command);
    }
 
    @Override
-   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
       return visitDataReadCommand(ctx, command);
    }
 
@@ -111,18 +111,16 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         addDataRead(rv != null, timeService.timeDuration(start, TimeUnit.NANOSECONDS));
-      });
+      return invokeNextAndFinally(ctx, command,
+            (rCtx, rCommand, rv, t) -> addDataRead(rv != null, timeService.timeDuration(start, TimeUnit.NANOSECONDS)));
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
@@ -135,7 +133,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          int requests = rCommand.getKeys().size();
          int hitCount = 0;
          if (t == null) {
-            for (Entry<Object, Object> entry : ((Map<Object, Object>) rv).entrySet()) {
+            for (Entry<?, ?> entry : ((Map<?, ?>) rv).entrySet()) {
                if (entry.getValue() != null) {
                   hitCount++;
                }
@@ -156,7 +154,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
@@ -174,18 +172,17 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   //Map.put(key,value) :: oldValue
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       return updateStoreStatistics(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
       return updateStoreStatistics(ctx, command);
    }
 
    @Override
-   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
@@ -204,11 +201,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) {
       return updateStoreStatistics(ctx, command);
    }
 
-   private Object updateStoreStatistics(InvocationContext ctx, WriteCommand command) throws Throwable {
+   private Object updateStoreStatistics(InvocationContext ctx, WriteCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
@@ -225,7 +222,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) {
       if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS))
          return invokeNext(ctx, command);
 
@@ -249,7 +246,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) {
       if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS))
          return invokeNext(ctx, command);
 
@@ -282,7 +279,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) {
       return updateStatisticsWriteOnly(ctx, command);
    }
 
@@ -311,7 +308,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) {
       return updateStatisticsReadWrite(ctx, command);
    }
 
@@ -347,12 +344,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
       return updateStatisticsReadWrite(ctx, command);
    }
 
    @Override
-   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) {
       return updateStatisticsWriteOnly(ctx, command);
    }
 
@@ -360,7 +357,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    // does not pass the return value.
 
    @Override
-   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) {
       return updateStatisticsReadWrite(ctx, command);
    }
 
@@ -417,12 +414,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) {
       return updateStatisticsReadWrite(ctx, command);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
@@ -539,7 +536,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
          return 0;
-      return (((double) (counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater)) / (double) sum));
+      return (double) (counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater)) / (double) sum;
    }
 
    @ManagedAttribute(
@@ -779,8 +776,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       counters.add(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread(), numEvictions);
    }
 
-   @SuppressWarnings("unused")
    private static class StripeA {
+      @SuppressWarnings("unused")
       private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
    }
 
@@ -819,8 +816,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       private volatile long removeTimes = 0;
    }
 
-   @SuppressWarnings("unused")
-   private static class StripeC extends StripeB {
+   private static final class StripeC extends StripeB {
+      @SuppressWarnings("unused")
       private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
    }
 }

@@ -9,20 +9,20 @@ import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.StripedCounters;
 
-public class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
+public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
    private final boolean enabled;
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private final NearCacheService nearCacheService;
    private final TimeService timeService;
-   private StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
+   private final StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
 
    ClientStatistics(boolean enabled, TimeService timeService, NearCacheService nearCacheService) {
       this.enabled = enabled;
       this.timeService = timeService;
       this.nearCacheService = nearCacheService;
       if (nearCacheService != null)
-         nearCacheService.setInvalidationCallback(() -> incrementNearCacheInvalidations());
+         nearCacheService.setInvalidationCallback(this::incrementNearCacheInvalidations);
    }
 
    ClientStatistics(boolean enabled, TimeService timeService) {
@@ -174,12 +174,12 @@ public class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
       return new ClientStatistics(false, timeService);
    }
 
-   @SuppressWarnings("unused")
    private static class StripeA {
+      @SuppressWarnings("unused")
       private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
    }
 
-   @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
+   @SuppressWarnings("VolatileLongOrDoubleField")
    private static class StripeB extends StripeA {
       static final AtomicLongFieldUpdater<StripeB> remoteCacheHitsFieldUpdater =
             AtomicLongFieldUpdater.newUpdater(StripeB.class, "remoteCacheHits");
@@ -217,8 +217,8 @@ public class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
       private volatile long nearCacheInvalidations = 0;
    }
 
-   @SuppressWarnings("unused")
-   private static class StripeC extends StripeB {
+   private static final class StripeC extends StripeB {
+      @SuppressWarnings("unused")
       private long slack1, slack2, slack3, slack4, slack5, slack6, slack7, slack8;
    }
 }

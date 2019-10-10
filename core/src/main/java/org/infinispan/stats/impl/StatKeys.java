@@ -4,7 +4,7 @@ package org.infinispan.stats.impl;
  * @author Ryan Emerson
  * @since 9.0
  */
-class StatKeys {
+final class StatKeys {
    static final String TIME_SINCE_RESET = "timeSinceReset";
    static final String TIME_SINCE_START = "timeSinceStart";
    static final String REMOVE_MISSES = "removeMisses";

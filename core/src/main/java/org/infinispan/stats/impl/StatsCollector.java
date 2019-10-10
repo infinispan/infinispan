@@ -38,7 +38,7 @@ import org.infinispan.stats.Stats;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 @Scope(Scopes.NAMED_CACHE)
-public class StatsCollector implements Stats, JmxStatisticsExposer {
+public final class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder hitTimes = new LongAdder();
    private final LongAdder missTimes = new LongAdder();
    private final LongAdder storeTimes = new LongAdder();
@@ -138,7 +138,6 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          units = Units.PERCENTAGE,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public double getHitRatio() {
       long hitsL = hits.sum();
       double total = hitsL + misses.sum();
@@ -146,7 +145,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
       // should be avoided for floating point numbers.
       if (total <= 0)
          return 0;
-      return (hitsL / total);
+      return hitsL / total;
    }
 
    @ManagedAttribute(
@@ -191,7 +190,6 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageWriteTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
    }
@@ -202,7 +200,6 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageWriteTimeNanos() {
       long sum = stores.sum();
       if (sum == 0)
@@ -216,7 +213,6 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageRemoveTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
    }
@@ -227,7 +223,6 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
-   @SuppressWarnings("unused")
    public long getAverageRemoveTimeNanos() {
       long removes = getRemoveHits();
       if (removes == 0)

@@ -126,7 +126,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       }
    }
 
-   long addLongAttributes(Collection<Map<String, Number>> responseList, String attribute) {
+   private long addLongAttributes(Collection<Map<String, Number>> responseList, String attribute) {
       long total = 0;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
@@ -150,7 +150,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       return total;
    }
 
-   int addIntAttributes(Collection<Map<String, Number>> responseList, String attribute) {
+   private int addIntAttributes(Collection<Map<String, Number>> responseList, String attribute) {
       int total = 0;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
@@ -162,7 +162,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       return total;
    }
 
-   int maxIntAttributes(Collection<Map<String, Number>> responseList, String attribute) {
+   private int maxIntAttributes(Collection<Map<String, Number>> responseList, String attribute) {
       int max = 0;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
