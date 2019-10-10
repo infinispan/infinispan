@@ -45,17 +45,17 @@ public class StatsImpl implements Stats {
          AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, AVERAGE_READ_TIME_NANOS, AVERAGE_REMOVE_TIME_NANOS, AVERAGE_WRITE_TIME_NANOS, REQUIRED_MIN_NODES};
 
    private final Map<String, Long> statsMap = new HashMap<>();
-   final CacheMgmtInterceptor mgmtInterceptor;
-   final Stats source;
+   private final CacheMgmtInterceptor mgmtInterceptor;
+   private final Stats source;
 
    /**
-    * Use this factory class to create Stats object from configuration and the interceptor chain
+    * Use this factory to create Stats object from configuration and the interceptor chain.
     *
     * @param configuration
     * @param chain
     * @return Stats object
     */
-   public static final Stats create(Configuration configuration, AsyncInterceptorChain chain) {
+   public static Stats create(Configuration configuration, AsyncInterceptorChain chain) {
       if (!configuration.jmxStatistics().available()) {
          return new StatsImpl();
       }
@@ -63,11 +63,12 @@ public class StatsImpl implements Stats {
    }
 
    /**
-    * Use this factory to create Stats object from {@link }StatsCollector}
+    * Use this factory to create Stats object from {@link StatsCollector}.
+    *
     * @param collector
     * @return
     */
-   public static final Stats create(StatsCollector collector) {
+   public static Stats create(StatsCollector collector) {
       if (collector == null || !collector.getStatisticsEnabled()) {
          return new StatsImpl();
       }
