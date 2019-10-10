@@ -18,16 +18,13 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
  *
  * @author pmuir
- *
  */
 public class HashConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<HashConfiguration>, ConfigurationBuilderInfo {
-   private static final Log log = LogFactory.getLog(HashConfigurationBuilder.class);
 
    private final AttributeSet attributes;
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
@@ -153,6 +150,4 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    public Collection<ConfigurationBuilderInfo> getChildrenInfo() {
       return subElements;
    }
-
-
 }

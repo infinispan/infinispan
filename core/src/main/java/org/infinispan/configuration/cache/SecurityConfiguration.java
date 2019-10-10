@@ -23,7 +23,7 @@ public class SecurityConfiguration implements Matchable<SecurityConfiguration>, 
 
    private final List<ConfigurationInfo> subElement = new ArrayList<>();
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SECURITY.getLocalName());
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(SECURITY.getLocalName());
 
    SecurityConfiguration(AuthorizationConfiguration authorization) {
       this.authorization = authorization;

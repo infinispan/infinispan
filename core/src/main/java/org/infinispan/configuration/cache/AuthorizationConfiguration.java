@@ -22,7 +22,7 @@ public class AuthorizationConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Set> ROLES = AttributeDefinition.builder("roles", null, Set.class).initializer(HashSet::new).build();
 
-   static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AuthorizationConfiguration.class, ENABLED, ROLES);
    }
 
@@ -50,7 +50,6 @@ public class AuthorizationConfiguration implements ConfigurationInfo {
    public Set<String> roles() {
       return roles.get();
    }
-
 
    public AttributeSet attributes() {
       return attributes;
@@ -85,5 +84,4 @@ public class AuthorizationConfiguration implements ConfigurationInfo {
       result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
       return result;
    }
-
 }

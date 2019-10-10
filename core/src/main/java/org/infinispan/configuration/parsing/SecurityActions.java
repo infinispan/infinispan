@@ -16,6 +16,7 @@ import org.infinispan.security.Security;
  * @since 10.0
  */
 final class SecurityActions {
+
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);
@@ -25,8 +26,6 @@ final class SecurityActions {
    }
 
    static Properties getSystemProperties() {
-      return doPrivileged(() -> System.getProperties());
+      return doPrivileged(System::getProperties);
    }
-
-
 }

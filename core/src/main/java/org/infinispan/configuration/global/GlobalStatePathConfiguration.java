@@ -10,11 +10,11 @@ import org.infinispan.configuration.parsing.ParseUtils;
 
 public class GlobalStatePathConfiguration implements ConfigurationInfo {
 
-   public static AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
+   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
          .initializer(() -> SecurityActions.getSystemProperty("user.dir"))
          .immutable().build();
 
-   public static AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).immutable().build();
 
    private final Attribute<String> path;
    private final Attribute<String> relativeTo;

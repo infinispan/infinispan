@@ -21,14 +21,11 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Configures the transport used for network communications across the cluster.
  */
 public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<TransportConfiguration> {
-   private static final Log log = LogFactory.getLog(TransportConfigurationBuilder.class);
 
    // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
    public static final String DEFAULT_TRANSPORT = "org.infinispan.remoting.transport.jgroups.JGroupsTransport";

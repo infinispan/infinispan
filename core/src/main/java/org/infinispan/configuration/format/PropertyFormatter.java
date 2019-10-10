@@ -3,6 +3,7 @@ package org.infinispan.configuration.format;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -27,20 +28,17 @@ public class PropertyFormatter {
       }
    }
 
-   private String globalConfigPrefix = "";
-   private String configPrefix = "";
+   private final String globalConfigPrefix;
+   private final String configPrefix;
 
    /**
-    *
     * Create a new PropertyFormatter instance.
-    *
     */
    public PropertyFormatter() {
       this("", "");
    }
 
    /**
-    *
     * Create a new PropertyFormatter instance.
     *
     * @param globalConfigPrefix
@@ -49,18 +47,15 @@ public class PropertyFormatter {
     *           Prefix used for cache configuration property keys.
     */
    public PropertyFormatter(String globalConfigPrefix, String configPrefix) {
-      super();
       this.globalConfigPrefix = globalConfigPrefix;
       this.configPrefix = configPrefix;
    }
 
    private static List<Method> getMethods(Class<?> clazz) {
       Class<?> c = clazz;
-      ArrayList<Method> r = new ArrayList<Method>();
+      List<Method> r = new ArrayList<>();
       while (c != null && c != Object.class) {
-         for (Method m : c.getDeclaredMethods()) {
-            r.add(m);
-         }
+         Collections.addAll(r, c.getDeclaredMethods());
          c = c.getSuperclass();
       }
       return r;

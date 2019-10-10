@@ -23,9 +23,9 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 public class SitesConfiguration implements Matchable<SitesConfiguration>, ConfigurationInfo {
    public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disable", false).immutable().build();
    public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>) (Class<?>) Set.class).initializer(() -> new HashSet<>(2)).immutable().build();
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(BACKUPS.getLocalName());
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(BACKUPS.getLocalName());
 
-   static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SitesConfiguration.class, DISABLE_BACKUPS, IN_USE_BACKUP_SITES);
    }
 
@@ -45,7 +45,6 @@ public class SitesConfiguration implements Matchable<SitesConfiguration>, Config
       this.backupFor = backupFor;
       this.subElements.addAll(allBackups);
    }
-
 
    @Override
    public List<ConfigurationInfo> subElements() {
@@ -72,7 +71,6 @@ public class SitesConfiguration implements Matchable<SitesConfiguration>, Config
    public List<BackupConfiguration> allBackups() {
       return allBackups;
    }
-
 
    /**
     * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.

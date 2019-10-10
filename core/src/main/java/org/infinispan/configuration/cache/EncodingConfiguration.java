@@ -21,7 +21,7 @@ public final class EncodingConfiguration implements Matchable<EncodingConfigurat
    private ContentTypeConfiguration keyDataType, valueDataType;
    private final List<ConfigurationInfo> contentTypeConfigurations;
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ENCODING.getLocalName());
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ENCODING.getLocalName());
 
    public EncodingConfiguration(ContentTypeConfiguration keyDataType, ContentTypeConfiguration valueDataType) {
       this.keyDataType = keyDataType;
