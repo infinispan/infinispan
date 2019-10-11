@@ -1,4 +1,0 @@
-[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
-[jmx://localhost:12000/MyCacheManager/namedCache]> clearcache
-[jmx://localhost:12000/MyCacheManager/namedCache]> get a
-null

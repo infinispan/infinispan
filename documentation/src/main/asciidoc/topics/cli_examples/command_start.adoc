@@ -1,4 +1,0 @@
-[jmx://localhost:12000/MyCacheManager/namedCache]> start
-[jmx://localhost:12000/MyCacheManager/namedCache]> put a a
-[jmx://localhost:12000/MyCacheManager/namedCache]> put b b
-[jmx://localhost:12000/MyCacheManager/namedCache]> end

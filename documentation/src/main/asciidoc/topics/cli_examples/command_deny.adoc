@@ -1,1 +1,0 @@
-[remoting://localhost:9999]> deny supervisor to user1

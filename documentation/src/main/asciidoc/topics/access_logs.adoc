@@ -1,0 +1,63 @@
+[[server_access_logs]]
+= Access Logs
+Hot Rod and REST endpoints can record all inbound client requests as log entries with the following categories:
+
+* `org.infinispan.HOTROD_ACCESS_LOG` logging category for the Hot Rod endpoint.
+* `org.infinispan.REST_ACCESS_LOG` logging category for the REST endpoint.
+
+[[server_access_logs_enable]]
+== Enabling Access Logs
+Access logs for Hot Rod and REST endpoints are disabled by default. To enable
+either logging category, set the level to `TRACE` in the server configuration file, as in the following example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/enable_access_logs.xml[]
+----
+
+[[server_access_logs_properties]]
+== Access Log Properties
+The default format for access logs is as follows:
+
+`%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n`
+
+The preceding format creates log entries such as the following:
+
+`127.0.0.1 - [30/Oct/2018:12:41:50 CET] "PUT /rest/default/key HTTP/1.1" 404 5 77 10`
+
+Logging properties use the `%X{name}` notation and let you modify the format of access logs. The following are the default logging properties:
+
+[%header,cols=2*]
+|===
+| Property
+| Description
+
+| `address`
+| Either the `X-Forwarded-For` header or the client IP address.
+
+| `user`
+| Principal name, if using authentication.
+
+| `method`
+| Method used. `PUT`, `GET`, and so on.
+
+| `protocol`
+| Protocol used. `HTTP/1.1`, `HTTP/2`, `HOTROD/2.9`, and so on.
+
+| `status`
+| An HTTP status code for the REST endpoint. `OK` or an exception for the Hot Rod endpoint.
+
+| `requestSize`
+| Size, in bytes, of the request.
+
+| `responseSize`
+| Size, in bytes, of the response.
+
+| `duration`
+| Number of milliseconds that the server took to handle the request.
+|===
+
+[TIP]
+====
+Use the header name prefixed with `h:` to log headers that were included in requests; for example, `%X{h:User-Agent}`.
+====

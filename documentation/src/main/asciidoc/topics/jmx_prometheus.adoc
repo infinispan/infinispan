@@ -1,0 +1,6 @@
+= JMX with Prometheus
+
+You can also expose JMX beans using link:https://prometheus.io/docs/prometheus/latest/querying/api/[Prometheus].
+In order to do this, just run the server with additional parameter `--jmx`, for example: `./standalone.xml -c cloud.xml --jmx`.
+Prometheus configuration is stored in `prometheus_config.yaml` file. It is possible to override this file by specifying it
+after `--jmx` parameter. For example: `./standalone.sh -c cloud.xml --jmx my-config.yaml`.

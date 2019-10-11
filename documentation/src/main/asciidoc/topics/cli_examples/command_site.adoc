@@ -1,7 +1,0 @@
-[jmx://localhost:12000/MyCacheManager/namedCache]> site --status NYC
-online
-[jmx://localhost:12000/MyCacheManager/namedCache]> site --offline NYC
-ok
-[jmx://localhost:12000/MyCacheManager/namedCache]> site --status NYC
-offline
-[jmx://localhost:12000/MyCacheManager/namedCache]> site --online NYC

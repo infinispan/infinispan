@@ -1,6 +1,11 @@
 [[jmx_mgmt_tooling]]
-= Management Tooling
+= JMX Monitoring
 Management of {brandname} instances is all about exposing as much relevant statistical information that allows administrators to get a view of the state of each {brandname} instance. Taking in account that a single installation could be made up of several tens or hundreds {brandname} instances, providing clear and concise information in an efficient manner is imperative. The following sections dive into the range of management tooling that {brandname} provides.
+
+[NOTE]
+====
+Any management tool that supports JMX already has basic support for {brandname}. However, custom plugins could be written to adapt the JMX information for easier consumption.
+====
 
 == JMX
 Over the years, link:http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html[JMX] has become the de facto standard for management and administration of middleware and as a result, the {brandname} team has decided to standardize on this technology for the exposure of management and statistical information.

@@ -1,11 +1,11 @@
 [id='monitoring-{context}']
 :context: monitoring
+= Monitoring {brandname} Servers
 
-include::{topics}/management_server.adoc[leveloffset=+0]
-include::{topics}/management.adoc[leveloffset=+0]
-include::{topics}/cli.adoc[leveloffset=+1]
-include::{topics}/hawt.adoc[leveloffset=+1]
-include::{topics}/mgmt_plugins.adoc[leveloffset=+1]
+include::{topics}/access_logs.adoc[leveloffset=+1]
+include::{topics}/jmx_server.adoc[leveloffset=+1]
+include::{topics}/jmx.adoc[leveloffset=+2]
+include::{topics}/jmx_prometheus.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
