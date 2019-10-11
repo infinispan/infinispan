@@ -48,6 +48,36 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> backupStatuses() {
+      return client.execute(baseCacheManagerUrl, "x-site", "backups");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> bringBackupOnline(String backup) {
+      return executeXSiteOperation(backup, "bring-online");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> takeOffline(String backup) {
+      return executeXSiteOperation(backup, "take-offline");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> pushSiteState(String backup) {
+      return executeXSiteOperation(backup, "start-push-state");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> cancelPushState(String backup) {
+      return executeXSiteOperation(backup, "cancel-push-state");
+   }
+
+   private CompletionStage<RestResponse> executeXSiteOperation(String backup, String operation) {
+      String url = String.format("%s/x-site/backups/%s?action=%s", baseCacheManagerUrl, backup, operation);
+      return client.execute(url);
+   }
+
+   @Override
    public CompletionStage<RestResponse> health() {
       return client.execute(baseCacheManagerUrl, "health");
    }

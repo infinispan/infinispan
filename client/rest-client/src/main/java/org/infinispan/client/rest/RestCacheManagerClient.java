@@ -20,4 +20,14 @@ public interface RestCacheManagerClient {
    CompletionStage<RestResponse> healthStatus();
 
    CompletionStage<RestResponse> stats();
+
+   CompletionStage<RestResponse> backupStatuses();
+
+   CompletionStage<RestResponse> bringBackupOnline(String backup);
+
+   CompletionStage<RestResponse> takeOffline(String backup);
+
+   CompletionStage<RestResponse> pushSiteState(String backup);
+
+   CompletionStage<RestResponse> cancelPushState(String backup);
 }
