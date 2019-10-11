@@ -1,22 +1,26 @@
 package org.infinispan.rest.resources;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.PUT;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -24,19 +28,25 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.XSiteAdminOperations;
+import org.infinispan.xsite.status.AbstractMixedSiteStatus;
+import org.infinispan.xsite.status.OfflineSiteStatus;
+import org.infinispan.xsite.status.OnlineSiteStatus;
+import org.infinispan.xsite.status.SiteStatus;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Handles REST calls for cache level X-Site operations
+ * Handles REST calls for cache and cache manager level X-Site operations
  *
  * @since 10.0
  */
-public class XSiteCacheResource implements ResourceHandler {
+public class XSiteResource implements ResourceHandler {
 
    private static final BiFunction<XSiteAdminOperations, String, String> TAKE_OFFLINE = XSiteAdminOperations::takeSiteOffline;
    private static final BiFunction<XSiteAdminOperations, String, String> BRING_ONLINE = XSiteAdminOperations::bringSiteOnline;
@@ -46,10 +56,14 @@ public class XSiteCacheResource implements ResourceHandler {
    private static final Function<XSiteAdminOperations, Map<String, String>> SITES_STATUS = XSiteAdminOperations::siteStatuses;
    private static final Function<XSiteAdminOperations, Map<String, String>> PUSH_STATE_STATUS = XSiteAdminOperations::getPushStateStatus;
    private static final Function<XSiteAdminOperations, String> CLEAR_PUSH_STATUS = XSiteAdminOperations::clearPushStateStatus;
+   private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> BRING_ALL_CACHES_ONLINE = GlobalXSiteAdminOperations::bringAllCachesOnline;
+   private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> TAKE_ALL_CACHES_OFFLINE = GlobalXSiteAdminOperations::takeAllCachesOffline;
+   private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> START_PUSH_ALL_CACHES = GlobalXSiteAdminOperations::pushStateAllCaches;
+   private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> CANCEL_PUSH_ALL_CACHES = GlobalXSiteAdminOperations::cancelPushStateAllCaches;
 
    private final InvocationHelper invocationHelper;
 
-   public XSiteCacheResource(InvocationHelper invocationHelper) {
+   public XSiteResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
    }
 
@@ -67,7 +81,50 @@ public class XSiteCacheResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::getXSiteTakeOffline)
             .invocation().methods(PUT).path("/v2/caches/{cacheName}/x-site/backups/{site}/take-offline-config").handleWith(this::updateTakeOffline)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/x-site/backups/{site}").withAction("cancel-receive-state").handleWith(this::cancelReceiveState)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/").handleWith(this::globalStatus)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online").handleWith(this::bringAllOnline)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline").handleWith(this::takeAllOffline)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state").handleWith(this::startPushAll)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state").handleWith(this::cancelPushAll)
             .create();
+   }
+
+   private CompletionStage<RestResponse> bringAllOnline(RestRequest request) {
+      return executeCacheManagerXSiteOp(request, BRING_ALL_CACHES_ONLINE);
+   }
+
+   private CompletionStage<RestResponse> takeAllOffline(RestRequest request) {
+      return executeCacheManagerXSiteOp(request, TAKE_ALL_CACHES_OFFLINE);
+   }
+
+   private CompletionStage<RestResponse> startPushAll(RestRequest request) {
+      return executeCacheManagerXSiteOp(request, START_PUSH_ALL_CACHES);
+   }
+
+   private CompletionStage<RestResponse> cancelPushAll(RestRequest request) {
+      return executeCacheManagerXSiteOp(request, CANCEL_PUSH_ALL_CACHES);
+   }
+
+   private CompletionStage<RestResponse> globalStatus(RestRequest request) {
+      GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
+
+      return CompletableFuture.supplyAsync(() -> {
+         Map<String, GlobalStatus> collect = globalXSiteAdmin.globalStatus().entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
+            SiteStatus status = e.getValue();
+            if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
+            if (status instanceof OfflineSiteStatus) return GlobalStatus.OFFLINE;
+            if (status instanceof AbstractMixedSiteStatus) {
+               AbstractMixedSiteStatus mixedSiteStatus = (AbstractMixedSiteStatus) status;
+               return GlobalStatus.mixed(mixedSiteStatus.getOnline(), mixedSiteStatus.getOffline());
+            }
+            return GlobalStatus.UNKNOWN;
+         }));
+         addPayload(responseBuilder, collect);
+         return responseBuilder.build();
+      });
    }
 
    private CompletionStage<RestResponse> pushStateStatus(RestRequest request) {
@@ -145,12 +202,7 @@ public class XSiteCacheResource implements ResourceHandler {
       }
       OfflineStatus offlineStatus = xsiteAdmin.getOfflineStatus(site);
 
-      try {
-         byte[] payload = invocationHelper.getMapper().writeValueAsBytes(new TakeOffline(offlineStatus.getTakeOffline()));
-         responseBuilder.entity(payload).contentType(APPLICATION_JSON_TYPE);
-      } catch (JsonProcessingException e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
+      addPayload(responseBuilder, new TakeOffline(offlineStatus.getTakeOffline()));
 
       return completedFuture(responseBuilder.build());
    }
@@ -167,12 +219,7 @@ public class XSiteCacheResource implements ResourceHandler {
 
       return CompletableFuture.supplyAsync(() -> {
          Map<Address, String> payload = xsiteAdmin.nodeStatus(site);
-         try {
-            byte[] statsResponse = invocationHelper.getMapper().writeValueAsBytes(payload);
-            responseBuilder.contentType(APPLICATION_JSON).entity(statsResponse).status(OK);
-         } catch (JsonProcessingException e) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-         }
+         addPayload(responseBuilder, payload);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
    }
@@ -183,12 +230,7 @@ public class XSiteCacheResource implements ResourceHandler {
 
       return CompletableFuture.supplyAsync(() -> {
          T payload = op.apply(xsiteAdmin);
-         try {
-            byte[] statsResponse = invocationHelper.getMapper().writeValueAsBytes(payload);
-            responseBuilder.contentType(APPLICATION_JSON).entity(statsResponse).status(OK);
-         } catch (JsonProcessingException e) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-         }
+         addPayload(responseBuilder, payload);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
    }
@@ -198,6 +240,41 @@ public class XSiteCacheResource implements ResourceHandler {
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
    }
+
+   private GlobalXSiteAdminOperations getGlobalXSiteAdmin(RestRequest request) {
+      String cacheManager = request.variables().get("name");
+      EmbeddedCacheManager cm = invocationHelper.getRestCacheManager().getInstance();
+
+      if (!cacheManager.equals(cm.getCacheManagerInfo().getName())) return null;
+
+      return SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalXSiteAdminOperations.class);
+   }
+
+   private CompletionStage<RestResponse> executeCacheManagerXSiteOp(RestRequest request,
+                                                                    BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> operation) {
+      GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      String site = request.variables().get("site");
+
+      if (globalXSiteAdmin == null) return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
+
+      return CompletableFuture.supplyAsync(() -> {
+         Map<String, String> payload = operation.apply(globalXSiteAdmin, site);
+         addPayload(responseBuilder, payload);
+         return responseBuilder.build();
+      });
+   }
+
+   private void addPayload(NettyRestResponse.Builder responseBuilder, Object o) {
+      try {
+         byte[] statsResponse = invocationHelper.getMapper().writeValueAsBytes(o);
+         responseBuilder.contentType(APPLICATION_JSON).entity(statsResponse).status(OK);
+      } catch (JsonProcessingException e) {
+         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+   }
+
 
    private CompletionStage<RestResponse> executeXSiteCacheOp(RestRequest request, BiFunction<XSiteAdminOperations, String, String> xsiteOp) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
@@ -216,6 +293,41 @@ public class XSiteCacheResource implements ResourceHandler {
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
+   }
+
+   @SuppressWarnings("unused")
+   private static class GlobalStatus {
+      static final GlobalStatus OFFLINE = new GlobalStatus("offline", null, null);
+      static final GlobalStatus ONLINE = new GlobalStatus("online", null, null);
+      static final GlobalStatus UNKNOWN = new GlobalStatus("unknown", null, null);
+
+      private String status;
+      private List online;
+      private List offline;
+
+      GlobalStatus(String status, List online, List offline) {
+         this.status = status;
+         this.online = online;
+         this.offline = offline;
+      }
+
+      static GlobalStatus mixed(List online, List offline) {
+         return new GlobalStatus("mixed", online, offline);
+      }
+
+      public String getStatus() {
+         return status;
+      }
+
+      @JsonInclude(NON_NULL)
+      public List getOnline() {
+         return online;
+      }
+
+      @JsonInclude(NON_NULL)
+      public List getOffline() {
+         return offline;
+      }
    }
 
    @SuppressWarnings("unused")

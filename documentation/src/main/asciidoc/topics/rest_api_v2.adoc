@@ -772,6 +772,88 @@ include::rest_examples/rest_cache_stats_response.json[]
 * `hit_ratio` provides the total percentage hit/(hit+miss) ratio for all caches.
 * `retrievals` shows the total number of `get()` operations.
 
+[[rest_v2_cache_manager_xsite]]
+=== Managing Cross site replication
+
+The REST API expose several operations to manage cross site replication for all the caches in a cache manager.
+
+[[rest_v2_cache_manager_site_status]]
+==== Retrieving backup statuses
+
+To retrieve the statuses of all backup sites from the caches of `cacheManagerName`, do a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/
+----
+
+Example response:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+   "SFO-3":{
+      "status":"online"
+   },
+   "NYC-2":{
+      "status":"mixed",
+      "online":[
+         "CACHE_1"
+      ],
+      "offline":[
+         "CACHE_2"
+      ]
+   }
+}
+----
+
+The `status` field can assume the following values:
+
+* `online`: all caches are online in the backup site.
+* `offline`: all caches are offline in the backup site.
+* `mixed`: some caches are online and others offline, and their names will be listed in the `online` and `offline` arrays respectively.
+
+
+[[rest_v2_cache_manager_take_offline]]
+==== Taking a backup site offline
+
+To take all caches from `cacheManagerName` offline, for the backup site `siteName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=take-offline
+----
+
+[[rest_v2_cache_manager_bring_online]]
+==== Bringing a backup site online
+
+To bring all caches from `cacheManagerName` online, for the backup site `siteName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
+----
+
+[[rest_v2_cache_manager_start_push]]
+==== Starting a state push
+
+To start pushing state of all caches of `cacheManagerName` to a backup site `siteName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=start-push-state
+----
+
+[[rest_v2_cache_manager_cancel_push]]
+==== Cancelling an ongoing state push
+
+To cancel an ongoing state push of all caches of `cacheManagerName` to a remote backup site `siteName`, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=cancel-push-state
+----
+
 [[rest_server_counters]]
 == Working with Counters
 

@@ -1,5 +1,7 @@
 package org.infinispan.xsite;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
@@ -46,12 +49,34 @@ public class GlobalXSiteAdminOperations {
       }
    }
 
+   public Map<String, String> takeAllCachesOffline(String site) {
+      return performMultiCacheOperation(operations -> operations.takeSiteOffline(site));
+   }
+
+   public Map<String, String> bringAllCachesOnline(String site) {
+      return performMultiCacheOperation(operations -> operations.bringSiteOnline(site));
+   }
+
+   public Map<String, String> pushStateAllCaches(String site) {
+      return performMultiCacheOperation(operations -> operations.pushState(site));
+   }
+
+   public Map<String, String> cancelPushStateAllCaches(String site) {
+      return performMultiCacheOperation(operations -> operations.cancelPushState(site));
+   }
+
+   private String toJMXResponse(Map<String, String> results) {
+      return results.entrySet().stream()
+            .map(e -> e.getKey() + ": " + e.getValue())
+            .collect(Collectors.joining(CACHE_DELIMITER));
+   }
+
    @ManagedOperation(
          description = "Takes this site offline in all caches in the cluster.",
          displayName = "Takes this site offline in all caches in the cluster."
    )
    public String takeSiteOffline(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      return performOperation(operations -> operations.takeSiteOffline(site));
+      return toJMXResponse(performMultiCacheOperation(operations -> operations.takeSiteOffline(site)));
    }
 
    @ManagedOperation(
@@ -59,7 +84,7 @@ public class GlobalXSiteAdminOperations {
          displayName = "Brings the given site back online on all the caches."
    )
    public String bringSiteOnline(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      return performOperation(operations -> operations.bringSiteOnline(site));
+      return toJMXResponse(performMultiCacheOperation(operations -> operations.bringSiteOnline(site)));
    }
 
    @ManagedOperation(
@@ -69,7 +94,7 @@ public class GlobalXSiteAdminOperations {
          name = "pushState"
    )
    public final String pushState(@Parameter(description = "The destination site name", name = "SiteName") String site) {
-      return performOperation(operations -> operations.pushState(site));
+      return toJMXResponse(performMultiCacheOperation(operations -> operations.pushState(site)));
    }
 
    @ManagedOperation(
@@ -77,9 +102,8 @@ public class GlobalXSiteAdminOperations {
          description = "Cancels the push state on all the caches to remote site.",
          name = "CancelPushState"
    )
-   public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
-                                       final String site) {
-      return performOperation(operations -> operations.cancelPushState(site));
+   public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName") final String site) {
+      return toJMXResponse(performMultiCacheOperation(operations -> operations.cancelPushState(site)));
    }
 
    public final Map<String, SiteStatus> globalStatus() {
@@ -105,25 +129,23 @@ public class GlobalXSiteAdminOperations {
       return result;
    }
 
-   private String performOperation(Operation operation) {
-      final Iterator<CacheXSiteAdminOperation> iterator = collectXSiteAdminOperation().iterator();
-      if (!iterator.hasNext()) {
-         return XSiteAdminOperations.SUCCESS;
+   /**
+    * Execute an operation for all caches in the site
+    * @return A Map keyed by the cache name and with the outcome in the value. Possible values are 'ok' or the
+    * error message.
+    */
+   private Map<String, String> performMultiCacheOperation(Operation operation) {
+      Collection<CacheXSiteAdminOperation> admOps = collectXSiteAdminOperation();
+      if (admOps.isEmpty()) {
+         return Collections.emptyMap();
       }
-      StringBuilder builder = new StringBuilder();
-      while (iterator.hasNext()) {
-         CacheXSiteAdminOperation xsiteAdminOperation = iterator.next();
+      return admOps.stream().collect(toMap(op -> op.cacheName, op -> {
          try {
-            String result = operation.execute(xsiteAdminOperation.xSiteAdminOperations);
-            builder.append(xsiteAdminOperation.cacheName).append(": ").append(result);
-            if (iterator.hasNext()) {
-               builder.append(CACHE_DELIMITER);
-            }
+            return operation.execute(op.xSiteAdminOperations);
          } catch (Exception e) {
-            builder.append("Exception on ").append(xsiteAdminOperation.cacheName).append(": ").append(e.getMessage());
+            return "Exception on " + op.cacheName + " : " + e.getMessage();
          }
-      }
-      return builder.length() == 0 ? XSiteAdminOperations.SUCCESS : builder.toString();
+      }));
    }
 
    private Collection<CacheXSiteAdminOperation> collectXSiteAdminOperation() {
