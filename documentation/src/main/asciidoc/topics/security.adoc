@@ -133,7 +133,6 @@ In order to convert the Principals in a Subject into a set of roles to be used w
 * IdentityRoleMapper (Java: +org.infinispan.security.impl.IdentityRoleMapper+, XML: +<identity-role-mapper />+): this mapper just uses the Principal name as the role name
 * CommonNameRoleMapper (Java: +org.infinispan.security.impl.CommonRoleMapper+, XML: +<common-name-role-mapper />+): if the Principal name is a Distinguished Name (DN), this mapper extracts the Common Name (CN) and uses it as a role name. For example
 the DN +cn=managers,ou=people,dc=example,dc=com+ will be mapped to the role +managers+
-* ClusterRoleMapper (Java: +org.infinispan.security.impl.ClusterRoleMapper+ XML: +<cluster-role-mapper />+): a mapper which uses the ClusterRegistry to store principal to role mappings. This allows the use of the CLI's GRANT and DENY commands to add/remove roles to a principal.
 * Custom role mappers (XML: +<custom-role-mapper class="a.b.c" />+): just supply the fully-qualified class name of an implementation of +org.infinispan.security.PrincipalRoleMapper+
 
 [[security_cluster]]
