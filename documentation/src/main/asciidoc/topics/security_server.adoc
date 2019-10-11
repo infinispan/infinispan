@@ -1,4 +1,4 @@
-== General concepts
+== Security Concepts
 
 === Authorization
 
@@ -29,14 +29,8 @@ It is also possible to authenticate/authorize against alternative sources, such 
 
 Bear in mind that the choice of authentication mechanism you select for the protocols limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself (e.g. pre-digested passwords for the digest algorithm)
 
-== Security Audit
-
-The {brandname} subsystem security audit by default sends audit logs to the audit manager configured at the server level.
-
-Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
-
 [[security_hotrod_auth]]
-== Hot Rod authentication
+== Hot Rod Authentication
 
 The Hot Rod protocol supports authentication by leveraging the SASL mechanisms.
 The supported SASL mechanisms (usually shortened as mechs) are:

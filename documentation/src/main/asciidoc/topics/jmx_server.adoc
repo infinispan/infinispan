@@ -1,0 +1,27 @@
+= Monitoring {brandname} Servers Over JMX
+
+You can monitor an {brandname} Server over JMX in two ways:
+
+* Use JConsole or VisualVM running locally as the same user. This will use a local link:http://www.oracle.com/technetwork/java/jvmstat-142257.html[jvmstat] connection and requires no additional setup
+* Use JMX remoting (aka JSR-160) to connect from any host. This requires connecting through the management port (usually 9990) using a special protocol which respects the server security configuration
+
+To setup a client for JMX remoting you need to add the +$ISPN_HOME/bin/client/jboss-client.jar+ to your client's classpath and use one of the following service URLs:
+
+ifndef::productized[]
+* `service:jmx:remote-http-jmx://host:port` for plain connections through the management interface
+* `service:jmx:remote-https-jmx://host:port` for TLS connections through the management interface (although this requires having the appropriate keys available)
+* `service:jmx:remoting-jmx://localhost:port` for connections through the remoting interface (necessary for connecting to individual servers in a domain)
+endif::productized[]
+ifdef::productized[]
+* `service:jmx:remote+http://hostname:9990` for plain connections through the management interface
+* `service:jmx:remote+https://hostname:9993` for TLS connections through the management interface (although this requires having the appropriate keys available)
+endif::productized[]
+
+The JMX subsystem registers a service with the Remoting endpoint so that remote access to JMX can be obtained over the exposed Remoting connector.
+This is switched on by default in standalone mode and accessible over port 9990 but in domain mode it is switched off so it needs to be enabled.
+In domain mode the port will be the port of the Remoting connector for the Server instance to be monitored.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jmx_remoting_connector.xml[]
+----

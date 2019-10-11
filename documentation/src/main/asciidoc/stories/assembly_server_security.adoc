@@ -1,5 +1,6 @@
 [id='security-{context}']
 :context: server
+= Securing {brandname} Servers
 
 include::{topics}/security_server.adoc[leveloffset=+0]
 

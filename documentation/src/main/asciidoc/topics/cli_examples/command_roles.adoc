@@ -1,2 +1,0 @@
-[remoting://localhost:9999]> roles user1
-[supervisor, reader]

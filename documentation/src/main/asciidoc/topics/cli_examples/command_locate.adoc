@@ -1,2 +1,0 @@
-[jmx://localhost:12000/MyCacheManager/namedCache]> locate a
-[host/node1,host/node2]

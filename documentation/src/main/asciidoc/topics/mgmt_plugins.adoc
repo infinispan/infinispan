@@ -1,2 +1,0 @@
-= Writing plugins for other management tools
-Any management tool that supports JMX already has basic support for {brandname}. However, custom plugins could be written to adapt the JMX information for easier consumption.
