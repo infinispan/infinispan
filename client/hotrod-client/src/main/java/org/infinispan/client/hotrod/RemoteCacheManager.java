@@ -56,7 +56,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.jmx.RemoteCacheManagerMXBean;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.marshall.BytesOnlyJBossLikeMarshaller;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -319,7 +318,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       if (!configuration.serialWhitelist().isEmpty()) {
          marshaller.initialize(configuration.getClassWhiteList());
       }
-      marshallerRegistry.registerMarshaller(BytesOnlyJBossLikeMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
       // Register this one last, so it will replace any that may support the same media type
