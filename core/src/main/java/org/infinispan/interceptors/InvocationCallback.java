@@ -10,10 +10,10 @@ import org.infinispan.context.InvocationContext;
  * @since 9.0
  */
 @FunctionalInterface
-public interface InvocationCallback {
+public interface InvocationCallback<C extends VisitableCommand> {
    /**
     * Process the result or the exception from an invocation stage and either return a simple value,
     * return a new {@link InvocationStage}, or throw an exception.
     */
-   Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable;
+   Object apply(InvocationContext rCtx, C rCommand, Object rv, Throwable throwable) throws Throwable;
 }

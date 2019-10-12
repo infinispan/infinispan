@@ -291,18 +291,18 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       Iterator<VisitableCommand> subCommands = keys.stream()
             .filter(k -> !cdl.getCacheTopology().isWriteOwner(k))
             .map(k -> removeFromL1Command(ctx, k, keyPartitioner.getSegment(k))).iterator();
-      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable ex) -> {
-         WriteCommand writeCommand = (WriteCommand) rCommand;
+      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, WriteCommand writeCommand, Object rv, Throwable ex) -> {
          if (ex != null) {
             if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
-               return asyncValue(invalidationFuture).thenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> {
+               return asyncValue(invalidationFuture).thenApply(rCtx, writeCommand, (rCtx1, rCommand1, rv1) -> {
                   throw ex;
                });
             }
             throw ex;
          } else {
             if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
-               return asyncValue(invalidationFuture).thenApply(null, null, (rCtx2, rCommand2, rv2) -> MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv));
+               return asyncValue(invalidationFuture).thenApply(null, null,
+                     (rCtx2, rCommand2, rv2) -> MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv));
             } else {
                return MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv);
             }
@@ -367,11 +367,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          return invokeNext(ctx, command);
       }
       CompletableFuture<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
-      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable ex) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, DataWriteCommand dataWriteCommand, Object rv, Throwable ex) -> {
          if (ex != null) {
             if (mustSyncInvalidation(l1InvalidationFuture, dataWriteCommand)) {
-               return asyncValue(l1InvalidationFuture).thenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> {
+               return asyncValue(l1InvalidationFuture).thenApply(rCtx, dataWriteCommand, (rCtx1, rCommand1, rv1) -> {
                   throw ex;
                });
             }
@@ -384,7 +383,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                   return makeStage(asyncInvokeNext(rCtx, removeFromL1Command, l1InvalidationFuture))
                         .thenApply(null, null, (rCtx2, rCommand2, rv2) -> rv);
                } else {
-                  return asyncValue(l1InvalidationFuture).thenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> rv);
+                  return asyncValue(l1InvalidationFuture).thenApply(rCtx, dataWriteCommand, (rCtx1, rCommand1, rv1) -> rv);
                }
             } else if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
                VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey(),

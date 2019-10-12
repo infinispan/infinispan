@@ -108,7 +108,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private final AdvancedCache<?, ?> cache;
 
-   private final InvocationSuccessAction processClearCommand = this::processClearCommand;
+   private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
                            IndexModificationStrategy indexingMode,
@@ -179,8 +179,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             prev = UNKNOWN;
          }
          Object oldValue = prev;
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            DataWriteCommand cmd = (DataWriteCommand) rCommand;
+         return invokeNextThenAccept(ctx, command, (rCtx, cmd, rv) -> {
             if (!cmd.isSuccessful()) {
                return;
             }
@@ -220,8 +219,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                oldValues.put(key, entry.getValue());
             }
          }
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            WriteCommand cmd = (WriteCommand) rCommand;
+         return invokeNextThenAccept(ctx, command, (rCtx, cmd, rv) -> {
             if (!cmd.isSuccessful()) {
                return;
             }
@@ -473,8 +471,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private void processClearCommand(InvocationContext ctx, VisitableCommand command, Object rv) {
-      if (shouldModifyIndexes((ClearCommand) command, ctx, null)) {
+   private void processClearCommand(InvocationContext ctx, ClearCommand command, Object rv) {
+      if (shouldModifyIndexes(command, ctx, null)) {
          purgeAllIndexes(NoTransactionContext.INSTANCE);
       }
    }

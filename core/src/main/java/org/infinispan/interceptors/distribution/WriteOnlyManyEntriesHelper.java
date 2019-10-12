@@ -13,7 +13,7 @@ import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
 class WriteOnlyManyEntriesHelper extends WriteManyCommandHelper<WriteOnlyManyEntriesCommand, Map<Object, Object>, Map.Entry<Object, Object>> {
-   WriteOnlyManyEntriesHelper(Function<WriteManyCommandHelper<WriteOnlyManyEntriesCommand, ?, ?>, InvocationSuccessFunction> createRemoteCallback) {
+   WriteOnlyManyEntriesHelper(Function<WriteManyCommandHelper<WriteOnlyManyEntriesCommand, ?, ?>, InvocationSuccessFunction<WriteOnlyManyEntriesCommand>> createRemoteCallback) {
       super(createRemoteCallback);
    }
 

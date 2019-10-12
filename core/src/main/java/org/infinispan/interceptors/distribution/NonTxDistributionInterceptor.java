@@ -344,7 +344,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
       C localCommand = helper.copyForLocal(command, myItems);
       localCommand.setTopologyId(command.getTopologyId());
-      InvocationFinallyAction handler =
+      InvocationFinallyAction<C> handler =
             createLocalInvocationHandler(ch, allFuture, segments, helper, MergingCompletableFuture.moveListItemsToFuture(myOffset));
       // It's safe to ignore the invocation stages below, because handleRemoteSegmentsForReadWriteManyCommand
       // does not touch the context.
@@ -428,7 +428,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private <C extends WriteCommand, F extends CountDownCompletableFuture, Item>
-   InvocationFinallyAction createLocalInvocationHandler(
+   InvocationFinallyAction<C> createLocalInvocationHandler(
          ConsistentHash ch, F allFuture, IntSet segments, WriteManyCommandHelper<C, ?, Item> helper,
          BiConsumer<F, Object> returnValueConsumer) {
       return (rCtx, rCommand, rv, throwable) -> {
@@ -440,8 +440,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Map<Address, IntSet> backupOwners = backupOwnersOfSegments(ch, segments);
             for (Entry<Address, IntSet> backup : backupOwners.entrySet()) {
                // rCommand is the original command
-               C backupCopy = helper.copyForBackup((C) rCommand, ch, backup.getValue());
-               backupCopy.setTopologyId(((C) rCommand).getTopologyId());
+               C backupCopy = helper.copyForBackup(rCommand, ch, backup.getValue());
+               backupCopy.setTopologyId(rCommand.getTopologyId());
                if (helper.getItems(backupCopy).isEmpty()) continue;
                Address backupOwner = backup.getKey();
                if (isSynchronous(backupCopy)) {

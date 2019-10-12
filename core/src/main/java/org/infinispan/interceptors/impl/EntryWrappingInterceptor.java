@@ -123,9 +123,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private final InvocationSuccessFunction dataReadReturnHandler = (rCtx, rCommand, rv) -> {
-      AbstractDataCommand dataCommand = (AbstractDataCommand) rCommand;
-
+   private final InvocationSuccessFunction<AbstractDataCommand> dataReadReturnHandler = (rCtx, dataCommand, rv) -> {
       if (rCtx.isInTxScope() && useRepeatableRead) {
          // This invokes another method as this is only done with a specific configuration and we want to inline
          // the notifier below
@@ -149,13 +147,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return rv;
    };
 
-   private final InvocationSuccessFunction commitEntriesSuccessHandler = (rCtx, rCommand, rv) ->
+   private final InvocationSuccessFunction<VisitableCommand> commitEntriesSuccessHandler = (rCtx, rCommand, rv) ->
          delayedValue(commitContextEntries(rCtx, null), rv);
 
-   private final InvocationFinallyFunction commitEntriesFinallyHandler = this::commitEntriesFinally;
-   private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
-   private final InvocationSuccessFunction applyAndFixVersion = this::applyAndFixVersion;
-   private final InvocationSuccessFunction applyAndFixVersionForMany = this::applyAndFixVersionForMany;
+   private final InvocationFinallyFunction<CommitCommand> commitEntriesFinallyHandler = this::commitEntriesFinally;
+   private final InvocationSuccessFunction<PrepareCommand> prepareHandler = this::prepareHandler;
+   private final InvocationSuccessFunction<DataWriteCommand> applyAndFixVersion = this::applyAndFixVersion;
+   private final InvocationSuccessFunction<WriteCommand> applyAndFixVersionForMany = this::applyAndFixVersionForMany;
 
    @Start
    public void start() {
@@ -186,8 +184,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
    }
 
-   private Object prepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
-      if (shouldCommitDuringPrepare((PrepareCommand) command, (TxInvocationContext) ctx)) {
+   private Object prepareHandler(InvocationContext ctx, PrepareCommand command, Object rv) {
+      if (shouldCommitDuringPrepare(command, (TxInvocationContext) ctx)) {
          return invokeNextThenApply(ctx, command, commitEntriesSuccessHandler);
       } else {
          return invokeNext(ctx, command);
@@ -223,8 +221,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getKeys()) {
          entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key), ignoreOwnership || canReadKey(key));
       }
-      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
-         GetAllCommand getAllCommand = (GetAllCommand) rCommand;
+      return invokeNextAndHandle(ctx, command, (rCtx, getAllCommand, rv, t) -> {
          if (useRepeatableRead) {
             for (Object key : getAllCommand.getKeys()) {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
@@ -279,7 +276,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // If we are committing a ClearCommand now then no keys should be written by state transfer from
          // now on until current rebalance ends.
          if (stateConsumer.running() != null) {
-            stateConsumer.running().stopApplyingState(((ClearCommand) rCommand).getTopologyId());
+            stateConsumer.running().stopApplyingState(rCommand.getTopologyId());
          }
          if (xSiteStateConsumer.running() != null) {
             xSiteStateConsumer.running().endStateTransfer(null);
@@ -287,8 +284,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
          CompletionStage<Void> stage = null;
          if (!rCtx.isInTxScope()) {
-            ClearCommand clearCommand = (ClearCommand) rCommand;
-            stage = applyChanges(rCtx, clearCommand);
+            stage = applyChanges(rCtx, rCommand);
          }
 
          if (trace)
@@ -442,7 +438,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (ctx.isInTxScope() && useRepeatableRead) {
          return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-            ctx.forEachEntry((key, entry) -> {
+            rCtx.forEachEntry((key, entry) -> {
                entry.setSkipLookup(true);
                if (isVersioned && ((MVCCEntry) entry).isRead()) {
                   addVersionRead(txCtx, entry, key);
@@ -658,8 +654,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return invokeNextThenApply(ctx, command, applyAndFixVersionForMany);
    }
 
-   private Object applyAndFixVersionForMany(InvocationContext ctx, VisitableCommand cmd, Object rv) {
-      WriteCommand writeCommand = (WriteCommand) cmd;
+   private Object applyAndFixVersionForMany(InvocationContext ctx, WriteCommand writeCommand, Object rv) {
       if (!ctx.isInTxScope()) {
          return delayedValue(applyChanges(ctx, writeCommand), rv);
       }
@@ -703,8 +698,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return invokeNextThenApply(ctx, command, applyAndFixVersion);
    }
 
-   private Object applyAndFixVersion(InvocationContext ctx, VisitableCommand cmd, Object rv) {
-      DataWriteCommand dataWriteCommand = (DataWriteCommand) cmd;
+   private Object applyAndFixVersion(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) {
       if (!ctx.isInTxScope()) {
          return delayedValue(applyChanges(ctx, dataWriteCommand), rv);
       }
@@ -864,7 +858,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
              command.isOnePhaseCommit();
    }
 
-   protected final Object wrapEntriesForPrepareAndApply(TxInvocationContext ctx, PrepareCommand command, InvocationSuccessFunction handler) throws Throwable {
+   protected final <P extends PrepareCommand> Object wrapEntriesForPrepareAndApply(TxInvocationContext ctx, P command, InvocationSuccessFunction<P> handler) throws Throwable {
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          return applyModificationsAndThen(ctx, command, command.getModifications(), 0, handler);
       } else if (ctx.isOriginLocal()) {
@@ -882,7 +876,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return handler.apply(ctx, command, null);
    }
 
-   private Object applyModificationsAndThen(TxInvocationContext ctx, PrepareCommand command, WriteCommand[] modifications, int startIndex, InvocationSuccessFunction handler) throws Throwable {
+   private <P extends PrepareCommand> Object applyModificationsAndThen(TxInvocationContext ctx, P command, WriteCommand[] modifications, int startIndex, InvocationSuccessFunction<P> handler) throws Throwable {
       // We need to execute modifications for the same key sequentially. In theory we could optimize
       // this loop if there are multiple remote invocations but since remote invocations are rare, we omit this.
       for (int i = startIndex; i < modifications.length; i++) {

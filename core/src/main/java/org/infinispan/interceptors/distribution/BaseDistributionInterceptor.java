@@ -98,7 +98,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected boolean isWriteBehind;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
-   private final InvocationSuccessFunction primaryReturnHandler = this::primaryReturnHandler;
+   private final InvocationSuccessFunction<AbstractDataWriteCommand> primaryReturnHandler = this::primaryReturnHandler;
 
    @Override
    protected Log getLog() {
@@ -295,8 +295,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return cacheTopology;
    }
 
-   private Object primaryReturnHandler(InvocationContext ctx, VisitableCommand visitableCommand, Object localResult) {
-      DataWriteCommand command = (DataWriteCommand) visitableCommand;
+   private Object primaryReturnHandler(InvocationContext ctx, AbstractDataWriteCommand command, Object localResult) {
       if (!command.isSuccessful()) {
          if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
@@ -476,7 +475,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    private <C extends TopologyAffectedCommand & VisitableCommand> Object handleRemoteReadManyCommand(
-         InvocationContext ctx, C command, Collection<?> keys, InvocationSuccessFunction remoteReturnHandler) {
+         InvocationContext ctx, C command, Collection<?> keys, InvocationSuccessFunction<C> remoteReturnHandler) {
       for (Object key : keys) {
          if (ctx.lookupEntry(key) == null) {
             return UnsureResponse.INSTANCE;
@@ -753,8 +752,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
          throw t;
       }
-      return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+      return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, dataWriteCommand, rv, t) -> {
          dataWriteCommand.setValueMatcher(dataWriteCommand.getValueMatcher().matcherForRetry());
          CompletableFutures.rethrowException(t);
 
@@ -778,7 +776,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP);
    }
 
-   protected interface ReadManyCommandHelper<C> extends InvocationSuccessFunction {
+   protected interface ReadManyCommandHelper<C extends VisitableCommand> extends InvocationSuccessFunction<C> {
       Collection<?> keys(C command);
       C copyForLocal(C command, List<Object> keys);
       ReadOnlyManyCommand copyForRemote(C command, List<Object> keys, InvocationContext ctx);
@@ -792,8 +790,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected class ReadOnlyManyHelper implements ReadManyCommandHelper<ReadOnlyManyCommand> {
       @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
-         return wrapFunctionalManyResultOnNonOrigin(rCtx, ((ReadOnlyManyCommand) rCommand).getKeys(), ((Stream) rv).toArray());
+      public Object apply(InvocationContext rCtx, ReadOnlyManyCommand rCommand, Object rv) throws Throwable {
+         return wrapFunctionalManyResultOnNonOrigin(rCtx, rCommand.getKeys(), ((Stream) rv).toArray());
       }
 
       @Override

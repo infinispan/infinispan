@@ -39,8 +39,8 @@ public class SyncInvocationStage extends InvocationStage {
    }
 
    @Override
-   public Object thenApply(InvocationContext ctx, VisitableCommand command,
-                           InvocationSuccessFunction function) {
+   public <C extends VisitableCommand> Object thenApply(InvocationContext ctx, C command,
+                           InvocationSuccessFunction<C> function) {
       try {
          return function.apply(ctx, command, rv);
       } catch (Throwable throwable) {
@@ -49,23 +49,23 @@ public class SyncInvocationStage extends InvocationStage {
    }
 
    @Override
-   public Object thenAccept(InvocationContext ctx, VisitableCommand command,
-                            InvocationSuccessAction action) {
+   public <C extends VisitableCommand> Object thenAccept(InvocationContext ctx, C command,
+                            InvocationSuccessAction<C> action) {
       return thenAcceptMakeStage(ctx, command, action);
    }
 
-   public Object andExceptionally(InvocationContext ctx, VisitableCommand command,
-                                  InvocationExceptionFunction function) {
+   public <C extends VisitableCommand> Object andExceptionally(InvocationContext ctx, C command,
+                                  InvocationExceptionFunction<C> function) {
       return this;
    }
 
-   public Object andFinally(InvocationContext ctx, VisitableCommand command,
-                            InvocationFinallyAction action) {
+   public <C extends VisitableCommand> Object andFinally(InvocationContext ctx, C command,
+                            InvocationFinallyAction<C> action) {
       return andFinallyMakeStage(ctx, command, action);
    }
 
-   public Object andHandle(InvocationContext ctx, VisitableCommand command,
-                           InvocationFinallyFunction function) {
+   public <C extends VisitableCommand> Object andHandle(InvocationContext ctx, C command,
+                           InvocationFinallyFunction<C> function) {
       try {
          return function.apply(ctx, command, rv, null);
       } catch (Throwable throwable) {
@@ -74,7 +74,7 @@ public class SyncInvocationStage extends InvocationStage {
    }
 
    @Override
-   public Object addCallback(InvocationContext ctx, VisitableCommand command, InvocationCallback function) {
+   public <C extends VisitableCommand> Object addCallback(InvocationContext ctx, C command, InvocationCallback<C> function) {
       try {
          return function.apply(ctx, command, rv, null);
       } catch (Throwable throwable) {
@@ -87,8 +87,8 @@ public class SyncInvocationStage extends InvocationStage {
     *
     * The result may be either a plain value, or a new {@link InvocationStage}.
     */
-   public InvocationStage thenApplyMakeStage(InvocationContext ctx, VisitableCommand command,
-                                             InvocationSuccessFunction function) {
+   public <C extends VisitableCommand> InvocationStage thenApplyMakeStage(InvocationContext ctx, C command,
+                                             InvocationSuccessFunction<C> function) {
       try {
          return makeStage(function.apply(ctx, command, rv));
       } catch (Throwable throwable) {
@@ -96,8 +96,8 @@ public class SyncInvocationStage extends InvocationStage {
       }
    }
 
-   public InvocationStage thenAcceptMakeStage(InvocationContext ctx, VisitableCommand command,
-                                              InvocationSuccessAction action) {
+   public <C extends VisitableCommand> InvocationStage thenAcceptMakeStage(InvocationContext ctx, C command,
+                                              InvocationSuccessAction<C> action) {
       try {
          action.accept(ctx, command, rv);
          return this;
@@ -106,13 +106,13 @@ public class SyncInvocationStage extends InvocationStage {
       }
    }
 
-   public InvocationStage andExceptionallyMakeStage(InvocationContext ctx, VisitableCommand command,
-                                                    InvocationExceptionFunction function) {
+   public <C extends VisitableCommand> InvocationStage andExceptionallyMakeStage(InvocationContext ctx, C command,
+                                                    InvocationExceptionFunction<C> function) {
       return this;
    }
 
-   public InvocationStage andFinallyMakeStage(InvocationContext ctx, VisitableCommand command,
-                                              InvocationFinallyAction action) {
+   public <C extends VisitableCommand> InvocationStage andFinallyMakeStage(InvocationContext ctx, C command,
+                                              InvocationFinallyAction<C> action) {
       try {
          action.accept(ctx, command, rv, null);
          return this;
@@ -121,8 +121,8 @@ public class SyncInvocationStage extends InvocationStage {
       }
    }
 
-   public InvocationStage andHandleMakeStage(InvocationContext ctx, VisitableCommand command,
-                                             InvocationFinallyFunction function) {
+   public <C extends VisitableCommand> InvocationStage andHandleMakeStage(InvocationContext ctx, C command,
+                                             InvocationFinallyFunction<C> function) {
       try {
          return makeStage(function.apply(ctx, command, rv, null));
       } catch (Throwable throwable) {

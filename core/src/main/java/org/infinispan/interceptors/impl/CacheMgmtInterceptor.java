@@ -132,7 +132,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
-         int requests = ((GetAllCommand) rCommand).getKeys().size();
+         int requests = rCommand.getKeys().size();
          int hitCount = 0;
          if (t == null) {
             for (Entry<Object, Object> entry : ((Map<Object, Object>) rv).entrySet()) {
@@ -164,7 +164,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          final long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
-         final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
+         final Map<Object, Object> data = rCommand.getMap();
          if (data != null && !data.isEmpty()) {
             StripeB stripe = counters.stripeForCurrentThread();
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
@@ -262,7 +262,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          StripeB stripe = counters.stripeForCurrentThread();
          ByRef.Integer hitCount = new ByRef.Integer(0);
          ByRef.Integer missCount = new ByRef.Integer(0);
-         int numResults = ((ReadOnlyManyCommand) rCommand).getKeys().size();
+         int numResults = rCommand.getKeys().size();
          Collection<Object> retvals = new ArrayList<>(numResults);
          ((Stream<StatsEnvelope<Object>>) rv).forEach(e -> {
             if (e.isHit()) hitCount.inc();
@@ -381,7 +381,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          int misses = 0;
          int stores = 0;
          int removals = 0;
-         int numResults = ((AbstractWriteManyCommand) rCommand).getAffectedKeys().size();
+         int numResults = rCommand.getAffectedKeys().size();
          List<Object> results = new ArrayList<>(numResults);
          for(StatsEnvelope<?> envelope : ((Collection<StatsEnvelope<?>>) rv)) {
             if (envelope.isDelete()) {
@@ -428,8 +428,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         RemoveCommand removeCommand = (RemoveCommand) rCommand;
+      return invokeNextAndFinally(ctx, command, (rCtx, removeCommand, rv, t) -> {
          if (removeCommand.isConditional()) {
             if (removeCommand.isSuccessful())
                increaseRemoveHits(start);

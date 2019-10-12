@@ -3,7 +3,6 @@ package org.infinispan.interceptors.impl;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
@@ -35,7 +34,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
    @Inject protected VersionGenerator versionGenerator;
 
-   private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
+   private final InvocationSuccessFunction<VersionedPrepareCommand> prepareHandler = this::prepareHandler;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -43,15 +42,15 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (ctx.isOriginLocal()) {
          versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
       }
-      return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
+      return wrapEntriesForPrepareAndApply(ctx, versionedPrepareCommand, prepareHandler);
    }
 
-   private Object prepareHandler(InvocationContext nonTxCtx, VisitableCommand command, Object nil) {
+   private Object prepareHandler(InvocationContext nonTxCtx, VersionedPrepareCommand command, Object nil) {
       TxInvocationContext ctx = (TxInvocationContext) nonTxCtx;
       CompletionStage<EntryVersionsMap> originVersionData;
       if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
          originVersionData =
-               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, command);
       } else {
          originVersionData = CompletableFutures.completedNull();
       }
@@ -94,8 +93,8 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
       }
 
-      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) ->
-            delayedValue(doCommit(rCtx, ((VersionedCommitCommand) rCommand)), rv, t));
+      return invokeNextAndHandle(ctx, versionedCommitCommand, (rCtx, rCommand, rv, t) ->
+            delayedValue(doCommit(rCtx, rCommand), rv, t));
    }
 
    private CompletionStage<Void> doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {

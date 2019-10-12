@@ -20,16 +20,16 @@ import org.infinispan.notifications.cachelistener.annotation.TransactionComplete
  */
 public class NotificationInterceptor extends DDAsyncInterceptor {
    @Inject CacheNotifier notifier;
-   private final InvocationSuccessFunction commitSuccessAction = new InvocationSuccessFunction() {
+   private final InvocationSuccessFunction<VisitableCommand> commitSuccessAction = new InvocationSuccessFunction<VisitableCommand>() {
       @Override
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
             throws Throwable {
          return delayedValue(notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), true, rCtx), rv);
       }
    };
-   private final InvocationSuccessFunction rollbackSuccessAction = new InvocationSuccessFunction() {
+   private final InvocationSuccessFunction<RollbackCommand> rollbackSuccessAction = new InvocationSuccessFunction<RollbackCommand>() {
       @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
+      public Object apply(InvocationContext rCtx, RollbackCommand rCommand, Object rv)
             throws Throwable {
          return delayedValue(notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), false, rCtx), rv);
       }

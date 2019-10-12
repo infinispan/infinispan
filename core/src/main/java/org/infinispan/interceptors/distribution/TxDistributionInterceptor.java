@@ -144,16 +144,17 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = command.getKey();
          CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null, command.getSegment());
          return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
+            Object innerKey = rCommand.getKey();
             if (max == null) {
                // If there was no max value just remove the entry as normal
-               return handleTxWriteCommand(ctx, command, command.getKey());
+               return handleTxWriteCommand(rCtx, rCommand, innerKey);
             }
             // If max was returned update our time with it, so we don't query again
-            UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, command.getSegment(), (long) max);
+            UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(innerKey, rCommand.getSegment(), (long) max);
             // This command doesn't block
             ulac.invokeAsync().join();
             // Make sure to notify other interceptors the command failed
-            command.fail();
+            rCommand.fail();
             return Boolean.FALSE;
          });
       }
@@ -419,11 +420,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                Object result = asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), true));
                return makeStage(result)
                      .andFinally(ctx, command, (rCtx, rCommand, rv, t) ->
-                           updateMatcherForRetry((WriteCommand) rCommand));
+                           updateMatcherForRetry(rCommand));
             }
          }
          // already wrapped, we can continue
-         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> updateMatcherForRetry((WriteCommand) rCommand));
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> updateMatcherForRetry(rCommand));
       } catch (Throwable t) {
          updateMatcherForRetry(command);
          throw t;
@@ -510,7 +511,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                                                     new RemoteGetSingleKeyCollector(), rpcManager.getSyncRpcOptions());
             return asyncValue(remoteGet).thenApply(ctx, command, (rCtx, rCommand, response) -> {
                Object responseValue = ((SuccessfulResponse) response).getResponseValue();
-               return unwrapFunctionalResultOnOrigin(ctx, command.getKey(), responseValue);
+               return unwrapFunctionalResultOnOrigin(rCtx, rCommand.getKey(), responseValue);
             });
          }
          // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
@@ -724,8 +725,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
-         return wrapFunctionalManyResultOnNonOrigin(rCtx, ((WriteCommand) rCommand).getAffectedKeys(), ((List) rv).toArray());
+      public Object apply(InvocationContext rCtx, C rCommand, Object rv) throws Throwable {
+         return wrapFunctionalManyResultOnNonOrigin(rCtx, rCommand.getAffectedKeys(), ((List) rv).toArray());
       }
 
       @Override

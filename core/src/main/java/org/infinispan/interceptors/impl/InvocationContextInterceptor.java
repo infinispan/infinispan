@@ -48,7 +48,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
    private volatile boolean shuttingDown = false;
 
-   private final InvocationExceptionFunction suppressExceptionsHandler = (rCtx, rCommand, throwable) -> {
+   private final InvocationExceptionFunction<VisitableCommand> suppressExceptionsHandler = (rCtx, rCommand, throwable) -> {
       if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
          throw throwable;
       } if (throwable instanceof UserRaisedFunctionalException) {

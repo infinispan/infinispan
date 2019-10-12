@@ -13,7 +13,7 @@ import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
 class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Object>, Map.Entry<Object, Object>> {
-   PutMapHelper(Function<WriteManyCommandHelper<PutMapCommand, ?, ?>, InvocationSuccessFunction> createRemoteCallback) {
+   PutMapHelper(Function<WriteManyCommandHelper<PutMapCommand, ?, ?>, InvocationSuccessFunction<PutMapCommand>> createRemoteCallback) {
       super(createRemoteCallback);
    }
 

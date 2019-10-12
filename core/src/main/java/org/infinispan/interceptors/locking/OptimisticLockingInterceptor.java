@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -24,8 +25,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
-   private final InvocationFinallyAction releaseLockOnCompletionAction = (rCtx, rCommand, rv, throwable) -> releaseLockOnTxCompletion((TxInvocationContext<?>) rCtx);
-   private final InvocationSuccessFunction onePhaseCommitFunction = (rCtx, rCommand, rv) -> invokeNextAndFinally(rCtx, rCommand, releaseLockOnCompletionAction);
+   private final InvocationFinallyAction<VisitableCommand> releaseLockOnCompletionAction = (rCtx, rCommand, rv, throwable) -> releaseLockOnTxCompletion((TxInvocationContext<?>) rCtx);
+   private final InvocationSuccessFunction<PrepareCommand> onePhaseCommitFunction = (rCtx, rCommand, rv) -> invokeNextAndFinally(rCtx, rCommand, releaseLockOnCompletionAction);
 
    @Override
    protected Log getLog() {

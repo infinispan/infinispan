@@ -13,7 +13,7 @@ import org.infinispan.interceptors.InvocationSuccessFunction;
  * @author Dan Berindei
  * @since 9.0
  */
-public class MultiSubCommandInvoker implements InvocationSuccessFunction {
+public class MultiSubCommandInvoker implements InvocationSuccessFunction<VisitableCommand> {
    private final BaseAsyncInterceptor interceptor;
    private final Object finalStage;
    private final Iterator<VisitableCommand> subCommands;

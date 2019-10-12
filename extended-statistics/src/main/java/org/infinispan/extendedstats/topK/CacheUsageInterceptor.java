@@ -42,7 +42,7 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
 
    private StreamSummaryContainer streamSummaryContainer;
 
-   private final InvocationFinallyAction writeSkewReturnHandler = new InvocationFinallyAction() {
+   private final InvocationFinallyAction<VisitableCommand> writeSkewReturnHandler = new InvocationFinallyAction<VisitableCommand>() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
          if (throwable instanceof WriteSkewException) {

@@ -41,9 +41,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final InvocationSuccessFunction localLockCommandWork =
-         (rCtx, rCommand, rv) -> localLockCommandWork((TxInvocationContext) rCtx, (LockControlCommand) rCommand);
-   private final InvocationSuccessAction releaseLockOnCompletion =
+   private final InvocationSuccessFunction<LockControlCommand> localLockCommandWork =
+         (rCtx, rCommand, rv) -> localLockCommandWork((TxInvocationContext) rCtx, rCommand);
+   private final InvocationSuccessAction<PrepareCommand> releaseLockOnCompletion =
          (rCtx, rCommand, rv) -> releaseLockOnTxCompletion((TxInvocationContext) rCtx);
 
    @Inject CommandsFactory cf;
@@ -73,6 +73,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
             txContext.getGlobalTransaction());
       lcc.setTopologyId(command.getTopologyId());
+      // This invokes the chain down using the lock control command and then after it is acquired invokes
+      // the chain again with the actual command
       return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> acquireLocalLockAndInvokeNext(rCtx, command));
    }
 
@@ -151,6 +153,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
                   txContext.getGlobalTransaction());
             lcc.setTopologyId(command.getTopologyId());
+            // This invokes the chain down using the lock control command and then after it is acquired invokes
+            // the chain again with the actual command
             return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> acquireLocalLockAndInvokeNext(rCtx, command));
          }
       }
@@ -265,6 +269,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (command instanceof TopologyAffectedCommand) {
             lcc.setTopologyId(((TopologyAffectedCommand) command).getTopologyId());
          }
+         // This invokes the chain down using the lock control command and then after it is acquired invokes
+         // the chain again with the actual command
          return invokeNextThenApply(ctx, lcc,
                (rCtx, rCommand, rv) -> acquireLocalLocksAndInvokeNext(rCtx, command, keys));
       }

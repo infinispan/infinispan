@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -21,9 +20,9 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -43,8 +42,8 @@ import org.infinispan.marshall.core.MarshallableFunctions;
  */
 public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
 
-   private final InvocationSuccessAction handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
-   private final InvocationSuccessAction handleMultipleKeysWriteReturn = this::handleMultipleKeysWriteReturn;
+   private final InvocationSuccessAction<DataWriteCommand> handleSingleKeyWriteReturn = this::handleSingleKeyWriteReturn;
+   private final InvocationSuccessAction<WriteCommand> handleMultipleKeysWriteReturn = this::handleMultipleKeysWriteReturn;
 
    @Inject CommandsFactory commandsFactory;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
@@ -127,8 +126,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       return invokeNextThenAccept(ctx, command, handleSingleKeyWriteReturn);
    }
 
-   private void handleSingleKeyWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv) throws Throwable {
-      DataWriteCommand dataWriteCommand = (DataWriteCommand) command;
+   private void handleSingleKeyWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) throws Throwable {
       int segment = dataWriteCommand.getSegment();
       if (dataWriteCommand.isSuccessful() &&
             clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment).isPrimary()) {
@@ -158,8 +156,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       return invokeNextThenAccept(ctx, command, handleMultipleKeysWriteReturn);
    }
 
-   private void handleMultipleKeysWriteReturn(InvocationContext ctx, VisitableCommand rCommand, Object rv) throws Throwable {
-      WriteCommand writeCommand = (WriteCommand) rCommand;
+   private void handleMultipleKeysWriteReturn(InvocationContext ctx, WriteCommand writeCommand, Object rv) throws Throwable {
       if (trace) log.tracef("Processing post %s", writeCommand);
       if (!writeCommand.isSuccessful()) {
          if (trace) {

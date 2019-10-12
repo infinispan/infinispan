@@ -10,5 +10,5 @@ import org.infinispan.context.InvocationContext;
  * @since 9.0
  */
 @FunctionalInterface
-public interface InvocationFinallyFunction extends InvocationCallback {
+public interface InvocationFinallyFunction<C extends VisitableCommand> extends InvocationCallback<C> {
 }

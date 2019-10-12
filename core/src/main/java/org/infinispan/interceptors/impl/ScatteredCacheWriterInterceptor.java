@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -88,8 +87,8 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
 
    private long lockTimeout;
 
-   private final InvocationSuccessFunction handleDataWriteReturn = this::handleDataWriteReturn;
-   private final InvocationSuccessFunction handleManyWriteReturn = this::handleManyWriteReturn;
+   private final InvocationSuccessFunction<DataWriteCommand> handleDataWriteReturn = this::handleDataWriteReturn;
+   private final InvocationSuccessFunction<WriteCommand> handleManyWriteReturn = this::handleManyWriteReturn;
 
    @Override
    protected Log getLog() {
@@ -134,8 +133,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
       return asyncInvokeNext(ctx, command, wfs);
    }
 
-   private Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv) {
-      DataWriteCommand dataWriteCommand = (DataWriteCommand) command;
+   private Object handleDataWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) {
       Object key = dataWriteCommand.getKey();
       if (!isStoreEnabled(dataWriteCommand) || !dataWriteCommand.isSuccessful())
          return rv;
@@ -192,8 +190,7 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
       return invokeNextThenApply(ctx, command, handleDataWriteReturn);
    }
 
-   private Object handleManyWriteReturn(InvocationContext ctx, VisitableCommand rcommand, Object rv) {
-      WriteCommand command = (WriteCommand) rcommand;
+   private Object handleManyWriteReturn(InvocationContext ctx, WriteCommand command, Object rv) {
       if (!isStoreEnabled(command))
          return rv;
 

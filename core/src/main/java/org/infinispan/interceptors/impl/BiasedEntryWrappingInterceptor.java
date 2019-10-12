@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
@@ -15,8 +14,8 @@ public class BiasedEntryWrappingInterceptor extends RetryingEntryWrappingInterce
          FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER | FlagBitSets.CACHE_MODE_LOCAL;
 
    private BiasManager biasManager;
-   private final InvocationFinallyFunction handleDataWriteReturn = this::handleDataWriteReturn;
-   private final InvocationFinallyFunction handleManyWriteReturn = this::handleManyWriteReturn;
+   private final InvocationFinallyFunction<DataWriteCommand> handleDataWriteReturn = this::handleDataWriteReturn;
+   private final InvocationFinallyFunction<WriteCommand> handleManyWriteReturn = this::handleManyWriteReturn;
 
    @Inject
    public void inject(BiasManager biasManager) {
@@ -43,11 +42,10 @@ public class BiasedEntryWrappingInterceptor extends RetryingEntryWrappingInterce
       return invokeNextAndHandle(ctx, command, handleManyWriteReturn);
    }
 
-   private Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv, Throwable throwable) throws Throwable {
+   private Object handleDataWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv, Throwable throwable) throws Throwable {
       if (throwable != null) {
-         return super.handleDataWriteReturn(ctx, command, throwable);
-      } else if (command.isSuccessful() && ctx.isOriginLocal()) {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) command;
+         return super.handleDataWriteReturn(ctx, dataWriteCommand, throwable);
+      } else if (dataWriteCommand.isSuccessful() && ctx.isOriginLocal()) {
          if (dataWriteCommand.hasAnyFlag(NOT_BIASING_FLAGS)) {
             return rv;
          }
@@ -58,11 +56,10 @@ public class BiasedEntryWrappingInterceptor extends RetryingEntryWrappingInterce
       return rv;
    }
 
-   private Object handleManyWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv, Throwable throwable) throws Throwable {
+   private Object handleManyWriteReturn(InvocationContext ctx, WriteCommand writeCommand, Object rv, Throwable throwable) throws Throwable {
       if (throwable != null) {
-         return super.handleManyWriteReturn(ctx, command, throwable);
-      } else if (command.isSuccessful() && ctx.isOriginLocal()) {
-         WriteCommand writeCommand = (WriteCommand) command;
+         return super.handleManyWriteReturn(ctx, writeCommand, throwable);
+      } else if (writeCommand.isSuccessful() && ctx.isOriginLocal()) {
          if (writeCommand.hasAnyFlag(NOT_BIASING_FLAGS)) {
             return rv;
          }

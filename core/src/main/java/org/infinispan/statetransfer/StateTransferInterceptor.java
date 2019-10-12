@@ -59,9 +59,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final InvocationFinallyFunction handleTxReturn = this::handleTxReturn;
-   private final InvocationFinallyFunction handleTxWriteReturn = this::handleTxWriteReturn;
-   private final InvocationFinallyFunction handleNonTxWriteReturn = this::handleNonTxWriteReturn;
+   private final InvocationFinallyFunction<TransactionBoundaryCommand> handleTxReturn = this::handleTxReturn;
+   private final InvocationFinallyFunction<WriteCommand> handleTxWriteReturn = this::handleTxWriteReturn;
+   private final InvocationFinallyFunction<WriteCommand> handleNonTxWriteReturn = this::handleNonTxWriteReturn;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
@@ -208,9 +208,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
    }
 
-   private Object handleTxReturn(InvocationContext ctx,
-                                 VisitableCommand command, Object rv, Throwable t) throws Throwable {
-      TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) command;
+   private Object handleTxReturn(InvocationContext ctx, TransactionBoundaryCommand txCommand, Object rv, Throwable t)
+         throws Throwable {
 
       int retryTopologyId = -1;
       int currentTopology = currentTopologyId();
@@ -260,10 +259,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return invokeNextAndHandle(ctx, command, handleTxWriteReturn);
    }
 
-   private Object handleTxWriteReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t)
+   private Object handleTxWriteReturn(InvocationContext rCtx, WriteCommand writeCommand, Object rv, Throwable t)
          throws Throwable {
       int retryTopologyId = -1;
-      WriteCommand writeCommand = (WriteCommand) rCommand;
       if (t instanceof OutdatedTopologyException || t instanceof AllOwnersLostException) {
          // This can only happen on the originator
          retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
@@ -309,7 +307,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return invokeNextAndHandle(ctx, command, handleNonTxWriteReturn);
    }
 
-   private Object handleExceptionOnNonTxWriteReturn(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
+   private Object handleExceptionOnNonTxWriteReturn(InvocationContext rCtx, WriteCommand writeCommand, Throwable t) throws Throwable {
       Throwable ce = t;
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
@@ -322,7 +320,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // Without this, we could retry the command too fast and we could get the
       // OutdatedTopologyException again.
       int currentTopologyId = currentTopologyId();
-      WriteCommand writeCommand = (WriteCommand) rCommand;
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, writeCommand);
       if (trace)
          log.tracef("Retrying command because of %s, current topology is %d (requested: %d): %s",
@@ -334,8 +331,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand, handleNonTxWriteReturn);
    }
 
-   private Object handleNonTxWriteReturn(InvocationContext rCtx,
-                                         VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+   private Object handleNonTxWriteReturn(InvocationContext rCtx, WriteCommand rCommand, Object rv, Throwable t)
+         throws Throwable {
       if (t == null)
          return rv;
 

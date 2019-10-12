@@ -26,7 +26,7 @@ public final class TxQueryInterceptor extends DDAsyncInterceptor {
    // wouldn't help much.
    private final QueryInterceptor queryInterceptor;
 
-   private final InvocationSuccessAction commitModificationsToIndex = this::commitModificationsToIndex;
+   private final InvocationSuccessAction<VisitableCommand> commitModificationsToIndex = this::commitModificationsToIndex;
 
    public TxQueryInterceptor(ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues, QueryInterceptor queryInterceptor) {
       this.txOldValues = txOldValues;

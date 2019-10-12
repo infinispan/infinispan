@@ -57,8 +57,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
       // We just set it, we always wrap our iterator and support removal
       command.addFlags(FlagBitSets.REMOTE_ITERATION);
 
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
+      return invokeNextThenApply(ctx, command, (rCtx, entrySetCommand, rv) -> {
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
          if (rCtx.isInTxScope()) {
             entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache.wired(), entrySetCommand), entrySet, entrySetCommand,
@@ -209,11 +208,11 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          CacheSet<K> keySet = (CacheSet<K>) rv;
-         if (ctx.isInTxScope()) {
-            keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache.wired(), command), keySet, command,
-                                           (LocalTxInvocationContext) ctx);
+         if (rCtx.isInTxScope()) {
+            keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache.wired(), rCommand), keySet, rCommand,
+                                           (LocalTxInvocationContext) rCtx);
          } else {
-            keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache.wired(), command), keySet, command);
+            keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache.wired(), rCommand), keySet, rCommand);
          }
          return keySet;
       });
