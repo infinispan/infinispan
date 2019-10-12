@@ -10,14 +10,14 @@ import org.infinispan.context.InvocationContext;
  * @since 9.0
  */
 @FunctionalInterface
-public interface InvocationFinallyAction extends InvocationCallback {
+public interface InvocationFinallyAction<C extends VisitableCommand> extends InvocationCallback<C> {
    /**
     * Process the result or the exception from an invocation stage and possibly throw an exception.
     */
-   void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable;
+   void accept(InvocationContext rCtx, C rCommand, Object rv, Throwable throwable) throws Throwable;
 
    @Override
-   default Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable {
+   default Object apply(InvocationContext rCtx, C rCommand, Object rv, Throwable throwable) throws Throwable {
       accept(rCtx, rCommand, rv, throwable);
       if (throwable == null) {
          return rv;

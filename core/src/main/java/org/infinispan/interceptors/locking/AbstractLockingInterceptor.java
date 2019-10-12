@@ -54,7 +54,7 @@ import org.infinispan.util.logging.Log;
 public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
-   final InvocationFinallyAction unlockAllReturnHandler = this::handleUnlockAll;
+   final InvocationFinallyAction<VisitableCommand> unlockAllReturnHandler = this::handleUnlockAll;
 
    @Inject protected LockManager lockManager;
    @Inject protected ClusteringDependentLogic cdl;
@@ -172,7 +172,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
       command.setKeys(keysToInvalidate.toArray());
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         ((InvalidateL1Command) rCommand).setKeys(keys);
+         rCommand.setKeys(keys);
          if (!rCtx.isInTxScope()) lockManager.unlockAll(rCtx);
       });
    }
@@ -299,7 +299,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
     * Locks and invoke the next interceptor for non-transactional commands.
     */
    final Object nonTxLockAndInvokeNext(InvocationContext ctx, VisitableCommand command,
-                                       InvocationStage lockStage, InvocationFinallyAction finallyFunction) {
+                                       InvocationStage lockStage, InvocationFinallyAction<VisitableCommand> finallyFunction) {
       return lockStage.andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
             lockManager.unlockAll(rCtx);

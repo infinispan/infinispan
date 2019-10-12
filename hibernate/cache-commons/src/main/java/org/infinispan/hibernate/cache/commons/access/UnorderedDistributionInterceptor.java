@@ -69,7 +69,7 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 		if (isReplicated) {
 			// local result is always ignored
          return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
-            CompletionStage<?> remoteInvocation = invokeRemotelyAsync(null, rCtx, (WriteCommand) rCommand);
+            CompletionStage<?> remoteInvocation = invokeRemotelyAsync(null, rCtx, rCommand);
             if (remoteInvocation != null) {
                return remoteInvocation.thenApply(responses -> rv);
             }
@@ -80,7 +80,7 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 			List<Address> owners = cacheTopology.getDistribution(command.getKey()).writeOwners();
 			if (owners.contains(rpcManager.getAddress())) {
             return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
-               CompletionStage<?> remoteInvocation = invokeRemotelyAsync(owners, rCtx, (WriteCommand) rCommand);
+               CompletionStage<?> remoteInvocation = invokeRemotelyAsync(owners, rCtx, rCommand);
                if (remoteInvocation != null) {
                   return remoteInvocation.thenApply(responses -> rv);
                }

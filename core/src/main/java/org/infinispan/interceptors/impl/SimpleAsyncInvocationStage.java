@@ -54,8 +54,8 @@ public class SimpleAsyncInvocationStage extends InvocationStage {
    }
 
    @Override
-   public Object addCallback(InvocationContext ctx, VisitableCommand command,
-                        InvocationCallback function) {
+   public <C extends VisitableCommand> Object addCallback(InvocationContext ctx, C command,
+                        InvocationCallback<C> function) {
       if (future.isDone()) {
          Object rv;
          Throwable throwable;

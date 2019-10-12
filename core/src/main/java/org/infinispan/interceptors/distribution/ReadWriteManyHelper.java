@@ -12,7 +12,7 @@ import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
 class ReadWriteManyHelper extends WriteManyCommandHelper<ReadWriteManyCommand, Collection<Object>, Object> {
-   ReadWriteManyHelper(Function<WriteManyCommandHelper<ReadWriteManyCommand, ?, ?>, InvocationSuccessFunction> createRemoteCallback) {
+   ReadWriteManyHelper(Function<WriteManyCommandHelper<ReadWriteManyCommand, ?, ?>, InvocationSuccessFunction<ReadWriteManyCommand>> createRemoteCallback) {
       super(createRemoteCallback);
    }
 

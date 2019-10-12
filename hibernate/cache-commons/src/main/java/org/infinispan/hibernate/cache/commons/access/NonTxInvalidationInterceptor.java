@@ -9,7 +9,6 @@ package org.infinispan.hibernate.cache.commons.access;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -52,8 +51,8 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);
 
-   private final InvocationSuccessFunction handleWriteReturn = this::handleWriteReturn;
-	private final InvocationSuccessFunction handleEvictReturn = this::handleEvictReturn;
+   private final InvocationSuccessFunction<RemoveCommand> handleWriteReturn = this::handleWriteReturn;
+	private final InvocationSuccessFunction<RemoveCommand> handleEvictReturn = this::handleEvictReturn;
 
 	@Override
 	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
@@ -125,16 +124,14 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
       return ispnLog;
    }
 
-   private Object handleWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv) {
-		RemoveCommand removeCmd = (RemoveCommand) command;
+   private Object handleWriteReturn(InvocationContext ctx, RemoveCommand removeCmd, Object rv) {
 		if ( removeCmd.isSuccessful()) {
 			return invalidateAcrossCluster(removeCmd, true, removeCmd.getKey(), removeCmd.getKeyLockOwner());
 		}
 		return null;
 	}
 
-	private Object handleEvictReturn(InvocationContext ctx, VisitableCommand command, Object rv) {
-		RemoveCommand removeCmd = (RemoveCommand) command;
+	private Object handleEvictReturn(InvocationContext ctx, RemoveCommand removeCmd, Object rv) {
 		if ( removeCmd.isSuccessful()) {
 			return invalidateAcrossCluster(removeCmd, false, removeCmd.getKey(), removeCmd.getKeyLockOwner());
 		}

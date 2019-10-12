@@ -50,7 +50,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
-   private final InvocationFinallyFunction handleReadCommandReturn = this::handleReadCommandReturn;
+   private final InvocationFinallyFunction<VisitableCommand> handleReadCommandReturn = this::handleReadCommandReturn;
 
    @Inject Configuration configuration;
    @Inject protected StateTransferLock stateTransferLock;
@@ -63,7 +63,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private long transactionDataTimeout;
    private boolean isScattered;
 
-   private final InvocationFinallyFunction handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
+   private final InvocationFinallyFunction<GetKeysInGroupCommand> handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
 
    @Start
    public void start() {
@@ -78,8 +78,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       if (ctx.isOriginLocal()) {
          return invokeNextAndHandle(ctx, command, handleLocalGetKeysInGroupReturn);
       } else {
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
+         return invokeNextThenAccept(ctx, command, (rCtx, cmd, rv) -> {
             final int commandTopologyId = cmd.getTopologyId();
             if (currentTopologyId() != commandTopologyId &&
                 !distributionManager.getCacheTopology().isReadOwner(cmd.getGroupName())) {
@@ -89,9 +88,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private Object handleLocalGetKeysInGroupReturn(InvocationContext ctx, VisitableCommand command, Object rv,
+   private Object handleLocalGetKeysInGroupReturn(InvocationContext ctx, GetKeysInGroupCommand cmd, Object rv,
                                                   Throwable throwable) throws Throwable {
-      GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) command;
       final int commandTopologyId = cmd.getTopologyId();
       boolean shouldRetry;
       if (throwable != null) {
@@ -113,7 +111,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
          cmd.setTopologyId(newTopologyId);
          CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
-         return retryWhenDone(transactionDataFuture, newTopologyId, ctx, command, handleLocalGetKeysInGroupReturn);
+         return retryWhenDone(transactionDataFuture, newTopologyId, ctx, cmd, handleLocalGetKeysInGroupReturn);
       } else {
          return valueOrException(rv, throwable);
       }
@@ -145,7 +143,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    protected <T extends VisitableCommand> Object retryWhenDone(CompletableFuture<Void> future, int topologyId,
                                                                InvocationContext ctx, T command,
-                                                               InvocationFinallyFunction callback) {
+                                                               InvocationFinallyFunction<T> callback) {
       if (future.isDone()) {
          getLog().tracef("Retrying command %s for topology %d", command, topologyId);
          return invokeNextAndHandle(ctx, command, callback);

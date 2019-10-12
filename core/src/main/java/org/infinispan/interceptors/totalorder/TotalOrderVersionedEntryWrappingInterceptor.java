@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
@@ -37,41 +36,41 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private static final boolean trace = log.isTraceEnabled();
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
 
-   private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
-   private final InvocationSuccessFunction afterPrepareHandler = this::afterPrepareHandler;
+   private final InvocationSuccessFunction<VersionedPrepareCommand> prepareHandler = this::prepareHandler;
+   private final InvocationSuccessFunction<VersionedPrepareCommand> afterPrepareHandler = this::afterPrepareHandler;
 
    @Override
    public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {
-         ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
+         versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-            if (shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
-               return delayedValue(commitContextEntries(ctx, null), rv);
+            if (shouldCommitDuringPrepare(rCommand, (TxInvocationContext) rCtx)) {
+               return delayedValue(commitContextEntries(rCtx, null), rv);
             }
             return rv;
          });
       }
 
       //Remote context, delivered in total order
-      return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
+      return wrapEntriesForPrepareAndApply(ctx, versionedPrepareCommand, prepareHandler);
    }
 
-   private Object prepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
+   private Object prepareHandler(InvocationContext ctx, VersionedPrepareCommand command, Object rv) {
       return invokeNextThenApply(ctx, command, afterPrepareHandler);
    }
 
-   private Object afterPrepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
+   private Object afterPrepareHandler(InvocationContext ctx, VersionedPrepareCommand prepareCommand, Object rv) {
       TxInvocationContext txInvocationContext = (TxInvocationContext) ctx;
-      VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) command;
       CompletionStage<EntryVersionsMap> versionsMap =
             cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
                   prepareCommand);
 
       InvocationStage versionStage = asyncValue(versionsMap);
 
-      return versionStage.thenApply(ctx, command, (rCtx, rCmd, rv2) -> {
+      return versionStage.thenApply(ctx, prepareCommand, (rCtx, rCmd, rv2) -> {
          Object result = rv2 == null ? rv : new ArrayList<>(((EntryVersionsMap) rv2).keySet());
          if (prepareCommand.isOnePhaseCommit()) {
             return delayedValue(commitContextEntries(txInvocationContext, null), result);

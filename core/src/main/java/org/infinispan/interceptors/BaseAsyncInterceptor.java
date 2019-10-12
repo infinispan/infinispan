@@ -24,7 +24,7 @@ import org.infinispan.util.concurrent.CompletionStages;
 @Experimental
 @Scope(Scopes.NAMED_CACHE)
 public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
-   private final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
+   private final InvocationSuccessFunction<VisitableCommand> invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 
    @Inject protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;
@@ -71,8 +71,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     *
     * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
     */
-   public final Object invokeNextThenApply(InvocationContext ctx, VisitableCommand command,
-                                           InvocationSuccessFunction function) {
+   public final <C extends VisitableCommand> Object invokeNextThenApply(InvocationContext ctx, C command,
+                                           InvocationSuccessFunction<C> function) {
       try {
          Object rv;
          if (nextDDInterceptor != null) {
@@ -95,8 +95,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     *
     * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
     */
-   public final Object invokeNextThenAccept(InvocationContext ctx, VisitableCommand command,
-                                           InvocationSuccessAction action) {
+   public final <C extends VisitableCommand> Object invokeNextThenAccept(InvocationContext ctx, C command,
+                                           InvocationSuccessAction<C> action) {
       try {
          Object rv;
          if (nextDDInterceptor != null) {
@@ -120,8 +120,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     *
     * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
     */
-   public final Object invokeNextAndExceptionally(InvocationContext ctx, VisitableCommand command,
-                                                  InvocationExceptionFunction function) {
+   public final <C extends VisitableCommand> Object invokeNextAndExceptionally(InvocationContext ctx, C command,
+                                                  InvocationExceptionFunction<C> function) {
       try {
          Object rv;
          if (nextDDInterceptor != null) {
@@ -145,8 +145,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     *
     * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
     */
-   public final Object invokeNextAndFinally(InvocationContext ctx, VisitableCommand command,
-                                            InvocationFinallyAction action) {
+   public final <C extends VisitableCommand> Object invokeNextAndFinally(InvocationContext ctx, C command,
+                                            InvocationFinallyAction<C> action) {
       try {
          Object rv;
          Throwable throwable;
@@ -178,8 +178,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     *
     * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
     */
-   public final Object invokeNextAndHandle(InvocationContext ctx, VisitableCommand command,
-                                           InvocationFinallyFunction function) {
+   public final <C extends VisitableCommand> Object invokeNextAndHandle(InvocationContext ctx, C command,
+                                           InvocationFinallyFunction<C> function) {
       try {
          Object rv;
          Throwable throwable;

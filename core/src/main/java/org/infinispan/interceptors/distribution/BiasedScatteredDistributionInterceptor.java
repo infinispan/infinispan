@@ -13,8 +13,8 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
@@ -155,7 +155,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
          // We'll send the response & revocations later but the command
          // will be already completed on this node
          return asyncValue(revocation.toCompletionStage()).andHandle(ctx, cmd, (rCtx, rCommand, rv, throwable) ->
-                     singleWriteResponse(rCtx, (DataWriteCommand) rCommand, returnValue));
+                     singleWriteResponse(rCtx, rCommand, returnValue));
       }
    }
 
@@ -236,7 +236,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
    }
 
    @Override
-   protected Object handleClear(InvocationContext ctx, VisitableCommand command, Object ignored) {
+   protected Object handleClear(InvocationContext ctx, ClearCommand command, Object ignored) {
       Object superStage = super.handleClear(ctx, command, ignored);
       biasManager.clear();
       return superStage;

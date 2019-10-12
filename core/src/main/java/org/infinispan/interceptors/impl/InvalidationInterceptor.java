@@ -13,7 +13,6 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -74,8 +73,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
 
    private final AtomicLong invalidations = new AtomicLong(0);
-   private final InvocationSuccessFunction handleCommit = this::handleCommit;
-   private final InvocationSuccessFunction handlePrepare = this::handlePrepare;
+   private final InvocationSuccessFunction<CommitCommand> handleCommit = this::handleCommit;
+   private final InvocationSuccessFunction<PrepareCommand> handlePrepare = this::handlePrepare;
 
    @Inject CommandsFactory commandsFactory;
 
@@ -121,8 +120,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         ClearCommand clearCommand = (ClearCommand) rCommand;
+      return invokeNextThenApply(ctx, command, (rCtx, clearCommand, rv) -> {
          if (!isLocalModeForced(clearCommand)) {
             // just broadcast the clear command - this is simplest!
             if (rCtx.isOriginLocal()) {
@@ -148,7 +146,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       return invokeNextThenApply(ctx, command, handlePrepare);
    }
 
-   private Object handlePrepare(InvocationContext ctx, VisitableCommand command, Object rv) throws Throwable {
+   private Object handlePrepare(InvocationContext ctx, PrepareCommand prepareCommand, Object rv) throws Throwable {
       // fetch the modifications before the transaction is committed (and thus removed from the txTable)
       TxInvocationContext txInvocationContext = (TxInvocationContext) ctx;
       if (!shouldInvokeRemoteTxCommand(txInvocationContext)) {
@@ -158,7 +156,6 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
       if (txInvocationContext.getTransaction() == null)
          throw new IllegalStateException("We must have an associated transaction");
-      PrepareCommand prepareCommand = (PrepareCommand) command;
       List<WriteCommand> mods = Arrays.asList(prepareCommand.getModifications());
       Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, txInvocationContext);
       if (remoteKeys == null) {
@@ -189,7 +186,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       return invokeNextThenApply(ctx, command, handleCommit);
    }
 
-   private Object handleCommit(InvocationContext ctx, VisitableCommand command, Object ignored) {
+   private Object handleCommit(InvocationContext ctx, CommitCommand command, Object ignored) {
       try {
          CompletionStage<Void> remoteInvocation =
             rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(),
@@ -213,9 +210,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextThenApply(ctx, command, (rCtx, lockControlCommand, rv) -> {
          //unlock will happen async as it is a best effort
-         LockControlCommand lockControlCommand = (LockControlCommand) rCommand;
          boolean sync = !lockControlCommand.isUnlock();
          ((LocalTxInvocationContext) rCtx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
          if (sync) {
@@ -235,8 +231,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       if (ctx.isInTxScope()) {
          return invokeNext(ctx, command);
       }
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         WriteCommand writeCommand = (WriteCommand) rCommand;
+      return invokeNextThenApply(ctx, command, (rCtx, writeCommand, rv) -> {
          if (writeCommand.isSuccessful()) {
             if (keys != null && keys.length != 0) {
                if (!isLocalModeForced(writeCommand)) {

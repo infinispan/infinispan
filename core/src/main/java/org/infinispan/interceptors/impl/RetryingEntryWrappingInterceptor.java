@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.MVCCEntry;
@@ -30,20 +29,19 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final InvocationExceptionFunction handleDataWriteReturn = this::handleDataWriteReturn;
-   private final InvocationExceptionFunction handleManyWriteReturn = this::handleManyWriteReturn;
+   private final InvocationExceptionFunction<DataWriteCommand> handleDataWriteReturn = this::handleDataWriteReturn;
+   private final InvocationExceptionFunction<WriteCommand> handleManyWriteReturn = this::handleManyWriteReturn;
 
    @Override
    protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx, DataWriteCommand command) {
       return invokeNextAndExceptionally(ctx, command, handleDataWriteReturn);
    }
 
-   Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
+   Object handleDataWriteReturn(InvocationContext ctx, DataWriteCommand dataWriteCommand, Throwable throwable) throws Throwable {
       if (throwable instanceof ConcurrentChangeException) {
          if (trace) {
-            log.tracef(throwable, "Retrying %s after concurrent change", command);
+            log.tracef(throwable, "Retrying %s after concurrent change", dataWriteCommand);
          }
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) command;
          ctx.removeLookedUpEntry(dataWriteCommand.getKey());
          return visitCommand(ctx, dataWriteCommand);
       } else {
@@ -56,7 +54,7 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
       return invokeNextAndExceptionally(ctx, command, handleManyWriteReturn);
    }
 
-   Object handleManyWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
+   Object handleManyWriteReturn(InvocationContext ctx, WriteCommand command, Throwable throwable) throws Throwable {
       if (throwable instanceof ConcurrentChangeException) {
          if (trace) {
             log.tracef(throwable, "Retrying %s after concurrent change", command);

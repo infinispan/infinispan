@@ -204,7 +204,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (!rCtx.isOriginLocal()) {
             // apply updates to the serialization context
-            for (WriteCommand wc : ((PrepareCommand) rCommand).getModifications()) {
+            for (WriteCommand wc : rCommand.getModifications()) {
                wc.acceptVisitor(rCtx, serializationContextUpdaterVisitor);
             }
          }
@@ -235,12 +235,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return invokeNextThenAccept(ctx, command, this::handlePutKeyValueResult);
    }
 
-   private void handlePutKeyValueResult(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
-      PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+   private void handlePutKeyValueResult(InvocationContext rCtx, PutKeyValueCommand putKeyValueCommand, Object rv) {
       if (putKeyValueCommand.isSuccessful()) {
          // StateConsumerImpl uses PutKeyValueCommands with InternalCacheEntry
          // values in order to preserve timestamps, so read the value from the context
-         Object key = ((PutKeyValueCommand) rCommand).getKey();
+         Object key = putKeyValueCommand.getKey();
          Object value = rCtx.lookupEntry(key).getValue();
          if (!(value instanceof String)) {
             throw log.valueMustBeString(value.getClass());
@@ -308,7 +307,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       invoker.running().invoke(ctx, cmd);
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         long flagsBitSet = copyFlags(((PutMapCommand) rCommand));
+         long flagsBitSet = copyFlags(rCommand);
          ProgressCallback progressCallback = null;
          if (rCtx.isOriginLocal()) {
             progressCallback = new ProgressCallback(rCtx, flagsBitSet);
@@ -416,7 +415,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             FileDescriptorSource source = new FileDescriptorSource()
                   .addProtoFile((String) key, (String) value);
 
-            long flagsBitSet = copyFlags(((WriteCommand) rCommand));
+            long flagsBitSet = copyFlags(rCommand);
             ProgressCallback progressCallback = null;
             if (rCtx.isOriginLocal()) {
                progressCallback = new ProgressCallback(rCtx, flagsBitSet);

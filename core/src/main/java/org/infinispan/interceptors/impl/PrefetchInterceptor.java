@@ -196,7 +196,9 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          CompletableFuture<Void> blockingFuture = CompletableFuture.allOf(blockedSegments.stream()
                .mapToObj(svm::getBlockingFuture).toArray(CompletableFuture[]::new));
          return asyncValue(blockingFuture).thenApply(ctx, command,
-               (rCtx, rCommand, rv) -> prefetchKeysIfNeededAndInvokeNext(rCtx, (C) rCommand, keys, true));
+               // Make sure command is passed to prefetchKeys - it is already a capturing lambda by referencing
+               // keys. This confuses graal otherwise
+               (rCtx, rCommand, rv) -> prefetchKeysIfNeededAndInvokeNext(rCtx, rCommand, keys, true));
       }
       if (transferedKeys != null) {
          return asyncInvokeNext(ctx, command, retrieveRemoteValues(ctx, command, transferedKeys));
@@ -288,15 +290,14 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    }
 
    // TODO: this is not completely aligned with single-entry prefetch
-   private <C extends TopologyAffectedCommand & VisitableCommand> InvocationStage retrieveRemoteValues(InvocationContext ctx, C originCommand, List<?> keys) {
+   private <C extends VisitableCommand & TopologyAffectedCommand> InvocationStage retrieveRemoteValues(InvocationContext ctx, C originCommand, List<?> keys) {
       if (trace) {
          log.tracef("Prefetching entries for keys %s using broadcast", keys);
       }
       ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
       command.setTopologyId(originCommand.getTopologyId());
       CompletionStage<Map<Address, Response>> rpcFuture = rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-      return asyncValue(rpcFuture).thenApplyMakeStage(ctx, originCommand, (rCtx, rCommand, rv) -> {
-         TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rCommand;
+      return asyncValue(rpcFuture).thenApplyMakeStage(ctx, originCommand, (rCtx, topologyAffectedCommand, rv) -> {
          Map<Address, Response> responseMap = (Map<Address, Response>) rv;
          InternalCacheValue[] maxValues = new InternalCacheValue[keys.size()];
          for (Response response : responseMap.values()) {
@@ -485,7 +486,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         boolean ignoreOwnership = command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
+         boolean ignoreOwnership = rCommand.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
          return new BackingKeySet(ignoreOwnership, (CacheSet<K>) rv);
       });
    }
@@ -493,7 +494,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         boolean ignoreOwnership = command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
+         boolean ignoreOwnership = rCommand.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
          return new BackingEntrySet(ignoreOwnership, (CacheSet<CacheEntry<K, V>>) rv);
       });
    }

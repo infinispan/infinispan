@@ -118,7 +118,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          long end = timeService.time();
          initStatsIfNecessary(rCtx);
-         Object key = ((GetKeyValueCommand) rCommand).getKey();
+         Object key = rCommand.getKey();
          if (isRemote(key)) {
             cacheStatisticManager.increment(ExtendedStatistic.NUM_REMOTE_GET, getGlobalTransaction(rCtx), rCtx.isOriginLocal());
             cacheStatisticManager.add(ExtendedStatistic.REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
@@ -144,7 +144,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
          long end = timeService.time();
          initStatsIfNecessary(rCtx);
          int numRemote = 0;
-         Collection<?> keys = ((GetAllCommand) rCommand).getKeys();
+         Collection<?> keys = rCommand.getKeys();
          for (Object key : keys) {
             if (isRemote(key))
                numRemote++;
@@ -186,7 +186,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
                   .isOriginLocal());
          }
 
-         if (((PrepareCommand) rCommand).isOnePhaseCommit()) {
+         if (rCommand.isOnePhaseCommit()) {
             boolean local = rCtx.isOriginLocal();
             boolean success = t == null;
             cacheStatisticManager.setTransactionOutcome(success, globalTransaction, rCtx.isOriginLocal());

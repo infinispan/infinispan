@@ -313,7 +313,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       CompletionStage<Integer> sizeStage = trySizeOptimization(command.getFlagsBitSet());
       return asyncValue(sizeStage).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if ((Integer) rv == -1) {
-            return super.visitSizeCommand(ctx, command);
+            return super.visitSizeCommand(rCtx, rCommand);
          }
          return rv;
       });

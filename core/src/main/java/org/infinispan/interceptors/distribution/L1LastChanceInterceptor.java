@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -54,11 +53,11 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    @Inject L1Manager l1Manager;
    @Inject ClusteringDependentLogic cdl;
 
-   private final InvocationSuccessFunction handleDataWriteCommandEntryInL1 = this::handleDataWriteCommandEntryInL1;
-   private final InvocationSuccessFunction handleDataWriteCommandEntryNotInL1 = this::handleDataWriteCommandEntryNotInL1;
-   private final InvocationSuccessFunction handleWriteManyCommand = this::handleWriteManyCommand;
-   private final InvocationSuccessFunction handlePrepareCommand = this::handlePrepareCommand;
-   private final InvocationSuccessFunction handleCommitCommand = this::handleCommitCommand;
+   private final InvocationSuccessFunction<DataWriteCommand> handleDataWriteCommandEntryInL1 = this::handleDataWriteCommandEntryInL1;
+   private final InvocationSuccessFunction<DataWriteCommand> handleDataWriteCommandEntryNotInL1 = this::handleDataWriteCommandEntryNotInL1;
+   private final InvocationSuccessFunction<WriteCommand> handleWriteManyCommand = this::handleWriteManyCommand;
+   private final InvocationSuccessFunction<PrepareCommand> handlePrepareCommand = this::handlePrepareCommand;
+   private final InvocationSuccessFunction<CommitCommand> handleCommitCommand = this::handleCommitCommand;
 
    private boolean nonTransactional;
 
@@ -136,9 +135,8 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return invokeNextThenApply(ctx, command, assumeOriginKeptEntryInL1 ? handleDataWriteCommandEntryInL1 : handleDataWriteCommandEntryNotInL1);
    }
 
-   private Object handleDataWriteCommand(InvocationContext rCtx, VisitableCommand rCommand, Object rv, boolean assumeOriginKeptEntryInL1) {
+   private Object handleDataWriteCommand(InvocationContext rCtx, DataWriteCommand writeCommand, Object rv, boolean assumeOriginKeptEntryInL1) {
       Object key;
-      DataWriteCommand writeCommand = (DataWriteCommand) rCommand;
       Object key1 = (key = writeCommand.getKey());
       if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
             cdl.getCacheTopology().isWriteOwner(key1)) {
@@ -153,11 +151,11 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return rv;
    }
 
-   private Object handleDataWriteCommandEntryInL1(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
+   private Object handleDataWriteCommandEntryInL1(InvocationContext rCtx, DataWriteCommand rCommand, Object rv) {
       return handleDataWriteCommand(rCtx, rCommand, rv, true);
    }
 
-   private Object handleDataWriteCommandEntryNotInL1(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
+   private Object handleDataWriteCommandEntryNotInL1(InvocationContext rCtx, DataWriteCommand rCommand, Object rv) {
       return handleDataWriteCommand(rCtx, rCommand, rv, false);
    }
 
@@ -179,8 +177,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return invokeNextThenApply(ctx, command, handleWriteManyCommand);
    }
 
-   private Object handleWriteManyCommand(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
-      WriteCommand command = (WriteCommand) rCommand;
+   private Object handleWriteManyCommand(InvocationContext rCtx, WriteCommand command, Object rv) {
       if (shouldUpdateOnWriteCommand(command)) {
          Collection<?> keys = command.getAffectedKeys();
          Set<Object> toInvalidate = new HashSet<>(keys.size());
@@ -209,8 +206,8 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return invokeNextThenApply(ctx, command, handlePrepareCommand);
    }
 
-   private Object handlePrepareCommand(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
-      if (((PrepareCommand) rCommand).isOnePhaseCommit()) {
+   private Object handlePrepareCommand(InvocationContext rCtx, PrepareCommand rCommand, Object rv) {
+      if (rCommand.isOnePhaseCommit()) {
          CompletableFuture<?> f = handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) rCtx));
          return asyncReturnValue(f, rv);
       }
@@ -222,7 +219,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return invokeNextThenApply(ctx, command, handleCommitCommand);
    }
 
-   private Object handleCommitCommand(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
+   private Object handleCommitCommand(InvocationContext rCtx, CommitCommand rCommand, Object rv) {
       CompletableFuture<?> f = handleLastChanceL1InvalidationOnCommit((TxInvocationContext<?>) rCtx);
       return asyncReturnValue(f, rv);
    }

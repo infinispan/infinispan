@@ -9,9 +9,9 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 
 abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item> {
-   protected final InvocationSuccessFunction remoteCallback;
+   protected final InvocationSuccessFunction<C> remoteCallback;
 
-   protected WriteManyCommandHelper(Function<WriteManyCommandHelper<C, ?, ?>, InvocationSuccessFunction> createRemoteCallback) {
+   protected WriteManyCommandHelper(Function<WriteManyCommandHelper<C, ?, ?>, InvocationSuccessFunction<C>> createRemoteCallback) {
       this.remoteCallback = createRemoteCallback.apply(this);
    }
 

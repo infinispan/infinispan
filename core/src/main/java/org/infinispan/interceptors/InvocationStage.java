@@ -41,7 +41,7 @@ public abstract class InvocationStage {
     * The result may be either a plain value, {@code this}, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public Object thenApply(InvocationContext ctx, VisitableCommand command, InvocationSuccessFunction function) {
+   public <C extends VisitableCommand> Object thenApply(InvocationContext ctx, C command, InvocationSuccessFunction<C> function) {
       return addCallback(ctx, command, function);
    }
 
@@ -51,7 +51,7 @@ public abstract class InvocationStage {
     * The result may be either a plain value, {@code this}, or a new {@link InvocationStage}.
     * If {@code action} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public Object thenAccept(InvocationContext ctx, VisitableCommand command, InvocationSuccessAction action) {
+   public <C extends VisitableCommand> Object thenAccept(InvocationContext ctx, C command, InvocationSuccessAction<C> action) {
       return addCallback(ctx, command, action);
    }
 
@@ -61,8 +61,8 @@ public abstract class InvocationStage {
     * The result may be either a plain value, {@code this}, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public Object andExceptionally(InvocationContext ctx, VisitableCommand command,
-                                  InvocationExceptionFunction function) {
+   public <C extends VisitableCommand> Object andExceptionally(InvocationContext ctx, C command,
+                                  InvocationExceptionFunction<C> function) {
       return addCallback(ctx, command, function);
    }
 
@@ -72,7 +72,7 @@ public abstract class InvocationStage {
     * The result may be either a plain value, {@code this}, or a new {@link InvocationStage}.
     * If {@code action} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public Object andFinally(InvocationContext ctx, VisitableCommand command, InvocationFinallyAction action) {
+   public <C extends VisitableCommand> Object andFinally(InvocationContext ctx, C command, InvocationFinallyAction<C> action) {
       return addCallback(ctx, command, action);
    }
 
@@ -82,7 +82,7 @@ public abstract class InvocationStage {
     * The result may be either a plain value, {@code this}, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public Object andHandle(InvocationContext ctx, VisitableCommand command, InvocationFinallyFunction function) {
+   public <C extends VisitableCommand> Object andHandle(InvocationContext ctx, C command, InvocationFinallyFunction<C> function) {
       return addCallback(ctx, command, function);
    }
 
@@ -92,7 +92,7 @@ public abstract class InvocationStage {
     * The result may be either a plain value, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public abstract Object addCallback(InvocationContext ctx, VisitableCommand command, InvocationCallback function);
+   public abstract <C extends VisitableCommand> Object addCallback(InvocationContext ctx, C command, InvocationCallback<C> function);
 
    /**
     * After the current stage completes successfully, invoke {@code function} and return its result.
@@ -100,8 +100,8 @@ public abstract class InvocationStage {
     * The result may be either {@code this}, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public InvocationStage thenApplyMakeStage(InvocationContext ctx, VisitableCommand command,
-                                             InvocationSuccessFunction function) {
+   public <C extends VisitableCommand> InvocationStage thenApplyMakeStage(InvocationContext ctx, C command,
+                                             InvocationSuccessFunction<C> function) {
       return makeStage(thenApply(ctx, command, function));
    }
 
@@ -111,8 +111,8 @@ public abstract class InvocationStage {
     * The result may be either {@code this}, or a new {@link InvocationStage}.
     * If {@code action} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public InvocationStage thenAcceptMakeStage(InvocationContext ctx, VisitableCommand command,
-                                              InvocationSuccessAction action) {
+   public <C extends VisitableCommand> InvocationStage thenAcceptMakeStage(InvocationContext ctx, C command,
+                                              InvocationSuccessAction<C> action) {
       return makeStage(thenAccept(ctx, command, action));
    }
 
@@ -122,8 +122,8 @@ public abstract class InvocationStage {
     * The result may be either {@code this}, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public InvocationStage andExceptionallyMakeStage(InvocationContext ctx, VisitableCommand command,
-                                                    InvocationExceptionFunction function) {
+   public <C extends VisitableCommand> InvocationStage andExceptionallyMakeStage(InvocationContext ctx, C command,
+                                                    InvocationExceptionFunction<C> function) {
       return makeStage(andExceptionally(ctx, command, function));
    }
 
@@ -133,8 +133,8 @@ public abstract class InvocationStage {
     * The result may be either {@code this}, or a new {@link InvocationStage}.
     * If {@code action} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public InvocationStage andFinallyMakeStage(InvocationContext ctx, VisitableCommand command,
-                                              InvocationFinallyAction action) {
+   public <C extends VisitableCommand> InvocationStage andFinallyMakeStage(InvocationContext ctx, C command,
+                                              InvocationFinallyAction<C> action) {
       return makeStage(andFinally(ctx, command, action));
    }
 
@@ -144,8 +144,8 @@ public abstract class InvocationStage {
     * The result may be either {@code this}, or a new {@link InvocationStage}.
     * If {@code function} throws an exception, the result {@link InvocationStage} will complete with the same exception.
     */
-   public InvocationStage andHandleMakeStage(InvocationContext ctx, VisitableCommand command,
-                                             InvocationFinallyFunction function) {
+   public <C extends VisitableCommand> InvocationStage andHandleMakeStage(InvocationContext ctx, C command,
+                                             InvocationFinallyFunction<C> function) {
       return makeStage(andHandle(ctx, command, function));
    }
 

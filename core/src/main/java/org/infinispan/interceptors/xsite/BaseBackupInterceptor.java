@@ -31,7 +31,7 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
    protected static final boolean trace = log.isTraceEnabled();
-   private final InvocationSuccessAction handleClearReturn = this::handleClearReturn;
+   private final InvocationSuccessAction<ClearCommand> handleClearReturn = this::handleClearReturn;
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
@@ -41,8 +41,8 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
       return invokeNextThenAccept(ctx, command, handleClearReturn);
    }
 
-   private void handleClearReturn(InvocationContext ctx, VisitableCommand rCommand, Object rv) throws Throwable {
-      backupSender.processResponses(backupSender.backupWrite((ClearCommand) rCommand), rCommand);
+   private void handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) throws Throwable {
+      backupSender.processResponses(backupSender.backupWrite(rCommand), rCommand);
    }
 
    @Override
