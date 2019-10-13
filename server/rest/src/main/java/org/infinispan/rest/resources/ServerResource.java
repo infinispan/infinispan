@@ -11,6 +11,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
 import java.lang.management.ManagementFactory;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ServerManagement;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -73,11 +75,11 @@ public class ServerResource implements ResourceHandler {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
       ServerManagement server = invocationHelper.getServer();
-
+      CacheIgnoreManager ignoreManager = server.getIgnoreManager(cacheManagerName);
       if (add) {
-         return server.ignoreCache(cacheManagerName, cacheName).thenApply(r -> builder.build());
+         return ignoreManager.ignoreCache(cacheName).thenApply(r -> builder.build());
       } else {
-         return server.unIgnoreCache(cacheManagerName, cacheName).thenApply(r -> builder.build());
+         return ignoreManager.unignoreCache(cacheName).thenApply(r -> builder.build());
       }
    }
 
@@ -87,16 +89,15 @@ public class ServerResource implements ResourceHandler {
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
 
       if (cacheManager == null) return completedFuture(builder.status(NOT_FOUND).build());
-
-      return invocationHelper.getServer().ignoredCaches(cacheManagerName).thenApply(ignored -> {
-         try {
-            byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(ignored);
-            builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
-         } catch (JsonProcessingException e) {
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
-         }
-         return builder.build();
-      });
+      CacheIgnoreManager ignoreManager = invocationHelper.getServer().getIgnoreManager(cacheManagerName);
+      Set<String> ignored = ignoreManager.getIgnoredCaches();
+      try {
+         byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(ignored);
+         builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
+      } catch (JsonProcessingException e) {
+         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+      }
+      return completedFuture(builder.build());
    }
 
    private CompletionStage<RestResponse> cacheManagers(RestRequest restRequest) {

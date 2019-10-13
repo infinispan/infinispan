@@ -9,6 +9,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
+import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 
@@ -64,9 +65,9 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static void startProtocolServer(final ProtocolServer server, final ProtocolServerConfiguration configuration, final EmbeddedCacheManager cacheManager) {
+   static void startProtocolServer(final ProtocolServer server, final ProtocolServerConfiguration configuration, final EmbeddedCacheManager cacheManager, final CacheIgnoreManager cacheIgnoreManager) {
       PrivilegedAction<Void> action = () -> {
-         server.start(configuration, cacheManager);
+         server.start(configuration, cacheManager, cacheIgnoreManager);
          return null;
       };
       doPrivileged(action);
