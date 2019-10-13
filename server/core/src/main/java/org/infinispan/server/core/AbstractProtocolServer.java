@@ -31,8 +31,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  * @author wburns
  * @since 4.1
  */
-public abstract class AbstractProtocolServer<A extends ProtocolServerConfiguration> extends AbstractCacheIgnoreAware
-      implements ProtocolServer<A> {
+public abstract class AbstractProtocolServer<A extends ProtocolServerConfiguration> implements ProtocolServer<A> {
 
    private static final Log log = LogFactory.getLog(AbstractProtocolServer.class, Log.class);
 
@@ -41,6 +40,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    protected NettyTransport transport;
    protected EmbeddedCacheManager cacheManager;
    protected A configuration;
+   private CacheIgnoreManager cacheIgnore;
    private ObjectName transportObjName;
    private MBeanServer mbeanServer;
    private ThreadPoolExecutor executor;
@@ -69,7 +69,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       // Start default cache
       startDefaultCache();
 
-      if(configuration.startTransport())
+      if (configuration.startTransport())
          startTransport();
    }
 
@@ -84,10 +84,23 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       }
    }
 
+   protected boolean isCacheIgnored(String cache) {
+      return cacheIgnore.isCacheIgnored(cache);
+   }
+
+   public CacheIgnoreManager getCacheIgnore() {
+      return cacheIgnore;
+   }
+
    @Override
    public final void start(A configuration, EmbeddedCacheManager cacheManager) {
+      start(configuration, cacheManager, new CacheIgnoreManager(cacheManager));
+   }
+
+   @Override
+   public void start(A configuration, EmbeddedCacheManager cacheManager, CacheIgnoreManager cacheIgnore) {
+      this.cacheIgnore = cacheIgnore;
       try {
-         initialize(cacheManager);
          startInternal(configuration, cacheManager);
       } catch (RuntimeException t) {
          stop();
@@ -159,7 +172,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    private ObjectName registerMBean(Object instance, String jmxDomain, String groupName, String name) throws Exception {
       CacheManagerJmxRegistration jmxRegistration =
-         SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
+            SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
       return jmxRegistration.registerExternalMBean(instance, jmxDomain, groupName, name);
    }
 
@@ -190,6 +203,10 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
          unregisterServerMBeans();
       } catch (Exception e) {
          throw new CacheException(e);
+      }
+
+      if (cacheIgnore != null) {
+         cacheIgnore.stop();
       }
 
       if (isDebug)

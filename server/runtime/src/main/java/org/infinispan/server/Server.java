@@ -3,13 +3,11 @@ package org.infinispan.server;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +31,7 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.admin.ServerAdminOperationsHandler;
+import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -120,6 +119,7 @@ public class Server implements ServerManagement {
    private volatile ComponentStatus status;
    private ServerConfiguration serverConfiguration;
    private Extensions extensions;
+   private CacheIgnoreManager cacheIgnoreManager;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -252,6 +252,7 @@ public class Server implements ServerManagement {
          DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);
          cacheManagers.put(cm.getName(), cm);
          SecurityActions.startCacheManager(cm);
+         cacheIgnoreManager = new CacheIgnoreManager(cm);
 
          // Start the protocol servers
          serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
@@ -263,7 +264,7 @@ public class Server implements ServerManagement {
                ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
                if (protocolServer instanceof RestServer) ((RestServer) protocolServer).setServer(this);
                protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
-               SecurityActions.startProtocolServer(protocolServer, configuration, cm);
+               SecurityActions.startProtocolServer(protocolServer, configuration, cm, cacheIgnoreManager);
                ProtocolServerConfiguration protocolConfig = protocolServer.getConfiguration();
                if (protocolConfig.startTransport()) {
                   log.protocolStarted(protocolServer.getName(), protocolConfig.host(), protocolConfig.port());
@@ -325,21 +326,8 @@ public class Server implements ServerManagement {
    }
 
    @Override
-   public CompletionStage<Void> ignoreCache(String cacheManager, String cache) {
-      ProtocolServer protocolServer = protocolServers.values().iterator().next();
-      return protocolServer.ignoreCache(cache);
-   }
-
-   @Override
-   public CompletionStage<Boolean> unIgnoreCache(String cacheManager, String cache) {
-      ProtocolServer protocolServer = protocolServers.values().iterator().next();
-      return protocolServer.unignore(cache);
-   }
-
-   @Override
-   public CompletionStage<Collection<String>> ignoredCaches(String cacheManager) {
-      ProtocolServer protocolServer = protocolServers.values().iterator().next();
-      return protocolServer.getIgnoredCaches(cacheManager);
+   public CacheIgnoreManager getIgnoreManager(String cacheManager) {
+      return cacheIgnoreManager;
    }
 
    public ConfigurationBuilderHolder getConfigurationBuilderHolder() {

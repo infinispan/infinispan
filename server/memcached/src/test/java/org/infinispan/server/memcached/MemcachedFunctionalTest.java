@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -76,7 +76,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    public void testSetWithExpiryUnixTimeInPast(Method m) throws InterruptedException, ExecutionException, TimeoutException {
-      OperationFuture<Boolean> f = client.set(k(m), 60*60*24*30 + 1, v(m));
+      OperationFuture<Boolean> f = client.set(k(m), 60 * 60 * 24 * 30 + 1, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       sleepThread(1100);
       assertNull(client.get(k(m)));
@@ -302,7 +302,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    public void testSetAndMultiDelete(Method m) throws IOException {
       String key = k(m);
       List<String> responses = sendMulti(String.format(
-              "set %s 0 0 1\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n", key, key, key, key, key), 5, true);
+            "set %s 0 0 1\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n", key, key, key, key, key), 5, true);
       assertEquals(responses.size(), 5);
       assertEquals(responses.get(0), "STORED");
       assertEquals(responses.get(1), "DELETED");
@@ -314,7 +314,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    public void testSetNoReplyMultiDelete(Method m) throws IOException {
       String key = k(m);
       List<String> responses = sendMulti(String.format(
-         "set %s 0 0 1 noreply\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n", key, key, key, key, key), 4, true);
+            "set %s 0 0 1 noreply\r\na\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\ndelete %s\r\n", key, key, key, key, key), 4, true);
       assertEquals(responses.size(), 4);
       assertEquals(responses.get(0), "DELETED");
       assertEquals(responses.get(1), "NOT_FOUND");
@@ -323,7 +323,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    private void withNoReply(Method m, String op) throws InterruptedException, ExecutionException, TimeoutException,
-           IOException {
+         IOException {
       OperationFuture<Boolean> f = client.set(k(m), 0, "blah");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       CountDownLatch latch = new CountDownLatch(1);
@@ -478,7 +478,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    public void testFlushAllNoReply(Method m) throws InterruptedException, ExecutionException, TimeoutException, IOException {
-     withNoReply(m, "flush_all noreply\r\n");
+      withNoReply(m, "flush_all noreply\r\n");
    }
 
    public void testFlushAllPipeline() throws IOException {
@@ -613,7 +613,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
       String cacheName = server.getConfiguration().defaultCacheName();
 
-      server.ignoreCache(cacheName);
+      server.getCacheIgnore().ignoreCache(cacheName);
       try {
          client.get(k(m));
          fail("Should have failed");
@@ -622,14 +622,14 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       }
 
 
-      server.unignore(cacheName);
-         client.get(k(m));
+      server.getCacheIgnore().unignoreCache(cacheName);
+      client.get(k(m));
    }
 
    public void testBufferOverflowCausesUnknownException() throws Exception {
       List<String> keys = Files.readAllLines(
-         Paths.get(getClass().getClassLoader().getResource("keys.txt").toURI()),
-         StandardCharsets.UTF_8
+            Paths.get(getClass().getClassLoader().getResource("keys.txt").toURI()),
+            StandardCharsets.UTF_8
       );
 
       for (String key : keys) {
