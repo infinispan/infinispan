@@ -24,7 +24,7 @@ public interface ProtoStreamTypeIds {
    // 1 byte Ids 0..127 -> Reserved for critical messages used a lot
    int WRAPPED_MESSAGE = WrappedMessage.PROTOBUF_TYPE_ID; // Id 0 is reserved for ProtoStream WrappedMessage class
    int WRAPPED_BYTE_ARRAY = 1;
-   int USER_MARSHALLER_BYTES = 2;
+   int MARSHALLABLE_USER_OBJECT = 2;
    int BYTE_STRING = 3;
    int EMBEDDED_METADATA = 4;
    int EMBEDDED_EXPIRABLE_METADATA = 5;
