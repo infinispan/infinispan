@@ -61,6 +61,18 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       cm.defineConfiguration("objectCache", object.build());
       cm.defineConfiguration("legacy", legacyStorageCache.build());
+      cm.defineConfiguration("rest", getDefaultCacheBuilder().build());
+   }
+
+   @Test
+   public void testLegacyPredefinedCache() throws Exception {
+      putStringValueInCache("rest", "k1", "v1");
+
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "rest", "k1"))
+            .send();
+
+      assertThat(response).isOk();
    }
 
    @Test
