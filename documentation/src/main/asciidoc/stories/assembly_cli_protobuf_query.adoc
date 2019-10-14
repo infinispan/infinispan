@@ -1,4 +1,4 @@
-[id='protobuf_query-{context}']
+[id='protobuf_query']
 :context: cli
 = Querying Caches with Protobuf Metadata
 {brandname} supports using Protocol Buffers (Protobuf) to structure data in the cache so that you can query it.

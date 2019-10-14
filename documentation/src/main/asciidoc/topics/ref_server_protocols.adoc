@@ -1,4 +1,4 @@
-= Choosing a Server Protocol
+= Server Protocol Comparison
 
 Choosing the right protocol depends on a number of factors.
 

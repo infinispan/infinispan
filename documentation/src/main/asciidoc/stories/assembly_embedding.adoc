@@ -1,4 +1,4 @@
-[id='embedding-{context}']
+[id='library_mode']
 :context: embedding
 
 include::{topics}/embedded_cache.adoc[leveloffset=+0]

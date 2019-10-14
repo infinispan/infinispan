@@ -1,4 +1,4 @@
-[id='rest-{context}']
+[id='rest_server']
 :context: rest
 
 include::{topics}/server_protocols_rest.adoc[leveloffset=+0]

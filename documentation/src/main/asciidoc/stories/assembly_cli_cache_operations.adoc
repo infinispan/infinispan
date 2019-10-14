@@ -1,4 +1,4 @@
-[id='cache_operations-{context}']
+[id='cache_operations']
 :context: cli
 = Performing Cache Operations with the {brandname} CLI
 The command line interface (CLI) lets you remotely connect to {brandname}

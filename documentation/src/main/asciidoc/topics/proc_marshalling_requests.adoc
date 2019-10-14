@@ -1,6 +1,0 @@
-= Custom Marshaller Bridges
-{brandname} provides two marshalling bridges for marshalling client/server requests using the Kryo and Protostuff libraries.
-To utilise either of these marshallers, you simply place the dependency of the marshaller you require in your client
-pom. Custom schemas for object marshalling must then be registered with the selected library using the library's api on
-the client or by implementing a RegistryService for the given marshaller bridge. Examples of how to achieve this for both
-libraries are presented below:

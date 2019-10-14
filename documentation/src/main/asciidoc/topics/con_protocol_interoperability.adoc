@@ -1,4 +1,0 @@
-= Protocol Interoperability
-Clients exchange data with {brandname} through endpoints such as REST or Hot Rod.
-
-Each endpoint uses a different protocol so that clients can read and write data in a suitable format. Because {brandname} can interoperate with multiple clients at the same time, it must convert data between client formats and the storage formats.

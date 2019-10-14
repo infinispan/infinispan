@@ -1,4 +1,4 @@
-[id='upgrading-{context}']
+[id='upgrading']
 :context: upgrading
 
 include::{topics}/upgrading.adoc[leveloffset=+0]

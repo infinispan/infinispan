@@ -1,5 +1,5 @@
-[id='server_start']
-:context: getting_started
+[id='start_server']
+:context: server
 = Getting Started with {brandname} Server
 Quickly set up {brandname} server and learn the basics.
 

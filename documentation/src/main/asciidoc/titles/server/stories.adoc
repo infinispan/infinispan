@@ -1,15 +1,14 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
 
-include::{stories}/assembly_getting_started_server.adoc[leveloffset=+1]
-include::{stories}/assembly_configuring_server.adoc[leveloffset=+1]
-include::{stories}/assembly_implementing_server_tasks.adoc[leveloffset=+1]
-include::{stories}/assembly_monitoring_server_health.adoc[leveloffset=+1]
+include::{stories}/assembly_server_getting_started.adoc[leveloffset=+1]
+include::{stories}/assembly_server_endpoints.adoc[leveloffset=+1]
 include::{stories}/assembly_server_logging.adoc[leveloffset=+1]
-include::{stories}/assembly_server_modules.adoc[leveloffset=+1]
-include::{stories}/assembly_scripting_server.adoc[leveloffset=+1]
-include::{stories}/assembly_server_multitenancy.adoc[leveloffset=+1]
+include::{stories}/assembly_server_health.adoc[leveloffset=+1]
+include::{stories}/assembly_server_monitoring.adoc[leveloffset=+1]
 include::{stories}/assembly_server_security.adoc[leveloffset=+1]
-include::{stories}/assembly_monitoring.adoc[leveloffset=+1]
 include::{stories}/assembly_server_single_port.adoc[leveloffset=+1]
-include::{stories}/assembly_performing_rolling_upgrades.adoc[leveloffset=+1]
+include::{stories}/assembly_server_marshalling.adoc[leveloffset=+1]
+include::{stories}/assembly_server_tasks.adoc[leveloffset=+1]
+include::{stories}/assembly_server_scripts.adoc[leveloffset=+1]
+include::{stories}/assembly_server_rolling_upgrades.adoc[leveloffset=+1]

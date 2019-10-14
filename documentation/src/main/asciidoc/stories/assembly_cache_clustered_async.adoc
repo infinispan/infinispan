@@ -1,4 +1,4 @@
-[id='async_comm-{context}']
+[id='async_clusters']
 :context: configuring
 = Asynchronous Communication with Clustered Caches
 

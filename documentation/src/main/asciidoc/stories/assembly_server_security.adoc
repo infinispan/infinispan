@@ -1,4 +1,4 @@
-[id='security-{context}']
+[id='security']
 :context: server
 = Securing {brandname} Servers
 

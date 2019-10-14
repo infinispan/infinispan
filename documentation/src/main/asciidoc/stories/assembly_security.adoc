@@ -1,4 +1,4 @@
-[id='security-{context}']
+[id='security']
 :context: security
 
 include::{topics}/security.adoc[leveloffset=+0]

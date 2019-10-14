@@ -1,0 +1,133 @@
+[[cache_configuration_declarative]]
+= Declarative Cache Configuration
+
+Declarative configuration comes in a form of XML document that adheres to a provided {brandname} configuration XML
+link:http://www.infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema].
+
+Every aspect of {brandname} that can be configured declaratively can also be configured programmatically.
+In fact, declarative configuration, behind the scenes, invokes the programmatic configuration API as the XML configuration file is being processed.
+One can even use a combination of these approaches.
+For example, you can read static XML configuration files and at runtime programmatically tune that same configuration.
+Or you can use a certain static configuration defined in XML as a starting point or template for defining additional configurations in runtime.
+
+There are two main configuration abstractions in {brandname}: `global` and `cache`.
+
+.Global configuration
+Global configuration defines global settings shared among all cache instances created by a single link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager].
+Shared resources like thread pools, serialization/marshalling settings, transport and network settings, JMX domains are all part of global configuration.
+
+.Cache configuration
+Cache configuration is specific to the actual caching domain itself: it specifies eviction, locking, transaction, clustering, persistence etc.
+You can specify as many named cache configurations as you need. One of these caches can be indicated as the `default` cache,
+which is the cache returned by the `CacheManager.getCache()` API, whereas other named caches are retrieved via the `CacheManager.getCache(String name)` API.
+
+Whenever they are specified, named caches inherit settings from the default cache while additional behavior can be specified or overridden.
+{brandname} also provides a very flexible inheritance mechanism, where you can define a hierarchy of configuration templates,
+allowing multiple caches to share the same settings, or overriding specific parameters as necessary.
+
+One of the major goals of {brandname} is to aim for zero configuration.
+A simple XML configuration file containing nothing more than a single infinispan element is enough to get you started.
+The configuration file listed below provides sensible defaults and is perfectly valid.
+
+.infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/infinispan.xml[]
+----
+
+However, that would only give you the most basic, local mode, non-clustered cache manager with no caches.
+Non-basic configurations are very likely to use customized global and default cache elements.
+
+Declarative configuration is the most common approach to configuring {brandname} cache instances.
+In order to read XML configuration files one would typically construct an instance of DefaultCacheManager by pointing to an XML file containing {brandname} configuration.
+Once the configuration file is read you can obtain reference to the default cache instance.
+
+[source,java]
+----
+include::code_examples/DefaultCacheManagerXML.java[]
+----
+
+or any other named instance specified in `my-config-file.xml`.
+
+[source,java]
+----
+include::code_examples/GetSomeNamedCache.java[]
+----
+
+The name of the default cache is defined in the `<cache-container>` element of the XML configuration file, and additional
+caches can be configured using the `<local-cache>`,`<distributed-cache>`,`<invalidation-cache>` or `<replicated-cache>` elements.
+
+The following example shows the simplest possible configuration for each of the cache types supported by {brandname}:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/simple_config_cache_types.xml[]
+----
+
+[[cache_configuration_templates]]
+= Cache configuration templates
+
+As mentioned above, {brandname} supports the notion of _configuration templates_. These are full or partial configuration
+declarations which can be shared among multiple caches or as the basis for more complex configurations.
+
+The following example shows how a configuration named `local-template` is used to define a cache named `local`.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/local_template_config.xml[]
+----
+
+Templates can inherit from previously defined templates, augmenting and/or overriding some or all of the configuration elements:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_template_inherit.xml[]
+----
+
+In the above example, `base-template` defines a local cache with a specific _expiration_ configuration. The `extended-template`
+configuration inherits from `base-template`, overriding just a single parameter of the _expiration_ element (all other
+attributes are inherited) and adds a _memory_ element. Finally, two caches are defined: `local` which uses the `base-template`
+configuration and `local-bounded` which uses the `extended-template` configuration.
+
+WARNING: Be aware that for multi-valued elements (such as `properties`) the inheritance is additive, i.e. the child configuration will be the result of merging the properties from the parent and its own.
+
+[[cache_configuration_wildcards]]
+= Cache configuration wildcards
+
+An alternative way to apply templates to caches is to use wildcards in the template name, e.g. `basecache*`. Any cache whose name matches the template wildcard will inherit that configuration.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_template_wildcard.xml[]
+----
+
+Above, caches `basecache-1` and `basecache-2` will use the `basecache*` configuration. The configuration will also
+be applied when retrieving undefined caches programmatically.
+
+NOTE: If a cache name matches multiple wildcards, i.e. it is ambiguous, an exception will be thrown.
+
+[[cache_configuration_xinclude]]
+= XInclude support
+
+The configuration parser supports link:https://www.w3.org/TR/xinclude/[XInclude] which means you can split your XML configuration across multiple files:
+
+.infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_xinclude.xml[]
+----
+
+.included.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+<local-cache name="cache-1"/>
+----
+
+NOTE: the parser supports a minimal subset of the XInclude spec (no support for XPointer, fallback, text processing and content negotiation).
+
+[[cache_configuration_declarative_ref]]
+= Declarative configuration reference
+
+For more details on the declarative configuration schema, refer to the link:{configdocroot}[configuration reference].
+
+If you are using XML editing tools for configuration writing you can use the provided {brandname} link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema] to assist you.

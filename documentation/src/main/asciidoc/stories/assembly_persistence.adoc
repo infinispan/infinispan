@@ -1,4 +1,4 @@
-[id='persistence-{context}']
+[id='persistence']
 :context: admin
 
 include::{topics}/persistence.adoc[leveloffset=+0]

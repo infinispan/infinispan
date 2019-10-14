@@ -1,4 +1,4 @@
-[id='counters-{context}']
+[id='counters']
 :context: cli
 = Working with Counters
 

@@ -1,6 +1,0 @@
-[id='server']
-:context: server
-= {brandname} Server
-
-
-include::assembly_server_modes.adoc[leveloffset=+1]

@@ -1,4 +1,4 @@
-[id='integrating-{context}']
+[id='integrating']
 :context: integration
 
 include::{topics}/integrations.adoc[leveloffset=+0]

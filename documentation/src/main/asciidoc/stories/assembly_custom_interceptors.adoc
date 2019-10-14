@@ -1,4 +1,4 @@
-[id='interceptors-{context}']
+[id='interceptors']
 :context: admin
 
 include::{topics}/interceptors.adoc[leveloffset=+0]

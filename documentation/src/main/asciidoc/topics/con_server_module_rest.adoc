@@ -1,0 +1,7 @@
+= REST Server
+
+Access {brandname} via a RESTful HTTP interface.
+
+** To connect to it, you can use any HTTP client. There are many different client implementations available for many different languages and systems.
+** This module is particularly recommended for those environments where the HTTP port is the only access method allowed between clients and servers.
+** Clients wanting to load balance or failover between different {brandname} REST servers can do so using any standard HTTP load balancer such as link:http://www.jboss.org/mod_cluster[mod_cluster] . It's worth noting, these load balancers maintain a static view of the servers in the backend and if a new one was to be added, it requires manual updates of the load balancer.

@@ -1,7 +1,0 @@
-= TCP PING Discovery
-The following example stack configures the TCPPING discovery protocol with two initial hosts:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/tcp_ping.xml[]
-----

@@ -1,4 +1,4 @@
-[id='batch-{context}']
+[id='batch_operations']
 :context: cli
 = Performing Batch Operations
 Process operations in groups, either interactively or using batch files.

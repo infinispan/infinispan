@@ -1,5 +1,5 @@
-[id='monitoring-{context}']
-:context: monitoring
+[id='monitoring']
+:context: server
 = Monitoring {brandname} Servers
 
 include::{topics}/jmx_server.adoc[leveloffset=+1]

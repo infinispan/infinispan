@@ -1,4 +1,4 @@
-[id='xsite-{context}']
+[id='xsite_commands']
 :context: cli
 = Performing Cross-Site Replication Operations
 
