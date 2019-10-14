@@ -1,0 +1,125 @@
+[[cache_configuration_programmatic]]
+= CacheManager and ConfigurationBuilder API
+
+Programmatic {brandname} configuration is centered around the CacheManager and ConfigurationBuilder API.
+Although every single aspect of {brandname} configuration could be set programmatically, the most usual approach is to create a starting point in a form of XML configuration file and then in runtime, if needed, programmatically tune a specific configuration to suit the use case best.
+
+[source,java]
+----
+include::code_examples/DefaultCacheManagerXML.java[]
+----
+
+Let's assume that a new synchronously replicated cache is to be configured programmatically.
+First, a fresh instance of Configuration object is created using ConfigurationBuilder helper object, and the cache mode is set to synchronous replication.
+Finally, the configuration is defined/registered with a manager.
+
+[source,java]
+----
+include::code_examples/ConfigRegisterManager.java[]
+----
+
+The default cache configuration (or any other cache configuration) can be used as a starting point for creation of a new cache.
+For example, lets say that `infinispan-config-file.xml` specifies a replicated cache as a default and that a distributed cache is desired with a specific L1 lifespan while at the same time retaining all other aspects of a default cache.
+Therefore, the starting point would be to read an instance of a default Configuration object and use `ConfigurationBuilder` to construct and modify cache mode and L1 lifespan on a new `Configuration` object. As a final step the configuration is defined/registered with a manager.
+
+[source,java]
+----
+include::code_examples/ConfigDefaultRegisterManager.java[]
+----
+
+As long as the base configuration is the default named cache, the previous code works perfectly fine. However, other times the base configuration might be another named cache. So, how can new configurations be defined based on other defined caches? Take the previous example and imagine that instead of taking the default cache as base, a named cache called "replicatedCache" is used as base. The code would look something like this:
+
+[source,java]
+----
+include::code_examples/ConfigReplicatedRegisterManager.java[]
+----
+
+Refer to link:{javadocroot}/org/infinispan/manager/CacheManager.html[CacheManager] , link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:{javadocroot}/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
+
+[[cache_configuration_programmatic_api]]
+= ConfigurationBuilder Programmatic Configuration API
+While the above paragraph shows how to combine declarative and programmatic configuration, starting from an XML configuration is completely optional.
+The ConfigurationBuilder fluent interface style allows for easier to write and more readable programmatic configuration.
+This approach can be used for both the global and the cache level configuration.
+GlobalConfiguration objects are constructed using GlobalConfigurationBuilder while Configuration objects are built using ConfigurationBuilder.
+Let's look at some examples on configuring both global and cache level options with this API:
+
+== Enabling JMX MBeans and statistics
+Sometimes you might also want to enable collection of link:{javadocroot}/jmxComponents.html[global JMX statistics]
+at cache manager level or get information about the transport. To enable global JMX statistics simply do:
+
+[source,java]
+----
+include::code_examples/EnableJmxStats.java[]
+----
+
+Please note that by not enabling (or by explicitly disabling) global JMX statistics your are just turning off statistics
+collection. The corresponding MBean is still registered and can be used to manage the cache manager in general, but the
+statistics attributes do not return meaningful values.
+
+Further options at the global JMX statistics level allows you to configure the cache manager name which comes handy when you have multiple cache managers running on the same system, or how to locate the JMX MBean Server:
+
+[source,java]
+----
+include::code_examples/MBeanServerLookup.java[]
+----
+
+== Configuring thread pools
+
+Some of the {brandname} features are powered by a group of the thread pool executors which can also be tweaked at this global level. For example:
+
+[source,java]
+----
+include::code_examples/ConfigThreadPools.java[]
+----
+
+You can not only configure global, cache manager level, options, but you can also configure cache level options such as the cluster mode:
+
+[source,java]
+----
+include::code_examples/ConfigClustering.java[]
+----
+
+Or you can configure eviction and expiration settings:
+
+[source,java]
+----
+include::code_examples/ConfigExpiration.java[]
+----
+
+== Configuring transactions and locking
+
+An application might also want to interact with an {brandname} cache within the boundaries of JTA and to do that you need to configure the transaction layer and optionally tweak the locking settings. When interacting with transactional caches, you might want to enable recovery to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too:
+
+[source,java]
+----
+include::code_examples/ConfigTransactionsLocking.java[]
+----
+
+== Configuring cache stores
+
+Configuring {brandname} with chained cache stores is simple too:
+
+[source,java]
+----
+include::code_examples/ConfigCacheStores.java[]
+----
+
+[[cache_configuration_programmatic_advanced]]
+== Advanced programmatic configuration
+
+The fluent configuration can also be used to configure more advanced or exotic options, such as advanced externalizers:
+
+[source,java]
+----
+include::code_examples/ConfigExternalizers.java[]
+----
+
+Or, add custom interceptors:
+
+[source,java]
+----
+include::code_examples/ConfigCustomInterceptors.java[]
+----
+
+For information on the individual configuration options, please check the link:{configdocroot}[configuration guide].

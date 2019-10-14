@@ -1,0 +1,7 @@
+= Memcached Server
+
+Access {brandname} via an implementation of the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol].
+
+** To connect to it, you can use any of the link:http://code.google.com/p/memcached/wiki/Clients[existing Memcached clients] which are diverse.
+** As opposed to Memcached servers, {brandname} based Memcached servers can actually be clustered and can replicate or distribute data using consistent hash algorithms around the cluster. This module is particularly of interest to those users that want to provide failover capabilities to the data stored in Memcached servers.
+** In terms of load balancing and failover, there are a few clients that can load balance or failover given a static list of server addresses (perl's Cache::Memcached for example) but any server addition or removal would require manual intervention.

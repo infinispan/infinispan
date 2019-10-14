@@ -1,5 +1,5 @@
-[id='memcached_server-{context}']
-:context: client
+[id='memcached_server']
+:context: memcached
 
 = Memcached Server
 

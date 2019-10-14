@@ -1,4 +1,4 @@
-[id='hotrod_protocol-{context}']
+[id='hotrod_protocol']
 :context: hotrod
 
 include::{topics}/hotrod_protocol.adoc[leveloffset=+0]

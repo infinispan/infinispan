@@ -1,4 +1,4 @@
-[id='tuning-{context}']
+[id='tuning']
 :context: tuning
 
 include::{topics}/performance.adoc[leveloffset=+0]

@@ -1,4 +1,4 @@
-[id='eviction-{context}']
+[id='eviction_expiration']
 :context: admin
 = Configuring Eviction and Expiration
 

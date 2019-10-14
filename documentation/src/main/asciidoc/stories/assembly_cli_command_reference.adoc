@@ -1,4 +1,4 @@
-[id='command_reference-{context}']
+[id='command_reference']
 :context: cli
 = Command Reference
 View help pages for {brandname} CLI commands.

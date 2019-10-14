@@ -1,4 +1,4 @@
-[id='partition_handling-{context}']
+[id='partition_handling']
 :context: admin
 = Setting Up Partition Handling
 

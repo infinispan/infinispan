@@ -1,4 +1,4 @@
-[id='logs-{context}']
+[id='logs']
 :context: server
 = Monitoring {brandname} Server Logs
 {brandname} uses JBoss LogManager to provide configurable logging mechanisms

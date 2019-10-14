@@ -12,6 +12,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :toclevels: 3
 :numbered:
 :stem: asciimath
+:context: server
 
 //Title
 = Deploying and Configuring {brandname} {infinispanversion} Servers

@@ -1,0 +1,18 @@
+[id='declarative']
+:context: configuring
+= Configuring Caches Declaratively
+{brandname} declarative configuration.
+
+include::{topics}/ref_ispn_subsystem.adoc[leveloffset=+1]
+include::{topics}/ref_cache_containers.adoc[leveloffset=+2]
+include::{topics}/ref_cache_declarations.adoc[leveloffset=+2]
+
+include::{topics}/ref_locking_config.adoc[leveloffset=+1]
+include::{topics}/ref_datasource_config.adoc[leveloffset=+1]
+include::{topics}/ref_state_xfer_config.adoc[leveloffset=+1]
+
+include::{topics}/proc_configuring_declaratively.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

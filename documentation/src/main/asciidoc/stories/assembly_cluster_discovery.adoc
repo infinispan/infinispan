@@ -1,5 +1,6 @@
-[id='cloud_discovery-{context}']
-= Cloud Discovery Mechanisms
+[id='cluster_discovery']
+:context: configuring
+= Configuring Cluster Discovery
 Running {brandname} on hosted services requires using discovery mechanisms that are adapted to network constraints that individual cloud providers impose. For instance, Amazon EC2 does not allow UDP multicast.
 
 {brandname} can use the following cloud discovery mechanisms:

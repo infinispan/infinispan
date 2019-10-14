@@ -1,4 +1,4 @@
-[id='hotrod-{context}']
+[id='hotrod_java']
 :context: hotrod
 
 include::{topics}/server_protocols_hotrod.adoc[leveloffset=+0]

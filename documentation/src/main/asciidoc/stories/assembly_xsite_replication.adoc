@@ -1,4 +1,4 @@
-[id='xsite_replication-{context}']
+[id='xsite_replication']
 :context: xsite
 
 include::{topics}/cross_site_replication.adoc[leveloffset=+0]

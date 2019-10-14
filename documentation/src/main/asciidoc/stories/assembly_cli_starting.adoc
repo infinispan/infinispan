@@ -1,4 +1,4 @@
-[id='getting_started-{context}']
+[id='getting_started']
 :context: cli
 = Getting Started with the {brandname} CLI
 The command line interface (CLI) lets you remotely connect to {brandname}

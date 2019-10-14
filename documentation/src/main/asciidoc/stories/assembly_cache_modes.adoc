@@ -1,4 +1,4 @@
-[id='cache_modes-{context}']
+[id='cache_modes']
 :context: configuring
 = {brandname} Caches
 {brandname} caches provide flexible, in-memory data stores that you can configure to suit use cases such as:

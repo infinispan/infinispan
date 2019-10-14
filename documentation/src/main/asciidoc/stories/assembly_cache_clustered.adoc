@@ -1,4 +1,4 @@
-[id='clustered_caches-{context}']
+[id='clustered_caches']
 :context: configuring
 = Clustered Caches
 Clustered caches store data across multiple {brandname} nodes using JGroups

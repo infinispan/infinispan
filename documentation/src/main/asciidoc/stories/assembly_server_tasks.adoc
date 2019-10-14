@@ -1,4 +1,4 @@
-[id='server_tasks-{context}']
+[id='server_tasks']
 :context: server
 = Implementing Server Tasks
 Create custom {brandname} server jobs that you can invoke from clients.

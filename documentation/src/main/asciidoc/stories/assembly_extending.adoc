@@ -1,4 +1,4 @@
-[id='extending-{context}']
+[id='extending']
 :context: admin
 
 include::{topics}/extending.adoc[leveloffset=+0]

@@ -1,4 +1,4 @@
-[id='local_caches-{context}']
+[id='local_caches']
 :context: configuring
 
 include::{topics}/con_caches_local.adoc[leveloffset=+0]

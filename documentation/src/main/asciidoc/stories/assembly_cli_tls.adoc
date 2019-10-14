@@ -1,4 +1,4 @@
-[id='tls-{context}']
+[id='tls_connections']
 :context: cli
 = Use SSL/TLS Connections
 

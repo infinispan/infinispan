@@ -1,5 +1,5 @@
-[id='starting-{context}']
-:context: getting_started
+[id='getting_started']
+:context: start
 
 include::{topics}/installation.adoc[leveloffset=+0]
 include::{topics}/create_project.adoc[leveloffset=+0]
