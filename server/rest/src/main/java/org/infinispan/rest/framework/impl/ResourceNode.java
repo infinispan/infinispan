@@ -136,8 +136,12 @@ class ResourceNode {
    public LookupResult find(Method method, List<PathItem> path, String action) {
       ResourceNode current = this;
       Map<String, String> variables = new HashMap<>();
+      boolean root = true;
       for (PathItem pathItem : path) {
-         if (pathItem.equals(current.pathItem)) continue;
+         if (pathItem.equals(current.pathItem) && root) {
+            root = false;
+            continue;
+         }
          ResourceNode resourceNode = current.children.get(pathItem);
          ResourceNode matchAll = current.children.get(new StringPathItem("*"));
          if (resourceNode != null) {

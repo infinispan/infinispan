@@ -4,6 +4,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
@@ -41,6 +42,11 @@ public class ResourceManagerImplTest {
       registerHandler("/", "HandlerB", POST, "/root/a/{pathA}");
    }
 
+   public void testLookupRepeatedPaths() {
+      registerHandler("/", "Handler", GET, "/root/path/path");
+      assertNotNull(resourceManager.lookupResource(GET, "/root/path/path"));
+   }
+
    @Test
    public void testLookupHandler() {
       registerHandler("root", "CompaniesHandler", "/companies", "/companies/{company}", "/companies/{company}/{id}");
@@ -49,6 +55,8 @@ public class ResourceManagerImplTest {
       registerHandler("root", "InfoHandler", "/info", "/info/jvm", "/info/jvm/{format}", "/info/{format}/{encoding}");
 
       assertNull(resourceManager.lookupResource(GET, "/root/dummy"));
+      assertNull(resourceManager.lookupResource(GET, "/fake/"));
+      assertNull(resourceManager.lookupResource(GET, "/"));
 
       assertNull(resourceManager.lookupResource(GET, "/root/stocks"));
       assertNull(resourceManager.lookupResource(GET, "/root/stocks/2/USD/1"));
