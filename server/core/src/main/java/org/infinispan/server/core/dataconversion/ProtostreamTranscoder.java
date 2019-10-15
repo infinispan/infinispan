@@ -21,6 +21,7 @@ import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.util.logging.Log;
@@ -34,17 +35,17 @@ import org.infinispan.util.logging.LogFactory;
 public class ProtostreamTranscoder extends OneToManyTranscoder {
 
    protected final static Log logger = LogFactory.getLog(ProtostreamTranscoder.class, Log.class);
-   private volatile SerializationContext ctx;
+   private volatile SerializationContextRegistry ctxRegistry;
    private final ClassLoader classLoader;
 
-   public ProtostreamTranscoder(SerializationContext ctx, ClassLoader classLoader) {
+   public ProtostreamTranscoder(SerializationContextRegistry ctxRegistry, ClassLoader classLoader) {
       super(APPLICATION_PROTOSTREAM, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON, APPLICATION_UNKNOWN);
-      this.ctx = ctx;
+      this.ctxRegistry = ctxRegistry;
       this.classLoader = classLoader;
    }
 
-   public void setCtx(SerializationContext ctx) {
-      this.ctx = ctx;
+   private SerializationContext ctx() {
+      return ctxRegistry.getGlobalCtx();
    }
 
    @Override
@@ -70,7 +71,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
                } else {
                   reader = new StringReader(content.toString());
                }
-               return ProtobufUtil.fromCanonicalJSON(ctx, reader);
+               return ProtobufUtil.fromCanonicalJSON(ctx(), reader);
             }
             if (contentType.match(APPLICATION_UNKNOWN) || contentType.match(APPLICATION_PROTOSTREAM)) {
                return content;
@@ -82,17 +83,17 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
             if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
-            return StandardConversions.convertJavaToProtoStream(unmarshalled, MediaType.APPLICATION_OBJECT, ctx);
+            return StandardConversions.convertJavaToProtoStream(unmarshalled, MediaType.APPLICATION_OBJECT, ctx());
          }
          if (destinationType.match(MediaType.TEXT_PLAIN)) {
-            String decoded = ProtobufUtil.fromWrappedByteArray(ctx, (byte[]) content).toString();
+            String decoded = ProtobufUtil.fromWrappedByteArray(ctx(), (byte[]) content).toString();
             return decoded.getBytes(destinationType.getCharset());
          }
          if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
             return unmarshall((byte[]) content, destinationType);
          }
          if (destinationType.match(MediaType.APPLICATION_JSON)) {
-            String converted = ProtobufUtil.toCanonicalJSON(ctx, (byte[]) content);
+            String converted = ProtobufUtil.toCanonicalJSON(ctx(), (byte[]) content);
             String convertType = destinationType.getClassType();
             if (convertType == null)
                return StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset());
@@ -102,7 +103,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
          if (destinationType.equals(APPLICATION_UNKNOWN)) {
             //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.
             if (content instanceof WrappedByteArray) return content;
-            return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx);
+            return StandardConversions.convertJavaToProtoStream(content, MediaType.APPLICATION_OBJECT, ctx());
          }
          throw logger.unsupportedContent(ProtostreamTranscoder.class.getSimpleName(), content);
       } catch (InterruptedException | IOException e) {
@@ -113,17 +114,17 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
    private byte[] marshall(Object decoded, MediaType destinationType) throws IOException {
       Optional<String> wrappedParam = destinationType.getParameter("wrapped");
       if (!wrappedParam.isPresent() || !wrappedParam.get().equals("false"))
-         return ProtobufUtil.toWrappedByteArray(ctx, decoded);
-      return ProtobufUtil.toByteArray(ctx, decoded);
+         return ProtobufUtil.toWrappedByteArray(ctx(), decoded);
+      return ProtobufUtil.toByteArray(ctx(), decoded);
    }
 
    private Object unmarshall(byte[] bytes, MediaType destinationType) throws IOException {
       String type = destinationType.getClassType();
       if (type == null) {
-         return ProtobufUtil.fromWrappedByteArray(ctx, bytes);
+         return ProtobufUtil.fromWrappedByteArray(ctx(), bytes);
       }
       Class<?> destination = Util.loadClass(type, classLoader);
-      return ProtobufUtil.fromByteArray(ctx, bytes, destination);
+      return ProtobufUtil.fromByteArray(ctx(), bytes, destination);
    }
 
    private Object addTypeIfNeeded(Object content) {

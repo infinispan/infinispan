@@ -6,7 +6,6 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -14,12 +13,15 @@ import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl;
 import org.infinispan.globalstate.impl.GlobalStateManagerImpl;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -32,12 +34,13 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-
-@DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
-                              InboundInvocationHandler.class, PersistentUUIDManager.class,
-                              RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
-                              IteratorHandler.class, GlobalStateManager.class, GlobalConfigurationManager.class})
-
+@DefaultFactoryFor(classes = {
+      BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
+      InboundInvocationHandler.class, PersistentUUIDManager.class,
+      RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
+      IteratorHandler.class, GlobalStateManager.class, GlobalConfigurationManager.class,
+      SerializationContextRegistry.class
+})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -66,6 +69,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new GlobalConfigurationManagerImpl();
       else if (componentName.equals(DataOperationOrderer.class.getName()))
          return new DataOperationOrderer();
+      else if (componentName.equals(SerializationContextRegistry.class.getName()))
+         return new SerializationContextRegistryImpl();
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }

@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.multimap.impl.function.ContainsFunction;
 import org.infinispan.multimap.impl.function.GetFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
@@ -28,6 +29,9 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+
       final Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization()
             .advancedExternalizers();
 

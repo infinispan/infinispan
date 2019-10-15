@@ -5,8 +5,10 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -18,7 +20,9 @@ public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
    @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-      transcoder = new ProtostreamTranscoder(ProtobufUtil.newSerializationContext(), ProtostreamTextTranscoderTest.class.getClassLoader());
+      SerializationContextRegistry registry = Mockito.mock(SerializationContextRegistry.class);
+      Mockito.when(registry.getGlobalCtx()).thenReturn(ProtobufUtil.newSerializationContext());
+      transcoder = new ProtostreamTranscoder(registry, ProtostreamTextTranscoderTest.class.getClassLoader());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

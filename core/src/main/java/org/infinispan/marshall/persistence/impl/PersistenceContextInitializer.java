@@ -40,6 +40,11 @@ import org.infinispan.util.logging.events.EventLogLevel;
       },
       schemaFileName = "persistence.core.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.core")
+      schemaPackageName = PersistenceContextInitializer.PACKAGE_NAME)
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
+   String PACKAGE_NAME = "org.infinispan.persistence.core";
+
+   static String getFqTypeName(Class clazz) {
+      return PACKAGE_NAME + "." + clazz.getSimpleName();
+   }
 }

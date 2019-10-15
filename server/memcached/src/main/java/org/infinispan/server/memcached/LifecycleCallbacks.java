@@ -3,10 +3,8 @@ package org.infinispan.server.memcached;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -19,8 +17,7 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 public class LifecycleCallbacks implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
-      BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
-      PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
-      persistenceMarshaller.register(new PersistenceContextInitializerImpl());
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
    }
 }

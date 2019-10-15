@@ -7,9 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -29,7 +26,8 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
-import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -64,16 +62,15 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    };
 
    @Inject GlobalComponentRegistry gcr;
-   private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
+   @Inject SerializationContextRegistry ctxRegistry;
 
    private Marshaller userMarshaller;
-   private List<BaseMarshaller<?>> marshallerOverrides = new ArrayList<>();
 
    public PersistenceMarshallerImpl() {
    }
 
    public SerializationContext getSerializationContext() {
-      return serializationContext;
+      return ctxRegistry.getPersistenceCtx();
    }
 
    @Start
@@ -85,8 +82,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          userMarshaller.start();
       }
 
-      marshallerOverrides.add(new MarshallableUserObject.Marshaller(getUserMarshaller()));
-      register(new PersistenceContextInitializerImpl());
+      // TODO can we move this to the registry?
+      String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
+      ctxRegistry.addMarshaller(MarshallerType.PERSISTENCE, new MarshallableUserObject.Marshaller(messageName, getUserMarshaller()));
    }
 
    private Marshaller createUserMarshaller() {
@@ -113,13 +111,6 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
          }
       } catch (ClassNotFoundException ignore) {
       }
-
-      // The user has specified a SerializationContextInitializer, so jboss-marshalling is ignored and serializationContext updated
-      List<SerializationContextInitializer> scis = serializationConfig.contextInitializers();
-      if (scis != null) {
-         for (SerializationContextInitializer sci : scis)
-            register(serializationContext, sci);
-      }
       return null;
    }
 
@@ -129,18 +120,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public void register(SerializationContextInitializer initializer) {
-      Objects.requireNonNull(initializer);
-      register(serializationContext, initializer);
-   }
-
-   private void register(SerializationContext ctx, SerializationContextInitializer initializer) {
-      initializer.registerSchema(ctx);
-      initializer.registerMarshallers(ctx);
-
-      // Manually override generated marshaller. Must be done per register operation to prevent sub-modules which
-      // depend on a SerializationContextInitializers containing MarshallableUserObject from overriding this manual
-      // marshaller with a generated one. TODO provide a better abstract that only requires registration once.
-      marshallerOverrides.forEach(ctx::registerMarshaller);
+      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, initializer);
    }
 
    @Override
@@ -181,7 +161,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
             o = new MarshallableUserObject(o);
          int size = estimatedSize < 0 ? PROTOSTREAM_DEFAULT_BUFFER_SIZE : estimatedSize;
          ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
-         ProtobufUtil.toWrappedStream(serializationContext, baos, o, size);
+         ProtobufUtil.toWrappedStream(getSerializationContext(), baos, o, size);
          byte[] bytes = baos.toByteArray();
          return new ByteBufferImpl(bytes, 0, bytes.length);
       } catch (Throwable t) {
@@ -199,7 +179,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException {
-      return unwrapAndInit(ProtobufUtil.fromWrappedByteArray(serializationContext, buf, offset, length));
+      return unwrapAndInit(ProtobufUtil.fromWrappedByteArray(getSerializationContext(), buf, offset, length));
    }
 
    @Override
@@ -212,12 +192,12 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    public void writeObject(Object o, OutputStream out) throws IOException {
       if (requiresWrapping(o))
          o = new MarshallableUserObject(o);
-      ProtobufUtil.toWrappedStream(serializationContext, out, o, PROTOSTREAM_DEFAULT_BUFFER_SIZE);
+      ProtobufUtil.toWrappedStream(getSerializationContext(), out, o, PROTOSTREAM_DEFAULT_BUFFER_SIZE);
    }
 
    @Override
    public Object readObject(InputStream in) throws ClassNotFoundException, IOException {
-      return unwrapAndInit(ProtobufUtil.fromWrappedStream(serializationContext, in));
+      return unwrapAndInit(ProtobufUtil.fromWrappedStream(getSerializationContext(), in));
    }
 
    private Object unwrapAndInit(Object o) {
@@ -264,9 +244,9 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
                o instanceof Character ||
                o instanceof java.util.Date ||
                o instanceof java.time.Instant ||
-               serializationContext.canMarshall(o.getClass());
+               getSerializationContext().canMarshall(o.getClass());
       }
-      return serializationContext.canMarshall(o.getClass());
+      return getSerializationContext().canMarshall(o.getClass());
    }
 
    private boolean isUserMarshallable(Object o) {

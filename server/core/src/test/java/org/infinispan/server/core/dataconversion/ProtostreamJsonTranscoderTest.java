@@ -6,10 +6,12 @@ import static org.testng.Assert.assertTrue;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -41,7 +43,9 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
       dataSrc = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("person_definition.proto", PROTO_DEFINITIONS));
-      transcoder = new ProtostreamTranscoder(serCtx, ProtostreamTranscoder.class.getClassLoader());
+      SerializationContextRegistry registry = Mockito.mock(SerializationContextRegistry.class);
+      Mockito.when(registry.getGlobalCtx()).thenReturn(serCtx);
+      transcoder = new ProtostreamTranscoder(registry, ProtostreamTranscoder.class.getClassLoader());
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

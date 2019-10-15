@@ -101,9 +101,11 @@ public class MarshallableUserObject<T> {
 
    public static class Marshaller implements RawProtobufMarshaller<MarshallableUserObject> {
 
+      private final String typeName;
       private final org.infinispan.commons.marshall.Marshaller userMarshaller;
 
-      public Marshaller(org.infinispan.commons.marshall.Marshaller userMarshaller) {
+      public Marshaller(String typeName, org.infinispan.commons.marshall.Marshaller userMarshaller) {
+         this.typeName = typeName;
          this.userMarshaller = userMarshaller;
       }
 
@@ -111,7 +113,7 @@ public class MarshallableUserObject<T> {
       public Class<MarshallableUserObject> getJavaClass() { return MarshallableUserObject.class; }
 
       @Override
-      public String getTypeName() { return "org.infinispan.persistence.core.MarshallableUserObject"; }
+      public String getTypeName() { return typeName; }
 
       @Override
       public MarshallableUserObject readFrom(ImmutableSerializationContext ctx, RawProtoStreamReader in) throws IOException {

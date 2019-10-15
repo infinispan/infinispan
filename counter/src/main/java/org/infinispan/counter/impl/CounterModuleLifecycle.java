@@ -32,7 +32,6 @@ import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -40,7 +39,7 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
@@ -133,8 +132,8 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       EmbeddedCacheManager cacheManager = bcr.getComponent(EmbeddedCacheManager.class).wired();
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
 
-      PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
-      persistenceMarshaller.register(new PersistenceContextInitializerImpl());
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
 
       CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(globalConfiguration);
       if (gcr.getGlobalConfiguration().isClustered()) {
