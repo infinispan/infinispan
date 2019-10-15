@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpHeader;
@@ -96,6 +97,55 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
 
       assertEquals(cachesAndConfig.get("cache1"), jsonWriter.toJSON(cache1Config));
       assertEquals(cachesAndConfig.get("cache2"), jsonWriter.toJSON(cache2Config));
+   }
+
+   @Test
+   public void testCaches() throws Exception {
+      String accept = "text/plain; q=0.9, application/json; q=0.6";
+      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/caches", restServer().getPort());
+      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      String json = response.getContentAsString();
+      JsonNode jsonNode = mapper.readTree(json);
+      List<String> names = asText(jsonNode.findValues("name"));
+      assertTrue(names.contains("cache1"));
+      assertTrue(names.contains("cache2"));
+
+      List<String> status = asText(jsonNode.findValues("status"));
+      assertTrue(status.contains("RUNNING"));
+
+      List<String> types = asText(jsonNode.findValues("type"));
+      assertTrue(types.contains("local-cache"));
+      assertTrue(types.contains("distributed-cache"));
+
+      List<String> sizes = asText(jsonNode.findValues("size"));
+      assertTrue(sizes.contains("0"));
+
+      List<String> simpleCaches = asText(jsonNode.findValues("simple_cache"));
+      assertTrue(simpleCaches.contains("false"));
+
+      List<String> transactional = asText(jsonNode.findValues("transactional"));
+      assertTrue(transactional.contains("false"));
+
+      List<String> persistent = asText(jsonNode.findValues("persistent"));
+      assertTrue(persistent.contains("false"));
+
+      List<String> bounded = asText(jsonNode.findValues("bounded"));
+      assertTrue(bounded.contains("false"));
+
+      List<String> secured = asText(jsonNode.findValues("secured"));
+      assertTrue(secured.contains("false"));
+
+      List<String> indexed = asText(jsonNode.findValues("indexed"));
+      assertTrue(indexed.contains("false"));
+
+      List<String> hasRemoteBackup = asText(jsonNode.findValues("has_remote_backup"));
+      assertTrue(hasRemoteBackup.contains("false"));
+   }
+
+   private List<String> asText( List<JsonNode> values) {
+      return values.stream().map(JsonNode::asText).collect(Collectors.toList());
    }
 
    @Test

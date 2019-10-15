@@ -15,11 +15,14 @@ import static org.infinispan.rest.framework.Method.POST;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
@@ -62,6 +65,7 @@ public class CacheManagerResource implements ResourceHandler {
    private final ObjectMapper objectMapper = new ObjectMapper();
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
+   private final Executor executor;
 
    public CacheManagerResource(InvocationHelper invocationHelper) {
       objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
@@ -70,6 +74,7 @@ public class CacheManagerResource implements ResourceHandler {
       this.cacheManagerName = globalConfiguration.cacheManagerName();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      this.executor = invocationHelper.getExecutor();
    }
 
    @Override
@@ -91,6 +96,9 @@ public class CacheManagerResource implements ResourceHandler {
 
             // Stats
             .invocation().methods(GET).path("/v2/cache-managers/{name}/stats").handleWith(this::getStats)
+
+            // Caches
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/caches").handleWith(this::getCaches)
             .create();
    }
 
@@ -180,6 +188,42 @@ public class CacheManagerResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
+   private CompletionStage<RestResponse> getCaches(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            Set<CacheInfo> caches = cacheManager.getCacheNames().stream().map(cacheName -> {
+               Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+               CacheInfo cacheInfo = new CacheInfo();
+               cacheInfo.name = cacheName;
+               Configuration cacheConfiguration = cache.getCacheConfiguration();
+               cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
+               cacheInfo.status = cache.getStatus().name();
+               cacheInfo.size = cache.size();
+               cacheInfo.simpleCache = cacheConfiguration.simpleCache();
+               cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+               cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
+               cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
+                     cacheConfiguration.expiration().lifespan() != -1 ;
+               cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
+               cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
+               cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
+               return cacheInfo;
+            }).collect(Collectors.toSet());
+
+            byte[] bytes = objectMapper.writeValueAsBytes(caches);
+            responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
+
+         } catch (JsonProcessingException e) {
+            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+         }
+
+         return responseBuilder.build();
+      }, executor);
+   }
+
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
@@ -266,6 +310,20 @@ public class CacheManagerResource implements ResourceHandler {
       public Object getConfiguration() {
          return configuration;
       }
+   }
+
+   class CacheInfo {
+      public String status;
+      public String name;
+      public String type;
+      public long size;
+      public boolean simpleCache;
+      public boolean transactional;
+      public boolean persistent;
+      public boolean bounded;
+      public boolean indexed;
+      public boolean secured;
+      public boolean hasRemoteBackup;
    }
 
 }

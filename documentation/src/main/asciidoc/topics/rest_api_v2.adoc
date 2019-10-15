@@ -731,6 +731,23 @@ include::rest_examples/get_v2_cache_configs.adoc[]
 include::rest_examples/rest_cache_config_response.json[]
 ----
 
+[[rest_v2_cache_manager_cache_list]]
+=== (Experimental) Obtaining caches with cache information
+
+To get the list of all the caches of a cache manager with cache informations, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_caches.adoc[]
+----
+
+{brandname} responds with a `JSON` array that contains each cache and the cache information:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::rest_examples/rest_caches_info_response.json[]
+----
+
 [[rest_v2_cache_manager_stats]]
 === Getting Cache Manager Statistics
 
