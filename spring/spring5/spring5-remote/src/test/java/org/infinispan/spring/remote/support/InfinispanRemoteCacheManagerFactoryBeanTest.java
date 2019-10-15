@@ -104,31 +104,6 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest extends AbstractInfinis
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.remote.support.InfinispanRemoteCacheManagerFactoryBean#getObject()}
-    * .
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void shouldProduceARemoteCacheManagerConfiguredUsingDefaultSettingsIfNeitherConfigurationPropertiesNorConfigurationPropertiesFileLocationHasBeenSet()
-         throws Exception {
-      final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
-
-      objectUnderTest.afterPropertiesSet();
-
-      final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-      RemoteCacheManager remoteCacheManager2 = new RemoteCacheManager();
-      AssertionUtils.assertPropertiesSubset(
-              "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
-                      + "to RemoteCacheManager's default settings since neither property 'configurationProperties' "
-                      + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-              remoteCacheManager2.getConfiguration().properties(), remoteCacheManager.getConfiguration().properties());
-      objectUnderTest.destroy();
-      remoteCacheManager2.stop();
-   }
-
-   /**
-    * Test method for
     * {@link org.infinispan.spring.remote.support.InfinispanRemoteCacheManagerFactoryBean#isSingleton()}
     * .
     */

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -103,33 +104,6 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
             "getObjectType() should have returned the most derived class of the actual RemoteCache "
                   + "implementation returned from getObject(). However, it didn't.",
             objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean#getObject()}.
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void shouldProduceARemoteCacheManagerConfiguredUsingDefaultSettingsIfNeitherConfigurationPropertiesNorConfigurationPropertiesFileLocationHasBeenSet()
-         throws Exception {
-      objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
-
-      objectUnderTest.afterPropertiesSet();
-
-      final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-      RemoteCacheManager defaultRemoteCacheManager = new RemoteCacheManager();
-      try {
-         AssertionUtils.assertPropertiesSubset(
-                 "The configuration properties used by the SpringRemoteCacheManager returned von getObject() should be equal "
-                         + "to SpringRemoteCacheManager's default settings since neither property 'configurationProperties' "
-                         + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-                 defaultRemoteCacheManager.getConfiguration().properties(),
-                 remoteCacheManager.getNativeCacheManager().getConfiguration().properties());
-      } finally {
-         defaultRemoteCacheManager.stop();
-      }
    }
 
    /**

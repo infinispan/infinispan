@@ -3,6 +3,7 @@ package org.infinispan.spring.remote.provider;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory;
 import org.infinispan.spring.remote.ConfigurationPropertiesOverrides;
 import org.springframework.beans.factory.DisposableBean;
@@ -69,7 +70,10 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
       final Properties configurationPropertiesToUse = configurationProperties();
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.marshaller(new JavaSerializationMarshaller())
+            .addJavaSerialWhiteList(SPRING_JAVA_SERIAL_WHITELIST);
       clientBuilder.withProperties(configurationPropertiesToUse);
+
       long readTimeout;
       if (configurationPropertiesToUse.containsKey(ConfigurationPropertiesOverrides.OPERATION_READ_TIMEOUT))
          readTimeout = Long.parseLong(configurationPropertiesToUse.getProperty(ConfigurationPropertiesOverrides.OPERATION_READ_TIMEOUT));

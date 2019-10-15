@@ -1,5 +1,6 @@
 package org.infinispan.spring.remote.session;
 
+import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_WHITELIST;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -39,7 +40,7 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort())
             .marshaller(new JavaSerializationMarshaller())
-            .addJavaSerialWhiteList("java.time.*", "org.springframework.session.MapSession", "org.infinispan.spring.remote.*");
+            .addJavaSerialWhiteList(SPRING_JAVA_SERIAL_WHITELIST);
       remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 

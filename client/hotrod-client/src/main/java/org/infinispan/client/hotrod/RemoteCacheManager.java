@@ -192,6 +192,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             Util.close(stream);
          }
       }
+
       this.configuration = builder.build();
       this.counterManager = new RemoteCounterManager();
       this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());

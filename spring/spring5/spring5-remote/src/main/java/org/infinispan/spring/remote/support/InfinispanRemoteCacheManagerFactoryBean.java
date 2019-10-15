@@ -3,6 +3,7 @@ package org.infinispan.spring.remote.support;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
@@ -69,7 +70,10 @@ public class InfinispanRemoteCacheManagerFactoryBean extends AbstractRemoteCache
       final Properties configurationPropertiesToUse = configurationProperties();
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.marshaller(new JavaSerializationMarshaller())
+            .addJavaSerialWhiteList(SPRING_JAVA_SERIAL_WHITELIST);
       clientBuilder.withProperties(configurationPropertiesToUse);
+
       this.nativeRemoteCacheManager = new RemoteCacheManager(clientBuilder.build(),
                                                              this.startAutomatically);
       this.logger.info("Finished creating new instance of RemoteCacheManager");

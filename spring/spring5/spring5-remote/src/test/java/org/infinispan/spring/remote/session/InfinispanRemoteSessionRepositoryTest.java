@@ -1,5 +1,7 @@
 package org.infinispan.spring.remote.session;
 
+import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPRING_JAVA_SERIAL_WHITELIST;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -31,7 +33,7 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort())
             .marshaller(new JavaSerializationMarshaller())
-            .addJavaSerialWhiteList("java.time.*", "org.springframework.session.MapSession", "org.infinispan.spring.remote.*");
+            .addJavaSerialWhiteList(SPRING_JAVA_SERIAL_WHITELIST);
       remoteCacheManager = new RemoteCacheManager(builder.build());
    }
 

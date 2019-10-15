@@ -24,6 +24,8 @@ import org.springframework.core.io.Resource;
  */
 public abstract class AbstractRemoteCacheManagerFactory {
 
+   public static final String[] SPRING_JAVA_SERIAL_WHITELIST = new String[]{"java.time.*", "org.springframework.session.MapSession", "org.infinispan.spring.remote.*"};
+
    protected static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected boolean startAutomatically = true;

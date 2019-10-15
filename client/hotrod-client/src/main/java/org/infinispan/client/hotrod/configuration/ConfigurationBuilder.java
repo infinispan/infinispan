@@ -237,6 +237,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder marshaller(Marshaller marshaller) {
       this.marshaller = marshaller;
+      this.marshallerClass = marshaller.getClass();
       return this;
    }
 
@@ -472,8 +473,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (marshaller == null) {
          // Otherwise we use the protostream marshaller
          marshaller = new ProtoStreamMarshaller();
-         marshallerClass = marshaller.getClass();
       }
+      marshallerClass = marshaller.getClass();
    }
 
    @Override
