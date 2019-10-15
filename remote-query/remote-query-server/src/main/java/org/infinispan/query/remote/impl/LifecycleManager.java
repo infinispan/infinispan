@@ -19,14 +19,13 @@ import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -42,7 +41,6 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkC
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.server.core.dataconversion.ProtostreamTranscoder;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -66,8 +64,8 @@ public final class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new FilterResultExternalizer());
 
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
-      PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
-      persistenceMarshaller.register(new PersistenceContextInitializerImpl());
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
 
       initProtobufMetadataManager(bcr);
 
@@ -80,13 +78,8 @@ public final class LifecycleManager implements ModuleLifecycle {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
       bcr.registerComponent(ProtobufMetadataManager.class, protobufMetadataManager, true).running();
 
-      SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-
       EncoderRegistry encoderRegistry = bcr.getComponent(EncoderRegistry.class).wired();
       encoderRegistry.registerWrapper(ProtobufWrapper.INSTANCE);
-
-      // Override SerializationContext so that QueryRequest and ___protobuf_metadata schemas are handled
-      encoderRegistry.getTranscoder(ProtostreamTranscoder.class).setCtx(serCtx);
    }
 
    @Override

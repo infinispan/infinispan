@@ -33,11 +33,10 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -63,8 +62,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManagerImpl.class, Log.class);
 
-   private final SerializationContext serCtx;
-
    private volatile Cache<String, String> protobufSchemaCache;
 
    @Inject
@@ -73,16 +70,8 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @Inject
    InternalCacheRegistry internalCacheRegistry;
 
-   public ProtobufMetadataManagerImpl() {
-      Configuration.Builder protostreamCfgBuilder = Configuration.builder();
-      IndexingMetadata.configure(protostreamCfgBuilder);
-      serCtx = ProtobufUtil.newSerializationContext(protostreamCfgBuilder.build());
-      try {
-         MarshallerRegistration.init(serCtx);
-      } catch (IOException | DescriptorParserException e) {
-         throw new CacheException("Failed to initialise the Protobuf serialization context", e);
-      }
-   }
+   @Inject
+   SerializationContextRegistry ctxRegistry;
 
    @Start
    void start() {
@@ -92,8 +81,19 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             getProtobufMetadataCacheConfig(globalConfiguration).build(),
             EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PROTECTED, InternalCacheRegistry.Flag.PERSISTENT));
 
-      processSerializationContextInitializer(globalConfiguration.serialization().contextInitializers());
+      initializeSerializationContext();
       processProtostreamSerializationContextInitializers(globalConfiguration.classLoader());
+   }
+
+   private void initializeSerializationContext() {
+      Configuration.Builder protostreamCfgBuilder = Configuration.builder();
+      IndexingMetadata.configure(protostreamCfgBuilder);
+      ctxRegistry.addConfiguration(SerializationContextRegistry.MarshallerType.GLOBAL, protostreamCfgBuilder.build());
+      try {
+         MarshallerRegistration.init(getSerializationContext());
+      } catch (IOException | DescriptorParserException e) {
+         throw new CacheException("Failed to initialise the Protobuf serialization context", e);
+      }
    }
 
    private void processProtostreamSerializationContextInitializers(ClassLoader classLoader) {
@@ -102,22 +102,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
       for (ProtostreamSerializationContextInitializer psci : initializers) {
          try {
-            psci.init(serCtx);
+            psci.init(getSerializationContext());
          } catch (Exception e) {
             throw log.errorInitializingSerCtx(e);
-         }
-      }
-   }
-
-   private void processSerializationContextInitializer(List<SerializationContextInitializer> initializers) {
-      if (initializers != null) {
-         for (SerializationContextInitializer sci : initializers) {
-            try {
-               sci.registerSchema(serCtx);
-               sci.registerMarshallers(serCtx);
-            } catch (Exception e) {
-               throw log.errorInitializingSerCtx(e);
-            }
          }
       }
    }
@@ -177,12 +164,12 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    @Override
    public void registerMarshaller(BaseMarshaller<?> marshaller) {
-      serCtx.registerMarshaller(marshaller);
+      getSerializationContext().registerMarshaller(marshaller);
    }
 
    @Override
    public void unregisterMarshaller(BaseMarshaller<?> marshaller) {
-      serCtx.unregisterMarshaller(marshaller);
+      getSerializationContext().unregisterMarshaller(marshaller);
    }
 
    @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register a Protofile")
@@ -275,7 +262,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    }
 
    SerializationContext getSerializationContext() {
-      return serCtx;
+      return ctxRegistry.getGlobalCtx();
    }
 
    /**
