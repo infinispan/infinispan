@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.persistence.file.SingleFileStore;
+import org.infinispan.persistence.spi.InitializationContext;
 
 /**
  * Defines the configuration for the single file cache store.
@@ -57,10 +58,13 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
    }
 
    @Override
-   public SingleFileStoreConfiguration newConfigurationFrom(int segment) {
+   public SingleFileStoreConfiguration newConfigurationFrom(int segment, InitializationContext ctx) {
       AttributeSet set = SingleFileStoreConfiguration.attributeDefinitionSet();
       set.read(attributes);
       String location = set.attribute(LOCATION).get();
+      if (location == null) {
+         location = ctx.getGlobalConfiguration().globalState().persistentLocation();
+      }
       set.attribute(LOCATION).set(fileLocationTransform(location, segment));
       return new SingleFileStoreConfiguration(set.protect(), async());
    }

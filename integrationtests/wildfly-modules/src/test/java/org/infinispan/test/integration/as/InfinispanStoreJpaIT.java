@@ -68,6 +68,7 @@ public class InfinispanStoreJpaIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
             .persistenceUnitName("org.infinispan.persistence.jpa")
+            .segmented(false)
             .entityClass(KeyValueEntity.class);
 
       cm = new DefaultCacheManager(gcb.build(), builder.build());

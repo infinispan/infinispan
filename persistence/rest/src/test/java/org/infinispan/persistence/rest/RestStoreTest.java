@@ -53,7 +53,7 @@ public class RestStoreTest extends BaseStoreTest {
             .addStore(RestStoreConfigurationBuilder.class);
       storeConfigurationBuilder.host(restServer.getHost()).port(restServer.getPort()).path("/rest/" + REMOTE_CACHE);
       storeConfigurationBuilder.connectionPool().maxTotalConnections(10).maxConnectionsPerHost(10);
-      storeConfigurationBuilder.validate();
+      storeConfigurationBuilder.segmented(false);
       RestStore restStore = new RestStore();
       restStore.init(createContext(builder.build()));
       return restStore;

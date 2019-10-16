@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -32,12 +33,13 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "      <distributed-cache name=\"default\">\n" +
             "     <persistence>\n" +
             "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
-            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" dialect=\"H2\">\n" +
+            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" dialect=\"H2\">\n" +
             "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
             "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
             "           <data-column name=\"datum\" type=\"BINARY\" />\n" +
             "           <timestamp-column name=\"version\" type=\"BIGINT\" />\n" +
+            "           <segment-column name=\"segfault\" type=\"BIGINT\" />\n" +
             "         </string-keyed-table>\n" +
             "         <write-behind />\n" +
             "       </string-keyed-jdbc-store>\n" +
@@ -54,6 +56,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(34, store.table().fetchSize());
       assertEquals("BINARY", store.table().dataColumnType());
       assertEquals("version", store.table().timestampColumnName());
+      assertEquals("segfault", store.table().segmentColumnName());
       assertTrue(store.async().enabled());
       assertEquals("DummyKey2StringMapper", store.key2StringMapper());
       assertTrue(store.shared());
@@ -66,6 +69,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("dbpass", connectionFactory.password());
       assertTrue(store.ignoreModifications());
       assertTrue(store.fetchPersistentState());
-      assertTrue(store.purgeOnStartup());
+      assertFalse(store.purgeOnStartup());
    }
 }

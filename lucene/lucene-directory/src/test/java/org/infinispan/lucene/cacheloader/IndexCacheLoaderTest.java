@@ -101,7 +101,8 @@ public class IndexCacheLoaderTest extends AbstractInfinispanTest {
             .addStore(LuceneLoaderConfigurationBuilder.class)
                .autoChunkSize(1024)
                .preload(true)
-               .location(rootDir.getAbsolutePath());
+               .location(rootDir.getAbsolutePath())
+               .segmented(false);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 }

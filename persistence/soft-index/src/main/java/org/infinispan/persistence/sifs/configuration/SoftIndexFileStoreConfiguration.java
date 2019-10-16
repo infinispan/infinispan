@@ -16,7 +16,9 @@ import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
+import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.sifs.SoftIndexFileStore;
+import org.infinispan.persistence.spi.InitializationContext;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -54,7 +56,7 @@ public class SoftIndexFileStoreConfiguration extends AbstractSegmentedStoreConfi
    }
 
    @Override
-   public SoftIndexFileStoreConfiguration newConfigurationFrom(int segment) {
+   public SoftIndexFileStoreConfiguration newConfigurationFrom(int segment, InitializationContext ctx) {
       AttributeSet set = SoftIndexFileStoreConfiguration.attributeDefinitionSet();
       set.read(attributes);
 
@@ -64,10 +66,14 @@ public class SoftIndexFileStoreConfiguration extends AbstractSegmentedStoreConfi
       newIndex.read(index);
       newData.read(data);
 
+      String cacheName = ctx.getCache().getName();
+
       String indexLocation = newIndex.attributes().attribute(IndexConfiguration.INDEX_LOCATION).get();
+      indexLocation = PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), indexLocation, cacheName, "data").toString();
       newIndex.indexLocation(fileLocationTransform(indexLocation, segment));
 
       String dataLocation = newData.attributes().attribute(DataConfiguration.DATA_LOCATION).get();
+      dataLocation = PersistenceUtil.getQualifiedLocation(ctx.getGlobalConfiguration(), dataLocation, cacheName, "index").toString();
       newData.dataLocation(fileLocationTransform(dataLocation, segment));
 
       return new SoftIndexFileStoreConfiguration(set.protect(), async(), newIndex.create(), newData.create());

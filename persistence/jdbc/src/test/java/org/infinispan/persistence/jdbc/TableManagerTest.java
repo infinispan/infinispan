@@ -113,10 +113,11 @@ public class TableManagerTest extends AbstractInfinispanTest {
       new Random().nextBytes(data);
       PreparedStatement ps = null;
       try {
-         ps = connection.prepareStatement("INSERT INTO " + tableManager.getTableName() + "(ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN) values(?, ?, ?)");
+         ps = connection.prepareStatement("INSERT INTO " + tableManager.getTableName() + "(ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN, SEGMENT_COLUMN) values(?, ?, ?, ?)");
          ps.setString(1, System.currentTimeMillis() + "");
          ps.setBytes(2, data);
          ps.setLong(3, System.currentTimeMillis());
+         ps.setLong(4, 1);
          assert 1 == ps.executeUpdate();
       } finally {
          JdbcUtil.safeClose(ps);

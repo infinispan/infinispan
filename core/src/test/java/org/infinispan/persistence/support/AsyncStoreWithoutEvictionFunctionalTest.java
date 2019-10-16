@@ -4,16 +4,17 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -22,6 +23,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -33,6 +35,36 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    private static final Log log = LogFactory.getLog(AsyncStoreWithoutEvictionFunctionalTest.class);
    private DefaultCacheManager dcm;
 
+   private boolean segmented;
+   private String tmpDirectory;
+
+   @BeforeClass
+   protected void setUpTempDir() {
+      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+   }
+
+   @AfterClass
+   protected void clearTempDir() {
+      Util.recursiveFileRemove(tmpDirectory);
+   }
+
+   AsyncStoreWithoutEvictionFunctionalTest segmented(boolean segmented) {
+      this.segmented = segmented;
+      return this;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new AsyncStoreWithoutEvictionFunctionalTest().segmented(true),
+            new AsyncStoreWithoutEvictionFunctionalTest().segmented(false),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "segmented-" + segmented;
+   }
 
    private DefaultCacheManager configureCacheManager(boolean async) throws Exception {
 
@@ -40,7 +72,8 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
       SingleFileStoreConfigurationBuilder bld = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-            .persistence().passivation(false).addSingleFileStore().preload(false).purgeOnStartup(false);
+            .persistence().passivation(false)
+            .addSingleFileStore().preload(false).purgeOnStartup(false).segmented(segmented).location(tmpDirectory);
 
       if (async) {
          bld.async().enable().threadPoolSize(10).modificationQueueSize(1000);
@@ -55,11 +88,6 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    @BeforeClass
    public void setUp() throws Exception {
       dcm = configureCacheManager(true);
-      SingleFileStore store = getFileStoreFromDCM();
-      SingleFileStoreConfiguration configuration = store.getConfiguration();
-      assertTrue(configuration.async().enabled());
-      assertEquals(10, configuration.async().threadPoolSize());
-      assertEquals(1000, configuration.async().modificationQueueSize());
    }
 
    @AfterClass
@@ -105,7 +133,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       cache.stop();
       cache.start();
-      SingleFileStore store = getFileStoreFromDCM();
+      AdvancedLoadWriteStore store = getFileStoreFromDCM();
 
       MarshallableEntry[] entries = new MarshallableEntry[number];
       for (int i = 0; i < number; i++) {
@@ -137,7 +165,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       cache.stop();
       cache.start();
-      SingleFileStore store = getFileStoreFromDCM();
+      AdvancedLoadWriteStore store = getFileStoreFromDCM();
       MarshallableEntry entry;
       boolean success = false;
       for (int i = 0; i < 120; i++) {
@@ -151,7 +179,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    }
 
    private void doTestSameKeyRemove(Cache<Object, Object> cache, String key) throws Exception {
-      SingleFileStore store = getFileStoreFromDCM();
+      AdvancedLoadWriteStore store = getFileStoreFromDCM();
       cache.remove(key);
       MarshallableEntry entry;
       do {
@@ -166,7 +194,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
       cache.stop();
       cache.start();
-      SingleFileStore store = getFileStoreFromDCM();
+      AdvancedLoadWriteStore store = getFileStoreFromDCM();
 
       MarshallableEntry[] entries = new MarshallableEntry[number];
       for (int i = 0; i < number; i++) {
@@ -183,7 +211,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    }
 
    private void doTestClear(Cache<Object, Object> cache, int number, String key) throws Exception {
-      SingleFileStore store = getFileStoreFromDCM();
+      AdvancedLoadWriteStore store = getFileStoreFromDCM();
       store.clear();
       cache.stop();
       cache.start();
@@ -203,9 +231,9 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
       }
    }
 
-   private SingleFileStore getFileStoreFromDCM() {
+   private AdvancedLoadWriteStore getFileStoreFromDCM() {
+      Class<? extends AdvancedLoadWriteStore> storeClass = segmented ? ComposedSegmentedLoadWriteStore.class : SingleFileStore.class;
       PersistenceManager persistenceManager = TestingUtil.extractComponent(dcm.getCache(), PersistenceManager.class);
-      SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
-      return store;
+      return persistenceManager.getStores(storeClass).iterator().next();
    }
 }

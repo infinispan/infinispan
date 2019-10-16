@@ -71,7 +71,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
       assert dc1.size() == NUM_KEYS;
 
       AdvancedCacheLoader cs = TestingUtil.getFirstLoader(c1);
-      assert PersistenceUtil.count(cs, null) == NUM_KEYS;
+      assertEquals(NUM_KEYS, PersistenceUtil.count(cs, null));
 
       addClusterEnabledCacheManager(TestDataSCI.INSTANCE, configuration, new TransportFlags().withFD(false));
       EmbeddedCacheManager cm2 = cacheManagers.get(1);

@@ -16,7 +16,7 @@
     <local-cache name="specificCache">
       <persistence passivation="false">
         <jpa-store xmlns="urn:infinispan:config:store:jpa:${infinispan.core.schema.version}"
-                  shared="false" preload="true"
+                  shared="false" preload="true" segmented="false"
                   persistence-unit="org.infinispan.persistence.jpa"
                   entity-class="org.infinispan.test.integration.as.KeyValueEntity"
                   batch-size="1">

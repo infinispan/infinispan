@@ -90,7 +90,7 @@ public class PersistenceUtil {
     * @param <K>
     * @param <V>
     * @return
-    * @deprecated Please use {@link #toKeySet(AdvancedCacheLoader, Predicate)} instead
+    * @deprecated since 9.3 Please use {@link #toKeySet(AdvancedCacheLoader, Predicate)} instead
     */
    @Deprecated
    public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {

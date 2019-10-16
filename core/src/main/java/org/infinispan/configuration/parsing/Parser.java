@@ -2313,6 +2313,10 @@ public class Parser implements ConfigurationParser {
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
     */
    public static void parseStoreAttribute(XMLExtendedStreamReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
+      // Stores before 10.0 were non segmented by default
+      if (reader.getSchema().getMajor() < 10) {
+         storeBuilder.segmented(false);
+      }
       String value = reader.getAttributeValue(index);
       Attribute attribute = Attribute.forName(reader.getAttributeLocalName(index));
       switch (attribute) {

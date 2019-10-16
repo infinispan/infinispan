@@ -67,6 +67,7 @@ public class WarmCacheTest extends MultipleCacheManagersTest {
       c.jmxStatistics().enable();
       c.persistence()
             .addStore(LuceneLoaderConfigurationBuilder.class)
+            .segmented(false)
             .preload(true)
             .location(indexDir.getAbsolutePath());
       createCluster(c, CLUSTER_SIZE);

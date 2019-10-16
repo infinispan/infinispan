@@ -34,6 +34,7 @@ public class JpaConfigurationTest {
 
       Configuration cacheConfig = new ConfigurationBuilder().persistence()
             .addStore(JpaStoreConfigurationBuilder.class)
+            .segmented(false)
             .persistenceUnitName(PERSISTENCE_UNIT_NAME)
             .entityClass(User.class).build();
 

@@ -34,7 +34,10 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
    }
 
    @AfterMethod
-   public void clearStats() {
+   @Override
+   protected void clearContent() throws Throwable {
+      super.clearContent();
+      // Make sure to clear stats after clearing content
       for (Cache<?, ?> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
          clearStats(c);
@@ -202,18 +205,13 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
        * the cache store is shared, each cache has each own cache store, that allows for checking
        * who execute puts, removes...etc. */
       CacheLoader store = TestingUtil.getFirstLoader(c1);
-      assertNumberOfInvocations(store, "clear", calculateTotalSegmentsForAllNodes());
+
+      // DummyInMemoryStore is segmented, so only 1 clear should be invoked
+      assertNumberOfInvocations(store, "clear", 1);
       for (int i = 0; i < 5; i++) {
          String key = "k" + i;
          assert !store.contains(key);
       }
-   }
-
-   /**
-    * @return how many segments there are across all nodes or 1 if the config is not segmented (all shared)
-    */
-   protected int calculateTotalSegmentsForAllNodes() {
-      return segmented ? c1.getCacheConfiguration().clustering().hash().numSegments() : 1;
    }
 
    public void testGetOnlyQueriesCacheOnOwners() throws PersistenceException {

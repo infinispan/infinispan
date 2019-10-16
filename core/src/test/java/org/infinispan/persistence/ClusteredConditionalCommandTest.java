@@ -72,7 +72,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(storeName + (shared ? "-shared" : storePrefix))
             .fetchPersistentState(false)
-            .purgeOnStartup(true)
             .shared(shared);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;

@@ -34,6 +34,7 @@ public class RestStoreParallelIterationTest extends ParallelIterationTest {
             .host("localhost")
             .port(restServer.getPort())
             .path("/rest/" + TestingUtil.getDefaultCacheName(localCacheManager))
+            .segmented(false)
             .preload(false);
    }
 

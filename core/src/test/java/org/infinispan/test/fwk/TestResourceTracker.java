@@ -24,7 +24,8 @@ import org.infinispan.util.logging.LogFactory;
 public class TestResourceTracker {
    private static final Log log = LogFactory.getLog(TestResourceTracker.class);
    private static final ConcurrentMap<String, TestResources> testResources = new ConcurrentHashMap<>();
-   private static final ThreadLocal<String> threadTestName = new ThreadLocal<>();
+   // Inheritable to allow for tests that spawn a thread to keep the test thread name of the original
+   private static final ThreadLocal<String> threadTestName = new InheritableThreadLocal<>();
 
    public static void addResource(AbstractInfinispanTest testInstance, final Cleaner<?> cleaner) {
       TestResources resources = getTestResources(testInstance.getTestName());

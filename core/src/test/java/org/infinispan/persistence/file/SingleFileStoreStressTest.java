@@ -53,7 +53,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       location = TestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addSingleFileStore().location(this.location).purgeOnStartup(true);
+      builder.persistence().addSingleFileStore().location(this.location).purgeOnStartup(true).segmented(false);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
       return cacheManager;

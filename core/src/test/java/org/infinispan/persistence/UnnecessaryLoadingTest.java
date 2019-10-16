@@ -3,11 +3,13 @@ package org.infinispan.persistence;
 import static org.testng.Assert.assertEquals;
 
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -26,12 +28,14 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
 /**
@@ -177,7 +181,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       countingCS.numContains = 0;
    }
 
-   public static class CountingStore implements AdvancedLoadWriteStore {
+   public static class CountingStore implements SegmentedAdvancedLoadWriteStore {
       public int numLoads, numContains;
 
       @Override
@@ -234,6 +238,21 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       private void incrementLoads() {
          numLoads++;
+      }
+
+      @Override
+      public int size(IntSet segments) {
+         return 0;
+      }
+
+      @Override
+      public Publisher publishKeys(IntSet segments, Predicate filter) {
+         return null;
+      }
+
+      @Override
+      public void clear(IntSet segments) {
+
       }
    }
 

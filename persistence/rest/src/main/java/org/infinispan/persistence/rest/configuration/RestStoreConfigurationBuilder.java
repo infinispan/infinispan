@@ -1,5 +1,6 @@
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.KEY2STRING_MAPPER;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.MAX_CONTENT_LENGTH;
@@ -17,8 +18,9 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
-import org.infinispan.persistence.rest.logging.Log;
+import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.rest.metadata.MetadataHelper;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 /**
  * RestStoreConfigurationBuilder. Configures a {@link org.infinispan.persistence.rest.RestStore}
@@ -140,6 +142,10 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public void validate() {
+      Boolean segmented = attributes.attribute(SEGMENTED).get();
+      if (segmented == null || segmented) {
+         throw log.storeDoesNotSupportBeingSegmented(RestStore.class.getSimpleName());
+      }
       this.connectionPool.validate();
       this.remoteServer.validate();
       String path = attributes.attribute(PATH).get();

@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.client.hotrod.ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
+import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_23;
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
@@ -148,6 +149,9 @@ class TestCluster {
                }
                if (builder.keyStoreFileName != null) {
                   store.remoteSecurity().ssl().keyStoreFileName(builder.keyStoreFileName).keyStorePassword(builder.keyStorePassword);
+               }
+               if (protocolVersion.compareTo(PROTOCOL_VERSION_23) < 0) {
+                  store.segmented(false);
                }
             }
             builder.addCache(name, configurationBuilder);
