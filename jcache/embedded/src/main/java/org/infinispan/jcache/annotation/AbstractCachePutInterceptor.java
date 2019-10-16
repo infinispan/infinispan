@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import javax.cache.Cache;
 import javax.cache.annotation.CacheKeyGenerator;
-import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.CachePut;
 import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.GeneratedCacheKey;
@@ -20,11 +19,11 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  */
 public abstract class AbstractCachePutInterceptor implements Serializable {
-   private final CacheResolver cacheResolver;
+   private final CacheResolver defaultCacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
 
-   public AbstractCachePutInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
-      this.cacheResolver = cacheResolver;
+   public AbstractCachePutInterceptor(CacheResolver defaultCacheResolver, CacheKeyInvocationContextFactory contextFactory) {
+      this.defaultCacheResolver = defaultCacheResolver;
       this.contextFactory = contextFactory;
    }
 
@@ -35,10 +34,14 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
                          invocationContext.getMethod().getName());
       }
 
-      final CacheKeyInvocationContext<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
-      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+      final CacheKeyInvocationContextImpl<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.getCacheKeyGenerator();
       final CachePut cachePut = cacheKeyInvocationContext.getCacheAnnotation();
       final GeneratedCacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
+      CacheResolver cacheResolver = cacheKeyInvocationContext.getCacheResolver();
+      if (cacheResolver == null) {
+         cacheResolver = defaultCacheResolver;
+      }
       final Cache<GeneratedCacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       final Object valueToCache = cacheKeyInvocationContext.getValueParameter().getValue();

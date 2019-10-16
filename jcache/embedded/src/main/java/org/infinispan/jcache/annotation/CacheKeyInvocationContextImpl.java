@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.cache.annotation.CacheInvocationParameter;
 import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheResolver;
 import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
@@ -107,6 +108,14 @@ public class CacheKeyInvocationContextImpl<A extends Annotation> implements Cach
 
    public CacheKeyGenerator getCacheKeyGenerator() {
       return methodMetaData.getCacheKeyGenerator();
+   }
+
+   public CacheResolver getCacheResolver() {
+      return methodMetaData.getCacheResolver();
+   }
+
+   public CacheResolver getExceptionCacheResolver() {
+      return methodMetaData.getExceptionCacheResolver();
    }
 
    @Override
