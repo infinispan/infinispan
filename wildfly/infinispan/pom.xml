@@ -207,7 +207,6 @@
                     <parallel>none</parallel>
                     <groups combine.self="override">${defaultJUnitGroups}</groups>
                     <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
-                    <disableXmlReport>false</disableXmlReport>
                     <systemPropertyVariables>
                        <!-- Copied from parent POM -->
                        <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>

@@ -214,7 +214,7 @@ public class ThreadLeakChecker {
             if (!reportsDir.exists() && !reportsDir.mkdirs()) {
                throw new IOException("Cannot create report directory " + reportsDir.getAbsolutePath());
             }
-            PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(
+            CustomJUnitXMLWriter writer = new CustomJUnitXMLWriter(
                new File(reportsDir, "TEST-ThreadLeakChecker" + lastTestName + ".xml"));
             String property = System.getProperty("infinispan.modulesuffix");
             String moduleName = property != null ? property.substring(1) : "";
@@ -235,7 +235,7 @@ public class ThreadLeakChecker {
 
                StringWriter exceptionWriter = new StringWriter();
                exception.printStackTrace(new PrintWriter(exceptionWriter));
-               writer.writeTestCase("ThreadLeakChecker", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
+               writer.writeTestCase("ThreadLeakChecker", testName, 0, CustomJUnitXMLWriter.Status.FAILURE,
                                     exceptionWriter.toString(), exception.getClass().getName(), exception.getMessage());
 
                leakInfo.markReported();

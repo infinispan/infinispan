@@ -356,7 +356,6 @@
                      <skipTests>${skipOSGiTests}</skipTests>
                      <failIfNoTests>false</failIfNoTests>
                      <testNGArtifactName>none:none</testNGArtifactName>
-                     <disableXmlReport>false</disableXmlReport>
                      <runOrder>alphabetical</runOrder>
                      <properties>
                         <usedefaultlisteners>false</usedefaultlisteners>

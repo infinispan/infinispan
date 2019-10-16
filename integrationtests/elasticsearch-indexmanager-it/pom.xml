@@ -77,7 +77,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <disableXmlReport>true</disableXmlReport>
                     <useFile>false</useFile>
                     <skip>${skipTests}</skip>
                     <properties>

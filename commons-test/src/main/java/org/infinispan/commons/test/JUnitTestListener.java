@@ -1,5 +1,6 @@
 package org.infinispan.commons.test;
 
+import static org.infinispan.commons.test.JUnitNameTranslator.translateTestName;
 import static org.infinispan.commons.test.RunningTestsRegistry.registerThreadWithTest;
 import static org.infinispan.commons.test.RunningTestsRegistry.unregisterThreadWithTest;
 
@@ -60,8 +61,10 @@ public class JUnitTestListener extends RunListener {
    }
 
    private String testName(Description description) {
+      StringBuilder sb = new StringBuilder();
       String className = description.isSuite() ? "suite" : description.getTestClass().getSimpleName();
-      return className + "." + description.getMethodName();
+      sb.append(className).append(".").append(translateTestName(description));
+      return sb.toString();
    }
 
    @Override

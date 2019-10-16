@@ -92,7 +92,6 @@
                   <hibernate.cache.infinispan.jgroups_cfg>2lc-test-tcp.xml</hibernate.cache.infinispan.jgroups_cfg>
                   <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
                </systemPropertyVariables>
-               <disableXmlReport>false</disableXmlReport>
             </configuration>
             <dependencies>
                <dependency>

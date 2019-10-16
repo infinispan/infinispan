@@ -232,7 +232,7 @@
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-      <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
+      <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.TestNGTestNameListener</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
       <jboss.modules.settings.xml.url>file://${user.home}/.m2/settings.xml</jboss.modules.settings.xml.url>
@@ -4685,7 +4685,6 @@
                <reuseForks>true</reuseForks>
                <groups>${defaultTestNGGroups}</groups>
                <excludedGroups>${defaultExcludedTestNGGroups}</excludedGroups>
-               <disableXmlReport>true</disableXmlReport>
                <useFile>false</useFile>
                <systemPropertyVariables>
                   <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>

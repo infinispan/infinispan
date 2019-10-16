@@ -85,7 +85,6 @@
                <groups combine.self="override"/>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <testNGArtifactName>none:none</testNGArtifactName>
-               <disableXmlReport>false</disableXmlReport>
                <properties combine.self="override">
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>

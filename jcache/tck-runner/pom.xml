@@ -232,7 +232,6 @@
                   <include>**/*Test.java</include>
                   <include>**/*TestCase.java</include>
                </includes>
-               <disableXmlReport>false</disableXmlReport>
                <systemPropertyVariables>
                   <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
@@ -264,12 +263,13 @@
                      <classpathDependencyExcludes>
                         <classpathDependencyExcludes>${project.groupId}:infinispan-jcache-remote</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
-                     <disableXmlReport>false</disableXmlReport>
+                     <reportNameSuffix>embedded</reportNameSuffix>
                      <systemPropertyVariables>
                         <ExcludeList>ExcludeList_embedded</ExcludeList>
                         <javax.cache.Cache>${embedded.CacheImpl}</javax.cache.Cache>
                         <javax.cache.Cache.Entry>${embedded.CacheEntryImpl}</javax.cache.Cache.Entry>
                         <jgroups.join_timeout>2000</jgroups.join_timeout>
+                        <inner.infinispan.module-suffix>embedded</inner.infinispan.module-suffix>
                      </systemPropertyVariables>
                   </configuration>
                </execution>
@@ -282,6 +282,10 @@
                   <configuration>
                      <summaryFile>${failsafe.summary.embedded}</summaryFile>
                      <reportsDirectory>${failsafe.reportdir.embedded}</reportsDirectory>
+                     <reportNameSuffix>embedded</reportNameSuffix>
+                     <systemPropertyVariables>
+                        <inner.infinispan.module-suffix>embedded</inner.infinispan.module-suffix>
+                     </systemPropertyVariables>
                   </configuration>
                </execution>
                <execution>
@@ -306,12 +310,13 @@
                         <classpathDependencyExcludes>org.jboss.weld:weld-core</classpathDependencyExcludes>
                         <classpathDependencyExcludes>org.jboss.weld.se:weld-se-core</classpathDependencyExcludes>
                      </classpathDependencyExcludes>
-                     <disableXmlReport>false</disableXmlReport>
+                     <reportNameSuffix>remote</reportNameSuffix>
                      <systemPropertyVariables>
                         <ExcludeList>ExcludeList_remote</ExcludeList>
                         <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
                         <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
                         <jgroups.join_timeout>2000</jgroups.join_timeout>
+                        <inner.infinispan.module-suffix>remote</inner.infinispan.module-suffix>
                      </systemPropertyVariables>
                   </configuration>
                </execution>
@@ -322,8 +327,12 @@
                      <goal>verify</goal>
                   </goals>
                   <configuration>
+                     <reportNameSuffix>remote</reportNameSuffix>
                      <summaryFile>${failsafe.summary.remote}</summaryFile>
                      <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
+                     <systemPropertyVariables>
+                        <inner.infinispan.module-suffix>remote</inner.infinispan.module-suffix>
+                     </systemPropertyVariables>
                   </configuration>
                </execution>
             </executions>

@@ -9,15 +9,15 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 /**
- * A JUnit XML report generator for Polarion based on the JUnitXMLReporter
+ * A JUnit XML report generator to report failures where throwing an exception would crash the surefire fork JVM.
  *
- * <p>Extracted from {@link PolarionJUnitXMLReporter}</p>
+ * Based on JUnitXMLReporter.
  *
  * @author <a href='mailto:afield[at]redhat[dot]com'>Alan Field</a>
  * @author Dan Berindei
  * @since 10.0
  */
-public class PolarionJUnitXMLWriter implements AutoCloseable {
+public class CustomJUnitXMLWriter implements AutoCloseable {
 
    private final FileWriter fileWriter;
 
@@ -49,7 +49,7 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
 
    private XMLStreamWriter xmlWriter;
 
-   public PolarionJUnitXMLWriter(File outputFile) throws IOException {
+   public CustomJUnitXMLWriter(File outputFile) throws IOException {
       File outputDirectory = outputFile.getParentFile();
       if (!outputDirectory.exists()) {
          if (!outputDirectory.mkdirs()) {

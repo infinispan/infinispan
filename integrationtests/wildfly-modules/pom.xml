@@ -218,7 +218,6 @@
             <configuration>
                <!-- Force use of JUnit, since TestNG+Arquillian break in wonderful ways -->
                <testNGArtifactName>none:none</testNGArtifactName>
-               <disableXmlReport>false</disableXmlReport>
                <properties>
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>

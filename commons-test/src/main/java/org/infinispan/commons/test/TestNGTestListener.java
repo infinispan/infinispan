@@ -1,21 +1,18 @@
 package org.infinispan.commons.test;
 
-import java.util.Arrays;
+import static org.infinispan.commons.test.TestNGNameTranslator.translateTestName;
 
-import org.jboss.logging.Logger;
 import org.testng.IConfigurationListener2;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-import org.testng.annotations.Test;
 
 /**
  * Logs TestNG test progress.
  */
 public class TestNGTestListener implements ITestListener, IConfigurationListener2, ISuiteListener {
-   private static final Logger log = Logger.getLogger(TestNGTestListener.class);
 
    private final TestSuiteProgress progressLogger;
 
@@ -64,17 +61,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    }
 
    private String testName(ITestResult res) {
-      StringBuilder result = new StringBuilder();
-      result.append(res.getInstanceName()).append(".").append(res.getMethod().getMethodName());
-      if (res.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
-         String dataProviderName = res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
-               .dataProvider();
-         // Add parameters for methods that use a data provider only
-         if (res.getParameters().length != 0 && !dataProviderName.isEmpty()) {
-            result.append("(").append(Arrays.deepToString(res.getParameters())).append(")");
-         }
-      }
-      return result.toString();
+      return new StringBuilder(res.getInstanceName()).append(".").append(translateTestName(res)).toString();
    }
 
    @Override
