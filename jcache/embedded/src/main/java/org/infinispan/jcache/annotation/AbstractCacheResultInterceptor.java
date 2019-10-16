@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import javax.cache.Cache;
 import javax.cache.annotation.CacheKeyGenerator;
-import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.CacheResult;
 import javax.cache.annotation.GeneratedCacheKey;
@@ -36,26 +35,34 @@ import org.infinispan.jcache.logging.Log;
 public abstract class AbstractCacheResultInterceptor implements Serializable {
    private static final long serialVersionUID = 5275055951121834315L;
 
-   private final CacheResolver cacheResolver;
+   private final CacheResolver defaultCacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
 
-   public AbstractCacheResultInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
-      this.cacheResolver = cacheResolver;
+   public AbstractCacheResultInterceptor(CacheResolver defaultCacheResolver, CacheKeyInvocationContextFactory contextFactory) {
+      this.defaultCacheResolver = defaultCacheResolver;
       this.contextFactory = contextFactory;
    }
 
-   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+   public Object cacheResult(InvocationContext invocationContext) throws Throwable {
       if (getLog().isTraceEnabled()) {
          getLog().tracef("Interception of method '%s.%s'",
                          invocationContext.getMethod().getDeclaringClass().getName(),
                          invocationContext.getMethod().getName());
       }
 
-      final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
-      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+      final CacheKeyInvocationContextImpl<CacheResult> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.getCacheKeyGenerator();
       final CacheResult cacheResult = cacheKeyInvocationContext.getCacheAnnotation();
       final GeneratedCacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
+      CacheResolver cacheResolver = cacheKeyInvocationContext.getCacheResolver();
+      if (cacheResolver == null) {
+         cacheResolver = defaultCacheResolver;
+      }
       final Cache<GeneratedCacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
+      CacheResolver exceptionCacheResolver = cacheKeyInvocationContext.getExceptionCacheResolver();
+      Cache<GeneratedCacheKey, Throwable> exceptionCache =
+         exceptionCacheResolver != null ?
+         cacheResolver.resolveCache(cacheKeyInvocationContext) : null;
 
       Object result = null;
 
@@ -65,20 +72,54 @@ public abstract class AbstractCacheResultInterceptor implements Serializable {
             getLog().tracef("Found in cache '%s' key '%s' with value '%s'",
                             cache.getName(), cacheKey, Util.toStr(result));
          }
-      }
 
-      if (result == null) {
-         result = invocationContext.proceed();
-         if (result != null) {
-            cache.put(cacheKey, result);
-            if (getLog().isTraceEnabled()) {
-               getLog().tracef("Cached return value in cache '%s' with key '%s': '%s'",
-                                  cache.getName(), cacheKey, Util.toStr(result));
+         if (exceptionCache != null) {
+            Throwable throwable = exceptionCache.get(cacheKey);
+            if (throwable != null) {
+               throw throwable;
             }
          }
       }
 
+      if (result == null) {
+         try {
+            result = invocationContext.proceed();
+
+            if (result != null) {
+               cache.put(cacheKey, result);
+               if (getLog().isTraceEnabled()) {
+                  getLog().tracef("Cached return value in cache '%s' with key '%s': '%s'",
+                                  cache.getName(), cacheKey, Util.toStr(result));
+               }
+            }
+         } catch (Throwable t) {
+            cacheException(cacheResult, cacheKey, exceptionCache, t);
+            throw t;
+         }
+      }
+
       return result;
+   }
+
+   private void cacheException(CacheResult cacheResult, GeneratedCacheKey cacheKey,
+                               Cache<GeneratedCacheKey, Throwable> exceptionCache, Throwable t) {
+      if (exceptionCache != null) {
+         // Default to cache everything if the include list is empty
+         boolean shouldCache = cacheResult.cachedExceptions().length == 0;
+         for (Class<? extends Throwable> includedException : cacheResult.cachedExceptions()) {
+            if (includedException.isAssignableFrom(t.getClass())) {
+               shouldCache = true;
+            }
+         }
+         for (Class<? extends Throwable> excludedException : cacheResult.nonCachedExceptions()) {
+            if (excludedException.isAssignableFrom(t.getClass())) {
+               shouldCache = false;
+            }
+         }
+         if (shouldCache) {
+            exceptionCache.put(cacheKey, t);
+         }
+      }
    }
 
    protected abstract Log getLog();

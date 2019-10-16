@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import javax.cache.Cache;
 import javax.cache.annotation.CacheKeyGenerator;
-import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.CacheRemove;
 import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.GeneratedCacheKey;
@@ -28,11 +27,11 @@ import org.infinispan.jcache.logging.Log;
 public abstract class AbstractCacheRemoveEntryInterceptor implements Serializable {
    private static final long serialVersionUID = -9079291622309963969L;
 
-   private final CacheResolver cacheResolver;
+   private final CacheResolver defaultCacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
 
-   public AbstractCacheRemoveEntryInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
-      this.cacheResolver = cacheResolver;
+   public AbstractCacheRemoveEntryInterceptor(CacheResolver defaultCacheResolver, CacheKeyInvocationContextFactory contextFactory) {
+      this.defaultCacheResolver = defaultCacheResolver;
       this.contextFactory = contextFactory;
    }
 
@@ -43,8 +42,12 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
                          invocationContext.getMethod().getName());
       }
 
-      final CacheKeyInvocationContext<CacheRemove> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
-      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+      final CacheKeyInvocationContextImpl<CacheRemove> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+      final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.getCacheKeyGenerator();
+      CacheResolver cacheResolver = cacheKeyInvocationContext.getCacheResolver();
+      if (cacheResolver == null) {
+         cacheResolver = defaultCacheResolver;
+      }
       final Cache<GeneratedCacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
       final CacheRemove cacheRemoveEntry = cacheKeyInvocationContext.getCacheAnnotation();
       final GeneratedCacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
