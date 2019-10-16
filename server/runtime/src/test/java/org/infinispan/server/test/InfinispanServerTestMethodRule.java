@@ -1,6 +1,9 @@
 package org.infinispan.server.test;
 
+import static org.infinispan.test.TestingUtil.loadFileAsString;
+
 import java.io.Closeable;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -233,5 +236,15 @@ public class InfinispanServerTestMethodRule implements TestRule {
       public Rest self() {
          return this;
       }
+   }
+
+   public String addScript(RemoteCacheManager remoteCacheManager, String script) {
+      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache("___script_cache");
+      try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
+         scriptCache.put(getMethodName(), loadFileAsString(in));
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+      return getMethodName();
    }
 }

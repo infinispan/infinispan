@@ -88,6 +88,10 @@
          <artifactId>infinispan-cli-client</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-scripting</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron</artifactId>
          <exclusions>

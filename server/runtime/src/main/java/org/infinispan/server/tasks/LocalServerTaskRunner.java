@@ -1,20 +1,23 @@
-package org.infinispan.server.infinispan.task;
+package org.infinispan.server.tasks;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.Cache;
 import org.infinispan.tasks.TaskContext;
 
 /**
- * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
- * Date: 1/28/16
- * Time: 9:36 AM
+ * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class LocalServerTaskRunner implements ServerTaskRunner {
 
+   private final ServerTaskEngine serverTaskEngine;
+
+   public LocalServerTaskRunner(ServerTaskEngine serverTaskEngine) {
+      this.serverTaskEngine = serverTaskEngine;
+   }
+
    @Override
    public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
-      ServerTaskWrapper<T> task = getRegistry(context).getTask(taskName);
+      ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
       try {
          task.inject(context);
          return CompletableFuture.completedFuture(task.run());
@@ -23,10 +26,5 @@ public class LocalServerTaskRunner implements ServerTaskRunner {
          finishedWithException.completeExceptionally(e);
          return finishedWithException;
       }
-   }
-
-   private ServerTaskRegistry getRegistry(TaskContext context) {
-      Cache<?, ?> cache = context.getCache().get();
-      return SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(ServerTaskRegistry.class);
    }
 }

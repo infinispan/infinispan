@@ -34,8 +34,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.commons.service.Builder;
 import org.infinispan.server.infinispan.spi.CacheContainer;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
-import org.infinispan.server.infinispan.task.ServerTaskRegistry;
-import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.logging.Logger;
@@ -57,7 +55,6 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
     private static final Logger log = Logger.getLogger(CacheContainerBuilder.class.getPackage().getName());
 
     private final InjectedValue<GlobalConfiguration> configuration = new InjectedValue<>();
-    private final InjectedValue<ServerTaskRegistry> serverTaskRegistry = new InjectedValue<>();
     private final List<String> aliases = new LinkedList<>();
     private final String name;
     private final String defaultCache;
@@ -77,9 +74,7 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
     @Override
     public ServiceBuilder<CacheContainer> build(ServiceTarget target) {
         ServiceBuilder<CacheContainer> builder = target.addService(this.getServiceName(), this)
-                .addDependency(CacheContainerServiceName.CONFIGURATION.getServiceName(this.name), GlobalConfiguration.class, this.configuration)
-           .addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, this.serverTaskRegistry)
-        ;
+                .addDependency(CacheContainerServiceName.CONFIGURATION.getServiceName(this.name), GlobalConfiguration.class, this.configuration);
         for (String alias : this.aliases) {
             builder.addAliases(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(alias));
         }
@@ -100,7 +95,6 @@ public class CacheContainerBuilder implements Builder<CacheContainer>, Service<C
     public void start(StartContext context) {
         GlobalConfiguration config = this.configuration.getValue();
         this.container = new DefaultCacheContainer(config, this.defaultCache);
-        SecurityActions.getGlobalComponentRegistry(this.container).registerComponent(this.serverTaskRegistry.getValue(), ServerTaskRegistry.class);
         SecurityActions.registerAndStartContainer(this.container, this);
         InfinispanLogger.ROOT_LOGGER.cacheContainerStarted(this.name);
     }

@@ -4,13 +4,20 @@ import java.sql.Driver;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.script.ScriptEngineFactory;
+
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.tasks.ServerTaskEngine;
+import org.infinispan.server.tasks.ServerTaskWrapper;
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.spi.TaskEngine;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -21,16 +28,19 @@ public class Extensions {
    private final Map<String, CacheEventConverterFactory> converterFactories = new HashMap<>();
    private final Map<String, CacheEventFilterConverterFactory> filterConverterFactories = new HashMap<>();
    private final Map<String, KeyValueFilterConverterFactory> keyValueFilterConverterFactories = new HashMap<>();
+   private final Map<String, ServerTaskWrapper> serverTasks = new HashMap<>();
 
    public Extensions() {
    }
 
    public void load(ClassLoader classLoader) {
-      load(classLoader, CacheEventFilterFactory.class, filterFactories);
-      load(classLoader, CacheEventConverterFactory.class, converterFactories);
-      load(classLoader, CacheEventFilterConverterFactory.class, filterConverterFactories);
-      load(classLoader, KeyValueFilterConverterFactory.class, keyValueFilterConverterFactories);
-      load(classLoader, Driver.class);
+      loadNamedFactory(classLoader, CacheEventFilterFactory.class, filterFactories);
+      loadNamedFactory(classLoader, CacheEventConverterFactory.class, converterFactories);
+      loadNamedFactory(classLoader, CacheEventFilterConverterFactory.class, filterConverterFactories);
+      loadNamedFactory(classLoader, KeyValueFilterConverterFactory.class, keyValueFilterConverterFactories);
+      loadService(classLoader, Driver.class);
+      loadService(classLoader, ScriptEngineFactory.class);
+      loadServerTasks(classLoader);
    }
 
    public void apply(HotRodServer server) {
@@ -48,13 +58,7 @@ public class Extensions {
       }
    }
 
-   private <T> void load(ClassLoader classLoader, Class<T> contract) {
-      for (T t : ServiceFinder.load(contract, classLoader)) {
-         Server.log.loadedExtension(t.getClass().getName());
-      }
-   }
-
-   private <T> void load(ClassLoader classLoader, Class<T> contract, Map<String, T> map) {
+   private <T> void loadNamedFactory(ClassLoader classLoader, Class<T> contract, Map<String, T> map) {
       for (T t : ServiceFinder.load(contract, classLoader)) {
          NamedFactory name = t.getClass().getAnnotation(NamedFactory.class);
          if (name != null) {
@@ -64,5 +68,22 @@ public class Extensions {
             Server.log.unnamedFactoryClass(t.getClass().getName());
          }
       }
+   }
+
+   private <T> void loadService(ClassLoader classLoader, Class<T> contract) {
+      for (T t : ServiceFinder.load(contract, classLoader)) {
+         Server.log.loadedExtension(t.getClass().getName());
+      }
+   }
+
+   private void loadServerTasks(ClassLoader classLoader) {
+      for (ServerTask t : ServiceFinder.load(ServerTask.class, classLoader)) {
+         serverTasks.put(t.getName(), new ServerTaskWrapper(t));
+         Server.log.loadedExtension(t.getClass().getName());
+      }
+   }
+
+   public TaskEngine getServerTaskEngine(EmbeddedCacheManager cm) {
+      return new ServerTaskEngine(cm, serverTasks);
    }
 }

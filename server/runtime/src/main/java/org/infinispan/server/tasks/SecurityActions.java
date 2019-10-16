@@ -1,4 +1,4 @@
-package org.infinispan.server.infinispan.task;
+package org.infinispan.server.tasks;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
