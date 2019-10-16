@@ -23,6 +23,22 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   class LeakDescription extends Throwable {
+
+      public LeakDescription() {
+         //
+      }
+
+      public LeakDescription(String message) {
+         super(message);
+      }
+
+      @Override
+      public String toString() {
+         // skip the class-name
+         return getLocalizedMessage();
+      }
+   }
 
    @Message(value = "Allocation stack trace:", id = 21001)
    LeakDescription cacheManagerNotClosed();
@@ -108,21 +124,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception while getting expiry duration. Fallback to default duration eternal.", id = 21032)
    void getExpiryHasThrown(@Cause Throwable t);
 
-   class LeakDescription extends Throwable {
-
-      public LeakDescription() {
-         //
-      }
-
-      public LeakDescription(String message) {
-         super(message);
-      }
-
-      @Override
-      public String toString() {
-         // skip the class-name
-         return getLocalizedMessage();
-      }
-   }
-
+   @Message(value = "Unable to instantiate CacheResolverFactory with type '%s'", id = 21033)
+   CacheException unableToInstantiateCacheResolverFactory(Class<?> type, @Cause Throwable cause);
 }

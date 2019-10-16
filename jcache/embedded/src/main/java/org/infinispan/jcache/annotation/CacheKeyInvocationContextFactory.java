@@ -2,6 +2,7 @@ package org.infinispan.jcache.annotation;
 
 import static org.infinispan.jcache.annotation.CacheLookupHelper.getCacheKeyGenerator;
 import static org.infinispan.jcache.annotation.CacheLookupHelper.getCacheName;
+import static org.infinispan.jcache.annotation.CacheLookupHelper.getCacheResolverFactory;
 import static org.infinispan.jcache.annotation.CollectionsHelper.asSet;
 import static org.infinispan.jcache.annotation.Contracts.assertNotNull;
 
@@ -16,10 +17,12 @@ import java.util.concurrent.ConcurrentMap;
 import javax.cache.annotation.CacheDefaults;
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheKeyGenerator;
-import javax.cache.annotation.CacheKeyInvocationContext;
+import javax.cache.annotation.CacheMethodDetails;
 import javax.cache.annotation.CachePut;
 import javax.cache.annotation.CacheRemove;
 import javax.cache.annotation.CacheRemoveAll;
+import javax.cache.annotation.CacheResolver;
+import javax.cache.annotation.CacheResolverFactory;
 import javax.cache.annotation.CacheResult;
 import javax.cache.annotation.CacheValue;
 import javax.enterprise.context.ApplicationScoped;
@@ -29,6 +32,7 @@ import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.logging.Log;
+import org.infinispan.util.KeyValuePair;
 
 /**
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
@@ -40,7 +44,7 @@ public class CacheKeyInvocationContextFactory {
    private static final Log log = LogFactory.getLog(CacheKeyInvocationContextFactory.class, Log.class);
 
    private BeanManager beanManager;
-   private ConcurrentMap<Method, MethodMetaData<? extends Annotation>> methodMetaDataCache;
+   private ConcurrentMap<KeyValuePair<Method, Class<?>>, MethodMetaData<? extends Annotation>> methodMetaDataCache;
 
    @Inject
    public CacheKeyInvocationContextFactory(BeanManager beanManager) {
@@ -58,10 +62,11 @@ public class CacheKeyInvocationContextFactory {
     * @param invocationContext the {@link javax.interceptor.InvocationContext}.
     * @return an instance of {@link javax.cache.annotation.CacheKeyInvocationContext} corresponding to the given {@link javax.interceptor.InvocationContext}.
     */
-   public <A extends Annotation> CacheKeyInvocationContext<A> getCacheKeyInvocationContext(InvocationContext invocationContext) {
+   public <A extends Annotation> CacheKeyInvocationContextImpl<A> getCacheKeyInvocationContext(
+      InvocationContext invocationContext) {
       assertNotNull(invocationContext, "invocationContext parameter must not be null");
 
-      final MethodMetaData<A> methodMetaData = (MethodMetaData<A>) getMethodMetaData(invocationContext.getMethod());
+      final MethodMetaData<A> methodMetaData = (MethodMetaData<A>) getMethodMetaData(invocationContext.getMethod(), invocationContext.getTarget().getClass());
       return new CacheKeyInvocationContextImpl<A>(invocationContext, methodMetaData);
    }
 
@@ -71,26 +76,34 @@ public class CacheKeyInvocationContextFactory {
     * @param method the method.
     * @return an instance of {@link MethodMetaData}.
     */
-   private MethodMetaData<? extends Annotation> getMethodMetaData(Method method) {
-      MethodMetaData<? extends Annotation> methodMetaData = methodMetaDataCache.get(method);
+   private MethodMetaData<? extends Annotation> getMethodMetaData(Method method, Class<?> targetClass) {
+      KeyValuePair<Method, Class<?>> methodKey = new KeyValuePair<>(method, targetClass);
+      MethodMetaData<? extends Annotation> methodMetaData = methodMetaDataCache.get(methodKey);
 
       if (methodMetaData == null) {
          final String cacheName;
          final Annotation cacheAnnotation;
          final AggregatedParameterMetaData aggregatedParameterMetaData;
          final CacheKeyGenerator cacheKeyGenerator;
-         final CacheDefaults cacheDefaultsAnnotation = method.getDeclaringClass().getAnnotation(CacheDefaults.class);
+         final CacheResolverFactory cacheResolverFactory;
+         CacheDefaults cacheDefaultsAnnotation = getCacheDefaults(targetClass);
 
          if (method.isAnnotationPresent(CacheResult.class)) {
             final CacheResult cacheResultAnnotation = method.getAnnotation(CacheResult.class);
             cacheKeyGenerator = getCacheKeyGenerator(beanManager, cacheResultAnnotation.cacheKeyGenerator(), cacheDefaultsAnnotation);
+            cacheResolverFactory = getCacheResolverFactory(beanManager, cacheResultAnnotation.cacheResolverFactory(),
+                                                           cacheDefaultsAnnotation);
             cacheName = getCacheName(method, cacheResultAnnotation.cacheName(), cacheDefaultsAnnotation, true);
             aggregatedParameterMetaData = getAggregatedParameterMetaData(method, false);
             cacheAnnotation = cacheResultAnnotation;
 
          } else if (method.isAnnotationPresent(CacheRemove.class)) {
             final CacheRemove cacheRemoveEntryAnnotation = method.getAnnotation(CacheRemove.class);
-            cacheKeyGenerator = getCacheKeyGenerator(beanManager, cacheRemoveEntryAnnotation.cacheKeyGenerator(), cacheDefaultsAnnotation);
+            cacheKeyGenerator = getCacheKeyGenerator(beanManager, cacheRemoveEntryAnnotation.cacheKeyGenerator(),
+                                                     cacheDefaultsAnnotation);
+            cacheResolverFactory = getCacheResolverFactory(beanManager,
+                                                           cacheRemoveEntryAnnotation.cacheResolverFactory(),
+                                                           cacheDefaultsAnnotation);
             cacheName = getCacheName(method, cacheRemoveEntryAnnotation.cacheName(), cacheDefaultsAnnotation, false);
             aggregatedParameterMetaData = getAggregatedParameterMetaData(method, false);
             cacheAnnotation = cacheRemoveEntryAnnotation;
@@ -102,6 +115,8 @@ public class CacheKeyInvocationContextFactory {
          } else if (method.isAnnotationPresent(CacheRemoveAll.class)) {
             final CacheRemoveAll cacheRemoveAllAnnotation = method.getAnnotation(CacheRemoveAll.class);
             cacheKeyGenerator = null;
+            cacheResolverFactory = getCacheResolverFactory(beanManager, cacheRemoveAllAnnotation.cacheResolverFactory(),
+                                                           cacheDefaultsAnnotation);
             cacheName = getCacheName(method, cacheRemoveAllAnnotation.cacheName(), cacheDefaultsAnnotation, false);
             aggregatedParameterMetaData = getAggregatedParameterMetaData(method, false);
             cacheAnnotation = cacheRemoveAllAnnotation;
@@ -113,6 +128,8 @@ public class CacheKeyInvocationContextFactory {
          } else if (method.isAnnotationPresent(CachePut.class)) {
             final CachePut cachePutAnnotation = method.getAnnotation(CachePut.class);
             cacheKeyGenerator = getCacheKeyGenerator(beanManager, cachePutAnnotation.cacheKeyGenerator(), cacheDefaultsAnnotation);
+            cacheResolverFactory = getCacheResolverFactory(beanManager, cachePutAnnotation.cacheResolverFactory(),
+                                                           cacheDefaultsAnnotation);
             cacheName = getCacheName(method, cachePutAnnotation.cacheName(), cacheDefaultsAnnotation, true);
             aggregatedParameterMetaData = getAggregatedParameterMetaData(method, true);
             cacheAnnotation = cachePutAnnotation;
@@ -121,22 +138,56 @@ public class CacheKeyInvocationContextFactory {
             throw log.methodWithoutCacheAnnotation(method.getName());
          }
 
-         final MethodMetaData<? extends Annotation> newCacheMethodMetaData = new MethodMetaData<Annotation>(
-               method,
-               aggregatedParameterMetaData,
-               asSet(method.getAnnotations()),
-               cacheKeyGenerator,
-               cacheAnnotation,
-               cacheName
+         // Create a temporary MethodMetaData instance first to pass to CacheResolverFactory
+         MethodMetaData<? extends Annotation> tmpMethodMetaData = new MethodMetaData<>(
+            method,
+            aggregatedParameterMetaData,
+            asSet(method.getAnnotations()),
+            cacheKeyGenerator,
+            null, null,
+            cacheAnnotation,
+            cacheName
+         );
+         CacheResolver cacheResolver = null;
+         if (cacheResolverFactory != null) {
+            cacheResolver = cacheResolverFactory.getCacheResolver(tmpMethodMetaData);
+         }
+         CacheResolver exceptionCacheResolver = null;
+         if (cacheResolverFactory != null && cacheAnnotation instanceof CacheResult) {
+            String exceptionCacheName = ((CacheResult) cacheAnnotation).exceptionCacheName();
+            if (exceptionCacheName.trim().length() != 0) {
+               exceptionCacheResolver = cacheResolverFactory.getExceptionCacheResolver(
+                  (CacheMethodDetails) tmpMethodMetaData);
+            }
+         }
+         MethodMetaData<Annotation> newMethodMetaData = new MethodMetaData<>(
+            method,
+            aggregatedParameterMetaData,
+            asSet(method.getAnnotations()),
+            cacheKeyGenerator,
+            cacheResolver, exceptionCacheResolver,
+            cacheAnnotation,
+            cacheName
          );
 
-         methodMetaData = methodMetaDataCache.putIfAbsent(method, newCacheMethodMetaData);
+         methodMetaData = methodMetaDataCache.putIfAbsent(methodKey, newMethodMetaData);
          if (methodMetaData == null) {
-            methodMetaData = newCacheMethodMetaData;
+            methodMetaData = newMethodMetaData;
          }
       }
 
       return methodMetaData;
+   }
+
+   private CacheDefaults getCacheDefaults(Class<?> targetClass) {
+      // Search for @CacheDefaults in the intercepted class and all its superclasses
+      CacheDefaults cacheDefaultsAnnotation = null;
+      Class<?> clazz = targetClass;
+      while (cacheDefaultsAnnotation == null && clazz != null) {
+         cacheDefaultsAnnotation = clazz.getAnnotation(CacheDefaults.class);
+         clazz = clazz.getSuperclass();
+      }
+      return cacheDefaultsAnnotation;
    }
 
    /**

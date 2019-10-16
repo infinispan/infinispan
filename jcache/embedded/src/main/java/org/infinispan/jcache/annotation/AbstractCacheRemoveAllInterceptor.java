@@ -3,7 +3,6 @@ package org.infinispan.jcache.annotation;
 import java.io.Serializable;
 
 import javax.cache.Cache;
-import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.CacheRemoveAll;
 import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.GeneratedCacheKey;
@@ -27,11 +26,11 @@ public abstract class AbstractCacheRemoveAllInterceptor implements Serializable 
 
    private static final long serialVersionUID = -8763819640664021763L;
 
-   private final CacheResolver cacheResolver;
+   private final CacheResolver defaultCacheResolver;
    private final CacheKeyInvocationContextFactory contextFactory;
 
-   public AbstractCacheRemoveAllInterceptor(CacheResolver cacheResolver, CacheKeyInvocationContextFactory contextFactory) {
-      this.cacheResolver = cacheResolver;
+   public AbstractCacheRemoveAllInterceptor(CacheResolver defaultCacheResolver, CacheKeyInvocationContextFactory contextFactory) {
+      this.defaultCacheResolver = defaultCacheResolver;
       this.contextFactory = contextFactory;
    }
 
@@ -40,9 +39,13 @@ public abstract class AbstractCacheRemoveAllInterceptor implements Serializable 
          getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
       }
 
-      final CacheKeyInvocationContext<CacheRemoveAll> cacheKeyInvocationContext =
+      final CacheKeyInvocationContextImpl<CacheRemoveAll> cacheKeyInvocationContext =
             contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheRemoveAll cacheRemoveAll = cacheKeyInvocationContext.getCacheAnnotation();
+      CacheResolver cacheResolver = cacheKeyInvocationContext.getCacheResolver();
+      if (cacheResolver == null) {
+         cacheResolver = defaultCacheResolver;
+      }
       final Cache<GeneratedCacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
 
       if (!cacheRemoveAll.afterInvocation()) {

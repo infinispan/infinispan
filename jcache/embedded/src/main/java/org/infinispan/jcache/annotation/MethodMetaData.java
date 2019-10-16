@@ -8,13 +8,15 @@ import java.util.List;
 import java.util.Set;
 
 import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheMethodDetails;
+import javax.cache.annotation.CacheResolver;
 
 /**
  * Metadata associated to a method annotated with a cache annotation.
  *
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  */
-public class MethodMetaData<A extends Annotation> {
+public class MethodMetaData<A extends Annotation> implements CacheMethodDetails<A> {
 
    private final Method method;
    private final Set<Annotation> annotations;
@@ -22,11 +24,14 @@ public class MethodMetaData<A extends Annotation> {
    private final String cacheName;
    private final AggregatedParameterMetaData aggregatedParameterMetaData;
    private final CacheKeyGenerator cacheKeyGenerator;
+   private final CacheResolver cacheResolver;
+   private final CacheResolver exceptionCacheResolver;
 
    public MethodMetaData(Method method,
                          AggregatedParameterMetaData aggregatedParameterMetaData,
                          Set<Annotation> annotations,
                          CacheKeyGenerator cacheKeyGenerator,
+                         CacheResolver cacheResolver, CacheResolver exceptionCacheResolver,
                          A cacheAnnotation,
                          String cacheName) {
 
@@ -34,6 +39,8 @@ public class MethodMetaData<A extends Annotation> {
       this.aggregatedParameterMetaData = aggregatedParameterMetaData;
       this.annotations = unmodifiableSet(annotations);
       this.cacheKeyGenerator = cacheKeyGenerator;
+      this.cacheResolver = cacheResolver;
+      this.exceptionCacheResolver = exceptionCacheResolver;
       this.cacheAnnotation = cacheAnnotation;
       this.cacheName = cacheName;
    }
@@ -56,6 +63,14 @@ public class MethodMetaData<A extends Annotation> {
 
    public CacheKeyGenerator getCacheKeyGenerator() {
       return cacheKeyGenerator;
+   }
+
+   public CacheResolver getCacheResolver() {
+      return cacheResolver;
+   }
+
+   public CacheResolver getExceptionCacheResolver() {
+      return exceptionCacheResolver;
    }
 
    public List<ParameterMetaData> getParameters() {

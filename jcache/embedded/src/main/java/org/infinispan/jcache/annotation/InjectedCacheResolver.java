@@ -36,6 +36,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@InjectedCacheResolverQualifier
 @ApplicationScoped
 public class InjectedCacheResolver implements CacheResolver {
    private static final Log log = LogFactory.getLog(DefaultCacheResolver.class);

@@ -2,11 +2,13 @@ package org.infinispan.jcache.annotation;
 
 import static org.infinispan.jcache.annotation.Contracts.assertNotNull;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
 import javax.cache.annotation.CacheDefaults;
 import javax.cache.annotation.CacheKeyGenerator;
+import javax.cache.annotation.CacheResolverFactory;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
@@ -85,13 +87,49 @@ public final class CacheLookupHelper {
 
       // the CacheKeyGenerator implementation is not managed by CDI
       try {
-
-         return cacheKeyGeneratorClass.newInstance();
-
-      } catch (InstantiationException e) {
+         return cacheKeyGeneratorClass.getConstructor().newInstance();
+      } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
          throw log.unableToInstantiateCacheKeyGenerator(cacheKeyGeneratorClass, e);
-      } catch (IllegalAccessException e) {
-         throw log.unableToInstantiateCacheKeyGenerator(cacheKeyGeneratorClass, e);
+      }
+   }
+
+
+   /**
+    * Resolves and creates an instance of {@link javax.cache.annotation.CacheResolverFactory}.
+    *
+    * To resolve the cache resolver factory class the algorithm defined in JCACHE specification is used.
+    *
+    * @param beanManager                  the bean manager instance.
+    * @param methodCacheResolverFactoryClass the {@link CacheResolverFactory} class declared in the cache annotation.
+    * @param cacheDefaultsAnnotation      the {@link CacheDefaults} annotation instance.
+    * @return the {@link javax.cache.annotation.CacheResolverFactory} instance.
+    * @throws NullPointerException if beanManager parameter is {@code null}.
+    */
+   public static CacheResolverFactory getCacheResolverFactory(BeanManager beanManager, Class<? extends CacheResolverFactory> methodCacheResolverFactoryClass, CacheDefaults cacheDefaultsAnnotation) {
+      assertNotNull(beanManager, "beanManager parameter must not be null");
+
+      Class<? extends CacheResolverFactory> cacheResolverFactoryClass = null;
+      if (!CacheResolverFactory.class.equals(methodCacheResolverFactoryClass)) {
+         cacheResolverFactoryClass = methodCacheResolverFactoryClass;
+      } else if (cacheDefaultsAnnotation != null && !CacheResolverFactory.class.equals(cacheDefaultsAnnotation.cacheResolverFactory())) {
+         cacheResolverFactoryClass = cacheDefaultsAnnotation.cacheResolverFactory();
+      }
+
+      if (cacheResolverFactoryClass == null)
+         return null;
+
+      final CreationalContext<?> creationalContext = beanManager.createCreationalContext(null);
+      final Set<Bean<?>> beans = beanManager.getBeans(cacheResolverFactoryClass);
+      if (!beans.isEmpty()) {
+         final Bean<?> bean = beanManager.resolve(beans);
+         return (CacheResolverFactory) beanManager.getReference(bean, CacheResolverFactory.class, creationalContext);
+      }
+
+      // the CacheResolverFactory implementation is not managed by CDI
+      try {
+         return cacheResolverFactoryClass.getConstructor().newInstance();
+      } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+         throw log.unableToInstantiateCacheResolverFactory(cacheResolverFactoryClass, e);
       }
    }
 

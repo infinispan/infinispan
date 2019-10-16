@@ -28,6 +28,7 @@ import org.infinispan.jcache.logging.Log;
  *
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
+ * @public
  */
 @Interceptor
 @CacheResult
@@ -43,7 +44,7 @@ public class CacheResultInterceptor extends AbstractCacheResultInterceptor {
    }
 
    @AroundInvoke
-   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+   public Object cacheResult(InvocationContext invocationContext) throws Throwable {
       return super.cacheResult(invocationContext);
    }
 
