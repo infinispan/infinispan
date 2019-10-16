@@ -1,5 +1,7 @@
 package org.infinispan.server.logging.events;
 
+import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType;
+
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +32,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new PersistenceContextManualInitializer());
 
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
