@@ -18,8 +18,16 @@ specification, and explains key aspects of the API.
 +
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::dependencies_maven/jcache.xml[]
+include::dependencies_maven/jcache_embedded.xml[]
 ----
+
+For remote caches, a different dependency is needed:
+.pom.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/jcache_remote.xml[]
+----
+
 
 == Create a local cache
 Creating a local cache, using default configuration options as defined by the
@@ -38,7 +46,8 @@ store in the cache, and that way adhere to the spec. Hence, if using default
 JCache configuration with {brandname}, data stored must be marshallable.
 
 Alternatively, JCache can be configured to store data by reference
-(just like {brandname} or JDK Collections work). To do that, simply call:
+(just like {brandname} with OBJECT storage or JDK Collections work).
+To do that, simply call:
 
 [source,java]
 ----
@@ -54,9 +63,6 @@ as defined by the JCache API specification, is as simple as doing the following:
 ----
 include::code_examples/JCacheCreateRemoteCache.java[]
 ----
-
-NOTE: In order to use the org.infinispan.jcache.remote.JCachingProvider, infinispan-jcache-remote-<version>.jar
-and all its transitive dependencies need to be on put your classpath.
 
 == Store and retrieve data
 Even though JCache API does not extend neither

@@ -51,6 +51,20 @@ file for your application.
 </beans>
 ----
 
+=== Deprecated managed caching interceptors
+
+.Interceptors for managed environments such as Application Servers
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::code_examples/InterceptorsManaged.xml[]
+----
+
+These interceptors look up a cache with the specified name in any `EmbeddedCacheManager` bean,
+and if they don't find an existing cache they create a new cache in the `@Default` `EmbeddedCacheManager` bean.
+
+They are deprecated because they do not support remote caches and because looking up the cache only by name is error-prone.
+You should define a `CacheResolverFactory` instead and use it to inject custom cache managers.
+
 .JCache Caching Annotation Examples
 
 The following example shows how the `@CacheResult` annotation caches the results of the `GreetingService.greet()` method:
