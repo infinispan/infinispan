@@ -24,8 +24,6 @@ By default you can inject the default {brandname} cache. Let's look at the follo
 .Default cache injection
 [source,java]
 ----
-
-...
 import javax.inject.Inject;
 
 public class GreetingService {
@@ -42,7 +40,6 @@ public class GreetingService {
         return cachedValue;
     }
 }
-
 ----
 
 If you want to use a specific cache rather than the default one, you just have to provide your own cache configuration and cache qualifier. See example below:
@@ -50,8 +47,6 @@ If you want to use a specific cache rather than the default one, you just have t
 .Qualifier example
 [source,java]
 ----
-
-...
 import javax.inject.Qualifier;
 
 @Qualifier
@@ -60,14 +55,11 @@ import javax.inject.Qualifier;
 @Documented
 public @interface GreetingCache {
 }
-
 ----
 
 .Injecting Cache with qualifier
 [source,java]
 ----
-
-...
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.cdi.ConfigureCache;
@@ -92,7 +84,6 @@ public class Config {
     @Produces
     public Configuration greetingCacheConfiguration;
 }
-
 ----
 
 To use this cache in the GreetingService add the `@GeetingCache` qualifier on your cache injection point.
@@ -103,7 +94,6 @@ You can override the default cache configuration used by the default `EmbeddedCa
 .Overriding Configuration
 [source,java]
 ----
-
 public class Config {
 
     // By default CDI adds the @Default qualifier if no other qualifier is provided.
@@ -115,7 +105,6 @@ public class Config {
                     .build();
     }
 }
-
 ----
 
 It's also possible to override the default `EmbeddedCacheManager`.
@@ -124,10 +113,6 @@ The newly created manager must have default qualifiers and Application scope.
 .Overriding EmbeddedCacheManager
 [source,java]
 ----
-
-...
-import javax.enterprise.context.ApplicationScoped;
-
 public class Config {
 
     @Produces
@@ -139,7 +124,6 @@ public class Config {
                                           .build());
    }
 }
-
 ----
 
 === Configure the transport for clustered use
@@ -149,19 +133,17 @@ To achieve that override the default cache manager as explained in the previous 
 .Overriding default EmbeddedCacheManager
 [source,java]
 ----
+public class Config {
 
-...
-package org.infinispan.configuration.global.GlobalConfigurationBuilder;
-
-@Produces
-@ApplicationScoped
-public EmbeddedCacheManager defaultClusteredCacheManager() {
-    return new DefaultCacheManager(
-        new GlobalConfigurationBuilder().transport().defaultTransport().build(),
-        new ConfigurationBuilder().memory().size(7).build()
-    );
+    @Produces
+    @ApplicationScoped
+    public EmbeddedCacheManager defaultClusteredCacheManager() {
+        return new DefaultCacheManager(
+            new GlobalConfigurationBuilder().transport().defaultTransport().build(),
+            new ConfigurationBuilder().memory().size(7).build()
+        );
+    }
 }
-
 ----
 
 == Remote cache integration
@@ -172,7 +154,6 @@ With the CDI integration it's also possible to use a `RemoteCache` as illustrate
 .Injecting RemoteCache
 [source,java]
 ----
-
 public class GreetingService {
 
     @Inject
@@ -187,7 +168,6 @@ public class GreetingService {
         return cachedValue;
     }
 }
-
 ----
 
 If you want to use another cache, for example the greeting-cache, add the `@Remote` qualifier on the cache injection point which contains the cache name.
@@ -195,25 +175,21 @@ If you want to use another cache, for example the greeting-cache, add the `@Remo
 .Injecting RemoteCache with qualifier
 [source,java]
 ----
-
 public class GreetingService {
 
     @Inject
     @Remote("greeting-cache")
     private RemoteCache<String, String> cache;
 
-    ...
 }
-
 ----
 
-Adding the `@Remote` cache qualifier on each injection point might be error prone.
+Adding the `@Remote` cache qualifier with the cache name on each injection point might be error prone.
 That's why the remote cache integration provides another way to achieve the same goal. For that you have to create your own qualifier annotated with `@Remote`:
 
 .RemoteCache qualifier
 [source,java]
 ----
-
 @Remote("greeting-cache")
 @Qualifier
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
@@ -221,7 +197,6 @@ That's why the remote cache integration provides another way to achieve the same
 @Documented
 public @interface RemoteGreetingCache {
 }
-
 ----
 
 To use this cache in the GreetingService add the qualifier `@RemoteGreetingCache` qualifier on your cache injection.
@@ -232,7 +207,6 @@ Like the embedded cache integration, the remote cache integration comes with a d
 .Overriding default RemoteCacheManager
 [source,java]
 ----
-
 public class Config {
 
     @Produces
@@ -241,7 +215,6 @@ public class Config {
         return new RemoteCacheManager(localhost, 1544);
     }
 }
-
 ----
 
 == Use a custom remote/embedded cache manager for one or more cache
@@ -249,7 +222,6 @@ It's possible to use a custom cache manager for one or more cache. You just need
 
 [source,java]
 ----
-
 public class Config {
 
    @GreetingCache
@@ -269,7 +241,6 @@ public class Config {
        return new RemoteCacheManager("localhost", 1544);
    }
 }
-
 ----
 
 With the above code the GreetingCache or the RemoteGreetingCache will be associated with the produced cache manager.
@@ -300,37 +271,13 @@ To use these annotations, proper interceptors need to be declared in `beans.xml`
 .Interceptors for managed environments such as Application Servers
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
-   version="1.2" bean-discovery-mode="annotated">
-
-  <interceptors>
-    <class>org.infinispan.jcache.annotation.InjectedCacheResultInterceptor</class>
-    <class>org.infinispan.jcache.annotation.InjectedCachePutInterceptor</class>
-    <class>org.infinispan.jcache.annotation.InjectedCacheRemoveEntryInterceptor</class>
-    <class>org.infinispan.jcache.annotation.InjectedCacheRemoveAllInterceptor</class>
-  </interceptors>
-</beans>
+include::code_examples/InterceptorsManaged.xml[]
 ----
 
 .Interceptors for unmanaged environments such as standalone applications
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
-   version="1.2" bean-discovery-mode="annotated">
-
-  <interceptors>
-    <class>org.infinispan.jcache.annotation.CacheResultInterceptor</class>
-    <class>org.infinispan.jcache.annotation.CachePutInterceptor</class>
-    <class>org.infinispan.jcache.annotation.CacheRemoveEntryInterceptor</class>
-    <class>org.infinispan.jcache.annotation.CacheRemoveAllInterceptor</class>
-  </interceptors>
-</beans>
+include::code_examples/InterceptorsUnmanaged.xml[]
 ----
 
 The following snippet of code illustrates the use of `@CacheResult` annotation. As you can see it simplifies the caching of the `Greetingservice#greet` method results.
@@ -338,7 +285,6 @@ The following snippet of code illustrates the use of `@CacheResult` annotation. 
 .Using JCache annotations
 [source,java]
 ----
-
 import javax.cache.interceptor.CacheResult;
 
 public class GreetingService {
@@ -348,7 +294,6 @@ public class GreetingService {
         return "Hello" + user;
     }
 }
-
 ----
 
 The first version of the `GreetingService` and the above version have exactly the same behavior. The only difference is the cache used. By default it's the fully qualified name of the annotated method with its parameter types (e.g. `org.infinispan.example.GreetingService.greet(java.lang.String)`).
@@ -358,9 +303,7 @@ Using other cache than default is rather simple. All you need to do is to specif
 .Specifying cache name for JCache
 [source,java]
 ----
-
 @CacheResult(cacheName = "greeting-cache")
-
 ----
 
 == Use Cache events and CDI
@@ -370,7 +313,6 @@ It is possible to receive Cache and Cache Manager level events using CDI Events.
 .Event listeners based on CDI
 [source,java]
 ----
-
 import javax.enterprise.event.Observes;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachelistener.event.*;
@@ -379,15 +321,12 @@ public class GreetingService {
 
     // Cache level events
     private void entryRemovedFromCache(@Observes CacheEntryCreatedEvent event) {
-        ...
     }
 
     // Cache Manager level events
     private void cacheStarted(@Observes CacheStartedEvent event) {
-        ...
     }
 }
-
 ----
 
 //old_link: TIP: Check link:#listeners_and_notifications[Listeners and Notifications] for more information about event types.
