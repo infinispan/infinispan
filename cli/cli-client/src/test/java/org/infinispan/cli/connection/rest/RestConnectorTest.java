@@ -8,7 +8,9 @@ import static org.junit.Assert.assertTrue;
 import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 
+import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.junit.Test;
@@ -59,13 +61,14 @@ public class RestConnectorTest {
       RestConnector connector = new RestConnector();
       RestConnection connection = (RestConnection) connector.getConnection("https://localhost", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
-      builder.security().ssl().sslContext(SSLContext.getDefault());
+      builder.security().ssl().sslContext(SSLContext.getDefault()).trustManagers(new TrustManager[]{new ZeroSecurityTrustManager()});
       RestClientConfiguration configuration = builder.build();
       assertEquals(11222, configuration.servers().get(0).port());
       assertEquals("localhost", configuration.servers().get(0).host());
       assertFalse(configuration.security().authentication().enabled());
       assertTrue(configuration.security().ssl().enabled());
    }
+
 
    @Test
    public void testEmptyUrl() {
