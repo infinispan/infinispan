@@ -10,13 +10,18 @@ import java.io.File;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.file.SingleFileStore;
+import org.infinispan.server.logging.events.ServerEventImpl;
 import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.server.test.TestThreadTrackerRule;
 import org.infinispan.test.CacheManagerCallable;
@@ -130,6 +135,22 @@ public class ServerEventLoggerTest {
       withCacheManager(startCacheManagerWithGlobalState(global), cm -> {
          EventLogger eventLogger = EventLogManager.getEventLogger(cm);
          eventLogger.info(EventLogCategory.CLUSTER, "message #5");
+      });
+   }
+
+   @Test
+   public void testCacheContentCanBePassivated() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      GlobalConfigurationBuilder globalBuilder = amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder());
+      globalBuilder.globalState().enable();
+      deleteGlobalPersistentState(globalBuilder);
+      withCacheManager(TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder), cm -> {
+         EventLogger eventLogger = EventLogManager.getEventLogger(cm);
+         eventLogger.info(EventLogCategory.CLUSTER, "message #1");
+         Cache<UUID, ServerEventImpl> cache = cm.getCache(ServerEventLogger.EVENT_LOG_CACHE);
+         TestingUtil.extractComponent(cache, PassivationManager.class).passivateAll();
+         SingleFileStore<UUID, ServerEventImpl> sfs = TestingUtil.getFirstWriter(cache);
+         assertEquals(1, sfs.size());
       });
    }
 
