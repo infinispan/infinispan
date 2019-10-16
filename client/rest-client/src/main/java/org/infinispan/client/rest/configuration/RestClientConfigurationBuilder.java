@@ -24,10 +24,10 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private static final Pattern ADDRESS_PATTERN = Pattern
          .compile("(\\[([0-9A-Fa-f:]+)\\]|([^:/?#]*))(?::(\\d*))?");
 
-   private int connectionTimeout = RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
+   private long connectionTimeout = RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
+   private long socketTimeout = RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT;
 
-   private final List<ServerConfigurationBuilder> servers = new ArrayList<>();
-   private int socketTimeout = RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT;
+   private final List<ServerConfigurationBuilder> servers;
    private final SecurityConfigurationBuilder security;
    private boolean tcpNoDelay = true;
    private boolean tcpKeepAlive = false;
@@ -37,6 +37,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
 
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
+      this.servers = new ArrayList<>();
    }
 
    @Override
@@ -84,7 +85,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    }
 
    @Override
-   public RestClientConfigurationBuilder connectionTimeout(int connectionTimeout) {
+   public RestClientConfigurationBuilder connectionTimeout(long connectionTimeout) {
       this.connectionTimeout = connectionTimeout;
       return this;
    }
@@ -95,7 +96,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    }
 
    @Override
-   public RestClientConfigurationBuilder socketTimeout(int socketTimeout) {
+   public RestClientConfigurationBuilder socketTimeout(long socketTimeout) {
       this.socketTimeout = socketTimeout;
       return this;
    }
@@ -121,14 +122,14 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    public RestClientConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
       this.protocol(typed.getEnumProperty(RestClientConfigurationProperties.PROTOCOL, Protocol.class, protocol, true));
-      this.connectionTimeout(typed.getIntProperty(RestClientConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
+      this.connectionTimeout(typed.getLongProperty(RestClientConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
       String serverList = typed.getProperty(RestClientConfigurationProperties.SERVER_LIST, null, true);
       if (serverList != null) {
          this.servers.clear();
          this.addServers(serverList);
       }
       this.contextPath(typed.getProperty(RestClientConfigurationProperties.CONTEXT_PATH, contextPath, true));
-      this.socketTimeout(typed.getIntProperty(RestClientConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+      this.socketTimeout(typed.getLongProperty(RestClientConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
       this.tcpNoDelay(typed.getBooleanProperty(RestClientConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
       this.tcpKeepAlive(typed.getBooleanProperty(RestClientConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive, true));
       this.security.ssl().withProperties(properties);
