@@ -16,9 +16,9 @@ import org.infinispan.commons.util.TypedProperties;
 @BuiltBy(RestClientConfigurationBuilder.class)
 public class RestClientConfiguration {
 
-   private final int connectionTimeout;
+   private final long connectionTimeout;
    private final List<ServerConfiguration> servers;
-   private final int socketTimeout;
+   private final long socketTimeout;
    private final SecurityConfiguration security;
    private final boolean tcpNoDelay;
    private final boolean tcpKeepAlive;
@@ -26,7 +26,7 @@ public class RestClientConfiguration {
    private final String contextPath;
    private final boolean priorKnowledge;
 
-   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, int connectionTimeout, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge) {
+   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge) {
       this.servers = Collections.unmodifiableList(servers);
       this.protocol = protocol;
       this.connectionTimeout = connectionTimeout;
@@ -46,7 +46,7 @@ public class RestClientConfiguration {
       return priorKnowledge;
    }
 
-   public int connectionTimeout() {
+   public long connectionTimeout() {
       return connectionTimeout;
    }
 
@@ -54,7 +54,7 @@ public class RestClientConfiguration {
       return servers;
    }
 
-   public int socketTimeout() {
+   public long socketTimeout() {
       return socketTimeout;
    }
 
@@ -77,7 +77,7 @@ public class RestClientConfiguration {
    public Properties properties() {
       TypedProperties properties = new TypedProperties();
       properties.setProperty(RestClientConfigurationProperties.PROTOCOL, protocol().name());
-      properties.setProperty(RestClientConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(connectionTimeout()));
+      properties.setProperty(RestClientConfigurationProperties.CONNECT_TIMEOUT, Long.toString(connectionTimeout()));
       properties.setProperty(RestClientConfigurationProperties.SO_TIMEOUT, socketTimeout());
       properties.setProperty(RestClientConfigurationProperties.TCP_NO_DELAY, tcpNoDelay());
       properties.setProperty(RestClientConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive());

@@ -31,7 +31,7 @@ public abstract class AbstractConfigurationChildBuilder implements RestClientCon
    }
 
    @Override
-   public RestClientConfigurationBuilder connectionTimeout(int connectionTimeout) {
+   public RestClientConfigurationBuilder connectionTimeout(long connectionTimeout) {
       return builder.connectionTimeout(connectionTimeout);
    }
 
@@ -41,7 +41,7 @@ public abstract class AbstractConfigurationChildBuilder implements RestClientCon
    }
 
    @Override
-   public RestClientConfigurationBuilder socketTimeout(int socketTimeout) {
+   public RestClientConfigurationBuilder socketTimeout(long socketTimeout) {
       return builder.socketTimeout(socketTimeout);
    }
 

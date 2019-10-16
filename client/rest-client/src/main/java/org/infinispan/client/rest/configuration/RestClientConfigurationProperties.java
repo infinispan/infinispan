@@ -52,8 +52,8 @@ public class RestClientConfigurationProperties {
 
    // defaults
    public static final int DEFAULT_REST_PORT = 11222;
-   public static final int DEFAULT_SO_TIMEOUT = 60_000;
-   public static final int DEFAULT_CONNECT_TIMEOUT = 60_000;
+   public static final long DEFAULT_SO_TIMEOUT = 60_000;
+   public static final long DEFAULT_CONNECT_TIMEOUT = 60_000;
    public static final int DEFAULT_MAX_RETRIES = 10;
    public static final int DEFAULT_BATCH_SIZE = 10_000;
 
@@ -105,16 +105,16 @@ public class RestClientConfigurationProperties {
       props.setProperty(PROTOCOL, protocol.name());
    }
 
-   public int getSoTimeout() {
-      return props.getIntProperty(SO_TIMEOUT, DEFAULT_SO_TIMEOUT);
+   public long getSoTimeout() {
+      return props.getLongProperty(SO_TIMEOUT, DEFAULT_SO_TIMEOUT);
    }
 
    public void setSocketTimeout(int socketTimeout) {
       props.setProperty(SO_TIMEOUT, socketTimeout);
    }
 
-   public int getConnectTimeout() {
-      return props.getIntProperty(CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT);
+   public long getConnectTimeout() {
+      return props.getLongProperty(CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT);
    }
 
    public void setConnectTimeout(int connectTimeout) {

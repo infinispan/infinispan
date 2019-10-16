@@ -32,14 +32,15 @@ public interface RestClientConfigurationChildBuilder {
 
    /**
     * This property defines the maximum socket connect timeout before giving up connecting to the server.
+    * Defaults to 60000 (1 minute)
     */
-   RestClientConfigurationBuilder connectionTimeout(int connectionTimeout);
+   RestClientConfigurationBuilder connectionTimeout(long connectionTimeout);
 
    /**
     * This property defines the maximum socket read timeout in milliseconds before giving up waiting for bytes from the
     * server. Defaults to 60000 (1 minute)
     */
-   RestClientConfigurationBuilder socketTimeout(int socketTimeout);
+   RestClientConfigurationBuilder socketTimeout(long socketTimeout);
 
    /**
     * Security Configuration
