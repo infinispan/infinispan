@@ -2,6 +2,8 @@ package org.infinispan.server.test;
 
 import java.util.Properties;
 
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -12,7 +14,8 @@ public class InfinispanServerTestConfiguration {
    private int numServers = 2;
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private Properties properties = new Properties();
-   private String[] artifacts;
+   private String[] mavenArtifacts;
+   private JavaArchive[] artifacts;
    private boolean jmx;
 
    public InfinispanServerTestConfiguration(String configurationFile) {
@@ -49,17 +52,29 @@ public class InfinispanServerTestConfiguration {
    }
 
    /**
-    * Extra libs
+    * Deployments
     *
     * @param artifacts
     */
-   public InfinispanServerTestConfiguration artifacts(String... artifacts) {
+   public InfinispanServerTestConfiguration artifacts(JavaArchive... artifacts) {
+      assert runMode == ServerRunMode.CONTAINER : "Artifacts can be added only when runMode == CONTAINER";
       this.artifacts = artifacts;
       return this;
    }
 
    public InfinispanServerTestConfiguration enableJMX() {
       this.jmx = true;
+      return this;
+   }
+
+   /**
+    * Extra libs
+    *
+    * @param artifacts
+    */
+   public InfinispanServerTestConfiguration mavenArtifacts(String... artifacts) {
+      assert runMode == ServerRunMode.CONTAINER : "Artifacts can be added only when runMode == CONTAINER";
+      this.mavenArtifacts = artifacts;
       return this;
    }
 
@@ -79,11 +94,15 @@ public class InfinispanServerTestConfiguration {
       return properties;
    }
 
-   public String[] artifacts() {
+   public JavaArchive[] artifacts() {
       return artifacts;
    }
 
    public boolean isJMXEnabled() {
       return jmx;
+   }
+
+   public String[] mavenArtifacts() {
+      return mavenArtifacts;
    }
 }

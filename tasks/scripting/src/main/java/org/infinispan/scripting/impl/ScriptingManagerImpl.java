@@ -75,7 +75,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null) {
-         scriptCache = cacheManager.getCache(SCRIPT_CACHE);
+         scriptCache = SecurityActions.getCache(cacheManager, SCRIPT_CACHE);
       }
       return scriptCache;
    }

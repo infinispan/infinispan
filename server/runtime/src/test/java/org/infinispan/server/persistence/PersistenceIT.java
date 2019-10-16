@@ -21,5 +21,5 @@ public class PersistenceIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/ClusteredServerTest.xml")
-         .numServers(NUM_SERVERS).runMode(ServerRunMode.CONTAINER).artifacts("com.h2database:h2:1.4.199", "mysql:mysql-connector-java:8.0.17", "org.postgresql:postgresql:jar:42.2.8"));
+         .numServers(NUM_SERVERS).runMode(ServerRunMode.CONTAINER).mavenArtifacts("com.h2database:h2:1.4.199", "mysql:mysql-connector-java:8.0.17", "org.postgresql:postgresql:jar:42.2.8"));
 }

@@ -56,6 +56,7 @@ import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
+import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
@@ -272,6 +273,10 @@ public class Server implements ServerManagement, AutoCloseable {
          cacheManagers.put(cm.getName(), cm);
          SecurityActions.startCacheManager(cm);
          cacheIgnoreManager = new CacheIgnoreManager(cm);
+
+         // Register the task manager
+         TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cm).getComponent(TaskManager.class);
+         taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
 
          // Start the protocol servers
          serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);

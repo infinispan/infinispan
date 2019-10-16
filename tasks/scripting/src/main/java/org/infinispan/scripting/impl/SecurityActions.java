@@ -10,6 +10,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheEntryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
@@ -41,6 +42,11 @@ final class SecurityActions {
    static AuthorizationManager getAuthorizationManager(final AdvancedCache<?, ?> cache) {
       GetCacheAuthorizationManagerAction action = new GetCacheAuthorizationManagerAction(cache);
       return doPrivileged(action);
+   }
+
+   static <K, V> org.infinispan.Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
+      GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
+      return (org.infinispan.Cache<K, V>) doPrivileged(action);
    }
 
    static <K, V> CacheEntry<K, V> getCacheEntry(final AdvancedCache<K, V> cache, K key) {

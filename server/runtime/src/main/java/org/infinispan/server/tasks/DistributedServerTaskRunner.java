@@ -1,4 +1,4 @@
-package org.infinispan.server.infinispan.task;
+package org.infinispan.server.tasks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +12,15 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.util.function.TriConsumer;
 
 /**
- * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
- * Date: 1/28/16
- * Time: 9:36 AM
+ * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class DistributedServerTaskRunner implements ServerTaskRunner {
+   private final ServerTaskEngine serverTaskEngine;
+
+   public DistributedServerTaskRunner(ServerTaskEngine serverTaskEngine) {
+      this.serverTaskEngine = serverTaskEngine;
+   }
+
    @Override
    public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
       Cache<?, ?> masterCacheNode = context.getCache().get();
@@ -35,7 +39,6 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
       CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedServerTask<>(
             masterCacheNode.getName(), taskName, context.getParameters()), triConsumer);
 
-//         noinspection unchecked
       return (CompletableFuture<T>) future.thenApply(ignore -> results);
    }
 

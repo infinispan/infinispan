@@ -1,4 +1,4 @@
-package org.infinispan.server.infinispan.task;
+package org.infinispan.server.tasks;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -15,9 +15,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.tasks.TaskContext;
 
 /**
- * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
- * Date: 1/28/16
- * Time: 1:49 PM
+ * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class DistributedServerTask<T> implements Serializable, Function<EmbeddedCacheManager, T> {
    private final String cacheName;
@@ -35,9 +33,9 @@ public class DistributedServerTask<T> implements Serializable, Function<Embedded
       Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
       // todo inject global component registry to be independent of existence of cache.
       GlobalComponentRegistry componentRegistry = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager);
-      ServerTaskRegistry taskRegistry = componentRegistry.getComponent(ServerTaskRegistry.class);
+      ServerTaskEngine serverTaskEngine = componentRegistry.getComponent(ServerTaskEngine.class);
       Marshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
-      ServerTaskWrapper<T> task = taskRegistry.getTask(taskName);
+      ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
       task.inject(prepareContext(cache, marshaller));
       try {
          return task.run();

@@ -19,6 +19,8 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.util.Version;
 import org.infinispan.test.Exceptions;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.testcontainers.DockerClientFactory;
@@ -153,8 +155,9 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    }
 
    private void copyArtifactsToUserLibDir(File libDir) {
+      // Maven artifacts
       String propertyArtifacts = System.getProperty(EXTRA_LIBS);
-      String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.artifacts();
+      String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.mavenArtifacts();
       if (artifacts != null && artifacts.length > 0) {
          MavenResolvedArtifact[] archives = Maven.resolver().resolve(artifacts).withoutTransitivity().asResolvedArtifact();
          for (MavenResolvedArtifact archive : archives) {
@@ -162,6 +165,14 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                Path source = archive.asFile().toPath();
                Files.copy(source, libDir.toPath().resolve(source.getFileName()));
             });
+         }
+      }
+      // Supplied artifacts
+      if (configuration.artifacts() != null) {
+         for (JavaArchive artifact : configuration.artifacts()) {
+            File jar = libDir.toPath().resolve(artifact.getName()).toFile();
+            jar.setWritable(true, false);
+            artifact.as(ZipExporter.class).exportTo(jar, true);
          }
       }
    }

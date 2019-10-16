@@ -1,4 +1,4 @@
-package org.infinispan.server.infinispan.task;
+package org.infinispan.server.tasks;
 
 import java.util.Optional;
 import java.util.Set;
@@ -9,9 +9,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
 
 /**
- * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
- * Date: 1/20/16
- * Time: 2:04 PM
+ * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class ServerTaskWrapper<T> implements Task {
    private final ServerTask<T> task;
@@ -51,4 +49,6 @@ public class ServerTaskWrapper<T> implements Task {
    public Set<String> getParameters() {
       return task.getParameters();
    }
+
+
 }
