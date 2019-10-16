@@ -1,12 +1,14 @@
 package org.infinispan.jcache.annotation;
 
 import javax.cache.annotation.CacheRemoveAll;
+import javax.cache.annotation.CacheResolver;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.embedded.InjectedCacheResolverFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -14,8 +16,9 @@ import org.infinispan.jcache.logging.Log;
  * injected in a managed environment, e.g. application server.
  *
  * @author Galder Zamarreño
- * @since 6.0
+ * @deprecated Since 13.0, please use {@link InjectedCacheResolverFactory} instead.
  */
+@Deprecated
 @Interceptor
 @CacheRemoveAll
 public class InjectedCacheRemoveAllInterceptor extends AbstractCacheRemoveAllInterceptor {
@@ -23,8 +26,8 @@ public class InjectedCacheRemoveAllInterceptor extends AbstractCacheRemoveAllInt
    private static final Log log = LogFactory.getLog(InjectedCacheRemoveAllInterceptor.class, Log.class);
 
    @Inject
-   public InjectedCacheRemoveAllInterceptor(InjectedCacheResolver cacheResolver,
-         CacheKeyInvocationContextFactory contextFactory) {
+   public InjectedCacheRemoveAllInterceptor(@InjectedCacheResolverQualifier CacheResolver cacheResolver,
+                                            CacheKeyInvocationContextFactory contextFactory) {
       super(cacheResolver, contextFactory);
    }
 

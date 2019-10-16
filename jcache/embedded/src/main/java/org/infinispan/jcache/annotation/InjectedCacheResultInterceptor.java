@@ -1,5 +1,6 @@
 package org.infinispan.jcache.annotation;
 
+import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.CacheResult;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
@@ -7,6 +8,7 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.embedded.InjectedCacheResolverFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -14,8 +16,9 @@ import org.infinispan.jcache.logging.Log;
  * injected in a managed environment, e.g. application server.
  *
  * @author Galder Zamarreño
- * @since 6.0
+ * @deprecated Since 13.0, please use {@link InjectedCacheResolverFactory} instead.
  */
+@Deprecated
 @Interceptor
 @CacheResult
 public class InjectedCacheResultInterceptor extends AbstractCacheResultInterceptor {
@@ -23,13 +26,13 @@ public class InjectedCacheResultInterceptor extends AbstractCacheResultIntercept
    private static final Log log = LogFactory.getLog(InjectedCacheResultInterceptor.class, Log.class);
 
    @Inject
-   public InjectedCacheResultInterceptor(InjectedCacheResolver cacheResolver,
-         CacheKeyInvocationContextFactory contextFactory) {
+   public InjectedCacheResultInterceptor(@InjectedCacheResolverQualifier CacheResolver cacheResolver,
+                                         CacheKeyInvocationContextFactory contextFactory) {
       super(cacheResolver, contextFactory);
    }
 
    @AroundInvoke
-   public Object cacheResult(InvocationContext invocationContext) throws Exception {
+   public Object cacheResult(InvocationContext invocationContext) throws Throwable {
       return super.cacheResult(invocationContext);
    }
 
