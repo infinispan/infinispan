@@ -8,7 +8,7 @@ import javax.cache.Cache;
 import javax.inject.Inject;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.jcache.annotation.InjectedCachePutInterceptor;
+import org.infinispan.jcache.embedded.annotation.InjectedCachePutInterceptor;
 import org.infinispan.jcache.embedded.JCache;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.jcache.util.JCacheTestingUtil;

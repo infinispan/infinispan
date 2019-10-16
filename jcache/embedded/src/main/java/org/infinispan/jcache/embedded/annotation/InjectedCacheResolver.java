@@ -1,4 +1,4 @@
-package org.infinispan.jcache.annotation;
+package org.infinispan.jcache.embedded.annotation;
 
 import java.lang.annotation.Annotation;
 import java.net.URI;
@@ -21,6 +21,7 @@ import org.infinispan.cdi.common.util.BeanManagerProvider;
 import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.jcache.annotation.Contracts;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 

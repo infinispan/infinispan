@@ -1,4 +1,4 @@
-package org.infinispan.jcache.annotation;
+package org.infinispan.jcache.embedded.annotation;
 
 import javax.annotation.Priority;
 import javax.cache.annotation.CachePut;
@@ -8,6 +8,8 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.annotation.AbstractCachePutInterceptor;
+import org.infinispan.jcache.annotation.CacheKeyInvocationContextFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**

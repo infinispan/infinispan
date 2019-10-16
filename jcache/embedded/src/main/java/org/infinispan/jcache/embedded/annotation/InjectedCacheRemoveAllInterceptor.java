@@ -1,4 +1,4 @@
-package org.infinispan.jcache.annotation;
+package org.infinispan.jcache.embedded.annotation;
 
 import javax.cache.annotation.CacheRemoveAll;
 import javax.inject.Inject;
@@ -7,6 +7,8 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.jcache.annotation.AbstractCacheRemoveAllInterceptor;
+import org.infinispan.jcache.annotation.CacheKeyInvocationContextFactory;
 import org.infinispan.jcache.logging.Log;
 
 /**
