@@ -22,6 +22,7 @@ public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
             .persistenceUnitName("org.infinispan.persistence.jpa")
             .entityClass(KeyValueEntity.class)
             .preload(preload)
+            .segmented(false)
             .create();
       return persistence;
    }

@@ -20,12 +20,16 @@ public abstract class Database {
       return type;
    }
 
-   public String getDataColumType() {
+   public String getDataColumnType() {
       return properties.getProperty("data.column.type");
    }
 
-   public String getTimeStampColumType() {
+   public String getTimeStampColumnType() {
       return properties.getProperty("timestamp.column.type");
+   }
+
+   public String getSegmentColumnType() {
+      return properties.getProperty("segment.column.type");
    }
 
    public String getIdColumType() {

@@ -2,16 +2,20 @@ package org.infinispan.persistence.dummy;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -20,21 +24,31 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.AbstractSegmentedAdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
+import org.reactivestreams.Publisher;
+import org.testng.AssertJUnit;
 
 import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * A Dummy cache store which stores objects in memory. Instance of the store can be shared
@@ -42,23 +56,25 @@ import io.reactivex.Flowable;
  */
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
 @Store(shared = true)
-public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCacheExpirationWriter {
+public class DummyInMemoryStore extends AbstractSegmentedAdvancedLoadWriteStore implements AdvancedCacheExpirationWriter {
    public static final int SLOW_STORE_WAIT = 100;
 
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<>();
+   private static final ConcurrentMap<String, AtomicReferenceArray<Map<Object, byte[]>>> stores = new ConcurrentHashMap<>();
    private static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
 
    private String storeName;
-   private Map<Object, byte[]> store;
+   private AtomicReferenceArray<Map<Object, byte[]>> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
    private ConcurrentMap<String, AtomicInteger> stats;
+   private int segmentCount;
    private AtomicInteger initCount = new AtomicInteger();
    private TimeService timeService;
    private Cache cache;
    private PersistenceMarshaller marshaller;
    private DummyInMemoryStoreConfiguration configuration;
+   private KeyPartitioner keyPartitioner;
    private InitializationContext ctx;
    private volatile boolean running;
    private volatile boolean available;
@@ -68,6 +84,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
+      this.keyPartitioner = ctx.getKeyPartitioner();
       this.cache = ctx.getCache();
       this.marshaller = ctx.getPersistenceMarshaller();
       this.storeName = makeStoreName(configuration, cache);
@@ -102,32 +119,44 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       stats.get(method).incrementAndGet();
    }
 
+   private Map<Object, byte[]> mapForSegment(int segment) {
+      if (!configuration.segmented()) {
+         return store.get(0);
+      }
+      Map<Object, byte[]> map = store.get(segment);
+      return map == null ? Collections.emptyMap() : map;
+   }
+
    @Override
-   public void write(MarshallableEntry entry) {
+   protected ToIntFunction<Object> getKeyMapper() {
+      return configuration.segmented() ? keyPartitioner : SingleSegmentKeyPartitioner.getInstance();
+   }
+
+   @Override
+   public void write(int segment, MarshallableEntry entry) {
       assertRunning();
       record("write");
       if (configuration.slow()) {
          TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
       if (entry!= null) {
+         Map<Object, byte[]> map = mapForSegment(segment);
          if (trace) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
-         store.put(entry.getKey(), serialize(entry));
+         map.put(entry.getKey(), serialize(entry));
       }
    }
 
    @Override
    public void clear() {
-      assertRunning();
-      record("clear");
-      if (trace) log.trace("Clear store");
-      store.clear();
+      clear(IntSets.immutableRangeSet(store.length()));
    }
 
    @Override
-   public boolean delete(Object key) {
+   public boolean delete(int segment, Object key) {
       assertRunning();
       record("delete");
-      if (store.remove(key) != null) {
+      Map<Object, byte[]> map = mapForSegment(segment);
+      if (map.remove(key) != null) {
          if (trace) log.tracef("Removed %s from dummy store", key);
          return true;
       }
@@ -140,23 +169,30 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    public void purge(Executor executor, ExpirationPurgeListener listener) {
       long currentTimeMillis = timeService.wallClockTime();
       Set expired = new HashSet();
-      for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
-         Map.Entry<Object, byte[]> next = i.next();
-         MarshallableEntry se = deserialize(next.getKey(), next.getValue());
-         if (isExpired(se, currentTimeMillis)) {
-            if (listener != null) listener.marshalledEntryPurged(se);
-            i.remove();
-            expired.add(next.getKey());
+      for (int i = 0; i < store.length(); ++i) {
+         Map<Object, byte[]> map = store.get(i);
+         if (map == null) {
+            continue;
+         }
+         for (Iterator<Map.Entry<Object, byte[]>> iter = map.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry<Object, byte[]> next = iter.next();
+            MarshallableEntry se = deserialize(next.getKey(), next.getValue());
+            if (isExpired(se, currentTimeMillis)) {
+               if (listener != null) listener.marshalledEntryPurged(se);
+               iter.remove();
+               expired.add(next.getKey());
+            }
          }
       }
    }
 
    @Override
-   public MarshallableEntry loadEntry(Object key) {
+   public MarshallableEntry get(int segment, Object key) {
       assertRunning();
       record("load");
       if (key == null) return null;
-      MarshallableEntry me = deserialize(key, store.get(key));
+      Map<Object, byte[]> map = mapForSegment(segment);
+      MarshallableEntry me = deserialize(key, map.get(key));
       if (me == null) return null;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
@@ -172,10 +208,31 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public Flowable<MarshallableEntry> entryPublisher(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+      return entryPublisher(IntSets.immutableRangeSet(segmentCount), filter, fetchValue, fetchMetadata);
+   }
+
+   @Override
+   public Flowable<MarshallableEntry> entryPublisher(IntSet segments, Predicate filter, boolean fetchValue, boolean fetchMetadata) {
       assertRunning();
       record("publishEntries");
       log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
-      Flowable<Map.Entry<Object, byte[]>> flowable = Flowable.fromIterable(store.entrySet());
+      Flowable<Map.Entry<Object, byte[]>> flowable;
+      if (configuration.segmented()) {
+       flowable = new FlowableFromIntSetFunction<>(segments, segment -> {
+            Map<Object, byte[]> map = store.get(segment);
+            if (map == null) {
+               return Flowable.<Map.Entry<Object, byte[]>>empty();
+            }
+            return Flowable.fromIterable(map.entrySet());
+         }).flatMap(Functions.identity());
+      } else {
+         flowable = Flowable.fromIterable(store.get(0).entrySet())
+            .filter(e -> {
+               int segment = keyPartitioner.getSegment(e.getKey());
+               return segments.contains(segment);
+            });
+      }
+
       return flowable.compose(f -> {
          // We compose so current time millis is retrieved for each subscriber
          final long currentTimeMillis = timeService.wallClockTime();
@@ -198,21 +255,47 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       if (configuration.startFailures() > startAttempts.incrementAndGet())
          throw new PersistenceException();
 
-      store = new ConcurrentHashMap<>();
+      ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
+      segmentCount = clusteringConfiguration.hash().numSegments();
+
+      int segmentsToInitialize;
+      if (configuration.segmented()) {
+         segmentsToInitialize = segmentCount;
+      } else {
+         segmentsToInitialize = 1;
+      }
+
+      store = new AtomicReferenceArray<>(segmentsToInitialize);
       stats = newStatsMap();
 
+      boolean shouldStartSegments = true;
       if (storeName != null) {
-         Map<Object, byte[]> existing = stores.putIfAbsent(storeName, store);
+         AtomicReferenceArray<Map<Object, byte[]>> existing = stores.putIfAbsent(storeName, store);
          if (existing != null) {
             store = existing;
             log.debugf("Reusing in-memory cache store %s", storeName);
+            shouldStartSegments = false;
          } else {
+            // Clean up the array for this test
+            TestResourceTracker.addResource(new TestResourceTracker.Cleaner<String>(storeName) {
+               @Override
+               public void close() {
+                  removeStoreData(ref);
+                  storeStats.remove(ref);
+               }
+            });
             log.debugf("Creating new in-memory cache store %s", storeName);
          }
 
          ConcurrentMap<String, AtomicInteger> existingStats = storeStats.putIfAbsent(storeName, stats);
-         if (existing != null) {
+         if (existingStats != null) {
             stats = existingStats;
+         }
+      }
+
+      if (shouldStartSegments) {
+         for (int i = 0; i < segmentsToInitialize; ++i) {
+            store.set(i, new ConcurrentHashMap<>());
          }
       }
 
@@ -239,11 +322,6 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       running = false;
       available = false;
 
-      if (configuration.purgeOnStartup()) {
-         if (storeName != null) {
-            removeStoreData(storeName);
-         }
-      }
       store = null;
    }
 
@@ -261,20 +339,37 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    public static int getStoreDataSize(String storeName) {
-      Map<Object, byte[]> storeMap = stores.get(storeName);
-      return storeMap != null ? storeMap.size() : 0;
+      AtomicReferenceArray<Map<Object, byte[]>> store = stores.get(storeName);
+      return store != null ? size(IntSets.immutableRangeSet(store.length()), store) : 0;
    }
 
    public static void removeStoreData(String storeName) {
       stores.remove(storeName);
    }
 
+   public static void removeStatData(String storeName) {
+      storeStats.remove(storeName);
+   }
+
    public boolean isEmpty() {
-      return store.isEmpty();
+      for (int i = 0; i < store.length(); ++i) {
+         Map<Object, byte[]> map = store.get(i);
+         if (map != null && !map.isEmpty()) {
+            return false;
+         }
+      }
+      return true;
    }
 
    public Set<Object> keySet() {
-      return store.keySet();
+      Set<Object> set = new HashSet<>();
+      for (int i = 0; i < store.length(); ++i) {
+         Map<Object, byte[]> map = store.get(i);
+         if (map != null) {
+            set.addAll(map.keySet());
+         }
+      }
+      return set;
    }
 
    public Map<String, Integer> stats() {
@@ -288,9 +383,11 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
+      Map<Object, byte[]> map = mapForSegment(keyPartitioner.getSegment(key));
+      AssertJUnit.assertNotNull("Map for key " + key + " was not present", map);
       long killTime = timeService.wallClockTime() + timeout;
       while (timeService.wallClockTime() < killTime) {
-         MarshallableEntry entry = deserialize(key, store.get(key));
+         MarshallableEntry entry = deserialize(key, map.get(key));
          if (entry != null && entry.getValue().equals(expectedValue)) return;
          TestingUtil.sleepThread(50);
       }
@@ -306,9 +403,9 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       Set<Object> notRemoved = null;
       while (timeService.wallClockTime() < killTime) {
          // Find out which entries might not have been removed from the store
-         notRemoved = InfinispanCollections.difference(store.keySet(), expectedState);
+         notRemoved = InfinispanCollections.difference(keySet(), expectedState);
          // Find out which entries might not have been stored
-         notStored = InfinispanCollections.difference(expectedState, store.keySet());
+         notStored = InfinispanCollections.difference(expectedState, keySet());
          if (notStored.isEmpty() && notRemoved.isEmpty())
             break;
 
@@ -328,16 +425,56 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public int size() {
-      record("size");
-      return store.size();
+      return size(IntSets.immutableRangeSet(store.length()));
    }
 
    @Override
-   public boolean contains(Object key) {
+   public int size(IntSet segments) {
+      record("size");
+      return size(segments, store);
+   }
+
+   private static int size(IntSet segments, AtomicReferenceArray<Map<Object, byte[]>> store) {
+      int size = 0;
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
+         Map<Object, byte[]> map = store.get(segment);
+         if (map != null) {
+            size += map.size();
+         }
+         if (size < 0) {
+            return Integer.MAX_VALUE;
+         }
+      }
+      return size;
+   }
+
+   @Override
+   public Publisher publishKeys(IntSet segments, Predicate filter) {
+      return entryPublisher(segments, filter, false, true).map(MarshallableEntry::getKey);
+   }
+
+   @Override
+   public void clear(IntSet segments) {
+      assertRunning();
+      record("clear");
+      if (trace) log.trace("Clear store");
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
+         Map<Object, byte[]> map = store.get(segment);
+         if (map != null) {
+            map.clear();
+         }
+      }
+   }
+
+   @Override
+   public boolean contains(int segment, Object key) {
       assertRunning();
       record("load");
       if (key == null) return false;
-      MarshallableEntry me = deserialize(key, store.get(key));
+      Map<Object, byte[]> map = mapForSegment(segment);
+      MarshallableEntry me = deserialize(key, map.get(key));
       if (me == null) return false;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
@@ -377,6 +514,24 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
       if (!available)
          throw new PersistenceException();
+   }
+
+   @Override
+   public void addSegments(IntSet segments) {
+      if (configuration.segmented() && storeName == null) {
+         segments.forEach((int segment) -> {
+            if (store.get(segment) == null) {
+               store.set(segment, new ConcurrentHashMap<>());
+            }
+         });
+      }
+   }
+
+   @Override
+   public void removeSegments(IntSet segments) {
+      if (configuration.segmented() && storeName == null) {
+         segments.forEach((int segment) -> store.getAndSet(segment, null));
+      }
    }
 
    public DummyInMemoryStoreConfiguration getConfiguration() {

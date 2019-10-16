@@ -323,13 +323,14 @@ public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest> ex
       final String v1 = "real-data";
       final String v2 = "stale-data";
 
-      // Simulate c3 was by itself and someone wrote a value that is now stale
-      CacheWriter store = TestingUtil.getFirstLoader(c3);
+      // Simulate a cache had it by itself and someone wrote a value that is now stale
+      Cache<Object, String> c = getFirstOwner(k);
+      CacheWriter store = TestingUtil.getFirstLoader(c);
       store.write(MarshalledEntryUtil.create(k, v2, c3));
 
-      c1.put(k, v1);
+      getFirstNonOwner(k).put(k, v1);
 
-      assertEquals(v1, c3.get(k));
+      assertEquals(v1, c.get(k));
    }
 
    /*---    test helpers      ---*/

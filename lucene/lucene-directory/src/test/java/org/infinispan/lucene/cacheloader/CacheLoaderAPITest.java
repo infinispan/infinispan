@@ -65,7 +65,8 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
             .addStore(LuceneLoaderConfigurationBuilder.class)
                .preload(true)
                .autoChunkSize(110)
-               .location(rootDir.getAbsolutePath());
+               .location(rootDir.getAbsolutePath())
+               .segmented(false);
 
       return TestCacheManagerFactory.createCacheManager(builder);
    }

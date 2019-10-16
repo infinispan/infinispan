@@ -58,7 +58,6 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(storeName + (shared ? "-shared" : "-private"))
             .fetchPersistentState(false)
-            .purgeOnStartup(true)
             .shared(shared);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;

@@ -75,6 +75,8 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
                .dataColumnType("BLOB")
                .timestampColumnName("TIMESTAMP_COLUMN")
                .timestampColumnType("BIGINT")
+               .segmentColumnName("SEGMENT_COLUMN")
+               .segmentColumnType("BIGINT")
             .simpleConnection()
                .driverClass(org.h2.Driver.class)
                .connectionUrl(DB_URL)

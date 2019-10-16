@@ -51,7 +51,8 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
             .persistenceUnitName(PERSISTENCE_UNIT_NAME)
-            .entityClass(getEntityClass());
+            .entityClass(getEntityClass())
+            .segmented(false);
 
       JpaStore store = new JpaStore();
       store.init(new DummyInitializationContext(builder.persistence().stores().get(0).create(), cm.getCache(),

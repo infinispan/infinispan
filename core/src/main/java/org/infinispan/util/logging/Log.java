@@ -1909,4 +1909,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Chunk size must be positive, got %d", id = 561)
    CacheConfigurationException invalidChunkSize(int chunkSize);
+
+   @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured with purgeOnStartup, the cache loader cannot be shared in a cluster!", id = 562)
+   CacheConfigurationException sharedStoreShouldNotBePurged(String name);
+
+   @Message(value = "Invalid cache loader configuration for '%s'.  This implementation does not support being segmented!", id = 563)
+   CacheConfigurationException storeDoesNotSupportBeingSegmented(String name);
 }

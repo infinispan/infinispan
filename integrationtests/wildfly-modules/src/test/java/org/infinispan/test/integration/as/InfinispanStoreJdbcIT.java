@@ -69,6 +69,8 @@ public class InfinispanStoreJdbcIT {
             .dataColumnType("BLOB")
             .timestampColumnName("T")
             .timestampColumnType("BIGINT")
+            .segmentColumnName("S")
+            .segmentColumnType("BIGINT")
             .dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
 
       cm = new DefaultCacheManager(gcb.build(), builder.build());

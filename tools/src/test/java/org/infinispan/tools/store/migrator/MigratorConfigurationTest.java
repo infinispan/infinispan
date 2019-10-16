@@ -18,6 +18,7 @@ import static org.infinispan.tools.store.migrator.Element.MAJOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.MINOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.NAME;
+import static org.infinispan.tools.store.migrator.Element.SEGMENT;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.STRING;
 import static org.infinispan.tools.store.migrator.Element.TABLE;
@@ -36,6 +37,7 @@ import static org.testng.Assert.assertTrue;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
@@ -188,21 +190,17 @@ public class MigratorConfigurationTest {
          properties.put(propKey(storeType, DB, DISABLE_INDEXING), "true");
          properties.put(propKey(storeType, DB, DISABLE_UPSERT), "true");
 
-         properties.put(propKey(storeType, TABLE, STRING, TABLE_NAME_PREFIX), "mock_table_name");
-         properties.put(propKey(storeType, TABLE, STRING, ID, NAME), "mock_id_column_name");
-         properties.put(propKey(storeType, TABLE, STRING, ID, TYPE), "mock_id_column_type");
-         properties.put(propKey(storeType, TABLE, STRING, DATA, NAME), "mock_data_column_name");
-         properties.put(propKey(storeType, TABLE, STRING, DATA, TYPE), "mock_data_column_type");
-         properties.put(propKey(storeType, TABLE, STRING, TIMESTAMP, NAME), "mock_timestamp_column_name");
-         properties.put(propKey(storeType, TABLE, STRING, TIMESTAMP, TYPE), "mock_timestamp_column_type");
-
-         properties.put(propKey(storeType, TABLE, BINARY, TABLE_NAME_PREFIX), "mock_table_name");
-         properties.put(propKey(storeType, TABLE, BINARY, ID, NAME), "mock_id_column_name");
-         properties.put(propKey(storeType, TABLE, BINARY, ID, TYPE), "mock_id_column_type");
-         properties.put(propKey(storeType, TABLE, BINARY, DATA, NAME), "mock_data_column_name");
-         properties.put(propKey(storeType, TABLE, BINARY, DATA, TYPE), "mock_data_column_type");
-         properties.put(propKey(storeType, TABLE, BINARY, TIMESTAMP, NAME), "mock_timestamp_column_name");
-         properties.put(propKey(storeType, TABLE, BINARY, TIMESTAMP, TYPE), "mock_timestamp_column_type");
+         for (Element store : Arrays.asList(STRING, BINARY)) {
+            properties.put(propKey(storeType, TABLE, store, TABLE_NAME_PREFIX), "mock_table_name");
+            properties.put(propKey(storeType, TABLE, store, ID, NAME), "mock_id_column_name");
+            properties.put(propKey(storeType, TABLE, store, ID, TYPE), "mock_id_column_type");
+            properties.put(propKey(storeType, TABLE, store, DATA, NAME), "mock_data_column_name");
+            properties.put(propKey(storeType, TABLE, store, DATA, TYPE), "mock_data_column_type");
+            properties.put(propKey(storeType, TABLE, store, TIMESTAMP, NAME), "mock_timestamp_column_name");
+            properties.put(propKey(storeType, TABLE, store, TIMESTAMP, TYPE), "mock_timestamp_column_type");
+            properties.put(propKey(storeType, TABLE, store, SEGMENT, NAME), "mock_segment_column_name");
+            properties.put(propKey(storeType, TABLE, store, SEGMENT, TYPE), "mock_segment_column_type");
+         }
       }
 
       for (Element storeType : storeTypes) {

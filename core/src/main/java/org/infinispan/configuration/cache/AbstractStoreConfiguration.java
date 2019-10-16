@@ -18,7 +18,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
    public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
    public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder("maxBatchSize", 100).immutable().build();
-   public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder("segmented", false).immutable().build();
+   public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder("segmented", true).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 

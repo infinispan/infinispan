@@ -472,22 +472,22 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public void write(MarshallableEntry entry) {
+      public void write(int segment, MarshallableEntry entry) {
          lock.lock();
          try {
             threads.add(Thread.currentThread());
-            super.write(entry);
+            super.write(segment, entry);
          } finally {
             lock.unlock();
          }
       }
 
       @Override
-      public boolean delete(Object key) {
+      public boolean delete(int segment, Object key) {
          lock.lock();
          try {
             threads.add(Thread.currentThread());
-            return super.delete(key);
+            return super.delete(segment, key);
          } finally {
             lock.unlock();
          }

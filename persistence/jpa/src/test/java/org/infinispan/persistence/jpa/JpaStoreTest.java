@@ -28,6 +28,7 @@ public class JpaStoreTest extends BaseStoreTest {
                      .persistenceUnitName(getPersistenceUnitName())
                      .entityClass(KeyValueEntity.class)
                      .storeMetadata(storeMetadata())
+                     .segmented(false)
                      .create();
       InitializationContext context = createContext(builder.build());
       context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()

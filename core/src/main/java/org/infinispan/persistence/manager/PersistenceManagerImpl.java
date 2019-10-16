@@ -812,16 +812,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   key, segment, includeStores, traceId);
          }
          MarshallableEntry load = null;
+         Set<CacheLoader> attemptedLoaders = null;
          for (CacheLoader l : loaders) {
             if (allowLoad(l, localInvocation, includeStores) && l instanceof SegmentedAdvancedLoadWriteStore) {
                load = ((SegmentedAdvancedLoadWriteStore) l).get(segment, key);
                if (load != null)
                   break;
+               if (attemptedLoaders == null) {
+                  attemptedLoaders = new HashSet<>(loaders.size());
+               }
+               attemptedLoaders.add(l);
             }
          }
          if (load == null) {
             for (CacheLoader l : loaders) {
-               if (allowLoad(l, localInvocation, includeStores)) {
+               if (allowLoad(l, localInvocation, includeStores) && (attemptedLoaders == null || !attemptedLoaders.contains(l))) {
                   load = l.loadEntry(key);
                   if (load != null)
                      break;

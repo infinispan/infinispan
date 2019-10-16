@@ -201,6 +201,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
             if (b.persistence().passivation()) {
                throw CONFIG.passivationStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
             }
+            if (storeConfiguration.purgeOnStartup()) {
+               throw CONFIG.sharedStoreShouldNotBePurged(storeConfiguration.getClass().getSimpleName());
+            }
          } else if (storeConfiguration.transactional() && !isLocalCache) {
             throw CONFIG.clusteredTransactionalStoreMustBeShared(storeConfiguration.getClass().getSimpleName());
          }

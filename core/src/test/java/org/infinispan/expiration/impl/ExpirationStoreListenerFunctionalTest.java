@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
@@ -84,7 +84,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       assertFalse(event.isPre());
       assertNotNull(event.getKey());
       // The dummy store produces value and metadata so lets make sure
-      if (TestingUtil.getCacheLoader(cache) instanceof AdvancedCacheExpirationWriter) {
+      if (TestingUtil.getCacheLoader(cache) instanceof DummyInMemoryStore) {
          assertEquals("v", event.getValue());
          assertNotNull(event.getMetadata());
       }

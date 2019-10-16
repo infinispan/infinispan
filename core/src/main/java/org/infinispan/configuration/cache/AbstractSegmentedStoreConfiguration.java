@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.io.File;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.persistence.spi.InitializationContext;
 
 /**
  * Abstract store configuration that should be extended when the store configuration supports being segmented.
@@ -19,8 +20,24 @@ public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStor
     * configuration that is configured to be persisted using the given segment.
     * @param segment the segment to use
     * @return the newly created configuration
+    * @deprecated since 10.0 - please implement {@link #newConfigurationFrom(int, InitializationContext)}.
     */
-   public abstract T newConfigurationFrom(int segment);
+   @Deprecated
+   public T newConfigurationFrom(int segment) {
+      throw new UnsupportedOperationException("Please make sure you are implementing newConfigurationFrom(int, InitializationContext)");
+   }
+
+   /**
+    * Same as {@link #newConfigurationFrom(int)} except that you can utilize the intialization context when
+    * initializing the segmented store object. This method
+    * @param segment the segment to use
+    * @param ctx the initialization context from the persistence layer
+    * @return the newly created configuration
+    * @implSpec This invokes the {@link #newConfigurationFrom(int)} method and this default impl will be removed in the future
+    */
+   public T newConfigurationFrom(int segment, InitializationContext ctx) {
+      return newConfigurationFrom(segment);
+   }
 
    /**
     * Transforms a file location to a segment based one. This is useful for file based stores where all you need to

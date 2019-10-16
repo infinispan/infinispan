@@ -15,7 +15,8 @@ public class JpaStoreParallelIterationTest extends ParallelIterationTest {
       cb.persistence().addStore(JpaStoreConfigurationBuilder.class)
          .persistenceUnitName(getPersistenceUnitName())
          .entityClass(KeyValueEntity.class)
-         .storeMetadata(storeMetadata());
+         .storeMetadata(storeMetadata())
+         .segmented(false);
    }
 
    @Override
