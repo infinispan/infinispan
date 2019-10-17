@@ -289,7 +289,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .content(new StringContentProvider(contents))
             .header(HttpHeader.CONTENT_TYPE, contentType.toString())
             .send();
-      assertEquals(response.getStatus(), HttpStatus.OK_200);
+      assertEquals(response.getStatus(), HttpStatus.NO_CONTENT_204);
    }
 
    protected ContentResponse get(String id, String accept) throws Exception {
@@ -327,7 +327,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .content(new StringContentProvider(protoFileContents))
             .method(POST)
             .send();
-      assertEquals(response.getStatus(), HttpStatus.OK_200);
+      assertEquals(response.getStatus(), HttpStatus.NO_CONTENT_204);
       String errorKey = protoFileName.concat(".error");
 
       ContentResponse errorCheck = client.newRequest(getProtobufMetadataUrl(errorKey)).method(GET).send();

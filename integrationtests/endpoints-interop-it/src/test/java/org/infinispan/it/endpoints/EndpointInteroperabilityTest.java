@@ -36,8 +36,8 @@ import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -472,7 +472,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             post.setRequestEntity(new StringRequestEntity(payload, contentType, UTF_8.toString()));
          }
          restClient.executeMethod(post);
-         assertEquals(post.getStatusCode(), HttpStatus.SC_OK);
+         assertEquals(post.getStatusCode(), HttpStatus.SC_NO_CONTENT);
       }
 
       HttpMethod executeGet() throws IOException {

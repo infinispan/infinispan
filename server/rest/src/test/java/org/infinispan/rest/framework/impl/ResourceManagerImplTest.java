@@ -1,11 +1,15 @@
 package org.infinispan.rest.framework.impl;
 
+import static org.infinispan.rest.framework.LookupResult.Status.FOUND;
+import static org.infinispan.rest.framework.LookupResult.Status.INVALID_ACTION;
+import static org.infinispan.rest.framework.LookupResult.Status.INVALID_METHOD;
+import static org.infinispan.rest.framework.LookupResult.Status.NOT_FOUND;
+import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
 
@@ -60,20 +64,20 @@ public class ResourceManagerImplTest {
       registerHandler("root", "DirectorsHandler", "/directors", "/directors/director", "/directors/director/{personId}");
       registerHandler("root", "InfoHandler", "/info", "/info/jvm", "/info/jvm/{format}", "/info/{format}/{encoding}");
 
-      assertNull(resourceManager.lookupResource(GET, "/root/dummy"));
-      assertNull(resourceManager.lookupResource(GET, "/fake/"));
-      assertNull(resourceManager.lookupResource(GET, "/"));
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/root/dummy").getStatus());
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/fake/").getStatus());
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/").getStatus());
 
-      assertNull(resourceManager.lookupResource(GET, "/root/stocks"));
-      assertNull(resourceManager.lookupResource(GET, "/root/stocks/2/USD/1"));
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/root/stocks").getStatus());
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/root/stocks/2/USD/1").getStatus());
       assertInvocation(resourceManager.lookupResource(GET, "/root/stocks/2"), "StocksHandler");
       assertInvocation(resourceManager.lookupResource(GET, "/root/stocks/2/USD"), "StocksHandler");
 
       assertInvocation(resourceManager.lookupResource(GET, "/root/directors"), "DirectorsHandler");
       assertInvocation(resourceManager.lookupResource(GET, "/root/directors/director"), "DirectorsHandler");
       assertInvocation(resourceManager.lookupResource(GET, "/root/directors/director/John"), "DirectorsHandler");
-      assertNull(resourceManager.lookupResource(GET, "/root/directors/1345"));
-      assertNull(resourceManager.lookupResource(GET, "/root/directors/director/Tim/123"));
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/root/directors/1345").getStatus());
+      assertEquals(NOT_FOUND, resourceManager.lookupResource(GET, "/root/directors/director/Tim/123").getStatus());
 
       assertInvocation(resourceManager.lookupResource(GET, "/root/companies"), "CompaniesHandler");
 
@@ -81,6 +85,33 @@ public class ResourceManagerImplTest {
       assertInvocation(resourceManager.lookupResource(GET, "/root/info/jvm"), "InfoHandler");
       assertInvocation(resourceManager.lookupResource(GET, "/root/info/jvm/json"), "InfoHandler");
       assertInvocation(resourceManager.lookupResource(GET, "/root/info/json/zip"), "InfoHandler");
+   }
+
+   @Test
+   public void testLookupStatuses() {
+      registerHandler("ctx", "handler1", "/items/{item}");
+      registerHandlerWithAction("ctx", new Method[]{GET}, "handler2", "clear", "/items/{item}/{sub}");
+
+      LookupResult lookupResult = resourceManager.lookupResource(GET, "/invalid");
+      assertEquals(NOT_FOUND, lookupResult.getStatus());
+
+      lookupResult = resourceManager.lookupResource(GET, "/ctx/items/1");
+      assertEquals(FOUND, lookupResult.getStatus());
+
+      lookupResult = resourceManager.lookupResource(DELETE, "/ctx/items/1");
+      assertEquals(INVALID_METHOD, lookupResult.getStatus());
+
+      lookupResult = resourceManager.lookupResource(GET, "/ctx/items/1/1", "clear");
+      assertEquals(FOUND, lookupResult.getStatus());
+
+      lookupResult = resourceManager.lookupResource(GET, "/ctx/items/1/1");
+      assertEquals(INVALID_ACTION, lookupResult.getStatus());
+
+      lookupResult = resourceManager.lookupResource(GET, "/ctx/items/1/1", "invalid");
+      assertEquals(INVALID_ACTION, lookupResult.getStatus());
+
+      lookupResult = resourceManager.lookupResource(GET, "/ctx/items/1", "invalid");
+      assertEquals(INVALID_ACTION, lookupResult.getStatus());
    }
 
    private void assertInvocation(LookupResult result, String name) {
@@ -95,12 +126,19 @@ public class ResourceManagerImplTest {
       });
    }
 
-
-   private void registerHandler(String ctx, String handlerName, String... paths) {
+   private void registerHandlerWithAction(String ctx, Method[] methods, String handlerName, String action, String... paths) {
       resourceManager.registerResource(ctx, () -> {
          Invocations.Builder builder = new Invocations.Builder();
-         Arrays.stream(paths).forEach(p -> builder.invocation().methods(GET, HEAD, POST).path(p).name(handlerName).handleWith(restRequest -> null));
+         Arrays.stream(paths).forEach(p -> {
+            InvocationImpl.Builder invocation = builder.invocation();
+            invocation.methods(methods).path(p).name(handlerName).handleWith(restRequest -> null);
+            if (action != null) invocation.withAction(action);
+         });
          return builder.create();
       });
+   }
+
+   private void registerHandler(String ctx, String handlerName, String... paths) {
+      registerHandlerWithAction(ctx, new Method[]{GET, HEAD, POST}, handlerName, null, paths);
    }
 }

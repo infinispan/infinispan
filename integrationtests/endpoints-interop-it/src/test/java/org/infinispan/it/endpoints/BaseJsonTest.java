@@ -102,7 +102,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
       restClient.executeMethod(put);
       System.out.println(put.getResponseBodyAsString());
-      assertEquals(put.getStatusCode(), HttpStatus.SC_OK);
+      assertEquals(put.getStatusCode(), HttpStatus.SC_NO_CONTENT);
    }
 
    private CryptoCurrency readCurrencyViaJson(String key) throws IOException {

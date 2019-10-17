@@ -233,7 +233,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       assertEquals(0, takeOfflineConfig.get("minTimeToWait").asInt());
 
       response = sync(cacheClient.updateXSiteTakeOfflineConfig(NYC, 5, 1000));
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
 
       response = sync(cacheClient.getXSiteTakeOfflineConfig(NYC));
       takeOfflineConfig = MAPPER.readTree(response.getBody());

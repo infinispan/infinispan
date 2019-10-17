@@ -40,8 +40,7 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
       put.setRequestEntity(new StringRequestEntity("<hey>ho</hey>", "text/plain", "UTF-8"));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_OK, put.getStatusCode());
-      assertEquals("", put.getResponseBodyAsString().trim());
+      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
 
       // 3. Get with Hot Rod
       assertEquals("<hey>ho</hey>", cacheFactory.getHotRodCache().get(key));

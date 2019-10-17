@@ -82,7 +82,7 @@ public final class Http2Test extends AbstractInfinispanTest {
 
       FullHttpRequest postRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, restServer.getBasePath() + "/test", wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
       response = client.sendRequest(postRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(200);
+      Assertions.assertThat(response.status().code()).isEqualTo(204);
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 
@@ -100,7 +100,7 @@ public final class Http2Test extends AbstractInfinispanTest {
 
       FullHttpRequest postRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, restServer.getBasePath() + "/test", wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
       response = client.sendRequest(postRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
-      Assertions.assertThat(response.status().code()).isEqualTo(200);
+      Assertions.assertThat(response.status().code()).isEqualTo(204);
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 
@@ -129,7 +129,7 @@ public final class Http2Test extends AbstractInfinispanTest {
       FullHttpResponse response = client.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
       //then
-      Assertions.assertThat(response.status().code()).isEqualTo(200);
+      Assertions.assertThat(response.status().code()).isEqualTo(204);
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 }

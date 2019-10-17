@@ -45,7 +45,7 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
       put.setRequestEntity(new StringRequestEntity(protoFile, "text/plain", "UTF-8"));
 
       restClient.executeMethod(put);
-      assertEquals(put.getStatusCode(), HttpStatus.SC_OK);
+      assertEquals(put.getStatusCode(), HttpStatus.SC_NO_CONTENT);
 
       return remoteCacheManager;
    }

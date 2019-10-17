@@ -1,11 +1,17 @@
 package org.infinispan.rest.framework.impl;
 
+import static org.infinispan.rest.framework.impl.LookupResultImpl.INVALID_ACTION;
+import static org.infinispan.rest.framework.impl.LookupResultImpl.INVALID_METHOD;
+import static org.infinispan.rest.framework.impl.LookupResultImpl.NOT_FOUND;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.LookupResult;
+import org.infinispan.rest.framework.LookupResult.Status;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -20,7 +26,7 @@ class ResourceNode {
    private final static Log logger = LogFactory.getLog(ResourceNode.class, Log.class);
 
    private final PathItem pathItem;
-   private final Map<String, Invocation> invocationTable = new HashMap<>();
+   private final Map<ExtendedMethod, Invocation> invocationTable = new HashMap<>();
    private final Map<PathItem, ResourceNode> children = new HashMap<>();
 
    ResourceNode(PathItem pathItem, Invocation invocation) {
@@ -34,13 +40,13 @@ class ResourceNode {
          if (action == null) {
             invocation.methods().forEach(m -> {
                String method = m.toString();
-               Invocation previous = invocationTable.put(method, invocation);
+               Invocation previous = invocationTable.put(new ExtendedMethod(method), invocation);
                if (previous != null) {
                   throw logger.duplicateResourceMethod(invocation.getName(), m, pathItem.toString());
                }
             });
          } else {
-            invocation.methods().forEach(m -> invocationTable.put(m.toString() + "_" + action, invocation));
+            invocation.methods().forEach(m -> invocationTable.put(new ExtendedMethod(m.toString(), action), invocation));
          }
       }
    }
@@ -144,7 +150,7 @@ class ResourceNode {
       return null;
    }
 
-   public LookupResult find(Method method, List<PathItem> path, String action) {
+   LookupResult find(Method method, List<PathItem> path, String action) {
       ResourceNode current = this;
       Map<String, String> variables = new HashMap<>();
       boolean root = true;
@@ -163,13 +169,49 @@ class ResourceNode {
                break;
             }
             ResourceNode variableMatch = current.findMatch(pathItem.getPath(), variables);
-            if (variableMatch == null) return null;
+            if (variableMatch == null) return NOT_FOUND;
             current = variableMatch;
          }
       }
-      String dispatchMethod = action == null ? method.toString() : method.toString() + "_" + action;
+      if (current.invocationTable.isEmpty()) return NOT_FOUND;
+
+      ExtendedMethod dispatchMethod = new ExtendedMethod(method.toString(), action);
       Invocation invocation = current.invocationTable.get(dispatchMethod);
-      if (invocation == null) return null;
-      return new LookupResultImpl(invocation, variables);
+
+      if (invocation != null) return new LookupResultImpl(invocation, variables, Status.FOUND);
+
+      if (current.invocationTable.keySet().stream().anyMatch(p -> p.method.equals(method.toString()))) {
+         return INVALID_ACTION;
+      }
+      return INVALID_METHOD;
+   }
+
+   private static class ExtendedMethod {
+      final String method;
+      final String action;
+
+      ExtendedMethod(String method, String action) {
+         this.method = method;
+         this.action = action;
+      }
+
+      ExtendedMethod(String method) {
+         this.method = method;
+         this.action = null;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         ExtendedMethod that = (ExtendedMethod) o;
+         return method.equals(that.method) &&
+               Objects.equals(action, that.action);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hash(method, action);
+      }
    }
 }

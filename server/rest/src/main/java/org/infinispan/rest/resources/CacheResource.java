@@ -108,7 +108,7 @@ public class CacheResource implements ResourceHandler {
             String etag = calcETAG(ice.getValue());
             String clientEtag = request.getEtagIfNoneMatchHeader();
             if (clientEtag == null || clientEtag.equals(etag)) {
-               responseBuilder.status(HttpResponseStatus.OK.code());
+               responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
                return restCacheManager.remove(cacheName, key, keyContentType, request).thenApply(v -> responseBuilder.build());
             } else {
                //ETags don't match, so preconditions failed
@@ -129,7 +129,7 @@ public class CacheResource implements ResourceHandler {
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request);
       Object key = request.variables().get("cacheKey");
       if (key == null) throw new NoKeyException();
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(HttpResponseStatus.NO_CONTENT);
 
       ContentSource contents = request.contents();
       if (contents == null) throw new NoDataFoundException();
@@ -162,7 +162,7 @@ public class CacheResource implements ResourceHandler {
       String cacheName = request.variables().get("cacheName");
 
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      responseBuilder.status(HttpResponseStatus.OK.code());
+      responseBuilder.status(HttpResponseStatus.NO_CONTENT.code());
 
       Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 

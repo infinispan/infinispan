@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -61,7 +62,7 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> doIgnoreOp(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
       boolean add = restRequest.method().equals(POST);
 
       String cacheManagerName = restRequest.variables().get("cache-manager");

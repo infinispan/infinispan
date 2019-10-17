@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -160,7 +161,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> updateTakeOffline(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
       String site = request.variables().get("site");
 
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
