@@ -803,6 +803,11 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
 
       @Override
+      public boolean isAlias() {
+         return instance instanceof ComponentAlias;
+      }
+
+      @Override
       public String getName() {
          return name;
       }
