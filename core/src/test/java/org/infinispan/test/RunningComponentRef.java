@@ -39,6 +39,11 @@ public class RunningComponentRef<T> implements ComponentRef<T> {
    }
 
    @Override
+   public boolean isAlias() {
+      return false;
+   }
+
+   @Override
    public String getName() {
       return componentName != null ? componentName : componentType.getName();
    }

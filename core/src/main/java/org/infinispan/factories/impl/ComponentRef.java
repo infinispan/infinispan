@@ -30,5 +30,7 @@ public interface ComponentRef<T> {
 
    boolean isWired();
 
+   boolean isAlias();
+
    String getName();
 }
