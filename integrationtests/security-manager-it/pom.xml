@@ -52,7 +52,7 @@
                <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
                <parallel>none</parallel>
                <systemPropertyVariables>
-                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                  <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>

@@ -392,7 +392,7 @@
                <disableXmlReport>false</disableXmlReport>
                <useFile>false</useFile>
                <systemPropertyVariables>
-                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                  <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
