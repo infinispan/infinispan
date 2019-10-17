@@ -110,4 +110,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "Loaded extension '%s'", id = 80027)
    void loadedExtension(String name);
+
+   @LogMessage(level = Logger.Level.FATAL)
+   @Message(value = "%s Server failed to start", id = 80028)
+   void serverFailedToStart(String name, @Cause Exception e);
 }
