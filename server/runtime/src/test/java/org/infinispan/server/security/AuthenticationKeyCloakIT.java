@@ -71,7 +71,7 @@ public class AuthenticationKeyCloakIT {
       RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
       RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
 
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
       response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"));
       assertEquals(200, response.getStatus());
       assertEquals("v1", response.getBody());

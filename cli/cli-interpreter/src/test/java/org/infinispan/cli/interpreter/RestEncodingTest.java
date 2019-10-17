@@ -139,7 +139,7 @@ public class RestEncodingTest extends SingleCacheManagerTest {
       HttpPost httpPost = new HttpPost(getRestEndpoint(cache, key));
       httpPost.setEntity(new StringEntity(value));
       CloseableHttpResponse response = restClient.execute(httpPost);
-      assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+      assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
       EntityUtils.consume(response.getEntity());
    }
 

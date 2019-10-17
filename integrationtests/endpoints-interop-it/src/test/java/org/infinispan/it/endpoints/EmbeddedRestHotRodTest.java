@@ -79,8 +79,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
             "<hey>ho</hey>".getBytes(), MediaType.TEXT_PLAIN_TYPE));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_OK, put.getStatusCode());
-      assertEquals("", put.getResponseBodyAsString().trim());
+      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
 
       // 2. Get with Embedded
       assertEquals("<hey>ho</hey>", cacheFactory.getEmbeddedCache().get(key));

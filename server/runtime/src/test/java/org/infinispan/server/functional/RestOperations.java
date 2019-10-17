@@ -56,14 +56,14 @@ public class RestOperations {
       RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
       RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
       RestResponse response = sync(cache.put("k1", "v1"));
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
       assertEquals(protocol, response.getProtocol());
       response = sync(cache.get("k1"));
       assertEquals(200, response.getStatus());
       assertEquals(protocol, response.getProtocol());
       assertEquals("v1", response.getBody());
       response = sync(cache.remove("k1"));
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
       assertEquals(protocol, response.getProtocol());
       response = sync(cache.get("k1"));
       assertEquals(404, response.getStatus());

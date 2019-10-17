@@ -34,7 +34,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion isOk() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
+      Assertions.assertThat(response.getStatus()).isBetween(HttpStatus.OK_200, HttpStatus.NO_CONTENT_204);
       return this;
    }
 

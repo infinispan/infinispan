@@ -37,8 +37,7 @@ public abstract class AbstractInteropTest extends EmbeddedRestMemcachedHotRodTes
       put.setRequestEntity(new ByteArrayRequestEntity(bytes, marshaller.mediaType().toString()));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
-      assertEquals(HttpStatus.SC_OK, put.getStatusCode());
-      assertEquals("", put.getResponseBodyAsString().trim());
+      assertEquals(HttpStatus.SC_NO_CONTENT, put.getStatusCode());
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
       assertEquals(value, cacheFactory.getEmbeddedCache().get(key));

@@ -80,12 +80,12 @@ public class IgnoreCaches {
 
    private void unIgnoreCache(RestClient client, String cacheName) {
       RestResponse response = sync(client.server().unIgnoreCache(CACHE_MANAGER, cacheName));
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
    }
 
    private void ignoreCache(RestClient client, String cacheName) {
       RestResponse response = sync(client.server().ignoreCache(CACHE_MANAGER, cacheName));
-      assertEquals(200, response.getStatus());
+      assertEquals(204, response.getStatus());
    }
 
    private Set<String> getIgnoredCaches(RestClient client, String cacheManagerName) throws Exception {

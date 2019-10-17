@@ -3,6 +3,7 @@ package org.infinispan.rest.resources;
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -112,7 +113,7 @@ public class CounterResource implements ResourceHandler {
       return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
          if (configuration == null) return completedFuture(new NettyRestResponse.Builder().status(NOT_FOUND).build());
          counterManager.undefineCounter(counterName);
-         return completedFuture(new NettyRestResponse.Builder().build());
+         return completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
       });
    }
 

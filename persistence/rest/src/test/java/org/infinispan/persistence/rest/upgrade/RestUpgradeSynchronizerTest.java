@@ -76,7 +76,7 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
          String s = Character.toString(ch);
          PutMethod put = new PutMethod(String.format("http://localhost:%d/rest/%s/%s", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer), s));
          put.setRequestEntity(new StringRequestEntity(s, "text/plain", "UTF-8"));
-         assertEquals(HttpStatus.SC_OK, client.executeMethod(put));
+         assertEquals(HttpStatus.SC_NO_CONTENT, client.executeMethod(put));
       }
 
       // Read a newly inserted entry

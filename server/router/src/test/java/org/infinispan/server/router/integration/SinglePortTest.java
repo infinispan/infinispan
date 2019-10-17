@@ -18,10 +18,10 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
+import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -121,7 +121,7 @@ public class SinglePortTest {
         FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
         //then
-        assertThat(response.status()).isEqualTo(HttpResponseStatus.OK);
+        assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
     }
 
     @Test
@@ -169,7 +169,7 @@ public class SinglePortTest {
         DefaultFullHttpRequest request = new DefaultFullHttpRequest(HTTP_1_1, POST, restPrefix + "/key", wrappedBuffer("value".getBytes(CharsetUtil.UTF_8)));
         request.trailingHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
         FullHttpResponse response = httpClient.sendRequest(request).toCompletableFuture().get(5, TimeUnit.SECONDS);
-        Assertions.assertThat(response.status()).isEqualTo(HttpResponseStatus.OK);
+        Assertions.assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
         Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
 
         // Next up, the RemoteCacheManager
@@ -220,7 +220,7 @@ public class SinglePortTest {
         FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
         //then
-        assertThat(response.status()).isEqualTo(HttpResponseStatus.OK);
+        assertThat(response.status()).isEqualTo(HttpResponseStatus.NO_CONTENT);
     }
 
     @Test

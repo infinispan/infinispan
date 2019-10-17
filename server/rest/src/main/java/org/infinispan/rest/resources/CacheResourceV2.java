@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -101,7 +102,7 @@ public class CacheResourceV2 extends CacheResource {
    }
 
    private CompletionStage<RestResponse> removeCache(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
@@ -117,7 +118,7 @@ public class CacheResourceV2 extends CacheResource {
    }
 
    private CompletableFuture<RestResponse> createCache(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
       List<String> template = request.parameters().get("template");
       String cacheName = request.variables().get("cacheName");
 
