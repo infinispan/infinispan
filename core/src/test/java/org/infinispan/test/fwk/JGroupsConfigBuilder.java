@@ -66,7 +66,7 @@ public class JGroupsConfigBuilder {
    private static final ConcurrentMap<String, Integer> testUdpIndex = new ConcurrentHashMap<>();
 
    static {
-      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "udp");
+      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.cluster.stack", "infinispan.test.jgroups.protocol", "udp");
       System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
    }
 

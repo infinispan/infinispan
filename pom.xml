@@ -213,8 +213,7 @@
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jvm.version.regex>^1\.8\.0.*</infinispan.test.jvm.version.regex>
       <ansi.strip/>
-      <default.transport.stack>udp</default.transport.stack>
-      <infinispan.test.jgroups.protocol>${default.transport.stack}</infinispan.test.jgroups.protocol>
+      <infinispan.cluster.stack>udp</infinispan.cluster.stack>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>
@@ -4649,7 +4648,7 @@
                <disableXmlReport>true</disableXmlReport>
                <useFile>false</useFile>
                <systemPropertyVariables>
-                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
+                  <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
@@ -5214,14 +5213,14 @@
          </activation>
          <properties>
             <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>
          <id>test-functional</id>
          <properties>
             <defaultTestNGGroups>functional</defaultTestNGGroups>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>
@@ -5229,7 +5228,7 @@
          <properties>
             <defaultTestNGGroups>smoke</defaultTestNGGroups>
             <defaultJUnitGroups>org.infinispan.commons.test.categories.Smoke</defaultJUnitGroups>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>
@@ -5240,7 +5239,7 @@
             <!-- empty since we are not going to exclude any group -->
             <defaultExcludedTestNGGroups/>
             <defaultExcludedJUnitGroups/>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
          <build>
             <plugins>
@@ -5264,7 +5263,7 @@
             <defaultExcludedTestNGGroups/>
             <defaultExcludedJUnitGroups/>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>
@@ -5351,7 +5350,7 @@
          </activation>
          <properties>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
          </properties>
       </profile>
       <profile>

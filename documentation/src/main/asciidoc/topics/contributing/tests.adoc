@@ -139,9 +139,9 @@ Every test (except those not intended to be run by continuous integration) shoul
 == Test permutations
 We use the term permutation to describe a test suite execution against a particular configuration.
 This allows us to test a variety of environments and configurations without rewriting the same basic test over and over again.
-For example, if we pass JVM parameter `-Dinfinispan.test.jgroups.protocol=udp` test suite is executed using UDP config.
+For example, if we pass JVM parameter `-Dinfinispan.cluster.stack=udp` test suite is executed using UDP config.
 
- $ mvn -Dinfinispan.test.jgroups.protocol=udp test
+ $ mvn -Dinfinispan.cluster.stack=udp test
 
 Each permutation uses its own report directory, and its own html output file name.
 This allows you to execute multiple permutations without wiping the results from the previous run.
@@ -151,7 +151,7 @@ So automating multiple runs requires shell scripting, or some other execution fr
 === Running permutations manually or in an IDE
 Sometimes you want to run a test using settings other than the defaults (such as UDP for `jgroups` group tests or the EmbeddedTransactionManager for `transaction` group tests).
 This can be achieved by referring to the Maven POM file to figure out which system properties are passed in to the test when doing something different.
-For example to run a `jgroups` group test in your IDE using TCP instead of the default UDP, set `-Dinfinispan.test.jgroups.protocol=tcp`.
+For example to run a `jgroups` group test in your IDE using TCP instead of the default UDP, set `-Dinfinispan.cluster.stack=tcp`.
 Or, to use JBoss JTA (Arjuna TM) instead of the EmbeddedTransactionManager in a `transaction` group test, set `-Dinfinispan.test.jta.tm=jbosstm`.
 Please refer to the POM file for more properties and permutations.
 
