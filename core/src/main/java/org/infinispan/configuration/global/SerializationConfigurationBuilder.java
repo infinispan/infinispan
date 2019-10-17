@@ -80,7 +80,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     *
     * @param id
     * @param advancedExternalizer
+    * @deprecated since 10.0, {@link AdvancedExternalizer}'s will be removed in a future release. Please utilise
+    * ProtoStream annotations on Java objects instead by configuring a {@link org.infinispan.protostream.SerializationContextInitializer}
+    * via {@link #addContextInitializer(SerializationContextInitializer)}, or specifying a custom marshaller for user types
+    * via {@link #marshaller(Marshaller)}.
     */
+   @Deprecated
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(int id, AdvancedExternalizer<T> advancedExternalizer) {
       AdvancedExternalizer<?> ext = advancedExternalizers.get(id);
       if (ext != null)
@@ -98,7 +103,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * including 0, and cannot clash with other identifiers in the system.
     *
     * @param advancedExternalizer
+    * @deprecated since 10.0, {@link AdvancedExternalizer}'s will be removed in a future release. Please utilise
+    * ProtoStream annotations on Java objects instead by configuring a {@link org.infinispan.protostream.SerializationContextInitializer}
+    * via {@link #addContextInitializer(SerializationContextInitializer)}, or specifying a custom marshaller for user types
+    * via {@link #marshaller(Marshaller)}.
     */
+   @Deprecated
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T> advancedExternalizer) {
       Integer id = advancedExternalizer.getId();
       if (id == null)
@@ -111,11 +121,15 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    /**
-    * Helper method that allows for quick registration of {@link AdvancedExternalizer}
-    * implementations.
+    * Helper method that allows for quick registration of {@link AdvancedExternalizer} implementations.
     *
     * @param advancedExternalizers
+    * @deprecated since 10.0, {@link AdvancedExternalizer}'s will be removed in a future release. Please utilise
+    * ProtoStream annotations on Java objects instead by configuring a {@link org.infinispan.protostream.SerializationContextInitializer}
+    * via {@link #addContextInitializer(SerializationContextInitializer)}, or specifying a custom marshaller for user types
+    * via {@link #marshaller(Marshaller)}.
     */
+   @Deprecated
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers) {
       for (AdvancedExternalizer<T> advancedExternalizer : advancedExternalizers) {
          this.addAdvancedExternalizer(advancedExternalizer);

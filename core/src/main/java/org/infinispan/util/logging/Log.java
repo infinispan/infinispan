@@ -1902,4 +1902,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Cannot marshall '%s'", id = 559)
    void cannotMarshall(Class<?> aClass, @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The AdvancedExternalizer configuration has been deprecated and will be removed in the future", id = 560)
+   void advancedExternalizerDeprecated();
 }

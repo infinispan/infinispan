@@ -8,7 +8,6 @@ import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
-
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.io.FileNotFoundException;
@@ -169,6 +168,7 @@ public class Parser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case ADVANCED_EXTERNALIZER: {
+               CONFIG.advancedExternalizerDeprecated();
                parseAdvancedExternalizer(reader, holder.getClassLoader(), builder.serialization());
                break;
             }
