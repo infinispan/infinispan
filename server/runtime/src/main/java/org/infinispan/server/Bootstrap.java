@@ -1,5 +1,7 @@
 package org.infinispan.server;
 
+import static org.infinispan.server.logging.Messages.MSG;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,8 +14,6 @@ import java.util.logging.LogManager;
 
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
-
-import static org.infinispan.server.logging.Messages.MSG;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -114,7 +114,7 @@ public class Bootstrap extends Main {
          server.setExitHandler(exitHandler);
          server.run().get();
       } catch (Exception e) {
-         Server.log.fatal("Error", e);
+         Server.log.serverFailedToStart(Version.getBrandName(), e);
       }
    }
 
