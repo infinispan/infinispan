@@ -168,7 +168,13 @@ public class ExtendedStatisticRpcManager implements RpcManager {
 
    @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
-      actual.sendToMany(destinations, command, deliverOrder);
+      if (command instanceof TxCompletionNotificationCommand) {
+         long start = timeService.time();
+         actual.sendToMany(destinations, command, deliverOrder);
+         updateStats(command, false, timeService.timeDuration(start, NANOSECONDS), destinations);
+      } else {
+         actual.sendToMany(destinations, command, deliverOrder);
+      }
    }
 
    @Override
