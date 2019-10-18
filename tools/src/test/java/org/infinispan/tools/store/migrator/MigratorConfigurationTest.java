@@ -1,20 +1,28 @@
 package org.infinispan.tools.store.migrator;
 
+import static org.infinispan.tools.store.migrator.Element.BINARY;
 import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
 import static org.infinispan.tools.store.migrator.Element.CLASS;
 import static org.infinispan.tools.store.migrator.Element.CONNECTION_POOL;
 import static org.infinispan.tools.store.migrator.Element.CONNECTION_URL;
+import static org.infinispan.tools.store.migrator.Element.DATA;
 import static org.infinispan.tools.store.migrator.Element.DB;
 import static org.infinispan.tools.store.migrator.Element.DIALECT;
 import static org.infinispan.tools.store.migrator.Element.DISABLE_INDEXING;
 import static org.infinispan.tools.store.migrator.Element.DISABLE_UPSERT;
 import static org.infinispan.tools.store.migrator.Element.DRIVER_CLASS;
 import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
+import static org.infinispan.tools.store.migrator.Element.ID;
 import static org.infinispan.tools.store.migrator.Element.MAJOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.MINOR_VERSION;
+import static org.infinispan.tools.store.migrator.Element.NAME;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
+import static org.infinispan.tools.store.migrator.Element.STRING;
+import static org.infinispan.tools.store.migrator.Element.TABLE;
+import static org.infinispan.tools.store.migrator.Element.TABLE_NAME_PREFIX;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
+import static org.infinispan.tools.store.migrator.Element.TIMESTAMP;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.VERSION;
 import static org.infinispan.tools.store.migrator.StoreType.JDBC_MIXED;
@@ -36,9 +44,9 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
@@ -166,6 +174,22 @@ public class MigratorConfigurationTest {
          properties.put(propKey(storeType, DB, MINOR_VERSION), "1");
          properties.put(propKey(storeType, DB, DISABLE_INDEXING), "true");
          properties.put(propKey(storeType, DB, DISABLE_UPSERT), "true");
+
+         properties.put(propKey(storeType, TABLE, STRING, TABLE_NAME_PREFIX), "mock_table_name");
+         properties.put(propKey(storeType, TABLE, STRING, ID, NAME), "mock_id_column_name");
+         properties.put(propKey(storeType, TABLE, STRING, ID, TYPE), "mock_id_column_type");
+         properties.put(propKey(storeType, TABLE, STRING, DATA, NAME), "mock_data_column_name");
+         properties.put(propKey(storeType, TABLE, STRING, DATA, TYPE), "mock_data_column_type");
+         properties.put(propKey(storeType, TABLE, STRING, TIMESTAMP, NAME), "mock_timestamp_column_name");
+         properties.put(propKey(storeType, TABLE, STRING, TIMESTAMP, TYPE), "mock_timestamp_column_type");
+
+         properties.put(propKey(storeType, TABLE, BINARY, TABLE_NAME_PREFIX), "mock_table_name");
+         properties.put(propKey(storeType, TABLE, BINARY, ID, NAME), "mock_id_column_name");
+         properties.put(propKey(storeType, TABLE, BINARY, ID, TYPE), "mock_id_column_type");
+         properties.put(propKey(storeType, TABLE, BINARY, DATA, NAME), "mock_data_column_name");
+         properties.put(propKey(storeType, TABLE, BINARY, DATA, TYPE), "mock_data_column_type");
+         properties.put(propKey(storeType, TABLE, BINARY, TIMESTAMP, NAME), "mock_timestamp_column_name");
+         properties.put(propKey(storeType, TABLE, BINARY, TIMESTAMP, TYPE), "mock_timestamp_column_type");
       }
 
       for (Element storeType : storeTypes) {

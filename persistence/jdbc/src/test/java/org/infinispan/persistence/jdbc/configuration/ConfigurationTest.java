@@ -7,6 +7,7 @@ import java.util.Properties;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.jdbc.configuration.ConfigurationTest")
@@ -16,7 +17,9 @@ public class ConfigurationTest {
 
    public void testImplicitPooledConnectionFactory() {
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+      JdbcStringBasedStoreConfigurationBuilder jdbc = b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      UnitTestDatabaseManager.buildTableManipulation(jdbc.table());
+      jdbc
          .connectionPool().connectionUrl(JDBC_URL);
       Configuration configuration = b.build();
       JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
@@ -25,8 +28,9 @@ public class ConfigurationTest {
 
    public void testImplicitManagedConnectionFactory() {
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-         .dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
+      JdbcStringBasedStoreConfigurationBuilder jdbc = b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      UnitTestDatabaseManager.buildTableManipulation(jdbc.table());
+      jdbc.dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
       Configuration configuration = b.build();
       JdbcStringBasedStoreConfiguration store = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
       assert store.connectionFactory() instanceof ManagedConnectionFactoryConfiguration;
@@ -81,7 +85,9 @@ public class ConfigurationTest {
       props.put("dropOnExit", "true");
 
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+      JdbcStringBasedStoreConfigurationBuilder jdbc = b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      UnitTestDatabaseManager.buildTableManipulation(jdbc.table());
+      jdbc
          .connectionPool().connectionUrl(JDBC_URL)
          .withProperties(props);
       Configuration stringConfiguration = b.build();

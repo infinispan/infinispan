@@ -69,9 +69,9 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
             .dbMajorVersion(1)
             .dbMinorVersion(4);
 
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       storeBuilder.table()
-            .createOnStart(false)
-            .tableNamePrefix("mock_table_name");
+            .createOnStart(false);
 
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
       stringBasedCacheStore.init(createContext(builder.build()));

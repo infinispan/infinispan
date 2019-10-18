@@ -60,5 +60,4 @@ public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbc
       this.attributes.read(template.attributes());
       return this;
    }
-
 }
