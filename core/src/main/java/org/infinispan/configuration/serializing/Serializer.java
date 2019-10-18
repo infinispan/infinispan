@@ -6,6 +6,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -451,7 +452,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    }
 
    private void writeSerializationContextInitializers(XMLExtendedStreamWriter writer, SerializationConfiguration config) throws XMLStreamException {
-      Collection<SerializationContextInitializer> scis = config.contextInitializers();
+      List<SerializationContextInitializer> scis = config.contextInitializers();
       if (scis != null) {
          for (SerializationContextInitializer sci : config.contextInitializers()) {
             writer.writeStartElement(Element.SERIALIZATION_CONTEXT_INITIALIZER);

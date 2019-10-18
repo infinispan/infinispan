@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import org.infinispan.commons.CacheException;
@@ -111,7 +111,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
       }
 
       // The user has specified a SerializationContextInitializer, so jboss-marshalling is ignored and serializationContext updated
-      Collection<SerializationContextInitializer> scis = serializationConfig.contextInitializers();
+      List<SerializationContextInitializer> scis = serializationConfig.contextInitializers();
       if (scis != null) {
          for (SerializationContextInitializer sci : scis)
             register(serializationContext, sci);
