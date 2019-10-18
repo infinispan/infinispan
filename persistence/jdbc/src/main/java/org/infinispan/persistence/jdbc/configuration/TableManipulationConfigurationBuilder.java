@@ -32,12 +32,13 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    private final DataColumnConfigurationBuilder dataColumn = new DataColumnConfigurationBuilder();
    private final IdColumnConfigurationBuilder idColumn = new IdColumnConfigurationBuilder();
    private final TimestampColumnConfigurationBuilder timeStampColumn = new TimestampColumnConfigurationBuilder();
-   private final SegmentColumnConfigurationBuilder segmentColumn = new SegmentColumnConfigurationBuilder();
+   private final SegmentColumnConfigurationBuilder segmentColumn;
    private List<ConfigurationBuilderInfo> subElements;
 
    TableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, B> builder) {
       super(builder);
       attributes = TableManipulationConfiguration.attributeSet();
+      segmentColumn = new SegmentColumnConfigurationBuilder(builder);
       subElements = Arrays.asList(idColumn, dataColumn, timeStampColumn, segmentColumn);
    }
 

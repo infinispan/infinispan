@@ -8,12 +8,15 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 
 public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnConfiguration>, ConfigurationBuilderInfo {
 
    private final AttributeSet attributes;
+   private final AbstractJdbcStoreConfigurationBuilder abstractJdbcStoreConfigurationBuilder;
 
-   SegmentColumnConfigurationBuilder() {
+   SegmentColumnConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder abstractJdbcStoreConfigurationBuilder) {
+      this.abstractJdbcStoreConfigurationBuilder = abstractJdbcStoreConfigurationBuilder;
       attributes = SegmentColumnConfiguration.attributeSet();
    }
 
@@ -39,7 +42,10 @@ public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnC
 
    @Override
    public void validate() {
-      TableManipulationConfigurationBuilder.validateIfSet(attributes, SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE);
+      Boolean segmented = abstractJdbcStoreConfigurationBuilder.attributes().attribute(AbstractStoreConfiguration.SEGMENTED).get();
+      if (segmented != null && segmented) {
+         TableManipulationConfigurationBuilder.validateIfSet(attributes, SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE);
+      }
    }
 
    @Override
