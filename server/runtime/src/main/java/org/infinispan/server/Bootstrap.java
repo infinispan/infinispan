@@ -7,10 +7,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.StringJoiner;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
@@ -88,7 +92,7 @@ public class Bootstrap extends Main {
 
    public void runInternal() {
       if (!serverRoot.isAbsolute()) {
-         serverRoot =  serverRoot.getAbsoluteFile();
+         serverRoot = serverRoot.getAbsoluteFile();
       }
       File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
       if (configurationFile == null) {
@@ -105,6 +109,8 @@ public class Bootstrap extends Main {
          stdErr.printf("Could not load logging.properties: %s", e.getMessage());
          e.printStackTrace(stdErr);
       }
+
+      logJVMInformation();
 
       try {
          Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
@@ -139,5 +145,14 @@ public class Bootstrap extends Main {
       out.printf("%s Server %s (%s)\n", Version.getBrandName(), Version.getVersion(), Version.getCodename());
       out.println("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors");
       out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
+   }
+
+   private void logJVMInformation() {
+      RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+      Logger logger = Logger.getLogger("BOOT");
+      logger.info("JVM " + runtimeMxBean.getVmName() + " " + runtimeMxBean.getVmVendor() + " " + runtimeMxBean.getVmVersion());
+      StringJoiner sj = new StringJoiner(" ");
+      runtimeMxBean.getInputArguments().forEach(s -> sj.add(s));
+      logger.info("JVM arguments = " + sj);
    }
 }

@@ -267,11 +267,3 @@ CLASSPATH=
 for JAR in "$ISPN_HOME/boot"/*.jar; do
     CLASSPATH="$CLASSPATH:$JAR"
 done
-
-# Display our environment
-echo "========================================================================="
-echo "  Bootstrap Environment"
-echo "  ISPN_HOME: $ISPN_HOME"
-echo "  JAVA: $JAVA"
-echo "  JAVA_OPTS: $JAVA_OPTS"
-echo "========================================================================="

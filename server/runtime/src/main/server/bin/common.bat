@@ -67,11 +67,3 @@ if "%DEBUG_MODE%" == "true" (
      echo Debug already enabled in JAVA_OPTS, ignoring --debug argument
   )
 )
-
-rem Display our environment
-echo "========================================================================="
-echo "  Bootstrap Environment"
-echo "  ISPN_HOME: $ISPN_HOME"
-echo "  JAVA: $JAVA"
-echo "  JAVA_OPTS: $JAVA_OPTS"
-echo "========================================================================="
