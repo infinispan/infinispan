@@ -19,6 +19,7 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
@@ -372,6 +373,9 @@ public class RemoteCommandsFactory {
                break;
             case CancelPublisherCommand.COMMAND_ID:
                command = new CancelPublisherCommand(cacheName);
+               break;
+            case CheckTransactionRpcCommand.COMMAND_ID:
+               command = new CheckTransactionRpcCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

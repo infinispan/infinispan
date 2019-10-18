@@ -9,6 +9,7 @@ import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
@@ -77,7 +78,6 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
-      //noinspection unchecked
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(LockControlCommand.class,
                StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
                SingleRpcCommand.class, CommitCommand.class,
@@ -101,7 +101,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                RevokeBiasCommand.class, RenewBiasCommand.class, RetrieveLastAccessCommand.class,
                UpdateLastAccessCommand.class, ReductionPublisherRequestCommand.class,
                MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
-            CancelPublisherCommand.class);
+            CancelPublisherCommand.class, CheckTransactionRpcCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

@@ -7,12 +7,12 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -32,6 +32,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -60,6 +61,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
@@ -102,7 +104,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Inject protected RpcManager rpcManager;
    @Inject protected CommandsFactory commandsFactory;
    @Inject ClusteringDependentLogic clusteringLogic;
-   @Inject CacheNotifier notifier;
+   @Inject CacheNotifier<?, ?> notifier;
    @Inject TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    @Inject TimeService timeService;
    @Inject CacheManagerNotifier cacheManagerNotifier;
@@ -150,8 +152,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          notifier.addListener(this);
          cacheManagerNotifier.addListener(this);
 
-         boolean totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-         if (!totalOrder) {
+         if (!isTotalOrder) {
             completedTransactionsInfo = new CompletedTransactionsInfo();
 
             // Periodically run a task to cleanup the transaction table of completed transactions.
@@ -296,7 +297,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          for (GlobalTransaction gtx : toKill) {
             if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(gtx)) {
                log.debugf("Rolling back transaction %s because originator %s left the cluster", gtx, gtx.getAddress());
-               killTransaction(gtx);
+               killTransactionAsync(gtx);
             } else {
                log.debugf("Keeping transaction %s after the originator %s left the cluster.", gtx, gtx.getAddress());
             }
@@ -307,29 +308,68 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
+   /**
+    * Removes the {@link RemoteTransaction} corresponding to the given tx.
+    */
+   public void remoteTransactionCommitted(GlobalTransaction gtx, boolean onePc) {
+      boolean optimisticWih1Pc = onePc && (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC);
+      if (isTotalOrder || optimisticWih1Pc) {
+         removeRemoteTransaction(gtx);
+      }
+   }
+
+   @ViewChanged
+   public void onViewChange(final ViewChangedEvent e) {
+      timeoutExecutor.submit(() -> cleanupLeaverTransactions(e.getNewMembers()));
+   }
+
    private void cleanupTimedOutTransactions() {
       if (trace) log.tracef("About to cleanup remote transactions older than %d ms", configuration.transaction().completedTxTimeout());
       long beginning = timeService.time();
       long cutoffCreationTime = beginning - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
       List<GlobalTransaction> toKill = new ArrayList<>();
+      Map<Address, Collection<GlobalTransaction>> toCheck = new HashMap<>();
 
       // Check remote transactions.
       for(Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
          GlobalTransaction gtx = e.getKey();
          RemoteTransaction remoteTx = e.getValue();
-         if(remoteTx != null) {
-            if (trace) log.tracef("Checking transaction %s", gtx);
-            // Check the time.
-            if (remoteTx.getCreationTime() - cutoffCreationTime < 0) {
-               long duration = timeService.timeDuration(remoteTx.getCreationTime(), beginning, TimeUnit.MILLISECONDS);
-               log.remoteTransactionTimeout(gtx, duration);
-               toKill.add(gtx);
+         assert remoteTx != null; //concurrent map doesn't accept null values
+         if (trace) {
+            log.tracef("Checking transaction %s", gtx);
+         }
+         // Check the time.
+         long creationTime = remoteTx.getCreationTime();
+         if (creationTime - cutoffCreationTime >= 0) {
+            //transaction still valid
+            continue;
+         }
+         if (transactionOriginatorChecker.isOriginatorMissing(gtx)) {
+            //originator no longer available. Transaction can be rolled back.
+            long duration = timeService.timeDuration(creationTime, beginning, TimeUnit.MILLISECONDS);
+            log.remoteTransactionTimeout(gtx, duration);
+            toKill.add(gtx);
+         } else {
+            //originator alive or hot rod transaction
+            Address orig = gtx.getAddress();
+            if (rpcManager.getMembers().contains(orig)) {
+               //originator still in view. Check if the transaction is valid.
+               Collection<GlobalTransaction> addressCheckList = toCheck.computeIfAbsent(orig, k -> new ArrayList<>());
+               addressCheckList.add(gtx);
             }
+            //else, it is a hot rod transaction. don't kill it since the server reaper will take appropriate action
          }
       }
 
+      // check if the transaction is running on originator
+      for (Map.Entry<Address, Collection<GlobalTransaction>> entry : toCheck.entrySet()) {
+         CheckTransactionRpcCommand cmd = commandsFactory.buildCheckTransactionRpcCommand(entry.getValue());
+         RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+         rpcManager.invokeCommand(entry.getKey(), cmd, CheckTransactionRpcCommand.responseCollector(), rpcOptions)
+               .thenAccept(this::killAllTransactionsAsync);
+      }
       // Rollback the orphaned transactions and release any held locks.
-      toKill.forEach(this::killTransaction);
+      killAllTransactionsAsync(toKill);
    }
 
    private void killTransaction(GlobalTransaction gtx) {
@@ -481,13 +521,9 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
-   /**
-    * Removes the {@link RemoteTransaction} corresponding to the given tx.
-    */
-   public void remoteTransactionCommitted(GlobalTransaction gtx, boolean onePc) {
-      boolean optimisticWih1Pc = onePc && (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC);
-      if (configuration.transaction().transactionProtocol().isTotalOrder() || optimisticWih1Pc) {
-         removeRemoteTransaction(gtx);
+   private void killAllTransactionsAsync(Collection<GlobalTransaction> transactions) {
+      for (GlobalTransaction gtx : transactions) {
+         killTransactionAsync(gtx);
       }
    }
 
@@ -574,12 +610,14 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
-   @ViewChanged
-   public void onViewChange(final ViewChangedEvent e) {
-         timeoutExecutor.submit((Callable<Void>) () -> {
-            cleanupLeaverTransactions(e.getNewMembers());
-            return null;
-         });
+   private void killTransactionAsync(GlobalTransaction gtx) {
+      RollbackCommand rc = new RollbackCommand(ByteString.fromString(cacheName), gtx);
+      commandsFactory.initializeReplicableCommand(rc, false);
+      try {
+         rc.invokeAsync();
+      } catch (Throwable throwable) {
+         log.unableToRollbackGlobalTx(gtx, throwable);
+      }
    }
 
    /**
@@ -907,8 +945,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          commitNodes = localTransaction.getCommitNodes(commitNodes, cacheTopology);
          if (trace)
             log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
-         rpcManager.invokeRemotely(commitNodes, command,
-               rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
+         rpcManager.sendToMany(commitNodes, command, DeliverOrder.NONE);
       }
    }
 
