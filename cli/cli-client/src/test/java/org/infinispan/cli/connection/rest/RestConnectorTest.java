@@ -6,8 +6,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -59,7 +62,7 @@ public class RestConnectorTest {
       RestConnector connector = new RestConnector();
       RestConnection connection = (RestConnection) connector.getConnection("https://localhost", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
-      builder.security().ssl().sslContext(SSLContext.getDefault());
+      builder.security().ssl().sslContext(SSLContext.getDefault()).trustManagers(INSECURE_TRUST_MANAGER);
       RestClientConfiguration configuration = builder.build();
       assertEquals(11222, configuration.servers().get(0).port());
       assertEquals("localhost", configuration.servers().get(0).host());
@@ -86,4 +89,14 @@ public class RestConnectorTest {
       assertEquals(12345, configuration.servers().get(0).port());
       assertEquals("my.host.com", configuration.servers().get(0).host());
    }
+
+   private static final TrustManager[] INSECURE_TRUST_MANAGER = new TrustManager[]{new X509TrustManager() {
+      public void checkClientTrusted(X509Certificate[] chain, String s) {
+      }
+      public void checkServerTrusted(X509Certificate[] chain, String s) {
+      }
+      public X509Certificate[] getAcceptedIssuers() {
+         return new X509Certificate[0];
+      }
+   }};
 }
