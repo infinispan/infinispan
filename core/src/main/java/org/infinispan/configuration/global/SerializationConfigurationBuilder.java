@@ -8,8 +8,8 @@ import static org.infinispan.configuration.global.SerializationConfiguration.VER
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -146,7 +146,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return addContextInitializers(Arrays.asList(scis));
    }
 
-   public SerializationConfigurationBuilder addContextInitializers(Collection<SerializationContextInitializer> scis) {
+   public SerializationConfigurationBuilder addContextInitializers(List<SerializationContextInitializer> scis) {
       attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).set(scis);
       return this;
    }

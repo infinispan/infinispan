@@ -112,7 +112,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       }
    }
 
-   private void processSerializationContextInitializer(Collection<SerializationContextInitializer> initializers) {
+   private void processSerializationContextInitializer(List<SerializationContextInitializer> initializers) {
       if (initializers != null) {
          for (SerializationContextInitializer sci : initializers) {
             try {

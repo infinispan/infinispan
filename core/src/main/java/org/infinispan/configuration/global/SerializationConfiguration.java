@@ -1,6 +1,5 @@
 package org.infinispan.configuration.global;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +37,8 @@ public class SerializationConfiguration implements ConfigurationInfo {
          .copier(CollectionAttributeCopier.INSTANCE)
          .initializer(HashMap::new).immutable().build();
 
-   public static final AttributeDefinition<Collection<SerializationContextInitializer>> SERIALIZATION_CONTEXT_INITIALIZERS =
-         AttributeDefinition.builder("contextInitializers", null, (Class<Collection<SerializationContextInitializer>>) (Class<?>) Collection.class).immutable().build();
+   public static final AttributeDefinition<List<SerializationContextInitializer>> SERIALIZATION_CONTEXT_INITIALIZERS =
+         AttributeDefinition.builder("contextInitializers", null, (Class<List<SerializationContextInitializer>>) (Class<?>) List.class).immutable().build();
 
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERIALIZATION.getLocalName());
 
@@ -51,7 +50,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
    private final Attribute<Object> classResolver;
    private final Attribute<Marshaller> marshaller;
    private final Attribute<Short> version;
-   private final Attribute<Collection<SerializationContextInitializer>> contextInitializers;
+   private final Attribute<List<SerializationContextInitializer>> contextInitializers;
    private final AttributeSet attributes;
    private final WhiteListConfiguration whiteListConfig;
    private final List<ConfigurationInfo> subElements;
@@ -94,7 +93,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
       return classResolver.get();
    }
 
-   public Collection<SerializationContextInitializer> contextInitializers() {
+   public List<SerializationContextInitializer> contextInitializers() {
       return contextInitializers.get();
    }
 
