@@ -126,7 +126,7 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
       ClusteredLockManager clusteredLockManager = new EmbeddedClusteredLockManager(future, config);
       registry.registerComponent(ClusteredLockManager.class, clusteredLockManager, true);
 
-      if (globalConfig.globalJmxStatistics().enabled()) {
+      if (globalConfig.statistics()) {
          CacheManagerJmxRegistration jmxRegistration = registry.getComponent(CacheManagerJmxRegistration.class).running();
          jmxRegistration.registerMBean(clusteredLockManager);
       }

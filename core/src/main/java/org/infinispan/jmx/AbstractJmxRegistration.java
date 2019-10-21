@@ -43,9 +43,9 @@ abstract class AbstractJmxRegistration {
    @Inject
    BasicComponentRegistry basicComponentRegistry;
 
-   MBeanServer mBeanServer;
+   volatile MBeanServer mBeanServer;
 
-   String jmxDomain;
+   volatile String jmxDomain;
 
    private String groupName;
 

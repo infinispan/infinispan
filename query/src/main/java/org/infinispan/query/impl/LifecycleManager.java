@@ -252,7 +252,7 @@ public class LifecycleManager implements ModuleLifecycle {
     */
    private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchIntegrator) {
       GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
-      if (!globalConfig.globalJmxStatistics().enabled())
+      if (!globalConfig.statistics())
          return;
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();

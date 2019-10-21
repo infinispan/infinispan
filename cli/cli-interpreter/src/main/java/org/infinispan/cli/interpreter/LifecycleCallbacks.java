@@ -16,7 +16,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
-      if (globalConfiguration.globalJmxStatistics().enabled()) {
+      if (globalConfiguration.statistics()) {
          BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
 
          Interpreter interpreter = new Interpreter();

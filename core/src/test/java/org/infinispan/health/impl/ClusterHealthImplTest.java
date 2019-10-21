@@ -42,7 +42,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
    private void init() {
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager();
       internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-      clusterHealth = new ClusterHealthImpl(cacheManager, cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class));
+      clusterHealth = new ClusterHealthImpl(cacheManager, internalCacheRegistry);
    }
 
    @BeforeMethod
