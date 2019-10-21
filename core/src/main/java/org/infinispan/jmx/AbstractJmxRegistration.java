@@ -2,6 +2,7 @@ package org.infinispan.jmx;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -46,45 +47,81 @@ abstract class AbstractJmxRegistration {
 
    String jmxDomain;
 
-   protected String groupName;
+   private String groupName;
+
+   private Collection<ResourceDMBean> resourceDMBeans;
 
    /**
     * Looks up the MBean server and initializes domain and group. Overriders must ensure they call super.
     */
-   public synchronized void start() {
-      // prevent double init of group on eventual restart
-      if (groupName == null) {
-         groupName = initGroup();
-      }
+   public void start() {
+      synchronized (this) {
+         // prevent double init of group on eventual restart
+         if (groupName == null) {
+            groupName = initGroup();
+         }
 
-      // prevent double lookup of MBeanServer on eventual restart
-      if (mBeanServer == null) {
-         try {
-            GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
-            MBeanServerLookup lookup = globalJmxConfig.mbeanServerLookup();
-            if (lookup != null) {
-               mBeanServer = lookup.getMBeanServer(globalJmxConfig.properties());
+         // prevent double lookup of MBeanServer on eventual restart
+         if (mBeanServer == null) {
+            try {
+               GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
+               MBeanServerLookup lookup = globalJmxConfig.mbeanServerLookup();
+               if (lookup != null) {
+                  mBeanServer = lookup.getMBeanServer(globalJmxConfig.properties());
+               }
+            } catch (Exception e) {
+               log.debug("Ignoring exception in MBean server lookup", e);
             }
-         } catch (Exception e) {
-            log.debug("Ignoring exception in MBean server lookup", e);
+         }
+
+         if (mBeanServer != null) {
+            // prevent double init of domain on eventual restart
+            if (jmxDomain == null) {
+               jmxDomain = initDomain();
+            }
          }
       }
 
       if (mBeanServer != null) {
-         // prevent double init of domain on eventual restart
-         if (jmxDomain == null) {
-            jmxDomain = initDomain();
+         resourceDMBeans = Collections.synchronizedCollection(getResourceDMBeansFromComponents());
+         try {
+            for (ResourceDMBean resourceDMBean : resourceDMBeans) {
+               ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
+               JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
+               resourceDMBean.setObjectName(objectName);
+            }
+         } catch (Exception e) {
+            throw new CacheException("Failure while registering MBeans", e);
+         }
+         log.trace("MBeans were successfully registered to the MBean server.");
+      }
+   }
+
+   /**
+    * Unregisters the MBeans that were registered on start. Overriders must ensure they call super.
+    */
+   public void stop() {
+      if (resourceDMBeans != null) {
+         try {
+            for (ResourceDMBean resourceDMBean : resourceDMBeans) {
+               if (resourceDMBean.getObjectName() != null) {
+                  JmxUtil.unregisterMBean(resourceDMBean.getObjectName(), mBeanServer);
+               }
+            }
+            resourceDMBeans = null;
+         } catch (Exception e) {
+            throw new CacheException("Failure while unregistering MBeans", e);
          }
       }
    }
 
    /**
-    * Subclasses must implement this hook to initialize {@link #jmxDomain}.
+    * Subclasses must implement this hook to initialize {@link #jmxDomain} during start.
     */
    protected abstract String initDomain();
 
    /**
-    * Subclasses must implement this hook to initialize {@link #groupName}.
+    * Subclasses must implement this hook to initialize {@link #groupName} during start.
     */
    protected abstract String initGroup();
 
@@ -119,42 +156,6 @@ abstract class AbstractJmxRegistration {
    }
 
    /**
-    * Performs the MBean registration (does not track them for automatic unregistration).
-    */
-   final void internalRegister(Collection<ResourceDMBean> resourceDMBeans) throws CacheException {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
-      try {
-         for (ResourceDMBean resourceDMBean : resourceDMBeans) {
-            ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
-            JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-            resourceDMBean.setObjectName(objectName);
-         }
-      } catch (Exception e) {
-         throw new CacheException("Failure while registering MBeans", e);
-      }
-   }
-
-   /**
-    * Unregisters the given MBeans (untracked).
-    */
-   final void internalUnregister(Collection<ResourceDMBean> resourceDMBeans) throws CacheException {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
-      try {
-         for (ResourceDMBean resourceDMBean : resourceDMBeans) {
-            if (resourceDMBean.getObjectName() != null) {
-               JmxUtil.unregisterMBean(resourceDMBean.getObjectName(), mBeanServer);
-            }
-         }
-      } catch (Exception e) {
-         throw new CacheException("Failure while unregistering MBeans", e);
-      }
-   }
-
-   /**
     * Creates an ObjectName based on given group and component name.
     */
    private ObjectName getObjectName(String groupName, String resourceName) throws MalformedObjectNameException {
@@ -170,7 +171,7 @@ abstract class AbstractJmxRegistration {
    /**
     * Gathers all components from registry that have MBeanMetadata and creates ResourceDMBeans for them.
     */
-   Collection<ResourceDMBean> getResourceDMBeansFromComponents() {
+   private Collection<ResourceDMBean> getResourceDMBeansFromComponents() {
       Collection<ComponentRef<?>> components = basicComponentRegistry.getRegisteredComponents();
       Collection<ResourceDMBean> resourceDMBeans = new ArrayList<>(components.size());
       for (ComponentRef<?> component : components) {
@@ -234,14 +235,9 @@ abstract class AbstractJmxRegistration {
          ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
          JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
          resourceDMBean.setObjectName(objectName);
-         trackRegisteredResourceDMBean(resourceDMBean);
+         resourceDMBeans.add(resourceDMBean);
       } catch (Exception e) {
          throw new CacheException("Failure while registering MBeans", e);
       }
    }
-
-   /**
-    * Add the registered MBean to internal tracking collection to support automatic unregistration on stop.
-    */
-   protected abstract void trackRegisteredResourceDMBean(ResourceDMBean resourceDMBean);
 }

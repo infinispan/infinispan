@@ -116,6 +116,9 @@ public final class ResourceDMBean implements DynamicMBean {
       return mbeanName;
    }
 
+   /**
+    * The ObjectName. Only available if the MBean was registered.
+    */
    public ObjectName getObjectName() {
       return objectName;
    }

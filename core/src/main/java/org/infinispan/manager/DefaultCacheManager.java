@@ -769,7 +769,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
       if (cacheFuture != null) {
          Cache<?, ?> cache = cacheFuture.join();
-         unregisterCacheMBean(cache);
          if (cache.getStatus().isTerminated()) {
             log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
             return;
@@ -835,12 +834,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             CONTAINER.componentFailedToStop(t);
          }
       }
-   }
-
-   private void unregisterCacheMBean(Cache<?, ?> cache) {
-      // Unregister cache mbean regardless of jmx statistics setting
-      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class)
-         .unregisterCacheMBean(cache.getName(), cache.getCacheConfiguration().clustering().cacheModeString());
    }
 
    @Override
@@ -1134,5 +1127,4 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    ConfigurationManager getConfigurationManager() {
       return configurationManager;
    }
-
 }

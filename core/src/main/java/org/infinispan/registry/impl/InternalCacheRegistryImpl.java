@@ -77,8 +77,6 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
          Cache<Object, Object> cache = cacheManager.getCache(name, false);
          if (cache != null) {
             cache.stop();
-            String cacheMode = cache.getCacheConfiguration().clustering().cacheModeString();
-            cacheManagerJmxRegistration.unregisterCacheMBean(name, cacheMode);
          }
          internalCaches.remove(name);
          privateCaches.remove(name);
