@@ -119,16 +119,20 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setUp() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration(), builder);
+      marshaller = extractGlobalMarshaller(cm);
+   }
+
+   protected GlobalConfigurationBuilder globalConfiguration() {
       // Use a clustered cache manager to be able to test global marshaller interaction too
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalAndInternal.Externalizer());
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithExternalizer.Externalizer());
       globalBuilder.serialization().addAdvancedExternalizer(new PojoWithMultiExternalizer.Externalizer());
       globalBuilder.serialization().serialization().addContextInitializer(new VersionAwareMarshallerSCIImpl());
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
-      marshaller = extractGlobalMarshaller(cm);
+      return globalBuilder;
    }
 
    @AfterClass

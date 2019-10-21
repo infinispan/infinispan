@@ -101,7 +101,7 @@ public class ReflectionUtil {
       }
    }
 
-   public static Method findMethod(Class<?> type, String methodName, Class<?>[] parameters) {
+   public static Method findMethod(Class<?> type, String methodName, Class<?>... parameters) {
       try {
          return type.getDeclaredMethod(methodName, parameters);
       } catch (NoSuchMethodException e) {
@@ -181,7 +181,7 @@ public class ReflectionUtil {
     * @param method     method to execute
     * @param parameters parameters
     */
-   public static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
+   public static Object invokeAccessibly(Object instance, Method method, Object... parameters) {
       method.setAccessible(true);
       return invokeMethod(instance, method, parameters);
    }

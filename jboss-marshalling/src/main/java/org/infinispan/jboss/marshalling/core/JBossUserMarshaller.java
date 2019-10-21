@@ -26,7 +26,7 @@ public class JBossUserMarshaller extends JBossMarshaller {
 
    private ClassToExternalizerMap externalExts;
 
-   public JBossUserMarshaller(GlobalComponentRegistry gcr) {
+   public void initialize(GlobalComponentRegistry gcr) {
       this.globalCfg = gcr.getGlobalConfiguration();
       // Only load the externalizers outside of the ISPN reserved range, this ensures that we don't accidentally persist internal types
       this.externalExts = ExternalExternalizers.load(globalCfg, USER_EXT_ID_MIN, Integer.MAX_VALUE);

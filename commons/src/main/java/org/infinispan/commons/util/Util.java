@@ -76,6 +76,7 @@ public final class Util {
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
    public static final byte[][] EMPTY_BYTE_ARRAY_ARRAY = new byte[0][];
    public static final String GENERIC_JBOSS_MARSHALLING_CLASS = "org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller";
+   public static final String JBOSS_USER_MARSHALLER_CLASS = "org.infinispan.jboss.marshalling.core.JBossUserMarshaller";
 
    private static final Log log = LogFactory.getLog(Util.class);
 

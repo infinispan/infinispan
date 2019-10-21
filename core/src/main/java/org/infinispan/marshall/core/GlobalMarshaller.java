@@ -9,7 +9,6 @@ import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
@@ -27,9 +26,7 @@ import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -121,8 +118,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
    private ClassIdentifiers classIdentifiers;
    private ClassLoader classLoader;
 
-   private Marshaller external;
-
    public GlobalMarshaller() {
    }
 
@@ -146,23 +141,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
 
       classIdentifiers = ClassIdentifiers.load(globalCfg);
-      try {
-         Class<StreamingMarshaller> clazz = Util.loadClassStrict("org.infinispan.jboss.marshalling.core.ExternalJBossMarshaller", globalCfg.classLoader());
-         try {
-            external = clazz.getConstructor(GlobalMarshaller.class, GlobalConfiguration.class).newInstance(this, globalCfg);
-            external.start();
-            PrivateGlobalConfiguration privateGlobalCfg = globalCfg.module(PrivateGlobalConfiguration.class);
-            if (privateGlobalCfg == null || !privateGlobalCfg.isServerMode()) {
-               log.jbossMarshallingDetected();
-            }
-         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            throw new CacheException("Unable to start GlobalMarshaller with ExternalJbossMarshaller", e);
-         }
-      } catch (ClassNotFoundException e) {
-         // When GlobalMarshaller is not dependent on jboss-marshalling, just load the PersistenceMarshaller which loads
-         // and initialises the configured user marshaller.
-         external = persistenceMarshaller;
-      }
    }
 
    @Override
@@ -173,7 +151,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       externalExts = null;
       reverseExternalExts = null;
       classIdentifiers = null;
-      external.stop();
+      persistenceMarshaller.stop();
    }
 
    public PersistenceMarshaller getPersistenceMarshaller() {
@@ -302,7 +280,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private boolean isExternalMarshallable(Object o) {
       try {
-         return external.isMarshallable(o);
+         return persistenceMarshaller.isMarshallable(o);
       } catch (Exception e) {
          throw new MarshallingException("Object of type " + o.getClass() + " expected to be marshallable", e);
       }
@@ -637,11 +615,11 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    private void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
-      writeUnknown(external, obj, out);
+      writeUnknown(persistenceMarshaller, obj, out);
    }
 
    private void writeRawUnknown(Object obj, ObjectOutput out) throws IOException {
-      writeRawUnknown(external, obj, out);
+      writeRawUnknown(persistenceMarshaller, obj, out);
    }
 
    public static void writeUnknown(Marshaller marshaller, Object obj, ObjectOutput out) throws IOException {
@@ -910,7 +888,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    private Object readUnknown(ObjectInput in) throws IOException, ClassNotFoundException {
-      return readUnknown(external, in);
+      return readUnknown(persistenceMarshaller, in);
    }
 
    Object readUnknown(Marshaller marshaller, ObjectInput in) throws IOException, ClassNotFoundException {
