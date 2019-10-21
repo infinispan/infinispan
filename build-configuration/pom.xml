@@ -219,11 +219,11 @@
       <version.rxjava>2.2.9</version.rxjava>
       <version.slf4j>1.7.25</version.slf4j>
       <version.sonatype.plexus>1.4</version.sonatype.plexus>
-      <version.spring.boot>2.1.5.RELEASE</version.spring.boot>
-      <version.spring.security>5.1.5.RELEASE</version.spring.security>
-      <version.spring5>5.1.7.RELEASE</version.spring5>
-      <version.spring.session>2.1.6.RELEASE</version.spring.session>
-      <version.tomcat>9.0.13</version.tomcat>
+      <version.spring.boot>2.2.0.RELEASE</version.spring.boot>
+      <version.spring.security>5.2.0.RELEASE</version.spring.security>
+      <version.spring5>5.2.0.RELEASE</version.spring5>
+      <version.spring.session>2.2.0.RELEASE</version.spring.session>
+      <version.tomcat>9.0.27</version.tomcat>
       <version.xalan>2.7.1.jbossorg-2</version.xalan>
       <version.xerces>2.12.0.SP02</version.xerces>
       <version.xpp3>1.1.4c</version.xpp3>
