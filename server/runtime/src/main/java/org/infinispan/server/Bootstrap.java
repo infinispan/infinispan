@@ -154,5 +154,6 @@ public class Bootstrap extends Main {
       StringJoiner sj = new StringJoiner(" ");
       runtimeMxBean.getInputArguments().forEach(s -> sj.add(s));
       logger.info("JVM arguments = " + sj);
+      logger.info("PID = " + runtimeMxBean.getName().split("@")[0]);
    }
 }
