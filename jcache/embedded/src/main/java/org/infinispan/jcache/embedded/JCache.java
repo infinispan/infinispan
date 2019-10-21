@@ -268,9 +268,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void close() {
       super.close();
-      if (jmxRegistration != null) {
-         jmxRegistration.setUnregisterCacheMBean(true);
-      }
       cache.stop();
    }
 

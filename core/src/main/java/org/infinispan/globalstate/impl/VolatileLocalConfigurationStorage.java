@@ -19,7 +19,6 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.LocalConfigurationStorage;
-import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.DependencyGraph;
@@ -82,7 +81,6 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
          ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(name);
          if (cacheComponentRegistry != null) {
             cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
-            cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
             cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
             Cache<?, ?> cache = cacheManager.getCache(name, false);
             if (cache != null) {

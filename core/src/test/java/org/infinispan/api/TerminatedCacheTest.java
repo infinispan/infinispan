@@ -8,7 +8,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Test that verifies the behaivour of Cache and CacheContainer.getCache() calls after
+ * Test that verifies the behaviour of Cache and CacheContainer.getCache() calls after
  * Cache and CacheContainer instances have been stopped. This emulates redeployment
  * scenarios under a situations where the CacheContainer is a shared resource.
  *
@@ -25,20 +25,19 @@ public class TerminatedCacheTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopFollowedByGetCache() {
-      Cache cache = cacheManager.getCache();
+      Cache<String, String> cache = cacheManager.getCache();
       cache.put("k", "v");
       cache.stop();
-      Cache cache2 = cacheManager.getCache();
+      Cache<String, String> cache2 = cacheManager.getCache();
       cache2.put("k", "v2");
    }
 
    @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopFollowedByCacheOp() {
       cacheManager.defineConfiguration("big", cacheManager.getDefaultCacheConfiguration());
-      Cache cache = cacheManager.getCache("big");
+      Cache<String, String> cache = cacheManager.getCache("big");
       cache.put("k", "v");
       cache.stop();
       cache.put("k", "v2");
    }
-
 }

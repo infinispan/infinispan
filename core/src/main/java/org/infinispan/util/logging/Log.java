@@ -187,19 +187,19 @@ public interface Log extends BasicLogger {
    @Message(value = "Passivated %d entries in %s", id = 30)
    void passivatedEntries(long numEntries, String duration);
 
-   @LogMessage(level = TRACE)
-   @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
-   void mbeansSuccessfullyRegistered();
+//   @LogMessage(level = TRACE)
+//   @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
+//   void mbeansSuccessfullyRegistered();
 
-   @LogMessage(level = WARN)
-   @Message(value = "Problems un-registering MBeans", id = 32)
-   void problemsUnregisteringMBeans(@Cause Exception e);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Problems un-registering MBeans", id = 32)
+//   void problemsUnregisteringMBeans(@Cause Exception e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to unregister MBean %s", id = 33)
-   void unableToUnregisterMBean(String name, @Cause Exception e);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to unregister MBean %s", id = 33)
+//   void unableToUnregisterMBean(String name, @Cause Exception e);
 
-   @Message(value = "There's already a JMX MBean instance %s already registered under " +
+   @Message(value = "There's already a JMX MBean instance %s registered under " +
          "'%s' JMX domain. If you want to allow multiple instances configured " +
          "with same JMX domain enable 'allowDuplicateDomains' attribute in " +
          "'globalJmxStatistics' config element", id = 34)
