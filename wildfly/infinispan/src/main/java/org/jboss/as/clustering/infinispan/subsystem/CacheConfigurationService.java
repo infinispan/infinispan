@@ -71,8 +71,7 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
         builder.read(configuration);
         builder.template(configuration.isTemplate());
 
-       boolean jmxEnabled = SecurityActions.getCacheManagerConfiguration(this.dependencies.getCacheContainer())
-                                           .globalJmxStatistics().enabled();
+       boolean jmxEnabled = SecurityActions.getCacheManagerConfiguration(dependencies.getCacheContainer()).statistics();
        builder.jmxStatistics().enabled(jmxEnabled);
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {

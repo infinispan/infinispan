@@ -493,12 +493,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
-      if (cacheName == null)
+      if (cacheName == null || configurationName == null)
          throw new NullPointerException("Null arguments not allowed");
       return internalGetCache(cacheName, configurationName);
    }
 
-   public <K, V> Cache<K, V> internalGetCache(String cacheName, String configurationName) {
+   private <K, V> Cache<K, V> internalGetCache(String cacheName, String configurationName) {
       assertIsNotTerminated();
       // No need to block if another thread (or even the current thread) is starting the global components
       // Because each cache component will wait for the global components it depends on
@@ -508,7 +508,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
       if (cacheFuture != null) {
          try {
-            return ((Cache<K, V>) cacheFuture.join());
+            return (Cache<K, V>) cacheFuture.join();
          } catch (CompletionException e) {
             throw ((CacheException) e.getCause());
          }
@@ -655,7 +655,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
          authzHelper.checkPermission(c.security().authorization(), AuthorizationPermission.LIFECYCLE);
       }
-      if (c.isTemplate() && cacheName.equals(configurationName)) {
+      if (c.isTemplate() && sameCache) {
          throw CONFIG.templateConfigurationStartAttempt(cacheName);
       }
 
@@ -664,23 +664,28 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          assertIsNotTerminated();
          return cacheFuture;
       });
+
+      Cache<K, V> cache = null;
       try {
          if (oldFuture != cacheFuture) {
-            return (Cache<K, V>) oldFuture.join();
+            cache = (Cache<K, V>) oldFuture.join();
+            if (!cache.getStatus().isTerminated()) {
+               return cache;
+            }
          }
       } catch (CompletionException ce) {
          throw ((CacheException) ce.getCause());
       }
 
-      Cache<K, V> cache;
       try {
          log.tracef("About to wire and start cache %s", cacheName);
-         cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
-         ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-
-         if (cache.getAdvancedCache().getAuthorizationManager() != null) {
-            cache = new SecureCacheImpl<>(cache.getAdvancedCache());
+         if (cache == null) {
+            cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
+            if (cache.getAdvancedCache().getAuthorizationManager() != null) {
+               cache = new SecureCacheImpl<>(cache.getAdvancedCache());
+            }
          }
+         ComponentRegistry cr = SecurityActions.getUnwrappedCache(cache).getAdvancedCache().getComponentRegistry();
 
          boolean notStartedYet =
             cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
@@ -972,12 +977,36 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @ManagedOperation(description = "Starts the default cache associated with this cache manager", displayName = "Starts the default cache")
    public void startCache() {
-      getCache();
+      if (defaultCacheName == null) {
+         throw CONFIG.noDefaultCache();
+      }
+      startCache(defaultCacheName);
    }
 
    @ManagedOperation(description = "Starts a named cache from this cache manager", name = "startCache", displayName = "Starts a cache with the given name")
    public void startCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
-      getCache(cacheName);
+      if (cacheName == null )
+         throw new NullPointerException("Null arguments not allowed");
+
+      assertIsNotTerminated();
+      // No need to block if another thread (or even the current thread) is starting the global components
+      // Because each cache component will wait for the global components it depends on
+      // And and ComponentRegistry depends on GlobalComponentRegistry.ModuleInitializer
+      internalStart(false);
+
+      CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
+      if (cacheFuture != null) {
+         try {
+            Cache<?,?> cache = cacheFuture.join();
+            if (!cache.getStatus().isTerminated()) {
+               return;
+            }
+         } catch (CompletionException e) {
+            throw ((CacheException) e.getCause());
+         }
+      }
+
+      createCache(cacheName, cacheName);
    }
 
    @ManagedAttribute(description = "The network address associated with this instance", displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)

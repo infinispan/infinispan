@@ -68,7 +68,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public EmbeddedCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
-      for(AdminFlag flag : flags) newFlags.add((flag));
+      for (AdminFlag flag : flags) newFlags.add(flag);
       return new DefaultCacheManagerAdmin(cacheManager, authzHelper, newFlags, clusterConfigurationManager);
    }
 

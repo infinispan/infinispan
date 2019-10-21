@@ -46,7 +46,7 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
    public void init(EmbeddedCacheManager cacheManager,
                     GlobalConfiguration configuration) {
       this.cacheManager = cacheManager;
-      this.statisticsEnabled = configuration.globalJmxStatistics().enabled();
+      this.statisticsEnabled = configuration.statistics();
    }
 
    @Override
