@@ -196,6 +196,24 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testCacheFullDetail() throws Exception {
+      String URL = String.format("http://localhost:%d/rest/v2/caches/default", restServer().getPort());
+
+      ContentResponse response = client.newRequest(URL).send();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).containsReturnedText("stats");
+      ResponseAssertion.assertThat(response).containsReturnedText("size");
+      ResponseAssertion.assertThat(response).containsReturnedText("configuration");
+      ResponseAssertion.assertThat(response).containsReturnedText("rehash_in_progress");
+      ResponseAssertion.assertThat(response).containsReturnedText("persistent");
+      ResponseAssertion.assertThat(response).containsReturnedText("bounded");
+      ResponseAssertion.assertThat(response).containsReturnedText("indexed");
+      ResponseAssertion.assertThat(response).containsReturnedText("has_remote_backup");
+      ResponseAssertion.assertThat(response).containsReturnedText("secured");
+      ResponseAssertion.assertThat(response).containsReturnedText("indexing_in_progress");
+   }
+
+   @Test
    public void testCacheNames() throws Exception {
       ObjectMapper objectMapper = new ObjectMapper();
       String URL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());

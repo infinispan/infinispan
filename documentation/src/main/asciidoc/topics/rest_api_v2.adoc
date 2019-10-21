@@ -107,6 +107,37 @@ POST /rest/v2/caches?action=toJSON
 
 The POST body must contain a valid cache XML configuration and the response will contain the equivalent JSON representation.
 
+[[rest_v2_cache_detail]]
+=== Retrieving All the details related to a cache
+
+To retrieve the details of a {brandname} cache, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_all_details.adoc[]
+----
+
+{brandname} returns the detail of the cache in `JSON` format, for example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::rest_examples/rest_full_cache_detail.json[]
+----
+
+* `stats` current stats of the cache.
+* `size` the estimated size for the cache.
+* `configuration` the cache configuration.
+* `rehash_in_progress` true when a rehashing is in progress.
+* `indexing_in_progress` true when indexing is in progress.
+* `bounded` when expiration is enabled
+* `indexed` true if the cache is indexed
+* `persistent` true if the cache is persisted
+* `transactional` true if the cache is transactional
+* `secured` true if the cache is secured
+* `has_remote_backup` true if the cache has remote backups
++
+
+
 [[rest_v2_add_entries]]
 === Adding Entries
 
