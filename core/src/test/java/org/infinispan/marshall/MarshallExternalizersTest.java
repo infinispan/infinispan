@@ -9,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -21,12 +22,18 @@ public class MarshallExternalizersTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(TestDataSCI.INSTANCE, configBuilder(), 2);
+      createCluster(globalConfigurationBuilder(), configBuilder(), 2);
       waitForClusterToForm();
    }
 
-   private ConfigurationBuilder configBuilder() {
+   protected ConfigurationBuilder configBuilder() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+   }
+
+   protected GlobalConfigurationBuilder globalConfigurationBuilder() {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
+      return globalBuilder;
    }
 
    public void testReplicateMarshallableByPojo(Method m) {
@@ -49,7 +56,7 @@ public class MarshallExternalizersTest extends MultipleCacheManagersTest {
 
    protected void doReplicatePojoToNewJoiningNode(Method m, Object o) {
       Cache cache1 = manager(0).getCache();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(TestDataSCI.INSTANCE, configBuilder());
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfigurationBuilder(), configBuilder());
       try {
          Cache cache3 = cm.getCache();
          cache1.put(k(m), o);

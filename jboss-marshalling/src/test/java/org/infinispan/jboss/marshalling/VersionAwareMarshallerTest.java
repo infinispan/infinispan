@@ -4,29 +4,22 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.infinispan.commons.marshall.MarshallingException;
-import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.jboss.marshalling.TraceInformation;
-import org.testng.annotations.Test;
 
 public class VersionAwareMarshallerTest extends org.infinispan.marshall.VersionAwareMarshallerTest {
 
    @Override
-   @Test(expectedExceptions = NotSerializableException.class)
-   public void testNestedNonMarshallable() throws Exception {
-      super.testNestedNonMarshallable();
-   }
-
-   @Override
-   @Test(expectedExceptions = NotSerializableException.class)
-   public void testNonMarshallable() throws Exception {
-      super.testNonMarshallable();
+   protected GlobalConfigurationBuilder globalConfiguration() {
+      GlobalConfigurationBuilder globalBuilder = super.globalConfiguration();
+      globalBuilder.serialization().marshaller(new JBossUserMarshaller());
+      return globalBuilder;
    }
 
    public void testPojoWithJBossMarshallingExternalizer(Method m) throws Exception {
@@ -78,9 +71,8 @@ public class VersionAwareMarshallerTest extends org.infinispan.marshall.VersionA
       byte[] bytes = marshaller.objectToByteBuffer(pojo);
       try {
          marshaller.objectFromByteBuffer(bytes);
-      } catch (MarshallingException e) {
-         IOException ioException = (IOException) e.getCause();
-         TraceInformation inf = (TraceInformation) ioException.getCause();
+      } catch (Exception e) {
+         TraceInformation inf = (TraceInformation) e.getCause();
          assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
       }
    }
