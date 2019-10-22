@@ -109,6 +109,8 @@
                   <javax.cache.Cache.Entry>${embedded.CacheEntryImpl}</javax.cache.Cache.Entry>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <infinispan.module-suffix>-${project.artifactId}-embedded</infinispan.module-suffix>
+                  <!-- Apply our beans.xml to the TCK beans -->
+                  <org.jboss.weld.se.archive.isolation>false</org.jboss.weld.se.archive.isolation>
 
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
