@@ -19,8 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 
 /**
  * Utilities to convert between text/plain, octet-stream, java-objects and url-encoded contents.
@@ -168,7 +168,7 @@ public final class StandardConversions {
    }
 
    /**
-    * Converts a java object to a sequence of bytes using a ProtoStream {@link SerializationContext}.
+    * Converts a java object to a sequence of bytes using a ProtoStream {@link ImmutableSerializationContext}.
     *
     * @param source source the java object to convert.
     * @param sourceMediaType the MediaType matching application/x-application-object describing the source.
@@ -176,7 +176,7 @@ public final class StandardConversions {
     * @throws EncodingException if the sourceMediaType is not a application/x-java-object or if the conversion is
     * not supported.
     */
-   public static byte[] convertJavaToProtoStream(Object source, MediaType sourceMediaType, SerializationContext ctx) throws IOException, InterruptedException {
+   public static byte[] convertJavaToProtoStream(Object source, MediaType sourceMediaType, ImmutableSerializationContext ctx) throws IOException, InterruptedException {
       if (source == null) return null;
       if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
          throw new EncodingException("sourceMediaType not conforming to application/x-java-object!");

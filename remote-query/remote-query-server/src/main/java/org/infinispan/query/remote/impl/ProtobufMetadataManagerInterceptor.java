@@ -40,6 +40,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.DescriptorParserException;
@@ -73,6 +74,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    private SerializationContext serializationContext;
 
    private KeyPartitioner keyPartitioner;
+
+   private SerializationContextRegistry serializationContextRegistry;
 
    /**
     * A no-op callback.
@@ -124,14 +127,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
-            FileDescriptorSource source = new FileDescriptorSource()
-                  .withProgressCallback(EMPTY_CALLBACK)
-                  .addProtoFile(key, (String) command.getValue());
-            try {
-               serializationContext.registerProtoFiles(source);
-            } catch (DescriptorParserException e) {
-               throw log.failedToParseProtoFile(key, e);
-            }
+            registerProtoFile(key, (String) command.getValue());
          }
          return null;
       }
@@ -139,15 +135,17 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
          final Map<Object, Object> map = command.getMap();
-         FileDescriptorSource source = new FileDescriptorSource()
-               .withProgressCallback(EMPTY_CALLBACK);
+         FileDescriptorSource source = new FileDescriptorSource().withProgressCallback(EMPTY_CALLBACK);
+         FileDescriptorSource ctxRegistrySource = new FileDescriptorSource();
          for (Object key : map.keySet()) {
             if (shouldIntercept(key)) {
                source.addProtoFile((String) key, (String) map.get(key));
+               ctxRegistrySource.addProtoFile((String) key, (String) map.get(key));
             }
          }
          try {
             serializationContext.registerProtoFiles(source);
+            registerWithContextRegistry(ctxRegistrySource);
          } catch (DescriptorParserException e) {
             throw log.failedToParseProtoFile(e);
          }
@@ -158,14 +156,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
-            FileDescriptorSource source = new FileDescriptorSource()
-                  .withProgressCallback(EMPTY_CALLBACK)
-                  .addProtoFile(key, (String) command.getNewValue());
-            try {
-               serializationContext.registerProtoFiles(source);
-            } catch (DescriptorParserException e) {
-               throw log.failedToParseProtoFile(key, e);
-            }
+            registerProtoFile(key, (String) command.getNewValue());
          }
          return null;
       }
@@ -190,13 +181,44 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
    };
 
+   private void registerProtoFile(String name, String content) {
+      registerProtoFile(name, content, EMPTY_CALLBACK);
+   }
+
+   private void registerProtoFile(String name, String content, FileDescriptorSource.ProgressCallback callback) {
+      try {
+         // Register protoFiles with remote-query context
+         serializationContext.registerProtoFiles(
+               new FileDescriptorSource()
+                     .withProgressCallback(callback)
+                     .addProtoFile(name, content)
+         );
+
+         // Register schema with global context to allow transcoding to json
+         registerWithContextRegistry(new FileDescriptorSource().addProtoFile(name, content));
+      } catch (DescriptorParserException e) {
+         if (name == null)
+            throw log.failedToParseProtoFile(e);
+         throw log.failedToParseProtoFile(name, e);
+      }
+   }
+
+   private void registerWithContextRegistry(FileDescriptorSource source) {
+      try {
+         serializationContextRegistry.addProtoFile(SerializationContextRegistry.MarshallerType.GLOBAL, source);
+      } catch (Exception ignore) {
+         // Ignore any exceptions here, as they will be reported in the protobuf cache
+      }
+   }
+
    @Inject
    public void init(CommandsFactory commandsFactory, ComponentRef<AsyncInterceptorChain> invoker, KeyPartitioner keyPartitioner,
-                    ProtobufMetadataManager protobufMetadataManager) {
+                    ProtobufMetadataManager protobufMetadataManager, SerializationContextRegistry serializationContextRegistry) {
       this.commandsFactory = commandsFactory;
       this.invoker = invoker;
       this.keyPartitioner = keyPartitioner;
       this.serializationContext = ((ProtobufMetadataManagerImpl) protobufMetadataManager).getSerializationContext();
+      this.serializationContextRegistry = serializationContextRegistry;
    }
 
    @Override
@@ -245,22 +267,13 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             throw log.valueMustBeString(value.getClass());
          }
 
-         FileDescriptorSource source = new FileDescriptorSource()
-                                          .addProtoFile((String) key, (String) value);
-
          long flagsBitSet = copyFlags(putKeyValueCommand);
          ProgressCallback progressCallback = null;
          if (rCtx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             progressCallback = new ProgressCallback(rCtx, flagsBitSet);
-            source.withProgressCallback(progressCallback);
+            registerProtoFile((String) key, (String) value, progressCallback);
          } else {
-            source.withProgressCallback(EMPTY_CALLBACK);
-         }
-
-         try {
-            serializationContext.registerProtoFiles(source);
-         } catch (DescriptorParserException e) {
-            throw log.failedToParseProtoFile((String) key, e);
+            registerProtoFile((String) key, (String) value);
          }
 
          if (progressCallback != null) {
@@ -285,6 +298,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       final Map<Object, Object> map = command.getMap();
 
+      FileDescriptorSource ctxRegistrySource = new FileDescriptorSource();
       FileDescriptorSource source = new FileDescriptorSource();
       for (Object key : map.keySet()) {
          final Object value = map.get(key);
@@ -299,6 +313,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                throw log.keyMustBeStringEndingWithProto(key);
             }
             source.addProtoFile((String) key, (String) value);
+            ctxRegistrySource.addProtoFile((String) key, (String) value);
          }
       }
 
@@ -315,9 +330,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          } else {
             source.withProgressCallback(EMPTY_CALLBACK);
          }
-
          try {
             serializationContext.registerProtoFiles(source);
+            registerWithContextRegistry(ctxRegistrySource);
          } catch (DescriptorParserException e) {
             throw log.failedToParseProtoFile(e);
          }
@@ -412,22 +427,13 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCommand.isSuccessful()) {
-            FileDescriptorSource source = new FileDescriptorSource()
-                  .addProtoFile((String) key, (String) value);
-
             long flagsBitSet = copyFlags(rCommand);
             ProgressCallback progressCallback = null;
             if (rCtx.isOriginLocal()) {
                progressCallback = new ProgressCallback(rCtx, flagsBitSet);
-               source.withProgressCallback(progressCallback);
+               registerProtoFile((String) key, (String) value, progressCallback);
             } else {
-               source.withProgressCallback(EMPTY_CALLBACK);
-            }
-
-            try {
-               serializationContext.registerProtoFiles(source);
-            } catch (DescriptorParserException e) {
-               throw log.failedToParseProtoFile((String) key, e);
+               registerProtoFile((String) key, (String) value);
             }
 
             if (progressCallback != null) {

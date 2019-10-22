@@ -15,10 +15,10 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.persistence.impl.PersistenceContextInitializerImpl;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.config.Configuration;
 
 @Scope(Scopes.GLOBAL)
 public class SerializationContextRegistryImpl implements SerializationContextRegistry {
@@ -52,14 +52,14 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    }
 
    @Override
-   public SerializationContext getGlobalCtx() {
+   public ImmutableSerializationContext getGlobalCtx() {
       synchronized (global) {
          return global.ctx;
       }
    }
 
    @Override
-   public SerializationContext getPersistenceCtx() {
+   public ImmutableSerializationContext getPersistenceCtx() {
       synchronized (persistence) {
          return persistence.ctx;
       }
@@ -78,11 +78,6 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    @Override
    public void addMarshaller(MarshallerType type, BaseMarshaller marshaller) {
       update(type, ctx -> ctx.addMarshaller(marshaller).update());
-   }
-
-   @Override
-   public void addConfiguration(MarshallerType type, Configuration config) {
-      update(type, ctx -> ctx.addConfiguration(config).update());
    }
 
    private void update(MarshallerType type, Consumer<MarshallerContext> consumer) {
@@ -120,11 +115,6 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
 
       MarshallerContext addMarshaller(BaseMarshaller marshaller) {
          marshallers.add(marshaller);
-         return this;
-      }
-
-      MarshallerContext addConfiguration(Configuration config) {
-         ctx = ProtobufUtil.newSerializationContext(config);
          return this;
       }
 

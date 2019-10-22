@@ -2,9 +2,9 @@ package org.infinispan.marshall.protostream.impl;
 
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.config.Configuration;
 
 /**
  * Manages {@link SerializationContext} across modules for use by various components.
@@ -20,11 +20,9 @@ public interface SerializationContextRegistry {
 
    void addContextInitializer(MarshallerType type, SerializationContextInitializer sci);
 
-   void addConfiguration(MarshallerType type, Configuration config);
+   ImmutableSerializationContext getGlobalCtx();
 
-   SerializationContext getGlobalCtx();
-
-   SerializationContext getPersistenceCtx();
+   ImmutableSerializationContext getPersistenceCtx();
 
    enum MarshallerType {
       GLOBAL,
