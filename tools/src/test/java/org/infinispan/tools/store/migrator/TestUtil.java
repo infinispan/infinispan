@@ -33,6 +33,11 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.util.KeyValuePair;
@@ -41,10 +46,10 @@ public class TestUtil {
    public static final Map<String, Object> TEST_MAP = new HashMap<>();
    static final Map<String, Object> TEST_MAP_UNSUPPORTED = new HashMap<>();
    static {
-      TEST_MAP.put("List", Arrays.asList(new Person("Alan Shearer"), new Person("Nolberto Solano")));
-      TEST_MAP.put("SingletonList", Collections.singletonList(new Key("Key")));
-      TEST_MAP.put("SingletonMap", Collections.singletonMap("Key", "Value"));
-      TEST_MAP.put("SingletonSet", Collections.singleton(new Key("Key")));
+      TEST_MAP_UNSUPPORTED.put("List", Arrays.asList(new Person("Alan Shearer"), new Person("Nolberto Solano")));
+      TEST_MAP_UNSUPPORTED.put("SingletonList", Collections.singletonList(new Key("Key")));
+      TEST_MAP_UNSUPPORTED.put("SingletonMap", Collections.singletonMap("Key", "Value"));
+      TEST_MAP_UNSUPPORTED.put("SingletonSet", Collections.singleton(new Key("Key")));
 
       Metadata metadata = new EmbeddedMetadata.Builder().version(new NumericVersion(1)).build();
       TEST_MAP.put("EmbeddedMetadata", metadata);
@@ -79,12 +84,16 @@ public class TestUtil {
    }
 
    public static class TestObject {
+      @ProtoField(number = 1, defaultValue = "0")
       int id;
+
+      @ProtoField(number = 2)
       String someString;
 
       TestObject() {
       }
 
+      @ProtoFactory
       TestObject(int id, String someString) {
          this.id = id;
          this.someString = someString;
@@ -143,5 +152,15 @@ public class TestUtil {
          if (i != elements.length - 1) sb.append(".");
       }
       return sb.toString();
+   }
+
+   @AutoProtoSchemaBuilder(
+         dependsOn = TestDataSCI.class,
+         includeClasses = TestObject.class,
+         schemaFileName = "test.tools.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.tools")
+   interface SCI extends SerializationContextInitializer {
+      SCI INSTANCE = new SCIImpl();
    }
 }

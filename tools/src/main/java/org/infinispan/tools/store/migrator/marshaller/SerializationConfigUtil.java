@@ -1,6 +1,7 @@
 package org.infinispan.tools.store.migrator.marshaller;
 
 import static org.infinispan.tools.store.migrator.Element.CLASS;
+import static org.infinispan.tools.store.migrator.Element.CONTEXT_INITIALIZERS;
 import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
@@ -21,6 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.tools.store.migrator.StoreProperties;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
@@ -31,6 +33,7 @@ public class SerializationConfigUtil {
       Marshaller marshaller = getMarshaller(props);
       builder.marshaller(marshaller);
       configureExternalizers(props, builder);
+      configureSerializationContextInitializers(props, builder);
    }
 
    public static MarshallableEntryFactory getEntryFactory(StoreProperties props) {
@@ -42,20 +45,15 @@ public class SerializationConfigUtil {
    }
 
    public static Marshaller getMarshaller(StoreProperties props) {
-      String marshallerClass = props.get(MARSHALLER, CLASS);
-      if (marshallerClass != null) {
-         try {
-            return (Marshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
-         } catch (IllegalAccessException | InstantiationException e) {
-            throw new CacheConfigurationException(String.format("Unable to load StreamingMarshaller '%s' for %s store",
-                  marshallerClass, SOURCE), e);
-         }
-      }
-
       int majorVersion = props.getMajorVersion();
       switch (majorVersion) {
          case 8:
          case 9:
+            Marshaller marshaller = loadMarshallerInstance(props);
+            if (marshaller != null) {
+               return marshaller;
+            }
+
             if (props.isTargetStore())
                throw new CacheConfigurationException(String.format("The marshaller associated with Infinispan %d can only be specified for source stores.", majorVersion));
             Map<Integer, AdvancedExternalizer> userExts = getExternalizersFromProps(props);
@@ -66,13 +64,30 @@ public class SerializationConfigUtil {
 
             GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder()
                   .defaultCacheName(props.cacheName());
-            configureExternalizers(props, globalConfig.serialization());
+            configureSerializationContextInitializers(props, globalConfig.serialization());
+            marshaller = loadMarshallerInstance(props);
+            if (marshaller != null) {
+               globalConfig.serialization().marshaller(marshaller);
+            }
 
             EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build(), new ConfigurationBuilder().build());
             return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
          default:
             throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
       }
+   }
+
+   private static Marshaller loadMarshallerInstance(StoreProperties props) {
+      String marshallerClass = props.get(MARSHALLER, CLASS);
+      if (marshallerClass != null) {
+         try {
+            return (Marshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
+         } catch (IllegalAccessException | InstantiationException e) {
+            throw new CacheConfigurationException(String.format("Unable to load StreamingMarshaller '%s' for %s store",
+                  marshallerClass, SOURCE), e);
+         }
+      }
+      return null;
    }
 
    private static void configureExternalizers(StoreProperties props, SerializationConfigurationBuilder builder) {
@@ -98,5 +113,16 @@ public class SerializationConfigUtil {
          }
       }
       return map;
+   }
+
+   private static void configureSerializationContextInitializers(StoreProperties props, SerializationConfigurationBuilder builder) {
+      String sciString = props.get(MARSHALLER, CONTEXT_INITIALIZERS);
+      if (sciString == null)
+         return;
+
+      for (String impl : sciString.split(",")) {
+         SerializationContextInitializer sci = Util.getInstance(impl, SerializationConfigUtil.class.getClassLoader());
+         builder.addContextInitializers(sci);
+      }
    }
 }

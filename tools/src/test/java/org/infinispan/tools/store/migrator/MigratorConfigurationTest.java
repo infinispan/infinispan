@@ -5,6 +5,7 @@ import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
 import static org.infinispan.tools.store.migrator.Element.CLASS;
 import static org.infinispan.tools.store.migrator.Element.CONNECTION_POOL;
 import static org.infinispan.tools.store.migrator.Element.CONNECTION_URL;
+import static org.infinispan.tools.store.migrator.Element.CONTEXT_INITIALIZERS;
 import static org.infinispan.tools.store.migrator.Element.DATA;
 import static org.infinispan.tools.store.migrator.Element.DB;
 import static org.infinispan.tools.store.migrator.Element.DIALECT;
@@ -44,10 +45,10 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
-import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
@@ -75,8 +76,21 @@ public class MigratorConfigurationTest {
 
    @BeforeMethod
    public void init() {
+      // Ignore all threads, SerializationConfigUtil.getMarshaller() starts a cache manager and doesn't stop it
+      ThreadLeakChecker.ignoreThreadsContaining("");
       externalizerReadCount.set(0);
       externalizerWriteCount.set(0);
+   }
+
+   public void testCustomMarshallerLoadedLegacy() {
+      Properties properties = createBaseProperties();
+      properties.put(propKey(SOURCE, VERSION), String.valueOf(8));
+      properties.put(propKey(SOURCE, MARSHALLER, CLASS), GenericJBossMarshaller.class.getName());
+
+      StoreProperties props = new StoreProperties(SOURCE, properties);
+      Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
+      assertNotNull(marshaller);
+      assertTrue(marshaller instanceof GenericJBossMarshaller);
    }
 
    public void testCustomMarshallerLoaded() {
@@ -86,7 +100,9 @@ public class MigratorConfigurationTest {
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assertNotNull(marshaller);
-      assertTrue(marshaller instanceof GenericJBossMarshaller);
+      assertTrue(marshaller instanceof PersistenceMarshaller);
+      PersistenceMarshaller pm = (PersistenceMarshaller) marshaller;
+      assertTrue(pm.getUserMarshaller() instanceof GenericJBossMarshaller);
    }
 
    public void testInfinipsan8MarshallerAndExternalizersLoaded() throws Exception {
@@ -125,10 +141,9 @@ public class MigratorConfigurationTest {
       assertEquals(1, externalizerReadCount.get());
    }
 
-   public void testCurrentMarshallerLoadedAndExternalizersLoaded() throws Exception {
-      String externalizers = String.format("%d:%s", JBossUserMarshaller.USER_EXT_ID_MIN, PersonExternalizer.class.getName());
+   public void testCurrentMarshallerLoadedAndSCILoaded() throws Exception {
       Properties properties = createBaseProperties();
-      properties.put(propKey(SOURCE, MARSHALLER, EXTERNALIZERS), externalizers);
+      properties.put(propKey(SOURCE, MARSHALLER, CONTEXT_INITIALIZERS), TestUtil.SCI.INSTANCE.getClass().getName());
 
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
@@ -138,8 +153,6 @@ public class MigratorConfigurationTest {
       Person person = (Person) marshaller.objectFromByteBuffer(bytes);
       assertNotNull(person);
       assertEquals(Person.class.getName(), person.getName());
-      assertEquals(1, externalizerReadCount.get());
-      assertEquals(1, externalizerWriteCount.get());
    }
 
    public void testExceptionOnMarshallerType() {
