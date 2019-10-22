@@ -21,8 +21,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import io.reactivex.Flowable;
-import io.reactivex.internal.functions.Functions;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -90,6 +88,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.PublisherManagerFactory;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
@@ -107,6 +107,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidat
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.reactive.publisher.PublisherReducers;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.local.SegmentedEntryStreamSupplier;
 import org.infinispan.stream.impl.local.SegmentedKeyStreamSupplier;
@@ -119,6 +122,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -146,6 +152,9 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Inject InternalEntryFactory internalEntryFactory;
    @Inject KeyPartitioner keyPartitioner;
    @Inject GroupManager groupManager;
+   @Inject ClusterPublisherManager clusterPublisherManager;
+   @ComponentName(PublisherManagerFactory.LOCAL_CLUSTER_PUBLISHER)
+   @Inject ClusterPublisherManager localClusterPublisherManager;
 
    // Internally we always deal with an unwrapped cache, so don't unwrap per invocation
    Cache unwrappedCache;
@@ -570,13 +579,16 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      // Use an unwrapped cache to avoid unneeded transformations as we only want a count
-      long size = cacheWithFlags(command.getFlagsBitSet()).keySet().stream().count();
-      if (size > Integer.MAX_VALUE) {
-         return Integer.MAX_VALUE;
+      ClusterPublisherManager managerToUse;
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         managerToUse = localClusterPublisherManager;
       } else {
-         return (int) size;
+         managerToUse = clusterPublisherManager;
       }
+
+      return asyncValue(managerToUse.keyReduction(false, null, null, ctx,
+            !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD), DeliveryGuarantee.EXACTLY_ONCE, PublisherReducers.count(),
+            PublisherReducers.add()));
    }
 
    @Override

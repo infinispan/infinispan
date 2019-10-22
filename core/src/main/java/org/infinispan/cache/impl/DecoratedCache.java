@@ -494,6 +494,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<Long> sizeAsync() {
+      return cacheImplementation.sizeAsync(flags);
+   }
+
+   @Override
    public boolean isEmpty() {
       return cacheImplementation.isEmpty(flags);
    }

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
@@ -383,6 +384,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testSize(SecureCache<String, String> cache) {
       cache.size();
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testSizeAsync(SecureCache<String, String> cache) {
+      cache.sizeAsync();
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)

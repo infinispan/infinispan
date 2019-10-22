@@ -315,7 +315,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          if ((Integer) rv == -1) {
             return super.visitSizeCommand(rCtx, rCommand);
          }
-         return rv;
+         return ((Integer) rv).longValue();
       });
 
    }

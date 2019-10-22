@@ -36,7 +36,7 @@ public interface ClusterPublisherManager<K, V> {
     * will be invoked on each node to ensure there is only a single result per node.
     * @param <R> return value type
     * @param parallelPublisher Whether on each node the publisher should be parallelized remotely and locally
-    * @param segments determines what entries should be evaluated by only using ones that map to the given segments
+    * @param segments determines what entries should be evaluated by only using ones that map to the given segments (if null assumes all segments)
     * @param keysToInclude set of keys that should only be used. If null all entries for the given segments will be evaluated
     * @param invocationContext context of the invoking operation
     * @param includeLoader whether to include entries from the underlying cache loader if any

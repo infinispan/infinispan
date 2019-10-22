@@ -41,7 +41,6 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.processors.UnicastProcessor;
 
 /**
  * ClusterPublisherManager that determines targets for the given segments and/or keys and then sends to local and
@@ -60,7 +59,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    @Inject StateTransferLock stateTransferLock;
    @Inject RpcManager rpcManager;
    @Inject CommandsFactory commandsFactory;
-   @Inject protected Configuration cacheConfiguration;
+   @Inject Configuration cacheConfiguration;
 
    // Make sure we don't create one per invocation
    private final KeyComposedType KEY_COMPOSED = new KeyComposedType<>();
@@ -79,7 +78,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    @Start
    public void start() {
-      maxSegment = distributionManager.getReadConsistentHash().getNumSegments();
+      maxSegment = cacheConfiguration.clustering().hash().numSegments();
       writeBehindShared = hasWriteBehindSharedStore(cacheConfiguration.persistence());
    }
 
@@ -618,7 +617,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer);
    }
 
-   private class KeyComposedType<R> implements ComposedType<K, K, R> {
+   class KeyComposedType<R> implements ComposedType<K, K, R> {
 
       @Override
       public CompletionStage<PublisherResult<R>> localInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
@@ -641,21 +640,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
             InvocationContext ctx, Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer) {
-         UnicastProcessor<K> unicastProcessor = UnicastProcessor.create(ctx.lookedUpEntriesCount());
-         ctx.forEachValue((o, cacheEntry) -> {
-            K key = (K) o;
-            if (keysToInclude == null || keysToInclude.contains(key)) {
-               unicastProcessor.onNext(key);
-            }
-         });
-         unicastProcessor.onComplete();
 
-         return transformer.apply(unicastProcessor)
+         return transformer.apply(LocalClusterPublisherManagerImpl.keyPublisherFromContext(ctx, keysToInclude))
                .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
    }
 
-   private class EntryComposedType<R> implements ComposedType<K, CacheEntry<K, V>, R> {
+   class EntryComposedType<R> implements ComposedType<K, CacheEntry<K, V>, R> {
 
       @Override
       public CompletionStage<PublisherResult<R>> localInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
@@ -678,15 +669,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       public CompletionStage<PublisherResult<R>> contextInvocation(IntSet segments, Set<K> keysToInclude,
             InvocationContext ctx, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer) {
-         UnicastProcessor<CacheEntry<K, V>> unicastProcessor = UnicastProcessor.create(ctx.lookedUpEntriesCount());
-         ctx.forEachValue((o, cacheEntry) -> {
-            if (keysToInclude == null || keysToInclude.contains(o)) {
-               unicastProcessor.onNext(cacheEntry);
-            }
-         });
-         unicastProcessor.onComplete();
-
-         return transformer.apply(unicastProcessor)
+         return transformer.apply(LocalClusterPublisherManagerImpl.entryPublisherFromContext(ctx, keysToInclude))
                .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
       }
    }

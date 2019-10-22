@@ -2,8 +2,10 @@ package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.impl.ComponentAlias;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManagerImpl;
+import org.infinispan.reactive.publisher.impl.LocalClusterPublisherManagerImpl;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManagerImpl;
 import org.infinispan.reactive.publisher.impl.NonSegmentedLocalPublisherManagerImpl;
@@ -15,10 +17,14 @@ import org.infinispan.reactive.publisher.impl.NonSegmentedLocalPublisherManagerI
  * @author wburns
  * @since 10.0
  */
-@DefaultFactoryFor(classes = {LocalPublisherManager.class, ClusterPublisherManager.class})
+@DefaultFactoryFor(classes = {LocalPublisherManager.class, ClusterPublisherManager.class}, names = PublisherManagerFactory.LOCAL_CLUSTER_PUBLISHER)
 public class PublisherManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+   public static final String LOCAL_CLUSTER_PUBLISHER = "NoClusterPublisherManager";
    @Override
    public Object construct(String componentName) {
+      if (componentName.equals(LOCAL_CLUSTER_PUBLISHER)) {
+         return new LocalClusterPublisherManagerImpl<>();
+      }
       if (componentName.equals(LocalPublisherManager.class.getName())) {
          if (configuration.persistence().usingStores() && !configuration.persistence().usingSegmentedStore()) {
             return new NonSegmentedLocalPublisherManagerImpl<>();
@@ -29,6 +35,6 @@ public class PublisherManagerFactory extends AbstractNamedCacheComponentFactory 
       if (cacheMode.needsStateTransfer() && componentName.equals(ClusterPublisherManager.class.getName())) {
          return new ClusterPublisherManagerImpl<>();
       }
-      return null;
+      return ComponentAlias.of(LOCAL_CLUSTER_PUBLISHER);
    }
 }
