@@ -217,13 +217,14 @@
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.sonatype.plexus>1.4</version.sonatype.plexus>
       <version.spring.boot>1.5.19.RELEASE</version.spring.boot>
-      <version.spring.boot2>2.1.4.RELEASE</version.spring.boot2>
+      <version.spring.boot2>2.2.0.RELEASE</version.spring.boot2>
       <version.spring.security>4.1.1.RELEASE</version.spring.security>
-      <version.spring5.security>5.1.4.RELEASE</version.spring5.security>
-      <version.spring5.session>2.1.4.RELEASE</version.spring5.session>
+      <version.spring5.security>5.2.0.RELEASE</version.spring5.security>
+      <version.spring5.session>2.2.0.RELEASE</version.spring5.session>
       <version.spring4>4.3.4.RELEASE</version.spring4>
-      <version.spring5>5.1.5.RELEASE</version.spring5>
+      <version.spring5>5.2.0.RELEASE</version.spring5>
       <version.tomcat85>8.5.31</version.tomcat85>
+      <version.tomcat>9.0.27</version.tomcat>
       <version.xerces>2.12.0.SP02</version.xerces>
       <version.xpp3>1.1.4c</version.xpp3>
 
