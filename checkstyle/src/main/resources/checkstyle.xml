@@ -122,7 +122,7 @@
             <property name="argumentCount" value="2"/>
         </module>
         <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
-            <property name="methodPattern" value="(handle|thenAccept|thenApply|thenCompose|thenRun|whenComplete)Async"/>
+            <property name="methodPattern" value="(handle|thenAccept|thenApply|thenCompose|thenRun|whenComplete|run|supply)Async"/>
             <property name="argumentCount" value="1"/>
         </module>
 
