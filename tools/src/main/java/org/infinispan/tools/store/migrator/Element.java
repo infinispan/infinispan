@@ -13,6 +13,7 @@ public enum Element {
    COMPRESSION("compression"),
    CONNECTION_URL("connection_url"),
    CONNECTION_POOL("connection_pool"),
+   CONTEXT_INITIALIZERS("context-initializers"),
    DATA("data"),
    DB("db"),
    DIALECT("dialect"),

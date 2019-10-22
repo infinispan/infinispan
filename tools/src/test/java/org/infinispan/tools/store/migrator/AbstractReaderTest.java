@@ -1,6 +1,7 @@
 package org.infinispan.tools.store.migrator;
 
 import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
+import static org.infinispan.tools.store.migrator.Element.CONTEXT_INITIALIZERS;
 import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.SEGMENT_COUNT;
@@ -17,7 +18,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -61,10 +61,12 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
    }
 
    protected void configureStoreProperties(Properties properties, Element type) {
-      // User externalizers must start at JBossUserMarshaller.USER_EXT_ID_MIN in Infinispan 10.x
-      int externalizerId = type == TARGET ? JBossUserMarshaller.USER_EXT_ID_MIN : 256;
       properties.put(propKey(type, CACHE_NAME), TEST_CACHE_NAME);
-      properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), externalizerId + ":" + TestUtil.TestObjectExternalizer.class.getName());
+      if (type == SOURCE) {
+         properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), 256 + ":" + TestUtil.TestObjectExternalizer.class.getName());
+      } else {
+         properties.put(propKey(type, MARSHALLER, CONTEXT_INITIALIZERS), TestUtil.SCI.INSTANCE.getClass().getName());
+      }
       properties.put(propKey(type, VERSION), type == SOURCE ? String.valueOf(majorVersion): Version.getMajor());
 
       if (type == TARGET && segmentCount > 0) {
@@ -80,7 +82,7 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       new StoreMigrator(properties).run();
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
-      globalConfig.serialization().addAdvancedExternalizer(JBossUserMarshaller.USER_EXT_ID_MIN, new TestUtil.TestObjectExternalizer());
+      globalConfig.serialization().addContextInitializer(TestUtil.SCI.INSTANCE);
 
       // Create a new cache instance, with the required externalizers, to ensure that the new RocksDbStore can be
       // loaded and contains all of the expected values.

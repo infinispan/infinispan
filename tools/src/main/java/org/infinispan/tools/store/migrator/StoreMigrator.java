@@ -4,6 +4,8 @@ import static org.infinispan.tools.store.migrator.Element.BATCH;
 import static org.infinispan.tools.store.migrator.Element.SIZE;
 
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -50,6 +52,10 @@ public class StoreMigrator {
    // guarantees over byte compatibility in future versions
    private static final Set<Class<?>> INTERNAL_BLACKLIST = new HashSet<>();
    static {
+      INTERNAL_BLACKLIST.add(ArrayList.class);
+      INTERNAL_BLACKLIST.add(Collections.singletonList(1).getClass());
+      INTERNAL_BLACKLIST.add(Collections.singletonMap(1,1).getClass());
+      INTERNAL_BLACKLIST.add(Collections.singleton(1).getClass());
       INTERNAL_BLACKLIST.add(ByteBufferImpl.class);
       INTERNAL_BLACKLIST.add(KeyValuePair.class);
       INTERNAL_BLACKLIST.add(InternalCacheEntry.class);
