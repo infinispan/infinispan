@@ -24,7 +24,6 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
@@ -95,7 +94,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected boolean isL1Enabled;
    protected boolean isReplicated;
-   protected boolean isWriteBehind;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
    private final InvocationSuccessFunction<AbstractDataWriteCommand> primaryReturnHandler = this::primaryReturnHandler;
@@ -110,17 +108,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // Can't rely on the super injectConfiguration() to be called before our injectDependencies() method2
       isL1Enabled = cacheConfiguration.clustering().l1().enabled();
       isReplicated = cacheConfiguration.clustering().cacheMode().isReplicated();
-      isWriteBehind = cacheConfiguration.persistence().usingAsyncStore();
-   }
-
-   @Override
-   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      if (isReplicated && !isWriteBehind) {
-         // Replicated size command has no reason to be distributed as we do is count entries, no processing
-         // done upon these entries and the overhead of coordinating remote nodes and network calls is more expensive
-         command.setFlagsBitSet(command.getFlagsBitSet() | FlagBitSets.CACHE_MODE_LOCAL);
-      }
-      return super.visitSizeCommand(ctx, command);
    }
 
    @Override

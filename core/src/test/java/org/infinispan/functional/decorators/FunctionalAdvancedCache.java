@@ -128,6 +128,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<Long> sizeAsync() {
+      return cache.sizeAsync();
+   }
+
+   @Override
    public CacheSet<Entry<K, V>> entrySet() {
       return new SetAsCacheSet<>(map.entrySet());
    }

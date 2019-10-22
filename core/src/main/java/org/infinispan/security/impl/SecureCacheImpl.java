@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
@@ -814,6 +815,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public int size() {
       authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
       return delegate.size();
+   }
+
+   @Override
+   public CompletableFuture<Long> sizeAsync() {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
+      return delegate.sizeAsync();
    }
 
    @Override

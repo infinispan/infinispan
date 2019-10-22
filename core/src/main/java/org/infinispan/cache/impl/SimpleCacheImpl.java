@@ -492,6 +492,25 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Long> sizeAsync() {
+      // we have to iterate in order to provide precise result in case of expiration
+      long now = Long.MIN_VALUE;
+      long size = 0;
+      DataContainer<K, V> dataContainer = getDataContainer();
+      for (InternalCacheEntry<K, V> entry : dataContainer) {
+         if (entry.canExpire()) {
+            if (now == Long.MIN_VALUE) now = timeService.wallClockTime();
+            if (!checkExpiration(entry, now)) {
+               ++size;
+            }
+         } else {
+            ++size;
+         }
+      }
+      return CompletableFuture.completedFuture(size);
+   }
+
+   @Override
    public boolean isEmpty() {
       long now = Long.MIN_VALUE;
       DataContainer<K, V> dataContainer = getDataContainer();

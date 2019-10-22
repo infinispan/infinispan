@@ -23,6 +23,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -33,7 +34,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
-import org.infinispan.commons.util.Version;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -68,6 +68,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -484,7 +485,18 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final int size(long explicitFlags) {
       SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
-      return (Integer) invoker.invoke(invocationContextFactory.createInvocationContext(false, UNBOUNDED), command);
+      long size = (Long) invoker.invoke(invocationContextFactory.createInvocationContext(false, UNBOUNDED), command);
+      return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
+   }
+
+   @Override
+   public CompletableFuture<Long> sizeAsync() {
+      return sizeAsync(EnumUtil.EMPTY_BIT_SET);
+   }
+
+   final CompletableFuture<Long> sizeAsync(long explicitFlags) {
+      SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
+      return (CompletableFuture) invoker.invokeAsync(invocationContextFactory.createInvocationContext(false, UNBOUNDED), command).toCompletableFuture();
    }
 
    @Override

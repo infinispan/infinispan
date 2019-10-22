@@ -375,6 +375,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Long> sizeAsync() {
+      return cache.sizeAsync();
+   }
+
+   @Override
    public boolean isEmpty() {
       return cache.isEmpty();
    }

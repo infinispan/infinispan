@@ -132,6 +132,28 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    }
 
    @Override
+   public int sizeIncludingExpired(IntSet segments) {
+      int size = 0;
+      // We have to loop through and count all the entries
+      for (Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iter = iteratorIncludingExpired(segments); iter.hasNext(); ) {
+         iter.next();
+         if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+      }
+      return size;
+   }
+
+   @Override
+   public int size(IntSet segments) {
+      int size = 0;
+      // We have to loop through and count the non expired entries
+      for (Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iter = iterator(segments); iter.hasNext(); ) {
+         iter.next();
+         if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+      }
+      return size;
+   }
+
+   @Override
    public void addRemovalListener(Consumer<Iterable<InternalCacheEntry<WrappedBytes, WrappedBytes>>> listener) {
       listeners.add(listener);
    }

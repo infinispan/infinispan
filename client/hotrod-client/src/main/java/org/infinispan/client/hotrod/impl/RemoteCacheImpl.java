@@ -303,9 +303,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public int size() {
+      long size = await(sizeAsync());
+      return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
+   }
+
+   @Override
+   public CompletableFuture<Long> sizeAsync() {
       assertRemoteCacheManagerIsStarted();
       SizeOperation op = operationsFactory.newSizeOperation();
-      return await(op.execute());
+      return op.execute().thenApply(Integer::longValue);
    }
 
    @Override

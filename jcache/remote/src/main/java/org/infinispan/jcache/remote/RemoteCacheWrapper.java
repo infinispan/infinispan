@@ -500,6 +500,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Long> sizeAsync() {
+      return delegate.sizeAsync();
+   }
+
+   @Override
    public void start() {
       delegate.start();
    }

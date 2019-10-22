@@ -128,6 +128,14 @@ public interface AsyncCache<K, V> {
    CompletableFuture<Void> clearAsync();
 
    /**
+    * Asynchronous version of {@link BasicCache#size()}.  This method does not block on remote calls, even if your cache mode is
+    * synchronous.
+    *
+    * @return a future containing the count of the cache
+    */
+   CompletableFuture<Long> sizeAsync();
+
+   /**
     * Asynchronous version of {@link BasicCache#putIfAbsent(Object, Object)}.  This method does not block on remote calls, even if
     * your cache mode is synchronous.
     *
