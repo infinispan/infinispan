@@ -30,6 +30,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.impl.Externalizers.QueryRequestExternalizer;
+import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
@@ -66,6 +67,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, MarshallerRegistration.INSTANCE);
 
       initProtobufMetadataManager(bcr);
 

@@ -27,6 +27,7 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -68,7 +69,7 @@ public class PersistenceMarshallerImpl implements PersistenceMarshaller {
    public PersistenceMarshallerImpl() {
    }
 
-   public SerializationContext getSerializationContext() {
+   public ImmutableSerializationContext getSerializationContext() {
       return ctxRegistry.getPersistenceCtx();
    }
 

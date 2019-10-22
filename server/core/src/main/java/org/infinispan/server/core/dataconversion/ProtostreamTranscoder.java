@@ -22,8 +22,8 @@ import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -44,7 +44,7 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
       this.classLoader = classLoader;
    }
 
-   private SerializationContext ctx() {
+   private ImmutableSerializationContext ctx() {
       return ctxRegistry.getGlobalCtx();
    }
 
