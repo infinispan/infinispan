@@ -125,7 +125,7 @@ public class XSiteResource implements ResourceHandler {
          }));
          addPayload(responseBuilder, collect);
          return responseBuilder.build();
-      });
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> pushStateStatus(RestRequest request) {
@@ -264,7 +264,7 @@ public class XSiteResource implements ResourceHandler {
          Map<String, String> payload = operation.apply(globalXSiteAdmin, site);
          addPayload(responseBuilder, payload);
          return responseBuilder.build();
-      });
+      }, invocationHelper.getExecutor());
    }
 
    private void addPayload(NettyRestResponse.Builder responseBuilder, Object o) {

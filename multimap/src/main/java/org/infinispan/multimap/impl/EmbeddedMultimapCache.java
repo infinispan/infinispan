@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.functional.FunctionalMap;
@@ -66,12 +67,13 @@ import org.infinispan.util.concurrent.CompletableFutures;
  */
 public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
 
-   private FunctionalMap.ReadWriteMap<K, Collection<V>> readWriteMap;
-   private Cache<K, Collection<V>> cache;
+   private final FunctionalMap.ReadWriteMap<K, Collection<V>> readWriteMap;
+   private final Cache<K, Collection<V>> cache;
 
    public EmbeddedMultimapCache(Cache<K, Collection<V>> cache) {
       this.cache = cache;
-      FunctionalMapImpl<K, Collection<V>> functionalMap = FunctionalMapImpl.create(this.cache.getAdvancedCache());
+      AdvancedCache advancedCache = cache.getAdvancedCache();
+      FunctionalMapImpl<K, Collection<V>> functionalMap = FunctionalMapImpl.create(advancedCache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
    }
 
@@ -91,7 +93,8 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    @Override
    public CompletableFuture<Optional<CacheEntry<K, Collection<V>>>> getEntry(K key) {
       requireNonNull(key, "key can't be null");
-      return CompletableFuture.supplyAsync(() -> Optional.ofNullable(cache.getAdvancedCache().getCacheEntry(key)));
+      return cache.getAdvancedCache().getCacheEntryAsync(key)
+            .thenApply(Optional::ofNullable);
    }
 
    @Override

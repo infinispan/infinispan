@@ -19,6 +19,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -284,11 +285,14 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    public CompletableFuture<Void> startAsync() {
       // The default async executor service is dedicated for Netty, therefore here we'll use common FJP.
-      return CompletableFuture.runAsync(start);
+      // TODO: This needs to be fixed at some point to not use an additional thread
+      return CompletableFuture.runAsync(start, ForkJoinPool.commonPool());
    }
 
    public CompletableFuture<Void> stopAsync() {
-      return CompletableFuture.runAsync(stop);
+      // The default async executor service is dedicated for Netty, therefore here we'll use common FJP.
+      // TODO: This needs to be fixed at some point to not use an additional thread
+      return CompletableFuture.runAsync(stop, ForkJoinPool.commonPool());
    }
 
    @Override

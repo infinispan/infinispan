@@ -189,7 +189,8 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       if (trace) {
          log.tracef("LOCK[%s] forceRelease has been called", name);
       }
-      return CompletableFuture.supplyAsync(() -> forceReleaseSync(name));
+      CompletableFuture<ClusteredLockValue> future = cache.computeIfPresentAsync(new ClusteredLockKey(ByteString.fromString(name)), (k, v) -> ClusteredLockValue.INITIAL_STATE);
+      return future.thenApply(clusteredLockValue -> clusteredLockValue != null && clusteredLockValue.getState() == ClusteredLockState.RELEASED);
    }
 
    @ManagedOperation(
@@ -201,8 +202,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       if (trace) {
          log.tracef("LOCK[%s] forceRelease sync has been called", name);
       }
-      ClusteredLockValue clusteredLockValue = cache.computeIfPresent(new ClusteredLockKey(ByteString.fromString(name)), (k, v) -> ClusteredLockValue.INITIAL_STATE);
-      return clusteredLockValue != null && clusteredLockValue.getState() == ClusteredLockState.RELEASED;
+      return forceRelease(name).join();
    }
 
    @ManagedOperation(
