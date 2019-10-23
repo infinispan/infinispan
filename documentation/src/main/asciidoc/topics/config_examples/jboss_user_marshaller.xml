@@ -1,0 +1,1 @@
+<serialization marshaller="org.infinispan.jboss.marshalling.core.JBossUserMarshaller"/>

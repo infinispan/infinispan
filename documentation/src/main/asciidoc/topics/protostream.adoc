@@ -1,0 +1,173 @@
+[[protostream]]
+= {brandname} ProtoStream Serialization Library
+
+{brandname} uses the Protostream serialization library to encode and decode Java objects into the Protocol Buffers (Protobuf)
+format, which is a platform-independent protocol for structural representation of data.
+
+.Reference
+
+link:https://github.com/infinispan/protostream[{brandname} ProtoStream library]
+link:https://developers.google.com/protocol-buffers[Protocol Buffers]
+
+== Concepts
+[[proto_files]]
+=== .proto Files
+NOTE: Protocol Buffers is a broad subject, we will not detail it here in great detail, so please consult the
+link:https://developers.google.com/protocol-buffers/docs/overview[Developer Guide] for an in-depth
+explanation of the encoding format and best practices.
+
+Protocol Buffers, Protobuf for short, provide a platform independent encoding format that utilises .proto schema files to
+provide a structured representation of entities that can be easily evolved over time whilst maintaining backwards compatibility.
+
+Protobuf is all about structured data, so the first thing to do is to define the structure of your data. This is
+accomplished by declaring Protobuf message types in .proto files, as shown in the example below.
+
+[[book_sample_proto]]
+[source,proto]
+.library.proto
+----
+include::config_examples/library.proto[]
+----
+
+In this example _.proto_ file, we define an entity (message type in Protobuf speak) named _Book_, which is contained in the
+package _book_sample_. The _Book_ entity declares several fields of primitive types and a repeatable field (Protobuf's
+way of representing an array) named _authors_, which is the _Author_ message type also declared in _library.proto_.
+
+There are a few important notes we need to make about Protobuf messages:
+
+* Nesting of messages is possible, but the resulting structure is strictly a tree, never a graph
+* There is no concept of type inheritance
+* Collections are not supported but arrays can be easily emulated using repeated fields
+
+
+=== Marshallers
+As described in the link:#proto_files[previous section], a fundamental concept of the Protobuf format is the definition
+of messages in the .proto schema to determine how an entity is represented. However, in order for our Java
+applications to utilise the Protobuf format to transmit/store data, it's necessary for our Java objects to be encoded.
+This is handled by the ProtoStream library and its configured _Marshaller_ implementations, which convert plain old
+Java objects into the Protobuf format.
+
+[[protostream_ctx]]
+=== SerializationContext
+A fundamental component of the ProtoStream library is the SerializationContext. This is a repository for Protobuf
+type definitions, loaded from .proto files, and their accompanying Marshaller implementations. All ProtoStream marshalling
+operations happen in the context of a provided SerializationContext.
+
+[[protostream_usage]]
+== Usage
+ProtoStream is able to handle the following types, as well as their unboxed equivalent in the case of primitive types,
+without any additional configuration:
+
+* String
+* Integer
+* Long
+* Double
+* Float
+* Boolean
+* byte[]
+* Byte
+* Short
+* Character
+* java.util.Date
+* java.time.Instant
+
+Support for additional Java objects is possible by configuring the link:#protostream_ctx[SerializationContext] using `SerializationContextInitializer`
+implementations.
+
+{brandname} directly integrates with the ProtoStream library by allowing users to configure implementations of the ProtoStream
+SerializationContextInitializer interface. These implementations are then used to initialise the various `SerializationContext`
+instances used by {brandname} for marshalling, therefore allowing custom user objects to be marshalled for storage and cluster communication.
+
+[[generating_proto_marshallers]]
+=== Generating SerializationContextInitializers
+The simplest way to create a SerializastionContextInitializer is to use the _org:infinispan.protostream:protostream-processor_
+artifact to automatically generate the following:
+
+* _.proto_ schema
+* All marshaller implementations
+* The SerializationContextInitializer implementation used to register the schemas and marshaller with a SerializationContext
+
+This requires Java annotations to be added to the Java object(s) that require marshalling, in addition to a class
+annotated with `@AutoProtoSchemaBuilder`.
+
+The protostream-processor then processes these objects at compile-time, using the meta data in the
+ProtoStream annotations to generate the required .proto schema and corresponding marshaller implementations.
+
+For example, let's reconsider the _Book_ and _Author_ messages which we manually defined link:#book_sample_proto[[previously]].
+The manual writing of the .proto file, can be replaced with the following Java annotations.
+
+[source,java]
+.Book.java
+----
+include::code_examples/Book.java[]
+----
+[source,java]
+.Author.java
+----
+include::code_examples/Author.java[]
+----
+
+We then define an interface which is annotated with `@AutoProtoSchemaBuilder` and extends `SerializationContextInitializer`.
+
+[source,java]
+----
+include::code_examples/LibraryInitializer.java[]
+----
+
+
+During compile-time, the protostream-processor generates a concrete implementation of the above interface which can then
+be used to initialize a ProtoStream SerializationContext. By default, the name of the implementation is the annotated class
+name plus the "Impl" suffix. The generated schema file can be found at `target/classes/proto/library.proto`, which is dictated
+by the provided `schemaFileName` and `schemaFilePath` values.
+
+The generated .proto file and `LibraryInitializerImpl.java` are shown below.
+
+[source,protobuf]
+.target/classes/proto/library.proto
+----
+include::config_examples/generated_library.proto[]
+----
+
+[source,java]
+----
+include::code_examples/LibraryInitializerImpl.java[]
+----
+
+=== Manually Implementing SerializationContextInitializers
+Although link:#generating_proto_marshallers[generating resources] is the easiest and most performant way to utilise
+ProtoStream, this method might not always be viable. For example, if you are not able to modify the Java object classes
+to add the required annotations. For such use cases, it's possible to manually define the .proto schema and create a manual
+marshaller implementation.
+
+Continuing with the Book and Author examples, first we need to manually create a `library.proto` file with our message
+schemas.
+
+[source,proto]
+.library.proto
+----
+include::config_examples/library.proto[]
+----
+
+Then, we need to implement a marshaller for both the Book and Author classes using the `org.infinispan.protostream.MessageMarshaller`
+interface.
+
+[source,java]
+.BookMarshaller.java
+----
+include::code_examples/BookMarshaller.java[]
+----
+
+[source,java]
+.AuthorMarshaller.java
+----
+include::code_examples/AuthorMarshaller.java[]
+----
+
+Finally, we need to create a `SerializationContextInitializer` implementation that registers the `library.proto` file
+and the two marshallers with a ProtoStream `SerializationContext`.
+
+[source,java]
+.ManualSerializationContextInitializer.java
+----
+include::code_examples/ManualSerializationContextInitializer.java[]
+----

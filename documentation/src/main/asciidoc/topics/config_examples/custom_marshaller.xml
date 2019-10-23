@@ -1,4 +1,4 @@
-<serialization marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller">
+<serialization marshaller="org.infinispan.example.marshall.CustomMarshaller">
     <white-list>
         <class>org.infinispan.concrete.SomeClass</class>
         <regex>org.infinispan.example.*</regex>
