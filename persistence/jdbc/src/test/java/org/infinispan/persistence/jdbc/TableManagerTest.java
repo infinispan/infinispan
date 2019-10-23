@@ -33,9 +33,9 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "persistence.jdbc.TableManagerTest")
 public class TableManagerTest extends AbstractInfinispanTest {
-   ConnectionFactory connectionFactory;
-   Connection connection;
-   TableManager tableManager;
+   protected ConnectionFactory connectionFactory;
+   protected Connection connection;
+   protected TableManager tableManager;
 
    @BeforeClass
    public void createConnection() throws Exception {
