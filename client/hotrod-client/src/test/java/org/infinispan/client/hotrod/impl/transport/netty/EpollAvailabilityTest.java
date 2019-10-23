@@ -16,7 +16,7 @@ public class EpollAvailabilityTest extends AbstractInfinispanTest {
 
    public void testEpollNotAvailable() throws Exception {
       Thread testThread = Thread.currentThread();
-      StringLogAppender logAppender = new StringLogAppender(EPOLL_AVAILABLE_CLASS,
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.HOTROD",
             Level.TRACE,
             t -> t == testThread,
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
