@@ -1016,7 +1016,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CacheEntry getCacheEntry(Object key) {
+   public CacheEntry<K, V> getCacheEntry(Object key) {
       authzManager.checkPermission(subject, AuthorizationPermission.READ);
       return delegate.getCacheEntry(key);
    }

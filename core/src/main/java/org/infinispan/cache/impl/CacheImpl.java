@@ -534,16 +534,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return (V) invoker.invoke(ctx, command);
    }
 
-   final CacheEntry getCacheEntry(Object key, long explicitFlags, InvocationContext ctx) {
+   final CacheEntry<K, V> getCacheEntry(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
       Object ret = invoker.invoke(ctx, command);
-      return (CacheEntry) ret;
+      return (CacheEntry<K, V>) ret;
    }
 
    @Override
-   public final CacheEntry getCacheEntry(Object key) {
+   public final CacheEntry<K, V> getCacheEntry(Object key) {
       return getCacheEntry(key, EnumUtil.EMPTY_BIT_SET, invocationContextFactory.createInvocationContext(false, 1));
    }
 
