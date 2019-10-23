@@ -102,11 +102,6 @@
          <artifactId>jboss-threads</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.jboss.narayana.jta</groupId>
-         <artifactId>narayana-jta</artifactId>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
          <groupId>io.agroal</groupId>
          <artifactId>agroal-pool</artifactId>
       </dependency>

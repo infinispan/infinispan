@@ -1,5 +1,7 @@
 package org.infinispan.transaction.lookup;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
@@ -81,7 +83,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
 
    private void useDummyTM() {
       tm = EmbeddedTransactionManager.getInstance();
-      log.fallingBackToEmbeddedTm();
+      CONTAINER.fallingBackToEmbeddedTm();
    }
 
    private void tryEmbeddedJBossTM() {
@@ -113,7 +115,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          ctx = new InitialContext();
       }
       catch (NamingException e) {
-         log.failedToCreateInitialCtx(e);
+         CONTAINER.failedToCreateInitialCtx(e);
          lookupFailed = true;
          return;
       }
