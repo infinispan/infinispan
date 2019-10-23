@@ -1915,4 +1915,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid cache loader configuration for '%s'.  This implementation does not support being segmented!", id = 563)
    CacheConfigurationException storeDoesNotSupportBeingSegmented(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Configured store '%s' is segmented and may use a large number of file descriptors", id = 564)
+   void segmentedStoreUsesManyFileDescriptors(String storeName);
 }

@@ -1,14 +1,18 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.FRAGMENTATION_FACTOR;
 import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.LOCATION;
 import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.MAX_ENTRIES;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.persistence.file.SingleFileStore;
+import org.infinispan.util.logging.Log;
 
 /**
  * Single file cache store configuration builder.
@@ -18,6 +22,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class SingleFileStoreConfigurationBuilder
       extends AbstractStoreConfigurationBuilder<SingleFileStoreConfiguration, SingleFileStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
+
+   private static boolean NOTIFIED_SEGMENTED;
 
    public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       this(builder, SingleFileStoreConfiguration.attributeDefinitionSet());
@@ -83,6 +89,16 @@ public class SingleFileStoreConfigurationBuilder
    public SingleFileStoreConfigurationBuilder fragmentationFactor(float fragmentationFactor) {
       attributes.attribute(FRAGMENTATION_FACTOR).set(fragmentationFactor);
       return this;
+   }
+
+   @Override
+   public void validate() {
+      Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
+      if ((!segmentedAttribute.isModified() || segmentedAttribute.get()) && !NOTIFIED_SEGMENTED) {
+         NOTIFIED_SEGMENTED = true;
+         Log.CONFIG.segmentedStoreUsesManyFileDescriptors(SingleFileStore.class.getSimpleName());
+      }
+      super.validate();
    }
 
    @Override

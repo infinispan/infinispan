@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs.configuration;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.COMPACTION_THRESHOLD;
 import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.OPEN_FILES_LIMIT;
 
@@ -9,12 +10,14 @@ import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationBuilderInfo;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.persistence.sifs.Log;
+import org.infinispan.persistence.sifs.SoftIndexFileStore;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -22,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<SoftIndexFileStoreConfiguration, SoftIndexFileStoreConfigurationBuilder> implements ConfigurationBuilderInfo {
    private static final Log log = LogFactory.getLog(SoftIndexFileStoreConfigurationBuilder.class, Log.class);
+   private static boolean NOTIFIED_SEGMENTED;
 
    private final IndexConfigurationBuilder index = new IndexConfigurationBuilder();
    private final DataConfigurationBuilder data = new DataConfigurationBuilder();
@@ -170,6 +174,11 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
 
    @Override
    protected void validate(boolean skipClassChecks) {
+      Attribute<Boolean> segmentedAttribute = attributes.attribute(SEGMENTED);
+      if ((!segmentedAttribute.isModified() || segmentedAttribute.get()) && !NOTIFIED_SEGMENTED) {
+         NOTIFIED_SEGMENTED = true;
+         org.infinispan.util.logging.Log.CONFIG.segmentedStoreUsesManyFileDescriptors(SoftIndexFileStore.class.getSimpleName());
+      }
       super.validate(skipClassChecks);
       index.validate();
       double compactionThreshold = attributes.attribute(COMPACTION_THRESHOLD).get();
