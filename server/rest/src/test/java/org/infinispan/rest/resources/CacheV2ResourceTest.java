@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
 import static org.eclipse.jetty.http.HttpMethod.GET;
+import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.PERMANENT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
@@ -262,6 +263,33 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String contentAsString = response.getContentAsString();
       Set keys = new ObjectMapper().readValue(contentAsString, Set.class);
       assertEquals(2, keys.size());
+   }
+
+   @Test
+   public void testJSONConversion() throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches?action=toJSON", restServer().getPort());
+
+      String xml = "<infinispan>\n" +
+            "    <cache-container>\n" +
+            "        <distributed-cache name=\"cacheName\" mode=\"SYNC\">\n" +
+            "            <memory>\n" +
+            "                <object size=\"20\"/>\n" +
+            "            </memory>\n" +
+            "        </distributed-cache>\n" +
+            "    </cache-container>\n" +
+            "</infinispan>";
+
+      ContentResponse response = client.newRequest(url).method(POST).content(new StringContentProvider(xml)).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      ObjectMapper objectMapper = new ObjectMapper();
+      JsonNode jsonNode = objectMapper.readTree(response.getContentAsString());
+
+      JsonNode distCache = jsonNode.get("distributed-cache");
+      JsonNode memory = distCache.get("memory");
+      JsonNode object = memory.get("object");
+      assertEquals("SYNC", distCache.get("mode").asText());
+      assertEquals(20, object.get("size").asInt());
    }
 
    private void registerSchema() throws Exception {

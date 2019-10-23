@@ -95,6 +95,18 @@ include::rest_examples/get_v2_configuration.adoc[]
 |Sets the required format to return content. Supported formats are `application/xml` and `application/json`. The default is `application/json`. See link:#rest_accept[Accept] for more information.
 |===
 
+[[rest_v2_cache_config_convert]]
+=== Converting Cache Configurations
+
+To convert a certain existing cache configuration that is in XML format to JSON, invoke:
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches?action=toJSON
+----
+
+The POST body must contain a valid cache XML configuration and the response will contain the equivalent JSON representation.
+
 [[rest_v2_add_entries]]
 === Adding Entries
 
