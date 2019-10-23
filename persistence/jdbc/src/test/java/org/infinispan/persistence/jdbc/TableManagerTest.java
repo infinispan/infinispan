@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc;
 
-import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -116,7 +115,7 @@ public class TableManagerTest extends AbstractInfinispanTest {
       try {
          ps = connection.prepareStatement("INSERT INTO " + tableManager.getTableName() + "(ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN) values(?, ?, ?)");
          ps.setString(1, System.currentTimeMillis() + "");
-         ps.setBlob(2, new ByteArrayInputStream(data));
+         ps.setBytes(2, data);
          ps.setLong(3, System.currentTimeMillis());
          assert 1 == ps.executeUpdate();
       } finally {
