@@ -417,8 +417,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "A remote transaction with the given id was already registered!!!", id = 103)
 //   void remoteTxAlreadyRegistered();
 
-   @LogMessage(level = WARN)
-   @Message(value = "Falling back to EmbeddedTransactionManager from Infinispan", id = 104)
+   @LogMessage(level = INFO)
+   @Message(value = "Using EmbeddedTransactionManager", id = 104)
    void fallingBackToEmbeddedTm();
 
    @LogMessage(level = ERROR)
