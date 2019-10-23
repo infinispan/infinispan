@@ -549,35 +549,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)} which takes in lifespan parameters.
-    *
-    * @param key                key to use
-    * @param value              new value to merge with existing value
-    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
-    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param lifespanUnit       time unit for lifespan
-    * @return the merged value that was stored under key
-    * @since 9.4
-    */
-   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
-
-   /**
-    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)} which takes in lifespan parameters.
-    *
-    * @param key                key to use
-    * @param value              new value to merge with existing value
-    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
-    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param lifespanUnit       time unit for lifespan
-    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                           expired
-    * @param maxIdleTimeUnit    time unit for max idle time
-    * @return the merged value that was stored under key
-    * @since 9.4
-    */
-   CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
-
-   /**
     * Overloaded {@link #mergeAsync(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
