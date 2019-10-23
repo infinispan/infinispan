@@ -9,7 +9,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -30,7 +29,7 @@ public class HotRodMultiMapOperations {
 
    @Test
    public void testMultiMap() {
-      RemoteCache<String, String> cache = SERVER_TEST.getHotRodCache(CacheMode.DIST_SYNC);
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
       MultimapCacheManager multimapCacheManager = RemoteMultimapCacheManagerFactory.from(cache.getRemoteCacheManager());
 
       RemoteMultimapCache<Integer, String> people = multimapCacheManager.get(cache.getName());

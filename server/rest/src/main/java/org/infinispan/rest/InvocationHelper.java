@@ -1,8 +1,6 @@
 package org.infinispan.rest;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
@@ -27,7 +25,6 @@ public class InvocationHelper {
    private final RestServerConfiguration configuration;
    private final ServerManagement server;
    private final Executor executor;
-   private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1);
 
    InvocationHelper(RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
@@ -72,14 +69,6 @@ public class InvocationHelper {
 
    public EmbeddedCounterManager getCounterManager() {
       return counterManager;
-   }
-
-   public ScheduledExecutorService getScheduledExecutor() {
-      return scheduledExecutor;
-   }
-
-   public void stop() {
-      scheduledExecutor.shutdown();
    }
 
    public String getContext() {

@@ -1,0 +1,20 @@
+SHUTDOWN(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+shutdown - shuts down individual servers or the whole cluster
+
+
+SYNOPSIS
+--------
+*shutdown server* ['SERVERS']
+
+*shutdown cluster*
+
+
+DESCRIPTION
+-----------
+The *shutdown* command performs an orderly shutdown of individual server nodes or of the whole cluster.

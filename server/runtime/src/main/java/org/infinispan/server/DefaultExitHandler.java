@@ -8,9 +8,9 @@ import org.infinispan.commons.util.Version;
  **/
 public class DefaultExitHandler extends ExitHandler {
    @Override
-   public void exit(int exitCode) {
+   public void exit(ExitStatus exitStatus) {
       Server.log.serverStopping(Version.getBrandName());
-      exitFuture.complete(exitCode);
+      exitFuture.complete(exitStatus);
       Server.log.serverStopped(Version.getBrandName());
    }
 }

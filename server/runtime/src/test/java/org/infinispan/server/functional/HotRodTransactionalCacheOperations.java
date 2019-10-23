@@ -66,7 +66,7 @@ public class HotRodTransactionalCacheOperations {
 
       String xml = String.format(TEST_CACHE_XML_CONFIG, SERVER_TEST.getMethodName(), txMode.name());
 
-      RemoteCache<String, String> cache = SERVER_TEST.getHotRodCache(config, new XMLStringConfiguration(xml));
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(config).withServerConfiguration(new XMLStringConfiguration(xml)).create();
       TransactionManager tm = cache.getTransactionManager();
       tm.begin();
       cache.put("k", "v1");

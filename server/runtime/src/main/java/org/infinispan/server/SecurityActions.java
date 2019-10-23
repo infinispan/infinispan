@@ -76,4 +76,12 @@ final class SecurityActions {
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager manager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(manager));
    }
+
+   static void shutdownCache(EmbeddedCacheManager manager, String name) {
+      PrivilegedAction<Void> action = () -> {
+         manager.getCache(name).shutdown();
+         return null;
+      };
+      doPrivileged(action);
+   }
 }

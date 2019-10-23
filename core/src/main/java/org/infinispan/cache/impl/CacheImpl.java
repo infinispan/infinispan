@@ -84,7 +84,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -1140,14 +1139,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (log.isDebugEnabled())
          log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
       componentRegistry.stop();
-   }
-
-   public void performGracefulShutdown() {
-      // Perform any orderly shutdown operations here
-      PassivationManager passivationManager = componentRegistry.getComponent(PassivationManager.class);
-      if (passivationManager != null) {
-         passivationManager.passivateAll();
-      }
    }
 
    /**

@@ -18,6 +18,7 @@ import javax.net.ssl.X509TrustManager;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
@@ -26,12 +27,12 @@ import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.client.rest.impl.okhttp.auth.AutoDetectAuthenticator;
-import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorInterceptor;
 import org.infinispan.client.rest.impl.okhttp.auth.BasicAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.BearerAuthenticator;
+import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticator;
+import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorInterceptor;
 import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorWrapper;
 import org.infinispan.client.rest.impl.okhttp.auth.DigestAuthenticator;
-import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticator;
 
 import okhttp3.Authenticator;
 import okhttp3.Call;
@@ -139,6 +140,11 @@ public class RestClientOkHttp implements RestClient {
    @Override
    public CompletionStage<RestResponse> caches() {
       return execute(baseURL, configuration.contextPath(), "v2", "caches");
+   }
+
+   @Override
+   public RestClusterClient cluster() {
+      return new RestClusterClientOkHttp(this);
    }
 
    @Override

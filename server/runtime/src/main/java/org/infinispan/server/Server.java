@@ -4,13 +4,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -26,7 +30,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -46,6 +53,7 @@ import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
+import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
 import org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider;
@@ -62,7 +70,7 @@ import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  */
-public class Server implements ServerManagement {
+public class Server implements ServerManagement, AutoCloseable {
    public static final Log log = LogFactory.getLog("SERVER", Log.class);
 
    // Properties
@@ -73,23 +81,28 @@ public class Server implements ServerManagement {
    public static final String INFINISPAN_NODE_NAME = "infinispan.node.name";
    public static final String INFINISPAN_PORT_OFFSET = "infinispan.socket.binding.port-offset";
    /**
-    * Property name indicating the path to the server installation. If unspecified, the current working directory will be used
+    * Property name indicating the path to the server installation. If unspecified, the current working directory will
+    * be used
     */
    public static final String INFINISPAN_SERVER_HOME_PATH = "infinispan.server.home.path";
    /**
-    * Property name indicating the path to the root of a server instance. If unspecified, defaults to the <i>server</i> directory under the server home.
+    * Property name indicating the path to the root of a server instance. If unspecified, defaults to the <i>server</i>
+    * directory under the server home.
     */
    public static final String INFINISPAN_SERVER_ROOT_PATH = "infinispan.server.root.path";
    /**
-    * Property name indicating the path to the configuration directory of a server instance. If unspecified, defaults to the <i>conf</i> directory under the server root.
+    * Property name indicating the path to the configuration directory of a server instance. If unspecified, defaults to
+    * the <i>conf</i> directory under the server root.
     */
    public static final String INFINISPAN_SERVER_CONFIG_PATH = "infinispan.server.config.path";
    /**
-    * Property name indicating the path to the data directory of a server instance. If unspecified, defaults to the <i>data</i> directory under the server root.
+    * Property name indicating the path to the data directory of a server instance. If unspecified, defaults to the
+    * <i>data</i> directory under the server root.
     */
    public static final String INFINISPAN_SERVER_DATA_PATH = "infinispan.server.data.path";
    /**
-    * Property name indicating the path to the log directory of a server instance. If unspecified, defaults to the <i>log</i> directory under the server root.
+    * Property name indicating the path to the log directory of a server instance. If unspecified, defaults to the
+    * <i>log</i> directory under the server root.
     */
    public static final String INFINISPAN_SERVER_LOG_PATH = "infinispan.server.log.path";
 
@@ -106,6 +119,8 @@ public class Server implements ServerManagement {
    public static final String DEFAULT_CLUSTER_STACK = "tcp";
    public static final int DEFAULT_BIND_PORT = 11222;
 
+   private static final int SHUTDOWN_DELAY_SECONDS = 3;
+
    private final TimeService timeService;
    private final File serverRoot;
    private final File serverConf;
@@ -120,6 +135,7 @@ public class Server implements ServerManagement {
    private ServerConfiguration serverConfiguration;
    private Extensions extensions;
    private CacheIgnoreManager cacheIgnoreManager;
+   private ScheduledExecutorService scheduler;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -236,8 +252,8 @@ public class Server implements ServerManagement {
       }
    }
 
-   public synchronized CompletableFuture<Integer> run() {
-      CompletableFuture<Integer> r = exitHandler.getExitFuture();
+   public synchronized CompletableFuture<ExitStatus> run() {
+      CompletableFuture<ExitStatus> r = exitHandler.getExitFuture();
       if (status == ComponentStatus.RUNNING) {
          return r;
       }
@@ -256,6 +272,9 @@ public class Server implements ServerManagement {
 
          // Start the protocol servers
          serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
+         // Register this server instance
+         serverConfiguration.setServer(this);
+
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
          ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
          serverConfiguration.endpoints().connectors().parallelStream().forEach(configuration -> {
@@ -294,7 +313,7 @@ public class Server implements ServerManagement {
       } catch (Exception e) {
          r.completeExceptionally(e);
       }
-      r = r.whenComplete((status, t) -> shutdown());
+      r = r.whenComplete((status, t) -> localShutdown(status));
       return r;
    }
 
@@ -303,16 +322,77 @@ public class Server implements ServerManagement {
       return serverConfiguration;
    }
 
-   private void shutdown() {
-      status = ComponentStatus.STOPPING;
+   @Override
+   public void serverStop(List<String> servers) {
+      for (DefaultCacheManager cacheManager : cacheManagers.values()) {
+         ClusterExecutor executor = cacheManager.executor();
+         if (servers != null && !servers.isEmpty()) {
+            // Find the actual addresses of the servers
+            List<Address> targets = cacheManager.getMembers().stream()
+                  .filter(a -> servers.contains(a.toString()))
+                  .collect(Collectors.toList());
+            executor = executor.filterTargets(targets);
+         }
+         // Tell all the target servers to exit
+         sendExitStatusToServers(executor, ExitStatus.SERVER_SHUTDOWN);
+      }
+   }
+
+   @Override
+   public void clusterStop() {
+      cacheManagers.values().forEach(cm -> {
+         cm.getCacheNames().forEach(name -> SecurityActions.shutdownCache(cm, name));
+         sendExitStatusToServers(cm.executor(), ExitStatus.CLUSTER_SHUTDOWN);
+      });
+   }
+
+   private void sendExitStatusToServers(ClusterExecutor clusterExecutor, ExitStatus exitStatus) {
+      CompletableFuture<Void> job = clusterExecutor.submitConsumer(new ShutdownRunnable(exitStatus), (a, i, t) -> {
+         if (t != null) {
+            log.clusteredTaskError(t);
+         }
+      });
+      job.join();
+   }
+
+   private void localShutdown(ExitStatus exitStatus) {
+      this.status = ComponentStatus.STOPPING;
+      if (exitStatus == ExitStatus.CLUSTER_SHUTDOWN) {
+         log.clusterShutdown();
+      }
       // Shutdown the protocol servers in parallel
       protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
       cacheManagers.values().forEach(cm -> SecurityActions.stopCacheManager(cm));
-      status = ComponentStatus.TERMINATED;
+      this.status = ComponentStatus.TERMINATED;
    }
 
-   public void stop() {
-      getExitHandler().exit(0);
+
+   private void serverStopHandler(ExitStatus exitStatus) {
+      scheduler = Executors.newSingleThreadScheduledExecutor();
+      // This will complete the exit handler
+      scheduler.schedule(() -> getExitHandler().exit(exitStatus), SHUTDOWN_DELAY_SECONDS, TimeUnit.SECONDS);
+   }
+
+   static final class ShutdownRunnable implements SerializableFunction<EmbeddedCacheManager, Void> {
+      private final ExitStatus exitStatus;
+
+      public ShutdownRunnable(ExitStatus exitStatus) {
+         this.exitStatus = exitStatus;
+      }
+
+      @Override
+      public Void apply(EmbeddedCacheManager em) {
+         Server server = SecurityActions.getCacheManagerConfiguration(em).module(ServerConfiguration.class).getServer();
+         server.serverStopHandler(exitStatus);
+         return null;
+      }
+   }
+
+   @Override
+   public void close() {
+      if (scheduler != null) {
+         scheduler.shutdown();
+      }
    }
 
    @Override

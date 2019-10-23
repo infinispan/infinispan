@@ -1206,7 +1206,7 @@ The response is the current thread dump in `text/plain` format.
 [[rest_v2_server_stop]]
 === Stopping {brandname} Servers
 
-To stop a {brandname} server, invoke a `GET` request:
+To stop the {brandname} server, invoke a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -1214,3 +1214,28 @@ include::rest_examples/get_v2_server_stop.adoc[]
 ----
 
 The server responds with `200(OK)` and then stops running.
+
+[[rest_v2_cluster]]
+== Interacting with {brandname} Clusters
+
+The REST API lets you interact with {brandname} clusters to retrieve cluster-wide
+configuration and information. You can also perform operations to manage clusters.
+
+[[rest_v2_cluster_stop]]
+=== Stopping {brandname} Clusters
+
+To gracefully stop {brandname} clusters, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_cluster_stop.adoc[]
+----
+
+The server responds with `200(OK)` and then the cluster performs a graceful shutdown.
+
+You can also stop one or more specific servers by passing their names:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_cluster_stop_named.adoc[]
+----

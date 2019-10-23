@@ -36,7 +36,7 @@ public class ResilienceIT {
    public void testUnresponsiveNode() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.socketTimeout(1000).connectionTimeout(1000).maxRetries(10).connectionPool().maxActive(1);
-      RemoteCache<String, String> cache = SERVER_TEST.getHotRodCache(builder, CacheMode.REPL_SYNC);
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.REPL_SYNC).create();
 
       cache.put("k1", "v1");
       assertEquals("v1", cache.get("k1"));

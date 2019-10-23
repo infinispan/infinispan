@@ -120,7 +120,6 @@ public class RestConnection implements Connection, Closeable {
    }
 
    private void connectInternal() throws IOException {
-
       serverVersion = (String) parseBody(fetch(() -> client.server().info()), Map.class).get("version");
       connected = true;
       availableContainers = parseBody(fetch(() -> client.cacheManagers()), List.class);
@@ -432,7 +431,20 @@ public class RestConnection implements Connection, Closeable {
                break;
             }
             case Shutdown.CMD: {
-               response = client.server().stop();
+               switch (command.arg(Shutdown.TYPE)) {
+                  case Shutdown.Server.CMD: {
+                     if (command.hasArg(Shutdown.SERVERS)) {
+                        response = client.cluster().stop(command.argAs(Shutdown.SERVERS));
+                     } else {
+                        response = client.server().stop();
+                     }
+                     break;
+                  }
+                  case Shutdown.Cluster.CMD: {
+                     response = client.cluster().stop();
+                     break;
+                  }
+               }
                break;
             }
             case Site.CMD: {
@@ -544,6 +556,11 @@ public class RestConnection implements Connection, Closeable {
       List<String> schemas = new ArrayList<>();
       getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME).forEach(s -> schemas.add(s));
       return schemas;
+   }
+
+   @Override
+   public Collection<String> getAvailableServers(String container) throws IOException {
+      return (List<String>) parseBody(fetch(() -> client.cacheManager(container).info()), Map.class).get("cluster_members");
    }
 
    @Override

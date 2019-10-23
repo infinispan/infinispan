@@ -54,7 +54,7 @@ public class AuthenticationKeyCloakIT {
             })
             .realm("default");
 
-      RemoteCache<String, String> cache = SERVER_TEST.getHotRodCache(builder, CacheMode.DIST_SYNC);
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
@@ -68,7 +68,7 @@ public class AuthenticationKeyCloakIT {
       builder.security().authentication()
                .mechanism("BEARER_TOKEN")
                .username(token);
-      RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
 
       assertEquals(204, response.getStatus());

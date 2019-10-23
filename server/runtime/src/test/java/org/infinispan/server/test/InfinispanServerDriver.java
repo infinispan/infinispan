@@ -278,15 +278,25 @@ public abstract class InfinispanServerDriver {
       builder.security().ssl().trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath()).trustStorePassword(KEY_PASSWORD.toCharArray());
    }
 
+   public abstract boolean isRunning(int server);
+
    /**
     * Returns an InetSocketAddress for connecting to a specific port on a specific server. The implementation will need
     * to provide a specific mapping (e.g. port offset).
     *
     * @param server the index of the server
     * @param port   the service port
-    * @return an unresolved InetSocketeAddress pointing to the actual running service
+    * @return an unresolved InetSocketAddress pointing to the actual running service
     */
-   public abstract InetSocketAddress getServerAddress(int server, int port);
+   public abstract InetSocketAddress getServerSocket(int server, int port);
+
+   /**
+    * Returns an InetAddress that points to a specific server.
+    *
+    * @param server the index of the server
+    * @return an InetAddress pointing to the server's address
+    */
+   public abstract InetAddress getServerAddress(int server);
 
    /**
     * Pauses the server. Equivalent to kill -SIGSTOP
@@ -316,6 +326,18 @@ public abstract class InfinispanServerDriver {
     * @param server
     */
    public abstract void kill(int server);
+
+   /**
+    * Restarts a previously stopped server.
+    *
+    * @param server
+    */
+   public abstract void restart(int server);
+
+   /**
+    * Restarts all of the nodes
+    */
+   public abstract void restartCluster();
 
    /**
     * Returns a {@link MBeanServerConnection} to the specified server

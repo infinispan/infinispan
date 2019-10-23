@@ -1,5 +1,6 @@
 package org.infinispan.server.core;
 
+import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -12,7 +13,9 @@ public interface ServerManagement {
 
    ConfigurationInfo getConfiguration();
 
-   void stop();
+   void serverStop(List<String> servers);
+
+   void clusterStop();
 
    Set<String> cacheManagerNames();
 

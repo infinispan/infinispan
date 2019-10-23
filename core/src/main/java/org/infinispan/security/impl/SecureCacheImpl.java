@@ -121,6 +121,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public void shutdown() {
+      authzManager.checkPermission(subject, AuthorizationPermission.LIFECYCLE);
+      delegate.shutdown();
+   }
+
+   @Override
    public void start() {
       authzManager.checkPermission(subject, AuthorizationPermission.LIFECYCLE);
       delegate.start();

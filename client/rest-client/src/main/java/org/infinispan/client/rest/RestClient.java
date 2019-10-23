@@ -19,7 +19,15 @@ public interface RestClient extends Closeable {
    @Override
    void close() throws IOException;
 
+   /**
+    * Interact with the single server
+    */
    RestServerClient server();
+
+   /**
+    * Interact with the whole cluster
+    */
+   RestClusterClient cluster();
 
    /**
     * Returns a list of available cache manager names

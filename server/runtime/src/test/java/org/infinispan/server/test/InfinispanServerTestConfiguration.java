@@ -13,6 +13,7 @@ public class InfinispanServerTestConfiguration {
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private Properties properties = new Properties();
    private String[] artifacts;
+   private boolean jmx;
 
    public InfinispanServerTestConfiguration(String configurationFile) {
       this.configurationFile = configurationFile;
@@ -20,6 +21,7 @@ public class InfinispanServerTestConfiguration {
 
    /**
     * The number of servers in the initial cluster
+    *
     * @param numServers
     */
    public InfinispanServerTestConfiguration numServers(int numServers) {
@@ -28,7 +30,9 @@ public class InfinispanServerTestConfiguration {
    }
 
    /**
-    * The {@link ServerRunMode} to use. The default run mode is EMBEDDED unless overridden via the org.infinispan.test.server.driver system property
+    * The {@link ServerRunMode} to use. The default run mode is EMBEDDED unless overridden via the
+    * org.infinispan.test.server.driver system property
+    *
     * @param runMode
     */
    public InfinispanServerTestConfiguration runMode(ServerRunMode runMode) {
@@ -46,10 +50,16 @@ public class InfinispanServerTestConfiguration {
 
    /**
     * Extra libs
+    *
     * @param artifacts
     */
    public InfinispanServerTestConfiguration artifacts(String... artifacts) {
       this.artifacts = artifacts;
+      return this;
+   }
+
+   public InfinispanServerTestConfiguration enableJMX() {
+      this.jmx = true;
       return this;
    }
 
@@ -71,5 +81,9 @@ public class InfinispanServerTestConfiguration {
 
    public String[] artifacts() {
       return artifacts;
+   }
+
+   public boolean isJMXEnabled() {
+      return jmx;
    }
 }

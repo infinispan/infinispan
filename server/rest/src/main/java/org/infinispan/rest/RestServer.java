@@ -16,6 +16,7 @@ import org.infinispan.rest.framework.impl.RestDispatcherImpl;
 import org.infinispan.rest.resources.CacheManagerResource;
 import org.infinispan.rest.resources.CacheResource;
 import org.infinispan.rest.resources.CacheResourceV2;
+import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.SplashResource;
@@ -78,7 +79,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       if (restCacheManager != null) {
          restCacheManager.stop();
       }
-      if (invocationHelper != null) invocationHelper.stop();
       AuthenticationConfiguration auth = configuration.authentication();
       if (auth.enabled()) {
          try {
@@ -122,6 +122,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       }
       if (server != null) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
+         resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }

@@ -98,7 +98,7 @@ public class InfinispanServerRule implements TestRule {
    RemoteCacheManager newHotRodClient(ConfigurationBuilder builder) {
       // Add all known server addresses
       for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         InetSocketAddress serverAddress = serverDriver.getServerAddress(i, 11222);
+         InetSocketAddress serverAddress = serverDriver.getServerSocket(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
@@ -112,7 +112,7 @@ public class InfinispanServerRule implements TestRule {
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {
       // Add all known server addresses
       for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         InetSocketAddress serverAddress = serverDriver.getServerAddress(i, 11222);
+         InetSocketAddress serverAddress = serverDriver.getServerSocket(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       return RestClient.forConfiguration(builder.build());
@@ -124,7 +124,7 @@ public class InfinispanServerRule implements TestRule {
    CloseableMemcachedClient newMemcachedClient() {
       List<InetSocketAddress> addresses = new ArrayList<>();
       for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         InetSocketAddress unresolved = serverDriver.getServerAddress(i, 11221);
+         InetSocketAddress unresolved = serverDriver.getServerSocket(i, 11221);
          addresses.add(new InetSocketAddress(unresolved.getHostName(), unresolved.getPort()));
       }
       MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(addresses));

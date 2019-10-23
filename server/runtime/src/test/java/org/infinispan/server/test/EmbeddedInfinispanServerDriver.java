@@ -14,7 +14,9 @@ import javax.management.MBeanServerConnection;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.DefaultExitHandler;
+import org.infinispan.server.ExitStatus;
 import org.infinispan.server.Server;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 
 /**
@@ -24,7 +26,7 @@ import org.infinispan.test.TestingUtil;
 public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    public static final int OFFSET_FACTOR = 100;
    List<Server> servers;
-   List<CompletableFuture<Integer>> serverFutures;
+   List<CompletableFuture<ExitStatus>> serverFutures;
 
    protected EmbeddedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
@@ -58,7 +60,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
       if (servers != null) {
          for (int i = 0; i < servers.size(); i++) {
             Server server = servers.get(i);
-            server.getExitHandler().exit(0);
+            server.getExitHandler().exit(ExitStatus.SERVER_SHUTDOWN);
             try {
                serverFutures.get(i).get();
             } catch (Throwable t) {
@@ -72,8 +74,13 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    }
 
    @Override
-   public InetSocketAddress getServerAddress(int server, int port) {
-      return new InetSocketAddress("localhost", port + server * OFFSET_FACTOR);
+   public InetSocketAddress getServerSocket(int server, int port) {
+      return new InetSocketAddress(getServerAddress(server), port + server * OFFSET_FACTOR);
+   }
+
+   @Override
+   public InetAddress getServerAddress(int server) {
+      return Exceptions.unchecked(() -> InetAddress.getByName("localhost"));
    }
 
    @Override
@@ -93,6 +100,21 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
 
    @Override
    public void kill(int server) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void restart(int server) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void restartCluster() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public boolean isRunning(int server) {
       throw new UnsupportedOperationException();
    }
 

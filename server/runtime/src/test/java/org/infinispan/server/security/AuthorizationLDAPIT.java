@@ -66,7 +66,7 @@ public class AuthorizationLDAPIT {
 
    @Test
    public void testAdminCanDoEverything() {
-      RemoteCache<String, String> adminCache = SERVER_TEST.getHotRodCache(builderMap.get("admin"), CacheMode.DIST_SYNC);
+      RemoteCache<String, String> adminCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("admin")).withCacheMode(CacheMode.DIST_SYNC).create();
       adminCache.put("k", "v");
       assertEquals("v", adminCache.get("k"));
       adminCache.putAll(bulkData);
@@ -77,7 +77,7 @@ public class AuthorizationLDAPIT {
    public void testNonAdminsMustNotCreateCache() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
-               () -> SERVER_TEST.getHotRodCache(builderMap.get(user), CacheMode.DIST_SYNC)
+               () -> SERVER_TEST.hotrod().withClientConfiguration(builderMap.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
       }
    }
@@ -85,13 +85,13 @@ public class AuthorizationLDAPIT {
    @Test
    public void testWriterCannotRead() {
       createAuthzCache();
-      RemoteCache<String, String> writerCache = SERVER_TEST.getHotRodCache(builderMap.get("writer"));
+      RemoteCache<String, String> writerCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("writer")).get();
       writerCache.put("k1", "v1");
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> writerCache.get("k1")
       );
       for (String user : Arrays.asList("reader", "supervisor")) {
-         RemoteCache<String, String> userCache = SERVER_TEST.getHotRodCache(builderMap.get(user));
+         RemoteCache<String, String> userCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get(user)).get();
          assertEquals("v1", userCache.get("k1"));
       }
    }
@@ -99,12 +99,12 @@ public class AuthorizationLDAPIT {
    @Test
    public void testReaderCannotWrite() {
       createAuthzCache();
-      RemoteCache<String, String> readerCache = SERVER_TEST.getHotRodCache(builderMap.get("reader"));
+      RemoteCache<String, String> readerCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("reader")).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.put("k1", "v1")
       );
       for (String user : Arrays.asList("writer", "supervisor")) {
-         RemoteCache<String, String> userCache = SERVER_TEST.getHotRodCache(builderMap.get(user));
+         RemoteCache<String, String> userCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get(user)).get();
          userCache.put(user, user);
       }
    }
@@ -112,17 +112,17 @@ public class AuthorizationLDAPIT {
    @Test
    public void testBulkOperations() {
       createAuthzCache().putAll(bulkData);
-      RemoteCache<String, String> readerCache = SERVER_TEST.getHotRodCache(builderMap.get("reader"));
+      RemoteCache<String, String> readerCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("reader")).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.getAll(bulkData.keySet())
       );
-      RemoteCache<String, String> supervisorCache = SERVER_TEST.getHotRodCache(builderMap.get("supervisor"));
+      RemoteCache<String, String> supervisorCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("supervisor")).get();
       supervisorCache.getAll(bulkData.keySet());
    }
 
    private RemoteCache<Object, Object> createAuthzCache() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable().role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
-      return SERVER_TEST.getHotRodCache(builderMap.get("admin"), builder.build());
+      return SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("admin")).withServerConfiguration(builder).create();
    }
 }
