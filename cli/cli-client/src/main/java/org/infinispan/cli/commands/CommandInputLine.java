@@ -19,7 +19,7 @@ public class CommandInputLine {
       this.arguments = new LinkedHashMap<>();
    }
 
-   public CommandInputLine arg(String name, String value) {
+   public <T> CommandInputLine arg(String name, T value) {
       this.arguments.put(name, value);
       return this;
    }
@@ -59,6 +59,10 @@ public class CommandInputLine {
 
    public String arg(String arg) {
       return (String) arguments.get(arg);
+   }
+
+   public <T> T argAs(String arg) {
+      return (T) arguments.get(arg);
    }
 
    public String option(String option) {

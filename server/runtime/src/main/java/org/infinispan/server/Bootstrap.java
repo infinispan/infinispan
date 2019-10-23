@@ -27,6 +27,10 @@ public class Bootstrap extends Main {
    private final ExitHandler exitHandler;
    private File configurationFile;
 
+   static {
+      System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
+   }
+
    public Bootstrap(PrintStream stdOut, PrintStream stdErr, ExitHandler exitHandler, Properties properties) {
       super(stdOut, stdErr, properties);
       this.exitHandler = exitHandler;
@@ -112,11 +116,10 @@ public class Bootstrap extends Main {
 
       logJVMInformation();
 
-      try {
-         Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
-         Server.log.serverStarting(Version.getBrandName());
-         Server.log.serverConfiguration(configurationFile.getAbsolutePath());
-         Server server = new Server(serverRoot, configurationFile, properties);
+      Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
+      Server.log.serverStarting(Version.getBrandName());
+      Server.log.serverConfiguration(configurationFile.getAbsolutePath());
+      try (Server server = new Server(serverRoot, configurationFile, properties)) {
          server.setExitHandler(exitHandler);
          server.run().get();
       } catch (Exception e) {

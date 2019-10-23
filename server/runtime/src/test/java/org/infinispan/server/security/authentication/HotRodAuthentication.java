@@ -58,7 +58,7 @@ public class HotRodAuthentication {
       }
 
       try {
-         RemoteCache<String, String> cache = SERVER_TEST.getHotRodCache(builder, CacheMode.DIST_SYNC);
+         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
          cache.put("k1", "v1");
          assertEquals(1, cache.size());
          assertEquals("v1", cache.get("k1"));

@@ -13,6 +13,6 @@ public class ShutdownHook extends Thread {
 
    @Override
    public void run() {
-      exitHandler.exit(0);
+      exitHandler.exit(ExitStatus.SERVER_SHUTDOWN);
    }
 }

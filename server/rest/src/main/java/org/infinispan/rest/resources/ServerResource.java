@@ -12,10 +12,10 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 
 import java.lang.management.ManagementFactory;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.commons.util.Util;
@@ -39,7 +39,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class ServerResource implements ResourceHandler {
    private final InvocationHelper invocationHelper;
-   private static final int SHUTDOWN_DELAY_SECONDS = 3;
    private static final ServerInfo SERVER_INFO = new ServerInfo();
 
    public ServerResource(InvocationHelper invocationHelper) {
@@ -135,7 +134,7 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
-      invocationHelper.getScheduledExecutor().schedule(() -> invocationHelper.getServer().stop(), SHUTDOWN_DELAY_SECONDS, TimeUnit.SECONDS);
+      invocationHelper.getServer().serverStop(Collections.emptyList());
       return CompletableFuture.completedFuture(new NettyRestResponse.Builder().build());
    }
 

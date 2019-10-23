@@ -9,6 +9,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
 import org.infinispan.server.network.NetworkAddress;
@@ -23,6 +24,7 @@ public class ServerConfiguration implements ConfigurationInfo {
    private final InterfacesConfiguration interfaces;
    private final SocketBindingsConfiguration socketBindings;
    private final EndpointsConfiguration endpoints;
+   private Server server;
 
    private final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.SERVER.toString(), true, false);
    private final List<ConfigurationInfo> elements = new ArrayList<>();
@@ -61,5 +63,13 @@ public class ServerConfiguration implements ConfigurationInfo {
 
    public EndpointsConfiguration endpoints() {
       return endpoints;
+   }
+
+   public Server getServer() {
+      return server;
+   }
+
+   public void setServer(Server server) {
+      this.server = server;
    }
 }

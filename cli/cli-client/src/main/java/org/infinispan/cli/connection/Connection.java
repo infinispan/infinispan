@@ -35,6 +35,8 @@ public interface Connection extends Closeable {
 
    Collection<String> getAvailableSchemas(String container) throws IOException;
 
+   Collection<String> getAvailableServers(String container) throws IOException;
+
    Collection<String> getAvailableSites(String container, String cache) throws IOException;
 
    Iterable<String> getCacheKeys(String container, String cache) throws IOException;

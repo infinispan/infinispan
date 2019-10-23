@@ -9,12 +9,24 @@ import java.util.concurrent.CompletionStage;
 public interface RestServerClient {
    CompletionStage<RestResponse> configuration();
 
+   /**
+    * Shuts down the server we're connected to
+    */
    CompletionStage<RestResponse> stop();
 
+   /**
+    * Returns thread information
+    */
    CompletionStage<RestResponse> threads();
 
+   /**
+    * Returns information about the server
+    */
    CompletionStage<RestResponse> info();
 
+   /**
+    * Returns memory information about the server
+    */
    CompletionStage<RestResponse> memory();
 
    CompletionStage<RestResponse> env();

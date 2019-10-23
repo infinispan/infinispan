@@ -13,7 +13,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.security.Common;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
@@ -73,9 +72,9 @@ public class RestAuthentication {
                .password("all");
       }
       if (mechanism.isEmpty()) {
-         Exceptions.expectException(RuntimeException.class, () -> SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC));
+         Exceptions.expectException(RuntimeException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());
       } else {
-         RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
+         RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
          RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
          assertEquals(204, response.getStatus());
          assertEquals(protocol, response.getProtocol());

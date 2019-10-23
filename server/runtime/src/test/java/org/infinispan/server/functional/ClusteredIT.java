@@ -61,7 +61,7 @@ public class ClusteredIT {
                .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       }
 
-      RemoteCache<Integer, User> cache = testMethodRule.getHotRodCache(config, builder.build());
+      RemoteCache<Integer, User> cache = testMethodRule.hotrod().withClientConfiguration(config).withServerConfiguration(builder).create();
       RemoteCacheManager remoteCacheManager = cache.getRemoteCacheManager();
 
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);

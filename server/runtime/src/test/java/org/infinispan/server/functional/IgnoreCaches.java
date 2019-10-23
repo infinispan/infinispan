@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -41,7 +40,7 @@ public class IgnoreCaches {
    @Test
    public void testIgnoreCaches() throws Exception {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       String testCache = SERVER_TEST.getMethodName();
 
       assertTrue(getIgnoredCaches(client, CACHE_MANAGER).isEmpty());

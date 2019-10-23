@@ -5,7 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
@@ -15,9 +17,14 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
+import org.infinispan.commons.configuration.Self;
+import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.counter.api.CounterManager;
@@ -88,42 +95,12 @@ public class InfinispanServerTestMethodRule implements TestRule {
       }
    }
 
-   public RemoteCache<String, String> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder) {
-      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
-      return remoteCacheManager.getCache(getMethodName());
+   public HotRod hotrod() {
+      return new HotRod();
    }
 
-   public <K, V> RemoteCache<K, V> getHotRodCache(CacheMode mode) {
-      return getHotRodCache(new ConfigurationBuilder(), mode);
-   }
-
-   public <K, V> RemoteCache<K, V> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder, CacheMode cacheMode) {
-      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
-      return remoteCacheManager.administration().getOrCreateCache(getMethodName(), "org.infinispan." + cacheMode.name());
-   }
-
-   public <K, V> RemoteCache<K, V> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder, BasicConfiguration cacheConfiguration) {
-      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
-      return remoteCacheManager.administration().getOrCreateCache(getMethodName(), cacheConfiguration);
-   }
-
-   public RemoteCache<String, String> getHotRodCache(ConfigurationBuilder clientConfigurationBuilder, org.infinispan.configuration.cache.ConfigurationBuilder builder, String cacheQualifier) {
-      RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfigurationBuilder));
-      return remoteCacheManager.administration().getOrCreateCache(getMethodName(cacheQualifier), builder.build());
-   }
-
-   public RestClient getRestClient(CacheMode mode) {
-      return getRestClient(new RestClientConfigurationBuilder(), mode);
-   }
-
-   public RestClient getRestClient(RestClientConfigurationBuilder clientConfigurationBuilder, CacheMode mode) {
-      String cacheName = getMethodName();
-      RestClient restClient = registerResource(infinispanServerRule.newRestClient(clientConfigurationBuilder));
-      RestResponse response = Exceptions.unchecked(() -> restClient.cache(cacheName).createWithTemplate("org.infinispan." + mode.name()).toCompletableFuture().get(5, TimeUnit.SECONDS));
-      if (response.getStatus() != 200) {
-         throw new RuntimeException("Could not create cache " + cacheName + ", status = " + response.getStatus());
-      }
-      return restClient;
+   public Rest rest() {
+      return new Rest();
    }
 
    public CounterManager getCounterManager() {
@@ -137,5 +114,122 @@ public class InfinispanServerTestMethodRule implements TestRule {
 
    public MBeanServerConnection getJmxConnection(int server) {
       return infinispanServerRule.getServerDriver().getJmxConnection(server);
+   }
+
+   public abstract class Base<S extends Base<S>> implements Self<S> {
+      protected BasicConfiguration serverConfiguration = null;
+      protected EnumSet<CacheContainerAdmin.AdminFlag> flags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
+      protected CacheMode mode = null;
+      protected String qualifier;
+
+      public S withServerConfiguration(org.infinispan.configuration.cache.ConfigurationBuilder serverConfiguration) {
+         if (mode != null) {
+            throw new IllegalStateException("Cannot set server configuration and cache mode");
+         }
+         this.serverConfiguration = serverConfiguration.build();
+         return self();
+      }
+
+      public S withServerConfiguration(XMLStringConfiguration xmlConfiguration) {
+         if (mode != null) {
+            throw new IllegalStateException("Cannot set server configuration and cache mode");
+         }
+         this.serverConfiguration = xmlConfiguration;
+         return self();
+      }
+
+      public S withCacheMode(CacheMode mode) {
+         if (serverConfiguration != null) {
+            throw new IllegalStateException("Cannot set server configuration and cache mode");
+         }
+         this.mode = mode;
+         return self();
+      }
+
+      public S withQualifier(String qualifier) {
+         this.qualifier = qualifier;
+         return self();
+      }
+
+      public S permanent() {
+         this.flags = EnumSet.of(CacheContainerAdmin.AdminFlag.PERMANENT);
+         return self();
+      }
+   }
+
+   public class HotRod extends Base<HotRod> {
+      ConfigurationBuilder clientConfiguration = new ConfigurationBuilder();
+
+      private HotRod() {
+      }
+
+      public HotRod withClientConfiguration(ConfigurationBuilder clientConfiguration) {
+         this.clientConfiguration = clientConfiguration;
+         return this;
+      }
+
+      public <K, V> RemoteCache<K, V> get() {
+         RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfiguration));
+         String name = getMethodName(qualifier);
+         return remoteCacheManager.getCache(name);
+      }
+
+      public <K, V> RemoteCache<K, V> create() {
+         RemoteCacheManager remoteCacheManager = registerResource(infinispanServerRule.newHotRodClient(clientConfiguration));
+         String name = getMethodName(qualifier);
+         if (serverConfiguration != null) {
+            return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
+         } else if (mode != null) {
+            return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + mode.name());
+         } else {
+            return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + CacheMode.DIST_SYNC.name());
+         }
+      }
+
+      @Override
+      public HotRod self() {
+         return this;
+      }
+   }
+
+   public class Rest extends Base<Rest> {
+      RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
+
+      private Rest() {
+      }
+
+      public Rest withClientConfiguration(RestClientConfigurationBuilder clientConfiguration) {
+         this.clientConfiguration = clientConfiguration;
+         return this;
+      }
+
+      public RestClient get() {
+         return registerResource(infinispanServerRule.newRestClient(clientConfiguration));
+      }
+
+      public RestClient create() {
+         RestClient restClient = get();
+         String name = getMethodName(qualifier);
+         CompletionStage<RestResponse> future;
+         if (serverConfiguration != null) {
+            RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toXMLString(name));
+            future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         } else if (mode != null) {
+            future = restClient.cache(name).createWithTemplate("org.infinispan." + mode.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         } else {
+            future = restClient.cache(name).createWithTemplate("org.infinispan." + CacheMode.DIST_SYNC.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         }
+         RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(5, TimeUnit.SECONDS));
+         if (response.getStatus() != 200) {
+            throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+         } else {
+            return restClient;
+         }
+      }
+
+      @Override
+      public Rest self() {
+         return this;
+      }
    }
 }

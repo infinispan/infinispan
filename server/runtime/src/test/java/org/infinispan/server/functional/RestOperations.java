@@ -13,7 +13,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -53,7 +52,7 @@ public class RestOperations {
    public void testRestOperations() {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.getRestClient(builder, CacheMode.DIST_SYNC);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
       RestResponse response = sync(cache.put("k1", "v1"));
       assertEquals(204, response.getStatus());

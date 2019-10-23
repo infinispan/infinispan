@@ -3,23 +3,22 @@ package org.infinispan.server;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * ExitHandler provides alternate implementations for {@link System#exit(int)} to use in different scenarios (e.g.
- * tests)
+ * ExitHandler provides alternate implementations for exiting the server
  *
  * @author Tristan Tarrant
  * @since 10.0
  */
 
 public abstract class ExitHandler {
-   protected final CompletableFuture<Integer> exitFuture;
+   protected final CompletableFuture<ExitStatus> exitFuture;
 
    ExitHandler() {
       exitFuture = new CompletableFuture<>();
    }
 
-   public CompletableFuture<Integer> getExitFuture() {
+   public CompletableFuture<ExitStatus> getExitFuture() {
       return exitFuture;
    }
 
-   public abstract void exit(int exitCode);
+   public abstract void exit(ExitStatus status);
 }

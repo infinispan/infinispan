@@ -114,4 +114,12 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.FATAL)
    @Message(value = "%s Server failed to start", id = 80028)
    void serverFailedToStart(String name, @Cause Exception e);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Cluster shutdown", id = 80029)
+   void clusterShutdown();
+
+   @LogMessage(level = Logger.Level.ERROR)
+   @Message(value = "Clustered task error", id = 80030)
+   void clusteredTaskError(@Cause Throwable t);
 }

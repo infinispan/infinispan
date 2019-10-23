@@ -7,7 +7,6 @@ import java.net.ConnectException;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
@@ -29,7 +28,7 @@ public class ShutdownRestIT {
 
    @Test
    public void testShutDown() {
-      RestClient client = SERVER_TEST.getRestClient(CacheMode.DIST_SYNC);
+      RestClient client = SERVER_TEST.rest().create();
       sync(client.server().stop());
       eventually(() -> {
          try {
