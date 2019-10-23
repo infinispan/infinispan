@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -7,8 +9,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.time.TimeService;
 
@@ -19,7 +19,6 @@ import org.infinispan.commons.time.TimeService;
  * @param <V>
  */
 public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
-   private static final Log log = LogFactory.getLog(InvalidatedNearRemoteCache.class);
    private final NearCacheService<K, V> nearcache;
 
    public InvalidatedNearRemoteCache(RemoteCacheManager rcm, String name, TimeService timeService, NearCacheService<K, V> nearcache) {
@@ -43,7 +42,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
             if (v != null) {
                nearcache.putIfAbsent(key, v);
                if (v.getMaxIdle() > 0) {
-                  log.nearCacheMaxIdleUnsupported();
+                  HOTROD.nearCacheMaxIdleUnsupported();
                }
             }
             return v;
@@ -57,7 +56,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       if (maxIdleTime > 0)
-         log.nearCacheMaxIdleUnsupported();
+         HOTROD.nearCacheMaxIdleUnsupported();
       CompletableFuture<V> ret = super.putAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return ret.thenApply(v -> {
          nearcache.remove(key);
@@ -68,7 +67,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       if (maxIdleTime > 0)
-         log.nearCacheMaxIdleUnsupported();
+         HOTROD.nearCacheMaxIdleUnsupported();
       return super.putAllAsync(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit)
             .thenRun(() -> map.keySet().forEach(nearcache::remove));
    }
@@ -76,7 +75,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       if (maxIdleTime > 0)
-         log.nearCacheMaxIdleUnsupported();
+         HOTROD.nearCacheMaxIdleUnsupported();
       return invalidateNearCacheIfNeeded(
             operationsFactory.hasFlag(Flag.FORCE_RETURN_VALUE),
             key,
@@ -87,7 +86,7 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
    @Override
    public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, long lifespan, TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       if (maxIdleTime > 0)
-         log.nearCacheMaxIdleUnsupported();
+         HOTROD.nearCacheMaxIdleUnsupported();
       return super.replaceWithVersionAsync(key, newValue, version, lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit)
             .thenApply(removed -> {
                if (removed) nearcache.remove(key);

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.List;
 import java.util.Properties;
 
@@ -186,20 +188,20 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       if (enabled) {
          if (sslContext == null) {
             if (keyStoreFileName != null && keyStorePassword == null) {
-               throw log.missingKeyStorePassword(keyStoreFileName);
+               throw HOTROD.missingKeyStorePassword(keyStoreFileName);
             }
             if (trustStoreFileName == null && trustStorePath == null) {
-               throw log.noSSLTrustManagerConfiguration();
+               throw HOTROD.noSSLTrustManagerConfiguration();
             }
             if (trustStoreFileName != null && trustStorePath != null) {
-               throw log.trustStoreFileAndPathExclusive();
+               throw HOTROD.trustStoreFileAndPathExclusive();
             }
             if (trustStoreFileName != null && trustStorePassword == null) {
-               throw log.missingTrustStorePassword(trustStoreFileName);
+               throw HOTROD.missingTrustStorePassword(trustStoreFileName);
             }
          } else {
             if (keyStoreFileName != null || trustStoreFileName != null) {
-               throw log.xorSSLContext();
+               throw HOTROD.xorSSLContext();
             }
          }
       }

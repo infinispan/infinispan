@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.event.impl;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
@@ -25,8 +27,6 @@ import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.ClientEvents;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 
 public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
@@ -84,9 +84,9 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
       }
 
       if (!isAllowed)
-         throw log.incorrectClientListener(annotationName, Arrays.asList(allowedParameters));
+         throw HOTROD.incorrectClientListener(annotationName, Arrays.asList(allowedParameters));
       if (!m.getReturnType().equals(void.class))
-         throw log.incorrectClientListener(annotationName);
+         throw HOTROD.incorrectClientListener(annotationName);
    }
 
    @Override
@@ -137,8 +137,6 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    }
 
    static final class ClientListenerInvocation {
-      private static final Log log = LogFactory.getLog(ClientListenerInvocation.class, Log.class);
-
       final Object listener;
       final Method method;
 
@@ -151,7 +149,7 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
          try {
             method.invoke(listener, event);
          } catch (Exception e) {
-            throw log.exceptionInvokingListener(
+            throw HOTROD.exceptionInvokingListener(
                   e.getClass().getName(), method, listener, e);
          }
       }

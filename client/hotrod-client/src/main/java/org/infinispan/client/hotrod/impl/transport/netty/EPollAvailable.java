@@ -1,13 +1,11 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import io.netty.channel.epoll.Epoll;
 
 // This is a separate class for better replacement within Quarkus as it doesn't support native EPoll
 final class EPollAvailable {
-   static private final Log log = LogFactory.getLog(EPollAvailable.class, Log.class);
 
    private static final String USE_EPOLL_PROPERTY = "infinispan.server.channel.epoll";
    private static final boolean IS_LINUX = System.getProperty("os.name").toLowerCase().startsWith("linux");
@@ -23,12 +21,12 @@ final class EPollAvailable {
             return !EPOLL_DISABLED && IS_LINUX;
          } else {
             if (IS_LINUX) {
-               log.epollNotAvailable(Epoll.unavailabilityCause().toString());
+               HOTROD.epollNotAvailable(Epoll.unavailabilityCause().toString());
             }
          }
       } catch (ClassNotFoundException e) {
          if (IS_LINUX) {
-            log.epollNotAvailable(e.getMessage());
+            HOTROD.epollNotAvailable(e.getMessage());
          }
       }
       return false;

@@ -18,11 +18,12 @@ import javax.transaction.xa.Xid;
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.CacheNotTransactionalException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -40,6 +41,8 @@ import io.netty.channel.Channel;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   String LOG_ROOT = "org.infinispan.";
+   Log HOTROD = Logger.getMessageLogger(Log.class, LOG_ROOT + "HOTROD");
 
    @LogMessage(level = WARN)
    @Message(value = "Could not find '%s' file in classpath, using defaults.", id = 4001)
@@ -49,13 +52,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot perform operations on a cache associated with an unstarted RemoteCacheManager. Use RemoteCacheManager.start before using the remote cache.", id = 4002)
    void unstartedRemoteCacheManager();
 
-   @LogMessage(level = ERROR)
    @Message(value = "Invalid magic number. Expected %#x and received %#x", id = 4003)
-   void invalidMagicNumber(short expectedMagicNumber, short receivedMagic);
+   InvalidResponseException invalidMagicNumber(short expectedMagicNumber, short receivedMagic);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Invalid message id. Expected %d and received %d", id = 4004)
-   void invalidMessageId(long expectedMsgId, long receivedMsgId);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Invalid message id. Expected %d and received %d", id = 4004)
+//   void invalidMessageId(long expectedMsgId, long receivedMsgId);
 
    @LogMessage(level = WARN)
    @Message(value = "Error received from the server: %s", id = 4005)
@@ -92,17 +94,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Server not in cluster anymore(%s), removing from the pool.", id = 4016)
    void removingServer(SocketAddress server);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to convert string property [%s] to an int! Using default value of %d", id = 4018)
-   void unableToConvertStringPropertyToInt(String value, int defaultValue);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to convert string property [%s] to a long! Using default value of %d", id = 4019)
-   void unableToConvertStringPropertyToLong(String value, long defaultValue);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to convert string property [%s] to a boolean! Using default value of %b", id = 4020)
-   void unableToConvertStringPropertyToBoolean(String value, boolean defaultValue);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to convert string property [%s] to an int! Using default value of %d", id = 4018)
+//   void unableToConvertStringPropertyToInt(String value, int defaultValue);
+//
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to convert string property [%s] to a long! Using default value of %d", id = 4019)
+//   void unableToConvertStringPropertyToLong(String value, long defaultValue);
+//
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to convert string property [%s] to a boolean! Using default value of %b", id = 4020)
+//   void unableToConvertStringPropertyToBoolean(String value, boolean defaultValue);
 
    @LogMessage(level = INFO)
    @Message(value = "Infinispan version: %s", id = 4021)
@@ -132,11 +134,11 @@ public interface Log extends BasicLogger {
    @Message(value = "The selected authentication mechanism '%s' is not among the supported server mechanisms: %s", id = 4031)
    SecurityException unsupportedMech(String authMech, List<String> serverMechs);
 
-   @Message(value = "'%s' is an invalid SASL mechanism", id = 4032)
-   CacheConfigurationException invalidSaslMechanism(String saslMechanism);
-
-   @Message(value = "Connection dedicated to listener with id=%s but received event for listener with id=%s", id = 4033)
-   IllegalStateException unexpectedListenerId(String expectedListenerId, String receivedListenerId);
+//   @Message(value = "'%s' is an invalid SASL mechanism", id = 4032)
+//   CacheConfigurationException invalidSaslMechanism(String saslMechanism);
+//
+//   @Message(value = "Connection dedicated to listener with id=%s but received event for listener with id=%s", id = 4033)
+//   IllegalStateException unexpectedListenerId(String expectedListenerId, String receivedListenerId);
 
    @Message(value = "Unable to unmarshall bytes %s", id = 4034)
    HotRodClientException unableToUnmarshallBytes(String bytes, @Cause Exception e);
@@ -168,13 +170,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to set method %s accessible", id = 4042)
    void unableToSetAccesible(Method m, @Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Unrecoverable error reading event from server %s, exiting listener %s", id = 4043)
-   void unrecoverableErrorReadingEvent(@Cause Throwable t, SocketAddress server, String listenerId);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Unable to read %s bytes %s", id = 4044)
-   void unableToUnmarshallBytesError(String element, String bytes, @Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Unrecoverable error reading event from server %s, exiting listener %s", id = 4043)
+//   void unrecoverableErrorReadingEvent(@Cause Throwable t, SocketAddress server, String listenerId);
+//
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Unable to read %s bytes %s", id = 4044)
+//   void unableToUnmarshallBytesError(String element, String bytes, @Cause Exception e);
 
    @Message(value = "When enabling near caching, number of max entries must be configured", id = 4045)
    CacheConfigurationException nearCacheMaxEntriesUndefined();
@@ -239,19 +241,19 @@ public interface Log extends BasicLogger {
    @Message(value = "Tracking key %s belonging to segment %d, already tracked? = %b", id = 4064)
    void trackingSegmentKey(String key, int segment, boolean isTracked);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 4065)
-   void warnAboutUberJarDuplicates();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 4065)
+//   void warnAboutUberJarDuplicates();
 
-   /*@LogMessage(level = WARN)
-   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 4066)
-   void unableToConvertStringPropertyToEnum(String value, String defaultValue);*/
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 4066)
+//   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
 
    @Message(value = "Cannot specify both a callback handler and a username for authentication", id = 4067)
    CacheConfigurationException callbackHandlerAndUsernameMutuallyExclusive();
 
-   @Message(value = "Class '%s' blocked by Java standard deserialization white list. Adjust the client configuration java serialization white list regular expression to include this class.", id = 4068)
-   CacheException classNotInWhitelist(String className);
+//   @Message(value = "Class '%s' blocked by Java standard deserialization white list. Adjust the client configuration java serialization white list regular expression to include this class.", id = 4068)
+//   CacheException classNotInWhitelist(String className);
 
    @Message(value = "Connection to %s is not active.", id = 4069)
    TransportException channelInactive(@Param SocketAddress address1, SocketAddress address2);
@@ -266,9 +268,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot create another async thread. Please increase 'infinispan.client.hotrod.default_executor_factory.pool_size' (current value is %d).", id = 4072)
    void cannotCreateAsyncThread(int maxPoolSize);
 
-   @LogMessage(level = WARN)
-   @Message(value = "TransportFactory is deprecated, this setting is not used anymore.", id = 4073)
-   void transportFactoryDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "TransportFactory is deprecated, this setting is not used anymore.", id = 4073)
+//   void transportFactoryDeprecated();
 
    @LogMessage(level = INFO)
    @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 4074)
@@ -318,4 +320,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "TransactionTable is not started!", id = 4089)
    HotRodClientException transactionTableNotStarted();
+
+   @Message(value = "[%s] Invalid response operation. Expected %#x and received %#x", id = 4090)
+   InvalidResponseException invalidResponse(String cacheName, short opRespCode, double receivedOpCode);
 }

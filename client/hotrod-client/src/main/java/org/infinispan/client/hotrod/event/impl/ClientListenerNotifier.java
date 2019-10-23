@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.event.impl;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -190,7 +192,7 @@ public class ClientListenerNotifier {
    public <T> void invokeEvent(byte[] listenerId, T event) {
       EventDispatcher<T> eventDispatcher = (EventDispatcher<T>) dispatchers.get(new WrappedByteArray(listenerId));
       if (eventDispatcher == null) {
-         throw log.unexpectedListenerId(Util.printArray(listenerId));
+         throw HOTROD.unexpectedListenerId(Util.printArray(listenerId));
       }
       eventDispatcher.invokeEvent(event);
    }
@@ -198,7 +200,7 @@ public class ClientListenerNotifier {
    public DataFormat getCacheDataFormat(byte[] listenerId) {
       ClientEventDispatcher clientEventDispatcher = (ClientEventDispatcher) dispatchers.get(new WrappedByteArray(listenerId));
       if (clientEventDispatcher == null) {
-         throw log.unexpectedListenerId(Util.printArray(listenerId));
+         throw HOTROD.unexpectedListenerId(Util.printArray(listenerId));
       }
       return clientEventDispatcher.getDataFormat();
    }

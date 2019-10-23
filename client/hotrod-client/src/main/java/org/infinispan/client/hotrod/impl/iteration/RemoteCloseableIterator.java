@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -75,14 +76,14 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
             IterationEndResponse endResponse = await(operationsFactory.newIterationEndOperation(iterationId, channel).execute());
             short status = endResponse.getStatus();
 
-            if (HotRodConstants.isSuccess(status) && log.isDebugEnabled()) {
-               log.iterationClosed(iterationId());
+            if (HotRodConstants.isSuccess(status) && HOTROD.isDebugEnabled()) {
+               HOTROD.iterationClosed(iterationId());
             }
             if (HotRodConstants.isInvalidIteration(status)) {
-               throw log.errorClosingIteration(iterationId());
+               throw HOTROD.errorClosingIteration(iterationId());
             }
          } catch (HotRodClientException e) {
-            log.ignoringErrorDuringIterationClose(iterationId(), e);
+            HOTROD.ignoringErrorDuringIterationClose(iterationId(), e);
          } finally {
             closed = true;
          }

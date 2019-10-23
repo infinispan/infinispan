@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.Util.checkTransactionSupport;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -185,7 +186,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       builder.classLoader(cl);
       InputStream stream = FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES, cl);
       if (stream == null) {
-         log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
+         HOTROD.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
       } else {
          try {
             builder.withProperties(loadFromStream(stream));
@@ -219,7 +220,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             JmxUtil.registerMBean(this, mbeanObjectName, mbeanServer);
          }
       } catch (Exception e) {
-         log.warn("MBean registration failed", e);
+         HOTROD.warn("MBean registration failed", e);
       }
    }
 
@@ -231,7 +232,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             JmxUtil.unregisterMBean(mbeanObjectName, mbeanServer);
          }
       } catch (Exception e) {
-         log.warn("MBean unregistration failed", e);
+         HOTROD.warn("MBean unregistration failed", e);
       }
    }
 
@@ -347,7 +348,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
 
       // Print version to help figure client version run
-      log.version(Version.printVersion());
+      HOTROD.version(Version.printVersion());
 
       started = true;
    }
@@ -421,7 +422,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                result = createRemoteCache(cacheName);
             } else {
                if (!this.isTransactional(cacheName)) {
-                  throw log.cacheDoesNotSupportTransactions(cacheName);
+                  throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
                }
                TransactionManager transactionManager = getTransactionManager(transactionManagerOverride);
                result = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
@@ -521,7 +522,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    @Override
-   public void close() throws IOException {
+   public void close() {
       stop();
    }
 

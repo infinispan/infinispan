@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -10,8 +12,6 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -23,7 +23,6 @@ import io.netty.channel.Channel;
  * @since 7.0
  */
 public class AuthMechListOperation extends HotRodOperation<List<String>> {
-   private static final Log log = LogFactory.getLog(AuthMechListOperation.class);
    private final Channel channel;
    private int mechCount = -1;
    private List<String> result;
@@ -36,7 +35,7 @@ public class AuthMechListOperation extends HotRodOperation<List<String>> {
    @Override
    public CompletableFuture<List<String>> execute() {
       if (!channel.isActive()) {
-         throw log.channelInactive(channel.remoteAddress(), channel.remoteAddress());
+         throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
       scheduleRead(channel);
       sendHeader(channel);

@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import static org.infinispan.commons.util.Util.getInstance;
 import static org.infinispan.commons.util.Util.loadClass;
 
@@ -12,8 +13,6 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
@@ -29,7 +28,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    public static final long DEFAULT_TIMEOUT = 60000;
 
-   private static final Log log = LogFactory.getLog(TransactionConfigurationBuilder.class, Log.class);
    private TransactionMode transactionMode = TransactionMode.NONE;
    private TransactionManagerLookup transactionManagerLookup = defaultTransactionManagerLookup();
    private long timeout = DEFAULT_TIMEOUT;
@@ -79,13 +77,13 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    @Override
    public void validate() {
       if (transactionMode == null) {
-         throw log.invalidTransactionMode();
+         throw HOTROD.invalidTransactionMode();
       }
       if (transactionManagerLookup == null) {
-         throw log.invalidTransactionManagerLookup();
+         throw HOTROD.invalidTransactionManagerLookup();
       }
       if (timeout <= 0) {
-         throw log.invalidTransactionTimeout();
+         throw HOTROD.invalidTransactionTimeout();
       }
    }
 

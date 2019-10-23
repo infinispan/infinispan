@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.client.hotrod.impl.Util.await;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -126,8 +127,8 @@ public class ChannelFactory {
          if (!configuration.clusters().isEmpty()) {
             configuration.clusters().forEach(cluster -> {
                Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
-                       .map(server -> InetSocketAddress.createUnresolved(server.host(), server.port()))
-                       .collect(Collectors.toList());
+                     .map(server -> InetSocketAddress.createUnresolved(server.host(), server.port()))
+                     .collect(Collectors.toList());
                ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
                log.debugf("Add secondary cluster: %s", clusterInfo);
                clusters.add(clusterInfo);
@@ -142,7 +143,7 @@ public class ChannelFactory {
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", servers);
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
-                    configuration.tcpNoDelay(), configuration.socketTimeout(), configuration.connectionTimeout());
+                  configuration.tcpNoDelay(), configuration.socketTimeout(), configuration.connectionTimeout());
          }
          balancers = new HashMap<>();
          WrappedByteArray defaultCacheName = new WrappedByteArray(RemoteCacheManager.cacheNameBytes());
@@ -207,7 +208,7 @@ public class ChannelFactory {
             // exceptions from nodes that might not be up any more.
             if (trace)
                log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
-                       servers);
+                     servers);
          }
       }
    }
@@ -359,13 +360,13 @@ public class ChannelFactory {
 
       //1. first add new servers. For servers that went down, the returned transport will fail for now
       for (SocketAddress server : addedServers) {
-         log.newServerAdded(server);
+         HOTROD.newServerAdded(server);
          fetchChannelAndInvoke(server, new ReleaseChannelOperation(quiet));
       }
 
       //2. Remove failed servers
       for (SocketAddress server : failedServers) {
-         log.removingServer(server);
+         HOTROD.removingServer(server);
          ChannelPool pool = channelPoolMap.remove(server);
          if (pool != null) {
             pool.close();
@@ -448,7 +449,7 @@ public class ChannelFactory {
          String currentClusterName = this.currentClusterName;
          if (!isSwitchedClusterNotAvailable(failedClusterName, currentClusterName)) {
             log.debugf("Cluster already switched from failed cluster `%s` to `%s`, try again",
-                    failedClusterName, currentClusterName);
+                  failedClusterName, currentClusterName);
             return IN_PROGRESS_FUTURE;
          }
 
@@ -459,7 +460,7 @@ public class ChannelFactory {
 
          if (trace)
             log.tracef("Switching clusters, failed cluster is '%s' and current cluster name is '%s'",
-                    failedClusterName, currentClusterName);
+                  failedClusterName, currentClusterName);
 
          List<ClusterInfo> candidateClusters = new ArrayList<>();
          for (ClusterInfo cluster : clusters) {
@@ -523,12 +524,10 @@ public class ChannelFactory {
          log.debugf("Switching to %s, servers: %s, setting topology.", clusterName, addresses);
          topologyInfo.setAllTopologyIds(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
 
-         if (log.isInfoEnabled()) {
-            if (!clusterName.equals(DEFAULT_CLUSTER_NAME))
-               log.manuallySwitchedToCluster(clusterName);
-            else
-               log.manuallySwitchedBackToMainCluster();
-         }
+         if (!clusterName.equals(DEFAULT_CLUSTER_NAME))
+            HOTROD.manuallySwitchedToCluster(clusterName);
+         else
+            HOTROD.manuallySwitchedBackToMainCluster();
 
          return true;
       }
@@ -614,9 +613,9 @@ public class ChannelFactory {
       @Override
       public String toString() {
          return "ClusterInfo{" +
-                 "name='" + clusterName + '\'' +
-                 ", addresses=" + clusterAddresses +
-                 '}';
+               "name='" + clusterName + '\'' +
+               ", addresses=" + clusterAddresses +
+               '}';
       }
    }
 
@@ -656,12 +655,10 @@ public class ChannelFactory {
          //clustersViewed++; // Increase number of clusters viewed
          currentClusterName = cluster.clusterName;
 
-         if (log.isInfoEnabled()) {
-            if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))
-               log.switchedToCluster(cluster.clusterName);
-            else
-               log.switchedBackToMainCluster();
-         }
+         if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))
+            HOTROD.switchedToCluster(cluster.clusterName);
+         else
+            HOTROD.switchedBackToMainCluster();
 
          return SWITCHED_FUTURE;
       }
@@ -682,7 +679,7 @@ public class ChannelFactory {
       @Override
       public void cancel(SocketAddress address, Throwable cause) {
          if (!quiet) {
-            log.failedAddingNewServer(address, cause);
+            HOTROD.failedAddingNewServer(address, cause);
          }
       }
    }

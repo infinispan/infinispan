@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.IntStream.range;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.net.SocketAddress;
 import java.util.Collection;
@@ -74,7 +75,7 @@ public final class TopologyInfo {
          byte[] cacheName, AtomicInteger topologyId) {
       ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
       if (hash == null) {
-         log.noHasHFunctionConfigured(hashFunctionVersion);
+         HOTROD.noHasHFunctionConfigured(hashFunctionVersion);
       } else {
          hash.init(servers2Hash, numKeyOwners, hashSpace);
       }
@@ -92,7 +93,7 @@ public final class TopologyInfo {
       if (hashFunctionVersion > 0) {
          SegmentConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
-            log.noHasHFunctionConfigured(hashFunctionVersion);
+            HOTROD.noHasHFunctionConfigured(hashFunctionVersion);
          } else {
             hash.init(segmentOwners, numSegments);
          }

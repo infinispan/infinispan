@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Arrays;
@@ -197,7 +198,7 @@ public class TransactionContext<K, V> {
          } while (operation.shouldRetry());
          return xaReturnCode;
       } catch (Exception e) {
-         log.exceptionDuringPrepare(xid, e);
+         HOTROD.exceptionDuringPrepare(xid, e);
          return XAException.XA_RBROLLBACK;
       }
    }

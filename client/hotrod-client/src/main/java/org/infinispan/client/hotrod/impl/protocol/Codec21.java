@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.net.SocketAddress;
 import java.util.function.Function;
 
@@ -53,7 +55,7 @@ public class Codec21 extends Codec20 {
          case ERROR_RESPONSE:
             checkForErrorsInResponseStatus(buf, null, status, serverAddress);
          default:
-            throw log.unknownEvent(eventTypeId);
+            throw HOTROD.unknownEvent(eventTypeId);
       }
 
       byte[] listenerId = ByteBufUtil.readArray(buf);
@@ -83,7 +85,7 @@ public class Codec21 extends Codec20 {
                Object expiredKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist);
                return createExpiredEvent(listenerId, expiredKey);
             default:
-               throw getLog().unknownEvent(eventTypeId);
+               throw HOTROD.unknownEvent(eventTypeId);
          }
       }
    }

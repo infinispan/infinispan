@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,8 +18,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 
@@ -28,8 +28,6 @@ import io.netty.channel.Channel;
  * @author Galder Zamarreño
  */
 public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
-
-   private static final Log log = LogFactory.getLog(AddClientListenerOperation.class, Log.class);
 
    public final byte[] listenerId;
    public final Object listener;
@@ -76,7 +74,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    private ClientListener extractClientListener() {
       ClientListener l = ReflectionUtil.getAnnotation(listener.getClass(), ClientListener.class);
       if (l == null)
-         throw log.missingClientListenerAnnotation(listener.getClass().getName());
+         throw HOTROD.missingClientListenerAnnotation(listener.getClass().getName());
       return l;
    }
 
@@ -139,7 +137,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       } else {
          // this releases the channel
          listenerNotifier.removeClientListener(listenerId);
-         throw log.failedToAddListener(listener, status);
+         throw HOTROD.failedToAddListener(listener, status);
       }
       complete(status);
    }

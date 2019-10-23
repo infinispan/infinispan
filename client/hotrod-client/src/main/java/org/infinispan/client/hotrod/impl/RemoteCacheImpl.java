@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 import static org.infinispan.client.hotrod.impl.Util.await;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -553,9 +554,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    protected void assertRemoteCacheManagerIsStarted() {
       if (!remoteCacheManager.isStarted()) {
          String message = "Cannot perform operations on a cache associated with an unstarted RemoteCacheManager. Use RemoteCacheManager.start before using the remote cache.";
-         if (log.isInfoEnabled()) {
-            log.unstartedRemoteCacheManager();
-         }
+         HOTROD.unstartedRemoteCacheManager();
          throw new RemoteCacheManagerNotStartedException(message);
       }
    }

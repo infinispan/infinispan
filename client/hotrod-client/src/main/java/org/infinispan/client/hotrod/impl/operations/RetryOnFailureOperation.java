@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.HashSet;
@@ -129,7 +131,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
       }
       SocketAddress address = ChannelRecord.of(channel).getUnresolvedAddress();
       updateFailedServers(address);
-      logAndRetryOrFail(log.connectionClosed(address, address), true);
+      logAndRetryOrFail(HOTROD.connectionClosed(address, address), true);
    }
 
    @Override
@@ -220,7 +222,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
                      triedCompleteRestart = true;
                      retryCount = 0;
                   } else {
-                     log.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
+                     HOTROD.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
                      completeExceptionally(e);
                   }
                   break;
@@ -233,7 +235,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             retryIfNotDone();
          });
       } else {
-         log.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
+         HOTROD.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
          completeExceptionally(e);
       }
    }

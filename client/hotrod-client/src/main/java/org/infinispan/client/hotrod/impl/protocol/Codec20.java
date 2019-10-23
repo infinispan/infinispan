@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.hexDump;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.lang.annotation.Annotation;
@@ -26,7 +27,6 @@ import org.infinispan.client.hotrod.event.impl.CustomEventImpl;
 import org.infinispan.client.hotrod.event.impl.ModifiedEventImpl;
 import org.infinispan.client.hotrod.event.impl.RemovedEventImpl;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
@@ -77,10 +77,10 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public void writeExpirationParams(ByteBuf buf, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       if (!CodecUtils.isGreaterThan4bytes(lifespan)) {
-         log.warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+         HOTROD.warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
       if (!CodecUtils.isGreaterThan4bytes(maxIdle)) {
-         log.warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+         HOTROD.warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
       int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
       int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);
@@ -141,11 +141,10 @@ public class Codec20 implements Codec, HotRodConstants {
       short magic = buf.readUnsignedByte();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          final Log localLog = getLog();
-         localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
+
          if (trace)
             localLog.tracef("Socket dump: %s", hexDump(buf));
-
-         throw new InvalidResponseException(String.format("Invalid magic number. Expected %#x and received %#x", HotRodConstants.RESPONSE_MAGIC, magic));
+         throw HOTROD.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
       }
       long receivedMessageId = ByteBufUtil.readVLong(buf);
       if (trace) {
@@ -176,9 +175,7 @@ public class Codec20 implements Codec, HotRodConstants {
          if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
             checkForErrorsInResponseStatus(buf, params, status, serverAddress);
          }
-         throw new InvalidResponseException(String.format(
-               "[%s] Invalid response operation. Expected %#x and received %#x",
-               new String(params.cacheName), params.opRespCode, receivedOpCode));
+         throw HOTROD.invalidResponse(new String(params.cacheName), params.opRespCode, receivedOpCode);
       }
 
       return status;
@@ -260,7 +257,7 @@ public class Codec20 implements Codec, HotRodConstants {
             checkForErrorsInResponseStatus(buf, null, status, serverAddress);
             // Fall through if we didn't throw an exception already
          default:
-            throw log.unknownEvent(eventTypeId);
+            throw HOTROD.unknownEvent(eventTypeId);
       }
 
       byte[] listenerId = ByteBufUtil.readArray(buf);
@@ -282,7 +279,7 @@ public class Codec20 implements Codec, HotRodConstants {
             case CLIENT_CACHE_ENTRY_REMOVED:
                return createRemovedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), isRetried);
             default:
-               throw log.unknownEvent(eventTypeId);
+               throw HOTROD.unknownEvent(eventTypeId);
          }
       }
    }
@@ -335,7 +332,7 @@ public class Codec20 implements Codec, HotRodConstants {
                if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && trace) {
                   localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
                } else {
-                  localLog.errorFromServer(msgFromServer);
+                  HOTROD.errorFromServer(msgFromServer);
                }
                throw new HotRodClientException(msgFromServer, params.messageId, status);
             }
@@ -412,8 +409,8 @@ public class Codec20 implements Codec, HotRodConstants {
       if (params.topologyAge < topologyAge || params.topologyAge == topologyAge && currentTopology != newTopologyId) {
          params.topologyId.set(newTopologyId);
          List<SocketAddress> addressList = Arrays.asList(addresses);
-         if (localLog.isInfoEnabled()) {
-            localLog.newTopology(newTopologyId, topologyAge,
+         if (HOTROD.isInfoEnabled()) {
+            HOTROD.newTopology(newTopologyId, topologyAge,
                   addresses.length, new HashSet<>(addressList));
          }
          channelFactory.updateServers(addressList, params.cacheName, false);
