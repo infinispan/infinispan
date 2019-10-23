@@ -42,6 +42,11 @@ being segmented, which will result in a configuration exception being thrown at 
 position is to use segmented stores when possible to increase cache wide performance and reduce memory
 requirements for various operations including state transfer.
 
+The file based stores (SingleFileStore and SoftIndexFileStore) both support being segmented, but their
+current implementation requires opening file descriptors based on how many segments there are. This may
+cause issues in some configurations and users should be aware. Infinispan will print a single WARN message
+when such a configuration is found.
+
 == Hot Rod 3.0
 
 Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.
