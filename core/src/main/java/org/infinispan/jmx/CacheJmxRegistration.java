@@ -24,7 +24,7 @@ import org.infinispan.factories.scopes.Scopes;
 @SurvivesRestarts
 public final class CacheJmxRegistration extends AbstractJmxRegistration {
 
-   private static final String CACHE_JMX_GROUP = "type=Cache";
+   private static final String GROUP_PATTERN = TYPE + "=Cache," + NAME + "=%s," + MANAGER + "=%s";
 
    @Inject
    Configuration cacheConfiguration;
@@ -39,13 +39,12 @@ public final class CacheJmxRegistration extends AbstractJmxRegistration {
    @Start(priority = 14)
    @Override
    public void start() {
-      synchronized (globalJmxRegistration) {
-         if (mBeanServer == null) {
-            mBeanServer = globalJmxRegistration.mBeanServer;
-         }
-         if (jmxDomain == null) {
-            jmxDomain = globalJmxRegistration.jmxDomain;
-         }
+      // prevent double lookup of MBeanServer on eventual restart
+      if (mBeanServer == null && globalJmxRegistration.mBeanServer != null) {
+         groupName = initGroup();
+         // grab domain and MBean server from container
+         jmxDomain = globalJmxRegistration.jmxDomain;
+         mBeanServer = globalJmxRegistration.mBeanServer;
       }
 
       super.start();
@@ -59,13 +58,8 @@ public final class CacheJmxRegistration extends AbstractJmxRegistration {
 
    @Override
    protected String initGroup() {
-      return CACHE_JMX_GROUP + "," + NAME_KEY + "="
-            + ObjectName.quote(cacheName + "(" + cacheConfiguration.clustering().cacheModeString().toLowerCase() + ")")
-            + ",manager=" + ObjectName.quote(globalConfig.cacheManagerName());
-   }
-
-   @Override
-   protected String initDomain() {
-      return globalJmxRegistration.jmxDomain;
+      return String.format(GROUP_PATTERN,
+            ObjectName.quote(cacheName + "(" + cacheConfiguration.clustering().cacheModeString().toLowerCase() + ")"),
+            ObjectName.quote(globalConfig.cacheManagerName()));
    }
 }
