@@ -1,5 +1,6 @@
 package org.infinispan.configuration;
 
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
@@ -19,11 +20,11 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,7 +42,6 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
@@ -65,17 +65,17 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionSize() {
       Configuration configuration = new ConfigurationBuilder()
-         .memory().size(20)
-         .build();
+            .memory().size(20)
+            .build();
       Assert.assertEquals(configuration.memory().size(), 20);
    }
 
    @Test
    public void testDistSyncAutoCommit() {
       Configuration configuration = new ConfigurationBuilder()
-         .clustering().cacheMode(CacheMode.DIST_SYNC)
-         .transaction().autoCommit(true)
-         .build();
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .transaction().autoCommit(true)
+            .build();
       Assert.assertTrue(configuration.transaction().autoCommit());
       Assert.assertEquals(configuration.clustering().cacheMode(), CacheMode.DIST_SYNC);
    }
@@ -158,10 +158,10 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    public void testClearStores() {
       Configuration c = new ConfigurationBuilder()
             .persistence()
-               .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .persistence()
-               .clearStores()
-         .build();
+            .clearStores()
+            .build();
       assertEquals(c.persistence().stores().size(), 0);
    }
 
@@ -180,14 +180,12 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          throw new NullPointerException("Failed to find a schema file " + schemaFilename);
       }
       Source xmlFile = new StreamSource(lookup.lookupFile(String.format("configs/unified/%s.xml", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader()));
-      //SchemaFactory factory = org.apache.xerces.jaxp.validation.XMLSchema11Factory.newInstance("http://www.w3.org/XML/XMLSchema/v1.1");
-
       try {
-        SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/XML/XMLSchema/v1.1");
+         SchemaFactory factory = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
          factory.setResourceResolver(new TestResolver());
          factory.newSchema(schemaFile).newValidator().validate(xmlFile);
       } catch (IllegalArgumentException e) {
-         throw new SkipException("No XMLSchema 1.1 validator available");
+         Assert.fail("Unable to validate schema", e);
       }
    }
 
@@ -393,9 +391,11 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    }
 
    public static class NonValidatingBuilder implements Builder<Object> {
-      public NonValidatingBuilder(GlobalConfigurationBuilder builder) {}
+      public NonValidatingBuilder(GlobalConfigurationBuilder builder) {
+      }
 
-      public NonValidatingBuilder(ConfigurationBuilder builder) {}
+      public NonValidatingBuilder(ConfigurationBuilder builder) {
+      }
 
       @Override
       public void validate() {
@@ -470,6 +470,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          return inputStream;
       }
    }
+
    public static class LSInputImpl implements LSInput {
       private final String type;
       private final String namespaceURI;
