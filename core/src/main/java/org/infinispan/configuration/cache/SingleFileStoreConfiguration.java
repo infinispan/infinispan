@@ -27,11 +27,12 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
    public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", null, String.class).immutable().xmlName("path").global(false).build();
    public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder("maxEntries", -1).immutable().build();
    public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder("fragmentationFactor", 0.75f).immutable().build();
+
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SingleFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, MAX_ENTRIES, FRAGMENTATION_FACTOR);
    }
 
-   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(FILE_STORE.getLocalName());
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(FILE_STORE.getLocalName(), true, false);
 
    private final Attribute<String> location;
    private final Attribute<Integer> maxEntries;
@@ -72,7 +73,7 @@ public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfigur
       return maxEntries.get();
    }
 
-   public float fragmentationFactor () {
+   public float fragmentationFactor() {
       return fragmentationFactor.get();
    }
 

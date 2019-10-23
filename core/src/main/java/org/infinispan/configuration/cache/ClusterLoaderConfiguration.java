@@ -30,7 +30,7 @@ public class ClusterLoaderConfiguration extends AbstractStoreConfiguration imple
       return new AttributeSet(ClusterLoaderConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), REMOTE_CALL_TIMEOUT);
    }
 
-   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CLUSTER_LOADER.getLocalName());
+   public static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(CLUSTER_LOADER.getLocalName(), true, false);
 
    private final Attribute<Long> remoteCallTimeout;
 

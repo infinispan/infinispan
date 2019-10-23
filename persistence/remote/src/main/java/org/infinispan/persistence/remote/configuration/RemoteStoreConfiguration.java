@@ -26,7 +26,7 @@ import org.infinispan.persistence.remote.RemoteStore;
 @SerializedWith(RemoteStoreConfigurationSerializer.class)
 public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> BALANCING_STRATEGY = AttributeDefinition.builder("balancingStrategy", RoundRobinBalancingStrategy.class.getName()).immutable().build();
-   static final AttributeDefinition<Long> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", (long)ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT).xmlName("connect-timeout").build();
+   static final AttributeDefinition<Long> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", (long) ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT).xmlName("connect-timeout").build();
    static final AttributeDefinition<Boolean> FORCE_RETURN_VALUES = AttributeDefinition.builder("forceReturnValues", false).immutable().build();
    static final AttributeDefinition<Boolean> HOTROD_WRAPPING = AttributeDefinition.builder("hotRodWrapping", false).immutable().xmlName("hotrod-wrapping").build();
    static final AttributeDefinition<Boolean> RAW_VALUES = AttributeDefinition.builder("rawValues", false).immutable().build();
@@ -35,9 +35,9 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder("marshaller", null, String.class).immutable().build();
    static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", ProtocolVersion.DEFAULT_PROTOCOL_VERSION).immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", "").immutable().xmlName("cache").build();
-   static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>)(Class<?>)List.class)
+   static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>) (Class<?>) List.class)
          .initializer(ArrayList::new).autoPersist(false).build();
-   static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long)ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
+   static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", (long) ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).build();
    private final List<ConfigurationInfo> subElements;
 
@@ -46,7 +46,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
             HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE);
    }
 
-   static ElementDefinition ELELEMENT_DEFINITION = new DefaultElementDefinition(REMOTE_STORE.getLocalName());
+   static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(REMOTE_STORE.getLocalName(), true, false);
 
    private final Attribute<String> balancingStrategy;
    private final Attribute<Long> connectionTimeout;
@@ -94,7 +94,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
 
    @Override
    public ElementDefinition getElementDefinition() {
-      return ELELEMENT_DEFINITION;
+      return ELEMENT_DEFINITION;
    }
 
    @Override
