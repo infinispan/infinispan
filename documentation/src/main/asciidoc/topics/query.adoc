@@ -1515,135 +1515,11 @@ support and support for schema evolution.
 
 [[storing_protobuf]]
 === Storing Protobuf encoded entities
-Remote clients that want to be able to index and query their stored entities must do so using the Protobuf encoding
-format. This is _key_ for the search capability to work. But it's also possible to store Protobuf entities just for
+Remote clients that want to be able to index and query their stored entities must do so using the <<protostream,ProtoStream>>
+marshaller. This is _key_ for the search capability to work. But it's also possible to store Protobuf entities just for
 gaining the benefit of platform independence and not enable indexing if you do not need it.
 
-Protobuf is all about structured data, so first thing you do to use it is define the structure of your data. This is
-accomplished by declaring protocol buffer message types in .proto files, like in the following example. Protobuf is a
-broad subject, we will not detail it here, so please consult the Protobuf
-link:https://developers.google.com/protocol-buffers/docs/overview[Developer Guide] for an in-depth
-explanation. It suffices to say for now that our example defines an entity (message type in protobuf speak) named _Book_,
-placed in a package named _book_sample_. Our entity declares several fields of primitive types and a repeatable field (an
-array basically) named _authors_. The _Author_ message instances are embedded in the _Book_ message instance.
-
-
-[source,proto]
-.library.proto
-----
-package book_sample;
-
-message Book {
-  required string title = 1;
-  required string description = 2;
-  required int32 publicationYear = 3; // no native Date type available in Protobuf
-
-  repeated Author authors = 4;
-}
-
-message Author {
-  required string name = 1;
-  required string surname = 2;
-}
-----
-
-There are a few important notes we need to make about Protobuf messages:
-
-* nesting of messages is possible, but the resulting structure is strictly a tree, never a graph
-* there is no concept of type inheritance
-* collections are not supported but arrays can be easily emulated using repeated fields
-
-Using Protobuf with the Java Hot Rod client is a two step process. First, the client must be configured to use a
-dedicated marshaller, link:{javadocroot}/org/infinispan/client/hotrod/marshall/ProtoStreamMarshaller.html[_ProtoStreamMarshaller_].
-This marshaller uses the link:https://github.com/infinispan/protostream[_ProtoStream_] library to assist you in
-encoding your objects. The second step is instructing _ProtoStream_ library on how to marshall your message types. The
-following example highlights this process.
-
-[source,java,numbered]
-----
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
-import org.infinispan.protostream.SerializationContext;
-...
-
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder.addServer()
-    .host("10.1.2.3").port(11234)
-    .marshaller(new ProtoStreamMarshaller());
-
-RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-
-SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-
-FileDescriptorSource fds = new FileDescriptorSource();
-fds.addProtoFiles("/library.proto");
-serCtx.registerProtoFiles(fds);
-serCtx.registerMarshaller(new BookMarshaller());
-serCtx.registerMarshaller(new AuthorMarshaller());
-
-// Book and Author classes omitted for brevity
-----
-
-The interesting part in this sample is obtaining the _SerializationContext_ associated to the _RemoteCacheManager_ and
-then instructing ProtoStream about the protobuf types we want to marshall. The _SerializationContext_ is provided by the
-library for this purpose. The `SerializationContext.registerProtoFiles` method receives the name of one or more
-classpath resources that is expected to be a protobuf definition containing our type declarations.
-
-NOTE: A _RemoteCacheManager_ has no _SerializationContext_ associated with it unless it was configured to use
-a _ProtoStreamMarshaller_.
-
-The next relevant part is the registration of per entity marshallers for our domain model types. They must be
-provided by the user for each type or marshalling will fail. Writing marshallers is a simple process. The
-_BookMarshaller_ example should get you started. The most important thing you need to consider is they need to be
-stateless and threadsafe as a single instance of them is being used.
-
-.BookMarshaller.java
-[source,java]
-----
-import org.infinispan.protostream.MessageMarshaller;
-...
-
-public class BookMarshaller implements MessageMarshaller<Book> {
-
-   @Override
-   public String getTypeName() {
-      return "book_sample.Book";
-   }
-
-   @Override
-   public Class<? extends Book> getJavaClass() {
-      return Book.class;
-   }
-
-   @Override
-   public void writeTo(ProtoStreamWriter writer, Book book) throws IOException {
-      writer.writeString("title", book.getTitle());
-      writer.writeString("description", book.getDescription());
-      writer.writeInt("publicationYear", book.getPublicationYear());
-      writer.writeCollection("authors", book.getAuthors(), Author.class);
-   }
-
-   @Override
-   public Book readFrom(ProtoStreamReader reader) throws IOException {
-      String title = reader.readString("title");
-      String description = reader.readString("description");
-      int publicationYear = reader.readInt("publicationYear");
-      Set<Author> authors = reader.readCollection("authors", new HashSet<>(), Author.class);
-      return new Book(title, description, publicationYear, authors);
-   }
-}
-----
-
-Once you've followed these steps to setup your client you can start reading and writing Java objects to the remote cache
-and the actual data stored in the cache will be protobuf encoded provided that marshallers were registered with the
-remote client for all involved types (_Book_ and _Author_ in our example). Keeping your objects stored in protobuf
-format has the benefit of being able to consume them with compatible clients written in different languages.
-
-//TODO Add reference to sample in C++ client user guide
-
-//TODO
-//=== Using annotations
-
+[[enable_indexing]]
 === Indexing of Protobuf encoded entries
 After configuring the client as described in the previous section you can start configuring indexing for your caches on
 the server side. Activating indexing and the various indexing specific configurations is identical to embedded mode and
@@ -1675,32 +1551,13 @@ option indexed_by_default = false;  // This disables indexing of types that are 
 ----
 
 === A remote query example
-You've managed to configure both client and server to talk protobuf and you've enabled indexing. Let's put some data in
-the cache and try to search for it then!
+In this example, we will show you how to configure the client to utilise the example <<protostream_usage,LibraryInitializerImpl>>,
+put some data in the cache and then try to search for it. Note, the following example assumes that <<enable_indexing,Indexing has been enabled>>
+by registering the required .proto files with the `__protobuf_metadata` cache.
 
 [source,java]
 ----
-import org.infinispan.client.hotrod.*;
-import org.infinispan.query.dsl.*;
-...
-
-RemoteCacheManager remoteCacheManager = ...;
-RemoteCache<Integer, Book> remoteCache = remoteCacheManager.getCache();
-
-Book book1 = new Book();
-book1.setTitle("Hibernate in Action");
-remoteCache.put(1, book1);
-
-Book book2 = new Book();
-book2.setTile("Hibernate Search in Action");
-remoteCache.put(2, book2);
-
-QueryFactory qf = Search.getQueryFactory(remoteCache);
-Query query = qf.from(Book.class)
-            .having("title").like("%Hibernate Search%")
-            .build();
-
-List<Book> list = query.list(); // Voila! We have our book back from the cache!
+include::code_examples/RemoteQuery.java[]
 ----
 
 The key part of creating a query is obtaining the _QueryFactory_ for the remote cache using the

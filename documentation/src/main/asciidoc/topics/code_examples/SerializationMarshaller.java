@@ -1,2 +1,3 @@
-GlobalConfigurationBuilder builder = ...
-builder.serialization().marshaller(myMarshaller); // needs an instance of the marshaller
+GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+builder.marshaller(JavaSerializationMarshaller.class)
+      .addJavaSerialWhiteList("org.infinispan.example.*", "org.infinispan.concrete.SomeClass");

@@ -1,5 +1,40 @@
 = Upgrading from 9.4 to 10.0
 
+== Marshalling
+The internal marshalling capabilities of {brandname} have undergone a significant refactoring in 10.0. The marshalling of
+internal {brandname} objects and user objects are now truly isolated. This means that it's now possible to configure
+link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[Marshaller] implementations in embedded mode or on the
+server, without having to handle the marshalling of {brandname} internal classes. Consequently, it's possible to easily
+change the marshaller implementation, in a similar manner to how users of the HotRod client are accustomed.
+
+As a consequence of the above changes, the default marshaller used for marshalling user types is no longer based upon JBoss Marshalling. Instead
+we now utilise the ProtoStream library to store user types in the language agnostic link:https://developers.google.com/protocol-buffers[Protocol Buffers]
+format. It is still possible to utilise the old default, link:{javadocroot}/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller],
+however it's necessary to add the `org.infinispan:infinispan-jboss-marshalling` artifact to your application's classpath.
+
+=== Externalizer Deprecations
+The following interfaces/annotations have been deprecated as a consequence of the marshalling refactoring:
+
+* link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer],
+* link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
+* link:{javadocroot}/org/infinispan/commons/marshall/SerializeWith.html[SerializeWith]
+
+For cluster communication any configured link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer]'s
+are still utilised to marshall objects, however they are ignored when persisting data to cache stores unless the
+link:{javadocroot}/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller] is explicitly configured
+via the global link:{javadocroot}/org/infinispan/configuration/global/SerializationConfiguration.html[SerializationConfiguration].
+
+It's highly recommended to migrate from the old Externalizer and JBoss marshalling approach to the new ProtoStream based
+marshalling, as the interfaces listed above and the JBossUserMarshaller implementation will be removed in future versions.
+
+=== Store Migration
+Unfortunately, the extensive marshalling changes mean that the binary format used by Infinispan stores in `9.4.x` is no
+longer compatible with `10.0.x`. Therefore, it's necessary for any existing stores to be migrated to the new format via
+the StoreMigrator tool.
+
+NOTE: Whilst we regret that 9.4.x stores are no longer binary compatible, these extensive changes should ensure binary
+compatibility across future major versions.
+
 == Hot Rod 3.0
 
 Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.
@@ -60,6 +95,13 @@ same as the regular state transfer chunk size.
 Previously a value &lt;= 0 would transfer the entire cache in a single batch, which is almost always a bad idea.
 
 == RemoteCache Changes
+
+=== Marshalling Changes
+The default marshaller is no longer GenericJbossMarshaller. We now utilise the link:https://github.com/infinispan/protostream[ProtoStream]
+library as the default. If Java Serialization is required by clients, we strongly recommend utilising the
+link:link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller[JavaSerializationMarshaller] instead.
+However if the GenericJbossMarshaller must be used, it's necessary to add the `org.infinispan:infinispan-jboss-marshalling`
+artifact to your client's classpath and for the `GenericJbossMarshaller` to be configured as the marshaller.
 
 === The getBulk methods have been removed
 The getBulk method is an expensive method as it requires holding all keys in memory at once and requires a possibly very single result
