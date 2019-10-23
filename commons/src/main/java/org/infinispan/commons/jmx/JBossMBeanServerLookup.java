@@ -7,6 +7,8 @@ import javax.management.MBeanServer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 
+//todo [anistor] is this still used ?
+
 /**
  * MBeanServer lookup implementation to locate the JBoss MBeanServer.
  *

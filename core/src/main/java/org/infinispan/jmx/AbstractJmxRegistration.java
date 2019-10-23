@@ -1,5 +1,7 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,13 +31,9 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @Scope(Scopes.NONE)
-abstract class AbstractJmxRegistration {
+abstract class AbstractJmxRegistration implements ObjectNameKeys {
 
    private static final Log log = LogFactory.getLog(AbstractJmxRegistration.class);
-
-   static final String NAME_KEY = "name";
-
-   private static final String COMPONENT_KEY = "component";
 
    @Inject
    GlobalConfiguration globalConfig;
@@ -45,9 +43,9 @@ abstract class AbstractJmxRegistration {
 
    volatile MBeanServer mBeanServer;
 
-   volatile String jmxDomain;
+   String jmxDomain;
 
-   private String groupName;
+   String groupName;
 
    private Collection<ResourceDMBean> resourceDMBeans;
 
@@ -55,30 +53,24 @@ abstract class AbstractJmxRegistration {
     * Looks up the MBean server and initializes domain and group. Overriders must ensure they call super.
     */
    public void start() {
-      synchronized (this) {
-         // prevent double init of group on eventual restart
-         if (groupName == null) {
-            groupName = initGroup();
-         }
+      // prevent double lookup of MBeanServer on eventual restart
+      if (mBeanServer == null) {
+         groupName = initGroup();
 
-         // prevent double lookup of MBeanServer on eventual restart
-         if (mBeanServer == null) {
-            try {
-               GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
-               MBeanServerLookup lookup = globalJmxConfig.mbeanServerLookup();
-               if (lookup != null) {
-                  mBeanServer = lookup.getMBeanServer(globalJmxConfig.properties());
-               }
-            } catch (Exception e) {
-               log.debug("Ignoring exception in MBean server lookup", e);
+         MBeanServer mBeanServer = null;
+         try {
+            GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
+            MBeanServerLookup lookup = globalJmxConfig.mbeanServerLookup();
+            if (lookup != null) {
+               mBeanServer = lookup.getMBeanServer(globalJmxConfig.properties());
             }
+         } catch (Exception e) {
+            log.warn("Ignoring exception in MBean server lookup", e);
          }
 
          if (mBeanServer != null) {
-            // prevent double init of domain on eventual restart
-            if (jmxDomain == null) {
-               jmxDomain = initDomain();
-            }
+            jmxDomain = initDomain(mBeanServer);
+            this.mBeanServer = mBeanServer;
          }
       }
 
@@ -101,7 +93,7 @@ abstract class AbstractJmxRegistration {
     * Unregisters the MBeans that were registered on start. Overriders must ensure they call super.
     */
    public void stop() {
-      if (resourceDMBeans != null) {
+      if (mBeanServer != null && resourceDMBeans != null) {
          try {
             for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                if (resourceDMBean.getObjectName() != null) {
@@ -116,14 +108,21 @@ abstract class AbstractJmxRegistration {
    }
 
    /**
-    * Subclasses must implement this hook to initialize {@link #jmxDomain} during start.
-    */
-   protected abstract String initDomain();
-
-   /**
     * Subclasses must implement this hook to initialize {@link #groupName} during start.
     */
    protected abstract String initGroup();
+
+   /**
+    * Initialize JMX domain during start.
+    */
+   private String initDomain(MBeanServer mBeanServer) {
+      GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
+      String jmxDomain = JmxUtil.buildJmxDomain(globalJmxConfig.domain(), mBeanServer, groupName);
+      if (!globalJmxConfig.allowDuplicateDomains() && !jmxDomain.equals(globalJmxConfig.domain())) {
+         throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, globalJmxConfig.domain());
+      }
+      return jmxDomain;
+   }
 
    /**
     * Gets the domain name. This should not be called unless JMX is enabled.
@@ -165,7 +164,7 @@ abstract class AbstractJmxRegistration {
       if (resourceName == null) {
          throw new IllegalArgumentException("resourceName cannot be null");
       }
-      return new ObjectName(getDomain() + ":" + groupName + "," + COMPONENT_KEY + "=" + resourceName);
+      return new ObjectName(getDomain() + ":" + groupName + "," + COMPONENT + "=" + resourceName);
    }
 
    /**
