@@ -36,7 +36,7 @@ for %%j in (%ISPN_HOME%\boot\*.jar) do (
 
 set DEBUG_MODE=false
 set DEBUG_PORT=8787
-
+set "JAVA_OPTS_EXTRA="
 :ARGS_LOOP_START
 if "%~1" == "" (
    goto ARGS_LOOP_END
@@ -50,6 +50,8 @@ if "%~1" == "" (
       set DEBUG_PORT=%2
       shift
    )
+) else if "%~1:~0,2" == "-D" (
+   set "JAVA_OPTS_EXTRA=%JAVA_OPTS_EXTRA% %1"
 ) else (
    set "ARGUMENTS=%ARGUMENTS% %1"
 )

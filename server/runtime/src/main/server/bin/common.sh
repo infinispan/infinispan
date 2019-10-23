@@ -8,6 +8,7 @@
 DEBUG_MODE="${DEBUG:-false}"
 DEBUG_PORT="${DEBUG_PORT:-8787}"
 GC_LOG="$GC_LOG"
+JAVA_OPTS_EXTRA=""
 while [ "$#" -gt 0 ]
 do
     case "$1" in
@@ -21,6 +22,9 @@ do
       --)
           shift
           break;;
+      -D*)
+          JAVA_OPTS_EXTRA="$JAVA_OPTS_EXTRA '$1'"
+          ;;
       *)
           ARGUMENTS="$ARGUMENTS '$1'"
           ;;
@@ -102,6 +106,8 @@ fi
 if [ -r "$RUN_CONF" ]; then
     . "$RUN_CONF"
 fi
+
+JAVA_OPTS="$JAVA_OPTS_EXTRA $JAVA_OPTS"
 
 # Set debug settings if not already set
 if [ "$DEBUG_MODE" = "true" ]; then
