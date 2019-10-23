@@ -13,6 +13,5 @@ setlocal DisableDelayedExpansion
 
 "%JAVA%" %JAVA_OPTS% ^
    -Dvisualvm.display.name=%PROCESS_NAME% ^
-   -Djava.util.logging.manager=org.jboss.logmanager.LogManager ^
    "-Dinfinispan.server.home.path=%ISPN_HOME%" ^
    -classpath %CLASSPATH% %LOADER_CLASS% %MAIN_CLASS% %ARGUMENTS%
