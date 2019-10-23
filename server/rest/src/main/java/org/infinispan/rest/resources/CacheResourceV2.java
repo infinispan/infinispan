@@ -29,6 +29,7 @@ import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.rest.CacheInputStream;
 import org.infinispan.rest.InvocationHelper;
@@ -79,8 +80,27 @@ public class CacheResourceV2 extends CacheResource {
 
             // Search
             .invocation().methods(GET, POST).path("/v2/caches/{cacheName}").withAction("search").handleWith(queryAction::search)
+
+            // Misc
+            .invocation().methods(POST).path("/v2/caches").withAction("toJSON").handleWith(this::convertToJson)
             .create();
 
+   }
+
+   private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      String contents = restRequest.contents().asString();
+
+      if(contents == null || contents.isEmpty()) {
+         responseBuilder.status(HttpResponseStatus.BAD_REQUEST);
+         return CompletableFuture.completedFuture(responseBuilder.build());
+      }
+      ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents);
+      ConfigurationBuilder builder = builderHolder.getNamedConfigurationBuilders().values().iterator().next();
+      Configuration configuration = builder.build();
+      responseBuilder.contentType(APPLICATION_JSON).entity(invocationHelper.getJsonWriter().toJSON(configuration));
+      return completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> streamKeys(RestRequest request) {
