@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -8,8 +10,6 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -23,7 +23,6 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class AuthOperation extends HotRodOperation<byte[]> {
-   private static final Log log = LogFactory.getLog(AuthOperation.class);
 
    private final Channel channel;
    private final String saslMechanism;
@@ -40,7 +39,7 @@ public class AuthOperation extends HotRodOperation<byte[]> {
    @Override
    public CompletableFuture<byte[]> execute() {
       if (!channel.isActive()) {
-         throw log.channelInactive(channel.remoteAddress(), channel.remoteAddress());
+         throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
 
       byte[] saslMechBytes = saslMechanism.getBytes(HOTROD_STRING_CHARSET);

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,8 +19,6 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -28,8 +28,6 @@ import io.netty.channel.Channel;
  * @since 8.0
  */
 public class IterationNextOperation<E> extends HotRodOperation<IterationNextResponse<E>> {
-
-   private static final Log log = LogFactory.getLog(IterationNextOperation.class);
 
    private final byte[] iterationId;
    private final Channel channel;
@@ -54,7 +52,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
    @Override
    public CompletableFuture<IterationNextResponse<E>> execute() {
       if (!channel.isActive()) {
-         throw log.channelInactive(channel.remoteAddress(), channel.remoteAddress());
+         throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
       scheduleRead(channel);
       sendArrayOperation(channel, iterationId);
@@ -119,7 +117,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
       }
       segmentKeyTracker.segmentsFinished(finishedSegments);
       if (HotRodConstants.isInvalidIteration(status)) {
-         throw log.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
+         throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
       complete(new IterationNextResponse(status, entries, entriesSize > 0));
    }

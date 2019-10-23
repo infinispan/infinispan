@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.marshall;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -67,7 +69,7 @@ public final class MarshallerUtil {
 
          return (T) ret;
       } catch (Exception e) {
-         throw log.unableToUnmarshallBytes(Util.toHexString(bytes), e);
+         throw HOTROD.unableToUnmarshallBytes(Util.toHexString(bytes), e);
       }
    }
 

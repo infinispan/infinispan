@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_E
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_ENTRY_MODIFIED_EVENT_RESPONSE;
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_ENTRY_REMOVED_EVENT_RESPONSE;
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.COUNTER_EVENT_RESPONSE;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,7 +71,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                operation, System.identityHashCode(operation), operation.header().messageId(), channel);
       }
       if (closing) {
-         throw log.noMoreOperationsAllowed();
+         throw HOTROD.noMoreOperationsAllowed();
       }
       HotRodOperation<?> prev = incomplete.put(operation.header().messageId(), operation);
       assert prev == null : "Already registered: " + prev + ", new: " + operation;
@@ -104,7 +105,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                      // until all events are sent, only until these are queued. In such case the operation may
                      // complete earlier.
                      if (operation != null && !(operation instanceof AddClientListenerOperation)) {
-                        throw log.operationIsNotAddClientListener(messageId, operation.toString());
+                        throw HOTROD.operationIsNotAddClientListener(messageId, operation.toString());
                      } else if (trace) {
                         log.tracef("This event belongs to %s", operation);
                      }
@@ -125,7 +126,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                // we can remove the operation at this point since we'll read no more in this state
                operation = incomplete.remove(messageId);
                if (operation == null) {
-                  throw log.unknownMessageId(messageId);
+                  throw HOTROD.unknownMessageId(messageId);
                }
                if (trace) {
                   log.tracef("Response %d belongs to %s on %s", messageId, operation, ctx.channel());
@@ -174,7 +175,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                } catch (Signal signal) {
                   throw signal;
                } catch (Throwable t) {
-                  log.unableToReadEventFromServer(t, ctx.channel().remoteAddress());
+                  HOTROD.unableToReadEventFromServer(t, ctx.channel().remoteAddress());
                   throw t;
                }
                invokeEvent(counterEvent.getListenerId(), counterEvent);
@@ -194,7 +195,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       try {
          listenerNotifier.invokeEvent(listenerId, cacheEvent);
       } catch (Exception e) {
-         log.unexpectedErrorConsumingEvent(cacheEvent, e);
+         HOTROD.unexpectedErrorConsumingEvent(cacheEvent, e);
       }
    }
 
@@ -208,7 +209,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             try {
                op.exceptionCaught(ctx.channel(), transportException);
             } catch (Throwable t) {
-               log.errorf(t, "Failed to complete %s", op);
+               HOTROD.errorf(t, "Failed to complete %s", op);
             }
          }
          if (trace) {
@@ -224,7 +225,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          try {
             op.channelInactive(ctx.channel());
          } catch (Throwable t) {
-            log.errorf(t, "Failed to complete %s", op);
+            HOTROD.errorf(t, "Failed to complete %s", op);
          }
       }
       failoverClientListeners();

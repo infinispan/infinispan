@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -86,7 +88,7 @@ public class Util {
       try {
          return op.execute().handle((integer, throwable) -> {
             if (throwable != null) {
-               log.invalidTxServerConfig(cacheName, throwable);
+               HOTROD.invalidTxServerConfig(cacheName, throwable);
             }
             return throwable == null;
          }).get();

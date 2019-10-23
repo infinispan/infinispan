@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.async;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
@@ -44,7 +46,7 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
       return new ThreadPoolExecutor(cp.getDefaultExecutorFactoryPoolSize(), cp.getDefaultExecutorFactoryPoolSize(),
             0L, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), tf, (r, executor) -> {
          int poolSize = cp.getDefaultExecutorFactoryPoolSize();
-         log.cannotCreateAsyncThread(poolSize);
+         HOTROD.cannotCreateAsyncThread(poolSize);
          throw new RejectedExecutionException("Too few threads: " + poolSize);
       });
    }

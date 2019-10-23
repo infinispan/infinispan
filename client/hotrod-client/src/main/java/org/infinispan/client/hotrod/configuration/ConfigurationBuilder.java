@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,7 +128,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
                   : Integer.parseInt(portString);
             c.accept(host, port);
          } else {
-            throw log.parseErrorServerAddress(server);
+            throw HOTROD.parseErrorServerAddress(server);
          }
 
       }
@@ -425,12 +427,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       transaction.validate();
       statistics.validate();
       if (maxRetries < 0) {
-         throw log.invalidMaxRetries(maxRetries);
+         throw HOTROD.invalidMaxRetries(maxRetries);
       }
       Set<String> clusterNameSet = new HashSet<>(clusters.size());
       for (ClusterConfigurationBuilder clusterConfigBuilder : clusters) {
          if (!clusterNameSet.add(clusterConfigBuilder.getClusterName())) {
-            throw log.duplicateClusterDefinition(clusterConfigBuilder.getClusterName());
+            throw HOTROD.duplicateClusterDefinition(clusterConfigBuilder.getClusterName());
          }
          clusterConfigBuilder.validate();
       }

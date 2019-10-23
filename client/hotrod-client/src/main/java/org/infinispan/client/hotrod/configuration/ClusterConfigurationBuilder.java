@@ -1,19 +1,17 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 
 /**
  * @since 8.1
  */
 public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ClusterConfiguration> {
-
-   private static final Log log = LogFactory.getLog(ClusterConfigurationBuilder.class);
 
    private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
    private final String clusterName;
@@ -44,10 +42,10 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    @Override
    public void validate() {
       if (clusterName == null || clusterName.isEmpty()) {
-         throw log.missingClusterNameDefinition();
+         throw HOTROD.missingClusterNameDefinition();
       }
       if (servers.isEmpty()) {
-         throw log.missingClusterServersDefinition(clusterName);
+         throw HOTROD.missingClusterServersDefinition(clusterName);
       }
       for (ServerConfigurationBuilder serverConfigBuilder : servers) {
          serverConfigBuilder.validate();
