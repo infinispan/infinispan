@@ -467,7 +467,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return localPublisherManager;
    }
 
-   @SuppressWarnings("unchecked")
    public ComponentRef<LocalStreamManager> getLocalStreamManager() {
       return localStreamManager;
    }

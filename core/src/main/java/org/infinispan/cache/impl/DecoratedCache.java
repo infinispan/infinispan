@@ -716,7 +716,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public CacheEntry getCacheEntry(Object key) {
+   public CacheEntry<K, V> getCacheEntry(Object key) {
       return cacheImplementation.getCacheEntry(key, flags, readContext(1));
    }
 
