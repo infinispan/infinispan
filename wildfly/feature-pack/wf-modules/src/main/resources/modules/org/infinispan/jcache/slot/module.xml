@@ -12,7 +12,7 @@
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.cdi.embedded" slot="@infinispan.module.slot@" services="import" />
-        <module name="org.infinispan.jcache.commons" slot="@infinispan.module.slot@" />
+        <module name="org.infinispan.jcache.commons" slot="@infinispan.module.slot@" services="export" export="true" />
         <module name="org.jboss.logging"/>
     </dependencies>
 </module>
