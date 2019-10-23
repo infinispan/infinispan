@@ -2,6 +2,7 @@ package org.infinispan;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -383,9 +384,70 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation value is null
     */
-   default V computeIfAbsent(K key,
-                             SerializableFunction<? super K, ? extends V> mappingFunction) {
+   default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction,
+         long lifespan, TimeUnit lifespanUnit) {
+      return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction,
+         long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    /**
@@ -417,6 +479,20 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    }
 
    /**
+    * Overloaded {@link Cache#computeIfPresentAsync(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation result is null
+    */
+   default CompletableFuture<V> computeIfPresentAsync(K key,
+         SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeIfPresentAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
+   }
+
+   /**
     * {@inheritDoc}
     * <p>
     * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
@@ -439,9 +515,73 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computation result (can be null)
     */
-   default V compute(K key,
-                     SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+   default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
+   }
+
+   /**
+    * Overloaded {@link Cache#compute(Object, BiFunction, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computation result (can be null)
+    */
+   default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#compute(Object, BiFunction, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computation result (can be null)
+    */
+   default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeAsync(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computation result (can be null)
+    */
+   default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeAsync(Object, BiFunction, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computation result (can be null)
+    */
+   default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
+   }
+
+   /**
+    * Overloaded {@link Cache#computeAsync(Object, BiFunction, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computation result (can be null)
+    */
+   default CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return computeAsync(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    /**
@@ -474,27 +614,81 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    }
 
    /**
-    * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    * Overloaded {@link #merge(Object, Object, BiFunction, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
     *
-    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the merged value that was stored under key
+    * @since 9.4
     */
-   default V computeIfAbsent(K key,
-                             SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
+   default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
    }
 
    /**
-    * Overloaded {@link Cache#computeIfAbsent(Object, Function, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableFunction}.
+    * Overloaded {@link #merge(Object, Object, BiFunction, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
     *
-    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
-    * @param key, the key to be computed
-    * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the merged value that was stored under key
+    * @since 9.4
     */
-   default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @return the merged value that was stored under key
+    * @since 10.0
+    */
+   default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction);
+   }
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the merged value that was stored under key
+    * @since 10.0
+    */
+   default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit);
+   }
+
+   /**
+    * Overloaded {@link #mergeAsync(Object, Object, BiFunction, long, TimeUnit, long, TimeUnit)} with Infinispan {@link SerializableBiFunction}.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the merged value that was stored under key
+    * @since 10.0
+    */
+   default CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return mergeAsync(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 }
