@@ -67,7 +67,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
 
    @Override
    public ElementDefinition getElementDefinition() {
-      return RemoteStoreConfiguration.ELELEMENT_DEFINITION;
+      return RemoteStoreConfiguration.ELEMENT_DEFINITION;
    }
 
    @Override

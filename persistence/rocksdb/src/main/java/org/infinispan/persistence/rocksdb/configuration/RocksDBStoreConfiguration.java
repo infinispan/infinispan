@@ -39,7 +39,7 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
             BLOCK_SIZE, CACHE_SIZE, CLEAR_THRESHOLD);
    }
 
-   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ROCKSDB_STORE.getLocalName());
+   public static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(ROCKSDB_STORE.getLocalName(), true, false);
 
    private final Attribute<String> location;
    private final Attribute<CompressionType> compressionType;
