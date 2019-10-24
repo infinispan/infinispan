@@ -1,19 +1,23 @@
+/**********************************************************************************************************************
+ *                                  REMOTE QUERY RELATED PROTOBUF DEFINITIONS                                         *
+ *                                                                                                                    *
+ *         Allocated TypeId range is: [4400 .. 4599] (see org.infinispan.commons.marshall.ProtoStreamTypeIds)         *
+ *         Actually used range is: [4400 .. 4403]                                                                     *
+ *********************************************************************************************************************/
+
 import "org/infinispan/protostream/message-wrapping.proto";
 
 package org.infinispan.query.remote.client;
 
 /**
- * @TypeId(1000101)
+ * @TypeId(4400)
  */
 message QueryRequest {
 
    /**
-    * The query string, expressed in Infinispan's query language (a JPA subset with full-text enhancements).
-    * NOTE: currently only a limited subset of the JPA query language is supported.
+    * The query string, in Infinispan's query language aka Ickle (a JP-QL micro-subset with full-text enhancements).
     */
    required string queryString = 1;
-
-   // NOTE: id 2 was used for sort criteria, which is now into the ORDER BY clause inside the query string
 
    /**
     * The number of matching results to skip before the first returned result.
@@ -26,14 +30,14 @@ message QueryRequest {
    optional int32 maxResults = 4;
 
    /**
-    * Multiple, optional named parameters. Each name must occur only once.
+    * Multiple, optional, named parameters. Each name must occur only once.
     */
    repeated NamedParameter namedParameters = 5;
 
    message NamedParameter {
 
       /**
-       * Parameter name.
+       * Parameter unique name.
        */
       required string name = 1;
 
@@ -43,11 +47,16 @@ message QueryRequest {
       required org.infinispan.protostream.WrappedMessage value = 2;
    }
 
+   /**
+    * EXPERIMENTAL! DO NOT USE! This is the query mode (FETCH / BROADCAST), currently represented as string,
+    * but it will be renamed / refactored into an enum, eventually with more possible values, one additional
+    * possibility would be NON_INDEXED to force querying without using the index.
+    */
    optional string indexedQueryMode = 6;
 }
 
 /**
- * @TypeId(1000102)
+ * @TypeId(4401)
  */
 message QueryResponse {
 
@@ -61,22 +70,27 @@ message QueryResponse {
     *
     *      0 - no projection
     * 1 .. N - projection with N components
-    *    < 0 - illegal value, not used
+    *    < 0 - illegal value
     */
    required int32 projectionSize = 2;
 
    /**
     * The list of matching results. The size should be either numResults, if no projections are used, or numResults *
     * projectionSize otherwise. If projections are used, then each group of projectionSize consecutive elements
-    * represent together a row from the result.
+    * represent together a row from the result. We use this simple schema in order to avoid bi-dimensional arrays when
+    * projections are present.
     */
    repeated org.infinispan.protostream.WrappedMessage results = 3;
 
+   /**
+    * Total number of results that match the query. This is usually larger than numResults due to
+    * QueryRequest.startOffset and QueryRequest.maxResults.
+    */
    required int64 totalResults = 4;
 }
 
 /**
- * @TypeId(1000103)
+ * @TypeId(4402)
  */
 message FilterResult {
 
@@ -88,14 +102,13 @@ message FilterResult {
 }
 
 /**
- * @TypeId(1000104)
+ * @TypeId(4403)
  */
 message ContinuousQueryResult {
 
-   /* @TypeId(1000105) */
    enum ResultType {
-      JOINING = 1;
       LEAVING = 0;
+      JOINING = 1;
       UPDATED = 2;
    }
 
