@@ -47,7 +47,7 @@
                   max_bytes="1M"
    />
    <pbcast.GMS print_local_addr="false"
-               join_timeout="15000"
+               join_timeout="2000"
    />
 
     <!-- At this place we can react on DISCONNECTs immediatelly -->

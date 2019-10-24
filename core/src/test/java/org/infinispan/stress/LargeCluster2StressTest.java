@@ -72,7 +72,7 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
       udpConfiguration.getProperties().put("thread_pool.max_threads", String.valueOf(JGROUPS_MAX_THREADS));
       ProtocolConfiguration gmsConfiguration = configurator.getProtocolStack().get(9);
       assertEquals("pbcast.GMS", gmsConfiguration.getProtocolName());
-      gmsConfiguration.getProperties().put("join_timeout", "5000");
+      gmsConfiguration.getProperties().put("join_timeout", "2000");
 
       final Configuration distConfig = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.DIST_SYNC)
