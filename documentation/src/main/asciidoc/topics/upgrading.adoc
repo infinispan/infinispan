@@ -35,6 +35,13 @@ the StoreMigrator tool.
 NOTE: Whilst we regret that 9.4.x stores are no longer binary compatible, these extensive changes should ensure binary
 compatibility across future major versions.
 
+=== Store Defaults
+
+Stores now default to being segmented if the property is not configured. Some stores do not support
+being segmented, which will result in a configuration exception being thrown at startup. The moving forward
+position is to use segmented stores when possible to increase cache wide performance and reduce memory
+requirements for various operations including state transfer.
+
 == Hot Rod 3.0
 
 Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.
