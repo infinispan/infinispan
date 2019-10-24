@@ -485,22 +485,43 @@ import java.util.Base64;
  * @author Gustavo Lira (glira@redhat.com)
  */
 public class RestExample {
-   private static final String SERVER_ADDRESS = "http://localhost:8080";
+   private static final String SERVER_ADDRESS = "http://localhost:11222";
+   private static final String CACHE_URI = "/rest/v2/caches/default";
+
+   /**
+    * postMethod create a named cache.
+    * @param httpClient HTTP client that sends requests and receives responses
+    * @param builder    Encapsulates HTTP requests
+    * @throws IOException
+    * @throws InterruptedException
+    */
+   public void postMethod(HttpClient httpClient, HttpRequest.Builder builder) throws IOException, InterruptedException {
+      System.out.println("----------------------------------------");
+      System.out.println("Executing POST");
+      System.out.println("----------------------------------------");
+
+      HttpRequest request = builder.POST(HttpRequest.BodyPublishers.noBody()).build();
+      HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+
+      System.out.println("----------------------------------------");
+      System.out.println(response.statusCode());
+      System.out.println("----------------------------------------");
+   }
 
    /**
     * putMethod stores a String value in your cache.
     * @param httpClient HTTP client that sends requests and receives responses
     * @param builder    Encapsulates HTTP requests
-    * @param value      Hello World
     * @throws IOException
     * @throws InterruptedException
     */
-   public void putMethod(HttpClient httpClient, HttpRequest.Builder builder, String value) throws IOException, InterruptedException {
+   public void putMethod(HttpClient httpClient, HttpRequest.Builder builder) throws IOException, InterruptedException {
       System.out.println("----------------------------------------");
       System.out.println("Executing PUT");
       System.out.println("----------------------------------------");
 
-      HttpRequest request = builder.PUT(HttpRequest.BodyPublishers.ofString(value)).build();
+      String cacheValue = "Infinispan REST Test";
+      HttpRequest request = builder.PUT(HttpRequest.BodyPublishers.ofString(cacheValue)).build();
       HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
 
       System.out.println("----------------------------------------");
@@ -534,21 +555,22 @@ public class RestExample {
 
    public static void main(String[] args) throws IOException, InterruptedException {
       RestExample restExample = new RestExample();
+      HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 
-      String url = String.format("%s%s", SERVER_ADDRESS, "/rest/default/1");
-      HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Content-Type", "text/plain")
-            .header("Authorization", basicAuth("user", "pass"));
-
-       HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
-
-      restExample.putMethod(httpClient, builder, "Infinispan REST Test");
-      restExample.getMethod(httpClient, builder);
+      restExample.postMethod(httpClient, getHttpReqestBuilder(String.format("%s%s", SERVER_ADDRESS, CACHE_URI)));
+      restExample.putMethod(httpClient, getHttpReqestBuilder(String.format("%s%s/1", SERVER_ADDRESS, CACHE_URI)));
+      restExample.getMethod(httpClient, getHttpReqestBuilder(String.format("%s%s/1", SERVER_ADDRESS, CACHE_URI)));
    }
 
    private static String basicAuth(String username, String password) {
       return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+   }
+
+   private static final HttpRequest.Builder getHttpReqestBuilder(String url) {
+      return HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "text/plain")
+            .header("Authorization", basicAuth("user", "pass"));
    }
 }
 
