@@ -150,6 +150,11 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-extended-statistics</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jboss-marshalling</artifactId>
+      </dependency>
       <!-- /javadoc-embedded dependencies -->
 
       <!-- javadoc-remote dependencies -->
