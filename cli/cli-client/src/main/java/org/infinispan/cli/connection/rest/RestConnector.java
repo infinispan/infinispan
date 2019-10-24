@@ -39,7 +39,7 @@ public class RestConnector implements Connector {
                }
 
                int port = url.getPort();
-               builder.addServer().host(url.getHost()).port(port > 0 ? port : 11222);
+               builder.addServer().host(url.getHost()).port(port > 0 ? port : url.getDefaultPort());
                String userInfo = url.getUserInfo();
                if (userInfo != null) {
                   String[] split = userInfo.split(":");

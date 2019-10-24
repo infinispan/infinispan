@@ -51,7 +51,7 @@ public class RestConnectorTest {
       RestConnection connection = (RestConnection) connector.getConnection("http://localhost", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       RestClientConfiguration configuration = builder.build();
-      assertEquals(11222, configuration.servers().get(0).port());
+      assertEquals(80, configuration.servers().get(0).port());
       assertEquals("localhost", configuration.servers().get(0).host());
       assertFalse(configuration.security().authentication().enabled());
    }
@@ -63,7 +63,7 @@ public class RestConnectorTest {
       RestClientConfigurationBuilder builder = connection.getBuilder();
       builder.security().ssl().sslContext(SSLContext.getDefault()).trustManagers(new TrustManager[]{new ZeroSecurityTrustManager()});
       RestClientConfiguration configuration = builder.build();
-      assertEquals(11222, configuration.servers().get(0).port());
+      assertEquals(443, configuration.servers().get(0).port());
       assertEquals("localhost", configuration.servers().get(0).host());
       assertFalse(configuration.security().authentication().enabled());
       assertTrue(configuration.security().ssl().enabled());
