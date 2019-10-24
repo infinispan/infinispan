@@ -29,7 +29,7 @@
          thread_pool.keep_alive_time="5000"
     />
 
-    <PING/>
+    <PING num_discovery_runs="3"/>
     <MERGE3/>
     <FD_SOCK />
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
@@ -45,7 +45,7 @@
                    desired_avg_gossip="5000"
                    max_bytes="1M"
     />
-    <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}"
+    <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:2000}"
                 max_bundling_time="200"/>
     <UFC_NB max_credits="3m"
           min_threshold="0.40"/>
