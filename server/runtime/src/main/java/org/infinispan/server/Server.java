@@ -2,6 +2,8 @@ package org.infinispan.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +23,7 @@ import javax.xml.stream.XMLStreamException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.ConfigurationInfo;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
@@ -373,10 +376,11 @@ public class Server implements ServerManagement, AutoCloseable {
       scheduler.schedule(() -> getExitHandler().exit(exitStatus), SHUTDOWN_DELAY_SECONDS, TimeUnit.SECONDS);
    }
 
+   @SerializeWith(ShutdownRunnable.Externalizer.class)
    static final class ShutdownRunnable implements SerializableFunction<EmbeddedCacheManager, Void> {
       private final ExitStatus exitStatus;
 
-      public ShutdownRunnable(ExitStatus exitStatus) {
+      ShutdownRunnable(ExitStatus exitStatus) {
          this.exitStatus = exitStatus;
       }
 
@@ -385,6 +389,19 @@ public class Server implements ServerManagement, AutoCloseable {
          Server server = SecurityActions.getCacheManagerConfiguration(em).module(ServerConfiguration.class).getServer();
          server.serverStopHandler(exitStatus);
          return null;
+      }
+
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ShutdownRunnable> {
+         @Override
+         public void writeObject(ObjectOutput output, ShutdownRunnable object) throws IOException {
+            output.writeObject(object.exitStatus);
+         }
+
+         @Override
+         public ShutdownRunnable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            ExitStatus exitStatus = (ExitStatus) input.readObject();
+            return new ShutdownRunnable(exitStatus);
+         }
       }
    }
 
