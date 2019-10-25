@@ -31,10 +31,7 @@ import io.smallrye.metrics.MetricsRequestHandler;
  */
 public final class MetricsResource implements ResourceHandler {
 
-   private static final String METRICS_PATH = "/v2/metrics";
-
-   //TODO [anistor] Spec mandates /metrics but we're using /rest/v2/metrics to avoid clashing with a cache name
-   private static final String METRICS_CONTEXT_ROOT = "/rest" + METRICS_PATH;
+   private static final String METRICS_PATH = "/metrics";
 
    private final MetricsRequestHandler requestHandler = new MetricsRequestHandler();
 
@@ -72,7 +69,7 @@ public final class MetricsResource implements ResourceHandler {
 
          RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder();
 
-         requestHandler.handleRequest(restRequest.path(), METRICS_CONTEXT_ROOT, restRequest.method().name(),
+         requestHandler.handleRequest(restRequest.path(), METRICS_PATH, restRequest.method().name(),
                accept.stream(), (status, message, headers) -> {
                   builder.status(status).entity(message);
                   for (String header : headers.keySet()) {

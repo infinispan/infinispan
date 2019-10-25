@@ -109,18 +109,18 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
             configuration, server, getExecutor());
 
       String restContext = configuration.contextPath();
-      String staticContext = "/";
+      String rootContext = "/";
       ResourceManager resourceManager = new ResourceManagerImpl();
-      resourceManager.registerResource(staticContext, new SplashResource());
+      resourceManager.registerResource(rootContext, new SplashResource());
       resourceManager.registerResource(restContext, new CacheResource(invocationHelper));
       resourceManager.registerResource(restContext, new CacheResourceV2(invocationHelper));
       resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
       resourceManager.registerResource(restContext, new CacheManagerResource(invocationHelper));
       resourceManager.registerResource(restContext, new XSiteResource(invocationHelper));
-      resourceManager.registerResource(restContext, new MetricsResource());
+      resourceManager.registerResource(rootContext, new MetricsResource());
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
-         resourceManager.registerResource(staticContext, new StaticFileResource(staticResources, "static"));
+         resourceManager.registerResource(rootContext, new StaticFileResource(staticResources, "static"));
       }
       if (server != null) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
