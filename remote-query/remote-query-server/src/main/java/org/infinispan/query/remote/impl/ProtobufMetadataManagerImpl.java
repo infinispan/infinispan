@@ -32,6 +32,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
@@ -71,6 +72,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    @Inject
    InternalCacheRegistry internalCacheRegistry;
+
+   @Inject
+   SerializationContextRegistry serializationContextRegistry;
 
    public ProtobufMetadataManagerImpl() {
       Configuration.Builder protostreamCfgBuilder = Configuration.builder();
@@ -177,6 +181,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @Override
    public void registerMarshaller(BaseMarshaller<?> marshaller) {
       serCtx.registerMarshaller(marshaller);
+      serializationContextRegistry.addMarshaller(SerializationContextRegistry.MarshallerType.GLOBAL, marshaller);
    }
 
    @Override

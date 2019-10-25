@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,24 +13,21 @@ import java.util.Set;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.testng.annotations.Test;
 
 /**
@@ -51,19 +47,11 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
       cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       createHotRodServers(NUM_NODES, cfgBuilder);
       waitForClusterToForm();
+   }
 
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
-      // Register extra marshallers in the ProtobufMetadataManager. In standalone servers this can be done with a deployment jar.
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContext(cm));
-      }
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(client(0));
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDomainSCI.INSTANCE;
    }
 
    @Override

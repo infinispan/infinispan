@@ -6,6 +6,8 @@ import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -65,12 +67,17 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
             .host(host)
             .port(serverPort)
             .maxRetries(maxRetries())
-            .contextInitializer(contextInitializer());
+            .contextInitializers(contextInitializers().toArray(new SerializationContextInitializer[0]));
       return clientBuilder;
    }
 
    protected SerializationContextInitializer contextInitializer() {
       return null;
+   }
+
+   protected List<SerializationContextInitializer> contextInitializers() {
+      SerializationContextInitializer sci = contextInitializer();
+      return sci == null ? Collections.emptyList() : Arrays.asList(sci);
    }
 
    protected int maxRetries() {
@@ -161,8 +168,8 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
-      SerializationContextInitializer sci = contextInitializer();
-      if (sci != null)
-         builder.serialization().addContextInitializer(sci);
+      List<SerializationContextInitializer> scis = contextInitializers();
+      if (scis != null)
+         builder.serialization().addContextInitializers(scis);
    }
 }
