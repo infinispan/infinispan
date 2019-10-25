@@ -161,7 +161,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    public SerializationConfigurationBuilder addContextInitializers(List<SerializationContextInitializer> scis) {
-      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).set(scis);
+      attributes.attribute(SERIALIZATION_CONTEXT_INITIALIZERS).computeIfAbsent(ArrayList::new).addAll(scis);
       return this;
    }
 
