@@ -16,9 +16,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -30,30 +28,33 @@ import org.testng.annotations.Test;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "distribution.DistStorePreloadTest")
-@InTransactionMode({ TransactionMode.TRANSACTIONAL, TransactionMode.NON_TRANSACTIONAL })
-public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDistStoreTest<Object, String, D> {
+public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends BaseDistStoreTest<String, String, D> {
 
    public static final int NUM_KEYS = 10;
 
    public DistStorePreloadTest() {
       INIT_CLUSTER_SIZE = 1;
       testRetVals = true;
+      // Have to be shared and preload
+      shared = true;
+      preload = true;
    }
 
    @Override
    public Object[] factory() {
       return new Object[] {
-            // Have to be shared and preload
-            new DistStorePreloadTest().segmented(true).preload(true).shared(true),
-            new DistStorePreloadTest().segmented(false).preload(true).shared(true),
+            new DistStorePreloadTest<D>().segmented(true).transactional(false),
+            new DistStorePreloadTest<D>().segmented(true).transactional(true),
+            new DistStorePreloadTest<D>().segmented(false).transactional(false),
+            new DistStorePreloadTest<D>().segmented(false).transactional(true),
       };
    }
 
    @AfterMethod
    public void clearStats() {
-      for (Cache<?, ?> c: caches) {
+      for (Cache<String, String> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
-         AdvancedLoadWriteStore cs = TestingUtil.getFirstLoader(c);
+         AdvancedLoadWriteStore<String, String> cs = TestingUtil.getFirstWriter(c);
          cs.clear();
       }
 
@@ -67,10 +68,10 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
       for (int i = 0; i < NUM_KEYS; i++) {
          c1.put("k" + i, "v" + i);
       }
-      DataContainer dc1 = c1.getAdvancedCache().getDataContainer();
+      DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
       assert dc1.size() == NUM_KEYS;
 
-      AdvancedCacheLoader cs = TestingUtil.getFirstLoader(c1);
+      AdvancedCacheLoader<String, String> cs = TestingUtil.getFirstLoader(c1);
       assertEquals(NUM_KEYS, PersistenceUtil.count(cs, null));
 
       addClusterEnabledCacheManager(TestDataSCI.INSTANCE, configuration, new TransportFlags().withFD(false));
@@ -80,7 +81,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
       caches.add(c2);
       waitForClusterToForm();
 
-      DataContainer dc2 = c2.getAdvancedCache().getDataContainer();
+      DataContainer<String, String> dc2 = c2.getAdvancedCache().getDataContainer();
       assertEquals("Expected all the cache store entries to be preloaded on the second cache", NUM_KEYS, dc2.size());
 
       for (int i = 0; i < NUM_KEYS; i++) {
@@ -106,7 +107,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
       String value = "value";
       c1.put(key, value, 10, TimeUnit.MINUTES);
 
-      DataContainer dc1 = c1.getAdvancedCache().getDataContainer();
+      DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
       CacheEntry<?, ?> entry = dc1.get(key);
       assertNotNull(entry);
       assertEquals(createdTime, entry.getCreated());
@@ -117,7 +118,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
 
       timeService.advance(1000);
 
-      AdvancedCacheLoader cs = TestingUtil.getFirstLoader(c1);
+      AdvancedCacheLoader<String, String> cs = TestingUtil.getFirstLoader(c1);
       assertEquals(1, cs.size());
 
       addClusterEnabledCacheManager();
@@ -128,7 +129,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDi
       caches.add(c2);
       waitForClusterToForm(cacheName);
 
-      DataContainer dc2 = c2.getAdvancedCache().getDataContainer();
+      DataContainer<String, String> dc2 = c2.getAdvancedCache().getDataContainer();
       entry = dc2.get(key);
       assertNotNull(entry);
       // Created time should be the same, not the incremented one
