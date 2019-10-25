@@ -31,11 +31,10 @@ public class RestClusterClientOkHttp implements RestClusterClient {
    public CompletionStage<RestResponse> stop(List<String> servers) {
       Request.Builder builder = new Request.Builder();
       StringBuilder sb = new StringBuilder(baseClusterURL);
-      sb.append("/stop");
-      for (int i = 0; i < servers.size(); i++) {
-         sb.append(i == 0 ? '?' : '&');
-         sb.append("server=");
-         sb.append(servers.get(i));
+      sb.append("?action=stop");
+      for (String server : servers) {
+         sb.append("&server=");
+         sb.append(server);
       }
       builder.url(sb.toString());
       return client.execute(builder);

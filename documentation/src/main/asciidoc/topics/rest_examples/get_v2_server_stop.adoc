@@ -1,1 +1,1 @@
-GET /rest/v2/server/stop
+GET /rest/v2/server?action=stop

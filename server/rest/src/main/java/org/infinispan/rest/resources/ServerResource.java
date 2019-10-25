@@ -52,7 +52,7 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/config").handleWith(this::config)
             .invocation().methods(GET).path("/v2/server/env").handleWith(this::env)
             .invocation().methods(GET).path("/v2/server/memory").handleWith(this::memory)
-            .invocation().methods(GET).path("/v2/server/stop").handleWith(this::stop)
+            .invocation().methods(GET).path("/v2/server/").withAction("stop").handleWith(this::stop)
             .invocation().methods(GET).path("/v2/server/threads").handleWith(this::threads)
             .invocation().methods(GET).path("/v2/server/cache-managers").handleWith(this::cacheManagers)
             .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}").handleWith(this::listIgnored)

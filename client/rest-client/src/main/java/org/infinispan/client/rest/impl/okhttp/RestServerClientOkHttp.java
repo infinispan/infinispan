@@ -28,7 +28,7 @@ public class RestServerClientOkHttp implements RestServerClient {
 
    @Override
    public CompletionStage<RestResponse> stop() {
-      return client.execute(baseServerURL, "stop");
+      return client.execute(baseServerURL + "?action=stop");
    }
 
    @Override

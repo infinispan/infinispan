@@ -1,1 +1,1 @@
-GET /rest/v2/cluster/stop
+GET /rest/v2/cluster?action=stop

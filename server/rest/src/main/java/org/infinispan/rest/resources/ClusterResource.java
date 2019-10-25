@@ -26,7 +26,7 @@ public class ClusterResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET).path("/v2/cluster/stop").handleWith(this::stop)
+            .invocation().methods(GET).path("/v2/cluster").withAction("stop").handleWith(this::stop)
             .create();
    }
 
