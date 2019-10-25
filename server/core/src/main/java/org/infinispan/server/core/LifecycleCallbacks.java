@@ -36,6 +36,9 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
+
       BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
       InternalCacheRegistry cacheRegistry = basicComponentRegistry.getComponent(InternalCacheRegistry.class).running();
       cacheRegistry.registerInternalCache(SERVER_STATE_CACHE, getServerStateCacheConfig(globalConfiguration).build(),
@@ -52,7 +55,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
 
-      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       encoderRegistry.registerTranscoder(new ProtostreamTranscoder(ctxRegistry, classLoader));
 
       if (jbossMarshaller != null) {
