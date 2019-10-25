@@ -151,7 +151,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          }
 
          if (trace)
-            log.tracef("Store %s in container", copy);
+            log.tracef("Store %s=%s in container", k, copy);
 
          entries.put(k, copy);
       } else {
@@ -189,7 +189,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       if (entries != null) {
          InternalCacheEntry<K, V> e = entries.remove(k);
          if (trace) {
-            log.tracef("Removed %s from container", e);
+            log.tracef("Removed %s=%s from container", k, e);
          }
 
          return e == null || (e.canExpire() && e.isExpired(timeService.wallClockTime())) ? null : e;
