@@ -10,24 +10,31 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 import io.reactivex.subscribers.TestSubscriber;
 
 /**
@@ -95,6 +102,35 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       assertEquals(0, pmImpl.activePublisherInvocations());
       assertFalse(cache.isEmpty());
       assertEquals(0, pmImpl.activePublisherInvocations());
+   }
+
+   public void testPublishWithInterrupt() throws InterruptedException {
+      ExecutorService original = TestingUtil.extractGlobalComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
+      // Use within thread so we can interrupt ourselves
+      TestingUtil.replaceComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR, new WithinThreadExecutor(), true);
+      try {
+         PersistenceManager persistenceManager = extractComponent(cache, PersistenceManager.class);
+         persistenceManager.stop();
+         persistenceManager.start();
+
+         Thread.currentThread().interrupt();
+
+         // The throwable is observed on the cpu thread - so wait for it
+         CountDownLatch latch = new CountDownLatch(1);
+         AtomicReference<Throwable> errorCatcher = new AtomicReference<>();
+         Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
+               .subscribe(Functions.emptyConsumer(), t -> {
+                  errorCatcher.set(t);
+                  latch.countDown();
+               });
+
+         latch.await(10, TimeUnit.SECONDS);
+
+         Throwable t = errorCatcher.get();
+         Exceptions.assertException(InterruptedException.class, t);
+      } finally {
+         TestingUtil.replaceComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR, original, true);
+      }
    }
 
    @Override
