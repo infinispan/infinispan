@@ -1553,7 +1553,7 @@ option indexed_by_default = false;  // This disables indexing of types that are 
 === A remote query example
 In this example, we will show you how to configure the client to utilise the example <<protostream_usage,LibraryInitializerImpl>>,
 put some data in the cache and then try to search for it. Note, the following example assumes that <<enable_indexing,Indexing has been enabled>>
-by registering the required .proto files with the `__protobuf_metadata` cache.
+by registering the required .proto files with the `___protobuf_metadata` cache.
 
 [source,java]
 ----
