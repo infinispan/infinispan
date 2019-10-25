@@ -62,6 +62,7 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
@@ -69,6 +70,8 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.wildfly.security.WildFlyElytronProvider;
 
 /**
@@ -317,6 +320,13 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
       if (!configuration.serialWhitelist().isEmpty()) {
          marshaller.initialize(configuration.getClassWhiteList());
+      }
+      if (marshaller instanceof ProtoStreamMarshaller) {
+         SerializationContext ctx = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
+         for (SerializationContextInitializer sci : configuration.getContextInitializers()) {
+            sci.registerSchema(ctx);
+            sci.registerMarshallers(ctx);
+         }
       }
       marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
