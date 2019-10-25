@@ -112,7 +112,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
-import io.reactivex.internal.functions.Functions;
 import io.reactivex.schedulers.Schedulers;
 import net.jcip.annotations.GuardedBy;
 
@@ -156,7 +155,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @GuardedBy("storesMutex")
    private final Map<Object, StoreStatus> storeStatuses = new HashMap<>();
    private AdvancedPurgeListener<Object, Object> advancedListener;
-   private final Callable<Semaphore> publisherSemaphoreCallable = Functions.justCallable(publisherSemaphore);
+   private final Callable<Semaphore> publisherSemaphoreCallable = () -> {
+      publisherSemaphore.acquire();
+      return publisherSemaphore;
+   };
 
    private Scheduler persistenceScheduler;
    private Scheduler cpuScheduler;
@@ -684,10 +686,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
          // is done while processing data
          return Flowable
-               .using(publisherSemaphoreCallable, semaphore -> {
-                  semaphore.acquire();
-                  return advancedCacheLoader.entryPublisher(filter, fetchValue, fetchMetadata);
-               }, Semaphore::release)
+               .using(publisherSemaphoreCallable,
+                     semaphore -> advancedCacheLoader.entryPublisher(filter, fetchValue, fetchMetadata),
+                     Semaphore::release)
                .subscribeOn(persistenceScheduler)
                .observeOn(cpuScheduler);
       }
@@ -701,10 +702,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
       SegmentedAdvancedLoadWriteStore<K, V> segmentedStore = getFirstSegmentedStore(predicate);
       if (segmentedStore != null) {
          return Flowable
-               .using(publisherSemaphoreCallable, semaphore -> {
-                  semaphore.acquire();
-                  return segmentedStore.entryPublisher(segments, filter, fetchValue, fetchMetadata);
-               }, Semaphore::release)
+               .using(publisherSemaphoreCallable,
+                     semaphore -> segmentedStore.entryPublisher(segments, filter, fetchValue, fetchMetadata),
+                     Semaphore::release)
                .subscribeOn(persistenceScheduler)
                .observeOn(cpuScheduler);
       }
@@ -720,10 +720,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
          // is done while processing data
          return Flowable
-               .using(publisherSemaphoreCallable, semaphore -> {
-                  semaphore.acquire();
-                  return advancedCacheLoader.publishKeys(filter);
-               }, Semaphore::release)
+               .using(publisherSemaphoreCallable,
+                     semaphore -> advancedCacheLoader.publishKeys(filter),
+                     Semaphore::release)
                .subscribeOn(persistenceScheduler)
                .observeOn(cpuScheduler);
       }
@@ -740,10 +739,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
          // is done while processing data
          return Flowable
-               .using(publisherSemaphoreCallable, semaphore -> {
-                  semaphore.acquire();
-                  return segmentedStore.publishKeys(segments, filter);
-               }, Semaphore::release)
+               .using(publisherSemaphoreCallable,
+                     semaphore -> segmentedStore.publishKeys(segments, filter),
+                     Semaphore::release)
                .subscribeOn(persistenceScheduler)
                .observeOn(cpuScheduler);
       }
