@@ -1,0 +1,38 @@
+= Shutting Down {brandname} Servers
+Use the CLI to gracefully shutdown running servers. This ensures that {brandname} passivates all entries to disk and persists state.
+
+* Use the `shutdown server` command to stop individual servers, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> shutdown server server_hostname
+----
+
+* Use the `shutdown cluster` command to stop all servers joined to the cluster, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> shutdown cluster
+----
+
+{brandname} servers log the following shutdown messages:
+
+[source,options="nowrap",subs=attributes+]
+----
+INFO  [org.infinispan.SERVER] (pool-3-thread-1) ISPN080002: Infinispan Server stopping
+INFO  [org.infinispan.CONTAINER] (pool-3-thread-1) ISPN000029: Passivating all entries to disk
+INFO  [org.infinispan.CONTAINER] (pool-3-thread-1) ISPN000030: Passivated 28 entries in 46 milliseconds
+INFO  [org.infinispan.CLUSTER] (pool-3-thread-1) ISPN000080: Disconnecting JGroups channel cluster
+INFO  [org.infinispan.CONTAINER] (pool-3-thread-1) ISPN000390: Persisted state, version=<{brandname} version> timestamp=YYYY-MM-DDTHH:MM:SS
+INFO  [org.infinispan.SERVER] (pool-3-thread-1) ISPN080003: Infinispan Server stopped
+INFO  [org.infinispan.SERVER] (Thread-0) ISPN080002: Infinispan Server stopping
+INFO  [org.infinispan.SERVER] (Thread-0) ISPN080003: Infinispan Server stopped
+----
+
+When you shutdown {brandname} clusters, the shutdown messages include:
+
+[source,options="nowrap",subs=attributes+]
+----
+INFO  [org.infinispan.SERVER] (pool-3-thread-1) ISPN080029: Cluster shutdown
+INFO  [org.infinispan.CLUSTER] (pool-3-thread-1) ISPN000080: Disconnecting JGroups channel cluster
+----
