@@ -5,8 +5,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -57,8 +59,9 @@ class RunningTestsRegistry {
          new RuntimeException(String.format("Test timed out after %d seconds", MAX_TEST_SECONDS));
       exception.setStackTrace(testThread.getStackTrace());
       TestSuiteProgress.fakeTestFailure(testName, exception);
+      writeJUnitReport(testName, exception);
 
-      List<String> pids = collectChildProcesses(testName);
+      List<String> pids = collectChildProcesses();
 
       String safeTestName = simpleName.replaceAll("[^a-zA-Z0-9=]", "_");
       dumpThreads(safeTestName, pids);
@@ -66,7 +69,30 @@ class RunningTestsRegistry {
       killTest(testThread, pids);
    }
 
-   private static List<String> collectChildProcesses(String testName) {
+   private static void writeJUnitReport(String testName, RuntimeException exception) {
+      try {
+         File reportsDir = new File("target/surefire-reports");
+         if (!reportsDir.exists() && !reportsDir.mkdirs()) {
+            throw new IOException("Cannot create report directory " + reportsDir.getAbsolutePath());
+         }
+         PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(
+            new File(reportsDir, "TEST-ThreadLeakChecker" + testName + ".xml"));
+         String property = System.getProperty("infinispan.modulesuffix");
+         String moduleName = property != null ? property.substring(1) : "";
+         writer.start(moduleName, 1, 0, 1, 0, false);
+
+         StringWriter exceptionWriter = new StringWriter();
+         exception.printStackTrace(new PrintWriter(exceptionWriter));
+         writer.writeTestCase("ThreadLeakChecker", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
+                              exceptionWriter.toString(), exception.getClass().getName(), exception.getMessage());
+
+         writer.close();
+      } catch (Exception e) {
+         throw new RuntimeException("Error reporting thread leaks", e);
+      }
+   }
+
+   private static List<String> collectChildProcesses() {
       try {
          String jvmName = ManagementFactory.getRuntimeMXBean().getName();
          String ppid = jvmName.split("@")[0];
