@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -70,14 +69,14 @@ public class RemoteCacheAdminPermanentTest extends MultiHotRodServersTest {
 
    public void permanentCacheTest(Method m) throws Throwable {
       String cacheName = m.getName();
-      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).createCache(cacheName, "template");
+      client(0).administration().createCache(cacheName, "template");
       assertTrue(manager(0).cacheExists(cacheName));
       assertTrue(manager(1).cacheExists(cacheName));
       killAll();
       clear = false;
       createCacheManagers();
       assertTrue(manager(0).cacheExists(cacheName));
-      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).removeCache(cacheName);
+      client(0).administration().removeCache(cacheName);
       killAll();
       clear = false;
       createCacheManagers();

@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -23,7 +24,7 @@ public class ConfigurationKeyValueStoreTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-      cacheManager.administration().createCache(CACHE_NAME, new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      cacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(CACHE_NAME, new org.infinispan.configuration.cache.ConfigurationBuilder().build());
       return HotRodClientTestingUtil.startHotRodServer(cacheManager, serverBuilder);
    }
 

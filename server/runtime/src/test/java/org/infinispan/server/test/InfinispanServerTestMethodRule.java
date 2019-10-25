@@ -153,8 +153,8 @@ public class InfinispanServerTestMethodRule implements TestRule {
          return self();
       }
 
-      public S permanent() {
-         this.flags = EnumSet.of(CacheContainerAdmin.AdminFlag.PERMANENT);
+      public S makeVolatile() {
+         this.flags = EnumSet.of(CacheContainerAdmin.AdminFlag.VOLATILE);
          return self();
       }
    }

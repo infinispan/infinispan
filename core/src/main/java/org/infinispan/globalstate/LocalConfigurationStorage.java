@@ -12,8 +12,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * The {@link LocalConfigurationStorage} is responsible for applying on each node the configuration changes initiated
- * through the {@link org.infinispan.globalstate.GlobalConfigurationManager} and persist them if requested via
- * {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}.
+ * through the {@link org.infinispan.globalstate.GlobalConfigurationManager} and persist them unless they are
+ * {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}.
  *
  * @author Tristan Tarrant
  * @since 9.2

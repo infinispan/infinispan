@@ -26,8 +26,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * An implementation of {@link LocalConfigurationStorage} which does not support
- * {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT} operations
+ * An implementation of {@link LocalConfigurationStorage} which does only supports
+ * {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE} operations
  *
  * @author Tristan Tarrant
  * @since 9.2
@@ -50,7 +50,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
 
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT))
+      if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE))
          throw CONFIG.globalStateDisabled();
    }
 

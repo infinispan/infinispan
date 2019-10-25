@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -74,7 +75,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    public void cacheCreateRemoveTest(Method m) {
       String cacheName = m.getName();
-      client(0).administration().createCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       assertTrue(manager(0).cacheExists(cacheName));
       assertTrue(manager(1).cacheExists(cacheName));
       client(1).administration().removeCache(cacheName);
@@ -91,14 +92,14 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000507.*")
    public void alreadyExistingCacheTest(Method m) {
       String cacheName = m.getName();
-      client(0).administration().createCache(cacheName, "template");
-      client(0).administration().createCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
    }
 
    public void getOrCreateWithTemplateTest(Method m) {
       String cacheName = m.getName();
-      client(0).administration().createCache(cacheName, "template");
-      client(0).administration().getOrCreateCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(cacheName, "template");
    }
 
    public void getOrCreateWithoutTemplateTest() {
@@ -108,7 +109,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    public void cacheCreateWithXMLConfigurationTest(Method m) {
       String cacheName = m.getName();
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"><encoding><key media-type=\"text/plain\"/><value media-type=\"application/json\"/></encoding><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>", cacheName);
-      client(0).administration().getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
@@ -120,7 +121,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    public void cacheCreateWithXMLConfigurationAndGetCacheTest(Method m) {
       String cacheName = m.getName();
       String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
-      client(0).administration().createCache(cacheName, new XMLStringConfiguration(xml));
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, new XMLStringConfiguration(xml));
       final RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
       assertNotNull(cache);
    }
@@ -129,7 +130,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       String cacheName = m.getName();
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.expiration().wakeUpInterval(10000).maxIdle(10).lifespan(10);
-      client(0).administration().getOrCreateCache(cacheName, builder.build());
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(cacheName, builder.build());
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
@@ -146,7 +147,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       MarshallerRegistration.registerMarshallers(client(0));
 
       // Create the cache
-      client(0).administration().createCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
       Transaction tx = new TransactionPB();
       tx.setId(1);
@@ -170,7 +171,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    public void testGetCacheNames(Method m) {
       String cacheName = m.getName();
-      client(0).administration().createCache(cacheName, "template");
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       Set<String> cacheNames = client(0).getCacheNames();
       assertEquals(manager(0).getCacheNames(), cacheNames);
    }

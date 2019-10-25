@@ -35,7 +35,7 @@ public class GracefulShutdownRestartIT {
    public void testGracefulShutdownRestart() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore();
-      RemoteCache<Object, Object> hotRod = SERVER_TEST.hotrod().withServerConfiguration(builder).permanent().create();
+      RemoteCache<Object, Object> hotRod = SERVER_TEST.hotrod().withServerConfiguration(builder).create();
 
       for (int i = 0; i < 100; i++) {
          hotRod.put(String.format("k%03d", i), String.format("v%03d", i));

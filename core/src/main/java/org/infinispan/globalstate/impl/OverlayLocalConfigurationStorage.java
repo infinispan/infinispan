@@ -26,7 +26,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 
 /**
- * An implementation of {@link LocalConfigurationStorage} which stores {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
+ * An implementation of {@link LocalConfigurationStorage} which stores non-{@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
  * <p>
  * This component persists cache configurations to the {@link GlobalStateConfiguration#persistentLocation()} in a
  * <pre>caches.xml</pre> file which is read on startup.
@@ -41,13 +41,13 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
-      if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT) && !globalConfiguration.globalState().enabled())
+      if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE) && !globalConfiguration.globalState().enabled())
          throw CONFIG.globalStateDisabled();
    }
 
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       CompletableFuture<Void> future = super.createCache(name, template, configuration, flags);
-      if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT)) {
+      if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
          return future.thenApplyAsync((v) -> {
             persistentCaches.add(name);
             storeAll();

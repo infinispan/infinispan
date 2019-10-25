@@ -14,6 +14,7 @@ import java.util.Collection;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.core.test.ServerTestingUtil;
@@ -65,7 +66,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
       cacheManager.administration().removeCache(TEST_CACHE_NAME);
       cacheManager.undefineConfiguration(TEST_CACHE_NAME);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
-      cache = cacheManager.administration().getOrCreateCache(TEST_CACHE_NAME, TEST_CACHE_NAME);
+      cache = cacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(TEST_CACHE_NAME, TEST_CACHE_NAME);
       objectUnderTest = new SpringRemoteCacheManager(remoteCacheManager);
    }
 

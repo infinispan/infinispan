@@ -31,6 +31,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.IdentityMarshaller;
@@ -373,7 +374,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertEquals(restRequest.executeGet().getResponseBodyAsString(), "Hello World");
 
       // Delete the cache
-      RemoteCacheManagerAdmin admin = stringRemoteCache.getRemoteCacheManager().administration();
+      RemoteCacheManagerAdmin admin = stringRemoteCache.getRemoteCacheManager().administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE);
       admin.removeCache(stringRemoteCache.getName());
 
       // Check cache not available

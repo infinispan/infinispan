@@ -27,6 +27,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.functional.FunctionalTestUtils;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
@@ -49,7 +50,7 @@ public class SearchKeyValueStoreTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-      cacheManager.administration().getOrCreateCache(PEOPLE, new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      cacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache(PEOPLE, new org.infinispan.configuration.cache.ConfigurationBuilder().build());
       return HotRodClientTestingUtil.startHotRodServer(cacheManager, serverBuilder);
    }
 

@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -36,7 +37,7 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       Configuration configuration = builder.build();
-      Cache<Object, Object> cache = manager(0).administration().createCache("a", configuration);
+      Cache<Object, Object> cache = manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache("a", configuration);
 
       waitForClusterToForm("a");
       assertEquals(cacheManagers.size(), cache.getAdvancedCache().getRpcManager().getMembers().size());
@@ -55,7 +56,7 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
             () -> manager(0).administration().createCache("a", configuration));
 
       // getOrCreate should work
-      manager(0).administration().getOrCreateCache("a", configuration);
+      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).getOrCreateCache("a", configuration);
 
       manager(1).administration().removeCache("a");
       checkCacheExistenceAcrossCluster("a", false);
