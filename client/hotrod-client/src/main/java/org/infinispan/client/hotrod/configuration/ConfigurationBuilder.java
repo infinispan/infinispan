@@ -34,7 +34,6 @@ import org.infinispan.commons.util.Features;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
@@ -453,14 +452,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
       if (marshaller == null && marshallerClass == null) {
          handleNullMarshaller();
-      }
-
-      if (marshaller instanceof ProtoStreamMarshaller) {
-         SerializationContext ctx = ((ProtoStreamMarshaller) marshaller).getSerializationContext();
-         for (SerializationContextInitializer sci : contextInitializers) {
-            sci.registerSchema(ctx);
-            sci.registerMarshallers(ctx);
-         }
       }
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
