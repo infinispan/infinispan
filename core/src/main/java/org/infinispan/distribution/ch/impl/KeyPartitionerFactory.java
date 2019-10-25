@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.HashConfiguration;
-import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
@@ -33,20 +33,23 @@ public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
 
    @Override
    public Object construct(String componentName) {
+      CacheMode cacheMode = configuration.clustering().cacheMode();
+      boolean transactional = configuration.transaction().transactionMode().isTransactional();
+      boolean usingSegmentedStore = configuration.persistence().usingSegmentedStore();
+      if (cacheMode.isReplicated() ||
+          cacheMode.isDistributed() ||
+          cacheMode.isScattered() ||
+          (cacheMode.isInvalidation() && transactional) ||
+          usingSegmentedStore) {
 
-      if (configuration.clustering().cacheMode().needsStateTransfer()) {
          KeyPartitioner partitioner = getConfiguredPartitioner();
          if (groupManager == null)
             return partitioner;
 
          // Grouping is enabled. Since the configured partitioner will not be registered in the component
          // registry, we need to inject dependencies explicitly.
-         componentRegistry.wireDependencies(partitioner);
-         GroupingPartitioner groupingPartitioner = new GroupingPartitioner(partitioner, groupManager);
-         return groupingPartitioner;
-      } else if (configuration.persistence().stores().stream().filter(StoreConfiguration::segmented).findFirst().isPresent()) {
-         // If store is segmented we still have to find consistent hashes
-         return getConfiguredPartitioner();
+         basicComponentRegistry.wireDependencies(partitioner, false);
+         return new GroupingPartitioner(partitioner, groupManager);
       } else {
          return SingleSegmentKeyPartitioner.getInstance();
       }
