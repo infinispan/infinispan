@@ -44,7 +44,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).contextInitializer(DslSCI.INSTANCE);
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).addContextInitializer(DslSCI.INSTANCE);
       return new InternalRemoteCacheManager(builder.build());
    }
 

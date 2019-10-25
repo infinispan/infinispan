@@ -60,7 +60,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
    @Override
    protected RemoteCacheManager createClient(int i) {
-      Configuration cfg = createHotRodClientConfigurationBuilder(server(i)).contextInitializer(DslSCI.INSTANCE).build();
+      Configuration cfg = createHotRodClientConfigurationBuilder(server(i)).addContextInitializer(DslSCI.INSTANCE).build();
       return new InternalRemoteCacheManager(cfg);
    }
 

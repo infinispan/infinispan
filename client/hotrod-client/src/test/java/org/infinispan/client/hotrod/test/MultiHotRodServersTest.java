@@ -67,7 +67,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
             .host(host)
             .port(serverPort)
             .maxRetries(maxRetries())
-            .contextInitializers(contextInitializers().toArray(new SerializationContextInitializer[0]));
+            .addContextInitializers(contextInitializers().toArray(new SerializationContextInitializer[0]));
       return clientBuilder;
    }
 

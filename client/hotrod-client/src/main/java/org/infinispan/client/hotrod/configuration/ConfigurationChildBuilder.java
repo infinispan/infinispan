@@ -136,20 +136,20 @@ public interface ConfigurationChildBuilder {
     * Supply a {@link SerializationContextInitializer} implementation to register classes with the {@link
     * org.infinispan.commons.marshall.ProtoStreamMarshaller}'s {@link org.infinispan.protostream.SerializationContext}.
     */
-   ConfigurationBuilder contextInitializer(String contextInitializer);
+   ConfigurationBuilder addContextInitializer(String contextInitializer);
 
    /**
     * Supply a {@link SerializationContextInitializer} implementation to register classes with the {@link
     * org.infinispan.commons.marshall.ProtoStreamMarshaller}'s {@link org.infinispan.protostream.SerializationContext}.
     */
-   ConfigurationBuilder contextInitializer(SerializationContextInitializer contextInitializer);
+   ConfigurationBuilder addContextInitializer(SerializationContextInitializer contextInitializer);
 
    /**
     * Convenience method to supply multiple {@link SerializationContextInitializer} implementations.
     *
-    * @see #contextInitializer(SerializationContextInitializer).
+    * @see #addContextInitializer(SerializationContextInitializer).
     */
-   ConfigurationBuilder contextInitializers(SerializationContextInitializer... contextInitializers);
+   ConfigurationBuilder addContextInitializers(SerializationContextInitializer... contextInitializers);
 
    /**
     * This property defines the protocol version that this client should use. Defaults to the latest protocol version

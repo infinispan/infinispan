@@ -35,7 +35,7 @@ public class JsonPojoStoreTest extends BaseJsonTest {
    protected RemoteCacheManager createRemoteCacheManager() throws IOException {
       return new RemoteCacheManager(new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
             .addServer().host("localhost").port(hotRodServer.getPort())
-            .contextInitializers(EndpointITSCI.INSTANCE)
+            .addContextInitializers(EndpointITSCI.INSTANCE)
             .build());
    }
 

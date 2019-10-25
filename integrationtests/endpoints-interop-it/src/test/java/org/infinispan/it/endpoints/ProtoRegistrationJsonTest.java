@@ -27,7 +27,7 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
       SerializationContextInitializer sci = EndpointITSCI.INSTANCE;
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
             .addServer().host("localhost").port(hotRodServer.getPort())
-            .contextInitializer(sci)
+            .addContextInitializer(sci)
             .build());
 
       //initialize server-side serialization context via rest endpoint

@@ -42,7 +42,7 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       SerializationContextInitializer sci = contextInitializer();
       if (sci != null)
-         builder.contextInitializer(sci);
+         builder.addContextInitializer(sci);
       return new InternalRemoteCacheManager(builder.build());
    }
 

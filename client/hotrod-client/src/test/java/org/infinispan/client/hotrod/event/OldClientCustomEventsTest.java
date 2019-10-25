@@ -34,7 +34,7 @@ public class OldClientCustomEventsTest extends SingleHotRodServerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).version(VERSION)
-      .contextInitializer(contextInitializer());
+      .addContextInitializer(contextInitializer());
       return new InternalRemoteCacheManager(builder.build());
    }
 

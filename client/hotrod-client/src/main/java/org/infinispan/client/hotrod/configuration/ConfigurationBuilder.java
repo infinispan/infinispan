@@ -242,20 +242,20 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
-   public ConfigurationBuilder contextInitializer(String contextInitializer) {
+   public ConfigurationBuilder addContextInitializer(String contextInitializer) {
       SerializationContextInitializer sci = Util.getInstance(contextInitializer, this.classLoader());
-      return contextInitializers(sci);
+      return addContextInitializers(sci);
    }
 
    @Override
-   public ConfigurationBuilder contextInitializer(SerializationContextInitializer contextInitializer) {
+   public ConfigurationBuilder addContextInitializer(SerializationContextInitializer contextInitializer) {
       if (contextInitializer != null)
          this.contextInitializers.add(contextInitializer);
       return this;
    }
 
    @Override
-   public ConfigurationBuilder contextInitializers(SerializationContextInitializer... contextInitializers) {
+   public ConfigurationBuilder addContextInitializers(SerializationContextInitializer... contextInitializers) {
       this.contextInitializers.addAll(Arrays.asList(contextInitializers));
       return this;
    }
@@ -376,7 +376,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.CONTEXT_INITIALIZERS)) {
          String initializers = typed.getProperty(ConfigurationProperties.CONTEXT_INITIALIZERS);
          for (String sci : initializers.split(","))
-            this.contextInitializer(sci);
+            this.addContextInitializer(sci);
       }
       this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
       String serverList = typed.getProperty(ConfigurationProperties.SERVER_LIST, null, true);
