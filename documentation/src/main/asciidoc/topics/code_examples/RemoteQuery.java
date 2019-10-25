@@ -1,7 +1,7 @@
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
 clientBuilder.addServer()
     .host("10.1.2.3").port(11234)
-    .contextInitializers(new LibraryInitializerImpl());
+    .addContextInitializers(new LibraryInitializerImpl());
 
 RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 

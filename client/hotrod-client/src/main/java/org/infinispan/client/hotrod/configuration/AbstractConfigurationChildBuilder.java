@@ -118,18 +118,18 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   public ConfigurationBuilder contextInitializer(String contextInitializer) {
-      return builder.contextInitializer(contextInitializer);
+   public ConfigurationBuilder addContextInitializer(String contextInitializer) {
+      return builder.addContextInitializer(contextInitializer);
    }
 
    @Override
-   public ConfigurationBuilder contextInitializer(SerializationContextInitializer contextInitializer) {
-      return builder.contextInitializer(contextInitializer);
+   public ConfigurationBuilder addContextInitializer(SerializationContextInitializer contextInitializer) {
+      return builder.addContextInitializer(contextInitializer);
    }
 
    @Override
-   public ConfigurationBuilder contextInitializers(SerializationContextInitializer... contextInitializers) {
-      return builder.contextInitializers(contextInitializers);
+   public ConfigurationBuilder addContextInitializers(SerializationContextInitializer... contextInitializers) {
+      return builder.addContextInitializers(contextInitializers);
    }
 
    /**

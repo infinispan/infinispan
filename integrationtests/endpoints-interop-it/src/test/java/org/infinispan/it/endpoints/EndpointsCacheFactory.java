@@ -189,7 +189,7 @@ public class EndpointsCacheFactory<K, V> {
             .addServers("localhost:" + hotrod.getPort())
             .addJavaSerialWhiteList(".*Person.*", ".*CustomEvent.*")
             .marshaller(marshaller)
-            .contextInitializer(contextInitializer)
+            .addContextInitializer(contextInitializer)
             .build());
       hotrodCache = cacheName.isEmpty()
             ? hotrodClient.getCache()
