@@ -8,7 +8,7 @@ import java.util.function.Function;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -29,9 +29,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
    @Start
    public void start() {
-      // If there is a segmented store then we need to use segments
-      if (cacheConfiguration.clustering().cacheMode().needsStateTransfer() ||
-            cacheConfiguration.persistence().stores().stream().filter(StoreConfiguration::segmented).findFirst().isPresent()) {
+      if (Configurations.needSegments(cacheConfiguration)) {
          maxSegment = cacheConfiguration.clustering().hash().numSegments();
       } else {
          maxSegment = 1;
