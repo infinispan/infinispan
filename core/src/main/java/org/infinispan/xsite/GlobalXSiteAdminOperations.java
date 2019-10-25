@@ -132,6 +132,9 @@ public class GlobalXSiteAdminOperations {
       for (String cacheName : cacheNames) {
          addCacheAdmin(cacheManager.getCache(cacheName, false), operations);
       }
+      if (cacheManager.isDefaultRunning()) {
+         addCacheAdmin(cacheManager.getCache(), operations);
+      }
       return operations;
    }
 
