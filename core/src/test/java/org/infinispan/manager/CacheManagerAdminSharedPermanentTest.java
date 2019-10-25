@@ -1,6 +1,5 @@
 package org.infinispan.manager;
 
-import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -30,8 +29,8 @@ public class CacheManagerAdminSharedPermanentTest extends CacheManagerAdminPerma
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       Configuration configuration = builder.build();
 
-      // Create a persistent cache
-      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).createCache("a", configuration);
+      // Create a permanent cache
+      manager(0).administration().createCache("a", configuration);
       waitForClusterToForm("a");
       checkConsistencyAcrossCluster("a", configuration);
 

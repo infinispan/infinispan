@@ -23,8 +23,11 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
       /**
        * If the operation affects configuration, make it permanent, which means it will survive restarts.
        * If the server cannot honor this flag an error will be returned
+       * @deprecated configurations are now always permanent by default. Use the {@link #VOLATILE} flag to obtain the opposite behaviour.
        */
-      PERMANENT;
+      @Deprecated
+      PERMANENT,
+      VOLATILE;
 
       private static final AdminFlag[] CACHED_VALUES = AdminFlag.values();
 

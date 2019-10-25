@@ -28,8 +28,8 @@ A file containing a JSON or XML configuration.
 *-t, --template*='TEMPLATE'::
 The configuration template to use.
 
-*-p, --permanent*='[true|false]'::
-Whether the cache should be made permanent in the server so that it survives restarts.
+*-v, --volatile*='[true|false]'::
+Whether the cache should be made volatile in the server so that it won't survive restarts.
 
 
 CREATE COUNTER OPTIONS

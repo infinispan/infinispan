@@ -53,14 +53,14 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       Configuration configuration = builder.build();
 
-      // Create a persistent cache
-      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).createCache("a", configuration);
+      // Create a permanent cache
+      manager(0).administration().createCache("a", configuration);
 
       waitForClusterToForm("a");
 
       checkConsistencyAcrossCluster("a", configuration);
 
-      manager(1).administration().createCache("b", configuration);
+      manager(1).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache("b", configuration);
 
       TestingUtil.killCacheManagers(this.cacheManagers);
       cacheManagers.clear();
@@ -75,7 +75,7 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
 
       checkCacheExistenceAcrossCluster("b", false);
 
-      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).createCache("c", configuration);
+      manager(0).administration().createCache("c", configuration);
 
       checkConsistencyAcrossCluster("c", configuration);
 

@@ -47,6 +47,10 @@ current implementation requires opening file descriptors based on how many segme
 cause issues in some configurations and users should be aware. Infinispan will print a single WARN message
 when such a configuration is found.
 
+== CacheContainterAdmin
+
+Caches created through the CacheContainerAdmin API will now be `PERMANENT` by default. Use the `VOLATILE` flag to obtain the previous behaviour.
+
 == Hot Rod 3.0
 
 Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.

@@ -43,7 +43,7 @@ public class Create extends CliCommand {
       public static final String CMD = "cache";
       public static final String TEMPLATE = "template";
       public static final String FILE = "file";
-      public static final String PERMANENT = "permanent";
+      public static final String VOLATILE = "volatile";
       @Argument(required = true)
       String name;
 
@@ -53,8 +53,8 @@ public class Create extends CliCommand {
       @Option(completer = FileOptionCompleter.class, shortName = 'f')
       Resource file;
 
-      @Option(defaultValue = "true", shortName = 'p')
-      boolean permanent;
+      @Option(defaultValue = "true", name = "volatile", shortName = 'v')
+      boolean volatileCache;
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -69,7 +69,7 @@ public class Create extends CliCommand {
                .arg(NAME, name)
                .optionalArg(TEMPLATE, template)
                .optionalArg(FILE, file != null ? file.getAbsolutePath() : null)
-               .option(PERMANENT, permanent);
+               .option(VOLATILE, volatileCache);
          return invocation.execute(cmd);
       }
    }

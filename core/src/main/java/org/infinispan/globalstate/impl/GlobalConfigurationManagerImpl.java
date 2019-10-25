@@ -98,7 +98,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
       List<CompletableFuture<Configuration>> all = localConfigurationManager.loadAll().entrySet().stream().map((entry) ->
             // The cache configuration was permanent, it still needs to be
-            getOrCreateCache(entry.getKey(), entry.getValue(), EnumSet.of(CacheContainerAdmin.AdminFlag.PERMANENT))
+            getOrCreateCache(entry.getKey(), entry.getValue(), EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class))
       ).collect(Collectors.toList());
       uncheckedAwait(CompletableFutures.sequence(all));
    }

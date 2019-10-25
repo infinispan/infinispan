@@ -288,8 +288,8 @@ public class RestConnection implements Connection, Closeable {
                switch (command.arg(Create.TYPE)) {
                   case Create.Cache.CMD: {
                      RestCacheClient cache = client.cache(command.arg(Create.NAME));
-                     boolean permanent = command.boolOption(Create.Cache.PERMANENT);
-                     CacheContainerAdmin.AdminFlag flags = permanent ? CacheContainerAdmin.AdminFlag.PERMANENT : null;
+                     boolean vltl = command.boolOption(Create.Cache.VOLATILE);
+                     CacheContainerAdmin.AdminFlag flags = vltl ? CacheContainerAdmin.AdminFlag.VOLATILE : null;
                      if (command.hasArg(Create.Cache.TEMPLATE)) {
                         response = cache.createWithTemplate(command.arg(Create.Cache.TEMPLATE), flags);
                      } else {

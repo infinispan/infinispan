@@ -3,7 +3,7 @@ package org.infinispan.rest.resources;
 import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
 import static org.eclipse.jetty.http.HttpMethod.GET;
 import static org.eclipse.jetty.http.HttpMethod.POST;
-import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.PERMANENT;
+import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.util.Util.getResourceAsString;
@@ -113,14 +113,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       String json = getResourceAsString("cache.json", getClass().getClassLoader());
 
       ContentResponse response = client.newRequest(url + "cache1").header("Content-type", APPLICATION_XML_TYPE)
-            .method(HttpMethod.POST).header("flags", "PERMANENT").content(new StringContentProvider(xml)).send();
+            .method(HttpMethod.POST).header("flags", "VOLATILE").content(new StringContentProvider(xml)).send();
       ResponseAssertion.assertThat(response).isOk();
-      assertPersistence("cache1", true);
+      assertPersistence("cache1", false);
 
       response = client.newRequest(url + "cache2").header("Content-type", APPLICATION_JSON_TYPE)
             .method(HttpMethod.POST).content(new StringContentProvider(json)).send();
       ResponseAssertion.assertThat(response).isOk();
-      assertPersistence("cache2", false);
+      assertPersistence("cache2", true);
 
       String mediaList = "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
       response = client.newRequest(url + "cache1?action=config").method(GET).header("Accept", mediaList).send();
@@ -147,7 +147,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       EmbeddedCacheManager cm = cacheManagers.iterator().next();
       Cache<ScopedState, CacheState> configCache = cm.getCache(CONFIG_STATE_CACHE_NAME);
       assertEquals(persisted, configCache.entrySet()
-            .stream().anyMatch(e -> e.getKey().getName().equals(name) && e.getValue().getFlags().contains(PERMANENT)));
+            .stream().anyMatch(e -> e.getKey().getName().equals(name) && !e.getValue().getFlags().contains(VOLATILE)));
    }
 
    @Test

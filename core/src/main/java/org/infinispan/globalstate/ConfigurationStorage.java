@@ -15,7 +15,7 @@ public enum ConfigurationStorage {
     */
    IMMUTABLE,
    /**
-    * Stores cache configurations in volatile storage. Does not support {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
+    * Stores cache configurations in volatile storage. Only supports {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
     */
    VOLATILE,
    /**
@@ -23,7 +23,7 @@ public enum ConfigurationStorage {
     */
    OVERLAY,
    /**
-    * Stores {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT} caches in a managed environment such as the server model. Supported in server deployments only.
+    * Stores non-{@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE} caches in a managed environment such as the server model. Supported in server deployments only.
     */
    MANAGED,
    /**

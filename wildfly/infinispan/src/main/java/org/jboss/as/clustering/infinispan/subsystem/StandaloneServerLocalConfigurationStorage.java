@@ -28,7 +28,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 /**
- * A {@link LocalConfigurationStorage} which saves {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
+ * A {@link LocalConfigurationStorage} which saves non-{@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
  * changes to the server configuration model in standalone mode.
  *
  * @author Tristan Tarrant
@@ -50,7 +50,7 @@ public class StandaloneServerLocalConfigurationStorage implements ServerLocalCon
 
    @Override
    public CompletableFuture<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      if (!flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT)) {
+      if (flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
          throw InfinispanMessages.MESSAGES.cannotCreateNonPermamentCache(name);
       }
 

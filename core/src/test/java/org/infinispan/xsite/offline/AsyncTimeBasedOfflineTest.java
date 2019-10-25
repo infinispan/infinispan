@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.reflect.Method;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -159,7 +160,7 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
 
    private void defineCache(String siteName, String cacheName, Configuration configuration) {
       TestSite site = site(siteName);
-      site.cacheManagers().get(0).administration().createCache(cacheName, configuration);
+      site.cacheManagers().get(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, configuration);
       site.waitForClusterToForm(cacheName);
    }
 

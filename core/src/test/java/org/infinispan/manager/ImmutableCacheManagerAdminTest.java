@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,7 +30,7 @@ public class ImmutableCacheManagerAdminTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       Configuration configuration = builder.build();
-      Cache<Object, Object> cache = manager(0).administration().createCache("a", configuration);
+      Cache<Object, Object> cache = manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache("a", configuration);
 
    }
 }

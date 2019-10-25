@@ -139,7 +139,7 @@ public interface RestCacheClient {
     * Creates the cache using the supplied template name
     *
     * @param template the name of a template
-    * @param flags    any flags to apply to the create operation, e.g. {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
+    * @param flags    any flags to apply to the create operation, e.g. {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
     * @return
     */
    CompletionStage<RestResponse> createWithTemplate(String template, CacheContainerAdmin.AdminFlag... flags);
@@ -155,7 +155,7 @@ public interface RestCacheClient {
     * Creates the cache using the supplied configuration
     *
     * @param configuration the configuration, either in XML or JSON format
-    * @param flags         any flags to apply to the create operation, e.g. {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
+    * @param flags         any flags to apply to the create operation, e.g. {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
     * @return
     */
    CompletionStage<RestResponse> createWithConfiguration(RestEntity configuration, CacheContainerAdmin.AdminFlag... flags);
