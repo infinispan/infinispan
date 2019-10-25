@@ -1,1 +1,1 @@
-GET /rest/v2/cluster/stop?server=server-38760&server=bespin-1223
+GET /rest/v2/cluster?action=stop&server=server-38760&server=bespin-1223
