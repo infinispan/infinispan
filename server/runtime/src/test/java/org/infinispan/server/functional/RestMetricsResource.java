@@ -13,6 +13,7 @@ import java.util.stream.StreamSupport;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
@@ -41,9 +42,9 @@ public class RestMetricsResource {
 
    @Test
    public void testOpenMetrics() {
-      RestClient client = SERVER_TEST.rest().create();
+      RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
 
-      RestResponse response = sync(client.metrics(true));
+      RestResponse response = sync(metricsClient.metrics(true));
 
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.TEXT_PLAIN, response.contentType());
@@ -51,7 +52,7 @@ public class RestMetricsResource {
       String metricsText = response.getBody();
       assertTrue(metricsText.contains("# TYPE application_Cache_Statistics_stores gauge"));
 
-      response = sync(client.metrics("application/Cache_Statistics_stores", true));
+      response = sync(metricsClient.metrics("application/Cache_Statistics_stores", true));
       assertEquals(200, response.getStatus());
 
       metricsText = response.getBody();
@@ -61,10 +62,11 @@ public class RestMetricsResource {
    @Test
    public void testMicroprofileMetrics() throws Exception {
       RestClient client = SERVER_TEST.rest().create();
+      RestMetricsClient metricsClient = client.metrics();
 
       String cacheNameTag = SERVER_TEST.getMethodName() + "(" + CacheMode.DIST_SYNC.toString().toLowerCase() + ")";
 
-      RestResponse response = sync(client.metrics());
+      RestResponse response = sync(metricsClient.metrics());
 
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
@@ -76,7 +78,7 @@ public class RestMetricsResource {
       assertNotNull(node.get("application"));
       assertTrue(metricsJson.contains("Cache_Statistics_stores"));
 
-      response = sync(client.metrics("application/Cache_Statistics_stores"));
+      response = sync(metricsClient.metrics("application/Cache_Statistics_stores"));
       assertEquals(200, response.getStatus());
 
       long totalStoresBefore = streamNodeFields(mapper.readTree(response.getBody()))
@@ -94,7 +96,7 @@ public class RestMetricsResource {
          assertEquals(204, putResp.getStatus());
       }
 
-      response = sync(client.metrics("application/Cache_Statistics_stores"));
+      response = sync(metricsClient.metrics("application/Cache_Statistics_stores"));
       assertEquals(200, response.getStatus());
 
       String metricJson = response.getBody();
@@ -108,8 +110,8 @@ public class RestMetricsResource {
 
    @Test
    public void testMicroprofileMetricsMetadata() throws Exception {
-      RestClient client = SERVER_TEST.rest().create();
-      RestResponse response = sync(client.metricsMetadata());
+      RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
+      RestResponse response = sync(metricsClient.metricsMetadata());
 
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
@@ -117,7 +119,7 @@ public class RestMetricsResource {
       String metricsMetadataJson = response.getBody();
       assertTrue(metricsMetadataJson.contains("Cache_Statistics_stores"));
 
-      response = sync(client.metricsMetadata("application/Cache_Statistics_stores"));
+      response = sync(metricsClient.metricsMetadata("application/Cache_Statistics_stores"));
       assertEquals(200, response.getStatus());
 
       metricsMetadataJson = response.getBody();
