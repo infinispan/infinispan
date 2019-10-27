@@ -86,11 +86,11 @@ public final class ResourceDMBean implements DynamicMBean {
       attInfos = new MBeanAttributeInfo[mBeanMetadata.getAttributes().size()];
       for (MBeanMetadata.AttributeMetadata attributeMetadata : mBeanMetadata.getAttributes()) {
          String attributeName = attributeMetadata.getName();
-         InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          if (atts.containsKey(attributeName)) {
             throw new IllegalArgumentException("Component " + objectClass.getName()
                   + " metadata has a duplicate attribute: " + attributeName);
          }
+         InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          atts.put(attributeName, info);
          attInfos[i++] = info.attributeInfo;
          if (trace)
@@ -233,7 +233,7 @@ public final class ResourceDMBean implements DynamicMBean {
          throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
       }
       if (i.attributeAccessor == null) {
-         throw new AttributeNotFoundException("Attribute '" + attributeName + "' does not have an accessor function.");
+         return null;
       }
       return () -> i.attributeAccessor.apply(obj);
    }
