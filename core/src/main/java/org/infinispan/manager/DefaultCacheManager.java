@@ -952,16 +952,31 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @ManagedAttribute(description = "The total number of defined cache configurations.", displayName = "Number of caches defined")
    public String getDefinedCacheCount() {
-      return String.valueOf(getCacheConfigurationNames().size());
+      return String.valueOf(getNumberOfCacheConfigurations());
+   }
+
+   @ManagedAttribute(description = "The total number of defined cache configurations.", displayName = "Number of caches defined")
+   public int getNumberOfCacheConfigurations() {
+      return getCacheConfigurationNames().size();
    }
 
    @ManagedAttribute(description = "The total number of created caches, including the default cache.", displayName = "Number of caches created")
    public String getCreatedCacheCount() {
+      return String.valueOf(getNumberOfCreatedCaches());
+   }
+
+   @ManagedAttribute(description = "The total number of created caches, including the default cache.", displayName = "Number of caches created")
+   public long getNumberOfCreatedCaches() {
       return cacheManagerInfo.getCreatedCacheCount();
    }
 
    @ManagedAttribute(description = "The total number of running caches, including the default cache.", displayName = "Number of running caches")
    public String getRunningCacheCount() {
+      return String.valueOf(getNumberOfRunningCaches());
+   }
+
+   @ManagedAttribute(description = "The total number of running caches, including the default cache.", displayName = "Number of running caches")
+   public long getNumberOfRunningCaches() {
       return cacheManagerInfo.getRunningCacheCount();
    }
 

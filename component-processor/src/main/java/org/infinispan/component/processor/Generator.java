@@ -26,6 +26,7 @@ import javax.tools.StandardLocation;
 
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -235,10 +236,10 @@ public class Generator {
       for (Model.MAttribute attribute : attributes) {
          String accessorFunction = "null";
          // provide accessor function only for a select list of types that are interesting for metrics
-         if (attribute.boxedType.equals("java.lang.Integer") || attribute.boxedType.equals("java.lang.Long") ||
+         if (attribute.attribute.dataType() == DataType.MEASUREMENT && (attribute.boxedType.equals("java.lang.Integer") || attribute.boxedType.equals("java.lang.Long") ||
                attribute.boxedType.equals("java.lang.Short") || attribute.boxedType.equals("java.lang.Byte") ||
                attribute.boxedType.equals("java.lang.Float") || attribute.boxedType.equals("java.lang.Double") ||
-               attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger")) {
+               attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger"))) {
             accessorFunction = "(java.util.function.Function<" + c.qualifiedName + ", " + attribute.boxedType + ">)"
                   + (attribute.useSetter ? c.qualifiedName + "::" : " _x -> _x.") + attribute.propertyAccessor;
          }
