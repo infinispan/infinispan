@@ -128,6 +128,11 @@ public class ActivationManagerImpl implements ActivationManager {
       });
    }
 
+   @ManagedAttribute(
+         description = "Number of activation events",
+         displayName = "Number of cache entries activated",
+         measurementType = MeasurementType.TRENDSUP
+   )
    @Override
    public long getActivationCount() {
       return activations.sum();

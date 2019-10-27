@@ -61,14 +61,12 @@ public class CacheManagerInfo {
          return Immutables.immutableSetWrap(names);
    }
 
-   public String getCreatedCacheCount() {
-      long created = cacheManager.getCaches().keySet().stream().filter(c -> !internalCacheRegistry.isInternalCache(c)).count();
-      return String.valueOf(created);
+   public long getCreatedCacheCount() {
+      return cacheManager.getCaches().keySet().stream().filter(c -> !internalCacheRegistry.isInternalCache(c)).count();
    }
 
-   public String getRunningCacheCount() {
-      long running = cacheManager.getCaches().keySet().stream().filter(c -> cacheManager.isRunning(c) && !internalCacheRegistry.isInternalCache(c)).count();
-      return String.valueOf(running);
+   public long getRunningCacheCount() {
+      return cacheManager.getCaches().keySet().stream().filter(c -> cacheManager.isRunning(c) && !internalCacheRegistry.isInternalCache(c)).count();
    }
 
    public String getVersion() {

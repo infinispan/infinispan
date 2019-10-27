@@ -1,7 +1,5 @@
 package org.infinispan.metrics.impl;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -60,66 +58,18 @@ public final class ApplicationMetricsRegistry {
             continue;
          }
 
-         // metrics are numbers, ignore other attributes
-         String type = attr.getType();
-         if (!type.equals("java.lang.Integer") && !type.equals("int") &&
-               !type.equals("java.lang.Long") && !type.equals("long") &&
-               !type.equals("java.lang.Short") && !type.equals("short") &&
-               !type.equals("java.lang.Byte") && !type.equals("byte") &&
-               !type.equals("java.lang.Double") && !type.equals("double") &&
-               !type.equals("java.lang.Float") && !type.equals("float") &&
-               !type.equals("java.math.BigDecimal") && !type.equals("java.math.BigInteger")) {
-            continue;
-         }
-
          String attrName = attr.getName();
-         String metricName = ObjectNameMapper.makeMetricName(objectName, attrName);
-
          Supplier valueSupplier;
          try {
             valueSupplier = resourceDMBean.getAttributeValueSupplier(attrName);
+            if (valueSupplier == null) {
+               continue;
+            }
          } catch (AttributeNotFoundException e) {
             throw new IllegalStateException(e);
          }
-
-         Gauge<Number> gaugeMetric = () -> {
-            try {
-               Object val = valueSupplier.get();
-
-               // some attribute values produced by our MBeans are actually strings (for historical reasons) and need to be parsed into a Number
-               if (val != null && !(val instanceof Number)) {
-                  String strVal = val.toString();
-                  switch (type) {
-                     case "java.lang.Integer":
-                     case "int":
-                        return Integer.valueOf(strVal);
-                     case "java.lang.Long":
-                     case "long":
-                        return Long.valueOf(strVal);
-                     case "java.lang.Short":
-                     case "short":
-                        return Short.valueOf(strVal);
-                     case "java.lang.Byte":
-                     case "byte":
-                        return Byte.valueOf(strVal);
-                     case "java.lang.Double":
-                     case "double":
-                        return Double.valueOf(strVal);
-                     case "java.lang.Float":
-                     case "float":
-                        return Float.valueOf(strVal);
-                     case "java.math.BigDecimal":
-                        return new BigDecimal(strVal);
-                     case "java.math.BigInteger":
-                        return new BigInteger(strVal);
-                  }
-               }
-
-               return (Number) val;
-            } catch (Throwable e) {
-               throw new IllegalStateException("Error while retrieving attribute '" + metricName + "'", e);
-            }
-         };
+         Gauge<Number> gaugeMetric = () -> (Number) valueSupplier.get();
+         String metricName = ObjectNameMapper.makeMetricName(objectName, attrName);
 
          Metadata metadata = new MetadataBuilder()
                .withType(MetricType.GAUGE)
