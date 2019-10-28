@@ -1,0 +1,112 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:global.commons.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "KeyValueWithPrevious",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedKey",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              },
+              {
+                "id": 2,
+                "name": "wrappedValue",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              },
+              {
+                "id": 3,
+                "name": "wrappedPrev",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "org/infinispan/protostream/message-wrapping.proto"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.global.commons"
+        }
+      }
+    },
+    {
+      "protopath": "generated:/:persistence.commons.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "CounterState",
+            "enum_fields": [
+              {
+                "name": "VALID"
+              },
+              {
+                "name": "LOWER_BOUND_REACHED",
+                "integer": 1
+              },
+              {
+                "name": "UPPER_BOUND_REACHED",
+                "integer": 2
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "MediaType",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tree",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "KeyValueWithPrevious",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedKey",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              },
+              {
+                "id": 2,
+                "name": "wrappedValue",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              },
+              {
+                "id": 3,
+                "name": "wrappedPrev",
+                "type": "org.infinispan.protostream.WrappedMessage"
+              }
+            ]
+          },
+          {
+            "name": "WrappedByteArray",
+            "fields": [
+              {
+                "id": 1,
+                "name": "bytes",
+                "type": "bytes"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "org/infinispan/protostream/message-wrapping.proto"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.commons"
+        }
+      }
+    }
+  ]
+}
