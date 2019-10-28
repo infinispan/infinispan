@@ -18,6 +18,7 @@
       <tck.mbean.builder>org.infinispan.jcache.tck.TckMbeanServerBuilder</tck.mbean.builder>
       <tck.mbean.server>TckMbeanServer</tck.mbean.server>
 
+      <remote.CacheManagerImpl>org.infinispan.jcache.remote.JCacheManager</remote.CacheManagerImpl>
       <remote.CacheImpl>org.infinispan.jcache.remote.JCache</remote.CacheImpl>
       <remote.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</remote.CacheEntryImpl>
       <remote.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</remote.CacheInvocationContextImpl>
@@ -232,6 +233,7 @@
                <disableXmlReport>false</disableXmlReport>
                <systemPropertyVariables>
                   <ExcludeList>ExcludeList_remote</ExcludeList>
+                  <javax.cache.CacheManager>${remote.CacheManagerImpl}</javax.cache.CacheManager>
                   <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
                   <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
