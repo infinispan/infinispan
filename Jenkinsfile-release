@@ -30,6 +30,12 @@ pipeline {
             }
         }
 
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Commit Proto.lock Files') {
             steps {
                 script {
@@ -41,12 +47,6 @@ pipeline {
                         sh "git commit -m 'Committing proto.lock files for ${version}'"
                     }
                 }
-            }
-        }
-
-        stage('Checkout') {
-            steps {
-                checkout scm
             }
         }
 
