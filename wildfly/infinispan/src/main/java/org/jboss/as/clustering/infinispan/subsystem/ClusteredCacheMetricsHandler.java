@@ -146,7 +146,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
          context.getFailureDescription().set(String.format("Unavailable cache %s", attrName));
       } else {
          AdvancedCache<?, ?> aCache = cache.getAdvancedCache();
-         ClusterCacheStats clusterCacheStats = aCache.getComponentRegistry().getComponent(ClusterCacheStats.class);
+         ClusterCacheStats clusterCacheStats = SecurityActions.getComponentRegistry(aCache).getComponent(ClusterCacheStats.class);
          switch (metric) {
          case NUMBER_OF_LOCKS_AVAILABLE: {
             result.set(clusterCacheStats.getNumberOfLocksAvailable());

@@ -23,7 +23,7 @@ public enum AuthorizationPermission {
     */
    WRITE(1 << 2),
    /**
-    * Allows performing task execution (e.g. distributed executors, map/reduce) on a cache
+    * Allows performing task execution (e.g. cluster executor, tasks) on a cache
     */
    EXEC(1 << 3),
    /**
