@@ -11,6 +11,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -35,6 +36,7 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    private static final String[] LONG_ATTRIBUTES = {MEMORY_AVAILABLE, MEMORY_MAX, MEMORY_TOTAL, MEMORY_USED};
 
+   private ClusterExecutor clusterExecutor;
    private EmbeddedCacheManager cacheManager;
 
    ClusterContainerStatsImpl() {
@@ -48,6 +50,11 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
    }
 
    @Override
+   public void start() {
+      this.clusterExecutor = SecurityActions.getClusterExecutor(cacheManager);
+   }
+
+   @Override
    void updateStats() throws Exception {
       List<Map<String, Number>> memoryMap = getClusterStatMaps();
       for (String att : LONG_ATTRIBUTES)
@@ -56,7 +63,7 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    private List<Map<String, Number>> getClusterStatMaps() throws Exception {
       final List<Map<String, Number>> successfulResponseMaps = new ArrayList<>();
-      CompletableFutures.await(cacheManager.executor().submit(() -> {
+      CompletableFutures.await(clusterExecutor.submit(() -> {
          Map<String, Number> map = new HashMap<>();
          long available = Runtime.getRuntime().freeMemory();
          long total = Runtime.getRuntime().totalMemory();
