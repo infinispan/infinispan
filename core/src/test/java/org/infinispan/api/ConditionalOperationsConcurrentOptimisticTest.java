@@ -18,6 +18,11 @@ public class ConditionalOperationsConcurrentOptimisticTest extends ConditionalOp
    }
 
    @Override
+   public Object[] factory() {
+      return new Object[]{new ConditionalOperationsConcurrentOptimisticTest()};
+   }
+
+   @Override
    public void testReplace() throws Exception {
       List caches = caches(null);
       testOnCaches(caches, new ReplaceOperation(false));

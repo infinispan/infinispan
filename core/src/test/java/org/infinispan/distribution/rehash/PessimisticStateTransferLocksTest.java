@@ -52,7 +52,10 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
    @AfterMethod(alwaysRun = true)
    public void printSequencerState() {
       log.debugf("Sequencer state: %s", sequencer);
-      sequencer.stop();
+      if (sequencer != null) {
+         sequencer.stop();
+         sequencer = null;
+      }
    }
 
    @Override
@@ -200,12 +203,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       for (Cache<Object, Object> c : caches()) {
          final TransactionTable txTable = getTransactionTable(c);
          assertTrue(txTable.getLocalTransactions().isEmpty());
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return txTable.getRemoteTransactions().isEmpty();
-            }
-         });
+         eventuallyEquals(0, () -> txTable.getRemoteTransactions().size());
       }
    }
 

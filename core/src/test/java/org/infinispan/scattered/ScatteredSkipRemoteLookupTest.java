@@ -16,6 +16,11 @@ public class ScatteredSkipRemoteLookupTest extends DistSkipRemoteLookupTest {
    }
 
    @Override
+   public Object[] factory() {
+      return new Object[]{new ScatteredSkipRemoteLookupTest()};
+   }
+
+   @Override
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       Utils.assertOwnershipAndNonOwnership(caches, key);
    }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -42,13 +43,13 @@ public class ChainMethodInterceptor implements IMethodInterceptor {
             findInterceptors(method.getInstance().getClass(), interceptorSet, interceptorList, filters);
          }
          if (!filters.isEmpty()) {
-            Predicate<IMethodInstance>[] filterInstances = filters.stream().map(clazz -> {
+            List<? extends Predicate<IMethodInstance>> filterInstances = filters.stream().map(clazz -> {
                try {
-                  return clazz.newInstance();
+                  return clazz.getConstructor().newInstance();
                } catch (Exception e) {
                   throw new IllegalStateException("Cannot construct filter", e);
                }
-            }).toArray(Predicate[]::new);
+            }).collect(Collectors.toList());
             ArrayList<IMethodInstance> filteredMethods = new ArrayList<>(methods.size());
 METHODS:
             for (IMethodInstance m : methods) {
@@ -61,12 +62,13 @@ METHODS:
             methods = filteredMethods;
          }
          for (Class<? extends IMethodInterceptor> interceptor : interceptorList) {
-            methods = interceptor.newInstance().intercept(methods, context);
+            methods = interceptor.getConstructor().newInstance().intercept(methods, context);
          }
          return methods;
       } catch (Throwable t) {
          MethodInstance methodInstance =
-            FakeTestClass.newFailureMethodInstance(new TestNGException(t), context.getCurrentXmlTest(), context);
+            FakeTestClass.newFailureMethodInstance(new TestNGException(t), context.getCurrentXmlTest(), context,
+                                                   methods.get(0).getInstance());
 
          return Collections.singletonList(methodInstance);
       }
@@ -95,9 +97,7 @@ METHODS:
                interceptorList.add(interceptor);
             }
          }
-         for (Class<? extends Predicate<IMethodInstance>> filter : annotation.filters()) {
-            filters.add(filter);
-         }
+         Collections.addAll(filters, annotation.filters());
       }
    }
 

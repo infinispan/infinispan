@@ -16,6 +16,11 @@ import org.testng.annotations.Test;
 public class TopologyAwareDistSyncUnsafeFuncTest extends DistSyncUnsafeFuncTest {
 
    @Override
+   public Object[] factory() {
+      return new Object[]{new TopologyAwareDistSyncUnsafeFuncTest()};
+   }
+
+   @Override
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
       int index = cacheManagers.size();
       String rack;

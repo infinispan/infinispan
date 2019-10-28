@@ -47,6 +47,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -61,12 +62,8 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.function.SerializableFunction;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -282,28 +279,28 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    }
 
    // Transactions use SimpleClusteredVersions, not NumericVersions, and user is not supposed to modify those
-   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testLocalReadWriteForConditionalParamBasedReplace() {
+      assumeNonTransactional();
       doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(fmapL1), rw(fmapL2));
    }
 
-   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testReplReadWriteForConditionalParamBasedReplaceOnNonOwner() {
+      assumeNonTransactional();
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
    }
 
-   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testReplReadWriteForConditionalParamBasedReplaceOnOwner() {
+      assumeNonTransactional();
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
    }
 
-   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testDistReadWriteForConditionalParamBasedReplaceOnNonOwner() {
+      assumeNonTransactional();
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
    }
 
-   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testDistReadWriteForConditionalParamBasedReplaceOnOwner() {
+      assumeNonTransactional();
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
    }
 
@@ -607,16 +604,8 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          };
    }
 
-   @Override
-   @BeforeClass
-   public void createBeforeClass() throws Throwable {
-      super.createBeforeClass();
+   private void assumeNonTransactional() {
+      SkipTestNG.skipIf(transactional == Boolean.TRUE,
+                        "Transactions use SimpleClusteredVersions, not NumericVersions, and user is not supposed to modify those");
    }
-
-   @Override
-   @BeforeMethod
-   public void createBeforeMethod() throws Throwable {
-      super.createBeforeMethod();
-   }
-
 }

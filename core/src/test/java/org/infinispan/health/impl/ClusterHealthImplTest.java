@@ -60,11 +60,14 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
    @AfterMethod(alwaysRun = true)
    private void cleanAfterMethod() {
-      cacheManager.administration().removeCache(CACHE_NAME);
-      cacheManager.undefineConfiguration(CACHE_NAME);
-
-      cacheManager.administration().removeCache(INTERNAL_CACHE_NAME);
-      internalCacheRegistry.unregisterInternalCache(INTERNAL_CACHE_NAME);
+      if (cacheManager != null) {
+         cacheManager.administration().removeCache(CACHE_NAME);
+         cacheManager.undefineConfiguration(CACHE_NAME);
+         cacheManager.administration().removeCache(INTERNAL_CACHE_NAME);
+      }
+      if (internalCacheRegistry != null) {
+         internalCacheRegistry.unregisterInternalCache(INTERNAL_CACHE_NAME);
+      }
    }
 
    @AfterClass(alwaysRun = true)
@@ -99,7 +102,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
    }
 
    public void testUnhealthyStatusWhenUserCacheIsStopped() {
-      Cache testCache = cacheManager.getCache(CACHE_NAME, true);
+      Cache<Object, Object> testCache = cacheManager.getCache(CACHE_NAME, true);
       testCache.stop();
 
       HealthStatus healthStatus = clusterHealth.getHealthStatus();
@@ -127,7 +130,7 @@ public class ClusterHealthImplTest extends AbstractInfinispanTest {
    }
 
    public void testUnhealthyStatusWhenInternalCacheIsStopped() {
-      Cache internalCache = cacheManager.getCache(INTERNAL_CACHE_NAME, true);
+      Cache<Object, Object> internalCache = cacheManager.getCache(INTERNAL_CACHE_NAME, true);
       internalCache.stop();
 
       assertEquals(HealthStatus.DEGRADED, clusterHealth.getHealthStatus());
