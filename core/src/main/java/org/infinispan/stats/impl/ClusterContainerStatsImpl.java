@@ -7,12 +7,14 @@ import java.util.Map;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -37,6 +39,7 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    private static final String[] LONG_ATTRIBUTES = new String[]{MEMORY_AVAILABLE, MEMORY_MAX, MEMORY_TOTAL, MEMORY_USED};
 
+   private ClusterExecutor clusterExecutor;
    private EmbeddedCacheManager cacheManager;
 
    public ClusterContainerStatsImpl() {
@@ -50,6 +53,11 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
       this.statisticsEnabled = configuration.globalJmxStatistics().enabled();
    }
 
+   @Start
+   public void start() {
+      this.clusterExecutor = SecurityActions.getClusterExecutor(cacheManager);
+   }
+
    @Override
    void updateStats() throws Exception {
       List<Map<String, Number>> memoryMap = getClusterStatMaps();
@@ -59,7 +67,7 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
 
    private List<Map<String, Number>> getClusterStatMaps() throws Exception {
       final List<Map<String, Number>> successfulResponseMaps = new ArrayList<>();
-      CompletableFutures.await(cacheManager.executor().submit(() -> {
+      CompletableFutures.await(clusterExecutor.submit(() -> {
          Map<String, Number> map = new HashMap<>();
          long available = Runtime.getRuntime().freeMemory();
          long total = Runtime.getRuntime().totalMemory();
