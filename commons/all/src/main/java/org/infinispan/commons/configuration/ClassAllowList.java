@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.KeyValueWithPrevious;
 
 /**
  * The {@link ClassAllowList} maintains classes definitions either by name or regular expression and is used for
@@ -90,6 +91,10 @@ public class ClassAllowList {
 
       // Reference array regex, for arrray representations of allowed classes e.g '[Ljava.lang.Byte;'
       SYS_ALLOWED_REGEXP.add("^\\[[\\[L].*\\;$");
+
+      // Infinispan classes
+      // Used by client listeners and jcache-remote
+      SYS_ALLOWED_CLASSES.add(KeyValueWithPrevious.class.getName());
 
       // Legacy handling
       String regexps = System.getProperty(REGEXPS_PROPERTY_NAME_LEGACY);

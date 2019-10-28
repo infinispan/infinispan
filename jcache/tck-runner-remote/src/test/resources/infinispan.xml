@@ -9,8 +9,12 @@
         <!-- Note: Maven resources plugin replaces ${infinispan.cluster.stack} with the property value
              It would not replace ${infinispan.cluster.stack:tcp -->
         <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
-        <serialization>
-            <context-initializer class="org.infinispan.jcache.tck.JCacheTckContextInitializer"/>
+        <serialization marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller">
+            <allow-list>
+                <regex>org\.jsr107\.ri\..*</regex>
+                <regex>domain\..*</regex>
+                <regex>\[L.*</regex>
+            </allow-list>
         </serialization>
     </cache-container>
 

@@ -1,6 +1,6 @@
 <serialization marshaller="org.infinispan.example.marshall.CustomMarshaller">
-    <white-list>
+    <allow-list>
         <class>org.infinispan.concrete.SomeClass</class>
         <regex>org.infinispan.example.*</regex>
-    </white-list>
+    </allow-list>
 </serialization>

@@ -11,6 +11,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
+import org.infinispan.jcache.annotation.DefaultCacheKey;
 import org.infinispan.jcache.embedded.functions.GetAndPut;
 import org.infinispan.jcache.embedded.functions.GetAndRemove;
 import org.infinispan.jcache.embedded.functions.GetAndReplace;
@@ -55,6 +56,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       if (canLoad("javax.cache.processor.MutableEntry", MutableEntrySnapshot.Externalizer.class.getClassLoader())) {
          add(map, new MutableEntrySnapshot.Externalizer());
       }
+
+      gcr.getCacheManager().getClassAllowList().addClasses(DefaultCacheKey.class);
    }
 
    private boolean canLoad(String className, ClassLoader classLoader) {

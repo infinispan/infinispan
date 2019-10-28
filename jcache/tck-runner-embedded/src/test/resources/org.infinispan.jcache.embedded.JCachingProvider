@@ -5,8 +5,12 @@
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
     <cache-container name="default">
-        <serialization>
-            <context-initializer class="org.infinispan.jcache.tck.JCacheTckContextInitializer"/>
+        <serialization marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller">
+            <allow-list>
+                <regex>org\.jsr107\.ri\..*</regex>
+                <regex>domain\..*</regex>
+                <regex>\[L.*</regex>
+            </allow-list>
         </serialization>
     </cache-container>
 
