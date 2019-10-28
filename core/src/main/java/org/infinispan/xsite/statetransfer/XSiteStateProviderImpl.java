@@ -8,7 +8,6 @@ import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlComman
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -33,6 +32,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -150,7 +150,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       } else {
          XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(FINISH_SEND, siteName);
          command.setStatusOk(!error);
-         rpcManager.invokeRemotely(Collections.singleton(origin), command, rpcManager.getDefaultRpcOptions(false));
+         rpcManager.sendTo(origin, command, DeliverOrder.NONE);
       }
    }
 
@@ -208,8 +208,6 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             }
 
             CompletableFutures.await(stateTransferLock.topologyFuture(minTopologyId));
-
-            final List<XSiteState> chunk = new ArrayList<>(chunkSize);
 
             if (debug) {
                log.debugf("[X-Site State Transfer - %s] start DataContainer iteration", xSiteBackup.getSiteName());

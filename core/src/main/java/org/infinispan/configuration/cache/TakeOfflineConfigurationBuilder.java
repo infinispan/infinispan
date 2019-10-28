@@ -11,6 +11,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea Markus
+ * @see <a href="https://infinispan.org/docs/stable/titles/xsite/xsite.html#taking_a_site_offline">Infinispan Cross-Site documentation</a>
  * @since 5.2
  */
 public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration>, ConfigurationBuilderInfo {
@@ -26,8 +27,19 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * The minimal number of millis to wait before taking this site offline, even in the case 'afterFailures' is reached.
-    * If smaller or equal to 0, then only 'afterFailures' is considered.
+    * The minimal number of milliseconds to wait before taking this site offline. It defaults to 0 (zero).
+    * <p>
+    * A zero or negative value will disable any waiting time and use only {@link #afterFailures(int)}.
+    * <p>
+    * The switch to offline status happens after a failed request (times-out or network failure) and {@code
+    * minTimeToWait} is already elapsed.
+    * <p>
+    * When a request fails (after a successful request) the timer is set and it is stopped and reset after a successful
+    * request.
+    * <p>
+    * Check the <a href="https://infinispan.org/docs/stable/titles/xsite/xsite.html#taking_a_site_offline">Infinispan
+    * Cross-Site documentation</a> for more information about {@link #minTimeToWait(long)} and {@link
+    * #afterFailures(int)}.
     */
    public TakeOfflineConfigurationBuilder minTimeToWait(long minTimeToWait) {
       attributes.attribute(MIN_TIME_TO_WAIT).set(minTimeToWait);
@@ -45,8 +57,14 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * The number of failed request operations after which this site should be taken offline. Defaults to 0 (never). A
-    * negative value would mean that the site will be taken offline after 'minTimeToWait'.
+    * The number of consecutive failed request operations after which this site should be taken offline. It default to 0
+    * (zero).
+    * <p>
+    * A zero or negative value will ignore the number of failures and use only {@link #minTimeToWait(long)}.
+    * <p>
+    * Check the <a href="https://infinispan.org/docs/stable/titles/xsite/xsite.html#taking_a_site_offline">Infinispan
+    * Cross-Site documentation</a> for more information about {@link #minTimeToWait(long)} and {@link
+    * #afterFailures(int)}.
     */
    public TakeOfflineConfigurationBuilder afterFailures(int afterFailures) {
       attributes.attribute(AFTER_FAILURES).set(afterFailures);

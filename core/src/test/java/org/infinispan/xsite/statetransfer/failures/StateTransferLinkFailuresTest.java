@@ -122,7 +122,7 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
 
    @Override
    protected void adaptLONConfiguration(BackupConfigurationBuilder builder) {
-      builder.stateTransfer().chunkSize(2).timeout(2000);
+      builder.stateTransfer().chunkSize(2).timeout(2000).maxRetries(1);
    }
 
    private Map<String, String> getStatus() {
