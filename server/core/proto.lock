@@ -1,0 +1,25 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.server.core.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "IgnoredCaches",
+            "fields": [
+              {
+                "id": 1,
+                "name": "caches",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.server.core"
+        }
+      }
+    }
+  ]
+}

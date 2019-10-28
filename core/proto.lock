@@ -1,0 +1,344 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.core.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "EventLogLevel",
+            "enum_fields": [
+              {
+                "name": "INFO"
+              },
+              {
+                "name": "WARN",
+                "integer": 1
+              },
+              {
+                "name": "ERROR",
+                "integer": 2
+              },
+              {
+                "name": "FATAL",
+                "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "EventLogCategory",
+            "enum_fields": [
+              {
+                "name": "LIFECYCLE"
+              },
+              {
+                "name": "CLUSTER",
+                "integer": 1
+              },
+              {
+                "name": "SECURITY",
+                "integer": 2
+              },
+              {
+                "name": "TASKS",
+                "integer": 3
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "EmbeddedExpirableMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "numericVersion",
+                "type": "NumericVersion"
+              },
+              {
+                "id": 2,
+                "name": "clusteredVersion",
+                "type": "SimpleClusteredVersion"
+              },
+              {
+                "id": 3,
+                "name": "lifespan",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "maxIdle",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "EmbeddedMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "numericVersion",
+                "type": "NumericVersion"
+              },
+              {
+                "id": 2,
+                "name": "clusteredVersion",
+                "type": "SimpleClusteredVersion"
+              }
+            ]
+          },
+          {
+            "name": "JGroupsAddress",
+            "fields": [
+              {
+                "id": 1,
+                "name": "bytes",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "name": "MetaParamsInternalMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "numericVersion",
+                "type": "NumericVersion"
+              },
+              {
+                "id": 2,
+                "name": "clusteredVersion",
+                "type": "SimpleClusteredVersion"
+              },
+              {
+                "id": 3,
+                "name": "created",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "lastUsed",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "lifespan",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "maxIdle",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "RemoteMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "address",
+                "type": "JGroupsAddress"
+              },
+              {
+                "id": 2,
+                "name": "version",
+                "type": "SimpleClusteredVersion"
+              }
+            ]
+          },
+          {
+            "name": "EmbeddedMaxIdleExpirableMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "numericVersion",
+                "type": "NumericVersion"
+              },
+              {
+                "id": 2,
+                "name": "clusteredVersion",
+                "type": "SimpleClusteredVersion"
+              },
+              {
+                "id": 3,
+                "name": "maxIdle",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "SimpleClusteredVersion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "topologyId",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "version",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "MarshalledValueImpl",
+            "fields": [
+              {
+                "id": 1,
+                "name": "value",
+                "type": "bytes"
+              },
+              {
+                "id": 2,
+                "name": "metadata",
+                "type": "bytes"
+              },
+              {
+                "id": 3,
+                "name": "created",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "lastUsed",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "NumericVersion",
+            "fields": [
+              {
+                "id": 1,
+                "name": "version",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "EmbeddedLifespanExpirableMetadata",
+            "fields": [
+              {
+                "id": 1,
+                "name": "numericVersion",
+                "type": "NumericVersion"
+              },
+              {
+                "id": 2,
+                "name": "clusteredVersion",
+                "type": "SimpleClusteredVersion"
+              },
+              {
+                "id": 3,
+                "name": "lifespan",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "-1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "MarshallableUserObject",
+            "fields": [
+              {
+                "id": 1,
+                "name": "bytes",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "name": "ByteString",
+            "fields": [
+              {
+                "id": 1,
+                "name": "bytes",
+                "type": "bytes"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.core"
+        }
+      }
+    }
+  ]
+}

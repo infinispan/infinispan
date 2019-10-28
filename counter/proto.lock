@@ -1,0 +1,74 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.counters.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "StrongCounterKey",
+            "fields": [
+              {
+                "id": 1,
+                "name": "counterName",
+                "type": "org.infinispan.persistence.core.ByteString"
+              }
+            ]
+          },
+          {
+            "name": "CounterValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "value",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "state",
+                "type": "org.infinispan.persistence.commons.CounterState"
+              }
+            ]
+          },
+          {
+            "name": "WeakCounterKey",
+            "fields": [
+              {
+                "id": 1,
+                "name": "counterName",
+                "type": "org.infinispan.persistence.core.ByteString"
+              },
+              {
+                "id": 2,
+                "name": "index",
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "persistence.core.proto"
+          },
+          {
+            "path": "persistence.commons.proto"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.counters"
+        }
+      }
+    }
+  ]
+}
