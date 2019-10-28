@@ -1,0 +1,29 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.query.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "KnownClassKey",
+            "fields": [
+              {
+                "id": 1,
+                "name": "cacheName",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "className",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.query"
+        }
+      }
+    }
+  ]
+}

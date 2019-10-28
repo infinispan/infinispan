@@ -1,0 +1,25 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.rocksdb.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "ExpiryBucket",
+            "fields": [
+              {
+                "id": 1,
+                "name": "entries",
+                "type": "bytes",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.rocksdb"
+        }
+      }
+    }
+  ]
+}

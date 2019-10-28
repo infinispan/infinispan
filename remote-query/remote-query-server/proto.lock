@@ -1,0 +1,24 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.remote_query.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "ProtobufValueWrapper",
+            "fields": [
+              {
+                "id": 1,
+                "name": "binary",
+                "type": "bytes"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.remote_query"
+        }
+      }
+    }
+  ]
+}
