@@ -5,6 +5,7 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetClusterExecutorAction;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -29,6 +30,11 @@ final class SecurityActions {
 
    static ClusterExecutor getClusterExecutor(final Cache<?, ?> cache) {
       GetClusterExecutorAction action = new GetClusterExecutorAction(cache);
+      return doPrivileged(action);
+   }
+
+   static ClusterExecutor getClusterExecutor(final EmbeddedCacheManager cacheManager) {
+      GetClusterExecutorAction action = new GetClusterExecutorAction(cacheManager);
       return doPrivileged(action);
    }
 
