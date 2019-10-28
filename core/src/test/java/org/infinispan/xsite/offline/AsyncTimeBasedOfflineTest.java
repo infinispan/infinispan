@@ -98,7 +98,9 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
    private void assertEventuallyOffline(String cacheName, int index) {
       OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
-      eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline);
+      eventually(status::minTimeHasElapsed);
+      cache(LON, cacheName, index).put("_key_", "_value_");
+      assertTrue("Site " + SFO + " is online. status=" + status, status.isOffline());
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {

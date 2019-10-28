@@ -30,14 +30,14 @@ public class OfflineStatus {
 
    private static final Log log = LogFactory.getLog(OfflineStatus.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final long NO_FAILURE = -1;
 
    private final TimeService timeService;
    private final SiteStatusListener listener;
    private volatile TakeOfflineConfiguration takeOffline;
-   private boolean recordingOfflineStatus = false;
-   private long firstFailureTime;
-   private int failureCount;
-   private boolean isOffline = false;
+   @GuardedBy("this") private long firstFailureTime = NO_FAILURE;
+   @GuardedBy("this") private int failureCount = 0;
+   @GuardedBy("this") private boolean isOffline = false;
 
    public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration, TimeService timeService, SiteStatusListener listener) {
       this.takeOffline = takeOfflineConfiguration;
@@ -46,50 +46,21 @@ public class OfflineStatus {
    }
 
    public synchronized void updateOnCommunicationFailure(long sendTimeMillis) {
-      if (!recordingOfflineStatus) {
-         recordingOfflineStatus = true;
+      if (firstFailureTime == NO_FAILURE) {
          firstFailureTime = sendTimeMillis;
       }
       failureCount++;
+      internalUpdateStatus();
    }
 
    public synchronized boolean isOffline() {
-      if (isOffline)
-         return true;
-
-      if (!recordingOfflineStatus)
-         return false;
-
-      if (takeOffline.minTimeToWait() > 0) { //min time to wait is enabled
-         if (!internalMinTimeHasElapsed()) return false;
-      }
-
-      if (takeOffline.afterFailures() > 0) {
-         if (takeOffline.afterFailures() <= failureCount) {
-            if (trace) {
-               log.trace("Site is failed: min failures reached.");
-            }
-            listener.siteOffline();
-            isOffline = true;
-            return true;
-         } else {
-            return false;
-         }
-      } else {
-         if (takeOffline.minTimeToWait() > 0) { //min time to wait is enabled
-            if (trace) {
-               log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
-            }
-            listener.siteOffline();
-            isOffline = true;
-            return true;
-         } else {
-            return false;
-         }
-      }
+      return isOffline;
    }
 
    public synchronized boolean minTimeHasElapsed() {
+      if (firstFailureTime == NO_FAILURE) {
+         return false;
+      }
       return internalMinTimeHasElapsed();
    }
 
@@ -107,15 +78,6 @@ public class OfflineStatus {
 
    public synchronized boolean isEnabled() {
       return takeOffline.enabled();
-   }
-
-   /**
-    * Configures the site to use the supplied configuration for determining when to take a site offline.
-    * Also triggers a state reset.
-    */
-   public void amend(TakeOfflineConfiguration takeOffline) {
-      this.takeOffline = takeOffline;
-      reset();
    }
 
    public synchronized void reset() {
@@ -136,14 +98,14 @@ public class OfflineStatus {
    }
 
    @Override
-   public String toString() {
+   public synchronized String toString() {
       return "OfflineStatus{" +
-            "takeOffline=" + takeOffline +
-            ", recordingOfflineStatus=" + recordingOfflineStatus +
-            ", firstFailureTime=" + firstFailureTime +
-            ", isOffline=" + isOffline +
-            ", failureCount=" + failureCount +
-            '}';
+             "takeOffline=" + takeOffline +
+             ", recordingOfflineStatus=" + (firstFailureTime != NO_FAILURE) +
+             ", firstFailureTime=" + firstFailureTime +
+             ", isOffline=" + isOffline +
+             ", failureCount=" + failureCount +
+             '}';
    }
 
    public void amend(Integer afterFailures, Long minTimeToWait) {
@@ -158,6 +120,46 @@ public class OfflineStatus {
       amend(builder.create());
    }
 
+   /**
+    * Configures the site to use the supplied configuration for determining when to take a site offline. Also triggers a
+    * state reset.
+    */
+   private void amend(TakeOfflineConfiguration takeOffline) {
+      this.takeOffline = takeOffline;
+      reset();
+   }
+
+   @GuardedBy("this")
+   private void internalUpdateStatus() {
+      if (isOffline) {
+         //already offline
+         return;
+      }
+      boolean hasMinWait = takeOffline.minTimeToWait() > 0;
+      if (hasMinWait && !internalMinTimeHasElapsed()) {
+         //minTimeToWait() not elapsed yet.
+         return;
+      }
+      long minFailures = takeOffline.afterFailures();
+      if (minFailures > 0) {
+         if (minFailures <= failureCount) {
+            if (trace) {
+               log.tracef("Site is failed: min failures (%s) reached (count=%s).", minFailures, failureCount);
+            }
+            listener.siteOffline();
+            isOffline = true;
+         }
+         //else, afterFailures() not reached yet.
+      } else if (hasMinWait) {
+         if (trace) {
+            log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
+         }
+         listener.siteOffline();
+         isOffline = true;
+      }
+      //else, no afterFailures() neither minTimeToWait() configured
+   }
+
    @GuardedBy("this")
    private boolean internalMinTimeHasElapsed() {
       long minTimeToWait = takeOffline.minTimeToWait();
@@ -167,7 +169,7 @@ public class OfflineStatus {
       if (millis >= minTimeToWait) {
          if (trace) {
             log.tracef("The minTimeToWait has passed: minTime=%s, timeSinceFirstFailure=%s",
-                       minTimeToWait, millis);
+                  minTimeToWait, millis);
          }
          return true;
       }
@@ -180,7 +182,7 @@ public class OfflineStatus {
    @GuardedBy("this")
    private boolean internalReset() {
       boolean wasOffline = isOffline;
-      recordingOfflineStatus = false;
+      firstFailureTime = NO_FAILURE;
       failureCount = 0;
       isOffline = false;
       if (wasOffline) {

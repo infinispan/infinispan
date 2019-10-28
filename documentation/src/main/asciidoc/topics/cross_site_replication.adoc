@@ -157,7 +157,7 @@ include::config_examples/take_offline.xml[]
 
 The _take-offline_ element under the _backup_ configures the taking offline of a site:
 
-* _after-failures_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_
+* _after-failures_ - the number of consecutive failed backup operations after which this site should be taken offline. Defaults to 0. A zero or negative value would mean that the site will be taken offline after _minTimeToWait_
 * _min-wait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered.
 
 The equivalent programmatic configuration is:
@@ -166,6 +166,29 @@ The equivalent programmatic configuration is:
 ----
 include::code_examples/TakeOffline.java[]
 ----
+
+
+|===
+|_after-failures_ |_min-wait_ |Result
+
+|`\<=0`
+|`\<=0`
+|The site will never be taken offline.
+
+|`N`
+|`\<=0`
+|The site will be offline after `N` consecutive requests failures.
+
+|`\<=0`
+|`M`
+|The site will be offline `M` milliseconds after the first request failure. A successful request rests this timer.
+
+|`N`
+|`M`
+|The site will be offline after `N` consecutive requests failures and after `M` milliseconds after the first consecutive failure.
+
+|===
+
 
 === Bringing Sites Back Online
 After taking sites offline, invoke the `bringSiteOnline(siteName)` operation via the following JMX MBeans to bring sites back online:

@@ -42,6 +42,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
 
       assertMinTimeElapsed(context, true);
       assertMinFailureCount(context, minFailures + 1);
+      addCommunicationFailure(context);
       assertOffline(context, true);
 
       context.offlineStatus.reset(); //reset everything
@@ -71,7 +72,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
       context.listener.check(SiteStatus.OFFLINE, SiteStatus.ONLINE, SiteStatus.OFFLINE);
    }
 
-   public void testFailureBasedOnly() throws Throwable {
+   public void testFailureBasedOnly() {
       //note: can't check the min time since it throws an IllegalStateException when disabled
       final int minFailures = 10;
       final TestContext context = createNew(0, minFailures);
@@ -97,7 +98,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
       context.listener.check(SiteStatus.OFFLINE);
    }
 
-   public void testTimeBasedOnly() throws Throwable {
+   public void testTimeBasedOnly() {
       final long minWaitTime = 3000;
       final int minFailures = 10;
       final TestContext context = createNew(minWaitTime, -1);
@@ -115,6 +116,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
 
       assertMinFailureCount(context, minFailures);
       assertMinTimeElapsed(context, true);
+      addCommunicationFailure(context);
       assertOffline(context, true);
 
       context.listener.check(SiteStatus.OFFLINE);
