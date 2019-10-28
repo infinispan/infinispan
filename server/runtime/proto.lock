@@ -1,0 +1,95 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.event_logger.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "ServerEventImpl",
+            "fields": [
+              {
+                "id": 1,
+                "name": "when",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "level",
+                "type": "org.infinispan.persistence.core.EventLogLevel"
+              },
+              {
+                "id": 3,
+                "name": "category",
+                "type": "org.infinispan.persistence.core.EventLogCategory"
+              },
+              {
+                "id": 4,
+                "name": "message",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "detail",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "who",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "context",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "scope",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "persistence.core.proto"
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.event_logger"
+        }
+      }
+    },
+    {
+      "protopath": "persistence.m.event_logger.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "UUID",
+            "fields": [
+              {
+                "id": 1,
+                "name": "mostSigBits",
+                "type": "uint64"
+              },
+              {
+                "id": 2,
+                "name": "leastSigBits",
+                "type": "uint64"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.m.event_logger"
+        }
+      }
+    }
+  ]
+}
