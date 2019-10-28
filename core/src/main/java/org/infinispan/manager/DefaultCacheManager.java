@@ -1114,7 +1114,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public ClusterExecutor executor() {
-      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      authzHelper.checkPermission(AuthorizationPermission.EXEC);
       // Allow INITIALIZING state so ClusterExecutor can be used by components in a @Start method.
       if (globalComponentRegistry.getStatus() != ComponentStatus.RUNNING &&
             globalComponentRegistry.getStatus() != ComponentStatus.INITIALIZING) {
@@ -1123,7 +1123,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       // Have to make sure the transport is running before we retrieve it
       Transport transport = globalComponentRegistry.getComponent(BasicComponentRegistry.class).getComponent(Transport.class).running();
       if (transport != null) {
-         long time = getCacheManagerConfiguration().transport().distributedSyncTimeout();
+         long time = configurationManager.getGlobalConfiguration().transport().distributedSyncTimeout();
          return ClusterExecutors.allSubmissionExecutor(null, this, transport, time, TimeUnit.MILLISECONDS,
                globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR),
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
