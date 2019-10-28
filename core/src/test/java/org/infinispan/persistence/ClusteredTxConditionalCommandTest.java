@@ -3,7 +3,9 @@ package org.infinispan.persistence;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -16,6 +18,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "functional", testName = "persistence.ClusteredTxConditionalCommandTest")
+@InCacheMode({CacheMode.DIST_SYNC})
 public class ClusteredTxConditionalCommandTest extends ClusteredConditionalCommandTest {
 
    // TX optimistic but without WSC!

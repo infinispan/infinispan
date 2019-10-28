@@ -12,4 +12,9 @@ public class ConditionalOperationsConcurrentPessimisticTest extends ConditionalO
       transactional = true;
       lockingMode = LockingMode.PESSIMISTIC;
    }
+
+   @Override
+   public Object[] factory() {
+      return new Object[]{new ConditionalOperationsConcurrentPessimisticTest()};
+   }
 }

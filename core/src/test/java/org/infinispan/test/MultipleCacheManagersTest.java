@@ -109,7 +109,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected IsolationLevel isolationLevel;
    // Disables the triangle algorithm if set to Boolean.FALSE
    protected Boolean useTriangle;
-   private boolean parametrizedInstance = false;
 
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
@@ -556,22 +555,29 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          Method factory = getClass().getMethod("factory");
          if (factory.getDeclaringClass() == getClass()) {
+            if (getClass().getAnnotation(InCacheMode.class) != null ||
+                getClass().getAnnotation(InTransactionMode.class) != null) {
+               return new Object[]{new TestFrameworkFailure<>(getClass(), new IllegalStateException(
+                           "Tests with factory() methods ignore @InCacheMode and @InTransactionMode annotations, " +
+                           "please remove them."))};
+            }
             Object[] instances = factory();
             for (int i = 0; i < instances.length; i++) {
                if (instances[i].getClass() != getClass()) {
-                  instances[i] = new TestFrameworkFailure("%s.factory() creates instances of %s",
+                  instances[i] = new TestFrameworkFailure<>(getClass(), "%s.factory() creates instances of %s",
                                                           getClass().getName(), instances[i].getClass().getName());
                }
             }
             return instances;
          } else if (factory.getDeclaringClass() != MultipleCacheManagersTest.class) {
-            return new Object[]{new TestFrameworkFailure(
-               "%s.factory() override is missing, inherited factory() creates instances of %s",
-               getClass().getName(), factory.getDeclaringClass().getName())};
+            return new Object[]{new TestFrameworkFailure<>(
+                  getClass(), "%s.factory() override is missing, inherited factory() creates instances of %s",
+                  getClass().getName(), factory.getDeclaringClass().getName())};
          }
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
       }
+
       List<Consumer<MultipleCacheManagersTest>[]> allModifiers;
       try {
          Consumer<MultipleCacheManagersTest>[] cacheModeModifiers =
@@ -581,7 +587,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
                      (t, m) -> t.transactional(m.isTransactional()));
          allModifiers = asList(cacheModeModifiers, transactionModifiers);
       } catch (Exception e) {
-         return new Object[]{new TestFrameworkFailure(e)};
+         return new Object[]{new TestFrameworkFailure<>(getClass(), e)};
       }
 
       int numTests = allModifiers.stream().mapToInt(m -> m.length).reduce(1, (m1, m2) -> m1 * m2);
@@ -591,13 +597,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          ctor = getClass().getConstructor();
       } catch (NoSuchMethodException e) {
-         return new Object[]{new TestFrameworkFailure("Missing no-arg constructor in %s", getClass().getName())};
+         return new Object[]{new TestFrameworkFailure<>(getClass(), "Missing no-arg constructor in %s", getClass().getName())};
       }
       for (int i = 1; i < tests.length; ++i) {
          try {
             tests[i] = ctor.newInstance();
          } catch (Exception e) {
-            return new Object[]{new TestFrameworkFailure(e)};
+            return new Object[]{new TestFrameworkFailure<>(getClass(), e)};
          }
       }
       int stride = 1;
@@ -665,11 +671,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       A annotation = getClass().getDeclaredAnnotation(annotationClass);
       if (annotation == null) return null;
       return modeRetriever.apply(annotation);
-   }
-
-   private MultipleCacheManagersTest internalCacheMode(CacheMode cacheMode) {
-      this.parametrizedInstance = true;
-      return cacheMode(cacheMode);
    }
 
    public MultipleCacheManagersTest cacheMode(CacheMode cacheMode) {
@@ -743,6 +744,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return new Object[]{cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle};
    }
 
+   @SafeVarargs
    protected static <T> T[] concat(T[] a1, T... a2) {
       T[] na = Arrays.copyOf(a1, a1.length + a2.length);
       System.arraycopy(a2, 0, na, a1.length, a2.length);
@@ -958,8 +960,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected TransactionTable transactionTable(int cacheIndex) {
-      return advancedCache(cacheIndex).getComponentRegistry()
-            .getComponent(TransactionTable.class);
+      return TestingUtil.extractComponent(cache(cacheIndex), TransactionTable.class);
    }
 
    protected void assertEventuallyEquals(
@@ -991,17 +992,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          A methodAnnotation = method.getMethod().getConstructorOrMethod().getMethod().getAnnotation(annotationClazz);
          if (methodAnnotation != null) {
             // If a method-level annotation contains current cache mode, run it, otherwise ignore that
-            if (Stream.of(modesRetriever.apply(methodAnnotation)).anyMatch(m -> modeChecker.test(m, mode))) {
-               return true;
-            }
-         } else if (clazzAnnotation != null) {
-            return true;
-         } else if (mode == null || !((MultipleCacheManagersTest) method.getInstance()).parametrizedInstance) {
-            // There are no annotations on this method nor on this class, but due to an annotation
-            // on different method there may be instances with non-default cache mode
-            return true;
+            return Stream.of(modesRetriever.apply(methodAnnotation)).anyMatch(m -> modeChecker.test(m, mode));
+         } else {
+            return clazzAnnotation != null;
          }
-         return false;
       }
    }
 

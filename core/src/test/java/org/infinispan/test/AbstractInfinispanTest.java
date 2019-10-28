@@ -105,7 +105,7 @@ public abstract class AbstractInfinispanTest {
                                                  instance.getClass().getName(), otherInstance.getClass().getName());
                   MethodInstance methodInstance =
                      FakeTestClass.newFailureMethodInstance(new TestNGException(message), context.getCurrentXmlTest(),
-                                                            context);
+                                                            context, instance);
                   newOrder.add(methodInstance);
                }
                String parameters = ((AbstractInfinispanTest) instance).parameters();
@@ -132,12 +132,12 @@ public abstract class AbstractInfinispanTest {
    }
 
    @BeforeClass(alwaysRun = true)
-   protected final void testClassStarted(ITestContext context) {
+   protected void testClassStarted(ITestContext context) {
       TestResourceTracker.testStarted(getTestName());
    }
 
    @AfterClass(alwaysRun = true)
-   protected final void testClassFinished(ITestContext context) {
+   protected void testClassFinished(ITestContext context) {
       killSpawnedThreads();
       nullOutFields();
       TestResourceTracker.testFinished(getTestName());

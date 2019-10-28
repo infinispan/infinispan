@@ -18,8 +18,9 @@ public class FakeTestClass implements ITestClass {
    private final ITestNGMethod method;
    private final XmlTest xmlTest;
 
-   public static MethodInstance newFailureMethodInstance(Exception e, XmlTest xmlTest, ITestContext context) {
-      Method failMethod = null;
+   public static MethodInstance newFailureMethodInstance(Exception e, XmlTest xmlTest, ITestContext context,
+                                                         Object instance) {
+      Method failMethod;
       try {
          failMethod = TestFrameworkFailure.class.getMethod("fail");
       } catch (NoSuchMethodException e1) {
@@ -27,11 +28,12 @@ public class FakeTestClass implements ITestClass {
          e1.printStackTrace(System.err);
          throw new TestNGException(e1);
       }
-      TestFrameworkFailure testInstance = new TestFrameworkFailure(e);
+      Class<?> testClass = instance.getClass();
+      TestFrameworkFailure<?> fakeInstance = new TestFrameworkFailure<>(testClass, e);
       TestNGMethod testNGMethod = new TestNGMethod(failMethod, context.getSuite().getAnnotationFinder(),
-                                                   xmlTest, testInstance);
-      ITestClass testClass = new FakeTestClass(testNGMethod, testInstance, xmlTest);
-      testNGMethod.setTestClass(testClass);
+                                                   xmlTest, fakeInstance);
+      ITestClass fakeTestClass = new FakeTestClass(testNGMethod, fakeInstance, xmlTest);
+      testNGMethod.setTestClass(fakeTestClass);
       return new MethodInstance(testNGMethod);
    }
 
