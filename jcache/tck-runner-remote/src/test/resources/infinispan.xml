@@ -7,8 +7,12 @@
 
     <cache-container name="default" statistics="true">
         <transport cluster="${infinispan.cluster.name}" stack="${infinispan.cluster.stack:tcp}"/>
-        <serialization>
-            <context-initializer class="org.infinispan.jcache.tck.JCacheTckContextInitializer"/>
+        <serialization marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller">
+            <white-list>
+                <regex>org\.jsr107\.ri\..*</regex>
+                <regex>domain\..*</regex>
+                <regex>\[L.*</regex>
+            </white-list>
         </serialization>
     </cache-container>
 
