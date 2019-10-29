@@ -3,6 +3,8 @@ package org.infinispan.persistence.support;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.File;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -36,16 +38,13 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
    private DefaultCacheManager dcm;
 
    private boolean segmented;
-   private String tmpDirectory;
+   private File tmpDirectory;
 
-   @BeforeClass
-   protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
-   }
-
-   @AfterClass
-   protected void clearTempDir() {
-      Util.recursiveFileRemove(tmpDirectory);
+   @AfterClass(alwaysRun = true)
+   public void clearTempDir() {
+      if (tmpDirectory != null) {
+         Util.recursiveFileRemove(tmpDirectory);
+      }
    }
 
    AsyncStoreWithoutEvictionFunctionalTest segmented(boolean segmented) {
@@ -68,12 +67,15 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
    private DefaultCacheManager configureCacheManager(boolean async) throws Exception {
 
+      tmpDirectory = new File(TestingUtil.tmpDirectory(this.getClass()));
+      Util.recursiveFileRemove(tmpDirectory);
+
       GlobalConfiguration glob = new GlobalConfigurationBuilder().defaultCacheName("cache").nonClusteredDefault().build();
       SingleFileStoreConfigurationBuilder bld = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .persistence().passivation(false)
-            .addSingleFileStore().preload(false).purgeOnStartup(false).segmented(segmented).location(tmpDirectory);
+            .addSingleFileStore().preload(false).purgeOnStartup(false).segmented(segmented).location(tmpDirectory.getAbsolutePath());
 
       if (async) {
          bld.async().enable().threadPoolSize(10).modificationQueueSize(1000);
