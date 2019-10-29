@@ -205,11 +205,12 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
       // Automatically set the digest realm name. It can be overridden by the user
       builder.addMechProperty(WildFlySasl.REALM_LIST, securityRealm.getName());
+      String serverPrincipal = null;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SASL: {
-               parseSasl(reader, builder);
+               serverPrincipal = parseSasl(reader, builder);
                break;
             }
             default: {
@@ -218,18 +219,19 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          }
       }
       builder.securityRealm(securityRealm.getName());
-      builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider());
+      builder.serverAuthenticationProvider(securityRealm.getSASLAuthenticationProvider(serverPrincipal));
    }
 
-   private void parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
+   private String parseSasl(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
       SaslConfigurationBuilder sasl = builder.sasl();
+      String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case SERVER_CONTEXT_NAME: {
-               //TODO: Kerberos auth
+            case SERVER_PRINCIPAL: {
+               serverPrincipal = value;
                break;
             }
             case SERVER_NAME: {
@@ -281,7 +283,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
             }
          }
       }
-
+      return serverPrincipal;
    }
 
    void parsePolicy(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder builder) throws XMLStreamException {

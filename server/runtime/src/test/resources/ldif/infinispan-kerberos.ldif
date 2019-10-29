@@ -117,7 +117,20 @@ cn: ISPN hotrod service
 sn: hotrod service
 uid: hotrod service
 userPassword: hotrodPassword
-krb5PrincipalName: hotrod/node0@INFINISPAN.ORG
+krb5PrincipalName: hotrod/datagrid@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=HTTP,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: HTTP
+sn: Service
+uid: HTTP
+userPassword: httpPassword
+krb5PrincipalName: HTTP/localhost@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
 dn: uid=jgroups/node0/clustered,ou=People,dc=infinispan,dc=org

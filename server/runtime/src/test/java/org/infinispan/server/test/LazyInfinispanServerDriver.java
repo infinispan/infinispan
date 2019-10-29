@@ -17,7 +17,7 @@ public class LazyInfinispanServerDriver implements Supplier<InfinispanServerDriv
       if (this.serverDriver == null) {
          // if two threads have serverDriver == null,
          synchronized (this) {
-            // this prevent two instance
+            // this prevents two instances
             if (this.serverDriver == null) {
                final InfinispanServerTestConfiguration configuration = configurationBuilder.build();
                this.serverDriver = configuration.runMode().newDriver(configuration);

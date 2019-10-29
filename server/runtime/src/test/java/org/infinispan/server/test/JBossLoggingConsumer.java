@@ -21,6 +21,7 @@ public class JBossLoggingConsumer extends BaseConsumer<JBossLoggingConsumer> {
       return this;
    }
 
+   @Override
    public void accept(OutputFrame outputFrame) {
       OutputFrame.OutputType outputType = outputFrame.getType();
       String utf8String = outputFrame.getUtf8String();

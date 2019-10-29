@@ -6,6 +6,11 @@
 
    <xs:element name="server" type="tns:server"/>
 
+   <xs:element name="interfaces" type="tns:interfaces"/>
+   <xs:element name="security" type="tns:security"/>
+   <xs:element name="socket-bindings" type="tns:socket-bindings"/>
+   <xs:element name="endpoints" type="tns:endpoints"/>
+
    <xs:complexType name="server">
       <xs:sequence>
          <xs:element type="tns:interfaces" name="interfaces">
@@ -294,7 +299,7 @@
       <xs:all>
          <xs:element name="sasl" type="tns:sasl" minOccurs="0"/>
       </xs:all>
-      <xs:attribute name="security-realm" type="xs:string" use="required">
+      <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
             <xs:documentation>The name of the security realm to use for authentication/authorization.</xs:documentation>
          </xs:annotation>
@@ -327,10 +332,11 @@
          <xs:element name="policy" type="tns:policy" minOccurs="0"/>
          <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute name="server-context-name" type="xs:string">
+      <xs:attribute name="server-principal" type="xs:string">
          <xs:annotation>
-            <xs:documentation>The name of the login context to be used to retrieve a server subject for certain SASL
-               mechs (i.e. GSSAPI)
+            <xs:documentation>The principal to use as the server identity. The principal must be present in the security
+               realm.
+               This is required for Kerberos-based SASL mechs (e.g. GSSAPI, GS2_KRB5)
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -478,7 +484,7 @@
    </xs:simpleType>
 
    <xs:complexType name="rest-authentication">
-      <xs:attribute name="security-realm" type="xs:string" use="optional">
+      <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
             <xs:documentation>The security realm to use for authentication/authorization purposes. Defaults to none (no
                authentication)
@@ -489,6 +495,14 @@
          <xs:annotation>
             <xs:documentation>The authentication method to require. Can be NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO.
                Defaults to NONE. Setting it to a different value requires enabling a security-realm.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="server-principal" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>The principal to use as the server identity. The principal must be present in the security
+               realm.
+               This is required for Kerberos-based SASL mechs (e.g. SPNEGO)
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -645,7 +659,6 @@
       <xs:sequence>
          <xs:element type="tns:security-realm-server-identities" name="server-identities" minOccurs="0"/>
          <xs:element type="tns:security-realm-filesystem" name="filesystem-realm" minOccurs="0"/>
-         <xs:element type="tns:security-realm-kerberos" name="kerberos-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-ldap" name="ldap-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-local" name="local-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
@@ -684,7 +697,8 @@
 
    <xs:complexType name="security-realm-server-identities">
       <xs:sequence>
-         <xs:element type="tns:security-realm-ssl" name="ssl"/>
+         <xs:element type="tns:security-realm-ssl" name="ssl" minOccurs="0"/>
+         <xs:element type="tns:security-realm-kerberos" name="kerberos" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
    </xs:complexType>
    <xs:complexType name="security-realm-ssl">
@@ -728,7 +742,8 @@
 
    <xs:complexType name="security-realm-ldap">
       <xs:sequence>
-         <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0"/>
+         <xs:element type="tns:ldap-name-rewriter" name="name-rewriter" minOccurs="0"/>
+         <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute type="xs:string" name="name"/>
       <xs:attribute type="xs:string" name="url" use="required"/>
@@ -738,6 +753,62 @@
       <xs:attribute type="xs:int" name="page-size"/>
       <xs:attribute type="xs:string" name="search-dn"/>
       <xs:attribute type="xs:string" name="rdn-identifier"/>
+   </xs:complexType>
+
+   <xs:complexType name="ldap-name-rewriter">
+      <xs:choice>
+         <xs:element type="tns:regex-principal-transformer" name="regex-principal-transformer"/>
+      </xs:choice>
+   </xs:complexType>
+
+   <xs:complexType name="principal-transformer" abstract="true">
+      <xs:annotation>
+         <xs:documentation>
+            Base type for all PrincipalTransformer definitions.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="name" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The unique name for the PrincipalTransformer, note names used for PrincipalTransformer must be unique
+               across the whole context.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="regex-principal-transformer">
+      <xs:annotation>
+         <xs:documentation>
+            A PrincipalTransformer definition using regular expressions and Matcher based
+            replacement.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="principal-transformer">
+            <xs:attribute name="pattern" type="xs:string" use="required">
+               <xs:annotation>
+                  <xs:documentation>
+                     The regular expression to use for this PrincipalTransformer.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="replacement" type="xs:string" use="required">
+               <xs:annotation>
+                  <xs:documentation>
+                     The replacement string for this PrincipalTransformer.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="replace-all" type="xs:boolean" default="false">
+               <xs:annotation>
+                  <xs:documentation>
+                     Should all occurrences be replaced or just the first?
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
    </xs:complexType>
 
    <xs:complexType name="ldap-identity-mapping">
@@ -806,8 +877,104 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-kerberos">
-      <xs:attribute type="xs:string" name="keytab-path"/>
-      <xs:attribute type="xs:string" name="relative-to"/>
+      <xs:attribute name="principal" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The principal represented by the KeyTab
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="keytab-path" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The path to the KeyTab to use to obtain the credential.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="relative-to" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               The name of another previously named path, or of one of the standard paths provided by the system.
+               If 'relative-to' is provided, the value of the 'path' attribute is treated as relative
+               to the path specified by this attribute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="minimum-remaining-lifetime" type="xs:int" default="0">
+         <xs:annotation>
+            <xs:documentation>
+               How much lifetime (in seconds) should a cached credential have remaining before it is recreated.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="request-lifetime" type="xs:int">
+         <xs:annotation>
+            <xs:documentation>
+               How much lifetime (in seconds) should be requested for newly created credentials.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="fail-cache" type="xs:int">
+         <xs:annotation>
+            <xs:documentation>
+               Amount of seconds before new try to obtain server credential should be done if it has failed last time.
+               Allows to prevent long waiting to unavailable KDC on every authentication.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="server" type="xs:boolean" default="true">
+         <xs:annotation>
+            <xs:documentation>
+               If this for use server side or client side?
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="obtain-kerberos-ticket" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               Should the KerberosTicket also be obtained and associated with the credential.
+
+               This is required to be true where credentials are delegated to the server.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="debug" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               Should the JAAS step of obtaining the credential have debug logging enabled.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="wrap-gss-credential" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               Should generated GSS credentials be wrapped to prevent improper disposal or not?
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="required" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               Is the keytab file with adequate principal required to exist at the time the service starts?
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="mechanism-names" type="tns:name-list" default="KRB5 SPNEGO">
+         <xs:annotation>
+            <xs:documentation>
+               The mechanism names the credential should be usable with.
+               Names will be converted to OIDs and used together with OIDs from mechanism-oids attribute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="mechanism-oids" type="tns:name-list">
+         <xs:annotation>
+            <xs:documentation>
+               The mechanism OIDs the credential should be usable with.
+               Will be used together with OIDs derived from names from mechanism-names attribute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-truststore">

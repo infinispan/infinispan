@@ -27,7 +27,6 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    private final FileSystemRealmConfigurationBuilder fileSystemConfiguration = new FileSystemRealmConfigurationBuilder(this);
    private final LdapRealmConfigurationBuilder ldapConfiguration = new LdapRealmConfigurationBuilder(this);
    private final LocalRealmConfigurationBuilder localConfiguration = new LocalRealmConfigurationBuilder();
-   private final KerberosRealmConfigurationBuilder kerberosConfiguration = new KerberosRealmConfigurationBuilder(this);
    private final TokenRealmConfigurationBuilder tokenConfiguration = new TokenRealmConfigurationBuilder(this);
    private final TrustStoreRealmConfigurationBuilder trustStoreConfiguration = new TrustStoreRealmConfigurationBuilder(this);
    private final PropertiesRealmConfigurationBuilder propertiesRealmConfiguration = new PropertiesRealmConfigurationBuilder(this);
@@ -72,10 +71,6 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       return localConfiguration;
    }
 
-   public KerberosRealmConfigurationBuilder kerberosConfiguration() {
-      return kerberosConfiguration;
-   }
-
    public TokenRealmConfigurationBuilder tokenConfiguration() {
       return tokenConfiguration;
    }
@@ -101,7 +96,6 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       fileSystemConfiguration.validate();
       ldapConfiguration.validate();
       localConfiguration.validate();
-      kerberosConfiguration.validate();
       tokenConfiguration.validate();
       trustStoreConfiguration.validate();
       serverIdentitiesConfiguration.validate();
@@ -115,7 +109,6 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
             fileSystemConfiguration.create(),
             ldapConfiguration.create(),
             localConfiguration.create(),
-            kerberosConfiguration.create(),
             tokenConfiguration.create(),
             trustStoreConfiguration.create(),
             serverIdentitiesConfiguration.create(),
@@ -128,7 +121,6 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       fileSystemConfiguration.read(template.fileSystemConfiguration());
       ldapConfiguration.read(template.ldapConfiguration());
       localConfiguration.read(template.localConfiguration());
-      kerberosConfiguration.read(template.kerberosConfiguration());
       tokenConfiguration.read(template.tokenConfiguration());
       trustStoreConfiguration.read(template.trustStoreConfiguration());
       serverIdentitiesConfiguration.read(template.serverIdentitiesConfiguration());
@@ -140,7 +132,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       if (serverSecurityRealm == null) {
          SecurityDomain securityDomain = domainBuilder.build();
          String name = attributes.attribute(RealmConfiguration.NAME).get();
-         serverSecurityRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness);
+         serverSecurityRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness, serverIdentitiesConfiguration.create());
       }
       return serverSecurityRealm;
    }

@@ -43,7 +43,7 @@ public class PooledConnectionOperations {
       String[] databaseTypes = DatabaseServerRule.getDatabaseTypes("h2", "mysql", "postgres");
       List<Object[]> params = new ArrayList<>(databaseTypes.length);
       for (String databaseType : databaseTypes) {
-         params.add(new Object[] {databaseType});
+         params.add(new Object[]{databaseType});
       }
       return params;
    }

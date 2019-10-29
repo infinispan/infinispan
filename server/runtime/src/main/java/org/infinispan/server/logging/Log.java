@@ -122,4 +122,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.ERROR)
    @Message(value = "Clustered task error", id = 80030)
    void clusteredTaskError(@Cause Throwable t);
+
+   @Message(value = "Unknown server identity '%s'", id = 80031)
+   IllegalArgumentException unknownServerIdentity(String serverPrincipal);
 }

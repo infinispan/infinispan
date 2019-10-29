@@ -103,11 +103,11 @@ public class ServerEventLoggerTest {
                EventLogger eventLogger = EventLogManager.getEventLogger(cms[i]);
                List<EventLog> events = eventLogger.getEvents(Instant.now(), 10, Optional.of(EventLogCategory.TASKS), Optional.empty());
                assertEquals("Result count discrepancy on node " + i, 2 * cms.length, events.size());
-               for(EventLog event : events) {
+               for (EventLog event : events) {
                   assertEquals(EventLogCategory.TASKS, event.getCategory());
                }
                events = eventLogger.getEvents(Instant.now(), 10, Optional.empty(), Optional.of(EventLogLevel.INFO));
-               for(EventLog event : events) {
+               for (EventLog event : events) {
                   assertEquals(EventLogLevel.INFO, event.getLevel());
                }
             }

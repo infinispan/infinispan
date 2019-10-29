@@ -11,7 +11,6 @@ import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
-import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory;
 import org.wildfly.security.sasl.util.AggregateSaslServerFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
@@ -26,12 +25,13 @@ import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
 public class ElytronSASLAuthenticationProvider implements ServerAuthenticationProvider {
    private final SaslAuthenticationFactory saslAuthenticationFactory;
 
-   public ElytronSASLAuthenticationProvider(String name, SecurityDomain domain) {
+   public ElytronSASLAuthenticationProvider(String name, ServerSecurityRealm realm, String serverPrincipal) {
       SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
       AggregateSaslServerFactory factory = new AggregateSaslServerFactory(SaslFactories.getProviderSaslServerFactory());
       builder.setFactory(factory);
-      builder.setSecurityDomain(domain);
+      builder.setSecurityDomain(realm.getSecurityDomain());
       MechanismConfiguration.Builder mechConfigurationBuilder = MechanismConfiguration.builder();
+      realm.applyServerCredentials(mechConfigurationBuilder, serverPrincipal);
       final MechanismRealmConfiguration.Builder mechRealmBuilder = MechanismRealmConfiguration.builder();
       mechRealmBuilder.setRealmName(name);
       mechConfigurationBuilder.addMechanismRealm(mechRealmBuilder.build());

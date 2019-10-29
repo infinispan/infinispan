@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -30,10 +29,8 @@ import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.http.RequestLine;
 
-public class DigestAuthenticator implements CachingAuthenticator {
+public class DigestAuthenticator extends AbstractAuthenticator implements CachingAuthenticator {
    private static final Pattern HEADER_REGEX = Pattern.compile("(?:\\s)([a-z]+)=(?:\"?)([\\p{Alnum}/=+]+)(?:\"?)");
-   public static final String WWW_AUTH = "WWW-Authenticate";
-   public static final String WWW_AUTH_RESP = "Authorization";
 
    private static final String CREDENTIAL_CHARSET = "http.auth.credential-charset";
    private static final int QOP_UNKNOWN = -1;
@@ -80,7 +77,7 @@ public class DigestAuthenticator implements CachingAuthenticator {
 
    @Override
    public synchronized Request authenticate(Route route, Response response) throws IOException {
-      String header = findDigestHeader(response.headers(), WWW_AUTH);
+      String header = findHeader(response.headers(), WWW_AUTH, "Digest");
       Matcher matcher = HEADER_REGEX.matcher(header);
       Map<String, String> parameters = new HashMap<>(8);
       while (matcher.find()) {
@@ -94,16 +91,6 @@ public class DigestAuthenticator implements CachingAuthenticator {
       }
 
       return authenticateWithState(route, response.request(), parameters);
-   }
-
-   private String findDigestHeader(Headers headers, String name) {
-      final List<String> authHeaders = headers.values(name);
-      for (String header : authHeaders) {
-         if (header.startsWith("Digest")) {
-            return header;
-         }
-      }
-      throw new IllegalArgumentException("unsupported auth scheme: " + authHeaders);
    }
 
    public Request authenticateWithState(Route route, Request request) throws IOException {
@@ -365,13 +352,5 @@ public class DigestAuthenticator implements CachingAuthenticator {
       }
    }
 
-   private static class AuthenticationException extends IllegalStateException {
-      public AuthenticationException(String s) {
-         super(s);
-      }
 
-      public AuthenticationException(String message, Exception ex) {
-         super(message, ex);
-      }
-   }
 }

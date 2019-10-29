@@ -208,6 +208,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
 
    private void parseAuthentication(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder) throws XMLStreamException {
       ServerSecurityRealm securityRealm = serverBuilder.endpoint().securityRealm();
+      String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -222,6 +223,10 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                builder.addMechanisms(reader.getListAttributeValue(i));
                break;
             }
+            case SERVER_PRINCIPAL: {
+               serverPrincipal = value;
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
@@ -232,7 +237,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       if (securityRealm == null) {
          throw Server.log.authenticationWithoutSecurityRealm();
       }
-      builder.authenticator(securityRealm.getHTTPAuthenticationProvider());
+      builder.authenticator(securityRealm.getHTTPAuthenticationProvider(serverPrincipal));
    }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption) throws XMLStreamException {

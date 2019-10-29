@@ -7,7 +7,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
-public class BasicAuthenticator implements CachingAuthenticator {
+public class BasicAuthenticator extends AbstractAuthenticator implements CachingAuthenticator {
    private final AuthenticationConfiguration configuration;
 
    public BasicAuthenticator(AuthenticationConfiguration configuration) {
@@ -16,25 +16,25 @@ public class BasicAuthenticator implements CachingAuthenticator {
 
    @Override
    public Request authenticate(Route route, Response response) {
-      final Request request = response.request();
-      return authFromRequest(request);
+      Request request = response.request();
+      return authenticateInternal(request);
    }
 
-   private Request authFromRequest(Request request) {
-      final String authorization = request.header("Authorization");
+   @Override
+   public Request authenticateWithState(Route route, Request request) {
+      return authenticateInternal(request);
+   }
+
+   private Request authenticateInternal(Request request) {
+      String authorization = request.header(WWW_AUTH_RESP);
       if (authorization != null && authorization.startsWith("Basic")) {
          // We have already attempted to authenticate, fail
          return null;
       }
       String authValue = okhttp3.Credentials.basic(configuration.username(), new String(configuration.password()));
       return request.newBuilder()
-            .header("Authorization", authValue)
+            .header(WWW_AUTH_RESP, authValue)
             .tag(Authenticator.class, this)
             .build();
-   }
-
-   @Override
-   public Request authenticateWithState(Route route, Request request) {
-      return authFromRequest(request);
    }
 }

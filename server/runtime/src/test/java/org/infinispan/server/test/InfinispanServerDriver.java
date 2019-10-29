@@ -21,7 +21,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -51,6 +53,7 @@ public abstract class InfinispanServerDriver {
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;
+   protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
    private File confDir;
    private ComponentStatus status;
    private AtomicLong certSerial = new AtomicLong(1);
@@ -348,4 +351,13 @@ public abstract class InfinispanServerDriver {
    public abstract MBeanServerConnection getJmxConnection(int server);
 
    public abstract RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder);
+   /**
+    * Registers a {@link Consumer} function which populates a server filesystem with additional files. The consumer will
+    * be invoked with the server's root directory
+    *
+    * @param enhancer
+    */
+   public void registerConfigurationEnhancer(Consumer<File> enhancer) {
+      configurationEnhancers.add(enhancer);
+   }
 }

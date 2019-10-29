@@ -44,6 +44,7 @@ import net.spy.memcached.MemcachedClient;
  * @since 10.0
  **/
 public class InfinispanServerTestMethodRule implements TestRule {
+   public static final int TIMEOUT = 10;
    private final InfinispanServerRule infinispanServerRule;
    private String methodName;
    private List<Closeable> resources;
@@ -228,7 +229,7 @@ public class InfinispanServerTestMethodRule implements TestRule {
          } else {
             future = restClient.cache(name).createWithTemplate("org.infinispan." + CacheMode.DIST_SYNC.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
          }
-         RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(5, TimeUnit.SECONDS));
+         RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
          if (response.getStatus() != 200) {
             throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
          } else {

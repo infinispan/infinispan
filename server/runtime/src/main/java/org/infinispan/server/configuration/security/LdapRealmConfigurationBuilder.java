@@ -9,6 +9,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 
@@ -59,7 +60,6 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
       return this;
    }
 
-
    public LdapRealmConfigurationBuilder principal(String principal) {
       attributes.attribute(LdapRealmConfiguration.PRINCIPAL).set(principal);
       dirContextBuilder.setSecurityPrincipal(principal);
@@ -97,6 +97,11 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
       return this;
    }
 
+   public LdapRealmConfigurationBuilder nameRewriter(NameRewriter rewriter) {
+      attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).set(rewriter);
+      return this;
+   }
+
    @Override
    public void validate() {
       identityMappings.forEach(LdapIdentityMappingConfigurationBuilder::validate);
@@ -122,7 +127,9 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
          identityMappingBuilder.build();
          DirContextFactory dirContextFactory = dirContextBuilder.build();
          ldapRealmBuilder.setDirContextSupplier(() -> dirContextFactory.obtainDirContext(DirContextFactory.ReferralMode.FOLLOW));
-
+         if (attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).isModified()) {
+            ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
+         }
          String name = attributes.attribute(LdapRealmConfiguration.NAME).get();
          SecurityDomain.Builder domainBuilder = realmBuilder.domainBuilder();
 

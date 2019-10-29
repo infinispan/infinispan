@@ -1,0 +1,23 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:10.1 https://infinispan.org/schemas/infinispan-server-10.1.xsd"
+          xmlns="urn:infinispan:server:10.1">
+   <security-realms>
+      <security-realm name="default">
+         <server-identities>
+            <kerberos keytab-path="hotrod.keytab" principal="hotrod/datagrid@INFINISPAN.ORG" debug="true" required="true"/>
+            <kerberos keytab-path="http.keytab" principal="HTTP/localhost@INFINISPAN.ORG" debug="true" required="true"/>
+         </server-identities>
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389" principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+            <name-rewriter>
+               <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG" replacement="$1"/>
+            </name-rewriter>
+            <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
+               <attribute-mapping>
+                  <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))" filter-dn="ou=Roles,dc=infinispan,dc=org" />
+               </attribute-mapping>
+               <user-password-mapper from="userPassword" />
+            </identity-mapping>
+         </ldap-realm>
+      </security-realm>
+   </security-realms>
+</security>

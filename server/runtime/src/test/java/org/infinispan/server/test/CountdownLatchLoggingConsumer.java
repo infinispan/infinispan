@@ -21,6 +21,7 @@ public class CountdownLatchLoggingConsumer extends BaseConsumer<CountdownLatchLo
       this.pattern = Pattern.compile(regex, Pattern.DOTALL);
    }
 
+   @Override
    public void accept(OutputFrame outputFrame) {
       String log = outputFrame.getUtf8String();
       if (pattern.matcher(log).matches()) {

@@ -2,6 +2,8 @@ package org.infinispan.server.configuration;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 
+import java.util.regex.Pattern;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -20,7 +22,7 @@ import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilde
 import org.infinispan.server.configuration.security.FileSystemRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.GroupsPropertiesConfigurationBuilder;
 import org.infinispan.server.configuration.security.JwtConfigurationBuilder;
-import org.infinispan.server.configuration.security.KerberosRealmConfigurationBuilder;
+import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfigurationBuilder;
 import org.infinispan.server.configuration.security.KeyStoreConfigurationBuilder;
 import org.infinispan.server.configuration.security.LdapAttributeConfigurationBuilder;
 import org.infinispan.server.configuration.security.LdapAttributeMappingConfigurationBuilder;
@@ -40,6 +42,7 @@ import org.infinispan.server.configuration.security.TrustStoreRealmConfiguration
 import org.infinispan.server.configuration.security.UserPropertiesConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.auth.util.RegexNameRewriter;
 
 /**
  * Server endpoint configuration parser
@@ -267,10 +270,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
          parseFileSystemRealm(reader, securityRealmBuilder.fileSystemConfiguration());
          element = nextElement(reader);
       }
-      if (element == Element.KERBEROS_REALM) {
-         parseKerberosRealm(reader, securityRealmBuilder.kerberosConfiguration());
-         element = nextElement(reader);
-      }
       if (element == Element.LDAP_REALM) {
          parseLdapRealm(reader, securityRealmBuilder.ldapConfiguration());
          element = nextElement(reader);
@@ -423,18 +422,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseKerberosRealm(XMLExtendedStreamReader reader, KerberosRealmConfigurationBuilder kerberosBuilder) throws XMLStreamException {
-      String defaultBasePath = (String) reader.getProperty(Server.INFINISPAN_SERVER_DATA_PATH);
-      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.KEYTAB_PATH, Attribute.RELATIVE_TO);
-      String path = attributes[0];
-      String relativeTo = attributes[1] == null ? defaultBasePath : (String) reader.getProperty(attributes[1]);
-      kerberosBuilder.path(path).relativeTo(relativeTo).build();
-      ParseUtils.requireNoContent(reader);
-   }
-
    private void parseLdapRealm(XMLExtendedStreamReader reader, LdapRealmConfigurationBuilder ldapRealmConfigBuilder) throws XMLStreamException {
       ldapRealmConfigBuilder.name("ldap");
-      LdapIdentityMappingConfigurationBuilder identityMapBuilder = ldapRealmConfigBuilder.addIdentityMap();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -468,17 +457,49 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case IDENTITY_MAPPING:
-               parseLdapIdentityMapping(reader, identityMapBuilder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
+      Element element = nextElement(reader);
+      if (element == Element.NAME_REWRITER) {
+         parseNameRewriter(reader, ldapRealmConfigBuilder);
+         element = nextElement(reader);
+      }
+      while (element == Element.IDENTITY_MAPPING) {
+         parseLdapIdentityMapping(reader, ldapRealmConfigBuilder.addIdentityMap());
+         element = nextElement(reader);
       }
       ldapRealmConfigBuilder.build();
+   }
+
+   private void parseNameRewriter(XMLExtendedStreamReader reader, LdapRealmConfigurationBuilder builder) throws XMLStreamException {
+      Element element = nextElement(reader);
+      switch (element) {
+         case REGEX_PRINCIPAL_TRANSFORMER: {
+            String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATTERN, Attribute.REPLACEMENT);
+            boolean replaceAll = false;
+            for (int i = 0; i < reader.getAttributeCount(); i++) {
+               ParseUtils.requireNoNamespaceAttribute(reader, i);
+               String value = reader.getAttributeValue(i);
+               Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+               switch (attribute) {
+                  case NAME:
+                  case PATTERN:
+                  case REPLACEMENT:
+                     // Already seen
+                     break;
+                  case REPLACE_ALL:
+                     replaceAll = Boolean.parseBoolean(value);
+                     break;
+                  default:
+                     throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+            }
+            builder.nameRewriter(new RegexNameRewriter(Pattern.compile(attributes[1]), attributes[2], replaceAll));
+            ParseUtils.requireNoContent(reader);
+            break;
+         }
+         default:
+            throw ParseUtils.unexpectedElement(reader);
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseLdapIdentityMapping(XMLExtendedStreamReader reader, LdapIdentityMappingConfigurationBuilder identityMapBuilder) throws XMLStreamException {
@@ -675,6 +696,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
          parseSSL(reader, identitiesBuilder);
          element = nextElement(reader);
       }
+      while (element == Element.KERBEROS) {
+         parseKerberos(reader, identitiesBuilder);
+         element = nextElement(reader);
+      }
       if (element != null) {
          throw ParseUtils.unexpectedElement(reader, element);
       }
@@ -794,6 +819,76 @@ public class ServerConfigurationParser implements ConfigurationParser {
       trustStoreBuilder.build();
    }
 
+   private void parseKerberos(XMLExtendedStreamReader reader, ServerIdentitiesConfigurationBuilder identitiesBuilder) throws XMLStreamException {
+      KerberosSecurityFactoryConfigurationBuilder builder = identitiesBuilder.addKerberosConfiguration();
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.KEYTAB_PATH, Attribute.PRINCIPAL);
+      builder.keyTabPath(attributes[0]).relativeTo((String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH));
+      builder.principal(attributes[1]);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case KEYTAB_PATH:
+            case PRINCIPAL:
+               // Already seen, ignore
+               break;
+            case RELATIVE_TO:
+               builder.relativeTo(ParseUtils.requireAttributeProperty(reader, i));
+               break;
+            case DEBUG:
+               builder.debug(Boolean.parseBoolean(value));
+               break;
+            case FAIL_CACHE:
+               builder.failCache(Long.parseLong(value));
+               break;
+            case MECHANISM_NAMES:
+               for (String name : ParseUtils.getListAttributeValue(value)) {
+                  builder.addMechanismName(name);
+               }
+               break;
+            case MECHANISM_OIDS:
+               for (String oid : ParseUtils.getListAttributeValue(value)) {
+                  builder.addMechanismOid(oid);
+               }
+               break;
+            case MINIMUM_REMAINING_LIFETIME:
+               builder.minimumRemainingLifetime(Integer.parseInt(value));
+               break;
+            case OBTAIN_KERBEROS_TICKET:
+               builder.obtainKerberosTicket(Boolean.parseBoolean(value));
+               break;
+            case REQUEST_LIFETIME:
+               builder.requestLifetime(Integer.parseInt(value));
+               break;
+            case REQUIRED:
+               builder.checkKeyTab(Boolean.parseBoolean(value));
+               break;
+            case SERVER:
+               builder.server(Boolean.parseBoolean(value));
+               break;
+            case WRAP_GSS_CREDENTIAL:
+               builder.wrapGssCredential(Boolean.parseBoolean(value));
+               break;
+
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      // Add all options
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case OPTION:
+               String[] option = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.VALUE);
+               builder.addOption(option[0], option[1]);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
    private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) throws XMLStreamException {
       EndpointsConfigurationBuilder endpoints = builder.endpoints();
       holder.pushScope(ENDPOINTS_SCOPE);
@@ -801,7 +896,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
       endpoints.socketBinding(socketBinding);
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          String value = reader.getAttributeValue(i);
          switch (attribute) {
@@ -823,53 +917,55 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    public static void parseCommonConnectorAttributes(XMLExtendedStreamReader reader, int index, ServerConfigurationBuilder serverBuilder, ProtocolServerConfigurationBuilder<?, ?> builder) throws XMLStreamException {
-      String value = reader.getAttributeValue(index);
-      Attribute attribute = Attribute.forName(reader.getAttributeLocalName(index));
-      switch (attribute) {
-         case CACHE_CONTAINER: {
-            // TODO: add support for multiple containers
-            break;
-         }
-         case IDLE_TIMEOUT: {
-            builder.idleTimeout(Integer.parseInt(value));
-            break;
-         }
-         case IO_THREADS: {
-            builder.ioThreads(Integer.parseInt(value));
-            break;
-         }
-         case RECEIVE_BUFFER_SIZE: {
-            builder.recvBufSize(Integer.parseInt(value));
-            break;
-         }
-         case REQUIRE_SSL_CLIENT_AUTH: {
-            builder.ssl().requireClientAuth(Boolean.parseBoolean(value));
-            break;
-         }
-         case SECURITY_REALM: {
-            if (serverBuilder.hasSSLContext(value)) {
-               builder.ssl().enable().sslContext(serverBuilder.getSSLContext(value));
+      if (ParseUtils.isNoNamespaceAttribute(reader, index)) {
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(index));
+         String value = reader.getAttributeValue(index);
+         switch (attribute) {
+            case CACHE_CONTAINER: {
+               // TODO: add support for multiple containers
+               break;
             }
-            break;
+            case IDLE_TIMEOUT: {
+               builder.idleTimeout(Integer.parseInt(value));
+               break;
+            }
+            case IO_THREADS: {
+               builder.ioThreads(Integer.parseInt(value));
+               break;
+            }
+            case RECEIVE_BUFFER_SIZE: {
+               builder.recvBufSize(Integer.parseInt(value));
+               break;
+            }
+            case REQUIRE_SSL_CLIENT_AUTH: {
+               builder.ssl().requireClientAuth(Boolean.parseBoolean(value));
+               break;
+            }
+            case SECURITY_REALM: {
+               if (serverBuilder.hasSSLContext(value)) {
+                  builder.ssl().enable().sslContext(serverBuilder.getSSLContext(value));
+               }
+               break;
+            }
+            case SEND_BUFFER_SIZE: {
+               builder.sendBufSize(Integer.parseInt(value));
+               break;
+            }
+            case TCP_KEEPALIVE: {
+               builder.tcpKeepAlive(Boolean.parseBoolean(value));
+               break;
+            }
+            case TCP_NODELAY: {
+               builder.tcpNoDelay(Boolean.parseBoolean(value));
+               break;
+            }
+            case WORKER_THREADS: {
+               builder.workerThreads(Integer.parseInt(value));
+               break;
+            }
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, index);
          }
-         case SEND_BUFFER_SIZE: {
-            builder.sendBufSize(Integer.parseInt(value));
-            break;
-         }
-         case TCP_KEEPALIVE: {
-            builder.tcpKeepAlive(Boolean.parseBoolean(value));
-            break;
-         }
-         case TCP_NODELAY: {
-            builder.tcpNoDelay(Boolean.parseBoolean(value));
-            break;
-         }
-         case WORKER_THREADS: {
-            builder.workerThreads(Integer.parseInt(value));
-            break;
-         }
-         default:
-            throw ParseUtils.unexpectedAttribute(reader, index);
       }
    }
 }

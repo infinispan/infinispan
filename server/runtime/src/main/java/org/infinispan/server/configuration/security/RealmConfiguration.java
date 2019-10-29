@@ -26,7 +26,6 @@ public class RealmConfiguration implements ConfigurationInfo {
    private final FileSystemRealmConfiguration fileSystemConfiguration;
    private final LdapRealmConfiguration ldapConfiguration;
    private final LocalRealmConfiguration localConfiguration;
-   private final KerberosRealmConfiguration kerberosConfiguration;
    private final TokenRealmConfiguration tokenConfiguration;
    private final TrustStoreRealmConfiguration trustStoreConfiguration;
    private final ServerIdentitiesConfiguration serverIdentitiesConfiguration;
@@ -37,7 +36,6 @@ public class RealmConfiguration implements ConfigurationInfo {
                       FileSystemRealmConfiguration fileSystemConfiguration,
                       LdapRealmConfiguration ldapConfiguration,
                       LocalRealmConfiguration localConfiguration,
-                      KerberosRealmConfiguration kerberosConfiguration,
                       TokenRealmConfiguration tokenConfiguration,
                       TrustStoreRealmConfiguration trustStoreConfiguration,
                       ServerIdentitiesConfiguration serverIdentitiesConfiguration,
@@ -46,13 +44,12 @@ public class RealmConfiguration implements ConfigurationInfo {
       this.fileSystemConfiguration = fileSystemConfiguration;
       this.ldapConfiguration = ldapConfiguration;
       this.localConfiguration = localConfiguration;
-      this.kerberosConfiguration = kerberosConfiguration;
       this.tokenConfiguration = tokenConfiguration;
       this.trustStoreConfiguration = trustStoreConfiguration;
       this.serverIdentitiesConfiguration = serverIdentitiesConfiguration;
       this.propertiesRealmConfiguration = propertiesRealmConfiguration;
       this.elements = Arrays.asList(fileSystemConfiguration, ldapConfiguration, localConfiguration,
-            kerberosConfiguration, tokenConfiguration, trustStoreConfiguration, serverIdentitiesConfiguration,
+            tokenConfiguration, trustStoreConfiguration, serverIdentitiesConfiguration,
             propertiesRealmConfiguration);
    }
 
@@ -71,10 +68,6 @@ public class RealmConfiguration implements ConfigurationInfo {
 
    LocalRealmConfiguration localConfiguration() {
       return localConfiguration;
-   }
-
-   KerberosRealmConfiguration kerberosConfiguration() {
-      return kerberosConfiguration;
    }
 
    TokenRealmConfiguration tokenConfiguration() {
@@ -129,7 +122,6 @@ public class RealmConfiguration implements ConfigurationInfo {
             ", fileSystemConfiguration=" + fileSystemConfiguration +
             ", ldapConfiguration=" + ldapConfiguration +
             ", localConfiguration=" + localConfiguration +
-            ", kerberosConfiguration=" + kerberosConfiguration +
             ", tokenConfiguration=" + tokenConfiguration +
             ", trustStoreConfiguration=" + trustStoreConfiguration +
             ", serverIdentitiesConfiguration=" + serverIdentitiesConfiguration +

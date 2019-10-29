@@ -1,12 +1,13 @@
 package org.infinispan.server.security.realm;
 
-import java.io.File;
 import java.security.spec.AlgorithmParameterSpec;
 
+import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.evidence.Evidence;
 
 /**
@@ -14,10 +15,10 @@ import org.wildfly.security.evidence.Evidence;
  * @since 10.0
  **/
 public class KerberosSecurityRealm implements SecurityRealm {
-   private final File keyTabFile;
+   private final SecurityFactory<GSSKerberosCredential> kerberosCredentialSecurityFactory;
 
-   public KerberosSecurityRealm(File keyTabFile) {
-      this.keyTabFile = keyTabFile;
+   public KerberosSecurityRealm(SecurityFactory<GSSKerberosCredential> kerberosCredentialSecurityFactory) {
+      this.kerberosCredentialSecurityFactory = kerberosCredentialSecurityFactory;
    }
 
    @Override

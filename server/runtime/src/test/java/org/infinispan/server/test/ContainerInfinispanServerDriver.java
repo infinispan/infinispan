@@ -1,5 +1,7 @@
 package org.infinispan.server.test;
 
+import static org.infinispan.server.test.ContainerUtil.getIpAddressFromContainer;
+
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -8,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
@@ -15,13 +18,12 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.ContainerNetwork;
-import com.github.dockerjava.api.model.Network;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Version;
+import org.infinispan.server.Server;
 import org.infinispan.test.Exceptions;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
@@ -34,7 +36,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
-import static org.infinispan.server.test.ContainerUtil.getIpAddressFromContainer;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.ContainerNetwork;
+import com.github.dockerjava.api.model.Network;
 
 /**
  * WARNING: Work in progress. Does not work yet.
@@ -75,6 +79,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       this.rootDir = rootDir;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
+      configurationEnhancers.forEach(c -> c.accept(new File(rootDir, Server.DEFAULT_SERVER_CONFIG)));
       String baseImageName = System.getProperty("org.infinispan.test.server.baseImageName", "jboss/base-jdk:11");
       Path serverOutputDir = Paths.get(System.getProperty("server.output.dir"));
 
@@ -92,9 +97,11 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          args.add("-Dcom.sun.management.jmxremote.authenticate=false");
          args.add("-Dcom.sun.management.jmxremote.ssl=false");
       }
-      configuration.properties().forEach((k, v) -> {
-         args.add("-D" + k + "=" + v);
-      });
+      Properties properties = new Properties();
+      properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, Paths.get(INFINISPAN_SERVER_HOME, Server.DEFAULT_SERVER_CONFIG).toString());
+      properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
+      properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
+      configuration.properties().forEach((k, v) -> args.add("-D" + k + "=" + StringPropertyReplacer.replaceProperties((String) v, properties)));
 
       image = new ImageFromDockerfile()
             .withFileFromPath("build", serverOutputDir)
@@ -141,7 +148,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    private GenericContainer createContainer(int i, File rootDir) {
       GenericContainer container = new GenericContainer(image);
       // Create directories which we will bind the container to
-      createServerHierarchy(rootDir, Integer.toString(i),
+      File serverRoot = createServerHierarchy(rootDir, Integer.toString(i),
             (hostDir, dir) -> {
                String containerDir = String.format("%s/server/%s", INFINISPAN_SERVER_HOME, dir);
                if ("lib".equals(dir)) {
@@ -150,6 +157,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                container.withFileSystemBind(hostDir.getAbsolutePath(), containerDir);
                hostDir.setWritable(true, false);
             });
+      // Process any enhancers
       container
             .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)))
             .withLogConsumer(latch)
@@ -171,8 +179,8 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          }
       }
       // Supplied artifacts
-      if (configuration.artifacts() != null) {
-         for (JavaArchive artifact : configuration.artifacts()) {
+      if (configuration.archives() != null) {
+         for (JavaArchive artifact : configuration.archives()) {
             File jar = libDir.toPath().resolve(artifact.getName()).toFile();
             jar.setWritable(true, false);
             artifact.as(ZipExporter.class).exportTo(jar, true);

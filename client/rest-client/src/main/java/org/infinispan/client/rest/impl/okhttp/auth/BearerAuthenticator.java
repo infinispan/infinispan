@@ -7,7 +7,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
-public class BearerAuthenticator implements CachingAuthenticator {
+public class BearerAuthenticator extends AbstractAuthenticator implements CachingAuthenticator {
    private final AuthenticationConfiguration configuration;
 
    public BearerAuthenticator(AuthenticationConfiguration configuration) {
@@ -17,23 +17,25 @@ public class BearerAuthenticator implements CachingAuthenticator {
    @Override
    public Request authenticate(Route route, Response response) {
       final Request request = response.request();
-      return authFromRequest(request);
+      return authenticateInternal(request);
    }
 
-   private Request authFromRequest(Request request) {
-      final String authorization = request.header("Authorization");
+   @Override
+   public Request authenticateWithState(Route route, Request request) {
+      return authenticateInternal(request);
+   }
+
+   private Request authenticateInternal(Request request) {
+      final String authorization = request.header(WWW_AUTH_RESP);
       if (authorization != null && authorization.startsWith("Bearer")) {
          // We have already attempted to authenticate, fail
          return null;
       }
       return request.newBuilder()
-            .header("Authorization", "Bearer " + configuration.username())
+            .header(WWW_AUTH_RESP, "Bearer " + configuration.username())
             .tag(Authenticator.class, this)
             .build();
    }
 
-   @Override
-   public Request authenticateWithState(Route route, Request request) {
-      return authFromRequest(request);
-   }
+
 }
