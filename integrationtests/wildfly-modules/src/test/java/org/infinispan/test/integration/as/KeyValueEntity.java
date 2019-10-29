@@ -6,6 +6,8 @@ import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  * @since 7.0
@@ -26,6 +28,7 @@ public class KeyValueEntity implements Serializable {
       this.value = value;
    }
 
+   @ProtoField(number = 1)
    public String getK() {
       return k;
    }
@@ -34,6 +37,7 @@ public class KeyValueEntity implements Serializable {
       this.k = k;
    }
 
+   @ProtoField(number = 2)
    public String getValue() {
       return value;
    }
