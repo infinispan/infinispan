@@ -1154,7 +1154,7 @@ include::rest_examples/get_v2_server_config.adoc[]
 //https://docs.jboss.org/infinispan/10.0/configdocs/infinispan-config-10.0.html
 The server responds with the configuration in `JSON` format. The structure
 follows the
-link:https://github.com/infinispan/infinispan/blob/master/server/runtime/src/main/resources/schema/infinispan-server-10.0.xsd[server schema], as in the
+link:https://github.com/infinispan/infinispan/blob/master/server/runtime/src/main/resources/schema/infinispan-server-10.1.xsd[server schema], as in the
 following example:
 
 [source,json,options="nowrap",subs=attributes+]
