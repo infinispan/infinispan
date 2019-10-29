@@ -358,7 +358,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       try {
          configurationManager = new ConfigurationManager(holder);
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
+         classWhiteList = globalConfiguration.serialization().whiteList().create();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
+
          ModuleRepository.Builder moduleRepositoryBuilder = new ModuleRepository.Builder(globalConfiguration.classLoader());
          ModuleRepository moduleRepository = moduleRepositoryBuilder.build(globalConfiguration);
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
@@ -380,7 +382,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
                                                           globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
-         classWhiteList = globalConfiguration.serialization().whiteList().create();
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
