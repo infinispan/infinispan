@@ -594,7 +594,7 @@ In order to use all of the latest features, make sure you change the namespace d
 
 [source,xml]
 ----
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd" xmlns="urn:infinispan:config:6.0">
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:6.0 https://infinispan.org/schemas/infinispan-config-6.0.xsd" xmlns="urn:infinispan:config:6.0">
    ...
 </infinispan>
 ----
@@ -640,7 +640,7 @@ In order to use all of the latest features, make sure you change the namespace d
 
 [source,xml]
 ----
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd" xmlns="urn:infinispan:config:5.3">
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:5.2 https://infinispan.org/schemas/infinispan-config-5.2.xsd" xmlns="urn:infinispan:config:5.3">
    ...
 </infinispan>
 ----
@@ -651,7 +651,7 @@ In order to use all of the latest features, make sure you change the namespace d
 
 [source,xml]
 ----
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd" xmlns="urn:infinispan:config:5.2">
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:5.2 https://infinispan.org/schemas/infinispan-config-5.2.xsd" xmlns="urn:infinispan:config:5.2">
    ...
 </infinispan>
 ----
@@ -806,7 +806,7 @@ The schema is unchanged from before. Infinispan 4.0 configurations are currently
 
 <infinispan
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="urn:infinispan:config:4.1 http://www.infinispan.org/schemas/infinispan-config-4.1.xsd"
+     xsi:schemaLocation="urn:infinispan:config:4.1 https://infinispan.org/schemas/infinispan-config-4.1.xsd"
      xmlns="urn:infinispan:config:4.1">
 
 ----
@@ -818,7 +818,7 @@ to
 
 <infinispan
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
+     xsi:schemaLocation="urn:infinispan:config:5.1 https://infinispan.org/schemas/infinispan-config-5.1.xsd"
      xmlns="urn:infinispan:config:5.1">
 
 ----

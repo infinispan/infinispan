@@ -2,7 +2,7 @@
 = Declarative Cache Configuration
 
 Declarative configuration comes in a form of XML document that adheres to a provided {brandname} configuration XML
-link:http://www.infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema].
+link:https://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema].
 
 Every aspect of {brandname} that can be configured declaratively can also be configured programmatically.
 In fact, declarative configuration, behind the scenes, invokes the programmatic configuration API as the XML configuration file is being processed.

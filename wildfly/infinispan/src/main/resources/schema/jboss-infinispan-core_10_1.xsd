@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xs:schema targetNamespace="urn:infinispan:server:core:10.0"
+<xs:schema targetNamespace="urn:infinispan:server:core:10.1"
             xmlns:xs="http://www.w3.org/2001/XMLSchema"
-            xmlns:tns="urn:infinispan:server:core:10.0"
+            xmlns:tns="urn:infinispan:server:core:10.1"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified">
 
@@ -422,7 +422,7 @@
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="num-owners" type="xs:int" default="${Server.CacheContainerCounters.num_owners}" use="optional">
+        <xs:attribute name="num-owners" type="xs:int" default="${Server.CacheContainerCounters.num-owners}" use="optional">
             <xs:annotation>
                 <xs:documentation>Sets the number of counter’s copies to keep
                     cluster-wide. It must be positive and its default value is 2.

@@ -251,7 +251,7 @@ public class TestingUtil {
       sb.append("<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
       sb.append("xsi:schemaLocation=\"urn:infinispan:config:");
       sb.append(schema);
-      sb.append(" http://www.infinispan.org/schemas/infinispan-config-");
+      sb.append(" https://infinispan.org/schemas/infinispan-config-");
       sb.append(schema);
       sb.append(".xsd\" xmlns=\"urn:infinispan:config:");
       sb.append(schema);

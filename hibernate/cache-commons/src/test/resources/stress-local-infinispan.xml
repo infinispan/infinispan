@@ -10,7 +10,7 @@
 <!-- Infinispan configuration based on the AS7 standalone, single node, set up -->
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns="urn:infinispan:config:5.1"
-            xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd">
+            xsi:schemaLocation="urn:infinispan:config:5.1 https://infinispan.org/schemas/infinispan-config-5.1.xsd">
    <global>
       <!-- No JGroups transport -->
    </global>
