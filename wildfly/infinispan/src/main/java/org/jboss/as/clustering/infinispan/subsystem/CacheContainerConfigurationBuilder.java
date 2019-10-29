@@ -40,6 +40,7 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.globalstate.LocalConfigurationStorage;
+import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -152,7 +153,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
 
         GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
         ModuleLoader moduleLoader = this.loader.getValue();
-        builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader));
+        builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader)).marshaller(new JBossUserMarshaller());
         ClassLoader loader;
         try {
             loader = makeGlobalClassLoader(moduleLoader, module, modules);
