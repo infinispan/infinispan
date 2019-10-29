@@ -11,6 +11,7 @@ import org.infinispan.commons.configuration.Builder;
  */
 public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdentitiesConfiguration> {
    private final List<SSLConfigurationBuilder> sslConfigurations = new ArrayList<>();
+   private final List<KerberosSecurityFactoryConfigurationBuilder> kerberosConfigurations = new ArrayList<>();
    private final RealmConfigurationBuilder realmBuilder;
 
    ServerIdentitiesConfigurationBuilder(RealmConfigurationBuilder realmBuilder) {
@@ -27,17 +28,27 @@ public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdent
       return ssl;
    }
 
+   public KerberosSecurityFactoryConfigurationBuilder addKerberosConfiguration() {
+      KerberosSecurityFactoryConfigurationBuilder kerberos = new KerberosSecurityFactoryConfigurationBuilder(realmBuilder);
+      kerberosConfigurations.add(kerberos);
+      return kerberos;
+   }
+
    @Override
    public ServerIdentitiesConfiguration create() {
       List<SSLConfiguration> sslConfigurations = this.sslConfigurations.stream()
             .map(SSLConfigurationBuilder::create).collect(Collectors.toList());
-      return new ServerIdentitiesConfiguration(sslConfigurations);
+      List<KerberosSecurityFactoryConfiguration> kerberosConfigurations = this.kerberosConfigurations.stream()
+            .map(KerberosSecurityFactoryConfigurationBuilder::create).collect(Collectors.toList());
+      return new ServerIdentitiesConfiguration(sslConfigurations, kerberosConfigurations);
    }
 
    @Override
    public ServerIdentitiesConfigurationBuilder read(ServerIdentitiesConfiguration template) {
       sslConfigurations.clear();
       template.sslConfigurations().forEach(s -> addSslConfiguration().read(s));
+      kerberosConfigurations.clear();
+      template.kerberosConfigurations().forEach(s -> addKerberosConfiguration().read(s));
       return this;
    }
 }

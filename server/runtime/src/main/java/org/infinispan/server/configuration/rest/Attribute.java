@@ -22,6 +22,7 @@ public enum Attribute {
    NAME,
    REQUIRE_SSL_CLIENT_AUTH,
    SECURITY_REALM,
+   SERVER_PRINCIPAL,
    SOCKET_BINDING,
    ;
 

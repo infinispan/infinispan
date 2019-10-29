@@ -2,7 +2,6 @@ package org.infinispan.server.security;
 
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
-import java.security.Provider;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -16,7 +15,6 @@ import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
-import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -42,17 +40,18 @@ public class ElytronHTTPAuthenticator implements Authenticator {
    private Executor executor;
    private RestServerConfiguration configuration;
 
-   public ElytronHTTPAuthenticator(String name, ServerSecurityRealm serverSecurityRealm) {
-      this.serverSecurityRealm = serverSecurityRealm;
+   public ElytronHTTPAuthenticator(String name, ServerSecurityRealm realm, String serverPrincipal) {
+      this.serverSecurityRealm = realm;
       HttpAuthenticationFactory.Builder httpBuilder = HttpAuthenticationFactory.builder();
-      httpBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
+      httpBuilder.setSecurityDomain(realm.getSecurityDomain());
 
-      final Provider elytronProvider = new WildFlyElytronProvider();
-      HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory(() -> new Provider[]{elytronProvider});
+      //final Provider elytronProvider = new WildFlyElytronProvider();
+      HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory(); //(() -> new Provider[]{elytronProvider});
       httpServerFactory = new SetMechanismInformationMechanismFactory(httpServerFactory);
       httpBuilder.setFactory(httpServerFactory);
 
       MechanismConfiguration.Builder mechConfigurationBuilder = MechanismConfiguration.builder();
+      realm.applyServerCredentials(mechConfigurationBuilder, serverPrincipal);
       final MechanismRealmConfiguration.Builder mechRealmBuilder = MechanismRealmConfiguration.builder();
       mechRealmBuilder.setRealmName(name);
       mechConfigurationBuilder.addMechanismRealm(mechRealmBuilder.build());
@@ -77,6 +76,8 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                String mechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
                if ("BEARER".equals(mechName)) {
                   mechName = "BEARER_TOKEN";
+               } else if ("NEGOTIATE".equals(mechName)) {
+                  mechName = "SPNEGO";
                }
                HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
                mechanism.evaluateRequest(requestAdapter);

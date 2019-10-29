@@ -46,9 +46,9 @@ public class HotRodTransactionalCacheOperations {
    @Parameterized.Parameters(name = "{0}")
    public static Collection<Object[]> data() {
       ArrayList<Object[]> txModes = new ArrayList<>();
-      txModes.add(new Object[] { Parser.TransactionMode.NON_XA });
-      txModes.add(new Object[] { Parser.TransactionMode.NON_DURABLE_XA });
-      txModes.add(new Object[] { Parser.TransactionMode.FULL_XA });
+      txModes.add(new Object[]{Parser.TransactionMode.NON_XA});
+      txModes.add(new Object[]{Parser.TransactionMode.NON_DURABLE_XA});
+      txModes.add(new Object[]{Parser.TransactionMode.FULL_XA});
       return txModes;
    }
 

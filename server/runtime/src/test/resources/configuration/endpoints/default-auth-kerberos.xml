@@ -4,9 +4,10 @@
            socket-binding="default" security-realm="default">
    <hotrod-connector name="hotrod">
       <authentication>
-         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 CRAM-MD5 PLAIN"
-               server-name="infinispan"/>
+         <sasl mechanisms="GSSAPI GS2-KRB5" server-name="datagrid" server-principal="hotrod/datagrid@INFINISPAN.ORG"/>
       </authentication>
    </hotrod-connector>
-   <rest-connector name="rest"/>
+   <rest-connector name="rest">
+      <authentication mechanisms="SPNEGO" server-principal="HTTP/localhost@INFINISPAN.ORG"/>
+   </rest-connector>
 </endpoints>

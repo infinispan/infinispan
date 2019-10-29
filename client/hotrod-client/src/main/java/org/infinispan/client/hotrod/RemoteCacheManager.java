@@ -123,7 +123,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
                "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
                "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
-               "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider"
+               "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
+               "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
+               "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
          )) {
             Provider provider = (Provider)Class.forName(name).getConstructor(new Class[]{}).newInstance(new Object[]{});
             SecurityActions.addSecurityProvider(provider);

@@ -66,8 +66,8 @@ public class AuthenticationKeyCloakIT {
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.security().authentication()
-               .mechanism("BEARER_TOKEN")
-               .username(token);
+            .mechanism("BEARER_TOKEN")
+            .username(token);
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
 

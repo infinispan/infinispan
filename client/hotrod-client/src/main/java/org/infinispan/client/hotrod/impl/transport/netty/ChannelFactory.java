@@ -260,7 +260,7 @@ public class ChannelFactory {
    public <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress server, T operation) {
       ChannelPool pool = channelPoolMap.computeIfAbsent(server, newPool);
       pool.acquire(operation);
-      return operation;
+         return operation;
    }
 
    private SocketAddress getNextServer(Set<SocketAddress> failedServers, byte[] cacheName) {

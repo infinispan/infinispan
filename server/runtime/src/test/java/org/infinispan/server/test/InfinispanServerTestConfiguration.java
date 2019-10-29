@@ -11,71 +11,21 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 public class InfinispanServerTestConfiguration {
 
    private final String configurationFile;
-   private int numServers = 2;
-   private ServerRunMode runMode = ServerRunMode.DEFAULT;
-   private Properties properties = new Properties();
-   private String[] mavenArtifacts;
-   private JavaArchive[] artifacts;
-   private boolean jmx;
+   private final int numServers;
+   private final ServerRunMode runMode;
+   private final Properties properties;
+   private final String[] mavenArtifacts;
+   private final JavaArchive[] archives;
+   private final boolean jmx;
 
-   public InfinispanServerTestConfiguration(String configurationFile) {
+   public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode, Properties properties, String[] mavenArtifacts, JavaArchive[] archives, boolean jmx) {
       this.configurationFile = configurationFile;
-   }
-
-   /**
-    * The number of servers in the initial cluster
-    *
-    * @param numServers
-    */
-   public InfinispanServerTestConfiguration numServers(int numServers) {
       this.numServers = numServers;
-      return this;
-   }
-
-   /**
-    * The {@link ServerRunMode} to use. The default run mode is EMBEDDED unless overridden via the
-    * org.infinispan.test.server.driver system property
-    *
-    * @param runMode
-    */
-   public InfinispanServerTestConfiguration runMode(ServerRunMode runMode) {
       this.runMode = runMode;
-      return this;
-   }
-
-   /**
-    * A system property
-    */
-   public InfinispanServerTestConfiguration property(String name, String value) {
-      this.properties.setProperty(name, value);
-      return this;
-   }
-
-   /**
-    * Deployments
-    *
-    * @param artifacts
-    */
-   public InfinispanServerTestConfiguration artifacts(JavaArchive... artifacts) {
-      assert runMode == ServerRunMode.CONTAINER : "Artifacts can be added only when runMode == CONTAINER";
-      this.artifacts = artifacts;
-      return this;
-   }
-
-   public InfinispanServerTestConfiguration enableJMX() {
-      this.jmx = true;
-      return this;
-   }
-
-   /**
-    * Extra libs
-    *
-    * @param artifacts
-    */
-   public InfinispanServerTestConfiguration mavenArtifacts(String... artifacts) {
-      assert runMode == ServerRunMode.CONTAINER : "Artifacts can be added only when runMode == CONTAINER";
-      this.mavenArtifacts = artifacts;
-      return this;
+      this.properties = properties;
+      this.mavenArtifacts = mavenArtifacts;
+      this.archives = archives;
+      this.jmx = jmx;
    }
 
    public String configurationFile() {
@@ -94,8 +44,8 @@ public class InfinispanServerTestConfiguration {
       return properties;
    }
 
-   public JavaArchive[] artifacts() {
-      return artifacts;
+   public JavaArchive[] archives() {
+      return archives;
    }
 
    public boolean isJMXEnabled() {

@@ -37,12 +37,15 @@
                      <engine enabled-protocols="TLSV1.1 TLSV1.2 TLSV1.3"
                              enabled-ciphersuites="DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"/>
                   </ssl>
+                  <kerberos principal="kerberos@DOMAIN.ORG" keytab-path="keytab" required="false" debug="false" fail-cache="1000" mechanism-names="KRB5 SPNEGO" relative-to="infinispan.server.config.path"/>
                </server-identities>
                <filesystem-realm path="security" levels="3" encoded="false"
                                  relative-to="infinispan.server.config.path"/>
-               <kerberos-realm keytab-path="keytab" relative-to="infinispan.server.config.path"/>
                <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
                            principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+                  <name-rewriter>
+                     <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG" replacement="$1"/>
+                  </name-rewriter>
                   <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
                      <attribute-mapping>
                         <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"

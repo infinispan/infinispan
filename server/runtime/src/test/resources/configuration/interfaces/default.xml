@@ -1,4 +1,6 @@
-<interfaces>
+<interfaces xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:server:10.1 https://infinispan.org/schemas/infinispan-server-10.1.xsd"
+        xmlns="urn:infinispan:server:10.1">
    <interface name="public">
       <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
    </interface>

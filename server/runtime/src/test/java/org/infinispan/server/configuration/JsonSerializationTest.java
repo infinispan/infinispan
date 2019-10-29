@@ -114,6 +114,10 @@ public class JsonSerializationTest {
       JsonNode cipherSuites = engine.get("enabled-ciphersuites");
       assertEquals("DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256", cipherSuites.asText());
 
+      JsonNode kerberos = securityRealm.get("server-identities").get("kerberos");
+      assertEquals("keytab", kerberos.get("keytab-path").asText());
+      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), kerberos.get("relative-to").asText());
+
       JsonNode filesystemRealm = securityRealm.get("filesystem-realm");
       assertEquals("security", filesystemRealm.get("path").asText());
       assertEquals(3, filesystemRealm.get("levels").asInt());
@@ -125,6 +129,13 @@ public class JsonSerializationTest {
       assertEquals("ldap://${org.infinispan.test.host.address}:10389", ldapRealm.get("url").asText());
       assertEquals("uid=admin,ou=People,dc=infinispan,dc=org", ldapRealm.get("principal").asText());
       assertEquals("***", ldapRealm.get("credential").asText());
+
+      /*JsonNode ldapNameRewriter = ldapRealm.get("name-rewriter");
+      JsonNode ldapRegexPrincipalTransformer = ldapNameRewriter.get("regex-principal-transformer");
+      assertEquals("uid", ldapRegexPrincipalTransformer.get("name").asText());
+      assertEquals("uid", ldapRegexPrincipalTransformer.get("pattern").asText());
+      assertEquals("uid", ldapRegexPrincipalTransformer.get("replacement").asText());*/
+
       JsonNode ldapIdentityMapping = ldapRealm.get("identity-mapping");
       assertEquals("uid", ldapIdentityMapping.get("rdn-identifier").asText());
       assertEquals("ou=People,dc=infinispan,dc=org", ldapIdentityMapping.get("search-base-dn").asText());
@@ -149,10 +160,6 @@ public class JsonSerializationTest {
 
       JsonNode localRealm = securityRealm.get("local-realm");
       assertEquals("test-local", localRealm.get("name").asText());
-
-      JsonNode kerberosRealm = securityRealm.get("kerberos-realm");
-      assertEquals("keytab", kerberosRealm.get("keytab-path").asText());
-      assertEquals(properties.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH), kerberosRealm.get("relative-to").asText());
 
       JsonNode propertiesRealm = securityRealm.get("properties-realm");
       assertEquals("Roles", propertiesRealm.get("groups-attribute").asText());

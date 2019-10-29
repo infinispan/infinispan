@@ -13,6 +13,7 @@ import javax.management.MBeanServerConnection;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.DefaultExitHandler;
@@ -38,6 +39,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    protected void start(String name, File rootDir, String configurationFile) {
       servers = new ArrayList<>();
       serverFutures = new ArrayList<>();
+      configurationEnhancers.forEach(c -> c.accept(new File(rootDir, Server.DEFAULT_SERVER_CONFIG)));
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
          Properties properties = new Properties();
@@ -45,7 +47,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
          properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
-         properties.putAll(configuration.properties());
+         configuration.properties().forEach((k, v) -> properties.put(k, StringPropertyReplacer.replaceProperties((String) v, properties)));
          Server server = new Server(serverRoot, new File(configurationFile), properties);
          server.setExitHandler(new DefaultExitHandler());
          serverFutures.add(server.run());

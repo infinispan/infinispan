@@ -13,21 +13,23 @@ import okhttp3.Route;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class AutoDetectAuthenticator implements CachingAuthenticator {
+public class AutoDetectAuthenticator extends AbstractAuthenticator implements CachingAuthenticator {
 
    private final BasicAuthenticator basic;
    private final BearerAuthenticator bearer;
    private final DigestAuthenticator digest;
+   private final NegotiateAuthenticator negotiate;
 
    public AutoDetectAuthenticator(AuthenticationConfiguration configuration) {
       basic = new BasicAuthenticator(configuration);
       bearer = new BearerAuthenticator(configuration);
       digest = new DigestAuthenticator(configuration);
+      negotiate = new NegotiateAuthenticator(configuration);
    }
 
    @Override
    public Request authenticate(Route route, Response response) throws IOException {
-      List<String> headers = response.headers("WWW-Authenticate");
+      List<String> headers = response.headers(WWW_AUTH);
       for (String header : headers) {
          int space = header.indexOf(' ');
          String mech = header.substring(0, space);
@@ -38,6 +40,8 @@ public class AutoDetectAuthenticator implements CachingAuthenticator {
                return basic.authenticate(route, response);
             case "Bearer":
                return bearer.authenticate(route, response);
+            case "Negotiate":
+               return negotiate.authenticate(route, response);
          }
       }
       return null;

@@ -35,6 +35,7 @@ import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticator;
 import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorInterceptor;
 import org.infinispan.client.rest.impl.okhttp.auth.CachingAuthenticatorWrapper;
 import org.infinispan.client.rest.impl.okhttp.auth.DigestAuthenticator;
+import org.infinispan.client.rest.impl.okhttp.auth.NegotiateAuthenticator;
 
 import okhttp3.Authenticator;
 import okhttp3.Call;
@@ -103,11 +104,18 @@ public class RestClientOkHttp implements RestClient {
             case "DIGEST":
                authenticator = new DigestAuthenticator(authentication);
                break;
+            case "SPNEGO":
+               authenticator = new NegotiateAuthenticator(authentication);
+               break;
             default:
                throw new IllegalArgumentException("Cannot handle " + authentication.mechanism());
          }
-         builder.addInterceptor(new CachingAuthenticatorInterceptor(authCache));
-         builder.authenticator(new CachingAuthenticatorWrapper(authenticator, authCache));
+         if (authenticator instanceof CachingAuthenticator) {
+            builder.addInterceptor(new CachingAuthenticatorInterceptor(authCache));
+            builder.authenticator(new CachingAuthenticatorWrapper(authenticator, authCache));
+         } else {
+            builder.authenticator(authenticator);
+         }
       }
 
       httpClient = builder.build();

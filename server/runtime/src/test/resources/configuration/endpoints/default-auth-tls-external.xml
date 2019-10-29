@@ -1,5 +1,8 @@
-<endpoints socket-binding="default" security-realm="default" require-ssl-client-auth="true">
-   <hotrod-connector name="hotrod" >
+<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="urn:infinispan:server:10.1 https://infinispan.org/schemas/infinispan-server-10.1.xsd"
+           xmlns="urn:infinispan:server:10.1"
+           socket-binding="default" security-realm="default" require-ssl-client-auth="true">
+   <hotrod-connector name="hotrod">
       <authentication>
          <sasl mechanisms="EXTERNAL" server-name="infinispan"/>
       </authentication>

@@ -184,13 +184,13 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public AuthenticationConfiguration create() {
       String mech = saslMechanism == null ? "DIGEST-MD5" : saslMechanism;
-      CallbackHandler cbh;
-      if (username != null) {
-         cbh = new BasicCallbackHandler(username, realm != null ? realm : DEFAULT_REALM, password);
-      } else if ("EXTERNAL".equals(mech) && callbackHandler == null) {
-         cbh = new VoidCallbackHandler();
-      } else {
-         cbh = callbackHandler;
+      CallbackHandler cbh = callbackHandler;
+      if (cbh == null) {
+         if (username != null) {
+            cbh = new BasicCallbackHandler(username, realm != null ? realm : DEFAULT_REALM, password);
+         } else if ("EXTERNAL".equals(mech) || "GSSAPI".equals(mech) || "GS2-KRB5".equals(mech)) {
+            cbh = new VoidCallbackHandler();
+         }
       }
       return new AuthenticationConfiguration(cbh, clientSubject, enabled, mech, saslProperties, serverName);
    }
