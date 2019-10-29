@@ -6,6 +6,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.infinispan.commons.util.Version;
+import org.infinispan.test.integration.as.WidlflyIntegrationSCI;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -36,7 +37,9 @@ public class DSLQueryIT {
    @SuppressWarnings("unused")
    private static Archive<?> deployment() {
       return ShrinkWrap.create(WebArchive.class, "dsl.war")
-            .addClasses(DSLQueryIT.class, QueryConfiguration.class, Book.class, GridService.class)
+            .addClasses(DSLQueryIT.class, QueryConfiguration.class, GridService.class)
+            .addClasses(WidlflyIntegrationSCI.CLASSES)
+            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .add(manifest(), "META-INF/MANIFEST.MF")
             .addAsResource("dynamic-indexing-distribution.xml")
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
