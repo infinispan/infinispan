@@ -1,6 +1,7 @@
 package org.infinispan.test.integration.as.query;
 
 import org.infinispan.commons.util.Version;
+import org.infinispan.test.integration.as.WidlflyIntegrationSCI;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
@@ -37,9 +38,11 @@ public class InfinispanQueryIT extends BaseQueryTest {
 
    private static Archive<?> deployment() {
       return ShrinkWrap.create(WebArchive.class)
-            .addClasses(BaseQueryTest.class, InfinispanQueryIT.class, QueryConfiguration.class, Book.class, GridService.class)
+            .addClasses(BaseQueryTest.class, InfinispanQueryIT.class, QueryConfiguration.class, GridService.class)
             .add(manifest(), "META-INF/MANIFEST.MF")
             .addAsResource("dynamic-indexing-distribution.xml")
+            .addClasses(WidlflyIntegrationSCI.CLASSES)
+            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 

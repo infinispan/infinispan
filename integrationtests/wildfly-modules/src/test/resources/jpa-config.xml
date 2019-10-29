@@ -8,6 +8,9 @@
    >
 
   <cache-container default-cache="default">
+    <serialization>
+      <context-initializer class="org.infinispan.test.integration.as.WidlflyIntegrationSCIImpl"/>
+    </serialization>
     <local-cache name="default">
       <locking isolation="REPEATABLE_READ"
                acquire-timeout="20000" write-skew="false"

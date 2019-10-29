@@ -1,6 +1,7 @@
 package org.infinispan.test.integration.as.query;
 
 import org.infinispan.commons.util.Version;
+import org.infinispan.test.integration.as.WidlflyIntegrationSCI;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
@@ -34,8 +35,9 @@ public class ElasticsearchIndexManagerIT extends BaseQueryTest {
 
    private static Archive<?> deployment() {
       return ShrinkWrap.create(WebArchive.class)
-            .addClasses(BaseQueryTest.class, ElasticsearchIndexManagerIT.class,
-                  ElasticQueryConfiguration.class, Book.class, GridService.class)
+            .addClasses(BaseQueryTest.class, ElasticsearchIndexManagerIT.class, ElasticQueryConfiguration.class, GridService.class)
+            .addClasses(WidlflyIntegrationSCI.CLASSES)
+            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .add(manifest(), "META-INF/MANIFEST.MF")
             .addAsResource("elasticsearch-indexing.xml")
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");

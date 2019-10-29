@@ -42,7 +42,7 @@ public class BaseQueryTest {
    public void testSimpleGetOnFirstNode() {
       Book book = service.findById("AB1");
       Assert.assertNotNull(book);
-      Assert.assertEquals("Hibernate in Action", book.title);
+      Assert.assertEquals("Hibernate in Action", book.getTitle());
    }
 
    @Test
@@ -51,7 +51,7 @@ public class BaseQueryTest {
    public void testSimpleGetOnSecondNode() {
       Book book = service.findById("AB2");
       Assert.assertNotNull(book);
-      Assert.assertEquals("Seam in Action", book.title);
+      Assert.assertEquals("Seam in Action", book.getTitle());
    }
 
    @Test
