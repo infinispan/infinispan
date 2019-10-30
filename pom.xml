@@ -349,6 +349,7 @@
       <versionx.org.aesh.aesh>2.4</versionx.org.aesh.aesh>
       <versionx.org.aesh.aesh-extensions>1.8</versionx.org.aesh.aesh-extensions>
       <versionx.org.aesh.aesh-readline>1.17</versionx.org.aesh.aesh-readline>
+      <versionx.org.aesh.readline>2.0</versionx.org.aesh.readline>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.antlr.antlr4-runtime>4.7</versionx.org.antlr.antlr4-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
@@ -1451,6 +1452,11 @@
             <groupId>org.aesh</groupId>
             <artifactId>aesh-readline</artifactId>
             <version>${versionx.org.aesh.aesh-readline}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.aesh</groupId>
+            <artifactId>readline</artifactId>
+            <version>${versionx.org.aesh.readline}</version>
          </dependency>
          <dependency>
             <groupId>org.antlr</groupId>
