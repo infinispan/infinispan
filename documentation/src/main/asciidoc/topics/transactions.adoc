@@ -24,7 +24,7 @@ If you're running {brandname} in a standalone environment, or in JBoss AS 7 and 
 It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the `EmbeddedTransactionManager`.
 
 * {wildfly-tm-lookup}:
-If you're running {brandname} in Wildfly 11 or later, this should be your default choice for transaction manager.
+If you're running {brandname} in WildFly 11 or later, this should be your default choice for transaction manager.
 
 * {generic-tm-lookup}:
 This is a lookup class that locate transaction managers in the most popular Java EE application servers.
