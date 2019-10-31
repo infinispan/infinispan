@@ -228,6 +228,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    TransportConfigurationBuilder read(TransportConfiguration template) {
       attributes.read(template.attributes());
       this.jgroupsConfigurationBuilder.read(template.jgroups());
+      this.typedProperties = new TypedProperties(template.properties());
       if (template.transport() != null) {
          Transport transport = Util.getInstance(template.transport().getClass().getName(), template.transport().getClass().getClassLoader());
          transport(transport);
