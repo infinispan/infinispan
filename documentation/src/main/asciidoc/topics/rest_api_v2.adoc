@@ -559,13 +559,13 @@ To check the configured parameters, execute a `GET` request:
 GET /v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
 ----
 
-The response include two fields, `afterFailures` and `minTimeToWait`:
+The response include two fields, `after_failures` and `min_wait`:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
 {
-  "afterFailures": 2,
-  "minTimeToWait": 1000
+  "after_failures": 2,
+  "min_wait": 1000
 }
 ----
 
@@ -581,8 +581,8 @@ with a body containing the new values, e.g.:
 [source,json,options="nowrap",subs=attributes+]
 ----
 {
-  "afterFailures": 4,
-  "minTimeToWait": 5000
+  "after_failures": 4,
+  "min_wait": 5000
 }
 ----
 

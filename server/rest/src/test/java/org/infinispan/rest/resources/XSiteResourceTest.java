@@ -229,8 +229,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       RestResponse response = sync(cacheClient.getXSiteTakeOfflineConfig(NYC));
       JsonNode takeOfflineConfig = MAPPER.readTree(response.getBody());
 
-      assertEquals(0, takeOfflineConfig.get("afterFailures").asInt());
-      assertEquals(0, takeOfflineConfig.get("minTimeToWait").asInt());
+      assertEquals(0, takeOfflineConfig.get("after_failures").asInt());
+      assertEquals(0, takeOfflineConfig.get("min_wait").asInt());
 
       response = sync(cacheClient.updateXSiteTakeOfflineConfig(NYC, 5, 1000));
       assertEquals(204, response.getStatus());
@@ -238,8 +238,8 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       response = sync(cacheClient.getXSiteTakeOfflineConfig(NYC));
       takeOfflineConfig = MAPPER.readTree(response.getBody());
 
-      assertEquals(5, takeOfflineConfig.get("afterFailures").asInt());
-      assertEquals(1000, takeOfflineConfig.get("minTimeToWait").asInt());
+      assertEquals(5, takeOfflineConfig.get("after_failures").asInt());
+      assertEquals(1000, takeOfflineConfig.get("min_wait").asInt());
    }
 
    @Test
