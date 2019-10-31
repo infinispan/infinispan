@@ -171,14 +171,14 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
 
       JsonNode jsonNode = objectMapper.readTree(response.getContent());
-      assertEquals(jsonNode.get("currentNumberOfEntries").asInt(), 2);
+      assertEquals(jsonNode.get("current_number_of_entries").asInt(), 2);
       assertEquals(jsonNode.get("stores").asInt(), 2);
 
       response = client.newRequest(cacheURL + "?action=clear").send();
       ResponseAssertion.assertThat(response).isOk();
       response = client.newRequest(cacheURL + "?action=stats").send();
       ResponseAssertion.assertThat(response).isOk();
-      assertEquals(objectMapper.readTree(response.getContent()).get("currentNumberOfEntries").asInt(), 0);
+      assertEquals(objectMapper.readTree(response.getContent()).get("current_number_of_entries").asInt(), 0);
    }
 
    @Test
