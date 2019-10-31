@@ -37,7 +37,6 @@ public class ElasticsearchIndexManagerIT extends BaseQueryTest {
       return ShrinkWrap.create(WebArchive.class)
             .addClasses(BaseQueryTest.class, ElasticsearchIndexManagerIT.class, ElasticQueryConfiguration.class, GridService.class)
             .addClasses(WidlflyIntegrationSCI.CLASSES)
-            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .add(manifest(), "META-INF/MANIFEST.MF")
             .addAsResource("elasticsearch-indexing.xml")
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");

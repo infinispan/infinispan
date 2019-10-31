@@ -42,7 +42,6 @@ public class InfinispanQueryIT extends BaseQueryTest {
             .add(manifest(), "META-INF/MANIFEST.MF")
             .addAsResource("dynamic-indexing-distribution.xml")
             .addClasses(WidlflyIntegrationSCI.CLASSES)
-            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
    }
 
