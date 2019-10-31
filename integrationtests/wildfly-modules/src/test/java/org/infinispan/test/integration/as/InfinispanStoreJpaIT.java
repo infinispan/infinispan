@@ -44,7 +44,6 @@ public class InfinispanStoreJpaIT {
             .create(WebArchive.class, "jpa.war")
             .addClass(InfinispanStoreJpaIT.class)
             .addClasses(WidlflyIntegrationSCI.CLASSES)
-            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .addAsResource("META-INF/persistence.xml")
             .addAsResource("jpa-config.xml")
             .add(manifest(), "META-INF/MANIFEST.MF");

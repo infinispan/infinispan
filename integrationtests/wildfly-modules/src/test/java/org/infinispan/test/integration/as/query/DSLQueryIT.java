@@ -39,7 +39,6 @@ public class DSLQueryIT {
       return ShrinkWrap.create(WebArchive.class, "dsl.war")
             .addClasses(DSLQueryIT.class, QueryConfiguration.class, GridService.class)
             .addClasses(WidlflyIntegrationSCI.CLASSES)
-            .addAsResource(WidlflyIntegrationSCI.RESOURCE)
             .add(manifest(), "META-INF/MANIFEST.MF")
             .addAsResource("dynamic-indexing-distribution.xml")
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
