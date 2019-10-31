@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-feature-pack-client</artifactId>
-    <name>Infinispan Wildfly Feature Pack - Client</name>
+    <name>Infinispan WildFly Feature Pack - Client</name>
     <packaging>pom</packaging>
 
     <dependencies>

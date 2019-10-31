@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-feature-pack-embedded-query</artifactId>
-    <name>Infinispan Wildfly Feature Pack - Embedded Query</name>
+    <name>Infinispan WildFly Feature Pack - Embedded Query</name>
     <packaging>pom</packaging>
 
     <dependencies>
