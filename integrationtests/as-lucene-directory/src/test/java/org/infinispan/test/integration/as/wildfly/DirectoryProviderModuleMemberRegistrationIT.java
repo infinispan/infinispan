@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 
 
 /**
- * Test the Hibernate Search module in Wildfly (slot "main") combined with the Infinispan directory provider
+ * Test the Hibernate Search module in WildFly (slot "main") combined with the Infinispan directory provider
  */
 @RunWith(Arquillian.class)
 public class DirectoryProviderModuleMemberRegistrationIT extends MemberRegistrationBase {

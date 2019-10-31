@@ -4,7 +4,7 @@ import javax.security.auth.Subject;
 
 /**
  * Pluggable security domain which could be used as a bridge between {@link Authenticator} and
- * Wildfly Security Realms.
+ * WildFly Security Realms.
  */
 public interface SecurityDomain {
 

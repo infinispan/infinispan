@@ -13,7 +13,7 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 
 /**
- * {@link DefaultsResolver} implementation that extracts default values from Wildfly {@link AttributeDefinition}s
+ * {@link DefaultsResolver} implementation that extracts default values from WildFly {@link AttributeDefinition}s
  *
  * @author Ryan Emerson
  */

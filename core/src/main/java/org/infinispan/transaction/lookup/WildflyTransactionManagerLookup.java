@@ -17,7 +17,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Wildfly transaction client lookup (WildFly 11 and later).
+ * WildFly transaction client lookup (WildFly 11 and later).
  *
  * @author Pedro Ruivo
  * @since 9.3

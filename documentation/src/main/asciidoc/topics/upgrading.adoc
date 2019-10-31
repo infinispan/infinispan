@@ -189,7 +189,7 @@ reflect the fact that `rebalancing` doesn't mean a cluster is unhealthy.
 
 == Multi-tenancy
 
-When using multi-tenancy in the Wildfly based server, it's necessary to specify the `content-path` for each of the REST connectors, to match the `prefix` element under `multi-tenancy\rest\prefix`.
+When using multi-tenancy in the WildFly based server, it's necessary to specify the `content-path` for each of the REST connectors, to match the `prefix` element under `multi-tenancy\rest\prefix`.
 
 == OffHeap Automatic Resizing
 Off Heap memory containers now will dynamically resize based on number of entries in the container. Due to this the
@@ -279,9 +279,9 @@ Max idle in a transactional clustered cache does not remove expired entries on a
 
 Iteration in a clustered cache will still show entries that are expired via maxIdle to ensure good performance, but could be removed at any point due to expiration reaper.
 
-== Wildfly Modules
-The {brandname} Wildfly modules are now located in the `system/add-ons/{moduleprefix}` dir as per the
-link:https://developer.jboss.org/wiki%20/LayeredDistributionsAndModulePathOrganization[Wildfly module conventions].
+== WildFly Modules
+The {brandname} WildFly modules are now located in the `system/add-ons/{moduleprefix}` dir as per the
+link:https://developer.jboss.org/wiki%20/LayeredDistributionsAndModulePathOrganization[WildFly module conventions].
 
 == Deserialization Whitelist
 

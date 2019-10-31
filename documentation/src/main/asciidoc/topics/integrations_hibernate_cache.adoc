@@ -156,7 +156,7 @@ This means that when using JPA in WildFly, region factory is already set to `inf
 {brandname}'s configuration is located in WildFly's `standalone.xml` file.
 It follows the same settings explained in link:#default_local_configuration_second_level[Default Local Configuration] section.
 
-WARNING: When running in Wildfly, do not set `hibernate.cache.infinispan.cfg`.
+WARNING: When running in WildFly, do not set `hibernate.cache.infinispan.cfg`.
 The configuration of the caches comes from WildFly's configuration file.
 
 Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
@@ -193,12 +193,12 @@ Clustering the {brandname} second-level cache provider is as simple as adding th
 The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
 You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
-=== Multi-Node Wildfly Application
+=== Multi-Node WildFly Application
 
-As mentioned in the single node Wildfly case, {brandname} is the default second level cache provider for JPA/Hibernate when running inside Wildfly.
+As mentioned in the single node WildFly case, {brandname} is the default second level cache provider for JPA/Hibernate when running inside WildFly.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
 
-When running Wildfly multi-node clusters, it is recommended that you start off by using `clustered.xml` configuration file.
+When running WildFly multi-node clusters, it is recommended that you start off by using `clustered.xml` configuration file.
 Within this file you can find Hibernate {brandname} caches configured with the correct settings to work in a clustered environment.
 You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
@@ -319,7 +319,7 @@ If you require further tuning of the cache, you can provide your own configurati
 Caches that are not specified in the provided configuration will default to `infinispan-config.xml` (if the provided configuration uses clustering) or `infinispan-config-local.xml`.
 
 WARNING: It is not possible to specify the configuration this way in WildFly.
-Cache configuration changes in Wildfly should be done either modifying the cache configurations inside the application server configuration, or creating new caches with the desired tweaks and plugging them accordingly.
+Cache configuration changes in WildFly should be done either modifying the cache configurations inside the application server configuration, or creating new caches with the desired tweaks and plugging them accordingly.
 See examples below on how entity/collection specific configurations can be applied.
 
 [[caching_provider_infinispan_config_example]]
@@ -359,8 +359,8 @@ For specifying cache template for specific region, use region name instead of th
 include::config_examples/ispn_caching_provider_custom.xml[]
 ----
 
-.Use custom cache template in Wildfly
-When applying entity/collection level changes inside JPA applications deployed in Wildfly, it is necessary to specify deployment name and persistence unit name (separated by `#` character):
+.Use custom cache template in WildFly
+When applying entity/collection level changes inside JPA applications deployed in WildFly, it is necessary to specify deployment name and persistence unit name (separated by `#` character):
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -414,7 +414,7 @@ Example:
 include::config_examples/hibernate_cache_eviction.xml[]
 ----
 
-Inside of Wildfly, same as with the entity/collection configuration override, eviction/expiration settings would also require deployment name and persistence unit information
+Inside of WildFly, same as with the entity/collection configuration override, eviction/expiration settings would also require deployment name and persistence unit information
 (a working example can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/wildfly-local[here]
 ):
