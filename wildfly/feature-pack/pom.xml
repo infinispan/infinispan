@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-feature-pack</artifactId>
-    <name>Infinispan Wildfly Feature Pack</name>
+    <name>Infinispan WildFly Feature Pack</name>
     <packaging>pom</packaging>
 
     <modules>
@@ -28,7 +28,7 @@
     </properties>
 
     <dependencies>
-        <!-- Prevent infinispan-parent transistive dependencies being loaded-->
+        <!-- Prevent infinispan-parent transitive dependencies being loaded-->
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>

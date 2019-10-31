@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-feature-pack-embedded</artifactId>
-    <name>Infinispan Wildfly Feature Pack - Embedded</name>
+    <name>Infinispan WildFly Feature Pack - Embedded</name>
     <packaging>pom</packaging>
 
     <dependencies>

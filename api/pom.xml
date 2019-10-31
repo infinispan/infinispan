@@ -9,8 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>infinispan-api</artifactId>
-    <name>Infinispan Api</name>
-    <description>Infinispan Api</description>
+    <name>Infinispan API</name>
+    <description>Infinispan API</description>
     <dependencies>
         <dependency>
             <groupId>org.reactivestreams</groupId>

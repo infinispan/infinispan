@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-feature-pack-wf-modules</artifactId>
-    <name>Infinispan Wildfly Feature Pack - Wildfly Modules</name>
+    <name>Infinispan WildFly Feature Pack - WildFly Modules</name>
     <packaging>pom</packaging>
 
     <dependencies>

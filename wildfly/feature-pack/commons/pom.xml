@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>infinispan-feature-pack-commons</artifactId>
-    <name>Infinispan Wildfly Feature Pack - Commons</name>
+    <name>Infinispan WildFly Feature Pack - Commons</name>
     <packaging>pom</packaging>
 
     <dependencies>

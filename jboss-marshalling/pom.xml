@@ -12,6 +12,7 @@
 
     <artifactId>infinispan-jboss-marshalling</artifactId>
     <packaging>bundle</packaging>
+    <name>Infinispan JBoss Marshalling</name>
 
     <dependencies>
         <dependency>

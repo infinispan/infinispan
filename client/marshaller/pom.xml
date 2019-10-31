@@ -11,7 +11,7 @@
 
     <artifactId>infinispan-marshaller-parent</artifactId>
     <packaging>pom</packaging>
-    <name>Alternative client marshallers</name>
+    <name>Infinispan Alternative client marshallers</name>
 
     <modules>
         <module>marshaller-tests</module>
