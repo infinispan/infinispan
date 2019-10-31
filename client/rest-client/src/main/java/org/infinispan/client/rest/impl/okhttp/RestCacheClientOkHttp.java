@@ -265,7 +265,7 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    public CompletionStage<RestResponse> updateXSiteTakeOfflineConfig(String site, int afterFailures, long minTimeToWait) {
       Request.Builder builder = new Request.Builder();
       String url = String.format("%s/x-site/backups/%s/take-offline-config", cacheUrl, site);
-      String body = String.format("{\"afterFailures\":%d,\"minTimeToWait\":%d}", afterFailures, minTimeToWait);
+      String body = String.format("{\"after_failures\":%d,\"min_wait\":%d}", afterFailures, minTimeToWait);
       builder.url(url);
       builder.method("PUT", RequestBody.create(MediaType.parse("application/json"), body));
       return client.execute(builder);

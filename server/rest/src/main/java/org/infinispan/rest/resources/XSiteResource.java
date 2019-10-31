@@ -181,11 +181,11 @@ public class XSiteResource implements ResourceHandler {
       } catch (IOException e) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
-      if (takeOffline.afterFailures == current.afterFailures() && takeOffline.minTimeToWait == current.minTimeToWait()) {
+      if (takeOffline.afterFailures == current.afterFailures() && takeOffline.minWait == current.minTimeToWait()) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_MODIFIED.code()).build());
       }
       return CompletableFuture.supplyAsync(() -> {
-         String status = xsiteAdmin.amendTakeOffline(site, takeOffline.afterFailures, takeOffline.minTimeToWait);
+         String status = xsiteAdmin.amendTakeOffline(site, takeOffline.afterFailures, takeOffline.minWait);
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).entity(site);
          }
@@ -334,14 +334,14 @@ public class XSiteResource implements ResourceHandler {
    @SuppressWarnings("unused")
    private static class TakeOffline {
       private int afterFailures;
-      private long minTimeToWait;
+      private long minWait;
 
       public void setAfterFailures(int afterFailures) {
          this.afterFailures = afterFailures;
       }
 
-      public void setMinTimeToWait(long minTimeToWait) {
-         this.minTimeToWait = minTimeToWait;
+      public void setMinWait(long minWait) {
+         this.minWait = minWait;
       }
 
       TakeOffline() {
@@ -349,15 +349,15 @@ public class XSiteResource implements ResourceHandler {
 
       TakeOffline(TakeOfflineConfiguration config) {
          this.afterFailures = config.afterFailures();
-         this.minTimeToWait = config.minTimeToWait();
+         this.minWait = config.minTimeToWait();
       }
 
       public int getAfterFailures() {
          return afterFailures;
       }
 
-      public long getMinTimeToWait() {
-         return minTimeToWait;
+      public long getMinWait() {
+         return minWait;
       }
    }
 }

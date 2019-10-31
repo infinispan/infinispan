@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.configuration.JsonReader;
@@ -11,6 +12,7 @@ import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.core.ServerManagement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 /**
  * @since 10.0
@@ -33,6 +35,7 @@ public class InvocationHelper {
       this.configuration = configuration;
       this.server = server;
       this.executor = executor;
+      this.mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
    }
 
    public ObjectMapper getMapper() {

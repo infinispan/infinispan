@@ -48,7 +48,6 @@ import org.infinispan.stats.CacheContainerStats;
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -62,13 +61,13 @@ public class CacheManagerResource implements ResourceHandler {
    private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
    private final JsonWriter jsonWriter = new JsonWriter();
-   private final ObjectMapper objectMapper = new ObjectMapper();
+   private final ObjectMapper objectMapper;
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
    private final Executor executor;
 
    public CacheManagerResource(InvocationHelper invocationHelper) {
-      objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+      this.objectMapper = invocationHelper.getMapper();
       this.cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       this.cacheManagerName = globalConfiguration.cacheManagerName();
@@ -206,7 +205,7 @@ public class CacheManagerResource implements ResourceHandler {
                cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
                cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
                cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
-                     cacheConfiguration.expiration().lifespan() != -1 ;
+                     cacheConfiguration.expiration().lifespan() != -1;
                cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
                cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
                cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
