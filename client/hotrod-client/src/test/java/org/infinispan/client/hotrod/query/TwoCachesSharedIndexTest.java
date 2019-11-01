@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -38,17 +37,17 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
    private static final String USER_CACHE = "users";
    private static final String ACCOUNT_CACHE = "accounts";
 
-   public static final String USER_METADATA = "user_metadata";
-   public static final String USER_DATA = "user_data";
-   public static final String USER_LOCKING = "user_locking";
+   private static final String USER_METADATA = "user_metadata";
+   private static final String USER_DATA = "user_data";
+   private static final String USER_LOCKING = "user_locking";
 
-   public static final String ACCOUNT_METADATA = "account_metadata";
-   public static final String ACCOUNT_DATA = "account_data";
-   public static final String ACCOUNT_LOCKING = "account_locking";
+   private static final String ACCOUNT_METADATA = "account_metadata";
+   private static final String ACCOUNT_DATA = "account_data";
+   private static final String ACCOUNT_LOCKING = "account_locking";
 
    public Configuration buildIndexedConfig(String lockCache, String dataCache, String metadataCache) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().index(Index.LOCAL)
+      builder.indexing().index(Index.PRIMARY_OWNER)
               .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
               .addProperty("default.metadata_cachename", metadataCache)
               .addProperty("default.data_cachename", dataCache)
@@ -103,7 +102,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
    }
 
    @Test
-   public void testWithUserCache() throws IOException {
+   public void testWithUserCache() {
       RemoteCache<Integer, UserPB> userCache = client(0).getCache(USER_CACHE);
       userCache.put(1, getUserPB());
 
@@ -114,7 +113,7 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
    }
 
    @Test
-   public void testWithAccountCache() throws IOException {
+   public void testWithAccountCache() {
       RemoteCache<Integer, AccountPB> accountCache = client(0).getCache(ACCOUNT_CACHE);
       accountCache.put(1, getAccountPB());
 
@@ -138,5 +137,4 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
       userPB.setSurname("Doe");
       return userPB;
    }
-
 }

@@ -1919,4 +1919,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Configured store '%s' is segmented and may use a large number of file descriptors", id = 564)
    void segmentedStoreUsesManyFileDescriptors(String storeName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Index.LOCAL is no longer supported since version 10.0. Deprecated usages are automatically converted to Index.PRIMARY_OWNER. Please update your configuration!", id = 565)
+   void indexLocalIsNotSupported();
 }

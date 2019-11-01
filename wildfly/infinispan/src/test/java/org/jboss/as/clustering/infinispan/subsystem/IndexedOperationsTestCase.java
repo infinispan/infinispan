@@ -41,7 +41,7 @@ public class IndexedOperationsTestCase extends OperationTestCaseBase {
 
       ModelNode result = servicesA.executeOperation(readOp);
       Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
-      Assert.assertEquals(Indexing.LOCAL.toString(), result.get(RESULT).asString());
+      Assert.assertEquals(Indexing.PRIMARY_OWNER.toString(), result.get(RESULT).asString());
    }
 
    @Test
@@ -68,7 +68,7 @@ public class IndexedOperationsTestCase extends OperationTestCaseBase {
 
       PathAddress indexingAddress = PathAddress.pathAddress(configAddOp.get(ClientConstants.OP_ADDR)).append(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
       ModelNode indexingAdd = Util.createAddOperation(indexingAddress);
-      indexingAdd.get(ModelKeys.INDEXING).set("LOCAL");
+      indexingAdd.get(ModelKeys.INDEXING).set("PRIMARY_OWNER");
       indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("default.directory_provider").set("local-heap");
       indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("hibernate.search.jmx_enabled").set("true");
       indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("lucene_version").set("LUCENE_CURRENT");

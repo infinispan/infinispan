@@ -4,7 +4,7 @@
                    initial-cluster-timeout="20000"/>
         <replicated-cache-configuration name="indexed-cache" mode="SYNC" remote-timeout="20000"/>
         <replicated-cache name="booksCache" configuration="indexed-cache">
-            <indexing index="LOCAL">
+            <indexing index="PRIMARY_OWNER">
                 <property name="default.metadata_cachename">indexMetadataBooksCache</property>
                 <property name="default.data_cachename">indexDataBooksCache</property>
                 <property name="default.locking_cachename">indexLockingBooksCache</property>

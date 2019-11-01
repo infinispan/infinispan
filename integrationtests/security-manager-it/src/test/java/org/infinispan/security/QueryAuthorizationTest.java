@@ -31,29 +31,29 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "security.QueryAuthorizationTest")
 public class QueryAuthorizationTest extends SingleCacheManagerTest {
-   Subject ADMIN = TestingUtil.makeSubject("admin");
-   Subject QUERY = TestingUtil.makeSubject("query");
-   Subject NOQUERY = TestingUtil.makeSubject("noquery");
+
+   private Subject ADMIN = TestingUtil.makeSubject("admin");
+
+   private Subject QUERY = TestingUtil.makeSubject("query");
+
+   private Subject NOQUERY = TestingUtil.makeSubject("noquery");
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder
          .indexing()
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
             .addIndexedEntity(TestEntity.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT")
          .security()
             .authorization().enable().role("admin").role("query").role("noquery");
-      return Subject.doAs(ADMIN, new PrivilegedAction<EmbeddedCacheManager>() {
 
-         @Override
-         public EmbeddedCacheManager run() {
-            EmbeddedCacheManager ecm = TestCacheManagerFactory.createCacheManager(getSecureGlobalConfiguration(), builder);
-            ecm.getCache();
-            return ecm;
-         }
+      return Subject.doAs(ADMIN, (PrivilegedAction<EmbeddedCacheManager>) () -> {
+         EmbeddedCacheManager ecm = TestCacheManagerFactory.createCacheManager(getSecureGlobalConfiguration(), builder);
+         ecm.getCache();
+         return ecm;
       });
    }
 
@@ -76,23 +76,17 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            QueryAuthorizationTest.super.teardown();
-            return null;
-         }
+      Subject.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         QueryAuthorizationTest.super.teardown();
+         return null;
       });
    }
 
    @Override
    protected void clearContent() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            cacheManager.getCache().clear();
-            return null;
-         }
+      Subject.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         cacheManager.getCache().clear();
+         return null;
       });
    }
 
@@ -111,13 +105,9 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       Policy.setPolicy(new SurefireTestingPolicy());
       System.setSecurityManager(new SecurityManager());
       try {
-         Subject.doAs(QUERY, new PrivilegedExceptionAction<Void>() {
-
-            @Override
-            public Void run() throws Exception {
-               queryTest();
-               return null;
-            }
+         Subject.doAs(QUERY, (PrivilegedExceptionAction<Void>) () -> {
+            queryTest();
+            return null;
          });
       } finally {
          System.setSecurityManager(null);
@@ -130,13 +120,9 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       Policy.setPolicy(new SurefireTestingPolicy());
       try {
          System.setSecurityManager(new SecurityManager());
-         Subject.doAs(NOQUERY, new PrivilegedExceptionAction<Void>() {
-
-            @Override
-            public Void run() throws Exception {
-               queryTest();
-               return null;
-            }
+         Subject.doAs(NOQUERY, (PrivilegedExceptionAction<Void>) () -> {
+            queryTest();
+            return null;
          });
       } finally {
          System.setSecurityManager(null);

@@ -189,7 +189,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
             throw CONFIG.sharedStoreWithLocalCache();
 
          if (!preload && builder.indexing().enabled()
-               && builder.indexing().indexLocalOnly() && !getBuilder().template())
+               && builder.indexing().index() == Index.PRIMARY_OWNER && !getBuilder().template())
             CONFIG.localIndexingWithSharedCacheLoaderRequiresPreload();
       }
 

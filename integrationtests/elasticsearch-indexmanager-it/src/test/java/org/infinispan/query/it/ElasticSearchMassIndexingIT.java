@@ -19,23 +19,23 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.it.ElasticSearchMassIndexingIT")
 public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
 
-    @Override
-    protected void createCacheManagers() throws Throwable {
-        ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-        cacheCfg.indexing().index(Index.LOCAL)
-                .addIndexedEntity(Car.class);
-        ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
-        List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
-        defineConfigurationOnAllManagers("default", cacheCfg);
-        ConfigurationBuilder indexCache = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-        indexCache.clustering().stateTransfer().fetchInMemoryState(true);
-        defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCache);
-        defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCache);
-        defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCache);
+   @Override
+   protected void createCacheManagers() {
+      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      cacheCfg.indexing()
+            .index(Index.PRIMARY_OWNER)
+            .addIndexedEntity(Car.class);
+      ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
+      List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
+      defineConfigurationOnAllManagers("default", cacheCfg);
+      ConfigurationBuilder indexCache = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      indexCache.clustering().stateTransfer().fetchInMemoryState(true);
+      defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCache);
+      defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCache);
+      defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCache);
 
-        waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm(neededCacheNames);
 
-        caches.addAll(cacheList.stream().collect(Collectors.toList()));
-    }
-
+      caches.addAll(cacheList.stream().collect(Collectors.toList()));
+   }
 }

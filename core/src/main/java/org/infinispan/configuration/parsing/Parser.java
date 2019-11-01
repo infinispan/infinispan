@@ -2547,11 +2547,15 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case INDEX:
+               if ("LOCAL".equals(value)) {
+                  value = "PRIMARY_OWNER";
+                  CONFIG.indexLocalIsNotSupported();
+               }
                Index index = Index.valueOf(value);
                builder.indexing().index(index);
                break;
             case AUTO_CONFIG:
-               builder.indexing().autoConfig(Boolean.valueOf(value));
+               builder.indexing().autoConfig(Boolean.parseBoolean(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

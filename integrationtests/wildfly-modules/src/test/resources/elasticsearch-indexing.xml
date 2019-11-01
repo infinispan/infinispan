@@ -17,7 +17,7 @@
                 <object size="-1"/>
             </memory>
             <expiration max-idle="-1"/>
-            <indexing index="LOCAL">
+            <indexing index="PRIMARY_OWNER">
                 <property name="default.indexmanager">elasticsearch</property>
                 <property name="default.elasticsearch.refresh_after_write">true</property>
                 <property name="default.elasticsearch.required_index_status">yellow</property>

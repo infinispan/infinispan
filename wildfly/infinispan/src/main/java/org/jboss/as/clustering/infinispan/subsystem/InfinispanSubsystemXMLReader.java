@@ -2777,6 +2777,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case INDEX:
+                    if ("LOCAL".equals(value)) {
+                        value = "PRIMARY_OWNER";
+                        log.warn("Index.LOCAL is no longer supported since version 10.0. Deprecated usages are automatically converted to Index.PRIMARY_OWNER. Please update your configuration!");
+                    }
                     IndexingConfigurationResource.INDEXING.parseAndSetParameter(value, indexing, reader);
                     break;
                 case AUTO_CONFIG:

@@ -23,14 +23,14 @@
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable">
-         <indexing index="LOCAL">
+         <indexing index="PRIMARY_OWNER">
             <property name="hibernate.search.default.directory_provider">filesystem</property>
             <property name="hibernate.search.cats.exclusive_index_use">true</property>
             <property name="lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>
       <replicated-cache name="repl-with-default">
-         <indexing index="LOCAL" auto-config="true"/>
+         <indexing index="PRIMARY_OWNER" auto-config="true"/>
       </replicated-cache>
       <distributed-cache name="dist-with-default">
           <indexing index="ALL" auto-config="true"/>

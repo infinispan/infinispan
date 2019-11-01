@@ -1,4 +1,3 @@
 <local-cache name="default">
-   <indexing index="LOCAL" auto-config="true">
-   </indexing>
+    <indexing index="PRIMARY_OWNER" auto-config="true"/>
 </local-cache>
