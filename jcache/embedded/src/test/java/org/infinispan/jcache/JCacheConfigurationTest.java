@@ -27,7 +27,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -36,26 +35,23 @@ import org.testng.annotations.Test;
 public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
    public void testNamedCacheConfiguration() {
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
-         @Override
-         public void call() {
-            cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());
-            JCacheManager jCacheManager = new JCacheManager(URI.create("oneCacheManager"), cm, null);
-            assertNotNull(jCacheManager.getCache("oneCache"));
-         }
+      withCacheManager(TestCacheManagerFactory.createCacheManager(false), cm -> {
+         cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());
+         JCacheManager jCacheManager = new JCacheManager(URI.create("oneCacheManager"), cm, null);
+         assertNotNull(jCacheManager.getCache("oneCache"));
       });
    }
 
    public void testJCacheManagerWherePathContainsFileSchemaAndAbsolutePath() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
       withCachingProvider(provider -> {
-         JCacheManager jCacheManager = new JCacheManager(
+         try (JCacheManager jCacheManager = new JCacheManager(
                uri,
                provider.getClass().getClassLoader(),
                provider,
-               null);
-         assertNotNull(jCacheManager.getCache("foo"));
+               null)) {
+            assertNotNull(jCacheManager.getCache("foo"));
+         }
       });
    }
 
@@ -102,14 +98,15 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
          // when
          URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!" + fullTargetPath);
          withCachingProvider(provider -> {
-            JCacheManager jCacheManager = new JCacheManager(
+            try (JCacheManager jCacheManager = new JCacheManager(
                 resourceInsideJarUri,
                 provider.getClass().getClassLoader(),
                 provider,
-                null);
+                null)) {
 
-            // then
-            assertNotNull(jCacheManager.getCache("foo"));
+               // then
+               assertNotNull(jCacheManager.getCache("foo"));
+            }
          });
       } finally {
          // cleanup
