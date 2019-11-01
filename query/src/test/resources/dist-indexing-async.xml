@@ -11,7 +11,7 @@
         <transport cluster="Infinispan-Query-Cluster"/>
 
         <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
-            <indexing index="LOCAL">
+            <indexing index="PRIMARY_OWNER">
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Transaction</indexed-entity>
                 </indexed-entities>

@@ -168,7 +168,7 @@
                     <timestamp-column name="version" type="BIGINT"/>
                 </string-keyed-table>
             </string-keyed-jdbc-store>
-            <indexing index="LOCAL" />
+            <indexing index="PRIMARY_OWNER" />
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
             <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
         </distributed-cache>

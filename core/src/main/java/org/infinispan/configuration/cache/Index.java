@@ -13,14 +13,6 @@ public enum Index {
    NONE,
 
    /**
-    * The local (originator) node is responsible for adding the entry to the index.
-    * This indexing mode is deprecated; use {@link #PRIMARY_OWNER} instead.
-    * @deprecated since 9.1
-    */
-   @Deprecated
-   LOCAL,
-
-   /**
     * All cluster nodes will add the entry to the index.
     */
    ALL,
@@ -37,11 +29,10 @@ public enum Index {
       return this != NONE;
    }
 
+   /**
+    * @deprecated in 10.1. Equivalent to a simple equality comparison to {@link #PRIMARY_OWNER}.
+    */
    @Deprecated
-   public boolean isLocalOnly() {
-      return this == LOCAL;
-   }
-
    public boolean isPrimaryOwner() {
       return this == PRIMARY_OWNER;
    }

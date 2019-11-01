@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "api.SimpleCacheTest")
 public class SimpleCacheTest extends APINonTxTest {
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -63,7 +64,7 @@ public class SimpleCacheTest extends APINonTxTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000381: This configuration is not supported for simple cache")
    public void testIndexing() {
-      new ConfigurationBuilder().simpleCache(true).indexing().index(Index.LOCAL).build();
+      new ConfigurationBuilder().simpleCache(true).indexing().index(Index.ALL).build();
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

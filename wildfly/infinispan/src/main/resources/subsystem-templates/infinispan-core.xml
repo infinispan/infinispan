@@ -37,7 +37,7 @@
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="indexed">
-               <indexing index="LOCAL" auto-config="true"/>
+               <indexing index="PRIMARY_OWNER" auto-config="true"/>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="memory-bounded">
@@ -425,13 +425,13 @@
             </local-cache>
             <!-- Indexes are shared between all nodes, stored on infinispan itself -->
             <distributed-cache name="InfinispanSharedIndex">
-               <indexing index="LOCAL">
+               <indexing index="PRIMARY_OWNER">
                   <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                </indexing>
             </distributed-cache>
             <!-- Auto config based on cache type -->
             <distributed-cache name="sharedIndexInfinispanDirectory">
-               <indexing index="LOCAL" auto-config="true"/>
+               <indexing index="PRIMARY_OWNER" auto-config="true"/>
             </distributed-cache>
             <replicated-cache name="nearRealtimeFileSystemIndex">
                <indexing index="ALL" auto-config="true"/>

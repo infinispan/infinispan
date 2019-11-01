@@ -23,16 +23,30 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 /**
- * Used to configure indexing of entries in the cache for searching.
+ * Used to configure indexing of entries in the cache for index-assisted searching.
  *
  * @author Paul Ferraro
  */
 public enum Indexing {
+
+   /**
+    * No indexing is performed.
+    */
    NONE,
-   LOCAL,
+
+   /**
+    * All cluster nodes will add the entry to the index.
+    */
    ALL,
+
+   /**
+    * Only the primary owner of an entry will add it to the index.
+    */
    PRIMARY_OWNER;
 
+   /**
+    * Is indexing enabled?
+    */
    public boolean isEnabled() {
       return this != NONE;
    }

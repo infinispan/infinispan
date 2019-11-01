@@ -1,8 +1,6 @@
 <distributed-cache name="default">
-    <indexing index="LOCAL">
-        <property name="default.indexmanager">
-              org.infinispan.query.indexmanager.InfinispanIndexManager
-        </property>
+    <indexing index="PRIMARY_OWNER">
+        <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
         <!-- Index data in async mode -->
         <property name="default.worker.execution">async</property>
         <!-- Optional: configure the commit interval, default is 1000ms -->

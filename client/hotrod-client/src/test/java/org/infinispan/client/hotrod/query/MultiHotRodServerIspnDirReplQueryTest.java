@@ -23,7 +23,7 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing()
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
 
       for (EmbeddedCacheManager cm : cacheManagers) {

@@ -32,7 +32,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <indexing index=\"LOCAL\">\n" +
+            "      <indexing index=\"PRIMARY_OWNER\">\n" +
             "            <property name=\"default.directory_provider\">local-heap</property>\n" +
             "            <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
             "      </indexing>\n" +

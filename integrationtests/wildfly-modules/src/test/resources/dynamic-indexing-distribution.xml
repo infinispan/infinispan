@@ -20,7 +20,7 @@
             <object size="-1"/>
          </memory>
          <expiration max-idle="-1" />
-            <indexing index="LOCAL">
+            <indexing index="PRIMARY_OWNER">
                <!-- Use our custom IndexManager; TODO autoinject by default? -->
                <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                <!-- specify the managed index is to be shared across the nodes -->

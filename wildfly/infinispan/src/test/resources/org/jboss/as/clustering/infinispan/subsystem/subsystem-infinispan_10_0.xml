@@ -60,7 +60,7 @@
                     <write-behind modification-queue-size="2048" thread-pool-size="1"/>
                 </file-store>
             </persistence>
-            <indexing index="LOCAL" auto-config="true">
+            <indexing index="PRIMARY_OWNER" auto-config="true">
                 <key-transformers>
                     <key-transformer key="java.lang.String" transformer="org.infinispan.query.impl.DefaultTransformer"/>
                 </key-transformers>
@@ -91,7 +91,7 @@
                     <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />
                 </rest-store>
             </persistence>
-            <indexing index="LOCAL" />
+            <indexing index="PRIMARY_OWNER" />
         </local-cache>
         <local-cache name="short-stack-tx" statistics-available="false">
             <transaction mode="NON_DURABLE_XA" notifications="false"/>
@@ -149,7 +149,7 @@
                     <property name="location">${java.io.tmpdir}</property>
                 </store>
             </persistence>
-            <indexing index="LOCAL" auto-config="true"/>
+            <indexing index="PRIMARY_OWNER" auto-config="true"/>
             <state-transfer enabled="true" timeout="60000" chunk-size="10000" await-initial-transfer="true"/>
             <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
         </replicated-cache>
@@ -164,7 +164,7 @@
                 <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false" name="custom-cache-loader"/>
                 <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
             </persistence>
-            <indexing index="LOCAL" auto-config="true"/>
+            <indexing index="PRIMARY_OWNER" auto-config="true"/>
             <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
         </replicated-cache>
         <distributed-cache name="dist" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" segments="20" statistics="false">
@@ -192,7 +192,7 @@
                     </string-keyed-table>
                 </string-keyed-jdbc-store>
             </persistence>
-            <indexing index="LOCAL" />
+            <indexing index="PRIMARY_OWNER" />
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
             <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
         </distributed-cache>

@@ -17,18 +17,18 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.api.ElasticSearchNonIndexedValuesIT")
 public class ElasticSearchNonIndexedValuesIT extends NonIndexedValuesTest {
 
-    @Override
-    protected EmbeddedCacheManager createCacheManager() throws Exception {
-        ConfigurationBuilder cacheCfg = getDefaultStandaloneCacheConfig(isTransactional());
-        cacheCfg.indexing()
-                .index(Index.LOCAL)
-                .addIndexedEntity(TestEntity.class)
-                .addIndexedEntity(AnotherTestEntity.class);
-        ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
-        return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cacheCfg);
-    }
+   @Override
+   protected EmbeddedCacheManager createCacheManager() {
+      ConfigurationBuilder cacheCfg = getDefaultStandaloneCacheConfig(isTransactional());
+      cacheCfg.indexing()
+            .index(Index.PRIMARY_OWNER)
+            .addIndexedEntity(TestEntity.class)
+            .addIndexedEntity(AnotherTestEntity.class);
+      ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
+      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cacheCfg);
+   }
 
-    protected boolean isTransactional() {
-        return false;
-    }
+   protected boolean isTransactional() {
+      return false;
+   }
 }

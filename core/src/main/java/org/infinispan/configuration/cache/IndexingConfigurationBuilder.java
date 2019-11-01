@@ -23,6 +23,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<IndexingConfiguration>, ConfigurationBuilderInfo {
+
    private final AttributeSet attributes;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
@@ -34,9 +35,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return attributes.attribute(INDEX).get().isEnabled();
    }
 
-   @Deprecated
-   boolean indexLocalOnly() {
-      return attributes.attribute(INDEX).get().isLocalOnly();
+   Index index() {
+      return attributes.attribute(INDEX).get();
    }
 
    /**
