@@ -76,14 +76,14 @@ class RunningTestsRegistry {
             throw new IOException("Cannot create report directory " + reportsDir.getAbsolutePath());
          }
          PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(
-            new File(reportsDir, "TEST-ThreadLeakChecker" + testName + ".xml"));
+            new File(reportsDir, "TEST-" + testName + "-Timeout.xml"));
          String property = System.getProperty("infinispan.modulesuffix");
          String moduleName = property != null ? property.substring(1) : "";
          writer.start(moduleName, 1, 0, 1, 0, false);
 
          StringWriter exceptionWriter = new StringWriter();
          exception.printStackTrace(new PrintWriter(exceptionWriter));
-         writer.writeTestCase("ThreadLeakChecker", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
+         writer.writeTestCase("Timeout", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
                               exceptionWriter.toString(), exception.getClass().getName(), exception.getMessage());
 
          writer.close();
