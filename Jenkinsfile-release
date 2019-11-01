@@ -44,7 +44,7 @@ pipeline {
                             sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests -DcommitProtoLockChanges=true"
                         }
                         sh "git add '**/proto.lock'"
-                        sh "git commit -m 'Committing proto.lock files for ${version}'"
+                        sh "git diff-index --quiet HEAD || git commit -m 'Committing proto.lock files for ${version}'"
                     }
                 }
             }
