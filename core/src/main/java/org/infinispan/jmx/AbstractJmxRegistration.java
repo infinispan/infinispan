@@ -5,7 +5,10 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
+import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -51,7 +54,13 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
 
    String groupName;
 
-   private Collection<ResourceDMBean> resourceDMBeans;
+   private List<ResourceDMBean> resourceDMBeans;
+
+   private final String mainComponent;
+
+   AbstractJmxRegistration(String mainComponent) {
+      this.mainComponent = mainComponent;
+   }
 
    /**
     * Looks up the MBean server and initializes domain and group. Overriders must ensure they call super.
@@ -59,8 +68,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
    public void start() {
       // prevent double lookup of MBeanServer on eventual restart
       if (mBeanServer == null) {
-         groupName = initGroup();
-
          MBeanServer mBeanServer = null;
          try {
             GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
@@ -73,18 +80,61 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          }
 
          if (mBeanServer != null) {
-            jmxDomain = initDomain(mBeanServer);
-            this.mBeanServer = mBeanServer;
-         }
-      }
+            // first time!
+            groupName = initGroup();
 
-      if (mBeanServer != null) {
-         resourceDMBeans = Collections.synchronizedCollection(getResourceDMBeansFromComponents());
+            List<ResourceDMBean> mbeans = getResourceDMBeansFromComponents();
+            Iterator<ResourceDMBean> it = mbeans.iterator();
+            ResourceDMBean first = it.next();
+
+            GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
+            String jmxDomain = globalJmxConfig.domain();
+            int counter = 2;
+            while (true) {
+               // register first bean
+               try {
+                  JmxUtil.registerMBean(first, getObjectName(jmxDomain, groupName, first.getMBeanName()), mBeanServer);
+                  break;
+               } catch (InstanceAlreadyExistsException e) {
+                  if (globalJmxConfig.allowDuplicateDomains()) {
+                     // add 'unique' suffix and retry
+                     jmxDomain = globalJmxConfig.domain() + counter++;
+                  } else {
+                     throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, globalJmxConfig.domain());
+                  }
+               } catch (Exception e) {
+                  throw new CacheException("Failure while registering MBeans", e);
+               }
+            }
+            resourceDMBeans = Collections.synchronizedList(mbeans);
+            this.jmxDomain = jmxDomain;
+            this.mBeanServer = mBeanServer;
+
+            if (applicationMetricsRegistry != null) {
+               applicationMetricsRegistry.register(first);
+            }
+
+            // register remaining beans
+            try {
+               while (it.hasNext()) {
+                  ResourceDMBean resourceDMBean = it.next();
+                  ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
+                  JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
+                  if (applicationMetricsRegistry != null) {
+                     applicationMetricsRegistry.register(resourceDMBean);
+                  }
+               }
+            } catch (Exception e) {
+               throw new CacheException("Failure while registering MBeans", e);
+            }
+         }
+      } else {
+         // restart
+         resourceDMBeans = Collections.synchronizedList(getResourceDMBeansFromComponents());
          try {
             for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
                JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-               resourceDMBean.setObjectName(objectName);
                if (applicationMetricsRegistry != null) {
                   applicationMetricsRegistry.register(resourceDMBean);
                }
@@ -92,7 +142,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          } catch (Exception e) {
             throw new CacheException("Failure while registering MBeans", e);
          }
-         log.trace("MBeans were successfully registered to the MBean server.");
       }
    }
 
@@ -103,10 +152,11 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       if (mBeanServer != null && resourceDMBeans != null) {
          try {
             for (ResourceDMBean resourceDMBean : resourceDMBeans) {
-               if (resourceDMBean.getObjectName() != null) {
-                  JmxUtil.unregisterMBean(resourceDMBean.getObjectName(), mBeanServer);
+               ObjectName objectName = resourceDMBean.getObjectName();
+               if (objectName != null) {
+                  JmxUtil.unregisterMBean(objectName, mBeanServer);
                   if (applicationMetricsRegistry != null) {
-                     applicationMetricsRegistry.unregister(resourceDMBean);
+                     applicationMetricsRegistry.unregister(objectName);
                   }
                }
             }
@@ -121,18 +171,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * Subclasses must implement this hook to initialize {@link #groupName} during start.
     */
    protected abstract String initGroup();
-
-   /**
-    * Initialize JMX domain during start.
-    */
-   private String initDomain(MBeanServer mBeanServer) {
-      GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
-      String jmxDomain = JmxUtil.buildJmxDomain(globalJmxConfig.domain(), mBeanServer, groupName);
-      if (!globalJmxConfig.allowDuplicateDomains() && !jmxDomain.equals(globalJmxConfig.domain())) {
-         throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, globalJmxConfig.domain());
-      }
-      return jmxDomain;
-   }
 
    /**
     * Gets the domain name. This should not be called unless JMX is enabled.
@@ -165,34 +203,52 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
    }
 
    /**
-    * Creates an ObjectName based on given group and component name.
+    * Creates an ObjectName based on given domain, group and component name.
     */
-   private ObjectName getObjectName(String groupName, String resourceName) throws MalformedObjectNameException {
+   private static ObjectName getObjectName(String domain, String groupName, String resourceName) throws MalformedObjectNameException {
+      if (domain == null) {
+         throw new IllegalArgumentException("domain cannot be null");
+      }
       if (groupName == null) {
          throw new IllegalArgumentException("groupName cannot be null");
       }
       if (resourceName == null) {
          throw new IllegalArgumentException("resourceName cannot be null");
       }
-      return new ObjectName(getDomain() + ":" + groupName + "," + COMPONENT + "=" + resourceName);
+      return new ObjectName(domain + ":" + groupName + "," + COMPONENT + "=" + resourceName);
    }
 
    /**
-    * Gathers all components from registry that have MBeanMetadata and creates ResourceDMBeans for them.
+    * Creates an ObjectName based on given group and component name.
     */
-   private Collection<ResourceDMBean> getResourceDMBeansFromComponents() {
+   private ObjectName getObjectName(String groupName, String resourceName) throws MalformedObjectNameException {
+      return getObjectName(getDomain(), groupName, resourceName);
+   }
+
+   /**
+    * Gathers all components from registry that have MBeanMetadata and creates ResourceDMBeans for them. The first
+    * component is always the main component, ie. the cache/cache manager.
+    */
+   private List<ResourceDMBean> getResourceDMBeansFromComponents() {
       Collection<ComponentRef<?>> components = basicComponentRegistry.getRegisteredComponents();
-      Collection<ResourceDMBean> resourceDMBeans = new ArrayList<>(components.size());
+      List<ResourceDMBean> resourceDMBeans = new ArrayList<>(components.size());
       for (ComponentRef<?> component : components) {
          if (!component.isAlias()) {
             Object instance = component.wired();
             if (instance != null) {
                ResourceDMBean resourceDMBean = getResourceDMBean(instance, component.getName());
                if (resourceDMBean != null) {  // not all components have MBeanMetadata
-                  resourceDMBeans.add(resourceDMBean);
+                  if (mainComponent.equals(resourceDMBean.getMBeanName())) {
+                     resourceDMBeans.add(0, resourceDMBean);
+                  } else {
+                     resourceDMBeans.add(resourceDMBean);
+                  }
                }
             }
          }
+      }
+      if (resourceDMBeans.isEmpty()) {
+         throw new IllegalStateException("No MBeans found in component registry!");
       }
       return resourceDMBeans;
    }
@@ -217,7 +273,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       }
       ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
       JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-      resourceDMBean.setObjectName(objectName);
       if (applicationMetricsRegistry != null) {
          applicationMetricsRegistry.register(resourceDMBean);
       }
@@ -246,7 +301,6 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          }
          ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
          JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-         resourceDMBean.setObjectName(objectName);
          resourceDMBeans.add(resourceDMBean);
          if (applicationMetricsRegistry != null) {
             applicationMetricsRegistry.register(resourceDMBean);

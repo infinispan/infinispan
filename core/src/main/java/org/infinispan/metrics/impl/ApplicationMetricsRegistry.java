@@ -82,10 +82,6 @@ public final class ApplicationMetricsRegistry {
       }
    }
 
-   public void unregister(ResourceDMBean resourceDMBean) {
-      unregister(resourceDMBean.getObjectName());
-   }
-
    public void unregister(ObjectName objectName) {
       String prefix = ObjectNameMapper.makeMetricNamePrefix(objectName);
       Map<String, String> tags = ObjectNameMapper.makeTagMap(objectName);

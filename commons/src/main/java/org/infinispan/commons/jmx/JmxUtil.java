@@ -2,10 +2,8 @@ package org.infinispan.commons.jmx;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
@@ -21,37 +19,6 @@ import org.infinispan.commons.logging.LogFactory;
 public final class JmxUtil {
 
    private static final Log log = LogFactory.getLog(JmxUtil.class);
-
-   /**
-    * Build the JMX domain name. Starts from the given domain and probes it for the existence of any MBeans in the given
-    * group. If MBeans exist it appends an increasing numeric suffix (starting from 2) and retries until it finds an
-    * unused domain.
-    *
-    * @param jmxDomain   The JMX domain name
-    * @param mBeanServer the {@link MBeanServer} where to check whether the JMX domain is allowed or not.
-    * @param groupName   String containing the group name for the JMX MBean
-    * @return A string that combines the allowed JMX domain possibly with a unique suffix
-    */
-   public static String buildJmxDomain(String jmxDomain, MBeanServer mBeanServer, String groupName) {
-      if (jmxDomain == null) {
-         throw new IllegalArgumentException("jmxDomain cannot be null");
-      }
-      if (groupName == null) {
-         throw new IllegalArgumentException("groupName cannot be null");
-      }
-
-      String finalName = jmxDomain;
-      int index = 2;
-      try {
-         while (!SecurityActions.queryNames(new ObjectName(finalName + ':' + groupName + ",*"), null, mBeanServer).isEmpty()) {
-            finalName = jmxDomain + index++;
-         }
-      } catch (MalformedObjectNameException e) {
-         throw new CacheException("Failed to check for duplicate JMX domain names", e);
-      }
-
-      return finalName;
-   }
 
    /**
     * Registers the JMX MBean.

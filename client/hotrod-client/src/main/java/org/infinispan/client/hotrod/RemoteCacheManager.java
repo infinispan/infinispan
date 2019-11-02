@@ -217,8 +217,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          if (configuration.jmxEnabled()) {
             MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
             String groupName = String.format("type=HotRodClient,name=%s", configuration.jmxName());
-            String jmxDomain = JmxUtil.buildJmxDomain(configuration.jmxDomain(), mbeanServer, groupName);
-            mbeanObjectName = new ObjectName(String.format("%s:%s", jmxDomain, groupName));
+            mbeanObjectName = new ObjectName(String.format("%s:%s", configuration.jmxDomain(), groupName));
             JmxUtil.registerMBean(this, mbeanObjectName, mbeanServer);
          }
       } catch (Exception e) {

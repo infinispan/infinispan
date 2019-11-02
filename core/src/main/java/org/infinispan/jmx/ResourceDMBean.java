@@ -20,6 +20,8 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
+import javax.management.MBeanRegistration;
+import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
 
@@ -32,8 +34,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not
- * ship with MBean, ManagedAttribute and ManagedOperation.
+ * This class was copied from JGroups and adapted.
  * <p/>
  * The original JGroup's ResourceDMBean logic has been modified so that invoke() method checks whether the operation
  * called has been exposed as a {@link ManagedOperation}, otherwise the call fails. JGroups deviated from this logic on
@@ -44,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public final class ResourceDMBean implements DynamicMBean {
+public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
 
    private static final Log log = LogFactory.getLog(ResourceDMBean.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -123,10 +124,6 @@ public final class ResourceDMBean implements DynamicMBean {
     */
    public ObjectName getObjectName() {
       return objectName;
-   }
-
-   void setObjectName(ObjectName objectName) {
-      this.objectName = objectName;
    }
 
    private static Field findField(Class<?> objectClass, String fieldName) {
@@ -368,6 +365,25 @@ public final class ResourceDMBean implements DynamicMBean {
          log.couldNotInvokeSetOnAttribute(name, attribute.getValue());
          throw new AttributeNotFoundException("Could not find attribute " + name);
       }
+   }
+
+   @Override
+   public ObjectName preRegister(MBeanServer server, ObjectName name) {
+      objectName = name;
+      return name;
+   }
+
+   @Override
+   public void postRegister(Boolean registrationDone) {
+   }
+
+   @Override
+   public void preDeregister() {
+   }
+
+   @Override
+   public void postDeregister() {
+      objectName = null;
    }
 
    private static abstract class InvokableMBeanAttributeInfo {
