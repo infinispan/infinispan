@@ -2,6 +2,7 @@ package org.infinispan.jmx;
 
 import javax.management.ObjectName;
 
+import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -35,6 +36,10 @@ public final class CacheJmxRegistration extends AbstractJmxRegistration {
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject
    String cacheName;
+
+   public CacheJmxRegistration() {
+      super(CacheImpl.OBJECT_NAME);
+   }
 
    @Start(priority = 14)
    @Override

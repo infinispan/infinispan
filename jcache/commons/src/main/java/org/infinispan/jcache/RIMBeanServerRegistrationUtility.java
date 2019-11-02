@@ -1,20 +1,17 @@
 package org.infinispan.jcache;
 
-import java.util.Set;
-
 import javax.cache.CacheException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 /**
- * A convenience class for registering CacheStatisticsMBeans with an
- * MBeanServer.
+ * A convenience class for registering CacheStatisticsMBeans with an MBeanServer.
  *
  * @author Greg Luck
  * @since 1.0
  */
-public final class RIMBeanServerRegistrationUtility {
+final class RIMBeanServerRegistrationUtility {
 
    /**
     * The type of registered Object
@@ -43,70 +40,52 @@ public final class RIMBeanServerRegistrationUtility {
    }
 
    /**
-    * Utility method for registering CacheStatistics with the platform
-    * MBeanServer
+    * Utility method for registering CacheStatistics with the platform MBeanServer.
     *
     * @param cache the cache to register
     */
-   static <K, V> void registerCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
+   static void registerCacheObject(AbstractJCache<?, ?> cache, ObjectNameType objectNameType) {
       //these can change during runtime, so always look it up
       MBeanServer mBeanServer = cache.getMBeanServer();
       if (mBeanServer != null) {
-         ObjectName registeredObjectName = calculateObjectName(cache, objectNameType);
+         Object mBean;
+         switch (objectNameType) {
+            case CONFIGURATION:
+               mBean = cache.getCacheMXBean();
+               break;
+            case STATISTICS:
+               mBean = cache.getCacheStatisticsMXBean();
+               break;
+            default:
+               throw new CacheException("Unrecognized ObjectNameType : " + objectNameType);
+         }
+         ObjectName objectName = calculateObjectName(cache, objectNameType);
          try {
-            if (objectNameType.equals(ObjectNameType.CONFIGURATION)) {
-               if (!isRegistered(cache, objectNameType)) {
-                  SecurityActions.registerMBean(cache.getCacheMXBean(), registeredObjectName, mBeanServer);
-               }
-            } else if (objectNameType.equals(ObjectNameType.STATISTICS)) {
-               if (!isRegistered(cache, objectNameType)) {
-                  SecurityActions.registerMBean(cache.getCacheStatisticsMXBean(), registeredObjectName, mBeanServer);
-               }
+            if (!mBeanServer.isRegistered(objectName)) {
+               SecurityActions.registerMBean(mBean, objectName, mBeanServer);
             }
          } catch (Exception e) {
             throw new CacheException("Error registering cache MXBeans for CacheManager "
-                  + registeredObjectName + " . Error was " + e.getMessage(), e);
+                  + objectName + ". Error was " + e.getMessage(), e);
          }
       }
    }
 
    /**
-    * Checks whether an ObjectName is already registered.
+    * Removes registered CacheStatistics for a Cache.
     *
-    * @throws javax.cache.CacheException - all exceptions are wrapped in
-    *                                    CacheException
+    * @throws javax.cache.CacheException - all exceptions are wrapped in CacheException
     */
-   private static <K, V> boolean isRegistered(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
+   static void unregisterCacheObject(AbstractJCache<?, ?> cache, ObjectNameType objectNameType) {
       MBeanServer mBeanServer = cache.getMBeanServer();
       if (mBeanServer != null) {
          ObjectName objectName = calculateObjectName(cache, objectNameType);
-         Set<ObjectName> registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
-         return !registeredObjectNames.isEmpty();
-      } else {
-         return false;
-      }
-   }
-
-   /**
-    * Removes registered CacheStatistics for a Cache
-    *
-    * @throws javax.cache.CacheException - all exceptions are wrapped in
-    *                                    CacheException
-    */
-   static <K, V> void unregisterCacheObject(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
-      MBeanServer mBeanServer = cache.getMBeanServer();
-      if (mBeanServer != null) {
-         ObjectName objectName = calculateObjectName(cache, objectNameType);
-         Set<ObjectName> registeredObjectNames = SecurityActions.queryNames(objectName, null, mBeanServer);
-
-         //should just be one
-         for (ObjectName registeredObjectName : registeredObjectNames) {
-            try {
-               SecurityActions.unregisterMBean(registeredObjectName, mBeanServer);
-            } catch (Exception e) {
-               throw new CacheException("Error unregistering object instance "
-                     + registeredObjectName + " . Error was " + e.getMessage(), e);
+         try {
+            if (mBeanServer.isRegistered(objectName)) {
+               SecurityActions.unregisterMBean(objectName, mBeanServer);
             }
+         } catch (Exception e) {
+            throw new CacheException("Error unregistering MBean " + objectName + ". Error was " + e.getMessage(), e);
          }
       }
    }
@@ -114,10 +93,9 @@ public final class RIMBeanServerRegistrationUtility {
    /**
     * Creates an object name using the scheme "javax.cache:type=Cache&lt;Statistics|Configuration&gt;,CacheManager=&lt;cacheManagerName&gt;,name=&lt;cacheName&gt;"
     */
-   private static <K, V> ObjectName calculateObjectName(AbstractJCache<K, V> cache, ObjectNameType objectNameType) {
+   private static ObjectName calculateObjectName(AbstractJCache<?, ?> cache, ObjectNameType objectNameType) {
       String cacheManagerName = mbeanSafe(cache.getCacheManager().getURI().toString());
       String cacheName = mbeanSafe(cache.getName());
-
       try {
          return new ObjectName("javax.cache:type=Cache" + objectNameType.objectName
                + ",CacheManager=" + cacheManagerName
@@ -135,7 +113,6 @@ public final class RIMBeanServerRegistrationUtility {
     * @return A valid JMX ObjectName attribute value.
     */
    private static String mbeanSafe(String string) {
-      return string == null ? "" : string.replaceAll(",|:|=|\n", ".");
+      return string == null ? "" : string.replaceAll("[,:=\n]", ".");
    }
-
 }
