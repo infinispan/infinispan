@@ -13,13 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -35,7 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.AbstractStringBasedCacheStore")
 public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTest {
 
-    protected DefaultCacheManager dcm;
+    protected EmbeddedCacheManager dcm;
     protected ConnectionFactory connectionFactory;
     protected TableManager tableManager;
     protected TableManipulationConfiguration tableConfiguration;
@@ -112,10 +110,8 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
             assertNull(getValueByKey("k1"));
     }
 
-    public DefaultCacheManager configureCacheManager(boolean passivation, boolean preload, boolean eviction) throws Exception {
+    public EmbeddedCacheManager configureCacheManager(boolean passivation, boolean preload, boolean eviction) {
         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName("StringBasedCache");
-        TestCacheManagerFactory.setNodeName(gcb);
-        GlobalConfiguration glob = gcb.build();
         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
         JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
                 .persistence()
@@ -132,10 +128,8 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
             builder.memory().evictionType(EvictionType.COUNT).size(-1);
         }
 
-        Configuration configuration = builder.build();
-
         tableConfiguration = storeBuilder.create().table();
-        DefaultCacheManager defaultCacheManager = new DefaultCacheManager(glob, configuration, true);
+        EmbeddedCacheManager defaultCacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, gcb, builder);
         String cacheName = defaultCacheManager.getCache().getName();
         tableManager = TableManagerFactory.getManager(connectionFactory, storeBuilder.create(), cacheName);
 
@@ -144,7 +138,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
 
     protected abstract ConnectionFactory getConnectionFactory(JdbcStringBasedStoreConfigurationBuilder storeBuilder);
 
-    protected void assertCleanCacheAndStore(Cache cache) throws Exception {
+    protected void assertCleanCacheAndStore(Cache<String, String> cache) throws Exception {
         cache.clear();
         deleteAllRows();
         assertEquals(0, cache.size());
@@ -172,7 +166,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
           Connection connection = connectionFactory.getConnection();
           Statement s = connection.createStatement();
           ResultSet rs = s.executeQuery(tableManager.getLoadAllRowsSql());
-          List<String> rows = new ArrayList<String>();
+          List<String> rows = new ArrayList<>();
           while (rs.next()) {
              rows.add(rs.toString());
           }

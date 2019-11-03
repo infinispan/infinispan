@@ -57,8 +57,9 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * domain. Each cache manager will in practice use a different JMX domain that has been
     * calculated based on the configured one by adding an incrementing index to it.
     *
-    * @param allowDuplicateDomains
+    * @deprecated Since 10.1, please set a unique {@link #jmxDomain} or {@link GlobalConfiguration#cacheManagerName()} instead.
     */
+   @Deprecated
    public GlobalJmxStatisticsConfigurationBuilder allowDuplicateDomains(Boolean allowDuplicateDomains) {
       attributes.attribute(ALLOW_DUPLICATE_DOMAINS).set(allowDuplicateDomains);
       return this;
@@ -70,8 +71,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * which later can be used to identify the cache manager within a JMX based management tool
     * amongst other cache managers that might be running under the same JVM.
     *
-    * @param cacheManagerName
-    * @Deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
+    * @deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
     */
    @Deprecated
    public GlobalJmxStatisticsConfigurationBuilder cacheManagerName(String cacheManagerName) {
@@ -89,11 +89,21 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
       return this;
    }
 
+   /**
+    * Disables JMX statistics in the cache manager
+    * @deprecated Since 10.0, use {@link CacheContainerConfigurationBuilder#statistics(Boolean)} instead
+    */
+   @Deprecated
    public GlobalJmxStatisticsConfigurationBuilder disable() {
       enabled(false);
       return this;
    }
 
+   /**
+    * Enables JMX statistics in the cache manager
+    * @deprecated Since 10.0, use {@link CacheContainerConfigurationBuilder#statistics(Boolean)} instead
+    */
+   @Deprecated
    public GlobalJmxStatisticsConfigurationBuilder enable() {
       enabled(true);
       return this;
@@ -101,8 +111,9 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
 
    /**
     * Enables JMX statistics in the cache manager
-    * @deprecated Use {@link CacheContainerConfigurationBuilder#statistics(Boolean)} instead
+    * @deprecated Since 10.0, use {@link CacheContainerConfigurationBuilder#statistics(Boolean)} instead
     */
+   @Deprecated
    public GlobalJmxStatisticsConfigurationBuilder enabled(boolean enabled) {
       getGlobalConfig().cacheContainer().statistics(enabled);
       return this;

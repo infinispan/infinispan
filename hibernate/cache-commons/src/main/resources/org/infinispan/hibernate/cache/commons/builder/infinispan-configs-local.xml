@@ -13,8 +13,6 @@
 
    <!-- This configuration is suitable for non-clustered environments, where only single instance accesses the DB -->
    <cache-container name="SampleCacheManager" statistics="false" default-cache="the-default-cache" shutdown-hook="DEFAULT">
-      <jmx duplicate-domains="true"/>
-
       <local-cache-configuration name="the-default-cache" statistics="false" />
 
       <!-- Default configuration is appropriate for entity/collection caching. -->

@@ -7,7 +7,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -29,11 +29,12 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "jmx.CacheLoaderAndCacheWriterInterceptorMBeanTest")
 public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheManagerTest {
+   private static final String JMX_DOMAIN = CacheLoaderAndCacheWriterInterceptorMBeanTest.class.getName();
+
    private ObjectName loaderInterceptorObjName;
    private ObjectName storeInterceptorObjName;
    private AdvancedLoadWriteStore store;
-   private static final String JMX_DOMAIN = CacheLoaderAndCacheWriterInterceptorMBeanTest.class.getName();
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -48,9 +49,8 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       globalConfiguration
             .cacheContainer().statistics(true)
             .globalJmxStatistics()
-            .allowDuplicateDomains(false)
             .jmxDomain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
 
       cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");

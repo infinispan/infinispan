@@ -68,8 +68,7 @@ public class DistributedStreamRehashStressTest extends StressTest {
 
       gcb.transport().remoteCommandThreadPool().threadPoolFactory(executorFactory);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(true, gcb, new ConfigurationBuilder(),
-              false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(true, gcb, new ConfigurationBuilder());
       cacheManagers.add(cm);
       return cm;
    }

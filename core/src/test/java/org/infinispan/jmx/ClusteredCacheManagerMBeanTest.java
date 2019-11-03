@@ -5,6 +5,8 @@ import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXEC
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getJGroupsChannelObjectName;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -13,7 +15,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -21,6 +23,7 @@ import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -38,19 +41,21 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
    private ObjectName name1;
    private ObjectName name2;
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      GlobalConfigurationBuilder globalConfig1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalConfig1, JMX_DOMAIN, mBeanServerLookup);
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
       config.jmxStatistics().enable();
 
-      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, JMX_DOMAIN,
-            true, true, GlobalConfigurationBuilder.defaultClusteredBuilder(), config, mBeanServerLookup);
+      EmbeddedCacheManager cacheManager1 = createClusteredCacheManager(globalConfig1, config, new TransportFlags());
       cacheManager1.start();
 
-      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, JMX_DOMAIN,
-            true, true, GlobalConfigurationBuilder.defaultClusteredBuilder(), config, mBeanServerLookup);
+      GlobalConfigurationBuilder globalConfig2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalConfig2, JMX_DOMAIN2, mBeanServerLookup);
+      EmbeddedCacheManager cacheManager2 = createClusteredCacheManager(globalConfig2, config, new TransportFlags());
       cacheManager2.start();
 
       registerCacheManager(cacheManager1, cacheManager2);

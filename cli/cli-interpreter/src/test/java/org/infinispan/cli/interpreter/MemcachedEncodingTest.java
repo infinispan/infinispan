@@ -1,5 +1,6 @@
 package org.infinispan.cli.interpreter;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -7,6 +8,8 @@ import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -15,9 +18,7 @@ import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import net.spy.memcached.MemcachedClient;
@@ -28,10 +29,11 @@ import net.spy.memcached.MemcachedClient;
  * @since 5.2
  */
 @Test(testName = "cli.interpreter.MemcachedEncodingTest", groups = "functional")
-@CleanupAfterMethod
 public class MemcachedEncodingTest extends SingleCacheManagerTest {
 
    private static final String MEMCACHED_CACHE = "memcachedCache";
+
+   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    MemcachedServer memcachedServer;
    int port;
    Interpreter interpreter;
@@ -42,7 +44,7 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
       c.jmxStatistics().enable();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      global.globalJmxStatistics().enable();
+      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
       memcachedServer = MemcachedTestingUtil.startMemcachedTextServer(cacheManager);
       port = memcachedServer.getPort();
@@ -52,8 +54,8 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterMethod
-   public void release() {
+   @Override
+   protected void teardown() {
       MemcachedTestingUtil.killMemcachedServer(memcachedServer);
       TestingUtil.killCacheManagers(cacheManager);
       MemcachedTestingUtil.killMemcachedClient(memcachedClient);

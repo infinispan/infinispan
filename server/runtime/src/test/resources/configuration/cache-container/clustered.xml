@@ -1,4 +1,3 @@
 <cache-container name="default" statistics="true">
    <transport cluster="${infinispan.cluster.name}" stack="test"/>
-   <jmx domain="test_domain" mbean-server-lookup="org.infinispan.commons.jmx.PlatformMBeanServerLookup" duplicate-domains="true" />
 </cache-container>

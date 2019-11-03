@@ -16,7 +16,7 @@ public class ClusterContainerStatsMBeanTest extends AbstractClusterMBeanTest {
 
    public void testContainerStats() throws Exception {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      ObjectName clusterStats = getCacheManagerObjectName(jmxDomain, "DefaultCacheManager", "ClusterContainerStats");
+      ObjectName clusterStats = getCacheManagerObjectName(jmxDomain1, "DefaultCacheManager", "ClusterContainerStats");
 
       assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "MemoryAvailable", 1);
       assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "MemoryMax", 1);

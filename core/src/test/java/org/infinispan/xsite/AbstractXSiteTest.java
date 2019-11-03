@@ -17,12 +17,12 @@ import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -42,12 +42,12 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    private Map<String, Integer> siteName2index = new HashMap<>();
 
    @BeforeMethod(alwaysRun = true) // run even for tests in the unstable group
-   public void createBeforeMethod() throws Throwable {
+   public void createBeforeMethod() {
       if (cleanupAfterMethod()) createSites();
    }
 
    @BeforeClass(alwaysRun = true) // run even for tests in the unstable group
-   public void createBeforeClass() throws Throwable {
+   public void createBeforeClass() {
       if (cleanupAfterTest()) createSites();
    }
 
@@ -268,13 +268,15 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          // which we don't want
          Transport transport = clone.transport().getTransport();
          Marshaller marshaller = clone.serialization().getMarshaller();
-         clone.read(gcb.build());
+         GlobalConfiguration original = gcb.build();
+         clone.read(original);
          clone.transport().transport(transport);
          clone.serialization().marshaller(marshaller);
-         clone.serialization().addContextInitializer(TestDataSCI.INSTANCE);
 
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
-
+         if (original.globalJmxStatistics().enabled()) {
+            clone.globalJmxStatistics().jmxDomain(original.globalJmxStatistics().domain() + cacheManagers.size());
+         }
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(clone, builder, flags);
          cacheManagers.add(cm);
          return cm;

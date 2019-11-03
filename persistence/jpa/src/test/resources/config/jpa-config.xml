@@ -8,7 +8,6 @@
    >
 
   <cache-container default-cache="default">
-    <jmx duplicate-domains="true" />
     <serialization>
       <context-initializer class="org.infinispan.persistence.jpa.JpaSCIImpl"/>
     </serialization>

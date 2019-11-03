@@ -135,7 +135,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       gcb.transport().nodeName(channel.getName());
       gcb.transport().distributedSyncTimeout(30, TimeUnit.SECONDS);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, cacheCfg, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, cacheCfg);
       registerCacheManager(cm);
       return cm;
    }

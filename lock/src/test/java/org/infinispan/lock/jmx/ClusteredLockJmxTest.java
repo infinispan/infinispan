@@ -1,6 +1,7 @@
 package org.infinispan.lock.jmx;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -14,7 +15,7 @@ import javax.management.ReflectionException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lock.BaseClusteredLockTest;
 import org.infinispan.lock.api.ClusteredLock;
@@ -36,7 +37,7 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
 
    private static final String LOCK_NAME = ClusteredLockJmxTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    public void testForceRelease() {
       ClusteredLockManager clm = clusteredLockManager(0);
@@ -99,9 +100,8 @@ public class ClusteredLockJmxTest extends BaseClusteredLockTest {
    @Override
    protected GlobalConfigurationBuilder configure(int nodeId) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.globalJmxStatistics()
-            .enable()
-            .mBeanServerLookup(mBeanServerLookup);
+      String jmxDomain = getClass().getSimpleName() + nodeId;
+      configureGlobalJmx(builder, jmxDomain, mBeanServerLookup);
       return builder;
    }
 

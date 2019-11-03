@@ -8,7 +8,6 @@
     <!-- Corresponds to @Cacheable("cache-name") -->
     <!-- ************************************** -->
     <cache-container default-cache="default">
-        <jmx duplicate-domains="true"/>
         <local-cache name="fibonacci"/>
         <local-cache name="books" />
         <local-cache name="booksTransactional" >

@@ -19,7 +19,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -50,7 +50,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    private static final String TEST_CACHE_NAME = "userCache";
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
@@ -67,7 +67,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = getConfigurationBuilder();
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder(), true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder());
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 

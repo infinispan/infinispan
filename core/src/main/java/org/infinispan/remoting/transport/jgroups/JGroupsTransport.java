@@ -515,7 +515,7 @@ public class JGroupsTransport implements Transport {
             // Normally this would be done by CacheManagerJmxRegistration but
             // the channel is not started when the cache manager starts but
             // when first cache starts, so it's safer to do it here.
-            globalStatsEnabled = configuration.globalJmxStatistics().enabled();
+            globalStatsEnabled = configuration.statistics();
             if (globalStatsEnabled) {
                // TODO Use the overloaded variant when available: https://issues.jboss.org/browse/JGRP-2394
                JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName, true);

@@ -1,12 +1,15 @@
 package org.infinispan.server.memcached;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+
 import javax.management.JMException;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -22,14 +25,15 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
 
    private static final String JMX_DOMAIN = MemcachedClusteredStatsTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    public EmbeddedCacheManager createCacheManager(int index) {
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalBuilder, JMX_DOMAIN + "-" + index, mBeanServerLookup);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      return TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN,
-            JMX_DOMAIN + "-" + index, true, false, builder, mBeanServerLookup);
+      return TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
    }
 
    public void testSingleConnectionPerServer() throws Exception {

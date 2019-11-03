@@ -14,9 +14,6 @@
 
       <transport stack="jgroupsStack" cluster="default" />
       <serialization />
-      <jmx duplicate-domains="true">
-         <property name="enabled">false</property>
-      </jmx>
 
       <local-cache name="default" />
 

@@ -30,6 +30,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -52,7 +53,6 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    @Override
    protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
       super.modifyGlobalConfiguration(builder);
-      builder.globalJmxStatistics().enable();
    }
 
    @Override
@@ -79,7 +79,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
       //initialize server-side serialization context
-      ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+      ProtobufMetadataManager protobufMetadataManager = TestingUtil.extractGlobalComponent(manager(0), ProtobufMetadataManager.class);
       protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManager.getFilesWithErrors());

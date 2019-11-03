@@ -23,7 +23,6 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
          "   <stack-file name=\"dummy\" path=\"nosuchfile.xml\"/>\n" +
          "</jgroups>\n" +
          "<cache-container default-cache=\"default\">" +
-         "   <jmx domain=\"NonExistingJGroupsConfigTest_channelLookupTest\" />\n" +
          "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
          "   <replicated-cache name=\"default\" />\n" +
          "</cache-container>\n" +
@@ -50,7 +49,6 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
          "   <stack-file name=\"dummy\" path=\"stacks/broken-tcp.xml\"/>\n" +
          "</jgroups>\n" +
          "<cache-container default-cache=\"default\">" +
-         "   <jmx domain=\"NonExistingJGroupsConfigTest_brokenJGroupsConfigTest\" />\n" +
          "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
          "   <replicated-cache name=\"default\" />\n" +
          "</cache-container>\n" +

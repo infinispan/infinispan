@@ -11,7 +11,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "jmx.CacheAvailabilityJmxTest")
 public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -45,9 +45,11 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
    }
 
    private GlobalConfigurationBuilder getGlobalConfigurationBuilder(String rackId) {
+      int nodeIndex = cacheManagers.size();
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.globalJmxStatistics()
             .enable()
+            .jmxDomain(getClass().getSimpleName() + nodeIndex)
             .mBeanServerLookup(mBeanServerLookup)
          .transport().rackId(rackId);
       return gcb;

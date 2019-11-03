@@ -15,7 +15,7 @@ import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -342,7 +342,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       );
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      ConfigurationBuilderHolder holder = TestCacheManagerFactory.holderFromStream(is, false);
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseStream(is, false);
       Configuration repl1 = getCacheConfiguration(holder, "repl-1");
       Configuration repl2 = getCacheConfiguration(holder, "repl-2");
       assertTrue(repl1.isTemplate());
@@ -520,7 +520,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(gc.globalJmxStatistics().enabled());
       assertTrue(gc.globalJmxStatistics().allowDuplicateDomains());
       assertEquals("funky_domain", gc.globalJmxStatistics().domain());
-      assertTrue(gc.globalJmxStatistics().mbeanServerLookup() instanceof PlatformMBeanServerLookup);
+      assertTrue(gc.globalJmxStatistics().mbeanServerLookup() instanceof TestMBeanServerLookup);
 
       c = getCacheConfiguration(holder, "dist");
       assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());

@@ -26,9 +26,9 @@ public class XSiteInlineConfigFileParsingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilderHolder holder = TestCacheManagerFactory.holderFromXml(FILE_NAME);
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseFile(FILE_NAME, false);
       TransportFlags flags = new TransportFlags().withPreserveConfig(true);
-      return TestCacheManagerFactory.createClusteredCacheManager(false, holder, false, flags);
+      return TestCacheManagerFactory.createClusteredCacheManager(false, holder, flags);
    }
 
    public void testInlineConfiguration() {

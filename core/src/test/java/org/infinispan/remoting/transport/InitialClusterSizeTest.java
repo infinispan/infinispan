@@ -34,7 +34,7 @@ public class InitialClusterSizeTest extends MultipleCacheManagersTest {
          GlobalConfigurationBuilder gc = GlobalConfigurationBuilder.defaultClusteredBuilder();
          gc.transport().initialClusterSize(CLUSTER_SIZE).initialClusterTimeout(CLUSTER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
          cacheManagers.add(TestCacheManagerFactory.createClusteredCacheManager(false, gc,
-               getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC), new TransportFlags().withPortRange(i), false));
+               getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC), new TransportFlags().withPortRange(i)));
       }
    }
 

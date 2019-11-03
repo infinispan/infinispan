@@ -26,7 +26,7 @@ import javax.management.ReflectionException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
@@ -37,6 +37,7 @@ import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -50,7 +51,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "counter.jmx.CounterJmxTest")
 public class CounterJmxTest extends BaseCounterTest {
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private static void assertCollection(Collection<String> expected, Collection<String> actual) {
       List<String> expectedList = new ArrayList<>(expected);
@@ -122,9 +123,8 @@ public class CounterJmxTest extends BaseCounterTest {
    @Override
    protected GlobalConfigurationBuilder configure(int nodeId) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.globalJmxStatistics()
-            .enable()
-            .mBeanServerLookup(mBeanServerLookup);
+      String jmxDomain = getClass().getSimpleName() + nodeId;
+      TestCacheManagerFactory.configureGlobalJmx(builder, jmxDomain, mBeanServerLookup);
       return builder;
    }
 

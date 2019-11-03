@@ -18,6 +18,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.Security;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -48,9 +49,8 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
          try {
             return TestCacheManagerFactory.fromXml("configs/named-cache-test.xml");
          } catch (IOException e) {
-            e.printStackTrace();
+            throw new TestException(e);
          }
-         return null;
       });
 
       GlobalConfiguration globalConfiguration = TestingUtil.extractGlobalConfiguration(cm);

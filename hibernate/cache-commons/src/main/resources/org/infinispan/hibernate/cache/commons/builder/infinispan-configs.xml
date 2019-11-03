@@ -16,7 +16,6 @@
 
    <cache-container name="SampleCacheManager" statistics="false" default-cache="the-default-cache" shutdown-hook="DEFAULT">
       <transport stack="hibernate-jgroups" cluster="infinispan-hibernate-cluster"/>
-      <jmx duplicate-domains="true"/>
 
       <local-cache-configuration name="the-default-cache" statistics="false" />
 

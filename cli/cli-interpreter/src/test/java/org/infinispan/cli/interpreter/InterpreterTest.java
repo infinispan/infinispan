@@ -13,6 +13,8 @@ import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.statement.CacheStatement;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -26,15 +28,18 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName="cli.interpreter.InterpreterTest")
 public class InterpreterTest extends SingleCacheManagerTest {
+   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.defaultCacheName("default").globalJmxStatistics().enable();
+      gcb.defaultCacheName("default");
+      TestCacheManagerFactory.configureGlobalJmx(gcb, getClass().getSimpleName(), mBeanServerLookup);
+
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.jmxStatistics().enable().invocationBatching().enable().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gcb, c);
-      return cm;
+
+      return TestCacheManagerFactory.createCacheManager(gcb, c);
    }
 
    private Interpreter getInterpreter() {

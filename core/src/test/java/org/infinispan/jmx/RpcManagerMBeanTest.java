@@ -52,7 +52,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
    }
 
    public void testJmxOperationMetadata() throws Exception {
-      ObjectName rpcManager = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       checkMBeanOperationParameterNaming(mBeanServerLookup.getMBeanServer(), rpcManager);
    }
 
@@ -60,7 +60,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       Cache<String, String> cache1 = manager(0).getCache();
       Cache cache2 = manager(1).getCache();
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      ObjectName rpcManager1 = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       ObjectName rpcManager2 = getCacheObjectName(jmxDomain2, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       assert mBeanServer.isRegistered(rpcManager1);
       assert mBeanServer.isRegistered(rpcManager2);
@@ -101,7 +101,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       Cache<MagicKey, Object> cache1 = manager(0).getCache();
       Cache cache2 = manager(1).getCache();
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      ObjectName rpcManager1 = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
+      ObjectName rpcManager1 = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
 
       // the previous test has reset the statistics
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 0);
@@ -199,7 +199,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       responses.get(3).toCompletableFuture().join();
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      ObjectName rpcManagerName = getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", "RpcManager");
+      ObjectName rpcManagerName = getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", "RpcManager");
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "SyncXSiteCount"), (long) 2);
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteCount"), (long) 2);
       assertEquals(mBeanServer.getAttribute(rpcManagerName, "AsyncXSiteAcksCount"), (long) 2);

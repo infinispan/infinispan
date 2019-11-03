@@ -13,6 +13,8 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -23,6 +25,7 @@ import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -30,6 +33,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest {
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    protected HttpClient client;
    private static final int NUM_SERVERS = 2;
    private List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
@@ -41,7 +45,8 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
    protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      globalBuilder.globalJmxStatistics().enable();
+      TestCacheManagerFactory.configureGlobalJmx(globalBuilder, getClass().getSimpleName() + id,
+                                                 mBeanServerLookup);
       globalBuilder.serialization().addContextInitializer(RestTestSCI.INSTANCE);
       return globalBuilder.clusteredDefault().cacheManagerName("default");
    }

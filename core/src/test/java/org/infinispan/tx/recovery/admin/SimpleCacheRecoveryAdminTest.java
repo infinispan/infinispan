@@ -13,7 +13,7 @@ import javax.management.ObjectName;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -36,9 +36,9 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
-   private static final String JMX_DOMAIN = "tx.recovery.admin.LocalCacheRecoveryAdminTest";
+   private static final String JMX_DOMAIN = SimpleCacheRecoveryAdminTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private EmbeddedTransaction tx1;
 
@@ -52,9 +52,9 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(3)
             .l1().disable();
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
-      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), configuration, new TransportFlags(), true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(0), configuration, new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(1), configuration, new TransportFlags());
+      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(2), configuration, new TransportFlags());
       registerCacheManager(cm1, cm2, cm3);
       defineConfigurationOnAllManagers("test", configuration);
       cache(0, "test");
@@ -76,11 +76,11 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       TestingUtil.blockUntilViewsReceived(90000, false, cache(0, "test"), cache(1, "test"));
    }
 
-   private GlobalConfigurationBuilder createGlobalConfigurationBuilder() {
+   private GlobalConfigurationBuilder createGlobalConfigurationBuilder(int index) {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalConfiguration.globalJmxStatistics().enable()
             .mBeanServerLookup(mBeanServerLookup)
-            .jmxDomain(JMX_DOMAIN);
+            .jmxDomain(JMX_DOMAIN + index);
       return globalConfiguration;
    }
 
@@ -192,7 +192,6 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    }
 
    private ObjectName getRecoveryAdminObjectName(int cacheIndex) {
-      String postfix = cacheIndex == 0 ? "" : String.valueOf(++cacheIndex);
-      return getCacheObjectName(JMX_DOMAIN + postfix, "test(dist_sync)", "RecoveryAdmin");
+      return getCacheObjectName(JMX_DOMAIN + cacheIndex, "test(dist_sync)", "RecoveryAdmin");
    }
 }

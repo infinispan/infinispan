@@ -13,7 +13,6 @@
 
     <cache-container name="HibernateSearch" statistics="false" shutdown-hook="DONT_REGISTER">
         <transport stack="default-jgroups-tcp"/>
-        <jmx duplicate-domains="true"/>
 
         <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
             <persistence passivation="false">

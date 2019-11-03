@@ -5,7 +5,6 @@
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
     <cache-container name="NonTransactionalCacheManager" default-cache="default">
-        <jmx duplicate-domains="true"/>
         <local-cache name="default"/>
         <local-cache name="cachedMock"/>
     </cache-container>

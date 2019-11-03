@@ -108,7 +108,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
       replCfg.clustering().cacheMode(CacheMode.REPL_SYNC);
       replCfg.clustering().stateTransfer().timeout(10, SECONDS);
 
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.newDefaultCacheManager(false, gcb1, replCfg, false);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.newDefaultCacheManager(false, gcb1, replCfg);
       registerCacheManager(cm1);
       return cm1;
    }

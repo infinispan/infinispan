@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -14,7 +15,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -40,7 +41,7 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private static final String REBALANCING_ENABLED = "rebalancingEnabled";
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    public void testJoinAndLeaveWithRebalanceSuspended() throws Exception {
       doTest(false);
@@ -63,11 +64,10 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
    }
 
    private GlobalConfigurationBuilder getGlobalConfigurationBuilder(String rackId) {
+      int index = cacheManagers.size();
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb.globalJmxStatistics()
-            .enable()
-            .mBeanServerLookup(mBeanServerLookup)
-            .transport().rackId(rackId);
+      gcb.transport().rackId(rackId);
+      configureGlobalJmx(gcb, getClass().getSimpleName() + index, mBeanServerLookup);
       return gcb;
    }
 

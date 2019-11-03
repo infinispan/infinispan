@@ -1,6 +1,7 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.management.MBeanServer;
@@ -8,8 +9,11 @@ import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -23,6 +27,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
 
    private static final String JMX_DOMAIN = TxInterceptorMBeanTest.class.getSimpleName();
 
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private ObjectName txInterceptor;
    private ObjectName txInterceptor2;
    private TransactionManager tm;
@@ -31,10 +36,15 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(JMX_DOMAIN, true);
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalBuilder, JMX_DOMAIN, mBeanServerLookup);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, new ConfigurationBuilder());
       registerCacheManager(cacheManager1);
 
-      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("SecondDefaultCacheManager", JMX_DOMAIN, true);
+      GlobalConfigurationBuilder globalBuilder2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder2.cacheManagerName("SecondDefaultCacheManager");
+      configureGlobalJmx(globalBuilder2, JMX_DOMAIN + 2, mBeanServerLookup);
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder2, new ConfigurationBuilder());
       registerCacheManager(cacheManager2);
 
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
@@ -45,7 +55,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       cache1 = cacheManager1.getCache("test");
       cache2 = cacheManager2.getCache("test");
       txInterceptor = getCacheObjectName(JMX_DOMAIN, "test(repl_sync)", "Transactions");
-      txInterceptor2 = getCacheObjectName(JMX_DOMAIN, "test(repl_sync)", "Transactions", "SecondDefaultCacheManager");
+      txInterceptor2 = getCacheObjectName(JMX_DOMAIN + 2, "test(repl_sync)", "Transactions", "SecondDefaultCacheManager");
 
       tm = TestingUtil.getTransactionManager(cache1);
    }

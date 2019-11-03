@@ -4,7 +4,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -20,35 +20,37 @@ import org.infinispan.test.fwk.TransportFlags;
  */
 abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
 
-   final String jmxDomain;
+   final String jmxDomain1;
    final String jmxDomain2;
+   final String jmxDomain3;
 
-   protected final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   protected final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    AbstractClusterMBeanTest(String clusterName) {
-      this.jmxDomain = clusterName;
+      this.jmxDomain1 = clusterName;
       this.jmxDomain2 = clusterName + "2";
+      this.jmxDomain3 = clusterName + "3";
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
-      CacheContainer c1 = createManager(cb);
-      CacheContainer c2 = createManager(cb);
-      CacheContainer c3 = createManager(cb);
+      CacheContainer c1 = createManager(cb, jmxDomain1);
+      CacheContainer c2 = createManager(cb, jmxDomain2);
+      CacheContainer c3 = createManager(cb, jmxDomain3);
       registerCacheManager(c1, c2, c3);
       createCluster(TestDataSCI.INSTANCE, cb, 3);
       waitForClusterToForm(getDefaultCacheName());
    }
 
-   private CacheContainer createManager(ConfigurationBuilder builder) {
+   private CacheContainer createManager(ConfigurationBuilder builder, String jmxDomain) {
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb1.globalJmxStatistics().enable().jmxDomain(jmxDomain)
             .mBeanServerLookup(mBeanServerLookup);
       gcb1.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       CacheContainer cacheManager = TestCacheManagerFactory.createClusteredCacheManager(gcb1, builder,
-            new TransportFlags(), true);
+            new TransportFlags());
       cacheManager.start();
       return cacheManager;
    }

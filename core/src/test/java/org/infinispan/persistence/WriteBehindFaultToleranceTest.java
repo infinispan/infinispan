@@ -38,7 +38,6 @@ public class WriteBehindFaultToleranceTest extends SingleCacheManagerTest {
 
    private Cache<Object, Object> createManagerAndGetCache(boolean failSilently, int queueSize) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
-      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       config.persistence().availabilityInterval(AVAILABILITY_INTERVAL)
         .addStore(DummyInMemoryStoreConfigurationBuilder.class)
