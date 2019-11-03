@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 @Test(testName = "tx.NoRecoveryManagerByDefaultTest", groups = "functional")
 public class NoRecoveryManagerByDefaultTest extends SingleCacheManagerTest {
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    public void testNoRecoveryManager() {
       assertTrue(cache.getCacheConfiguration().transaction().transactionMode().isTransactional());

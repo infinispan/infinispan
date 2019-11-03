@@ -3,6 +3,7 @@ package org.infinispan.cli.interpreter;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -19,6 +20,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -38,6 +41,7 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    private static final String REGULAR_CACHE = "default";
    private static final String OBJ_CACHE = "object";
 
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private CloseableHttpClient restClient = HttpClients.createMinimal();
    private RestServer restServer;
    private Interpreter interpreter;
@@ -47,7 +51,7 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false));
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      global.globalJmxStatistics().enable();
+      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
 
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();

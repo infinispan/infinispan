@@ -61,7 +61,7 @@ public class GetAllCommandStressTest extends StressTest {
       gcb.transport().remoteCommandThreadPool().threadPoolFactory(executorFactory);
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(true, gcb,
-            new ConfigurationBuilder(), false);
+            new ConfigurationBuilder());
       cacheManagers.add(cm);
       return cm;
    }

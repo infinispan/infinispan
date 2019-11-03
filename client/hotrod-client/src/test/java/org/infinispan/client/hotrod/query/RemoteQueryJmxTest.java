@@ -27,7 +27,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -60,7 +60,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
    private static final String TEST_CACHE_NAME = "userCache";
 
    private static final String JMX_DOMAIN = RemoteQueryJmxTest.class.getSimpleName();
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private final MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
 
    private HotRodServer hotRodServer;
@@ -81,7 +81,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 

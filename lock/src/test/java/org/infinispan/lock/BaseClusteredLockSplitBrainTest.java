@@ -40,7 +40,7 @@ public abstract class BaseClusteredLockSplitBrainTest extends BasePartitionHandl
             .numOwner(numOwner)
             .reliability(reliability);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, gcb, builder, flags, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, gcb, builder, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();

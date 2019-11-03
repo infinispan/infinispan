@@ -24,11 +24,6 @@
 
         <transport stack="default-jgroups-tcp"/>
 
-        <!-- Duplicate domains are allowed so that multiple deployments with default configuration
-            of Hibernate Search applications work - if possible it would be better to use JNDI to share
-            the CacheManager across applications -->
-        <jmx duplicate-domains="true"/>
-
         <!-- *************************************** -->
         <!--  Cache to store Lucene's file metadata  -->
         <!-- *************************************** -->

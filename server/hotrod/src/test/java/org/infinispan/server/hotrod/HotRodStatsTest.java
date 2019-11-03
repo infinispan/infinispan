@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -11,7 +12,10 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Objects;
 
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -24,13 +28,15 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "server.hotrod.HotRodStatsTest")
 public class HotRodStatsTest extends HotRodSingleNodeTest {
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    public EmbeddedCacheManager createTestCacheManager() {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.jmxStatistics().enable();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain(), cfg);
-      return cm;
+      GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalCfg, jmxDomain(), mBeanServerLookup);
+      return TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
    }
 
    public void testStats(Method m) {

@@ -127,7 +127,7 @@ public class PerCacheInboundHandlerMBeanTest extends AbstractClusterMBeanTest {
    }
 
    private ObjectName getObjectName() {
-      return getCacheObjectName(jmxDomain, getDefaultCacheName() + "(repl_sync)", MBEAN_COMPONENT_NAME);
+      return getCacheObjectName(jmxDomain1, getDefaultCacheName() + "(repl_sync)", MBEAN_COMPONENT_NAME);
    }
 
    private PerCacheInboundInvocationHandler getHandler() {

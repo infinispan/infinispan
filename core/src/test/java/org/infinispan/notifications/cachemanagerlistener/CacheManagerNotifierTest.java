@@ -43,7 +43,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
       holder.getGlobalConfigurationBuilder().clusteredDefault().defaultCacheName("default");
       holder.newConfigurationBuilder("default").clustering().cacheMode(CacheMode.DIST_SYNC);
-      EmbeddedCacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager(false, holder, false);
+      EmbeddedCacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager(false, holder);
       EmbeddedCacheManager cmB = null;
 
       try {

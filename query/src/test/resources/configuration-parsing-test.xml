@@ -4,9 +4,8 @@
       xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}"
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
-   <cache-container default-cache="default" statistics="true">
+   <cache-container default-cache="default" statistics="false">
       <transport stack="tcp"/>
-      <jmx duplicate-domains="true" />
       <local-cache name="default">
          <indexing index="NONE"/>
       </local-cache>

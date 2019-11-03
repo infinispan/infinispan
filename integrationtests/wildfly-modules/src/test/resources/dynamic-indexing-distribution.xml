@@ -10,7 +10,6 @@
          <context-initializer class="org.infinispan.test.integration.as.WidlflyIntegrationSCIImpl"/>
       </serialization>
       <transport stack="tcpStack" cluster="Infinispan-Query-Cluster" />
-      <jmx duplicate-domains="true" />
        <!-- *************************************** -->
        <!--  Default Cache, with indexing enabled.  -->
        <!-- *************************************** -->

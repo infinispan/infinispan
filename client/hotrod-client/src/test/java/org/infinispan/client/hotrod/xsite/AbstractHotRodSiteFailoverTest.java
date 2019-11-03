@@ -18,7 +18,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -38,7 +38,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    static String SITE_B = "NYC-2";
    static int NODES_PER_SITE = 2;
 
-   protected final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   protected final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private Map<String, List<HotRodServer>> siteServers = new HashMap<>();
 

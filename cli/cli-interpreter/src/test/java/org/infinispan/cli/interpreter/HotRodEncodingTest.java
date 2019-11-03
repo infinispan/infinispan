@@ -2,6 +2,7 @@ package org.infinispan.cli.interpreter;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -11,6 +12,8 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -18,7 +21,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -29,12 +31,12 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(testName = "cli.interpreter.HotRodEncodingTest", groups = "functional")
-@CleanupAfterMethod
 public class HotRodEncodingTest extends SingleCacheManagerTest {
 
    private static final String REGULAR_CACHE = "default";
    private static final String OBJECT_CACHE = "object";
 
+   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    HotRodServer hotrodServer;
    int port;
    Interpreter interpreter;
@@ -46,7 +48,7 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
             getDefaultStandaloneCacheConfig(false));
       c.jmxStatistics().enable();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      global.globalJmxStatistics().enable();
+      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
       ConfigurationBuilder objectStorageBuilder = new ConfigurationBuilder();
       objectStorageBuilder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)

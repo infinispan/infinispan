@@ -28,7 +28,8 @@ public class SecurityXmlFileParsingTest extends AbstractInfinispanTest {
 
          @Override
          public Void run() throws Exception {
-            withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/security.xml", true)) {
+            withCacheManager(new CacheManagerCallable(
+                  TestCacheManagerFactory.fromXml("configs/security.xml", true)) {
                @Override
                public void call() {
                   GlobalConfiguration g = cm.getCacheManagerConfiguration();

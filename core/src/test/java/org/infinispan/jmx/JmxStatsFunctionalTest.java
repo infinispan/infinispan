@@ -4,6 +4,7 @@ import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.existsDomain;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -15,7 +16,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -40,11 +41,11 @@ import org.testng.annotations.Test;
 public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    private static final String JMX_DOMAIN = JmxStatsFunctionalTest.class.getSimpleName();
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private final MBeanServer server = mBeanServerLookup.getMBeanServer();
    private EmbeddedCacheManager cm, cm2, cm3;
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm, cm2, cm3);
       cm = null;
@@ -57,7 +58,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
     */
    public void testDefaultDomain() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
@@ -91,7 +92,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testDifferentDomain() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
@@ -104,7 +105,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testOnlyGlobalJmxStatsEnabled() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
@@ -132,7 +133,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testOnlyPerCacheJmxStatsEnabled() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
@@ -155,8 +156,9 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testMultipleManagersOnSameServerFails(Method method) throws Exception {
       final String jmxDomain = JMX_DOMAIN + '_' + method.getName();
-      cm = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false,
-            GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), mBeanServerLookup);
+      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalConfiguration, jmxDomain, mBeanServerLookup);
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
 
       ConfigurationBuilder localCache = config();//local by default
       localCache.jmxStatistics().enable();
@@ -164,12 +166,15 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm.getCache("local_cache");
       assertTrue(server.isRegistered(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics")));
 
+      GlobalConfigurationBuilder globalConfiguration2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalConfiguration2, jmxDomain, mBeanServerLookup);
       expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
-            () -> TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false,
-                  GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), mBeanServerLookup));
+            () -> TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder()));
 
-      CacheContainer duplicateAllowedContainer = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, true,
-            GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), mBeanServerLookup);
+      GlobalConfigurationBuilder globalConfiguration3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configureGlobalJmx(globalConfiguration3, jmxDomain, mBeanServerLookup);
+      globalConfiguration3.globalJmxStatistics().allowDuplicateDomains(true);
+      CacheContainer duplicateAllowedContainer = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration3, new ConfigurationBuilder());
       try {
          final String duplicateName = jmxDomain + "2";
          ObjectName duplicateObjectName = getCacheManagerObjectName(duplicateName);
@@ -181,7 +186,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testMultipleManagersOnSameServerWithCloneFails() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
       ConfigurationBuilder localCache = config();//local by default
@@ -190,26 +195,28 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm.getCache("local_cache");
       assertTrue(server.isRegistered(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics")));
 
+      GlobalConfigurationBuilder globalConfiguration2 = new GlobalConfigurationBuilder();
+      globalConfiguration2.read(globalConfiguration.build());
+      globalConfiguration2.transport().defaultTransport();
       expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
-            () -> TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain, true, false,
-                  GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), mBeanServerLookup));
+            () -> TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder()));
    }
 
    public void testMultipleManagersOnSameServer() {
+      String jmxDomain = JMX_DOMAIN;
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, jmxDomain, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
-      String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
       ConfigurationBuilder localCache = config();//local by default
       localCache.jmxStatistics().enable();
       cm.defineConfiguration("local_cache", localCache.build());
       cm.getCache("local_cache");
       assertTrue(server.isRegistered(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics")));
 
+      String jmxDomain2 = JMX_DOMAIN + 2;
       GlobalConfigurationBuilder globalConfiguration2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration2.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration2, jmxDomain2, mBeanServerLookup);
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder());
-      String jmxDomain2 = cm2.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
       ConfigurationBuilder localCache2 = config();//local by default
       localCache2.jmxStatistics().enable();
@@ -217,10 +224,10 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       cm2.getCache("local_cache");
       assertTrue(server.isRegistered(getCacheObjectName(jmxDomain2, "local_cache(local)", "Statistics")));
 
+      String jmxDomain3 = JMX_DOMAIN + 3;
       GlobalConfigurationBuilder globalConfiguration3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration3.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration3, jmxDomain3, mBeanServerLookup);
       cm3 = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration3, new ConfigurationBuilder());
-      String jmxDomain3 = cm3.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
       ConfigurationBuilder localCache3 = config();//local by default
       localCache3.jmxStatistics().enable();
@@ -231,7 +238,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testUnregisterJmxInfoOnStop() {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
       ConfigurationBuilder localCache = config();//local by default
@@ -249,8 +256,8 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
    public void testCorrectUnregistering() {
       assertFalse(existsDomain(server, "infinispan"));
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
-      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, new ConfigurationBuilder(), false);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, new ConfigurationBuilder());
       ConfigurationBuilder localCache = config();//local by default
       cm.defineConfiguration("local_cache", localCache.build());
       cm.getCache("local_cache");
@@ -260,7 +267,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
       //now register a global one
       GlobalConfigurationBuilder globalConfiguration2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration2.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration2, JMX_DOMAIN + 2, mBeanServerLookup);
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder());
       ConfigurationBuilder remoteCache = new ConfigurationBuilder();
       remoteCache.jmxStatistics().enable();
@@ -283,8 +290,8 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public void testStopUnstartedCacheManager() {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
-      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, new ConfigurationBuilder(), false);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, new ConfigurationBuilder());
       cm.stop();
    }
 
@@ -293,7 +300,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       globalConfiguration.transport().siteId("TESTVALUE1");
       globalConfiguration.transport().rackId("TESTVALUE2");
       globalConfiguration.transport().machineId("TESTVALUE3");
-      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(mBeanServerLookup);
+      configureGlobalJmx(globalConfiguration, JMX_DOMAIN, mBeanServerLookup);
       cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
 

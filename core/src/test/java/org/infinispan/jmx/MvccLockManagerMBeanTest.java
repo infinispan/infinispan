@@ -6,7 +6,7 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -27,8 +27,8 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    private static final int CONCURRENCY_LEVEL = 129;
 
    private ObjectName lockManagerObjName;
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
-   private static final String JMX_DOMAIN = "MvccLockManagerMBeanTest";
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private static final String JMX_DOMAIN = MvccLockManagerMBeanTest.class.getSimpleName();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -45,11 +45,10 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
       globalConfiguration
             .cacheContainer().statistics(true)
             .globalJmxStatistics()
-            .allowDuplicateDomains(true)
             .jmxDomain(JMX_DOMAIN)
             .mBeanServerLookup(mBeanServerLookup);
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
 
       cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");

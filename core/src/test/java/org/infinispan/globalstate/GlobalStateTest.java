@@ -29,8 +29,8 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(stateDirectory, true);
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(stateDirectory, true);
 
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags(), false);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags(), false);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
       try {
          cm1.start();
          Exceptions.expectException(EmbeddedCacheManagerStartupException.class, "org.infinispan.commons.CacheConfigurationException: ISPN000512: Cannot acquire lock.*", () -> cm2.start());
@@ -44,8 +44,8 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
       String state2 = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags(), false);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags(), false);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
       try {
          cm1.start();
          cm2.start();
@@ -56,7 +56,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          w.write("'Cause I want to be anarchy\nIt's the only way to be");
          w.close();
          global1 = statefulGlobalBuilder(state1, false);
-         EmbeddedCacheManager newCm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags(), false);
+         EmbeddedCacheManager newCm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
          Exceptions.expectException(EmbeddedCacheManagerStartupException.class, "org.infinispan.commons.CacheConfigurationException: ISPN000516: The state file for '___global' is invalid.*", () -> newCm1.start());
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);

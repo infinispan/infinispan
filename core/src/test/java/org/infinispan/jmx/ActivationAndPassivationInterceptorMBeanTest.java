@@ -18,7 +18,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -43,7 +43,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
    private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private AdvancedLoadWriteStore loader;
    private ObjectName activationInterceptorObjName;
@@ -63,7 +63,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
                .passivation(true)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
-      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder, true);
+      return TestCacheManagerFactory.createCacheManager(globalBuilder, builder);
    }
 
    @Override

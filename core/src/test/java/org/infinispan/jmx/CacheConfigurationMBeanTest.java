@@ -8,7 +8,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.impl.DefaultDataContainer;
@@ -26,7 +26,7 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
 
    private static final String JMX_DOMAIN = CacheConfigurationMBeanTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -36,7 +36,7 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
       dcc.transaction().autoCommit(false);
       dcc.memory().size(1000);
       dcc.jmxStatistics().enable();
-      return TestCacheManagerFactory.createCacheManager(gcb, dcc, true);
+      return TestCacheManagerFactory.createCacheManager(gcb, dcc);
    }
 
    public void testEvictionSize() throws Exception {

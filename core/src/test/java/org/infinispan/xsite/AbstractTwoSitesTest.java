@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
 
 /**
@@ -78,6 +79,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
 
    protected GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       builder.site().localSite(siteName);
       return builder;
    }

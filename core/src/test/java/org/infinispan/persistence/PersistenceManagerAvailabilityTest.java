@@ -31,7 +31,6 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
 
    private Cache<Object, Object> createManagerAndGetCache(int startFailures) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
-      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       config.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .startFailures(startFailures);

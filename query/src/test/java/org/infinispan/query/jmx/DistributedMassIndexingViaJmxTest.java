@@ -1,5 +1,7 @@
 package org.infinispan.query.jmx;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+
 import java.net.URL;
 
 import javax.management.MalformedObjectNameException;
@@ -8,7 +10,7 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -26,9 +28,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.jmx.DistributedMassIndexingViaJmxTest")
 public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTest {
 
-   private static final String BASE_JMX_DOMAIN = DistributedMassIndexingViaJmxTest.class.getSimpleName();
+   private static final String BASE_JMX_DOMAIN = DistributedMassIndexingViaJmxTest.class.getName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -39,14 +41,10 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
          ParserRegistry parserRegistry = new ParserRegistry(
                Thread.currentThread().getContextClassLoader());
          ConfigurationBuilderHolder holder = parserRegistry.parse(url);
-         // Each cache manager should use a different jmx domain and
-         // a parallel-testsuite friendly mbean server
-         holder.getGlobalConfigurationBuilder().globalJmxStatistics()
-               .jmxDomain(BASE_JMX_DOMAIN + i)
-               .mBeanServerLookup(mBeanServerLookup);
+         configureGlobalJmx(holder.getGlobalConfigurationBuilder(), BASE_JMX_DOMAIN + i, mBeanServerLookup);
 
          EmbeddedCacheManager cm = TestCacheManagerFactory
-               .createClusteredCacheManager(holder, true);
+               .createClusteredCacheManager(holder);
          registerCacheManager(cm);
          Cache cache = cm.getCache();
          caches.add(cache);

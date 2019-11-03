@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,7 +24,7 @@ public class CacheOpsTest extends SingleCacheManagerTest {
 
    public static final String JMX_DOMAIN = CacheOpsTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -34,7 +34,7 @@ public class CacheOpsTest extends SingleCacheManagerTest {
       cfg.transaction().autoCommit(false)
             .memory().size(1000)
             .jmxStatistics().enable();
-      return TestCacheManagerFactory.createCacheManager(gcb, cfg, true);
+      return TestCacheManagerFactory.createCacheManager(gcb, cfg);
    }
 
    public void testClear() throws Exception {

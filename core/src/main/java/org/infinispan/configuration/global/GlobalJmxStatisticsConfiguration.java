@@ -64,6 +64,10 @@ public class GlobalJmxStatisticsConfiguration implements ConfigurationInfo {
       return properties.get();
    }
 
+   /**
+    * @deprecated Since 10.1, please set a unique {@link #jmxDomain} or {@link GlobalConfiguration#cacheManagerName()} instead.
+    */
+   @Deprecated
    public boolean allowDuplicateDomains() {
       return allowDuplicateDomains.get();
    }

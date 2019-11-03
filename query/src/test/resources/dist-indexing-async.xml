@@ -4,12 +4,11 @@
         xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}"
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
-    <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="true">
+    <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="false">
         <serialization>
             <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
         </serialization>
         <transport cluster="Infinispan-Query-Cluster"/>
-        <jmx duplicate-domains="true"/>
 
         <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
             <indexing index="LOCAL">

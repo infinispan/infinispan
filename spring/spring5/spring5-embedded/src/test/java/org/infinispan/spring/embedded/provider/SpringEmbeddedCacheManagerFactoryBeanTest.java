@@ -4,6 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Optional;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -182,9 +184,9 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractInfinispa
 
       // Get the cache manager and make assertions.
       final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject().getNativeCacheManager();
-      assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
-                         .allowDuplicateDomains(), true);
-      assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode().isTransactional(),
-                   false);
+      assertEquals(Optional.of("default"),
+                   infinispanEmbeddedCacheManager.getCacheManagerConfiguration().defaultCacheName());
+      assertEquals(TransactionMode.NON_TRANSACTIONAL,
+                   infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode());
    }
 }

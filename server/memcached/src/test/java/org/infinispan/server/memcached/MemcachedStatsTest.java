@@ -24,7 +24,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -49,7 +49,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    private static final String jmxDomain = MemcachedStatsTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    public EmbeddedCacheManager createTestCacheManager() {
@@ -61,7 +61,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.jmxStatistics().enabled(true);
 
-      return TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
+      return TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
    }
 
    public void testUnsupportedStats() {

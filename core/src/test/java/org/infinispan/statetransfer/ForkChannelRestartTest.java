@@ -113,7 +113,7 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
       gcb.transport().transport(new JGroupsTransport(fch));
       gcb.transport().distributedSyncTimeout(40, TimeUnit.SECONDS);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, cacheCfg, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, cacheCfg);
       registerCacheManager(cm);
       return cm;
    }

@@ -21,7 +21,7 @@ import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
@@ -44,7 +44,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    private static final String JMX_DOMAIN = CacheManagerMBeanTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private final MBeanServer server = mBeanServerLookup.getMBeanServer();
 
@@ -56,12 +56,11 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       globalConfiguration
             .cacheContainer().statistics(true)
             .globalJmxStatistics()
-            .allowDuplicateDomains(true)
             .jmxDomain(JMX_DOMAIN)
             .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.jmxStatistics().enabled(false);
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
       name = getCacheManagerObjectName(JMX_DOMAIN);
       mBeanServerLookup.getMBeanServer().invoke(name, "startCache", new Object[0], new String[0]);
       return cacheManager;
@@ -107,16 +106,37 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
             () -> mBeanServerLookup.getMBeanServer().invoke(name, "stop", new Object[]{}, new String[]{}));
    }
 
+   public void testSameDomain(Method m) throws Exception {
+      GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
+      gc.cacheContainer().statistics(true)
+        .globalJmxStatistics().jmxDomain(JMX_DOMAIN)
+        .allowDuplicateDomains(true)
+        .mBeanServerLookup(mBeanServerLookup);
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.jmxStatistics().enabled(false);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
+
+      CacheManagerJmxRegistration otherJmxRegistration = extractGlobalComponent(otherContainer, CacheManagerJmxRegistration.class);
+      String otherDomain = otherJmxRegistration.getDomain();
+      ObjectName otherName = getCacheManagerObjectName(otherDomain);
+      try {
+         assertEquals(JMX_DOMAIN + 2, otherDomain);
+      } finally {
+         otherContainer.stop();
+      }
+
+      Exceptions.expectException(InstanceNotFoundException.class, () -> mBeanServerLookup.getMBeanServer().getAttribute(otherName, "CreatedCacheCount"));
+   }
+
    public void testJmxRegistrationAtStartupAndStop(Method m) throws Exception {
       String otherJmxDomain = JMX_DOMAIN + "_" + m.getName();
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.cacheContainer().statistics(true)
-            .globalJmxStatistics().allowDuplicateDomains(true)
-            .jmxDomain(otherJmxDomain)
+            .globalJmxStatistics().jmxDomain(otherJmxDomain)
             .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.jmxStatistics().enabled(false);
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c, true);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain);
       try {
          assertEquals("0", mBeanServerLookup.getMBeanServer().getAttribute(otherName, "CreatedCacheCount"));
@@ -132,13 +152,12 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
       gc.cacheContainer().statistics(true)
             .globalJmxStatistics()
-            .allowDuplicateDomains(true)
             .jmxDomain(otherJmxDomain)
             .mBeanServerLookup(mBeanServerLookup);
       gc.cacheManagerName("Hibernate2LC");
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.jmxStatistics().enabled(false);
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c, true);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
       try {
          ObjectName otherName = getCacheManagerObjectName(otherJmxDomain, "Hibernate2LC");
          assertEquals("0", mBeanServerLookup.getMBeanServer().getAttribute(otherName, "CreatedCacheCount"));

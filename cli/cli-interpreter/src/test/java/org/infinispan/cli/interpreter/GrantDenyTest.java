@@ -12,6 +12,8 @@ import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.infinispan.cli.interpreter.result.ResultKeys;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -29,12 +31,14 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName="cli.interpreter.GrantDenyTest")
 public class GrantDenyTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
+
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private ClusterRoleMapper cpm;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalJmxStatistics().enable();
+      TestCacheManagerFactory.configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new ClusterRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);

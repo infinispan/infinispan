@@ -9,10 +9,14 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -29,6 +33,7 @@ import org.testng.annotations.Test;
 public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    public String configRoot;
    private InMemoryAppender appender;
 
@@ -43,7 +48,7 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    public void setUpTest() {
       final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
       final Configuration config = ctx.getConfiguration();
-      appender = (InMemoryAppender) config.getAppender("InMemory");
+      appender = config.getAppender("InMemory");
       appender.enable(Thread.currentThread());
       ctx.updateLoggers();
       configRoot = "../distribution/src/main/release/common/configs/config-samples".replace('/', File.separatorChar);
@@ -61,7 +66,13 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
          log.tracef("Analysing %s", aConfFile);
          EmbeddedCacheManager dcm = null;
          try {
-            dcm = TestCacheManagerFactory.fromXml(getRootFolder() + File.separator + aConfFile, false, true);
+            String absolutePath = getRootFolder() + File.separator + aConfFile;
+            ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseFile(absolutePath, false);
+            if (holder.getGlobalConfigurationBuilder().cacheContainer().statistics()) {
+               holder.getGlobalConfigurationBuilder().globalJmxStatistics()
+                     .mBeanServerLookup(mBeanServerLookup);
+            }
+            dcm = TestCacheManagerFactory.createClusteredCacheManager(true, holder, new TransportFlags());
             if (dcm.getDefaultCacheConfiguration() != null)
                dcm.getCache();
             assert !appender.isFoundUnknownWarning() : String.format(

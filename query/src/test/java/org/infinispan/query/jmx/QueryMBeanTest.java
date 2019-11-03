@@ -1,6 +1,7 @@
 package org.infinispan.query.jmx;
 
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -18,7 +19,7 @@ import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -44,7 +45,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
    private static final String TEST_JMX_DOMAIN = QueryMBeanTest.class.getSimpleName();
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private static final String CACHE_NAME = "queryable-cache";
 
@@ -64,7 +65,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, builder, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, builder);
 
       cm.defineConfiguration(CACHE_NAME, builder.build());
       return cm;
@@ -185,6 +186,9 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
       EmbeddedCacheManager cm2 = null;
       try {
+         GlobalConfigurationBuilder globalConfig2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+         globalConfig2.cacheManagerName("cm2");
+         configureGlobalJmx(globalConfig2, TEST_JMX_DOMAIN, mBeanServerLookup);
          ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
          defaultCacheConfig2
                .indexing().index(Index.ALL)
@@ -192,7 +196,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
                .addProperty("lucene_version", "LUCENE_CURRENT")
                .jmxStatistics().enable();
 
-         cm2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2", TEST_JMX_DOMAIN, true, true, defaultCacheConfig2, mBeanServerLookup);
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfig2, defaultCacheConfig2);
          cm2.defineConfiguration(CACHE_NAME, defaultCacheConfig2.build());
          cm2.getCache(CACHE_NAME); // Start the cache belonging to second cache manager
 

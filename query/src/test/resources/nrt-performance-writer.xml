@@ -5,7 +5,6 @@
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container name="QueryEnabledGrid-Local-NRTIndexing" default-cache="default" statistics="false">
-      <jmx duplicate-domains="true" />
       <local-cache name="default" statistics="false">
          <memory>
             <object size="-1"/>

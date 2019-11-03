@@ -14,8 +14,9 @@ import javax.management.ObjectName;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
-import org.infinispan.commons.jmx.MBeanServerLookupProvider;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -33,14 +34,15 @@ public class HotRodClientNearCacheJmxTest extends AbstractInfinispanTest {
    private RemoteCacheManager[] rcms;
    private RemoteCache<String, String>[] remoteCaches;
 
-   private final MBeanServerLookup mBeanServerLookup = MBeanServerLookupProvider.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @BeforeMethod
    protected void setup() throws Exception {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cfg.jmxStatistics().enable();
-      cacheContainer = TestCacheManagerFactory
-            .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), cfg);
+      GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.configureGlobalJmx(globalCfg, getClass().getSimpleName(), mBeanServerLookup);
+      cacheContainer = TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
 
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       rcms = new RemoteCacheManager[2];

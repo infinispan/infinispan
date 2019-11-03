@@ -181,9 +181,8 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest extends AbstractInfin
 
          // Get the cache manager and make assertions.
          final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
-         assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
-                                                    .allowDuplicateDomains(),
-                      gcb.build().globalJmxStatistics().allowDuplicateDomains());
+         assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().defaultCacheName(),
+                      gcb.build().defaultCacheName());
          assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction()
                                                     .transactionMode().isTransactional(),
                       builder.build().transaction().transactionMode().isTransactional());

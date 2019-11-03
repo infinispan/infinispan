@@ -4,8 +4,7 @@
       xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}"
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
-   <cache-container default-cache="default" statistics="true">
-      <jmx duplicate-domains="true" />
+   <cache-container default-cache="default" statistics="false">
       <local-cache-configuration name="base">
          <indexing index="ALL">
             <property name="hibernate.search.default.directory_provider">someDefault</property>

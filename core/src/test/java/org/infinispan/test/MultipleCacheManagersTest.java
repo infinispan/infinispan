@@ -189,7 +189,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false,
-            GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), flags, false);
+            GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
@@ -242,7 +242,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, flags, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
@@ -250,7 +250,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilderHolder builderHolder) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, builderHolder, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, builderHolder);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();
@@ -258,7 +258,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, globalBuilder, builder, flags, false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, globalBuilder, builder, flags);
       amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
       cm.start();

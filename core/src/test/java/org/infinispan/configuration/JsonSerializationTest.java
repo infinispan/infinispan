@@ -27,7 +27,8 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.JsonReader;
 import org.infinispan.commons.configuration.JsonWriter;
-import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
+import org.infinispan.commons.jmx.MBeanServerLookup;
+import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.util.Version;
@@ -80,6 +81,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Test(testName = "config.JsonSerializationTest", groups = "functional")
 public class JsonSerializationTest extends AbstractInfinispanTest {
+   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private JsonReader jsonReader = new JsonReader();
    private JsonWriter jsonWriter = new JsonWriter();
@@ -507,7 +509,12 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    @Test
    public void testJmx() throws IOException {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.globalJmxStatistics().enable().jmxDomain("x").mBeanServerLookup(new PlatformMBeanServerLookup()).allowDuplicateDomains(true).addProperty("prop1", "val1").addProperty("prop2", "val2");
+      builder.globalJmxStatistics().enable()
+             .jmxDomain("x")
+             .mBeanServerLookup(mBeanServerLookup)
+             .allowDuplicateDomains(true)
+             .addProperty("prop1", "val1")
+             .addProperty("prop2", "val2");
 
       GlobalConfiguration configuration = builder.build();
 
@@ -520,7 +527,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertTrue(cacheContainer.get("statistics").asBoolean());
       assertTrue(jmx.get("duplicate-domains").asBoolean());
       assertEquals("x", jmx.get("domain").asText());
-      assertEquals(PlatformMBeanServerLookup.class.getName(), jmx.get("mbean-server-lookup").asText());
+      assertEquals(TestMBeanServerLookup.class.getName(), jmx.get("mbean-server-lookup").asText());
       assertEquals("val1", jmx.get("properties").get("prop1").asText());
       assertEquals("val2", jmx.get("properties").get("prop2").asText());
    }

@@ -9,7 +9,6 @@
          <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
       </serialization>
       <transport cluster="Infinispan-Query-Cluster"/>
-      <jmx duplicate-domains="true" />
       <!-- *************************************** -->
       <!--  Default Cache, with indexing enabled.  -->
       <!-- *************************************** -->
