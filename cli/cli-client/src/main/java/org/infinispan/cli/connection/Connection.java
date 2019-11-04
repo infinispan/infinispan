@@ -39,6 +39,8 @@ public interface Connection extends Closeable {
 
    Collection<String> getAvailableSites(String container, String cache) throws IOException;
 
+   Collection<String> getAvailableTasks(String container) throws IOException;
+
    Iterable<String> getCacheKeys(String container, String cache) throws IOException;
 
    Iterable<String> getCounterValue(String container, String counter) throws IOException;
@@ -54,6 +56,8 @@ public interface Connection extends Closeable {
    String describeConfiguration(String container, String configuration) throws IOException;
 
    String describeCounter(String container, String counter) throws IOException;
+
+   String describeTask(String container, String taskName) throws IOException;
 
    String getConnectionInfo();
 

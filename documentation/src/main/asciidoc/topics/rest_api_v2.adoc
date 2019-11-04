@@ -1280,3 +1280,54 @@ You can also stop one or more specific servers by passing their names:
 ----
 include::rest_examples/get_v2_cluster_stop_named.adoc[]
 ----
+
+[[rest_v2_tasks]]
+== Server-side tasks
+
+The REST API lets you interact with {brandname} servers to retrieve server
+configuration and information, Java Virtual Machine (JVM) memory usage and
+thread dumps. You can also perform operations to manage servers.
+
+[[rest_v2_tasks_list]]
+=== Retrieving Tasks Information
+
+To view information about available tasks, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_tasks_list.adoc[]
+----
+
+The response consists of a list of available tasks, including the name, the engine that handles the task, the
+named parameters for the task, the execution mode (`ONE_NODE` or `ALL_NODES`) and the allowed security role in `JSON` format,
+as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::rest_examples/rest_tasks_response.json[]
+----
+
+[[rest_v2_tasks_list]]
+=== Executing Tasks
+
+To execute a task, invoke a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_tasks_exec.adoc[]
+----
+
+The request includes the task name and any required parameters as request parameters prefixed by `param.`
+The response will contain the task result.
+
+[[rest_v2_tasks_upload]]
+=== Uploading Script Tasks
+
+To upload a script tasks, invoke a `PUT` or `POST` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/post_v2_tasks_upload.adoc[]
+----
+
+supplying as the content payload the script you wish to upload. The script can then be executed like any other task using the task execution action.

@@ -1,0 +1,28 @@
+[
+  {
+    "name": "SimpleTask",
+    "type": "TaskEngine",
+    "parameters": [
+      "p1",
+      "p2"
+    ],
+    "execution_mode": "ONE_NODE",
+    "allowed_role": null
+  },
+  {
+    "name": "RunOnAllNodesTask",
+    "type": "TaskEngine",
+    "parameters": [
+      "p1"
+    ],
+    "execution_mode": "ALL_NODES",
+    "allowed_role": null
+  },
+  {
+    "name": "SecurityAwareTask",
+    "type": "TaskEngine",
+    "parameters": [],
+    "execution_mode": "ONE_NODE",
+    "allowed_role": "MyRole"
+  }
+]

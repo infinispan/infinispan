@@ -61,10 +61,18 @@ public interface RestClient extends Closeable {
    RestCounterClient counter(String name);
 
    /**
+    * Operations on tasks
+    */
+   RestTaskClient tasks();
+
+   /**
     * Raw HTTP operations
     */
    RestRawClient raw();
 
+   /**
+    * Server metrics
+    */
    RestMetricsClient metrics();
 
    /**

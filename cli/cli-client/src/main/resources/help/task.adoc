@@ -1,0 +1,27 @@
+TASK(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+task - executes or manipulates server-side tasks
+
+
+SYNOPSIS
+--------
+*task exec* ['TASK']
+
+*task upload* --file='script' 'TASK'
+
+
+DESCRIPTION
+-----------
+The *task* command executes or manipulates server-side tasks.
+
+
+OPTIONS
+-------
+*-f, --file*='FILE'::
+Uploads the specified file as a script task with the given name.
+

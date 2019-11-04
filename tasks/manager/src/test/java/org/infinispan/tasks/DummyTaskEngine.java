@@ -3,6 +3,7 @@ package org.infinispan.tasks;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -11,8 +12,8 @@ import org.infinispan.tasks.spi.TaskEngine;
 
 public class DummyTaskEngine implements TaskEngine {
 
-   static enum DummyTaskTypes {
-      SUCCESSFUL_TASK, FAILING_TASK, SLOW_TASK
+   enum DummyTaskTypes {
+      SUCCESSFUL_TASK, PARAMETERIZED_TASK, FAILING_TASK, SLOW_TASK
    }
 
    private final Set<String> tasks;
@@ -45,6 +46,9 @@ public class DummyTaskEngine implements TaskEngine {
       switch (DummyTaskTypes.valueOf(taskName)) {
       case SUCCESSFUL_TASK:
          return (CompletableFuture<T>) CompletableFuture.completedFuture("result");
+      case PARAMETERIZED_TASK:
+         Map<String, ?> params = context.getParameters().get();
+         return (CompletableFuture<T>) CompletableFuture.completedFuture(params.get("parameter"));
       case FAILING_TASK:
          CompletableFuture<T> f = new CompletableFuture<>();
          f.completeExceptionally(new Exception("exception"));

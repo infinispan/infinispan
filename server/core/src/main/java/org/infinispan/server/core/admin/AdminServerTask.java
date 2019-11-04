@@ -1,6 +1,8 @@
 package org.infinispan.server.core.admin;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,8 +13,6 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.util.logging.LogFactory;
-
-import io.netty.util.CharsetUtil;
 
 /**
  * Common base for admin server tasks
@@ -35,8 +35,18 @@ public abstract class AdminServerTask<T> implements Task {
    }
 
    public final T execute(TaskContext taskContext) {
-      Map<String, byte[]> rawParams = (Map<String, byte[]>) taskContext.getParameters().get();
-      Map<String, String> parameters = rawParams.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> new String(entry.getValue(), CharsetUtil.UTF_8)));
+      Map<String, ?> raw = taskContext.getParameters().orElse(Collections.emptyMap());
+      Map<String, String> parameters = raw.entrySet().stream().collect(
+            Collectors.toMap(Map.Entry::getKey, entry -> {
+               Object value = entry.getValue();
+               if (value instanceof String) {
+                  return (String) value;
+               } else if (value instanceof byte[]) {
+                  return new String((byte[]) value, StandardCharsets.UTF_8);
+               } else {
+                  throw log.illegalParameterType(entry.getKey(), value.getClass());
+               }
+            }));
       String sFlags = parameters.remove("flags");
       T result = execute(
             taskContext.getCacheManager(),

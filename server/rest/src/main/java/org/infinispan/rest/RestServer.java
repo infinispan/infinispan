@@ -22,6 +22,7 @@ import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.SplashResource;
 import org.infinispan.rest.resources.StaticContentResource;
+import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.ServerManagement;
@@ -117,6 +118,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
       resourceManager.registerResource(restContext, new CacheManagerResource(invocationHelper));
       resourceManager.registerResource(restContext, new XSiteResource(invocationHelper));
+      resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
       resourceManager.registerResource(rootContext, new MetricsResource());
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
