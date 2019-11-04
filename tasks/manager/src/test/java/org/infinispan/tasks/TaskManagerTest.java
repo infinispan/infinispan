@@ -67,8 +67,17 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       assertEquals(EventLogLevel.INFO, memoryLogger.getLevel());
 
       memoryLogger.reset();
+      CompletableFuture<String> paramTask = taskManager.runTask(DummyTaskTypes.PARAMETERIZED_TASK.name(), new TaskContext().logEvent(true).addParameter("parameter", "Hello"));
+      assertEquals("Hello", paramTask.get());
+      assertEquals(0, taskManager.getCurrentTasks().size());
+      assertEquals(Messages.MESSAGES.taskSuccess(DummyTaskTypes.PARAMETERIZED_TASK.name()), memoryLogger.getMessage());
+      assertEquals("Hello", memoryLogger.getDetail());
+      assertEquals(EventLogCategory.TASKS, memoryLogger.getCategory());
+      assertEquals(EventLogLevel.INFO, memoryLogger.getLevel());
+
+      memoryLogger.reset();
       CompletableFuture<Object> koTask = taskManager.runTask(DummyTaskTypes.FAILING_TASK.name(), new TaskContext().logEvent(true));
-      String message = koTask.handle((r, e) -> { return e.getCause().getMessage(); }).get();
+      String message = koTask.handle((r, e) -> e.getCause().getMessage()).get();
       assertEquals(0, taskManager.getCurrentTasks().size());
       assertEquals("exception", message);
       assertEquals(Messages.MESSAGES.taskFailure(DummyTaskTypes.FAILING_TASK.name()), memoryLogger.getMessage());
@@ -84,9 +93,9 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       assertEquals(DummyTaskTypes.SLOW_TASK.name(), execution.getName());
 
       List<Task> tasks = taskManager.getTasks();
-      assertEquals(3, tasks.size());
+      assertEquals(4, tasks.size());
 
-      Task task = tasks.get(2);
+      Task task = tasks.get(3);
       assertEquals(DummyTaskTypes.SLOW_TASK.name(), task.getName());
       assertEquals("Dummy", task.getType());
       assertEquals(TaskExecutionMode.ONE_NODE, task.getExecutionMode());

@@ -24,6 +24,7 @@ import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestServerClient;
+import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
@@ -166,6 +167,11 @@ public class RestClientOkHttp implements RestClient {
    @Override
    public RestCounterClient counter(String name) {
       return new RestCounterClientOkHttp(this, name);
+   }
+
+   @Override
+   public RestTaskClient tasks() {
+      return new RestTaskClientOkHttp(this);
    }
 
    @Override

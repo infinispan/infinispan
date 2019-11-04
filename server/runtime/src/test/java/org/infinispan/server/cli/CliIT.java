@@ -1,5 +1,6 @@
 package org.infinispan.server.cli;
 
+import java.net.URL;
 import java.util.Arrays;
 
 import org.aesh.terminal.utils.Config;
@@ -112,6 +113,27 @@ public class CliIT {
       cli.run(new String[]{"--connect=http://localhost:11222", "-f", this.getClass().getResource("/cli/batch-preconnect.cli").getPath()});
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
+      cli.stop();
+   }
+
+   @Test
+   public void testCliTasks() {
+      CLI cli = new CLI();
+      AeshTestConnection terminal = new AeshTestConnection();
+      cli.setTerminalConnection(terminal);
+      cli.run(new String[]{"--connect=http://localhost:11222"});
+
+      terminal.readln("cd tasks");
+      terminal.readln("ls");
+      terminal.assertContains("@@cache@names");
+      terminal.clear();
+      terminal.readln("task exec @@cache@names");
+      terminal.assertContains("\"___script_cache\"");
+      terminal.clear();
+      URL resource = this.getClass().getResource("/cli/hello.js");
+      terminal.readln("task upload --file=" + resource.getPath() + " hello");
+      terminal.readln("task exec hello -Pgreetee=world");
+      terminal.assertContains("\"Hello world\"");
       cli.stop();
    }
 }

@@ -5,11 +5,13 @@ HELP(1)
 
 NAME
 ----
+
 help - prints manual pages for commands.
 
 
 SYNOPSIS
 --------
+
 *help* ['COMMAND']
 
 

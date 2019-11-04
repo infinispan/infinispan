@@ -12,12 +12,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.infinispan.cli.commands.Abort;
 import org.infinispan.cli.commands.Add;
@@ -50,6 +52,7 @@ import org.infinispan.cli.commands.Shutdown;
 import org.infinispan.cli.commands.Site;
 import org.infinispan.cli.commands.Start;
 import org.infinispan.cli.commands.Stats;
+import org.infinispan.cli.commands.Task;
 import org.infinispan.cli.commands.Upgrade;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.resources.CacheResource;
@@ -489,6 +492,20 @@ public class RestConnection implements Connection, Closeable {
                }
                break;
             }
+            case Task.CMD: {
+               switch (command.arg(Task.TYPE)) {
+                  case Task.Exec.CMD: {
+                     response = client.tasks().exec(command.arg(Task.Exec.NAME), command.argAs(Task.Exec.PARAMETERS));
+                     break;
+                  }
+                  case Task.Upload.CMD: {
+                     RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, new File(command.option(CliCommand.FILE)));
+                     response = client.tasks().uploadScript(command.arg(Task.Exec.NAME), value);
+                     break;
+                  }
+               }
+               break;
+            }
             case Stats.CMD:
             case Abort.CMD:
             case Begin.CMD:
@@ -564,6 +581,12 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public Collection<String> getAvailableTasks(String container) throws IOException {
+      List<Map<String, String>> list = parseBody(fetch(() -> client.tasks().list()), List.class);
+      return list.stream().map(i -> i.get("name")).collect(Collectors.toList());
+   }
+
+   @Override
    public Collection<String> getAvailableSites(String container, String cache) throws IOException {
       CompletionStage<RestResponse> response = client.cache(cache).xsiteBackups();
       return null;
@@ -608,6 +631,13 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public String describeCounter(String container, String counter) throws IOException {
       return parseBody(fetch(() -> client.counter(counter).configuration()), String.class);
+   }
+
+   @Override
+   public String describeTask(String container, String taskName) throws IOException {
+      List<Map<String, Object>> list = parseBody(fetch(() -> client.tasks().list()), List.class);
+      Optional<Map<String, Object>> task = list.stream().filter(i -> taskName.equals(i.get("name"))).findFirst();
+      return task.map(Object::toString).orElseThrow(() -> MSG.noSuchResource(taskName));
    }
 
    @Override

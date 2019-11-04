@@ -107,4 +107,7 @@ public interface Log extends BasicLogger {
 
 //   @Message(value = "No provider for authorization realm", id = 5037)
 //   XMLStreamException noProviderForAuthorizationRealm();
+
+   @Message(value = "Illegal type for parameter '%s': %s", id = 5038)
+   IllegalArgumentException illegalParameterType(String parameter, Class<?> type);
 }
