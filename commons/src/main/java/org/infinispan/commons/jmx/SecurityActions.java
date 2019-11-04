@@ -1,14 +1,11 @@
 package org.infinispan.commons.jmx;
 
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.Set;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.management.QueryExp;
 
 /**
  * SecurityActions for the org.infinispan.commons.jmx package.
@@ -20,10 +17,6 @@ import javax.management.QueryExp;
  * @since 9.4
  */
 final class SecurityActions {
-
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
-   }
 
    private static void doPrivileged(PrivilegedExceptionAction<Void> action) throws Exception {
       try {
@@ -49,10 +42,6 @@ final class SecurityActions {
          mBeanServer.unregisterMBean(objectName);
          return null;
       });
-   }
-
-   static Set<ObjectName> queryNames(ObjectName target, QueryExp query, MBeanServer mBeanServer) {
-      return doPrivileged(() -> mBeanServer.queryNames(target, query));
    }
 
    private SecurityActions() {
