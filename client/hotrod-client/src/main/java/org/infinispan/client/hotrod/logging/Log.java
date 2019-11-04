@@ -323,4 +323,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "[%s] Invalid response operation. Expected %#x and received %#x", id = 4090)
    InvalidResponseException invalidResponse(String cacheName, short opRespCode, double receivedOpCode);
+
+   @Message(value = "MBean registration failed", id = 4091)
+   HotRodClientException jmxRegistrationFailure(@Cause Throwable cause);
+
+   @Message(value = "MBean unregistration failed", id = 4092)
+   HotRodClientException jmxUnregistrationFailure(@Cause Throwable cause);
 }

@@ -46,21 +46,17 @@ public class HotRodClientNearCacheJmxTest extends AbstractInfinispanTest {
       rcms = new RemoteCacheManager[2];
       remoteCaches = new RemoteCache[2];
       for (int i = 0; i < 2; i++) {
-         rcms[i] = addRemoteCacheManager();
+         org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+         clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
+         clientBuilder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
+         clientBuilder.statistics().enable()
+               .jmxEnable()
+               .jmxDomain(MethodHandles.lookup().lookupClass().getSimpleName() + i)
+               .mBeanServerLookup(mBeanServerLookup);
+         rcms[i] = new RemoteCacheManager(clientBuilder.build());
          remoteCaches[i] = rcms[i].getCache();
       }
-   }
-
-   private RemoteCacheManager addRemoteCacheManager() {
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
-      clientBuilder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
-      clientBuilder.statistics().enable()
-            .jmxEnable()
-            .jmxDomain(MethodHandles.lookup().lookupClass().getSimpleName())
-            .mBeanServerLookup(mBeanServerLookup);
-      return new RemoteCacheManager(clientBuilder.build());
    }
 
    @AfterMethod

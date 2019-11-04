@@ -60,7 +60,6 @@ import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -145,28 +144,32 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private void registerMBean(ObjectName jmxParent) {
-      try {
-         StatisticsConfiguration configuration = getRemoteCacheManager().getConfiguration().statistics();
-         if (configuration.jmxEnabled()) {
+      StatisticsConfiguration configuration = getRemoteCacheManager().getConfiguration().statistics();
+      if (configuration.jmxEnabled()) {
+         try {
             MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
-            String groupName = String.format("type=HotRodClient,name=%s", configuration.jmxName());
-            mbeanObjectName = new ObjectName(String.format("%s:%s,cache=%s", jmxParent.getDomain(), groupName, name.equals("") ? "org.infinispan.default" : name));
-            JmxUtil.registerMBean(clientStatistics, mbeanObjectName, mbeanServer);
+            String cacheName = name.isEmpty() ? "org.infinispan.default" : name;
+            mbeanObjectName = new ObjectName(String.format("%s:type=HotRodClient,name=%s,cache=%s", jmxParent.getDomain(), configuration.jmxName(), cacheName));
+            mbeanServer.registerMBean(clientStatistics, mbeanObjectName);
+         } catch (Exception e) {
+            throw HOTROD.jmxRegistrationFailure(e);
          }
-      } catch (Exception e) {
-         log.warn("MBean registration failed", e);
       }
    }
 
    private void unregisterMBean() {
-      try {
-         if (mbeanObjectName != null) {
-            StatisticsConfiguration configuration = getRemoteCacheManager().getConfiguration().statistics();
-            MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
-            JmxUtil.unregisterMBean(mbeanObjectName, mbeanServer);
+      if (mbeanObjectName != null) {
+         try {
+            MBeanServer mBeanServer = getRemoteCacheManager().getConfiguration().statistics()
+                  .mbeanServerLookup().getMBeanServer();
+            if (mBeanServer.isRegistered(mbeanObjectName)) {
+               mBeanServer.unregisterMBean(mbeanObjectName);
+            } else {
+               HOTROD.debugf("MBean not registered: %s", mbeanObjectName);
+            }
+         } catch (Exception e) {
+            throw HOTROD.jmxUnregistrationFailure(e);
          }
-      } catch (Exception e) {
-         log.warn("MBean unregistration failed", e);
       }
    }
 
