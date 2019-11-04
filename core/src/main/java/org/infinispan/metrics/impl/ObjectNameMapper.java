@@ -39,8 +39,9 @@ public final class ObjectNameMapper {
       }
 
       String componentKey = objectName.getKeyProperty(ObjectNameKeys.COMPONENT);
-      if (componentKey != null) {
-         sb.append(componentKey).append('_');
+      // avoid situations where TYPE equals COMPONENT like CacheManager_CacheManager_numberOfCreatedCaches
+      if (componentKey != null && !componentKey.equals(typeKey)) {
+         sb.append(componentKey.replace('.', '_')).append('_');
       }
 
       return sb.toString();
