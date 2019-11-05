@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -33,23 +35,37 @@ import java.util.stream.Stream;
 
 import javax.transaction.TransactionManager;
 
+import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.executors.NonBlockingThread;
 import org.infinispan.commons.test.TestNGLongTestsHook;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
+import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
+import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
+import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.FakeTestClass;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.Logger;
+import org.jgroups.protocols.FlowControl;
+import org.jgroups.protocols.UDP;
 import org.jgroups.stack.Protocol;
+import org.jgroups.util.Table;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
@@ -59,6 +75,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 import org.testng.internal.MethodInstance;
+
+import io.reactivex.internal.operators.flowable.BlockingFlowableIterable;
+import reactor.blockhound.BlockHound;
+import reactor.blockhound.integration.RxJava2Integration;
 
 
 /**
@@ -71,6 +91,66 @@ import org.testng.internal.MethodInstance;
 @Listeners({ChainMethodInterceptor.class, TestNGLongTestsHook.class})
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
 public abstract class AbstractInfinispanTest {
+
+   static {
+      BlockHound.builder().with(new RxJava2Integration()).with(builder -> {
+         builder.markAsBlocking(CacheImpl.class, "size", "()I");
+         builder.markAsBlocking(CacheImpl.class, "size", "(J)I");
+         builder.markAsBlocking(CacheImpl.class, "containsKey", "(Ljava/lang/Object;)Z");
+         builder.markAsBlocking(CacheImpl.class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+         builder.markAsBlocking(CacheImpl.class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+         builder.nonBlockingThreadPredicate(current -> current.or(thread -> thread instanceof NonBlockingThread));
+         // SecureRandom reads from a socket
+         builder.allowBlockingCallsInside(SecureRandom.class.getName(), "nextBytes");
+         // UDP calls PlainDatagramSocketImpl#send which can block if OS buffer is full - but we just ignore
+         builder.allowBlockingCallsInside(UDP.class.getName(), "_send");
+         builder.allowBlockingCallsInside(FlowControl.class.getName(), "adjustCredit");
+         // Random JGroups stuff
+         builder.allowBlockingCallsInside(Table.class.getName(), "add");
+         // Just assume all the thread pools don't block - not we check the rejected handler below though
+         builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "getTask");
+         builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "processWorkerExit");
+         builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "execute");
+         builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName(), "schedule");
+
+         // TODO: This can actually block us for a bit, we should really remove this!!!
+         builder.allowBlockingCallsInside(StateTransferLockImpl.class.getName(), "acquireSharedTopologyLock");
+         builder.allowBlockingCallsInside(StateTransferLockImpl.class.getName(), "releaseSharedTopologyLock");
+
+         // LimitedExecutor just submits a task to another thread pool
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "execute");
+
+         // Some test utilities may block the cpu thread - which is fine
+         builder.allowBlockingCallsInside(EvictionWithConcurrentOperationsTest.class.getName() + "$Latch", "blockIfNeeded");
+         builder.allowBlockingCallsInside(CheckPoint.class.getName(), "await");
+         builder.allowBlockingCallsInside(CheckPoint.class.getName(), "trigger");
+         builder.allowBlockingCallsInside(BlockingInterceptor.class.getName(), "blockIfNeeded");
+         builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepRandom");
+         builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepThread");
+
+         // The blocking iterator locks to signal at the end - ignore
+         builder.allowBlockingCallsInside(BlockingFlowableIterable.class.getName() + "$BlockingFlowableIterator", "signalConsumer");
+
+         // Allow logging to block
+         builder.allowBlockingCallsInside(Logger.class.getName(), "logf");
+         builder.allowBlockingCallsInside(java.util.logging.Logger.class.getName(), "log");
+
+         // Make sure our rejection handlers never block in a non blocking thread
+         builder.disallowBlockingCallsInside(BlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");
+         builder.disallowBlockingCallsInside(NonBlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");
+
+         builder.blockingMethodCallback(bm -> {
+            throw new CacheException(String.format("Blocking call! %s on thread %s", bm, Thread.currentThread()));
+         });
+      }).install();
+
+      Thread.setDefaultUncaughtExceptionHandler((thread, t) -> {
+         t.printStackTrace();
+         LogFactory.getLogger("Infinispan-TEST").fatal("Throwable was not caught in thread " + thread +
+               " - exception is: " + t);
+      });
+   }
 
    protected interface Condition {
       boolean isSatisfied() throws Exception;

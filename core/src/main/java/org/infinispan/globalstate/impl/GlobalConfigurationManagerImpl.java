@@ -54,8 +54,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Inject ConfigurationManager configurationManager;
    @Inject InternalCacheRegistry internalCacheRegistry;
    @Inject GlobalComponentRegistry globalComponentRegistry;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   ExecutorService executorService;
+   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
+   ExecutorService blockingExecutor;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -84,7 +84,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
       parserRegistry = new ParserRegistry();
 
-      localConfigurationManager.initialize(cacheManager, configurationManager, executorService);
+      localConfigurationManager.initialize(cacheManager, configurationManager, blockingExecutor);
       // Initialize caches which are present in the initial state. We do this before installing the listener.
       for (Map.Entry<ScopedState, Object> e : getStateCache().entrySet()) {
          if (CACHE_SCOPE.equals(e.getKey().getScope()))

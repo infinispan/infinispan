@@ -125,6 +125,7 @@
       <version.cdi>2.0</version.cdi>
       <version.codehaus.jackson>1.9.13</version.codehaus.jackson>
       <version.console>0.1.Final</version.console>
+      <version.datahoud>1.0.1.RELEASE</version.datahoud>
       <version.eclipse.aether>1.1.0</version.eclipse.aether>
       <version.eclipse.sisu>0.3.3</version.eclipse.sisu>
       <version.elasticsearch>5.6.8</version.elasticsearch>

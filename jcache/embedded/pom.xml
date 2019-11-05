@@ -72,6 +72,12 @@
       </dependency>
 
       <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.arquillian.testng</groupId>
          <artifactId>arquillian-testng-container</artifactId>
          <scope>test</scope>
