@@ -97,6 +97,10 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration implem
       return cacheSize.get();
    }
 
+   /**
+    * @deprecated There is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
+    */
+   @Deprecated
    public int expiryQueueSize() {
       return expiration.expiryQueueSize();
    }

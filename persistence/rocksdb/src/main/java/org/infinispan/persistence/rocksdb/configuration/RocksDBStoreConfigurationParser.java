@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -64,15 +66,15 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case CLEAR_THRESHOLD: {
-               builder.clearThreshold(Integer.valueOf(value));
+               builder.clearThreshold(Integer.parseInt(value));
                break;
             }
             case BLOCK_SIZE: {
-               builder.blockSize(Integer.valueOf(value));
+               builder.blockSize(Integer.parseInt(value));
                break;
             }
             case CACHE_SIZE: {
-               builder.cacheSize(Long.valueOf(value));
+               builder.cacheSize(Long.parseLong(value));
                break;
             }
             default: {
@@ -113,7 +115,7 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case QUEUE_SIZE: {
-               builder.expiryQueueSize(Integer.valueOf(value));
+               CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
                break;
             }
             default:

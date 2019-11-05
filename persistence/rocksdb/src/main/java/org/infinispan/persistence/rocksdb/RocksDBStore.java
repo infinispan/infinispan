@@ -13,10 +13,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Function;
@@ -79,8 +77,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
     static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
 
-    private RocksDBStoreConfiguration configuration;
-    private BlockingQueue<ExpiryEntry> expiryEntryQueue;
+    protected RocksDBStoreConfiguration configuration;
     private RocksDB db;
     private RocksDB expiredDb;
     private InitializationContext ctx;
@@ -109,7 +106,6 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
 
     @Override
     public void start() {
-        expiryEntryQueue = new LinkedBlockingQueue<>(configuration.expiryQueueSize());
 
         AdvancedCache cache = ctx.getCache().getAdvancedCache();
         KeyPartitioner keyPartitioner = cache.getComponentRegistry().getComponent(KeyPartitioner.class);
@@ -160,7 +156,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         return dataWriteOptions;
     }
 
-    private DBOptions dataDbOptions() {
+    protected DBOptions dataDbOptions() {
         DBOptions dbOptions;
         if (databaseProperties != null) {
             dbOptions = DBOptions.getDBOptionsFromProps(databaseProperties);
@@ -178,7 +174,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
               .setCreateMissingColumnFamilies(true);
     }
 
-    private Options expiredDbOptions() {
+    protected Options expiredDbOptions() {
         return new Options()
               .setCreateIfMissing(true)
               // Make sure keys are sorted by bytes - we use this sorting to remove entries that have expired most recently
@@ -313,6 +309,30 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         handler.deleteBatch(keys);
     }
 
+    private void putExpireDbData(ExpiryEntry entry) throws InterruptedException, RocksDBException, IOException,
+       ClassNotFoundException {
+        try {
+            final byte[] expiryBytes = marshall(entry.expiry);
+            final byte[] existingBytes = expiredDb.get(expiryBytes);
+
+            if (existingBytes != null) {
+                // in the case of collision make the value a List ...
+                final Object existing = unmarshall(existingBytes);
+                if (existing instanceof ExpiryBucket) {
+                    ((ExpiryBucket) existing).entries.add(entry.keyBytes);
+                    expiredDb.put(expiryBytes, marshall(existing));
+                } else {
+                    ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
+                    expiredDb.put(expiryBytes, marshall(bucket));
+                }
+            } else {
+                expiredDb.put(expiryBytes, entry.keyBytes);
+            }
+        } catch (IOException | InterruptedException | RocksDBException | ClassNotFoundException e) {
+            throw e;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void purge(Executor executor, PurgeListener purgeListener) {
@@ -325,28 +345,6 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
             if (stopped) {
                 throw new PersistenceException("RocksDB is stopped");
             }
-            // Drain queue and update expiry tree
-            List<ExpiryEntry> entries = new ArrayList<>();
-            expiryEntryQueue.drainTo(entries);
-            for (ExpiryEntry entry : entries) {
-                final byte[] expiryBytes = marshall(entry.expiry);
-                final byte[] existingBytes = expiredDb.get(expiryBytes);
-
-                if (existingBytes != null) {
-                    // in the case of collision make the key a List ...
-                    final Object existing = unmarshall(existingBytes);
-                    if (existing instanceof ExpiryBucket) {
-                        ((ExpiryBucket) existing).entries.add(entry.keyBytes);
-                        expiredDb.put(expiryBytes, marshall(existing));
-                    } else {
-                        ExpiryBucket bucket = new ExpiryBucket(existingBytes, entry.keyBytes);
-                        expiredDb.put(expiryBytes, marshall(bucket));
-                    }
-                } else {
-                    expiredDb.put(expiryBytes, entry.keyBytes);
-                }
-            }
-
             long now = ctx.getTimeService().wallClockTime();
             RocksIterator iterator = expiredDb.newIterator(readOptions);
             if (iterator != null) {
@@ -448,7 +446,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         return entryFactory.create(key, value.getValueBytes(), metadataBytes, value.getCreated(), value.getLastUsed());
     }
 
-    private void addNewExpiry(MarshallableEntry entry) {
+    private void addNewExpiry(MarshallableEntry entry) throws RocksDBException, IOException, ClassNotFoundException {
         long expiry = entry.expiryTime();
         long maxIdle = entry.getMetadata().maxIdle();
         if (maxIdle > 0) {
@@ -458,7 +456,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         }
         try {
             byte[] keyBytes = entry.getKeyBytes().copy().getBuf();
-            expiryEntryQueue.put(new ExpiryEntry(expiry, keyBytes));
+            putExpireDbData(new ExpiryEntry(expiry, keyBytes));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Restore interruption status
         }
@@ -652,7 +650,6 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                     if (stopped) {
                         throw new PersistenceException("RocksDB is stopped");
                     }
-
                     db.put(handle, marshalledKey, marshalledValue);
                 } finally {
                     semaphore.release();
