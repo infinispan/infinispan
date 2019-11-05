@@ -1,13 +1,13 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
-import static org.infinispan.persistence.rocksdb.configuration.Element.EXPIRATION;
-
 import org.infinispan.commons.configuration.ConfigurationInfo;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
+
+import static org.infinispan.persistence.rocksdb.configuration.Element.EXPIRATION;
 
 /**
  * @since 10.0
@@ -47,6 +47,7 @@ public class RocksDBExpirationConfiguration implements ConfigurationInfo {
       return expiredLocation.get();
    }
 
+   @Deprecated
    int expiryQueueSize() {
       return expiryQueueSize.get();
    }
