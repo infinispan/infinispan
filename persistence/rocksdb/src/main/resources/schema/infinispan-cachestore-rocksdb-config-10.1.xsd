@@ -67,7 +67,7 @@
     </xs:attribute>
     <xs:attribute name="queue-size" type="xs:integer" default="${RocksDBStore.expiryQueueSize}">
       <xs:annotation>
-        <xs:documentation>Expired entry queue size.</xs:documentation>
+        <xs:documentation>Deprecated. The expiration queue is no longer used since 10.1</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>

@@ -34,7 +34,10 @@ public class RocksDBExpirationConfigurationBuilder implements Builder<RocksDBExp
       return this;
    }
 
-
+   /**
+    * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
+    */
+   @Deprecated
    RocksDBExpirationConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
       attributes.attribute(EXPIRY_QUEUE_SIZE).set(expiryQueueSize);
       return this;

@@ -47,6 +47,10 @@ public class RocksDBExpirationConfiguration implements ConfigurationInfo {
       return expiredLocation.get();
    }
 
+   /**
+    * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
+    */
+   @Deprecated
    int expiryQueueSize() {
       return expiryQueueSize.get();
    }

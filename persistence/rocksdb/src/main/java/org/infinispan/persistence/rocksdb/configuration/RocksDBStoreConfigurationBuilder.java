@@ -24,10 +24,14 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<RocksDBStoreConfiguration, RocksDBStoreConfigurationBuilder>
       implements ConfigurationBuilderInfo {
 
-   RocksDBExpirationConfigurationBuilder expiration = new RocksDBExpirationConfigurationBuilder();
+   protected RocksDBExpirationConfigurationBuilder expiration = new RocksDBExpirationConfigurationBuilder();
 
    public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder, RocksDBStoreConfiguration.attributeDefinitionSet());
+      this(builder, RocksDBStoreConfiguration.attributeDefinitionSet());
+   }
+
+   public RocksDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributeSet) {
+      super(builder, attributeSet);
    }
 
    @Override
@@ -65,6 +69,10 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
       return self();
    }
 
+   /**
+    * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
+    */
+   @Deprecated
    public RocksDBStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
       expiration.expiryQueueSize(expiryQueueSize);
       return self();
