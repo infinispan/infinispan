@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LongSummaryStatistics;
 import java.util.OptionalDouble;
@@ -10,8 +9,10 @@ import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.LongBinaryOperator;
 import java.util.function.LongConsumer;
 import java.util.function.LongFunction;
@@ -32,6 +33,7 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.stream.impl.intops.primitive.l.AsDoubleLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.DistinctLongOperation;
@@ -48,7 +50,10 @@ import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjLongOperatio
 import org.infinispan.stream.impl.termop.primitive.ForEachLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjLongOperation;
 import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableLongBinaryOperator;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableBinaryOperator;
+import org.infinispan.util.function.SerializableCallable;
+import org.infinispan.util.function.SerializableComparator;
 import org.infinispan.util.function.SerializableLongConsumer;
 import org.infinispan.util.function.SerializableLongFunction;
 import org.infinispan.util.function.SerializableLongPredicate;
@@ -56,9 +61,10 @@ import org.infinispan.util.function.SerializableLongToDoubleFunction;
 import org.infinispan.util.function.SerializableLongToIntFunction;
 import org.infinispan.util.function.SerializableLongUnaryOperator;
 import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.function.SerializablePredicate;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 /**
  * Implementation of {@link LongStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -204,7 +210,7 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
       return new IntermediateLongCacheStream(this).skip(n);
    }
 
-   // Reset are terminal operators
+   // Rest are terminal operators
 
    @Override
    public void forEach(LongConsumer action) {
@@ -264,157 +270,108 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
 
    @Override
    public long[] toArray() {
-      return performOperation(TerminalFunctions.toArrayLongFunction(), false,
-              (v1, v2) -> {
-                 long[] array = Arrays.copyOf(v1, v1.length + v2.length);
-                 System.arraycopy(v2, 0, array, v1.length, v2.length);
-                 return array;
-              }, null);
+      Object[] values = performPublisherOperation(PublisherReducers.toArrayReducer(), PublisherReducers.toArrayFinalizer());
+
+      long[] results = new long[values.length];
+      int i = 0;
+      for (Object obj : values) {
+         results[i++] = (Long) obj;
+      }
+      return results;
    }
 
    @Override
    public long reduce(long identity, LongBinaryOperator op) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, op::applyAsLong, null);
-   }
-
-   @Override
-   public long reduce(long identity, SerializableLongBinaryOperator op) {
-      return reduce(identity, (LongBinaryOperator) op);
+      Function<Publisher<Long>, CompletionStage<Long>> reduce = PublisherReducers.reduce(identity,
+            (SerializableBiFunction<Long, Long, Long>) op::applyAsLong);
+      return performPublisherOperation(reduce, reduce);
    }
 
    @Override
    public OptionalLong reduce(LongBinaryOperator op) {
-      Long result = performOperation(TerminalFunctions.reduceFunction(op), true,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    if (i2 != null) {
-                       return op.applyAsLong(i1, i2);
-                    }
-                    return i1;
-                 }
-                 return i2;
-              }, null);
+      Function<Publisher<Long>, CompletionStage<Long>> reduce = PublisherReducers.reduce(
+            (SerializableBinaryOperator<Long>) op::applyAsLong);
+      Long result = performPublisherOperation(reduce, reduce);
       if (result == null) {
          return OptionalLong.empty();
-      } else {
-         return OptionalLong.of(result);
       }
-   }
-
-   @Override
-   public OptionalLong reduce(SerializableLongBinaryOperator op) {
-      return reduce((LongBinaryOperator) op);
+      return OptionalLong.of(result);
    }
 
    @Override
    public <R> R collect(Supplier<R> supplier, ObjLongConsumer<R> accumulator, BiConsumer<R, R> combiner) {
-      return performOperation(TerminalFunctions.collectFunction(supplier, accumulator, combiner), true,
-              (e1, e2) -> {
-                 combiner.accept(e1, e2);
-                 return e1;
-              }, null);
-   }
-
-   @Override
-   public <R> R collect(SerializableSupplier<R> supplier, SerializableObjLongConsumer<R> accumulator,
-           SerializableBiConsumer<R, R> combiner) {
-      return collect((Supplier<R>) supplier, accumulator, combiner);
+      return performPublisherOperation(PublisherReducers.collect(supplier,
+            (SerializableBiConsumer<R, Long>) accumulator::accept),
+            PublisherReducers.accumulate(combiner));
    }
 
    @Override
    public long sum() {
-      return performOperation(TerminalFunctions.sumLongFunction(), true, (i1, i2) -> i1 + i2, null);
+      Function<Publisher<Long>, CompletionStage<Long>> addFunction = PublisherReducers.add();
+      return performPublisherOperation(addFunction, addFunction);
    }
 
    @Override
    public OptionalLong min() {
-      Long value = performOperation(TerminalFunctions.minLongFunction(), false,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    if (i2 != null) {
-                       return i1 > i2 ? i2 : i1;
-                    }
-                    return i1;
-                 }
-                 return i2;
-              }, null);
-      if (value == null) {
+      SerializableComparator<Long> serializableComparator = Long::compareTo;
+      Function<Publisher<Long>, CompletionStage<Long>> minFunction = PublisherReducers.min(serializableComparator);
+      Long min = performPublisherOperation(minFunction, minFunction);
+      if (min == null) {
          return OptionalLong.empty();
-      } else {
-         return OptionalLong.of(value);
       }
+      return OptionalLong.of(min);
    }
 
    @Override
    public OptionalLong max() {
-      Long value = performOperation(TerminalFunctions.maxLongFunction(), false,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    if (i2 != null) {
-                       return i1 > i2 ? i1 : i2;
-                    }
-                    return i1;
-                 }
-                 return i2;
-              }, null);
-      if (value == null) {
+      SerializableComparator<Long> serializableComparator = Long::compareTo;
+      Function<Publisher<Long>, CompletionStage<Long>> maxFunction = PublisherReducers.max(serializableComparator);
+      Long max = performPublisherOperation(maxFunction, maxFunction);
+      if (max == null) {
          return OptionalLong.empty();
-      } else {
-         return OptionalLong.of(value);
       }
+      return OptionalLong.of(max);
    }
 
    @Override
    public OptionalDouble average() {
-      long[] results = performOperation(TerminalFunctions.averageLongFunction(), true,
-              (a1, a2) -> {
-                 a1[0] += a2[0];
-                 a1[1] += a2[1];
-                 return a1;
-              }, null);
-      if (results[1] > 0) {
-         return OptionalDouble.of((double) results[0] / results[1]);
-      } else {
+      LongSummaryStatistics lss = summaryStatistics();
+      if (lss.getCount() == 0) {
          return OptionalDouble.empty();
       }
+      return OptionalDouble.of(lss.getAverage());
    }
 
    @Override
    public LongSummaryStatistics summaryStatistics() {
-      return performOperation(TerminalFunctions.summaryStatisticsLongFunction(), true, (ls1, ls2) -> {
-         ls1.combine(ls2);
-         return ls1;
-      }, null);
+      return performPublisherOperation(PublisherReducers.reduceWith(
+            (SerializableCallable<LongSummaryStatistics>) LongSummaryStatistics::new,
+            (SerializableBiFunction<LongSummaryStatistics, Long, LongSummaryStatistics>) (lss, longValue) -> {
+               lss.accept(longValue);
+               return lss;
+            }), PublisherReducers.reduce(
+            (SerializableBinaryOperator<LongSummaryStatistics>) (first, second) -> {
+               first.combine(second);
+               return first;
+            }));
    }
 
    @Override
    public boolean anyMatch(LongPredicate predicate) {
-      return performOperation(TerminalFunctions.anyMatchFunction(predicate), false, Boolean::logicalOr, b -> b);
-   }
-
-   @Override
-   public boolean anyMatch(SerializableLongPredicate predicate) {
-      return anyMatch((LongPredicate) predicate);
+      return performPublisherOperation(PublisherReducers.anyMatch((SerializablePredicate<Long>) predicate::test),
+            PublisherReducers.or());
    }
 
    @Override
    public boolean allMatch(LongPredicate predicate) {
-      return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
-   }
-
-   @Override
-   public boolean allMatch(SerializableLongPredicate predicate) {
-      return allMatch((LongPredicate) predicate);
+      return performPublisherOperation(PublisherReducers.allMatch((SerializablePredicate<Long>) predicate::test),
+            PublisherReducers.and());
    }
 
    @Override
    public boolean noneMatch(LongPredicate predicate) {
-      return performOperation(TerminalFunctions.noneMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
-   }
-
-   @Override
-   public boolean noneMatch(SerializableLongPredicate predicate) {
-      return noneMatch((LongPredicate) predicate);
+      return performPublisherOperation(PublisherReducers.noneMatch((SerializablePredicate<Long>) predicate::test),
+            PublisherReducers.and());
    }
 
    @Override
@@ -425,19 +382,12 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
 
    @Override
    public OptionalLong findAny() {
-      Long result = performOperation(TerminalFunctions.findAnyLongFunction(), false,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    return i1;
-                 } else {
-                    return i2;
-                 }
-              }, null);
-      if (result != null) {
-         return OptionalLong.of(result);
-      } else {
+      Function<Publisher<Long>, CompletionStage<Long>> function = PublisherReducers.findFirst();
+      Long value = performPublisherOperation(function, function);
+      if (value == null) {
          return OptionalLong.empty();
       }
+      return OptionalLong.of(value);
    }
 
    @Override
@@ -479,7 +429,7 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
 
    @Override
    public long count() {
-      return performOperation(TerminalFunctions.countLongFunction(), true, (i1, i2) -> i1 + i2, null);
+      return performPublisherOperation(PublisherReducers.count(), PublisherReducers.add());
    }
 
    // These are the custom added methods for cache streams
