@@ -447,15 +447,20 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void size(HotRodHeader header, Subject subject) {
-      executor.execute(() -> sizeInternal(header, subject));
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
+      sizeInternal(header, cache);
    }
 
-   private void sizeInternal(HotRodHeader header, Subject subject) {
-      try {
-         AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-         writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), cache.size()));
-      } catch (Throwable t) {
-         writeException(header, t);
+   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache) {
+      cache.sizeAsync()
+            .whenComplete((size, throwable) -> handleSize(header, size, throwable));
+   }
+
+   private void handleSize(HotRodHeader header, Long size, Throwable throwable) {
+      if (throwable != null) {
+         writeException(header, throwable);
+      } else {
+         writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), size));
       }
    }
 
