@@ -21,7 +21,7 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
 
    private final FileWriter fileWriter;
 
-   enum Status {SUCCESS, FAILURE, ERROR, SKIPPED}
+   public enum Status {SUCCESS, FAILURE, ERROR, SKIPPED}
 
    private static final String TESTSUITE = "testsuite";
    private static final String ATTR_TESTS = "tests";

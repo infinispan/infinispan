@@ -84,7 +84,7 @@ public class TestSuiteProgress {
    /**
     * Write a fake test failures in the test-failures log, for {@code process_trace_logs.sh}
     */
-   static void fakeTestFailure(String name, Throwable exception) {
+   public static void fakeTestFailure(String name, Throwable exception) {
       String message = "Test failed: " + name;
       System.out.printf("[TestSuiteProgress] %s%n", message);
       log.error(message, exception);

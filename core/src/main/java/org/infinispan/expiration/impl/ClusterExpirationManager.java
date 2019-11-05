@@ -160,9 +160,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   } else {
                      stage = handleMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false);
                   }
-                  stage.whenComplete((obj, t) -> {
-                     expirationPermits.add(stage);
-                  });
+                  stage.whenComplete((obj, t) -> addStageToPermits(expirationPermits, stage));
                }
             }
             // Short circuit if topology has changed
@@ -186,6 +184,19 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          log.exceptionPurgingDataContainer(t);
       }
       return false;
+   }
+
+   /**
+    * This is a separate method to document the fact that this is invoked in a separate thread and also for code
+    * augmentation to find this method if needed
+    * <p>
+    * This method should never block as the queue should always have room by design
+    * @param expirationPermits the permits blocking queue to add to
+    * @param future the future to add to it.
+    */
+   void addStageToPermits(BlockingQueue<CompletableFuture<?>> expirationPermits, CompletableFuture<?> future) {
+      boolean inserted = expirationPermits.offer(future);
+      assert inserted;
    }
 
    private void printResults(String message, long start, int removedEntries, AtomicInteger errors) {
