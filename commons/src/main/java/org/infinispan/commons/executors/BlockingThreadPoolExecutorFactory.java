@@ -10,7 +10,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.util.concurrent.CallerRunsRejectOnShutdownPolicy;
+import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
+import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 
 /**
  * @author Galder Zamarreño
@@ -22,13 +23,19 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
    private final int coreThreads;
    private final int queueLength;
    private final long keepAlive;
+   private final boolean nonBlocking;
 
-   public BlockingThreadPoolExecutorFactory(
-         int maxThreads, int coreThreads, int queueLength, long keepAlive) {
+   public BlockingThreadPoolExecutorFactory(int maxThreads, int coreThreads, int queueLength, long keepAlive) {
+      this(maxThreads, coreThreads, queueLength, keepAlive, false);
+   }
+
+   public BlockingThreadPoolExecutorFactory(int maxThreads, int coreThreads, int queueLength, long keepAlive,
+         boolean nonBlocking) {
       this.maxThreads = maxThreads;
       this.coreThreads = coreThreads;
       this.queueLength = queueLength;
       this.keepAlive = keepAlive;
+      this.nonBlocking = nonBlocking;
    }
 
    public int maxThreads() {
@@ -47,6 +54,10 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
       return keepAlive;
    }
 
+   public boolean isNonBlocking() {
+      return nonBlocking;
+   }
+
    @Override
    public ExecutorService createExecutor(ThreadFactory threadFactory) {
       BlockingQueue<Runnable> queue = queueLength == 0 ?
@@ -55,7 +66,7 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
 
       return new ThreadPoolExecutor(coreThreads, maxThreads, keepAlive,
             TimeUnit.MILLISECONDS, queue, threadFactory,
-            new CallerRunsRejectOnShutdownPolicy());
+            nonBlocking ? NonBlockingRejectedExecutionHandler.getInstance() : BlockingRejectedExecutionHandler.getInstance());
    }
 
    @Override
@@ -87,10 +98,10 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
             '}';
    }
 
-   public static BlockingThreadPoolExecutorFactory create(int maxThreads, int queueSize) {
+   public static BlockingThreadPoolExecutorFactory create(int maxThreads, int queueSize, boolean nonBlocking) {
       int coreThreads = queueSize == 0 ? 1 : maxThreads;
-      return new BlockingThreadPoolExecutorFactory(
-         maxThreads, coreThreads, queueSize, DEFAULT_KEEP_ALIVE_MILLIS);
+      return new BlockingThreadPoolExecutorFactory(maxThreads, coreThreads, queueSize, DEFAULT_KEEP_ALIVE_MILLIS,
+            nonBlocking);
    }
 
 }
