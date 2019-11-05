@@ -29,7 +29,7 @@ public interface RestResponseBuilder<B extends RestResponseBuilder<B>> {
 
    B expires(Date expires);
 
-   B lastModified(long epoch);
+   B lastModified(Long epoch);
 
    B addProcessedDate(Date d);
 

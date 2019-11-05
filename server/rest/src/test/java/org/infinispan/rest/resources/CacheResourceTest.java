@@ -345,22 +345,17 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void testIfModifiedHeader() throws Exception {
-      testIfModifiedHeaderForCache("expiration");
-      testIfModifiedHeaderForCache("default");
-   }
+   public void testIfModifiedHeaderForCache() throws Exception {
+      putStringValueInCache("expiration", "test", "test");
 
-   private void testIfModifiedHeaderForCache(String cache) throws Exception {
-      putStringValueInCache(cache, "test", "test");
-
-      String url = String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cache, "test");
+      String url = String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test");
       ContentResponse resp = client.newRequest(url).send();
       String dateLast = resp.getHeaders().get("Last-Modified");
 
       ContentResponse sameLastModAndIfModified = client.newRequest(url).header("If-Modified-Since", dateLast).send();
       assertThat(sameLastModAndIfModified).isNotModified();
 
-      putStringValueInCache(cache, "test", "test-new");
+      putStringValueInCache("expiration", "test", "test-new");
       ContentResponse lastmodAfterIfModified = client.newRequest(url).send();
       dateLast = lastmodAfterIfModified.getHeaders().get("Last-Modified");
       assertThat(lastmodAfterIfModified).isOk();
