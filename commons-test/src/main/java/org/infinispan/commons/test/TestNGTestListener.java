@@ -86,6 +86,14 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onStart(ISuite suite) {
+      try {
+         Class.forName("reactor.blockhound.BlockHound");
+         log.info("BlockHound on classpath, installing non blocking checks!");
+         BlockHoundHelper.installBlockHound();
+      } catch (ClassNotFoundException  e) {
+         log.info("BlockHound not on classpath, not enabling");
+      }
+
       ThreadLeakChecker.saveInitialThreads();
    }
 

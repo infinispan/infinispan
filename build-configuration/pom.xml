@@ -120,6 +120,7 @@
       <version.arquillian>1.4.1.Final</version.arquillian>
       <version.asm>2.2.3</version.asm>
       <version.asm.ow2>6.1.1</version.asm.ow2>
+      <version.blockhound>1.0.1.RELEASE</version.blockhound>
       <version.byteman>4.0.6</version.byteman>
       <version.caffeine>2.8.0</version.caffeine>
       <version.cdi>2.0</version.cdi>

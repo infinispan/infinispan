@@ -34,6 +34,16 @@
          <artifactId>testng</artifactId>
          <scope>provided</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+      </dependency>
    </dependencies>
 
    <build>

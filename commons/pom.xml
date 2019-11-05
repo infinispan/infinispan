@@ -59,6 +59,17 @@
       </dependency>
 
       <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.karaf.features</groupId>
         <artifactId>framework</artifactId>
         <type>kar</type>
