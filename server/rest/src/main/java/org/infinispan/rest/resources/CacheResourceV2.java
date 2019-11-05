@@ -230,19 +230,20 @@ public class CacheResourceV2 extends CacheResource {
    private CompletionStage<RestResponse> getSize(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
 
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
-      return CompletableFuture.supplyAsync(() -> {
+      CompletableFuture<Long> cacheSize = cache.sizeAsync();
+
+      return cacheSize.thenApply(size -> {
+         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          try {
-            int size = cache.size();
             responseBuilder.entity(invocationHelper.getMapper().writeValueAsBytes(size));
          } catch (JsonProcessingException e) {
             responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
          }
+
          return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      });
    }
 
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {

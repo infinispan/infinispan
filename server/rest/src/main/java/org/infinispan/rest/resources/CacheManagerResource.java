@@ -13,16 +13,14 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 
 import java.io.ByteArrayOutputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.configuration.JsonWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
@@ -35,6 +33,7 @@ import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -50,6 +49,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.Flowable;
 
 /**
  * REST resource to manage the cache container.
@@ -64,7 +64,6 @@ public class CacheManagerResource implements ResourceHandler {
    private final ObjectMapper objectMapper;
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
-   private final Executor executor;
 
    public CacheManagerResource(InvocationHelper invocationHelper) {
       this.objectMapper = invocationHelper.getMapper();
@@ -73,7 +72,6 @@ public class CacheManagerResource implements ResourceHandler {
       this.cacheManagerName = globalConfiguration.cacheManagerName();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-      this.executor = invocationHelper.getExecutor();
    }
 
    @Override
@@ -191,36 +189,40 @@ public class CacheManagerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-      return CompletableFuture.supplyAsync(() -> {
-         try {
-            Set<CacheInfo> caches = cacheManager.getCacheNames().stream().map(cacheName -> {
-               Cache<Object, Object> cache = cacheManager.getCache(cacheName);
-               CacheInfo cacheInfo = new CacheInfo();
-               cacheInfo.name = cacheName;
-               Configuration cacheConfiguration = cache.getCacheConfiguration();
-               cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-               cacheInfo.status = cache.getStatus().name();
-               cacheInfo.size = cache.size();
-               cacheInfo.simpleCache = cacheConfiguration.simpleCache();
-               cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
-               cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
-               cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
-                     cacheConfiguration.expiration().lifespan() != -1;
-               cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
-               cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
-               cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
-               return cacheInfo;
-            }).collect(Collectors.toSet());
-
-            byte[] bytes = objectMapper.writeValueAsBytes(caches);
-            responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
-
-         } catch (JsonProcessingException e) {
-            responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-         }
-
-         return responseBuilder.build();
-      }, executor);
+      return Flowable.fromIterable(cacheManager.getCacheNames())
+            .map(cacheManager::getCache)
+            .flatMap(cache ->
+               RxJavaInterop.<Long>completionStageToPublisher()
+                     .apply(cache.sizeAsync())
+                     .map(size -> {
+                        CacheInfo cacheInfo = new CacheInfo();
+                        cacheInfo.name = cache.getName();
+                        Configuration cacheConfiguration = cache.getCacheConfiguration();
+                        cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
+                        cacheInfo.status = cache.getStatus().name();
+                        cacheInfo.size = size;
+                        cacheInfo.simpleCache = cacheConfiguration.simpleCache();
+                        cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+                        cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
+                        cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
+                              cacheConfiguration.expiration().lifespan() != -1;
+                        cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
+                        cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
+                        cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
+                        return cacheInfo;
+                        // Only request 10 caches sizes in parallel
+                     }), 10)
+            .collectInto(new HashSet<>(), Set::add)
+            .map(caches -> {
+               try {
+                  byte[] bytes = objectMapper.writeValueAsBytes(caches);
+                  responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
+               } catch (JsonProcessingException e) {
+                  responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+               }
+               return responseBuilder.build();
+            })
+            .to(RxJavaInterop.singleToCompletionStage());
    }
 
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {

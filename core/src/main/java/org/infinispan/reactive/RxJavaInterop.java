@@ -30,7 +30,7 @@ public class RxJavaInterop {
     * @param <E> underlying type
     * @return rxjava function to convert Single to CompletionStage
     */
-   public static <E> Function<Single<E>, CompletionStage<E>> singleToCompletionStage() {
+   public static <E> Function<Single<? extends E>, CompletionStage<E>> singleToCompletionStage() {
       return (Function) singleToCompletionStage;
    }
 
