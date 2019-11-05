@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -87,9 +88,25 @@ public class PublisherReducers {
       return OrFinalizer.INSTANCE;
    }
 
-   public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduce(E idenity,
+   /**
+    * Provides a reduction where the initial value must be the identity value that is not modified via the provided
+    * biFunction. Failure to do so will cause unexpected results.
+    * <p>
+    * If the initial value needs to be modified, you should use {@link #reduceWith(Callable, BiFunction)} instead.
+    * @param identity initial identity value to use (this value must not be modified by the provide biFunction)
+    * @param biFunction biFunction used to reduce the values into a single one
+    * @param <I> input type
+    * @param <E> output reduced type
+    * @return function that will map a publisher of the input type to a completion stage of the output type
+    */
+   public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduce(E identity,
          BiFunction<E, ? super I, E> biFunction) {
-      return new ReduceWithIdentityReducer<>(idenity, biFunction);
+      return new ReduceWithIdentityReducer<>(identity, biFunction);
+   }
+
+   public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduceWith(Callable<? extends E> initialSupplier,
+         BiFunction<E, ? super I, E> biFunction) {
+      return new ReduceWithInitialSupplierReducer<>(initialSupplier, biFunction);
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> reduce(BinaryOperator<E> operator) {
@@ -328,6 +345,23 @@ public class PublisherReducers {
       }
    }
 
+   private static class ReduceWithInitialSupplierReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
+      private final Callable<? extends E> initialSupplier;
+      private final BiFunction<E, ? super I, E> biFunction;
+
+      private ReduceWithInitialSupplierReducer(Callable<? extends E> initialSupplier, BiFunction<E, ? super I, E> biFunction) {
+         this.initialSupplier = initialSupplier;
+         this.biFunction = biFunction;
+      }
+
+      @Override
+      public CompletionStage<E> apply(Publisher<I> iPublisher) {
+         return Flowable.fromPublisher(iPublisher)
+               .reduceWith((Callable<E>) initialSupplier, biFunction::apply)
+               .to(RxJavaInterop.singleToCompletionStage());
+      }
+   }
+
    private static class ReduceReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
       private final BinaryOperator<E> operator;
 
@@ -436,6 +470,7 @@ public class PublisherReducers {
          NONE_MATCH_REDUCER(NoneMatchReducer.class),
          OR_FINALIZER(OrFinalizer.class),
          REDUCE_WITH_IDENTITY_REDUCER(ReduceWithIdentityReducer.class),
+         REDUCE_WITH_INITIAL_SUPPLIER_REDUCER(ReduceWithInitialSupplierReducer.class),
          REDUCE_REDUCER_FINALIZER(ReduceReducerFinalizer.class),
          SUM_REDUCER(SumReducer.class),
          SUM_FINALIZER(SumFinalizer.class),
@@ -510,6 +545,10 @@ public class PublisherReducers {
                output.writeObject(((ReduceWithIdentityReducer) object).identity);
                output.writeObject(((ReduceWithIdentityReducer) object).biFunction);
                break;
+            case REDUCE_WITH_INITIAL_SUPPLIER_REDUCER:
+               output.writeObject(((ReduceWithInitialSupplierReducer) object).initialSupplier);
+               output.writeObject(((ReduceWithInitialSupplierReducer) object).biFunction);
+               break;
             case REDUCE_REDUCER_FINALIZER:
                output.writeObject(((ReduceReducerFinalizer) object).operator);
                break;
@@ -557,6 +596,8 @@ public class PublisherReducers {
                return OrFinalizer.INSTANCE;
             case REDUCE_WITH_IDENTITY_REDUCER:
                return new ReduceWithIdentityReducer(input.readObject(), (BiFunction) input.readObject());
+            case REDUCE_WITH_INITIAL_SUPPLIER_REDUCER:
+               return new ReduceWithInitialSupplierReducer<>((Callable) input.readObject(), (BiFunction) input.readObject());
             case REDUCE_REDUCER_FINALIZER:
                return new ReduceReducerFinalizer((BinaryOperator) input.readObject());
             case SUM_REDUCER:

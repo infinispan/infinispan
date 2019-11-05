@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 import java.util.DoubleSummaryStatistics;
 import java.util.Iterator;
 import java.util.OptionalDouble;
@@ -9,6 +8,7 @@ import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.DoubleBinaryOperator;
@@ -18,6 +18,7 @@ import java.util.function.DoublePredicate;
 import java.util.function.DoubleToIntFunction;
 import java.util.function.DoubleToLongFunction;
 import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
 import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
@@ -31,6 +32,7 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.stream.impl.intops.primitive.d.BoxedDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.DistinctDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.FilterDoubleOperation;
@@ -46,7 +48,10 @@ import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapDoubleOperation
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
 import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableDoubleBinaryOperator;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableBinaryOperator;
+import org.infinispan.util.function.SerializableCallable;
+import org.infinispan.util.function.SerializableComparator;
 import org.infinispan.util.function.SerializableDoubleConsumer;
 import org.infinispan.util.function.SerializableDoubleFunction;
 import org.infinispan.util.function.SerializableDoublePredicate;
@@ -54,9 +59,10 @@ import org.infinispan.util.function.SerializableDoubleToIntFunction;
 import org.infinispan.util.function.SerializableDoubleToLongFunction;
 import org.infinispan.util.function.SerializableDoubleUnaryOperator;
 import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.function.SerializablePredicate;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 /**
  * Implementation of {@link DoubleStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -256,157 +262,108 @@ public class DistributedDoubleCacheStream<Original> extends AbstractCacheStream<
 
    @Override
    public double[] toArray() {
-      return performOperation(TerminalFunctions.toArrayDoubleFunction(), false,
-              (v1, v2) -> {
-                 double[] array = Arrays.copyOf(v1, v1.length + v2.length);
-                 System.arraycopy(v2, 0, array, v1.length, v2.length);
-                 return array;
-              }, null);
+      Object[] values = performPublisherOperation(PublisherReducers.toArrayReducer(), PublisherReducers.toArrayFinalizer());
+
+      double[] results = new double[values.length];
+      int i = 0;
+      for (Object obj : values) {
+         results[i++] = (Double) obj;
+      }
+      return results;
    }
 
    @Override
    public double reduce(double identity, DoubleBinaryOperator op) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, op::applyAsDouble, null);
-   }
-
-   @Override
-   public double reduce(double identity, SerializableDoubleBinaryOperator op) {
-      return reduce(identity, (DoubleBinaryOperator) op);
+      Function<Publisher<Double>, CompletionStage<Double>> reduce = PublisherReducers.reduce(identity,
+            (SerializableBiFunction<Double, Double, Double>) op::applyAsDouble);
+      return performPublisherOperation(reduce, reduce);
    }
 
    @Override
    public OptionalDouble reduce(DoubleBinaryOperator op) {
-      Double result = performOperation(TerminalFunctions.reduceFunction(op), true,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    if (i2 != null) {
-                       return op.applyAsDouble(i1, i2);
-                    }
-                    return i1;
-                 }
-                 return i2;
-              }, null);
+      Function<Publisher<Double>, CompletionStage<Double>> reduce = PublisherReducers.reduce(
+            (SerializableBinaryOperator<Double>) op::applyAsDouble);
+      Double result = performPublisherOperation(reduce, reduce);
       if (result == null) {
          return OptionalDouble.empty();
-      } else {
-         return OptionalDouble.of(result);
       }
-   }
-
-   @Override
-   public OptionalDouble reduce(SerializableDoubleBinaryOperator op) {
-      return reduce((DoubleBinaryOperator) op);
+      return OptionalDouble.of(result);
    }
 
    @Override
    public <R> R collect(Supplier<R> supplier, ObjDoubleConsumer<R> accumulator, BiConsumer<R, R> combiner) {
-      return performOperation(TerminalFunctions.collectFunction(supplier, accumulator, combiner), true,
-              (e1, e2) -> {
-                 combiner.accept(e1, e2);
-                 return e1;
-              }, null);
-   }
-
-   @Override
-   public <R> R collect(SerializableSupplier<R> supplier, SerializableObjDoubleConsumer<R> accumulator,
-           SerializableBiConsumer<R, R> combiner) {
-      return collect((Supplier<R>) supplier, accumulator, combiner);
+      return performPublisherOperation(PublisherReducers.collect(supplier,
+            (SerializableBiConsumer<R, Double>) accumulator::accept),
+            PublisherReducers.accumulate(combiner));
    }
 
    @Override
    public double sum() {
-      return performOperation(TerminalFunctions.sumDoubleFunction(), true, (i1, i2) -> i1 + i2, null);
+      DoubleSummaryStatistics dss = summaryStatistics();
+      return dss.getSum();
    }
 
    @Override
    public OptionalDouble min() {
-      Double value = performOperation(TerminalFunctions.minDoubleFunction(), false,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    if (i2 != null) {
-                       return i1 > i2 ? i2 : i1;
-                    }
-                    return i1;
-                 }
-                 return i2;
-              }, null);
-      if (value == null) {
+      SerializableComparator<Double> serializableComparator = Double::compareTo;
+      Function<Publisher<Double>, CompletionStage<Double>> minFunction = PublisherReducers.min(serializableComparator);
+      Double min = performPublisherOperation(minFunction, minFunction);
+      if (min == null) {
          return OptionalDouble.empty();
-      } else {
-         return OptionalDouble.of(value);
       }
+      return OptionalDouble.of(min);
    }
 
    @Override
    public OptionalDouble max() {
-      Double value = performOperation(TerminalFunctions.maxDoubleFunction(), false,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    if (i2 != null) {
-                       return i1 > i2 ? i1 : i2;
-                    }
-                    return i1;
-                 }
-                 return i2;
-              }, null);
-      if (value == null) {
+      SerializableComparator<Double> serializableComparator = Double::compareTo;
+      Function<Publisher<Double>, CompletionStage<Double>> maxFunction = PublisherReducers.max(serializableComparator);
+      Double max = performPublisherOperation(maxFunction, maxFunction);
+      if (max == null) {
          return OptionalDouble.empty();
-      } else {
-         return OptionalDouble.of(value);
       }
+      return OptionalDouble.of(max);
    }
 
    @Override
    public OptionalDouble average() {
-      double[] results = performOperation(TerminalFunctions.averageDoubleFunction(), true,
-              (a1, a2) -> {
-                 a1[0] += a2[0];
-                 a1[1] += a2[1];
-                 return a1;
-              }, null);
-      if (results[1] > 0) {
-         return OptionalDouble.of(results[0] / results[1]);
-      } else {
+      DoubleSummaryStatistics dss = summaryStatistics();
+      if (dss.getCount() == 0) {
          return OptionalDouble.empty();
       }
+      return OptionalDouble.of(dss.getAverage());
    }
 
    @Override
    public DoubleSummaryStatistics summaryStatistics() {
-      return performOperation(TerminalFunctions.summaryStatisticsDoubleFunction(), true, (ds1, ds2) -> {
-         ds1.combine(ds2);
-         return ds1;
-      }, null);
+      return performPublisherOperation(PublisherReducers.reduceWith(
+            (SerializableCallable<DoubleSummaryStatistics>) DoubleSummaryStatistics::new,
+            (SerializableBiFunction<DoubleSummaryStatistics, Double, DoubleSummaryStatistics>) (dss, doubleValue) -> {
+               dss.accept(doubleValue);
+               return dss;
+            }), PublisherReducers.reduce(
+            (SerializableBinaryOperator<DoubleSummaryStatistics>) (first, second) -> {
+               first.combine(second);
+               return first;
+            }));
    }
 
    @Override
    public boolean anyMatch(DoublePredicate predicate) {
-      return performOperation(TerminalFunctions.anyMatchFunction(predicate), false, Boolean::logicalOr, b -> b);
-   }
-
-   @Override
-   public boolean anyMatch(SerializableDoublePredicate predicate) {
-      return anyMatch((DoublePredicate) predicate);
+      return performPublisherOperation(PublisherReducers.anyMatch((SerializablePredicate<Double>) predicate::test),
+            PublisherReducers.or());
    }
 
    @Override
    public boolean allMatch(DoublePredicate predicate) {
-      return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
-   }
-
-   @Override
-   public boolean allMatch(SerializableDoublePredicate predicate) {
-      return allMatch((DoublePredicate) predicate);
+      return performPublisherOperation(PublisherReducers.allMatch((SerializablePredicate<Double>) predicate::test),
+            PublisherReducers.and());
    }
 
    @Override
    public boolean noneMatch(DoublePredicate predicate) {
-      return performOperation(TerminalFunctions.noneMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
-   }
-
-   @Override
-   public boolean noneMatch(SerializableDoublePredicate predicate) {
-      return noneMatch((DoublePredicate) predicate);
+      return performPublisherOperation(PublisherReducers.noneMatch((SerializablePredicate<Double>) predicate::test),
+            PublisherReducers.and());
    }
 
    @Override
@@ -417,19 +374,12 @@ public class DistributedDoubleCacheStream<Original> extends AbstractCacheStream<
 
    @Override
    public OptionalDouble findAny() {
-      Double result = performOperation(TerminalFunctions.findAnyDoubleFunction(), false,
-              (i1, i2) -> {
-                 if (i1 != null) {
-                    return i1;
-                 } else {
-                    return i2;
-                 }
-              }, a -> a != null);
-      if (result != null) {
-         return OptionalDouble.of(result);
-      } else {
+      Function<Publisher<Double>, CompletionStage<Double>> function = PublisherReducers.findFirst();
+      Double value = performPublisherOperation(function, function);
+      if (value == null) {
          return OptionalDouble.empty();
       }
+      return OptionalDouble.of(value);
    }
 
    @Override
@@ -471,7 +421,7 @@ public class DistributedDoubleCacheStream<Original> extends AbstractCacheStream<
 
    @Override
    public long count() {
-      return performOperation(TerminalFunctions.countDoubleFunction(), true, (i1, i2) -> i1 + i2, null);
+      return performPublisherOperation(PublisherReducers.count(), PublisherReducers.add());
    }
 
    // These are the custom added methods for cache streams
