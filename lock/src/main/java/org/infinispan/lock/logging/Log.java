@@ -4,6 +4,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 
 import org.infinispan.lock.exception.ClusteredLockException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
@@ -17,13 +18,12 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
    String LOCK_DELETE_MSG = "The lock was deleted.";
-//   String NODE_LEFT_MSG = "The node has left the cluster.";
    String UNLOCK_FAILED_MSG = "LOCK[%s] Unlock failed from node %s";
 
    @Message(value = LOCK_DELETE_MSG, id = 29001)
    ClusteredLockException lockDeleted();
 
-//   @Message(value = NODE_LEFT_MSG, id = 29002)
+//   @Message(value = "The node has left the cluster.", id = 29002)
 //   ClusteredLockException nodeShutdown();
 
    @Message(value = UNLOCK_FAILED_MSG, id = 29003)
@@ -47,4 +47,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Configuration is not clustered, clustered locks are disabled", id = 29009)
    void configurationNotClustered();
+
+   @Message(value = "MBean registration failed", id = 29010)
+   ClusteredLockException jmxRegistrationFailed(@Cause Throwable cause);
 }

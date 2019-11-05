@@ -25,13 +25,13 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
-   @LogMessage(level = ERROR)
-   @Message(value = "Could not register interpreter MBean", id = 19001)
-   void jmxRegistrationFailed();
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Could not unregister interpreter MBean", id = 19002)
-   void jmxUnregistrationFailed();
+   @Message(value = "Could not register interpreter MBean", id = 19001)
+   CacheException jmxRegistrationFailed(@Cause Throwable cause);
+
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Could not unregister interpreter MBean", id = 19002)
+//   void jmxUnregistrationFailed();
 
    @LogMessage(level = ERROR)
    @Message(value = "Interpreter error", id = 19003)

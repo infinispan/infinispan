@@ -26,7 +26,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
             CacheManagerJmxRegistration jmxRegistration = bcr.getComponent(CacheManagerJmxRegistration.class).running();
             jmxRegistration.registerMBean(interpreter);
          } catch (Exception e) {
-            log.jmxRegistrationFailed();
+            throw log.jmxRegistrationFailed(e);
          }
       }
    }

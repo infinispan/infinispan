@@ -5,12 +5,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
@@ -42,7 +40,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    protected A configuration;
    private CacheIgnoreManager cacheIgnore;
    private ObjectName transportObjName;
-   private MBeanServer mbeanServer;
+   private CacheManagerJmxRegistration jmxRegistration;
    private ThreadPoolExecutor executor;
    private ObjectName executorObjName;
 
@@ -156,10 +154,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
       GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
       if (jmxConfig.enabled()) {
-         CacheManagerJmxRegistration jmxRegistration =
-               SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
-
-         mbeanServer = jmxRegistration.getMBeanServer();
+         jmxRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
          String groupName = String.format("type=Server,name=%s-%d", getQualifiedName(), configuration.port());
          try {
             transportObjName = jmxRegistration.registerExternalMBean(transport, groupName);
@@ -171,11 +166,12 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    protected void unregisterServerMBeans() throws Exception {
-      // Unregister mbean(s)
-      if (transportObjName != null)
-         JmxUtil.unregisterMBean(transportObjName, mbeanServer);
-      if (executorObjName != null)
-         JmxUtil.unregisterMBean(executorObjName, mbeanServer);
+      if (transportObjName != null) {
+         jmxRegistration.unregisterMBean(transportObjName);
+      }
+      if (executorObjName != null) {
+         jmxRegistration.unregisterMBean(executorObjName);
+      }
    }
 
    public final String getQualifiedName() {

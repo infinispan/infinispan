@@ -12,7 +12,7 @@ import org.infinispan.client.hotrod.ServerStatistics;
  */
 public class ServerStatisticsImpl implements ServerStatistics {
 
-   private Map<String, String> stats = new HashMap<String, String>();
+   private final Map<String, String> stats = new HashMap<>();
 
    @Override
    public Map<String, String> getStatsMap() {
