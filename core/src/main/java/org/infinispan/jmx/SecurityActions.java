@@ -1,4 +1,4 @@
-package org.infinispan.commons.jmx;
+package org.infinispan.jmx;
 
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -8,7 +8,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
- * SecurityActions for the org.infinispan.commons.jmx package.
+ * SecurityActions for the org.infinispan.jmx package.
  * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other
  * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.

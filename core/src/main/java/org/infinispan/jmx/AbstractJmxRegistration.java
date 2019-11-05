@@ -14,7 +14,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
@@ -56,6 +55,9 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
 
    private List<ResourceDMBean> resourceDMBeans;
 
+   /**
+    * The component used for domain reservation.
+    */
    private final String mainComponent;
 
    AbstractJmxRegistration(String mainComponent) {
@@ -76,53 +78,27 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
                mBeanServer = lookup.getMBeanServer(globalJmxConfig.properties());
             }
          } catch (Exception e) {
-            log.warn("Ignoring exception in MBean server lookup", e);
+            CONTAINER.warn("Ignoring exception in MBean server lookup", e);
          }
 
          if (mBeanServer != null) {
             // first time!
             groupName = initGroup();
 
-            List<ResourceDMBean> mbeans = getResourceDMBeansFromComponents();
-            Iterator<ResourceDMBean> it = mbeans.iterator();
+            resourceDMBeans = Collections.synchronizedList(getResourceDMBeansFromComponents());
+            Iterator<ResourceDMBean> it = resourceDMBeans.iterator();
             ResourceDMBean first = it.next();
 
-            GlobalJmxStatisticsConfiguration globalJmxConfig = globalConfig.globalJmxStatistics();
-            String jmxDomain = globalJmxConfig.domain();
-            int counter = 2;
-            while (true) {
-               // register first bean
-               try {
-                  JmxUtil.registerMBean(first, getObjectName(jmxDomain, groupName, first.getMBeanName()), mBeanServer);
-                  break;
-               } catch (InstanceAlreadyExistsException e) {
-                  if (globalJmxConfig.allowDuplicateDomains()) {
-                     // add 'unique' suffix and retry
-                     jmxDomain = globalJmxConfig.domain() + counter++;
-                  } else {
-                     throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, globalJmxConfig.domain());
-                  }
-               } catch (Exception e) {
-                  throw new CacheException("Failure while registering MBeans", e);
-               }
-            }
-            resourceDMBeans = Collections.synchronizedList(mbeans);
-            this.jmxDomain = jmxDomain;
+            // register first bean to reserve the domain
+            this.jmxDomain = findVirginDomain(mBeanServer, first, globalConfig.globalJmxStatistics());
             this.mBeanServer = mBeanServer;
-
-            if (applicationMetricsRegistry != null) {
-               applicationMetricsRegistry.register(first);
-            }
 
             // register remaining beans
             try {
                while (it.hasNext()) {
                   ResourceDMBean resourceDMBean = it.next();
                   ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
-                  JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-                  if (applicationMetricsRegistry != null) {
-                     applicationMetricsRegistry.register(resourceDMBean);
-                  }
+                  register(resourceDMBean, objectName, mBeanServer);
                }
             } catch (Exception e) {
                throw new CacheException("Failure while registering MBeans", e);
@@ -134,15 +110,34 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          try {
             for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
-               JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-               if (applicationMetricsRegistry != null) {
-                  applicationMetricsRegistry.register(resourceDMBean);
-               }
+               register(resourceDMBean, objectName, mBeanServer);
             }
          } catch (Exception e) {
             throw new CacheException("Failure while registering MBeans", e);
          }
       }
+   }
+
+   //TODO remove support for allowDuplicateDomains in Infinispan 11. https://issues.jboss.org/browse/ISPN-10900
+   private String findVirginDomain(MBeanServer mBeanServer, ResourceDMBean first, GlobalJmxStatisticsConfiguration globalJmxConfig) {
+      String jmxDomain = globalJmxConfig.domain();
+      int counter = 2;
+      while (true) {
+         try {
+            register(first, getObjectName(jmxDomain, groupName, first.getMBeanName()), mBeanServer);
+            break;
+         } catch (InstanceAlreadyExistsException e) {
+            if (globalJmxConfig.allowDuplicateDomains()) {
+               // add 'unique' suffix and retry
+               jmxDomain = globalJmxConfig.domain() + counter++;
+            } else {
+               throw CONTAINER.jmxMBeanAlreadyRegistered(groupName, globalJmxConfig.domain());
+            }
+         } catch (Exception e) {
+            throw new CacheException("Failure while registering MBeans", e);
+         }
+      }
+      return jmxDomain;
    }
 
    /**
@@ -154,10 +149,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
             for (ResourceDMBean resourceDMBean : resourceDMBeans) {
                ObjectName objectName = resourceDMBean.getObjectName();
                if (objectName != null) {
-                  JmxUtil.unregisterMBean(objectName, mBeanServer);
-                  if (applicationMetricsRegistry != null) {
-                     applicationMetricsRegistry.unregister(objectName);
-                  }
+                  unregisterMBean(objectName);
                }
             }
             resourceDMBeans = null;
@@ -266,16 +258,12 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
       if (mBeanServer == null) {
          throw new IllegalStateException("MBean server not initialized");
       }
-
       ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
       if (resourceDMBean == null) {
          throw new IllegalArgumentException("No MBean metadata found for " + managedComponent.getClass().getName());
       }
       ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
-      JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-      if (applicationMetricsRegistry != null) {
-         applicationMetricsRegistry.register(resourceDMBean);
-      }
+      register(resourceDMBean, objectName, mBeanServer);
       return objectName;
    }
 
@@ -284,7 +272,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * components that are registered after the startup of the component registry and did not get registered
     * automatically.
     */
-   public void registerMBean(Object managedComponent) {
+   public void registerMBean(Object managedComponent) throws Exception {
       registerMBean(managedComponent, groupName);
    }
 
@@ -293,20 +281,53 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * components that are registered after the startup of the component registry and did not get registered
     * automatically.
     */
-   public void registerMBean(Object managedComponent, String groupName) {
-      try {
-         ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
-         if (resourceDMBean == null) {
-            throw new IllegalArgumentException("No MBean metadata found for " + managedComponent.getClass().getName());
+   public void registerMBean(Object managedComponent, String groupName) throws Exception {
+      if (mBeanServer == null) {
+         throw new IllegalStateException("MBean server not initialized");
+      }
+      ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
+      if (resourceDMBean == null) {
+         throw new IllegalArgumentException("No MBean metadata found for " + managedComponent.getClass().getName());
+      }
+      ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
+      register(resourceDMBean, objectName, mBeanServer);
+      resourceDMBeans.add(resourceDMBean);
+   }
+
+   /**
+    * Registers the JMX MBean.
+    *
+    * @param resourceDMBean MBean to register
+    * @param objectName     {@link ObjectName} under which to register the MBean.
+    * @throws Exception If registration could not be completed.
+    */
+   private void register(ResourceDMBean resourceDMBean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
+      SecurityActions.registerMBean(resourceDMBean, objectName, mBeanServer);
+      if (log.isTraceEnabled()) {
+         log.tracef("Registered MBean %s under %s", resourceDMBean, objectName);
+      }
+      if (applicationMetricsRegistry != null) {
+         applicationMetricsRegistry.register(resourceDMBean);
+      }
+   }
+
+   /**
+    * Unregisters the MBean located under the given {@link ObjectName}, if it exists.
+    *
+    * @param objectName {@link ObjectName} where the MBean is registered
+    * @throws Exception If unregistration could not be completed.
+    */
+   public void unregisterMBean(ObjectName objectName) throws Exception {
+      if (mBeanServer.isRegistered(objectName)) {
+         SecurityActions.unregisterMBean(objectName, mBeanServer);
+         if (log.isTraceEnabled()) {
+            log.tracef("Unregistered MBean: %s", objectName);
          }
-         ObjectName objectName = getObjectName(groupName, resourceDMBean.getMBeanName());
-         JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
-         resourceDMBeans.add(resourceDMBean);
          if (applicationMetricsRegistry != null) {
-            applicationMetricsRegistry.register(resourceDMBean);
+            applicationMetricsRegistry.unregister(objectName);
          }
-      } catch (Exception e) {
-         throw new CacheException("Failure while registering MBeans", e);
+      } else {
+         log.debugf("MBean not registered: %s", objectName);
       }
    }
 }

@@ -107,4 +107,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "CounterManager hasn't started yet or has been stopped.", id = 29528)
    CounterException managerNotStarted();
+
+   @Message(value = "MBean registration failed", id = 29529)
+   CounterException jmxRegistrationFailed(@Cause Throwable cause);
 }
