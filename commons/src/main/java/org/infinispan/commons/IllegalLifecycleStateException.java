@@ -1,4 +1,4 @@
-package org.infinispan;
+package org.infinispan.commons;
 
 /**
  * This exception is thrown when the cache or cache manager does not have the
@@ -6,11 +6,9 @@ package org.infinispan;
  * this include when the cache is stopping or is stopped, when the cache
  * manager is stopped...etc.
  *
- * @since 7.0
- * @deprecated since 10.1 please use {@link org.infinispan.commons.IllegalLifecycleStateException} instead
+ * @since 10.1 (prior was in org.infinispan package since 7.0)
  */
-@Deprecated
-public class IllegalLifecycleStateException extends org.infinispan.commons.IllegalLifecycleStateException {
+public class IllegalLifecycleStateException extends CacheException {
    public IllegalLifecycleStateException() {
    }
 

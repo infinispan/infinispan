@@ -65,7 +65,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
             return createExecutorService(
                         globalConfiguration.transport().remoteCommandThreadPool(),
                         REMOTE_COMMAND_EXECUTOR,
-                        ExecutorServiceType.BLOCKING);
+                        ExecutorServiceType.REMOTE_BLOCKING);
          } else if (componentName.equals(STATE_TRANSFER_EXECUTOR)) {
             return createExecutorService(
                         globalConfiguration.stateTransferThreadPool(),
@@ -74,7 +74,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          } else if (componentName.equals(ASYNC_OPERATIONS_EXECUTOR)) {
             return createExecutorService(
                         globalConfiguration.asyncThreadPool(),
-                        ASYNC_OPERATIONS_EXECUTOR, ExecutorServiceType.DEFAULT);
+                        ASYNC_OPERATIONS_EXECUTOR, ExecutorServiceType.NON_BLOCKING);
          } else if (componentName.endsWith(TIMEOUT_SCHEDULE_EXECUTOR)) {
             return createExecutorService(null, TIMEOUT_SCHEDULE_EXECUTOR, ExecutorServiceType.SCHEDULED);
          } else {
@@ -107,7 +107,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
       switch (type) {
          case SCHEDULED:
             return (T) new LazyInitializingScheduledExecutorService(executorFactory, threadFactory);
-         case BLOCKING:
+         case REMOTE_BLOCKING:
             final String controllerName = "Controller-" + shortened(componentName) + "-" +
                   globalConfiguration.transport().nodeName();
             return (T) new LazyInitializingBlockingTaskAwareExecutorService(executorFactory, threadFactory,
@@ -132,12 +132,19 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          default:
             int defaultQueueSize = KnownComponentNames.getDefaultQueueSize(componentName);
             int defaultMaxThreads = KnownComponentNames.getDefaultThreads(componentName);
-            return BlockingThreadPoolExecutorFactory.create(defaultMaxThreads, defaultQueueSize);
+            return BlockingThreadPoolExecutorFactory.create(defaultMaxThreads, defaultQueueSize,
+                  type == ExecutorServiceType.NON_BLOCKING);
       }
    }
 
    private enum ExecutorServiceType {
-      DEFAULT, SCHEDULED, BLOCKING
+      // This type can be blocking
+      DEFAULT,
+      SCHEDULED,
+      // This is a special type that allows for blocking remote operations to be enqueued
+      REMOTE_BLOCKING,
+      // This type of pool means that nothing should ever be executed upon it that may block
+      NON_BLOCKING,
    }
 
 }
