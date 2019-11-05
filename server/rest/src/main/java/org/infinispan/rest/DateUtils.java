@@ -17,8 +17,8 @@ public final class DateUtils {
    private DateUtils() {
    }
 
-   public static boolean ifUnmodifiedIsBeforeModificationDate(String ifUnmodifiedSince, long lastMod) {
-      if (ifUnmodifiedSince != null) {
+   public static boolean ifUnmodifiedIsBeforeModificationDate(String ifUnmodifiedSince, Long lastMod) {
+      if (ifUnmodifiedSince != null && lastMod != null) {
          try {
             Instant instant = Instant.ofEpochSecond(lastMod / 1000);
             ZonedDateTime clientTime = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(ifUnmodifiedSince));
@@ -50,8 +50,8 @@ public final class DateUtils {
       }
    }
 
-   public static boolean isNotModifiedSince(String rfc1123Since, long lasModificationDate) throws WrongDateFormatException {
-      if (rfc1123Since == null || lasModificationDate == -1) return false;
+   public static boolean isNotModifiedSince(String rfc1123Since, Long lasModificationDate) throws WrongDateFormatException {
+      if (rfc1123Since == null || lasModificationDate == null) return false;
       try {
          Instant instant = Instant.ofEpochSecond(lasModificationDate / 1000);
          ZonedDateTime lastMod = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());

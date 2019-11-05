@@ -85,7 +85,7 @@ public class SimpleRestResponse implements RestResponse {
       }
 
       @Override
-      public Builder lastModified(long epoch) {
+      public Builder lastModified(Long epoch) {
          return this;
       }
 

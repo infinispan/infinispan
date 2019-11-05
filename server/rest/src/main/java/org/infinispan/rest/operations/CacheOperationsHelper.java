@@ -93,9 +93,9 @@ public class CacheOperationsHelper {
             .orElse(OptionalInt.empty());
    }
 
-   public static <K, V> long lastModified(InternalCacheEntry<K, V> ice) {
+   public static <K, V> Long lastModified(InternalCacheEntry<K, V> ice) {
       long created = ice.getCreated();
-      return created == -1 ? 0 : ice.getCreated();
+      return created == -1 ? null : ice.getCreated();
    }
 
 }

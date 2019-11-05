@@ -190,7 +190,7 @@ public class CacheResource implements ResourceHandler {
 
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
-            long lastMod = CacheOperationsHelper.lastModified(ice);
+            Long lastMod = CacheOperationsHelper.lastModified(ice);
             Date expires = ice.canExpire() ? new Date(ice.getExpiryTime()) : null;
             OptionalInt minFreshSeconds = CacheOperationsHelper.minFresh(cacheControl);
             if (CacheOperationsHelper.entryFreshEnough(expires, minFreshSeconds)) {

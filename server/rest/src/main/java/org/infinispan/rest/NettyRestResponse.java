@@ -159,7 +159,7 @@ public class NettyRestResponse implements RestResponse {
       }
 
       @Override
-      public Builder lastModified(long epoch) {
+      public Builder lastModified(Long epoch) {
          setDateHeader(LAST_MODIFIED_HEADER, epoch);
          return this;
       }
