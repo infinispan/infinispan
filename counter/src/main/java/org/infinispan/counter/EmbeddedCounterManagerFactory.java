@@ -2,7 +2,7 @@ package org.infinispan.counter;
 
 import static java.util.Objects.requireNonNull;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;

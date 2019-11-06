@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;

@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;

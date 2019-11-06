@@ -5,7 +5,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.File;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;

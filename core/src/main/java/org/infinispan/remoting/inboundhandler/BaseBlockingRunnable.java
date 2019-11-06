@@ -3,7 +3,7 @@ package org.infinispan.remoting.inboundhandler;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;

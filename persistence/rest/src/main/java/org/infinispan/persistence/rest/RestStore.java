@@ -10,8 +10,8 @@ import java.util.function.Predicate;
 
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
-import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;

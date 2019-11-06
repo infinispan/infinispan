@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;

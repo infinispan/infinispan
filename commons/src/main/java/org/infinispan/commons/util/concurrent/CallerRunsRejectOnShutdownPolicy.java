@@ -3,6 +3,8 @@ package org.infinispan.commons.util.concurrent;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
+
 /**
  * A handler for rejected tasks that runs the rejected task
  * directly in the calling thread of the {@code execute} method. If
@@ -14,7 +16,7 @@ public class CallerRunsRejectOnShutdownPolicy extends ThreadPoolExecutor.AbortPo
    @Override
    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
       if (executor.isShutdown()) {
-         super.rejectedExecution(r, executor);
+         throw new IllegalLifecycleStateException();
       }
       r.run();
    }

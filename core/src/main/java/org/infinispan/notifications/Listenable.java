@@ -3,6 +3,7 @@ package org.infinispan.notifications;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**
@@ -37,7 +38,7 @@ public interface Listenable {
     * Removes a listener from the component.
     *
     * @param listener listener to remove.  Must not be null.
-    * @throws org.infinispan.IllegalLifecycleStateException may be thrown if the {@code Listenable} is stopped.
+    * @throws IllegalLifecycleStateException may be thrown if the {@code Listenable} is stopped.
     */
    default void removeListener(Object listener) {
       CompletionStages.join(removeListenerAsync(listener));
