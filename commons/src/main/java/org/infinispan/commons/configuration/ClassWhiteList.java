@@ -4,12 +4,14 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,23 +47,45 @@ public final class ClassWhiteList {
 
    static {
       // Classes always allowed
+      // Primitive Arrays
+      SYS_ALLOWED_CLASSES.add(byte[].class.getName());
+      SYS_ALLOWED_CLASSES.add(short[].class.getName());
+      SYS_ALLOWED_CLASSES.add(int[].class.getName());
+      SYS_ALLOWED_CLASSES.add(long[].class.getName());
+      SYS_ALLOWED_CLASSES.add(float[].class.getName());
+      SYS_ALLOWED_CLASSES.add(double[].class.getName());
+      SYS_ALLOWED_CLASSES.add(char[].class.getName());
+      SYS_ALLOWED_CLASSES.add(boolean[].class.getName());
+
+      // Boxed Primitives
       SYS_ALLOWED_CLASSES.add(Byte.class.getName());
       SYS_ALLOWED_CLASSES.add(Short.class.getName());
       SYS_ALLOWED_CLASSES.add(Integer.class.getName());
       SYS_ALLOWED_CLASSES.add(Long.class.getName());
       SYS_ALLOWED_CLASSES.add(Float.class.getName());
       SYS_ALLOWED_CLASSES.add(Double.class.getName());
-      SYS_ALLOWED_CLASSES.add(Number.class.getName());
       SYS_ALLOWED_CLASSES.add(Character.class.getName());
       SYS_ALLOWED_CLASSES.add(String.class.getName());
-      SYS_ALLOWED_CLASSES.add(HashSet.class.getName());
-      SYS_ALLOWED_CLASSES.add(HashMap.class.getName());
-      SYS_ALLOWED_CLASSES.add(Date.class.getName());
-      SYS_ALLOWED_CLASSES.add(Enum.class.getName());
       SYS_ALLOWED_CLASSES.add(Boolean.class.getName());
-      SYS_ALLOWED_CLASSES.add(ArrayList.class.getName());
-      SYS_ALLOWED_CLASSES.add(Object[].class.getName());
-      SYS_ALLOWED_CLASSES.add("org.infinispan.jboss.marshalling.commons.JBossExternalizerAdapter");
+
+      // Java.math
+      SYS_ALLOWED_CLASSES.add(BigInteger.class.getName());
+      SYS_ALLOWED_CLASSES.add(BigDecimal.class.getName());
+
+      // Java.time
+      SYS_ALLOWED_CLASSES.add(Instant.class.getName());
+      SYS_ALLOWED_CLASSES.add("java.time.Ser");
+
+
+      // Util
+      SYS_ALLOWED_CLASSES.add(Date.class.getName());
+
+      // Misc
+      SYS_ALLOWED_CLASSES.add(Enum.class.getName());
+      SYS_ALLOWED_CLASSES.add(Number.class.getName());
+
+      // Reference array regex, for arrray representations of allowed classes e.g '[Ljava.lang.Byte;'
+      SYS_ALLOWED_REGEXP.add("^\\[[\\[L].*\\;$");
 
       String regexps = System.getProperty(REGEXPS_PROPERTY_NAME);
       if (regexps != null) {
