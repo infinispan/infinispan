@@ -58,6 +58,9 @@ public final class ClassWhiteList {
       SYS_ALLOWED_CLASSES.add(HashMap.class.getName());
       SYS_ALLOWED_CLASSES.add(Date.class.getName());
       SYS_ALLOWED_CLASSES.add(Enum.class.getName());
+      SYS_ALLOWED_CLASSES.add(Boolean.class.getName());
+      SYS_ALLOWED_CLASSES.add(ArrayList.class.getName());
+      SYS_ALLOWED_CLASSES.add(Object[].class.getName());
       SYS_ALLOWED_CLASSES.add("org.infinispan.jboss.marshalling.commons.JBossExternalizerAdapter");
 
       String regexps = System.getProperty(REGEXPS_PROPERTY_NAME);
