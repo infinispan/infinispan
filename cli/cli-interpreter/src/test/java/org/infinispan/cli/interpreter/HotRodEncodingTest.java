@@ -36,10 +36,10 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
    private static final String REGULAR_CACHE = "default";
    private static final String OBJECT_CACHE = "object";
 
-   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
-   HotRodServer hotrodServer;
-   int port;
-   Interpreter interpreter;
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private HotRodServer hotrodServer;
+   private int port;
+   private Interpreter interpreter;
    private RemoteCacheManager remoteCacheManager;
 
    @Override

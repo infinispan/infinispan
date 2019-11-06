@@ -28,7 +28,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "server.hotrod.HotRodStatsTest")
 public class HotRodStatsTest extends HotRodSingleNodeTest {
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    public EmbeddedCacheManager createTestCacheManager() {

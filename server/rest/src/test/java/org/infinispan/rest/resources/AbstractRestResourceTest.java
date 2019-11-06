@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest {
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    protected HttpClient client;
    private static final int NUM_SERVERS = 2;
    private List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
@@ -45,8 +45,7 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
    protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      TestCacheManagerFactory.configureGlobalJmx(globalBuilder, getClass().getSimpleName() + id,
-                                                 mBeanServerLookup);
+      TestCacheManagerFactory.configureGlobalJmx(globalBuilder, getClass().getSimpleName() + id, mBeanServerLookup);
       globalBuilder.serialization().addContextInitializer(RestTestSCI.INSTANCE);
       return globalBuilder.clusteredDefault().cacheManagerName("default");
    }
@@ -88,7 +87,6 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
       restServers.forEach(RestServerHelper::clear);
    }
 
-
    private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
       Request request = client
             .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
@@ -122,6 +120,4 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
             .send();
       ResponseAssertion.assertThat(response).isOk();
    }
-
-
 }

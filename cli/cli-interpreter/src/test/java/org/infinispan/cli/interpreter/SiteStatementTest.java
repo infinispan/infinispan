@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
 @Test(groups = "xsite", testName = "cli.interpreter.SiteStatementTest")
 public class SiteStatementTest extends AbstractTwoSitesTest {
 
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    public SiteStatementTest() {
       implicitBackupCache = true;

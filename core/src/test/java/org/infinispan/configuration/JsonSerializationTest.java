@@ -81,7 +81,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Test(testName = "config.JsonSerializationTest", groups = "functional")
 public class JsonSerializationTest extends AbstractInfinispanTest {
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private JsonReader jsonReader = new JsonReader();
    private JsonWriter jsonWriter = new JsonWriter();

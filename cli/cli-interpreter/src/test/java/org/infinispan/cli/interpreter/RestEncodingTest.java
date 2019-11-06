@@ -41,11 +41,10 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    private static final String REGULAR_CACHE = "default";
    private static final String OBJ_CACHE = "object";
 
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private CloseableHttpClient restClient = HttpClients.createMinimal();
    private RestServer restServer;
    private Interpreter interpreter;
-
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {

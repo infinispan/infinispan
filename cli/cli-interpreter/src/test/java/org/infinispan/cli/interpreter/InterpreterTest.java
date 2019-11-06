@@ -28,7 +28,8 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName="cli.interpreter.InterpreterTest")
 public class InterpreterTest extends SingleCacheManagerTest {
-   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {

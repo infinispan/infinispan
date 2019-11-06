@@ -38,13 +38,11 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
          URL url = FileLookupFactory.newInstance().lookupFileLocation(
                "dynamic-indexing-distribution.xml",
                Thread.currentThread().getContextClassLoader());
-         ParserRegistry parserRegistry = new ParserRegistry(
-               Thread.currentThread().getContextClassLoader());
+         ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
          ConfigurationBuilderHolder holder = parserRegistry.parse(url);
          configureGlobalJmx(holder.getGlobalConfigurationBuilder(), BASE_JMX_DOMAIN + i, mBeanServerLookup);
 
-         EmbeddedCacheManager cm = TestCacheManagerFactory
-               .createClusteredCacheManager(holder);
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(holder);
          registerCacheManager(cm);
          Cache cache = cm.getCache(getClass().getSimpleName());
          caches.add(cache);
