@@ -29,7 +29,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
@@ -671,20 +671,17 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
 
       private void recursionTopologyChanged() {
-         if (addressCache.getStatus().allowInvocations()) {
+         // Check the manager status, not the address cache status, because it changes to STOPPING first
+         if (cacheManager.getStatus().allowInvocations()) {
             // No need for a timeout here, the cluster executor has a default timeout
             clusterExecutor.submitConsumer(new CheckAddressTask(addressCache.getName(), clusterAddress), (a, v, t) -> {
-               if (t != null) {
-                  throw new CacheException(t);
+               if (t != null && !(t instanceof IllegalLifecycleStateException)) {
+                  log.debug("Error re-adding address to topology cache, retrying", t);
+                  recursionTopologyChanged();
                }
                if (!v) {
                   log.debugf("Re-adding %s to the topology cache", clusterAddress);
                   addressCache.putAsync(clusterAddress, address);
-               }
-            }).whenComplete((v, t) -> {
-               if (t != null) {
-                  log.debug("Error re-adding address to topology cache, retrying", t);
-                  recursionTopologyChanged();
                }
             });
          }
