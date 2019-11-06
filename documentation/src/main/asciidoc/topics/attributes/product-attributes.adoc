@@ -61,9 +61,9 @@
 // Dependencies
 //
 //Spring Boot 1.5.x
-:sb_starter: 1.0.7.Final-redhat-00006
+:sb_starter: 1.0.7.Final-redhat-00011
 //Spring Boot 2.x
-:sb2_starter: 2.1.5.Final-redhat-00008
+:sb2_starter: 2.1.8.redhat-00001
 
 //Doc Home
 :doc_home: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
