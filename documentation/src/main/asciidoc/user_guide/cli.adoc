@@ -61,6 +61,16 @@ begin       commit      disconnect  evict       info     
 
 The CLI is based on link:https://github.com/aeshell/aesh[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation.
 
+
+[IMPORTANT]
+====
+{brandname} CLI sessions expire if they remain idle for more than six minutes. Running commands after the session expires results in the following message:
+
+`ISPN019015: Invalid session id '<session_id>'`
+
+You must restart the CLI to start a new session.
+====
+
 ==== Commands
 ===== abort
 The _abort_ command is used to abort a running batch initiated by the _start_ command
