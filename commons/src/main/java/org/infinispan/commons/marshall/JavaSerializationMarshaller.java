@@ -22,7 +22,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
  */
 public class JavaSerializationMarshaller extends AbstractMarshaller {
 
-   private final ClassWhiteList whiteList;
+   final ClassWhiteList whiteList;
 
    public JavaSerializationMarshaller() {
       this(new ClassWhiteList(Collections.emptyList()));

@@ -33,7 +33,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
 
    protected static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   public static final String SPRING_JAVA_SERIAL_WHITELIST = "java.time.*,org.springframework.*,org.infinispan.spring.remote.*";
+   public static final String SPRING_JAVA_SERIAL_WHITELIST = "java.util.HashMap,java.time.*,org.springframework.*,org.infinispan.spring.remote.*";
 
    protected boolean startAutomatically = true;
 
