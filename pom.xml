@@ -941,6 +941,16 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>${versionx.com.github.ben-manes.caffeine.caffeine}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.checkerframework</groupId>
+                  <artifactId>checker-qual</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>com.google.errorprone</groupId>
+                  <artifactId>error_prone_annotations</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>com.google.code.findbugs</groupId>
