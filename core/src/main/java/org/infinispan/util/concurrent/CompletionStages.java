@@ -144,21 +144,15 @@ public class CompletionStages {
          }
          return delay;
       }
-      CompletableFuture<V> returnedFuture = new CompletableFuture<>();
-      delay.whenCompleteAsync((v, t) -> {
+      return delay.whenCompleteAsync((v, t) -> {
          if (t != null) {
             if (trace) {
                log.tracef("Continuing execution of id %s with exception %s", traceId, t.getMessage());
             }
-            returnedFuture.completeExceptionally(t);
-         } else {
-            if (trace) {
-               log.tracef("Continuing execution of id %s", traceId);
-            }
-            returnedFuture.complete(v);
+         } else if (trace) {
+            log.tracef("Continuing execution of id %s", traceId);
          }
       }, continuationExecutor);
-      return returnedFuture;
    }
 
    private static class VoidAggregateCompletionStage extends AbstractAggregateCompletionStage<Void> {
