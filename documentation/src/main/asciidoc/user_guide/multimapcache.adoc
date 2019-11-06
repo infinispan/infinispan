@@ -120,9 +120,8 @@ multimapCacheManager.defineConfiguration(multimapCacheName, c.build());
 multimapCache = multimapCacheManager.get(multimapCacheName);
 ----
 
-==== Server mode
-
-TODO
+//==== Server mode
+//TODO
 
 === Limitations
 
