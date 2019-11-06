@@ -421,6 +421,9 @@ public class JGroupsTransport implements Transport {
    @Start
    @Override
    public void start() {
+      if (running)
+         throw new IllegalStateException("Two or more cache managers are using the same JGroupsTransport instance");
+
       probeHandler.updateThreadPool(remoteExecutor);
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
@@ -753,16 +756,15 @@ public class JGroupsTransport implements Transport {
          if (disconnectChannel && channel != null && channel.isConnected()) {
             CLUSTER.disconnectJGroups(clusterName);
 
-            // Unregistering before disconnecting/closing because
-            // after that the cluster name is null
-            if (globalStatsEnabled) {
-               JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), channel.getClusterName());
-            }
-
             channel.disconnect();
          }
+
          if (closeChannel && channel != null && channel.isOpen()) {
             channel.close();
+         }
+
+         if (globalStatsEnabled && channel != null) {
+            JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName);
          }
       } catch (Exception toLog) {
          CLUSTER.problemClosingChannel(toLog, clusterName);
