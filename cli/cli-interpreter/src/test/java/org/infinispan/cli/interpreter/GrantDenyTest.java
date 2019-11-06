@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 public class GrantDenyTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
 
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private ClusterRoleMapper cpm;
 
    @Override
@@ -51,8 +51,6 @@ public class GrantDenyTest extends SingleCacheManagerTest {
       authConfig.role("reader").role("writer").role("admin").jmxStatistics().enable();
       return TestCacheManagerFactory.createCacheManager(global, config);
    }
-
-
 
    @Override
    protected void setup() throws Exception {

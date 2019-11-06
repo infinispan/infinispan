@@ -30,13 +30,14 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "client.hotrod.HotRodStatisticsTest")
 public class HotRodStatisticsTest extends AbstractInfinispanTest {
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    private HotRodServer hotrodServer;
    private CacheContainer cacheContainer;
    private RemoteCacheManager rcm;
    private RemoteCache<String, String> remoteCache;
-   long startTime;
+   private long startTime;
 
    @BeforeMethod
    protected void setup() throws Exception {

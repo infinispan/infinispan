@@ -22,6 +22,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import net.spy.memcached.MemcachedClient;
+
 /**
  * MemcachedEncodingTest.
  *
@@ -33,11 +34,11 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
 
    private static final String MEMCACHED_CACHE = "memcachedCache";
 
-   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
-   MemcachedServer memcachedServer;
-   int port;
-   Interpreter interpreter;
-   MemcachedClient memcachedClient;
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private MemcachedServer memcachedServer;
+   private int port;
+   private Interpreter interpreter;
+   private MemcachedClient memcachedClient;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

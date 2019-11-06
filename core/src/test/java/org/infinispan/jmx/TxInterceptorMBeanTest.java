@@ -27,7 +27,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
 
    private static final String JMX_DOMAIN = TxInterceptorMBeanTest.class.getSimpleName();
 
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    private ObjectName txInterceptor;
    private ObjectName txInterceptor2;
    private TransactionManager tm;

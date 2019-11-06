@@ -33,8 +33,8 @@ import org.testng.annotations.Test;
 public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
-   private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
-   public String configRoot;
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private String configRoot;
    private InMemoryAppender appender;
 
    @BeforeClass

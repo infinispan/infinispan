@@ -15,9 +15,9 @@ import org.testng.annotations.Test;
 @Test(groups="functional", testName = "cli.interpreter.ClusteredCLITest")
 public class ClusteredCLITest extends MultipleCacheManagersTest {
 
-   public static String CACHE_NAME = "distCache";
+   private static String CACHE_NAME = "distCache";
 
-   MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
+   private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    public ClusteredCLITest() {
       cleanup = CleanupPhase.AFTER_TEST;
