@@ -1,9 +1,5 @@
 package org.infinispan.tools.store.migrator.rocksdb;
 
-import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
-import static org.infinispan.tools.store.migrator.Element.COMPRESSION;
-import static org.infinispan.tools.store.migrator.Element.LOCATION;
-
 import java.io.File;
 import java.util.Iterator;
 
@@ -14,12 +10,17 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
+import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.Cache;
 import org.rocksdb.CompressionType;
+import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+
+import static org.infinispan.tools.store.migrator.Element.*;
 
 public class RocksDBReader implements StoreIterator {
 
@@ -33,7 +34,12 @@ public class RocksDBReader implements StoreIterator {
       if (!f.exists() || !f.isDirectory())
          throw new CacheException(String.format("Unable to read db directory '%s'", location));
 
+      long capacity = 1000;
+      Cache cache = new LRUCache(capacity);
+      BlockBasedTableConfig tableOptions = new BlockBasedTableConfig();
+      tableOptions.setBlockCache(cache);
       Options options = new Options().setCreateIfMissing(false);
+      options.setTableFormatConfig(tableOptions);
       String compressionType = props.get(COMPRESSION);
       if (compressionType != null) {
          options.setCompressionType(CompressionType.getCompressionType(compressionType));
