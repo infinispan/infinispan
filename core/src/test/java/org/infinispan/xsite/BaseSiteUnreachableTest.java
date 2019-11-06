@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.test.TestDataSCI;
 
 public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
@@ -21,7 +22,8 @@ public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       lonGc
-            .site().localSite(LON);
+            .site().localSite(LON)
+            .serialization().addContextInitializer(TestDataSCI.INSTANCE);
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
                .site(NYC)

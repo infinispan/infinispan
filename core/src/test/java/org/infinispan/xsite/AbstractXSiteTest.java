@@ -14,7 +14,6 @@ import java.util.concurrent.locks.LockSupport;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -267,11 +266,9 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          //get the transport here as clone.read below would inject the same transport reference into the clone
          // which we don't want
          Transport transport = clone.transport().getTransport();
-         Marshaller marshaller = clone.serialization().getMarshaller();
          GlobalConfiguration original = gcb.build();
          clone.read(original);
          clone.transport().transport(transport);
-         clone.serialization().marshaller(marshaller);
 
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
          if (original.globalJmxStatistics().enabled()) {
