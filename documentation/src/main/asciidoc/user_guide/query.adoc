@@ -687,15 +687,13 @@ CompletableFuture<Void> future = searchManager.getMassIndexer().startAsyc();
 TIP: This is also available as a `start` JMX operation on the link:{javadocroot}/jmxComponents.html#MassIndexer[MassIndexer MBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=MassIndexer`.
 
-[[query_indexless]]
-===== Indexless
+//[[query_indexless]]
+//===== Indexless
+//TODO
 
-TODO
-
-[[query_hybrid]]
-===== Hybrid
-
-TODO
+//[[query_hybrid]]
+//===== Hybrid
+//TODO
 
 ===== Mapping Entities
 
@@ -1168,7 +1166,7 @@ a subset of attributes (or attribute paths) to return - the projection. If proje
 will not return the whole domain entity but will return a _List_ of _Object[]_, each slot in the array corresponding to
 a projected attribute.
 
-TODO document what needs to be configured for an attribute to be available for projection.
+//TODO document what needs to be configured for an attribute to be available for projection.
 
 [source,java]
 ----
@@ -1188,7 +1186,7 @@ the order of invocation of `orderBy` method will dictate their precedence. But y
 criteria as acting together on the tuple of specified attributes rather than in a sequence of individual sorting
 operations on each attribute.
 
-TODO document what needs to be configured for an attribute to be available for sorting.
+//TODO document what needs to be configured for an attribute to be available for sorting.
 
 [source,java]
 ----
@@ -1224,7 +1222,7 @@ Query query = queryFactory.from(Book.class)
 NOTE: Even if the results being fetched are limited to _maxResults_ you can still find the total number of matching
 results by calling `Query.getResultSize()`.
 
-TODO Does pagination make sense if no stable sort criteria is defined? Luckily when running on Lucene and no sort criteria is specified we still have the order of relevance, but this has to be defined for other search engines.
+//TODO Does pagination make sense if no stable sort criteria is defined? Luckily when running on Lucene and no sort criteria is specified we still have the order of relevance, but this has to be defined for other search engines.
 
 ====== Grouping and Aggregation
 
@@ -1742,11 +1740,10 @@ and the actual data stored in the cache will be protobuf encoded provided that m
 remote client for all involved types (_Book_ and _Author_ in our example). Keeping your objects stored in protobuf
 format has the benefit of being able to consume them with compatible clients written in different languages.
 
-TODO Add reference to sample in C++ client user guide
+//TODO Add reference to sample in C++ client user guide
 
-==== Using annotations
-
-TODO
+//==== Using annotations
+//TODO
 
 ==== Indexing of Protobuf encoded entries
 After configuring the client as described in the previous section you can start configuring indexing for your caches on
