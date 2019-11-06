@@ -14,7 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import net.jcip.annotations.GuardedBy;
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;

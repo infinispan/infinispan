@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;

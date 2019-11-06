@@ -22,7 +22,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;

@@ -1,5 +1,7 @@
 package org.infinispan.factories.impl;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
+
 /**
  * Reference to a component.
  *
@@ -14,7 +16,7 @@ public interface ComponentRef<T> {
 
    /**
     * @return the running component instance
-    * @throws org.infinispan.IllegalLifecycleStateException if the component is not running
+    * @throws IllegalLifecycleStateException if the component is not running
     */
    T running();
 

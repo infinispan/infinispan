@@ -2,6 +2,7 @@ package org.infinispan.factories.impl;
 
 import java.util.Collection;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.factories.annotations.Inject;
 
@@ -84,7 +85,7 @@ public interface BasicComponentRegistry {
     * @param manageLifecycle {@code false} if the registry should ignore methods annotated with
     * {@linkplain org.infinispan.factories.annotations.Start} and {@linkplain org.infinispan.factories.annotations.Stop}
     *
-    * @throws org.infinispan.IllegalLifecycleStateException If the registry is stopping/stopped
+    * @throws IllegalLifecycleStateException If the registry is stopping/stopped
     * @throws org.infinispan.commons.CacheConfigurationException If a component/alias is already registered with that
     *         name, or if a dependency cannot be resolved
     */
@@ -104,7 +105,7 @@ public interface BasicComponentRegistry {
     *
     * <p>Components that depend on the alias will behave as if they depended on the original component directly.</p>
     *
-    * @throws org.infinispan.IllegalLifecycleStateException If the registry is stopping/stopped
+    * @throws IllegalLifecycleStateException If the registry is stopping/stopped
     * @throws org.infinispan.commons.CacheConfigurationException If a component/alias is already registered with that
     *         name
     */
@@ -118,7 +119,7 @@ public interface BasicComponentRegistry {
     * @param target An instance of a class with {@link Inject} annotations.
     * @param startDependencies If {@code true}, start the dependencies before injecting them.
     *
-    * @throws org.infinispan.IllegalLifecycleStateException If the registry is stopping/stopped
+    * @throws IllegalLifecycleStateException If the registry is stopping/stopped
     * @throws org.infinispan.commons.CacheConfigurationException If a dependency cannot be resolved
     */
    void wireDependencies(Object target, boolean startDependencies);
@@ -145,7 +146,7 @@ public interface BasicComponentRegistry {
     * Need to call {@link #rewire()} to inject the new component in all the components that depend on it.
     * If the component is global, need to call {@link #rewire()} on all the cache component registries as well.</p>
     *
-    * @throws org.infinispan.IllegalLifecycleStateException If the registry is stopping/stopped
+    * @throws IllegalLifecycleStateException If the registry is stopping/stopped
     */
    @Experimental
    void replaceComponent(String componentName, Object newInstance, boolean manageLifecycle);

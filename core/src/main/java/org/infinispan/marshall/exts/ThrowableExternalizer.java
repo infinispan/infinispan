@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;

@@ -3,7 +3,7 @@ package org.infinispan.factories.impl;
 import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.ComponentFactory;
 import org.infinispan.factories.annotations.ComponentName;

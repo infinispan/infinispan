@@ -10,7 +10,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.provider.SpringCache;
