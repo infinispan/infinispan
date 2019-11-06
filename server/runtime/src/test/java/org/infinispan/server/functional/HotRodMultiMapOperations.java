@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
@@ -33,8 +34,9 @@ public class HotRodMultiMapOperations {
       MultimapCacheManager multimapCacheManager = RemoteMultimapCacheManagerFactory.from(cache.getRemoteCacheManager());
 
       RemoteMultimapCache<Integer, String> people = multimapCacheManager.get(cache.getName());
-      people.put(1, "Elaia");
-      people.put(1, "Oihana");
+      CompletableFuture<Void> elaia = people.put(1, "Elaia");
+      people.put(1, "Oihana").join();
+      elaia.join();
 
       Collection<String> littles = people.get(1).join();
 
