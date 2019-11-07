@@ -401,12 +401,15 @@ public class TestCacheManagerFactory {
       BlockingThreadPoolExecutorFactory executorFactoryWithQueue =
          new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
                                                NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE);
+      BlockingThreadPoolExecutorFactory nonBlockingExecutorFactoryWithQueue =
+            new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
+                  NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, true);
 
       builder.transport().remoteCommandThreadPool().threadPoolFactory(executorFactoryNoQueue);
       builder.stateTransferThreadPool().threadPoolFactory(executorFactoryNoQueue);
 
       builder.persistenceThreadPool().threadPoolFactory(executorFactoryWithQueue);
-      builder.asyncThreadPool().threadPoolFactory(executorFactoryWithQueue);
+      builder.asyncThreadPool().threadPoolFactory(nonBlockingExecutorFactoryWithQueue);
       builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
       builder.transport().transportThreadPool().threadPoolFactory(executorFactoryWithQueue);
       // TODO Scheduled thread pools don't have a threads limit
