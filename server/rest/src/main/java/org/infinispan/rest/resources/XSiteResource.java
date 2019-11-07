@@ -8,6 +8,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.xsite.XSiteAdminOperations.siteStatusToString;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,7 +55,12 @@ public class XSiteResource implements ResourceHandler {
    private static final BiFunction<XSiteAdminOperations, String, String> PUSH_STATE = XSiteAdminOperations::pushState;
    private static final BiFunction<XSiteAdminOperations, String, String> CANCEL_PUSH_STATE = XSiteAdminOperations::cancelPushState;
    private static final BiFunction<XSiteAdminOperations, String, String> CANCEL_RECEIVE_STATE = XSiteAdminOperations::cancelReceiveState;
-   private static final Function<XSiteAdminOperations, Map<String, String>> SITES_STATUS = XSiteAdminOperations::siteStatuses;
+   private static final Function<XSiteAdminOperations, Map<String, String>> SITES_STATUS = xSiteAdminOperations -> {
+      Map<String, SiteStatus> statuses = xSiteAdminOperations.clusterStatus();
+      return statuses.entrySet()
+            .stream()
+            .collect(Collectors.toMap(Entry::getKey, e -> siteStatusToString(e.getValue())));
+   };
    private static final Function<XSiteAdminOperations, Map<String, String>> PUSH_STATE_STATUS = XSiteAdminOperations::getPushStateStatus;
    private static final Function<XSiteAdminOperations, String> CLEAR_PUSH_STATUS = XSiteAdminOperations::clearPushStateStatus;
    private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> BRING_ALL_CACHES_ONLINE = GlobalXSiteAdminOperations::bringAllCachesOnline;
