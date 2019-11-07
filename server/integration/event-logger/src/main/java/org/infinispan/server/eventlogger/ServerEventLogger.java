@@ -11,13 +11,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
@@ -97,7 +97,7 @@ public class ServerEventLogger implements EventLogger {
       List<EventLog> events = Collections.synchronizedList(new ArrayList<>());
       AtomicReference<Throwable> throwable = new AtomicReference<>();
       try {
-         cacheManager.executor().submitConsumer(m -> {
+         SecurityActions.getClusterExecutor(cacheManager).submitConsumer(m -> {
             Cache<Object, Object> cache = m.getCache(EVENT_LOG_CACHE);
             QueryFactory queryFactory = Search.getQueryFactory(cache);
             FilterConditionContext filter = queryFactory.from(ServerEventImpl.class)
@@ -129,5 +129,4 @@ public class ServerEventLogger implements EventLogger {
       Collections.sort(events);
       return events.subList(0, Math.min(events.size(), count));
    }
-
 }

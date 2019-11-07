@@ -15,7 +15,7 @@ public interface EventLogManager {
     * @return the event logger for the given {@link CacheManager}
     */
    static EventLogger getEventLogger(EmbeddedCacheManager cacheManager) {
-      EventLogManager eventLogManager = cacheManager.getGlobalComponentRegistry().getComponent(EventLogManager.class);
+      EventLogManager eventLogManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EventLogManager.class);
       return eventLogManager.getEventLogger();
    }
 
