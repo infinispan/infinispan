@@ -160,6 +160,7 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
       @Override
       public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
          if (fail) {
+            getLog().debugf("Inducing timeout for %s", rpcCommand);
             XSiteResponseImpl rsp = new XSiteResponseImpl(TIME_SERVICE, backup);
             //completeExceptionally is ok since we don't care about the stats.
             rsp.completeExceptionally(new TimeoutException("induced timeout!"));

@@ -72,6 +72,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
             .strategy(lonBackupStrategy)
             .failurePolicyClass(lonCustomFailurePolicyClass)
             .useTwoPhaseCommit(use2Pc)
+            .stateTransfer().maxRetries(1).waitTime(500)
             .sites().addInUseBackupSite(NYC);
       adaptLONConfiguration(lonBackupConfigurationBuilder);
       return lon;

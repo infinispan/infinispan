@@ -59,9 +59,13 @@ public class RetryOnFailureXSiteCommand {
             throwable = CompletableFutures.extractException(throwable);
             if (!retryPolicy.retry(throwable, rpcManager)) {
                if (trace) {
-                  log.tracef("Exception Response received. Exception is %s", throwable);
+                  log.tracef("Failing command with exception %s", throwable);
                }
                throw throwable;
+            } else {
+               if (trace) {
+                  log.tracef("Will retry command after exception %s", throwable);
+               }
             }
          }
          unit.sleep(waitTimeBetweenRetries);
