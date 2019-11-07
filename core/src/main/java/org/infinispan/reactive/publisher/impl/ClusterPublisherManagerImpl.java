@@ -268,10 +268,15 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
          if (trace) {
             // Make sure the trace occurs before response is processed
-            localStage = localStage.whenComplete((results, t) ->
+            localStage = localStage.whenComplete((results, t) -> {
+               if (t != null) {
+                  log.tracef(t, "Received exception while processing segments %s from %s",
+                        localSegments, localAddress);
+               } else {
                   log.tracef("Result result was: %s for segments %s from %s with %s suspected segments",
-                        results.getResult(), localSegments, localAddress, results.getSuspectedSegments())
-            );
+                        results.getResult(), localSegments, localAddress, results.getSuspectedSegments());
+               }
+            });
          }
 
          // Map to the same collector, so we can reuse the same BiConsumer
