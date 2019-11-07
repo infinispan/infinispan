@@ -1,14 +1,22 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.AMEND_TAKE_OFFLINE;
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.BRING_ONLINE;
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.SITE_STATUS;
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.STATUS;
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.TAKE_OFFLINE;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-import org.infinispan.Cache;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -17,17 +25,15 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.ByteString;
+import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.infinispan.xsite.status.CacheMixedSiteStatus;
 import org.infinispan.xsite.status.CacheSiteStatusBuilder;
 import org.infinispan.xsite.status.SiteStatus;
 
@@ -46,20 +52,36 @@ public class XSiteAdminOperations {
    public static final String FAILED = "failed";
    public static final String OFFLINE = "offline";
    public static final String SUCCESS = "ok";
+   private static final Function<CacheMixedSiteStatus, String> DEFAULT_MIXED_MESSAGES = s -> "mixed, offline on nodes: " + s.getOffline();
    private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
 
    @Inject RpcManager rpcManager;
-   @Inject Cache cache;
    @Inject volatile BackupSender backupSender;
    @Inject XSiteStateTransferManager stateTransferManager;
+   @Inject CommandsFactory commandsFactory;
 
-   public Map<String, SiteStatus> clusterStatus()  {
+   public static String siteStatusToString(SiteStatus status, Function<CacheMixedSiteStatus, String> mixedFunction) {
+      if (status.isOffline()) {
+         return OFFLINE;
+      } else if (status.isOnline()) {
+         return ONLINE;
+      } else {
+         assert status instanceof CacheMixedSiteStatus;
+         return mixedFunction.apply((CacheMixedSiteStatus) status);
+      }
+   }
+
+   public static String siteStatusToString(SiteStatus status) {
+      return siteStatusToString(status, DEFAULT_MIXED_MESSAGES);
+   }
+
+   public Map<String, SiteStatus> clusterStatus() {
       Map<String, Boolean> localNodeStatus = backupSender.status();
-      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
-      Map<Address, Response> responses = invokeRemotely(command);
-      List<Address> errors = checkForErrors(responses);
-      if (!errors.isEmpty()) {
-         throw new CacheException("Unable to check cluster state for members: " + errors);
+      XSiteAdminCommand command = newStatusCommand();
+      XSiteResponse<Map<String, Boolean>> response = invokeOnAll(command,
+            new PerSiteBooleanResponseCollector(clusterSize()));
+      if (response.hasErrors()) {
+         throw new CacheException("Unable to check cluster state for members: " + response.getErrors());
       }
       //site name => online/offline/mixed
       Map<String, CacheSiteStatusBuilder> perSiteBuilder = new HashMap<>();
@@ -68,24 +90,16 @@ public class XSiteAdminOperations {
          builder.addMember(rpcManager.getAddress(), entry.getValue());
          perSiteBuilder.put(entry.getKey(), builder);
       }
-      for (Map.Entry<Address, Response> entry : responses.entrySet()) {
-         Response response = entry.getValue();
-         if (response == CacheNotFoundResponse.INSTANCE) {
-            continue; //shutting down.
-         }
-         if (!response.isSuccessful()) {
-            throw new CacheException("Unsuccessful response received from. " + entry);
-         }
-         //noinspection unchecked
-         Map<String, Boolean> sites = (Map<String, Boolean>) ((SuccessfulResponse) response).getResponseValue();
+
+      response.forEach((address, sites) -> {
          for (Map.Entry<String, Boolean> site : sites.entrySet()) {
             CacheSiteStatusBuilder builder = perSiteBuilder.get(site.getKey());
             if (builder == null) {
-               throw new IllegalStateException("Site " + entry.getKey() + " not defined in all the cluster members");
+               throw new IllegalStateException("Site " + site.getKey() + " not defined in all the cluster members");
             }
-            builder.addMember(entry.getKey(), site.getValue());
+            builder.addMember(address, site.getValue());
          }
-      }
+      });
 
       Map<String, SiteStatus> result = new HashMap<>();
       perSiteBuilder.forEach((site, builder) -> result.put(site, builder.build()));
@@ -126,30 +140,26 @@ public class XSiteAdminOperations {
    public Map<Address, String> nodeStatus(String site) {
       //also consider local node
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null)
+      if (offlineStatus == null) {
          throw new IllegalArgumentException("Incorrect site name: " + site);
-      log.tracef("This node's status is %s", offlineStatus);
-      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.SITE_STATUS, null, null);
-      Map<Address, Response> responses = invokeRemotely(command);
-      Map<Address, String> statusMap = new HashMap<>();
-      for (Map.Entry<Address, Response> e : responses.entrySet()) {
-         if (!e.getValue().isSuccessful() || !e.getValue().isValid()) {
-            if (e.getValue() != CacheNotFoundResponse.INSTANCE) {
-               //the node can be shutting down.
-               statusMap.put(e.getKey(), FAILED);
-            }
-            continue;
-         }
-         SuccessfulResponse response = (SuccessfulResponse) e.getValue();
-         log.tracef("Got status %s from node %s", response.getResponseValue(), e.getKey());
-         if (response.getResponseValue() == XSiteAdminCommand.Status.OFFLINE) {
-            statusMap.put(e.getKey(), OFFLINE);
-         } else if (response.getResponseValue() == XSiteAdminCommand.Status.ONLINE) {
-            statusMap.put(e.getKey(), ONLINE);
-         } else {
-            throw new IllegalStateException("Unknown response: " + response.getResponseValue());
-         }
       }
+
+      XSiteAdminCommand command = newAdminCommand(SITE_STATUS, site);
+      XSiteResponse<XSiteAdminCommand.Status> response = invokeOnAll(command,
+            new XSiteStatusResponseCollector(clusterSize()));
+      Map<Address, String> statusMap = new HashMap<>();
+
+      response.forEachError(address -> statusMap.put(address, FAILED));
+      response.forEach((address, status) -> {
+         switch (status) {
+            case OFFLINE:
+               statusMap.put(address, OFFLINE);
+               break;
+            case ONLINE:
+               statusMap.put(address, ONLINE);
+               break;
+         }
+      });
 
       if (offlineStatus.isOffline()) {
          statusMap.put(rpcManager.getAddress(), OFFLINE);
@@ -160,65 +170,12 @@ public class XSiteAdminOperations {
       return statusMap;
    }
 
-   /**
-    * Returns a Map&lt;String,String&gt; with each site and the status
-    */
-   public Map<String, String> siteStatuses() throws CacheException {
-      Map<String, Boolean> localNodeStatus = backupSender.status();
-      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
-      Map<Address, Response> responses = invokeRemotely(command);
-      List<Address> errors = checkForErrors(responses);
-      if (!errors.isEmpty()) throw new CacheException("Failure invoking 'status()' on nodes: " + errors);
-
-      //<site name, nodes where it failed>
-      Map<String, List<Address>> result = new HashMap<>();
-      for (Entry<String, Boolean> e : localNodeStatus.entrySet()) {
-         ArrayList<Address> failedSites = new ArrayList<>();
-         result.put(e.getKey(), failedSites);
-         if (!e.getValue()) {
-            failedSites.add(rpcManager.getAddress());
-         }
-      }
-      for (Entry<Address, Response> response : responses.entrySet()) {
-         @SuppressWarnings("unchecked")
-         Map<String, Boolean> status = (Map<String, Boolean>) ((SuccessfulResponse) response.getValue()).getResponseValue();
-         for (Entry<String, Boolean> entry : status.entrySet()) {
-            List<Address> addresses = result.get(entry.getKey());
-            if (addresses == null)
-               throw new IllegalStateException("All sites must be defined on all the nodes of the cluster!");
-            if (!entry.getValue()) {
-               addresses.add(rpcManager.getAddress());
-            }
-         }
-      }
-
-      int clusterSize = rpcManager.getTransport().getMembers().size();
-      return result.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
-               List<Address> value = e.getValue();
-               if (value.isEmpty()) return XSiteAdminOperations.ONLINE;
-               if (value.size() == clusterSize) return XSiteAdminOperations.OFFLINE;
-               return "mixed, offline on nodes: " + value;
-            }
-      ));
-   }
-
    @ManagedOperation(description = "Returns the the status(offline/online) of all the configured backup sites.", displayName = "Returns the the status(offline/online) of all the configured backup sites.")
    public String status() {
-      Map<String, String> statuses = siteStatuses();
-
-      StringBuilder resultStr = new StringBuilder();
-      //now generate the final response
-      boolean first = true;
-      for (Entry<String, String> e : statuses.entrySet()) {
-         if (!first) {
-            resultStr.append("\n");
-         } else first = false;
-         resultStr.append(e.getKey()).append("[");
-         String value = e.getValue();
-         resultStr.append(value.toUpperCase());
-         resultStr.append("]");
-      }
-      return resultStr.toString();
+      Map<String, SiteStatus> statuses = clusterStatus();
+      List<String> result = new ArrayList<>(statuses.size());
+      statuses.forEach((site, status) -> result.add(site + "[" + siteStatusToString(status).toUpperCase() + "]"));
+      return String.join("\n", result);
    }
 
    @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.", displayName = "Takes this site offline in all nodes in the cluster.")
@@ -229,13 +186,11 @@ public class XSiteAdminOperations {
       backupSender.takeSiteOffline(site);
       log.tracef("Is site offline in node %s? %s", rpcManager.getAddress(), offlineStatus.isOffline());
 
-      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.TAKE_OFFLINE, null, null);
-      Map<Address, Response> responses = invokeRemotely(command);
-
-      List<Address> failed = checkForErrors(responses);
+      XSiteAdminCommand command = newAdminCommand(TAKE_OFFLINE, site);
+      XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       String prefix = "Could not take the site offline on nodes:";
-      return returnFailureOrSuccess(failed, prefix);
+      return returnFailureOrSuccess(response.getErrors(), prefix);
    }
 
    @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
@@ -290,18 +245,16 @@ public class XSiteAdminOperations {
          return "Incorrect site name: " + site;
       backupSender.bringSiteOnline(site);
 
-      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.BRING_ONLINE, null, null);
-      Map<Address, Response> responses = invokeRemotely(command);
+      XSiteAdminCommand command = newAdminCommand(BRING_ONLINE, site);
+      XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
-      List<Address> failed = checkForErrors(responses);
-
-      return returnFailureOrSuccess(failed, "Could not take the site online on nodes:");
+      return returnFailureOrSuccess(response.getErrors(), "Could not take the site online on nodes:");
    }
 
    @ManagedOperation(displayName = "Push state to site",
-                     description = "Pushes the state of this cache to the remote site. " +
-                           "The remote site will be bring back online",
-                     name = "pushState")
+         description = "Pushes the state of this cache to the remote site. " +
+                       "The remote site will be bring back online",
+         name = "pushState")
    public final String pushState(@Parameter(description = "The destination site name", name = "SiteName") String siteName) {
       try {
          String status = bringSiteOnline(siteName);
@@ -324,8 +277,8 @@ public class XSiteAdminOperations {
    }
 
    @ManagedOperation(displayName = "Push State Status",
-                     description = "Shows a map with destination site name and the state transfer status.",
-                     name = "PushStateStatus")
+         description = "Shows a map with destination site name and the state transfer status.",
+         name = "PushStateStatus")
    public final Map<String, String> getPushStateStatus() {
       Map<String, String> map = new HashMap<>();
       try {
@@ -340,32 +293,32 @@ public class XSiteAdminOperations {
    }
 
    @ManagedOperation(displayName = "Clear State Status",
-                     description = "Clears the state transfer status.",
-                     name = "ClearPushStateStatus")
+         description = "Clears the state transfer status.",
+         name = "ClearPushStateStatus")
    public final String clearPushStateStatus() {
       return performOperation("clearPushStateStatus", "(local)", () -> stateTransferManager.clearClusterStatus());
    }
 
    @ManagedOperation(displayName = "Cancel Push Status",
-                     description = "Cancels the push state to remote site.",
-                     name = "CancelPushState")
+         description = "Cancels the push state to remote site.",
+         name = "CancelPushState")
    public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
                                           final String siteName) {
       return performOperation("cancelPushState", siteName, () -> stateTransferManager.cancelPushState(siteName));
    }
 
    @ManagedOperation(displayName = "Cancel Receive State",
-                     description = "Cancels the push state to this site. All the state received from state transfer " +
-                           "will be ignored.",
-                     name = "CancelReceiveState")
+         description = "Cancels the push state to this site. All the state received from state transfer " +
+                       "will be ignored.",
+         name = "CancelReceiveState")
    public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName")
                                              final String siteName) {
       return performOperation("cancelReceiveState", siteName, () -> stateTransferManager.cancelReceive(siteName));
    }
 
    @ManagedOperation(displayName = "Sending Site Name",
-                     description = "Returns the site name from which this site is receiving state.",
-                     name = "SendingSiteName")
+         description = "Returns the site name from which this site is receiving state.",
+         name = "SendingSiteName")
    public final String getSendingSiteName() {
       return stateTransferManager.getSendingSiteName();
    }
@@ -380,32 +333,18 @@ public class XSiteAdminOperations {
       return SUCCESS;
    }
 
-   private List<Address> checkForErrors(Map<Address, Response> responses) {
-      List<Address> failed = new ArrayList<>(responses.size());
-      for (Map.Entry<Address, Response> e : responses.entrySet()) {
-         if (e.getValue() != CacheNotFoundResponse.INSTANCE &&
-               (e.getValue() == null || !e.getValue().isSuccessful() || !e.getValue().isValid())) {
-            failed.add(e.getKey());
-         }
-      }
-      return failed;
-   }
-
    private String takeOffline(String site, Integer afterFailures, Long minTimeToWait) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
          return incorrectSiteName(site);
 
-      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.AMEND_TAKE_OFFLINE,
-                                                        afterFailures, minTimeToWait);
-      Map<Address, Response> responses = invokeRemotely(command);
+      XSiteAdminCommand command = newAmendTakeOfflineCommand(site, afterFailures, minTimeToWait);
+      XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       //also amend locally
       offlineStatus.amend(afterFailures, minTimeToWait);
 
-      List<Address> failed = checkForErrors(responses);
-
-      return returnFailureOrSuccess(failed, "Could not amend for nodes:");
+      return returnFailureOrSuccess(response.getErrors(), "Could not amend for nodes:");
    }
 
    private String returnFailureOrSuccess(List<Address> failed, String prefix) {
@@ -423,12 +362,130 @@ public class XSiteAdminOperations {
       return "Incorrect site name: " + site;
    }
 
-   private Map<Address, Response> invokeRemotely(XSiteAdminCommand command) {
-      return rpcManager.invokeRemotely(null, command,
-                                       rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build());
+   private <T> XSiteResponse<T> invokeOnAll(XSiteAdminCommand command, BaseResponseCollector<T> responseCollector) {
+      RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+      CompletionStage<XSiteResponse<T>> rsp = rpcManager.invokeCommandOnAll(command, responseCollector, rpcOptions);
+      return rpcManager.blocking(rsp);
+   }
+
+   private int clusterSize() {
+      return rpcManager.getTransport().getMembers().size();
+   }
+
+   private XSiteAdminCommand newStatusCommand() {
+      return commandsFactory.buildXSiteAdminCommand(null, STATUS, null, null);
+   }
+
+   private XSiteAdminCommand newAdminCommand(XSiteAdminCommand.AdminOperation operation, String siteName) {
+      return commandsFactory.buildXSiteAdminCommand(siteName, operation, null, null);
+   }
+
+   private XSiteAdminCommand newAmendTakeOfflineCommand(String siteName, Integer afterFailures, Long minTimeToWait) {
+      return commandsFactory.buildXSiteAdminCommand(siteName, AMEND_TAKE_OFFLINE, afterFailures, minTimeToWait);
    }
 
    private interface Operation {
       void execute() throws Throwable;
+   }
+
+   private static abstract class BaseResponseCollector<T> extends ValidResponseCollector<XSiteResponse<T>> {
+
+      final Map<Address, T> okResponses;
+      final List<Address> errors;
+
+      private BaseResponseCollector(int expectedSize) {
+         okResponses = new HashMap<>(expectedSize);
+         errors = new ArrayList<>(expectedSize);
+      }
+
+      @Override
+      public final XSiteResponse<T> finish() {
+         return new XSiteResponse<>(okResponses, errors);
+      }
+
+      abstract void storeResponse(Address sender, ValidResponse response);
+
+      @Override
+      protected final XSiteResponse<T> addValidResponse(Address sender, ValidResponse response) {
+         storeResponse(sender, response);
+         return null;
+      }
+
+      @Override
+      protected final XSiteResponse<T> addTargetNotFound(Address sender) {
+         //ignore leavers
+         return null;
+      }
+
+      @Override
+      protected final XSiteResponse<T> addException(Address sender, Exception exception) {
+         errors.add(sender);
+         return null;
+      }
+   }
+
+   private static class XSiteResponse<T> {
+      final Map<Address, T> responses;
+      final List<Address> errors;
+
+      private XSiteResponse(Map<Address, T> responses, List<Address> errors) {
+         this.responses = responses;
+         this.errors = errors;
+      }
+
+      boolean hasErrors() {
+         return !errors.isEmpty();
+      }
+
+      List<Address> getErrors() {
+         return errors;
+      }
+
+      void forEachError(Consumer<Address> consumer) {
+         errors.forEach(consumer);
+      }
+
+      void forEach(BiConsumer<Address, T> consumer) {
+         responses.forEach(consumer);
+      }
+   }
+
+   private static class VoidResponseCollector extends BaseResponseCollector<Void> {
+
+      private VoidResponseCollector(int expectedSize) {
+         super(expectedSize);
+      }
+
+      @Override
+      void storeResponse(Address sender, ValidResponse response) {
+         //no-op
+      }
+   }
+
+   private static class XSiteStatusResponseCollector extends BaseResponseCollector<XSiteAdminCommand.Status> {
+
+      private XSiteStatusResponseCollector(int expectedSize) {
+         super(expectedSize);
+      }
+
+      @Override
+      void storeResponse(Address sender, ValidResponse response) {
+         Object value = response.getResponseValue();
+         assert value instanceof XSiteAdminCommand.Status;
+         okResponses.put(sender, (XSiteAdminCommand.Status) value);
+      }
+   }
+
+   private static class PerSiteBooleanResponseCollector extends BaseResponseCollector<Map<String, Boolean>> {
+
+      private PerSiteBooleanResponseCollector(int expectedSize) {
+         super(expectedSize);
+      }
+
+      @Override
+      void storeResponse(Address sender, ValidResponse response) {
+         //noinspection unchecked
+         okResponses.put(sender, (Map<String, Boolean>) response.getResponseValue());
+      }
    }
 }
