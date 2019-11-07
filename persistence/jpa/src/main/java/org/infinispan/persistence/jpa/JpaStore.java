@@ -343,11 +343,12 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             CriteriaDelete query = cb.createCriteriaDelete(configuration.entityClass());
             Root root = query.from(configuration.entityClass());
             SingularAttribute id = getEntityId(em, configuration.entityClass());
-            query.where(root.get(id).in(keys));
+            List<Object> keyCollection = StreamSupport.stream(keys.spliterator(), false).collect(Collectors.toList());
+            query.where(root.get(id).in(keyCollection));
             em.createQuery(query).executeUpdate();
 
             if (configuration.storeMetadata()) {
-               List<MetadataEntityKey> metaKeys = StreamSupport.stream(keys.spliterator(), false).map(this::getMetadataKey).collect(Collectors.toList());
+               List<MetadataEntityKey> metaKeys = keyCollection.stream().map(this::getMetadataKey).collect(Collectors.toList());
                CriteriaDelete<MetadataEntity> metaQuery = cb.createCriteriaDelete(MetadataEntity.class);
                Root<MetadataEntity> metaRoot = metaQuery.from(MetadataEntity.class);
                id = getEntityId(em, MetadataEntity.class);
