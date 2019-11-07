@@ -189,29 +189,29 @@ public class CacheManagerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
+      // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
       return Flowable.fromIterable(cacheManager.getCacheNames())
             .map(cacheManager::getCache)
-            .flatMap(cache ->
-               RxJavaInterop.<Long>completionStageToPublisher()
-                     .apply(cache.sizeAsync())
-                     .map(size -> {
-                        CacheInfo cacheInfo = new CacheInfo();
-                        cacheInfo.name = cache.getName();
-                        Configuration cacheConfiguration = cache.getCacheConfiguration();
-                        cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-                        cacheInfo.status = cache.getStatus().name();
-                        cacheInfo.size = size;
-                        cacheInfo.simpleCache = cacheConfiguration.simpleCache();
-                        cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
-                        cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
-                        cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
-                              cacheConfiguration.expiration().lifespan() != -1;
-                        cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
-                        cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
-                        cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
-                        return cacheInfo;
-                        // Only request 10 caches sizes in parallel
-                     }), 10)
+            .flatMapSingle(cache ->
+                  RxJavaInterop.completionStageToSingle(cache.sizeAsync())
+                        .map(size -> {
+                           CacheInfo cacheInfo = new CacheInfo();
+                           cacheInfo.name = cache.getName();
+                           Configuration cacheConfiguration = cache.getCacheConfiguration();
+                           cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
+                           cacheInfo.status = cache.getStatus().name();
+                           cacheInfo.size = size;
+                           cacheInfo.simpleCache = cacheConfiguration.simpleCache();
+                           cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+                           cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
+                           cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
+                                 cacheConfiguration.expiration().lifespan() != -1;
+                           cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
+                           cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
+                           cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
+                           return cacheInfo;
+                           // Only request 1 cache size at a time
+                        }), false, 1)
             .collectInto(new HashSet<>(), Set::add)
             .map(caches -> {
                try {
