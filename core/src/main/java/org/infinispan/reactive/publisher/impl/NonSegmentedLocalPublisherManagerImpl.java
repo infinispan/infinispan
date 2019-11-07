@@ -40,7 +40,7 @@ public class NonSegmentedLocalPublisherManagerImpl<K, V> extends LocalPublisherM
             .parallel()
             .runOn(asyncScheduler)
             .map(buffer -> transformer.apply(Flowable.fromIterable(buffer)))
-            .sequential());
+            .sequential(), true);
    }
 
    @Override
