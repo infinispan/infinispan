@@ -1,6 +1,7 @@
 package org.infinispan.reactive;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
@@ -13,6 +14,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.processors.AsyncProcessor;
 import io.reactivex.subjects.CompletableSubject;
+import io.reactivex.subjects.SingleSubject;
 
 /**
  * Static factory class that provides methods to obtain commonly used instances for interoperation between RxJava
@@ -70,6 +72,23 @@ public class RxJavaInterop {
 
    public static java.util.function.Function<CompletionStage<?>, Completable> completionStageToCompletable() {
       return completionStageCompletableFunction;
+   }
+
+   public static <E> Single<E> completionStageToSingle(CompletionStage<E> stage) {
+      SingleSubject<E> ss = SingleSubject.create();
+
+      stage.whenComplete((value, t) -> {
+         if (t != null) {
+            ss.onError(t);
+         }
+         if (value != null) {
+            ss.onSuccess(value);
+         } else {
+            ss.onError(new NoSuchElementException());
+         }
+      });
+
+      return ss;
    }
 
    /**
