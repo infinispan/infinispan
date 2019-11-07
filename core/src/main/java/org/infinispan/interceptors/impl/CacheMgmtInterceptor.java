@@ -191,9 +191,9 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          if (rv == null && rCommand.isSuccessful()) {
             increaseRemoveMisses();
          } else if (rCommand.isSuccessful()) {
-            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+            long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.storesFieldUpdater, stripe);
          }
       });
