@@ -393,7 +393,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             }
             return CompletableFuture.completedFuture(value);
          });
-      }));
+      }), false);
    }
 
    private <R> CompletionStage<PublisherResult<R>> handleSpecificKeys(boolean parallelPublisher, Set<K> keysToInclude,
@@ -464,7 +464,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                return collator.apply(innerFlowable);
             }).sequential();
 
-      return combineStages(stageFlowable, finalizer);
+      return combineStages(stageFlowable, finalizer, true);
    }
 
    private <I, R> CompletionStage<R> atMostOnce(boolean parallel, CacheSet<I> set, Set<K> keysToExclude,
@@ -507,11 +507,11 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    }
 
    protected <R> CompletionStage<R> combineStages(Flowable<? extends CompletionStage<R>> stagePublisher,
-         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
-      return finalizer.apply(combineStages(stagePublisher));
+         Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer, boolean parallel) {
+      return finalizer.apply(combineStages(stagePublisher, parallel));
    }
 
-   protected <R> Flowable<R> combineStages(Flowable<? extends CompletionStage<R>> stagePublisher) {
+   protected <R> Flowable<R> combineStages(Flowable<? extends CompletionStage<R>> stagePublisher, boolean parallel) {
       return stagePublisher.flatMap(stage -> {
          // We purposely send completedNull stage for when a segment is suspected
          if (stage == CompletableFutures.completedNull()) {
@@ -526,7 +526,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             return Flowable.just(value);
          }
          return RxJavaInterop.<R>completionStageToPublisher().apply(stage);
-      });
+      }, parallel ? cpuCount : 1);
    }
 
    private AdvancedCache<K, V> getCacheWithFlags(boolean includeLoader) {
