@@ -269,7 +269,7 @@ public class CounterManagerNotificationManager {
          topologyReceived = new CountDownLatch(1);
          cache.addListener(this);
          if (!cache.getCacheConfiguration().clustering().cacheMode().isClustered() ||
-               cache.getAdvancedCache().getComponentRegistry().getStateTransferManager().isJoinComplete()) {
+               SecurityActions.getComponentRegistry(cache).getStateTransferManager().isJoinComplete()) {
             topologyReceived.countDown();
          }
          if (!topologyReceived.await(cache.getCacheConfiguration().clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS)) {
