@@ -96,9 +96,16 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          threadFactory = threadPoolConfiguration.threadFactory() != null
                ? threadPoolConfiguration.threadFactory()
                : createThreadFactoryWithDefaults(globalConfiguration, componentName);
-         executorFactory = threadPoolConfiguration.threadPoolFactory() != null
-               ? threadPoolConfiguration.threadPoolFactory()
-               : createThreadPoolFactoryWithDefaults(componentName, type);
+
+         ThreadPoolExecutorFactory threadPoolFactory = threadPoolConfiguration.threadPoolFactory();
+         if (threadPoolFactory != null) {
+            executorFactory = threadPoolConfiguration.threadPoolFactory();
+            if (type == ExecutorServiceType.NON_BLOCKING && !executorFactory.createsNonBlockingThreads()) {
+               throw log.threadPoolFactoryIsBlocking(componentName);
+            }
+         } else {
+            executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);
+         }
       } else {
          threadFactory = createThreadFactoryWithDefaults(globalConfiguration, componentName);
          executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);

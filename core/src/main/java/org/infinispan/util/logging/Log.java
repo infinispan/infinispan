@@ -1923,4 +1923,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Index.LOCAL is no longer supported since version 10.0. Deprecated usages are automatically converted to Index.PRIMARY_OWNER. Please update your configuration!", id = 565)
    void indexLocalIsNotSupported();
+
+   @Message(value = "Thread Pool Factory %s is blocking, but this pool requires non blocking threads", id = 566)
+   CacheConfigurationException threadPoolFactoryIsBlocking(String name);
 }

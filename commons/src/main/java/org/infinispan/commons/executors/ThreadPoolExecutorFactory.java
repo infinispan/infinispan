@@ -15,4 +15,7 @@ public interface ThreadPoolExecutorFactory<T extends ExecutorService> {
     */
    void validate();
 
+   default boolean createsNonBlockingThreads() {
+      return false;
+   }
 }

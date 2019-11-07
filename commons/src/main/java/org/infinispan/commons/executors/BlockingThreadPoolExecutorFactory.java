@@ -54,7 +54,8 @@ public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFact
       return keepAlive;
    }
 
-   public boolean isNonBlocking() {
+   @Override
+   public boolean createsNonBlockingThreads() {
       return nonBlocking;
    }
 
