@@ -18,11 +18,6 @@ public class DistSyncTx1PCL1FuncTest extends DistSyncTxL1FuncTest {
    }
 
    @Override
-   public Object[] factory() {
-      return new Object[]{new DistSyncTx1PCL1FuncTest()};
-   }
-
-   @Override
    protected Class<? extends VisitableCommand> getCommitCommand() {
       return PrepareCommand.class;
    }

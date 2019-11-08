@@ -30,11 +30,6 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
    }
 
    @Override
-   public Object[] factory() {
-      return new Object[]{new FunctionalWriteSkewInMemoryTest()};
-   }
-
-   @Override
    protected String parameters() {
       return null;
    }
