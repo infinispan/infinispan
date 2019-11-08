@@ -549,10 +549,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @Factory
    public Object[] defaultFactory() {
-      // It is possible to override the factory method, but if we extend a class that defines such overridden
-      // method, the factory method will be inherited, too - that results in running the superclass tests
-      // instead of current class tests.
       try {
+         // Ignore any inherited factory() method and only run methods defined in the current class
          Method factory = getClass().getMethod("factory");
          if (factory.getDeclaringClass() == getClass()) {
             if (getClass().getAnnotation(InCacheMode.class) != null ||
@@ -569,10 +567,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
                }
             }
             return instances;
-         } else if (factory.getDeclaringClass() != MultipleCacheManagersTest.class) {
-            return new Object[]{new TestFrameworkFailure<>(
-                  getClass(), "%s.factory() override is missing, inherited factory() creates instances of %s",
-                  getClass().getName(), factory.getDeclaringClass().getName())};
          }
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
