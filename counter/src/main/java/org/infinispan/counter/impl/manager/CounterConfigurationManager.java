@@ -236,18 +236,15 @@ public class CounterConfigurationManager {
                .execute(() -> {
                   String oldName = Thread.currentThread().getName();
                   try {
-                     Thread.currentThread().setName(threadName());
+                     GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+                     String threadName = "CounterCacheStartThread," + configuration.transport().nodeName();
+                     SecurityActions.setThreadName(threadName);
                      cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
                   } finally {
-                     Thread.currentThread().setName(oldName);
+                     SecurityActions.setThreadName(oldName);
                   }
                });
       }
-   }
-
-   private String threadName() {
-      GlobalConfiguration configuration = cacheManager.getCacheManagerConfiguration();
-      return "CounterCacheStartThread," + configuration.transport().nodeName();
    }
 
    //can be async!

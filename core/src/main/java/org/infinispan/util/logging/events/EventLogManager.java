@@ -26,7 +26,7 @@ public interface EventLogManager {
       if (cacheManager.getStatus() != ComponentStatus.RUNNING)
          throw new IllegalLifecycleStateException();
 
-      return cacheManager.getGlobalComponentRegistry()
+      return SecurityActions.getGlobalComponentRegistry(cacheManager)
                          .getComponent(BasicComponentRegistry.class)
                          .getComponent(EventLogManager.class)
                          .running().getEventLogger();
