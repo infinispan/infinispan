@@ -988,13 +988,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
       public boolean test(CM mode, IMethodInstance method) {
          // If both method and class have the annotation, method annotation has priority.
-         A clazzAnnotation = method.getInstance().getClass().getAnnotation(annotationClazz);
          A methodAnnotation = method.getMethod().getConstructorOrMethod().getMethod().getAnnotation(annotationClazz);
          if (methodAnnotation != null) {
             // If a method-level annotation contains current cache mode, run it, otherwise ignore that
             return Stream.of(modesRetriever.apply(methodAnnotation)).anyMatch(m -> modeChecker.test(m, mode));
          } else {
-            return clazzAnnotation != null;
+            // If there is no method-level annotation, always run it
+            return true;
          }
       }
    }
