@@ -98,7 +98,11 @@ public final class ClassWhiteList {
       boolean isClassAllowed = classes.contains(className);
       if (isClassAllowed) return true;
       boolean regexMatch = compiled.stream().anyMatch(p -> p.matcher(className).find());
-      if (regexMatch) return true;
+      if (regexMatch) {
+         // Add the class name to the classes set to avoid future regex checks
+         classes.add(className);
+         return true;
+      }
       if (log.isTraceEnabled())
          log.tracef("Class '%s' not in whitelist", className);
       return false;
