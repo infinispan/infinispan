@@ -23,7 +23,7 @@ import org.infinispan.cli.impl.CliManProvider;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Help.CMD, description = "Shows help about commands")
+@CommandDefinition(name = Help.CMD, description = "Displays help for commands")
 public class Help extends AeshFileDisplayer {
 
    public static final String CMD = "help";

@@ -5,7 +5,7 @@ DISCONNECT(1)
 
 NAME
 ----
-disconnect - disconnects from a ${infinispan.brand.name} server
+disconnect - ends CLI sessions with ${infinispan.brand.name} servers.
 
 
 SYNOPSIS
@@ -13,10 +13,10 @@ SYNOPSIS
 *disconnect*
 
 
-DESCRIPTION
------------
-The *disconnect* command disconnects from a ${infinispan.brand.name} server.
-Use the *connect*
+EXAMPLE
+-------
+`disconnect` +
+Ends the current CLI session.
 
 
 SEE ALSO

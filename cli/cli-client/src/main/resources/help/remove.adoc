@@ -1,15 +1,31 @@
-.SH SYNOPSIS
-.B remove [
-.I cache.
-.B ]
-.I key
-.SH DESCRIPTION
-Removes the entry associated with the specified key from a cache.
-.SH ARGUMENTS
-.IP cache
-(optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the 
-.B cache 
-command
-.IP key
-the key for which to remove the associated entry
-.SH OUTPUT
+REMOVE(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+remove - deletes entries from a cache.
+
+
+SYNOPSIS
+--------
+*remove* `KEY` ['OPTIONS']
+
+
+OPTIONS
+-------
+*--cache*='NAME'::
+Specifies the cache from which to remove entries. Defaults to the currently
+selected cache.
+
+
+EXAMPLE
+-------
+`remove --cache=mycache hola` +
+Deletes the `hola` entry from the `mycache` cache.
+
+
+SEE ALSO
+--------
+cache(1), drop(1), clearcache(1)

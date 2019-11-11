@@ -1,20 +1,15 @@
 [id='counters']
 :context: cli
 = Working with Counters
+Counters provide atomic increment and decrement operations that record the
+count of objects.
 
-[//containers/default]> create counter --concurrency-level=1 --initial-value=5 --storage=PERSISTENT --type=weak weak-counter
+.Prerequisites
+* Start the {brandname} CLI.
+* Connect to a running {brandname} cluster.
 
-[//containers/default]> describe counters/weak-counter
-{
-  "weak-counter" : {
-    "name" : "weak-counter",
-    "initial-value" : 5,
-    "storage" : "PERSISTENT",
-    "concurrency-level" : 1
-  }
-}
-
---concurrency-level=  --initial-value=  --lower-bound=  --storage=  --type=  --upper-bound=
+include::{topics}/proc_cli_creating_counters.adoc[leveloffset=+1]
+include::{topics}/proc_cli_adding_counter_deltas.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

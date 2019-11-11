@@ -1,4 +1,24 @@
-.SH SYNOPSIS
-.B version
-.SH DESCRIPTION
-Shows the version of both the client and the server 
+VERSION(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+version - displays the server version and CLI version.
+
+
+SYNOPSIS
+--------
+*version*
+
+
+EXAMPLE
+-------
+`version` +
+Returns the version for the server and the CLI.
+
+
+SEE ALSO
+--------
+help(1)

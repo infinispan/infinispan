@@ -5,19 +5,20 @@ RESET(1)
 
 NAME
 ----
-reset - resets a counter
+reset - restores the initial values of counters.
 
 
 SYNOPSIS
 --------
-*reset* ['NAME']
+*reset* ['COUNTER_NAME']
 
 
-DESCRIPTION
------------
-The *reset* command resets a counter to its initial value.
+EXAMPLE
+-------
+`reset cnt_a` +
+Resets the `cnt_a` counter.
 
 
 SEE ALSO
 --------
-add(1), cas(1)
+add(1), cas(1), drop(1)

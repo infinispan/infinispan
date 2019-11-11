@@ -5,7 +5,8 @@ SHUTDOWN(1)
 
 NAME
 ----
-shutdown - shuts down individual servers or the whole cluster
+shutdown - stops individual servers or performs orderly shutdowns for entire
+clusters.
 
 
 SYNOPSIS
@@ -15,6 +16,15 @@ SYNOPSIS
 *shutdown cluster*
 
 
-DESCRIPTION
------------
-The *shutdown* command performs an orderly shutdown of individual server nodes or of the whole cluster.
+EXAMPLES
+--------
+`shutdown server my_server01` +
+Stops the server with hostname `my_server01`.
+
+`shutdown cluster` +
+Performs an orderly shutdown of all servers joined to the cluster.
+
+
+SEE ALSO
+--------
+connect(1), disconnect(1), quit(1)

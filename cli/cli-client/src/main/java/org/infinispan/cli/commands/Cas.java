@@ -16,7 +16,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Cas.CMD, description = "Compares and sets a counter value", activator = ConnectionActivator.class)
+@CommandDefinition(name = Cas.CMD, description = "Compares and sets counter values", activator = ConnectionActivator.class)
 public class Cas extends CliCommand {
    public static final String CMD = "cas";
    public static final String EXPECT = "expect";

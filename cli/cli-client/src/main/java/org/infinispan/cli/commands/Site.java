@@ -124,7 +124,7 @@ public class Site extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = CANCEL_RECEIVE_STATE, description = "Cacncels receiving state to a site", activator = ConnectionActivator.class)
+   @CommandDefinition(name = CANCEL_RECEIVE_STATE, description = "Cancels receiving state to a site", activator = ConnectionActivator.class)
    public static class CancelReceiveState extends CliCommand {
       @Option(required = true, completer = CacheCompleter.class)
       String cache;

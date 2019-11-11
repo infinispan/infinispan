@@ -5,24 +5,25 @@ GET(1)
 
 NAME
 ----
-get - retrieves a cache entry
+get - retrieves entries from a cache.
 
 
 SYNOPSIS
 --------
-*get* [OPTIONS] KEY
-
-
-DESCRIPTION
------------
-The *get* command retrieves an entry from a cache.
+*get* ['OPTIONS'] `KEY`
 
 
 OPTIONS
 -------
-
 *-c, --cache*='NAME'::
-The name of the cache. If not specified, the currently selected cache will be used.
+Specifies the cache from which to retrieve entries. Defaults to the currently
+selected cache.
+
+
+EXAMPLE
+-------
+`get hello -c mycache` +
+Retrieves the value of the key named `hello` from `mycache`.
 
 
 SEE ALSO

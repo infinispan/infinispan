@@ -5,22 +5,20 @@ COUNTER(1)
 
 NAME
 ----
-counter - selects a counter making it the default for subsequent operations
+counter - selects the default counter for subsequent commands.
 
 
 SYNOPSIS
 --------
-*counter* ['NAME']
+*counter* ['COUNTER_NAME']
 
 
-DESCRIPTION
------------
-The *counter* command selects an existing counter, making it the default for subsequent
-counter manipulation operations such as *inc* and *dec*.
-If the command is invoked without specifying an argument, the name of the currently
-selected counter will be shown.
+EXAMPLE
+-------
+`counter cnt_a` +
+Selects `cnt_a` and is the same as navigating the resource tree using `cd counters/cnt_a`.
 
 
 SEE ALSO
 --------
-add(1), cas(1), inc(1), dec(1)
+add(1), cas(1)

@@ -14,7 +14,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Stats.CMD, description = "Shows cache/container statistics", activator = ConnectionActivator.class)
+@CommandDefinition(name = Stats.CMD, description = "Shows cache and container statistics", activator = ConnectionActivator.class)
 public class Stats extends CliCommand {
    public static final String CMD = "stats";
    @Argument(description = "The name of the cache", completer = CacheCompleter.class)

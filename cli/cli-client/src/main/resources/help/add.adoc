@@ -5,40 +5,30 @@ ADD(1)
 
 NAME
 ----
-add - adds/subtracts a delta to/from a counter
+add - increments and decrements counters with arbitrary values.
 
 
 SYNOPSIS
 --------
-*add* [OPTIONS] ['NAME']
-
-
-DESCRIPTION
------------
-The *add* adds or subtracts a value ('delta') to/from a counter. If no delta is specified, the counter is incremented by
-1.
+*add* ['OPTIONS'] ['COUNTER_NAME']
 
 
 OPTIONS
 -------
-
 *--delta*='nnn'::
-The delta to add/subtract from the counter's value. Defaults
+Sets a delta to increment or decrement the counter value. Defaults to `1`.
 
 *-q, --quiet*='[true|false]'::
-Whether the value of the counter should be printed.
+Hides return values for strong counters. The default is `false`.
 
 
 EXAMPLES
 --------
+`add --delta=10 cnt_a` +
+Increments the value of `cnt_a` by `10`.
 
-`add --delta=10 cnt_a`
-
-Adds `10` to the current value of the counter 'cnt_a'
-
-`add --delta=-5 cnt_a`
-
-Subtracts `5` from the current value of the counter 'cnt_a'
+`add --delta=-5 cnt_a` +
+Decrements the value of `cnt_a` by `5`.
 
 
 SEE ALSO

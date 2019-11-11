@@ -5,20 +5,19 @@ CONTAINER(1)
 
 NAME
 ----
-container - selects a container making it the default for subsequent operations
+container - selects the container for running subsequent commands.
 
 
 SYNOPSIS
 --------
-*container* ['NAME']
+*container* ['CONTAINER_NAME']
 
 
-DESCRIPTION
------------
-The *container* command selects an existing container, making it the default. This is
-equivalent to navigating the resource tree using `cd /containers/NAME`.
-If the command is invoked without specifying an argument, the name of the currently
-selected container will be shown.
+EXAMPLE
+-------
+`container default` +
+Selects the default container and is the same as navigating the resource tree
+using `cd containers/default`.
 
 
 SEE ALSO

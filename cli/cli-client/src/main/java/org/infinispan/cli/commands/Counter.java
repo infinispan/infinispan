@@ -14,12 +14,12 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Counter.CMD, description = "Selects a counter", activator = ConnectionActivator.class)
+@CommandDefinition(name = Counter.CMD, description = "Selects counters", activator = ConnectionActivator.class)
 public class Counter extends CliCommand {
 
    public static final String CMD = "counter";
 
-   @Argument(description = "The name of the counter", completer = CounterCompleter.class, required = true)
+   @Argument(description = "The name of the counter to select", completer = CounterCompleter.class, required = true)
    String name;
 
    @Override

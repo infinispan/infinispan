@@ -14,7 +14,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Cd.CMD, description = "Selects a subsytem/item", activator = ConnectionActivator.class)
+@CommandDefinition(name = Cd.CMD, description = "Selects a subsystem or item", activator = ConnectionActivator.class)
 public class Cd extends CliCommand {
    public static final String CMD = "cd";
    @Argument(description = "The name of the subsystem/item", completer = CdContextCompleter.class, required = true)

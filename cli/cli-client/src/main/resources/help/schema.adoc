@@ -5,21 +5,26 @@ SCHEMA(1)
 
 NAME
 ----
-schema - manipulates protobuf schemas
+schema - uploads and registers protobuf schemas.
 
 
 SYNOPSIS
 --------
-*schema* [OPTIONS] `NAME` [`VALUE`]
-
-
-DESCRIPTION
------------
-The *schema* command allows manipulation (upload, retrieve) of protobuf schemas.
+*schema* ['OPTIONS'] `SCHEMA_NAME`
 
 
 OPTIONS
 -------
 *-u, --upload*='FILE'::
-Uploads the specified file as a protobuf schema with the given name.
+Uploads a file as a protobuf schema with the given name.
 
+
+EXAMPLE
+--------
+`schema --upload=person.proto person.proto` +
+Registers a `person.proto` Protobuf schema.
+
+
+SEE ALSO
+--------
+query(1)
