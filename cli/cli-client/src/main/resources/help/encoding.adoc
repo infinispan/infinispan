@@ -5,7 +5,21 @@ ENCODING(1)
 
 NAME
 ----
-encoding - sets/shows the encoding used to put/get entries to/from the server.
+encoding - displays and sets the encoding for cache entries.
+
+
+DESCRIPTION
+-----------
+Sets a default encoding for *put* and *get* operations on a cache. If no
+argument is specified, the *encoding* command displays the current encoding.
+
+Valid encodings use standard MIME type (IANA media types) naming conventions,
+such as the following:
+
+* `text/plain`
+* `application/json`
+* `application/xml`
+* `application/octet-stream`
 
 
 SYNOPSIS
@@ -13,18 +27,10 @@ SYNOPSIS
 *encoding* ['ENCODING']
 
 
-DESCRIPTION
------------
-The *encoding* command is used to set a default encoding to be used
-for subsequent *put*/*get* operations on a cache. When invoked
-without arguments it shows the currently selected encoding.
-Encodings must use the standard MIME types (IANA media types) naming
-convention. Examples of valid encodings are:
-
-* `text/plain`
-* `application/json`
-* `application/xml`
-* `application/octet-stream`
+EXAMPLE
+-------
+`encoding application/json` +
+Configures the currently selected cache to encode entries as `application/json`.
 
 
 SEE ALSO

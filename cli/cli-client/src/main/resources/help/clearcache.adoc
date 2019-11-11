@@ -5,20 +5,20 @@ CLEARCACHE(1)
 
 NAME
 ----
-clearcache - clears a cache from all content
+clearcache - removes all entries from a cache.
 
 
 SYNOPSIS
 --------
-*clearcache* ['NAME']
+*clearcache* ['CACHE_NAME']
 
 
-DESCRIPTION
------------
-The *clearcache* command removes all entries from a cache. Unless a cache name has been specified as an argument,
-the currently selected cache will be used.
+EXAMPLES
+--------
+`clearcache mycache` +
+Removes all entries from `mycache`.
 
 
 SEE ALSO
 --------
-cache(1)
+cache(1), drop(1), remove(1)

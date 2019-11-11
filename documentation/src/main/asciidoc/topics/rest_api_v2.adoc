@@ -944,12 +944,12 @@ The payload must contain a configuration for the counter in `JSON` format, as in
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::rest_examples/rest_weak_counter.json[]
+include::json_examples/weak_counter.json[]
 ----
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::rest_examples/rest_strong_counter.json[]
+include::json_examples/strong_counter.json[]
 ----
 
 [[rest_server_counters_delete]]

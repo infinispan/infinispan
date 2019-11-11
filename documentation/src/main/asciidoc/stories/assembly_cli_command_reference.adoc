@@ -1,11 +1,17 @@
 [id='command_reference']
 :context: cli
 = Command Reference
-View help pages for {brandname} CLI commands.
+Review manual pages for {brandname} CLI commands.
 
 [TIP]
 ====
-Use the `-h` flag to access help pages directly from your CLI session.
+Use `help` command to access manual pages directly from your CLI session.
+
+For example, to view the manual page for the `get` command do the following:
+
+----
+$ help get
+----
 ====
 
 include::{cli_help}/add.adoc[leveloffset=+1]

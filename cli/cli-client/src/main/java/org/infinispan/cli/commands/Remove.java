@@ -15,7 +15,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Remove.CMD, description = "Removes an entry form the cache", aliases = "rm", activator = ConnectionActivator.class)
+@CommandDefinition(name = Remove.CMD, description = "Removes an entry from the cache", aliases = "rm", activator = ConnectionActivator.class)
 public class Remove extends CliCommand {
    public static final String CMD = "remove";
    @Argument(required = true)

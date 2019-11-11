@@ -17,7 +17,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = Shutdown.CMD, description = "Shuts down individual servers or the whole cluster", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class})
+@GroupCommandDefinition(name = Shutdown.CMD, description = "Shuts down individual servers or the entire cluster", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class})
 public class Shutdown extends CliCommand {
    public static final String CMD = "shutdown";
    public static final String SERVERS = "servers";
@@ -48,7 +48,7 @@ public class Shutdown extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = Shutdown.Cluster.CMD, description = "Shuts down the whole cluster", activator = ConnectionActivator.class)
+   @CommandDefinition(name = Shutdown.Cluster.CMD, description = "Shuts down the entire cluster", activator = ConnectionActivator.class)
    public static class Cluster extends CliCommand {
       public static final String CMD = "cluster";
 

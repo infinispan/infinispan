@@ -44,7 +44,7 @@ message Person {
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> cd caches
+[//containers/default]> cd caches/___protobuf_metadata
 [//containers/default/caches/___protobuf_metadata]> ls
 person.proto
 [//containers/default/caches/___protobuf_metadata]> get person.proto

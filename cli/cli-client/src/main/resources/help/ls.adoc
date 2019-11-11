@@ -5,7 +5,7 @@ LS(1)
 
 NAME
 ----
-ls - shows child resources of a resource.
+ls - lists resources for the current path or a given path.
 
 
 SYNOPSIS
@@ -13,10 +13,13 @@ SYNOPSIS
 *ls* ['PATH']
 
 
-DESCRIPTION
------------
-The *ls* shows a list of child resources of the currently selected resource or the named
-resource specified as an argument.
+EXAMPLES
+--------
+`ls caches` +
+Lists the available caches.
+
+`ls ../` +
+Lists parent resources.
 
 
 SEE ALSO

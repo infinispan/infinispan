@@ -5,7 +5,7 @@ QUIT(1)
 
 NAME
 ----
-quit - exits the CLI
+quit - exits the command line interface.
 
 
 SYNOPSIS
@@ -13,10 +13,12 @@ SYNOPSIS
 *quit*
 
 
-DESCRIPTION
------------
-The *quit* command exits the CLI.
+EXAMPLE
+-------
+`quit` +
+Exits the CLI.
+
 
 SEE ALSO
 --------
-disconnect(1)
+disconnect(1), shutdown(1)

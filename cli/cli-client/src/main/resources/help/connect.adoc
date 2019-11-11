@@ -5,29 +5,34 @@ CONNECT(1)
 
 NAME
 ----
-connect - connects to a ${infinispan.brand.name} server
-
-
-SYNOPSIS
---------
-*connect* ['OPTIONS'] ['CONNECTION']
+connect - connects to running ${infinispan.brand.name} servers.
 
 
 DESCRIPTION
 -----------
-The *connect* command connects to a running ${infinispan.brand.name} server.
-If the command is invoked without specifying an argument, the CLI will default
-to http://localhost:11222. If the connection requires authentication, the CLI
-will prompt for credentials.
+Defaults to `http://localhost:11222` and prompts for credentials if
+authentication is required.
+
+
+SYNOPSIS
+--------
+*connect* ['OPTIONS'] ['SERVER_LOCATION']
 
 
 OPTIONS
 -------
 *-u, --username*='USERNAME'::
-The username to use when connecting if the server requires credentials.
+Specifies a username to authenticate with ${infinispan.brand.name} servers.
 
 *-p, --password*='PASSWORD'::
-The password to use when connecting if the server requires credentials.
+Specifies passwords.
+
+
+EXAMPLE
+-------
+`connect 127.0.0.1:11322 -u test -p changeme` +
+Connects to a locally running server using a port offset of `100` and example
+credentials.
 
 
 SEE ALSO

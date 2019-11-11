@@ -1,0 +1,6 @@
+= Resetting and Dropping Counters
+
+* [//containers/default/counters/my-strong-counter]> reset
+* [//containers/default/counters]> reset my-weak-counter
+
+[//containers/default/counters]> drop counter my-strong-counter

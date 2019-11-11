@@ -14,7 +14,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@CommandDefinition(name = Ls.CMD, description = "Lists the items under the current path", activator = ConnectionActivator.class)
+@CommandDefinition(name = Ls.CMD, description = "Lists resources in a path", activator = ConnectionActivator.class)
 public class Ls extends CliCommand {
    public static final String CMD = "ls";
 

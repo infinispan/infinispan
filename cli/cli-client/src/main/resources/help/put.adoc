@@ -5,42 +5,56 @@ PUT(1)
 
 NAME
 ----
-put - puts an entry in a cache
-
-
-SYNOPSIS
---------
-*put* [OPTIONS] `KEY` [`VALUE`]
+put - adds or updates cache entries.
 
 
 DESCRIPTION
 -----------
-The *put* command puts an entry in a cache. The first argument is compulsory and
-indicates the key of the entry. The second argument is optional when the
+Creates entries for new keys. Replaces values for existing keys.
+
+
+SYNOPSIS
+--------
+*put* ['OPTIONS'] `KEY` [`VALUE`]
 
 
 OPTIONS
 -------
 *-c, --cache*='NAME'::
-The name of the cache. If not specified, the currently selected cache will be used.
+Specifies the name of the cache. Defaults to the currently selected cache.
 
 *-e, --encoding*='ENCODING'::
-The encoding to use when putting the trname of the cache.
-If not specified, the currently selected cache will be used.
+Sets the media type for the value.
 
 *-f, --file*='FILE'::
-The file to be used to supply the value.
+Specifies a file that contains the value for the entry.
 
 *-l, --ttl*='TTL'::
-The time-to-live of the entry in seconds. If 0 or not specified, the default expiration for the cache will be used.
-If a negative value, the entry never expires.
+Sets the number of seconds before the entry is automatically deleted
+(time-to-live). Defaults to the value for `lifespan` in the cache configuration
+if `0` or not specified. If you set a negative value, the entry is never
+deleted.
 
 *-i, --max-idle*='MAXIDLE'::
-The maximum idle time of the entry in seconds. If 0 or not specified, the default expiration for the cache will be used.
-If a negative value, the entry never expires.
+Sets the number of seconds that the entry can be idle. If a read or write
+operation does not occur for an entry after the maximum idle time elapses, the
+entry is automatically deleted. Defaults to the value for `maxIdle` in the
+cache configuration if `0` or not specified. If you set a negative value, the
+entry is never deleted.
 
 *-a, --if-absent*=[true|false]::
-Only puts an entry if it doesn't already exist.
+Puts an entry only if it does not exist.
+
+
+EXAMPLES
+--------
+`put -c mycache hello world` +
+Adds the `hello` key with a value of `world` to the `mycache` cache.
+
+`put -c mycache -f myfile -i 500 hola` +
+Adds the `hola` key with the value from the contents of `myfile`. Also sets a
+maximum idle of `500` seconds.
+
 
 SEE ALSO
 --------

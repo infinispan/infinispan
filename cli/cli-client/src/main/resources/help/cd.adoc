@@ -5,19 +5,24 @@ CD(1)
 
 NAME
 ----
-cd - navigates the resource tree
-
-
-SYNOPSIS
---------
-*cd* 'PATH'
+cd - navigates the server resource tree.
 
 
 DESCRIPTION
 -----------
-The *cd* command navigates the server resource tree. `PATH` can be either absolute or
-relative to the current resource. The special `..` resource name indicates the parent of
-a resource.
+`PATH` can be absolute or relative to the current resource.
+`../` specifies parent resources.
+
+
+SYNOPSIS
+--------
+*cd* ['PATH']
+
+
+EXAMPLE
+-------
+`cd caches` +
+Changes to the `caches` path in the resource tree.
 
 
 SEE ALSO
