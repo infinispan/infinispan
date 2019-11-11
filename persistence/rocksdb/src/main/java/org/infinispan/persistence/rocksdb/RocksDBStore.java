@@ -64,6 +64,7 @@ import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
@@ -92,6 +93,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private Properties columnFamilyProperties;
     private Marshaller marshaller;
     private MarshallableEntryFactory<K, V> entryFactory;
+    private Statistics expiredDbStatistics;
+    private Statistics dbStatistics;
     private volatile boolean stopped = true;
 
     @Override
@@ -169,6 +172,10 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         } else {
             dbOptions = new DBOptions();
         }
+        if (configuration.enableStatistics()) {
+            dbStatistics = new Statistics();
+            dbOptions.setStatistics(dbStatistics);
+        }
         return dbOptions
               .setCreateIfMissing(true)
               // We have to create missing column families on open.
@@ -178,10 +185,15 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     }
 
     private Options expiredDbOptions() {
-        return new Options()
+        Options options = new Options()
               .setCreateIfMissing(true)
               // Make sure keys are sorted by bytes - we use this sorting to remove entries that have expired most recently
               .setComparator(BuiltinComparator.BYTEWISE_COMPARATOR);
+        if (configuration.enableStatistics()) {
+            expiredDbStatistics = new Statistics();
+            options.setStatistics(dbStatistics);
+        }
+        return options;
     }
 
     /**
@@ -426,6 +438,22 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     @Override
     public void removeSegments(IntSet segments) {
         handler.removeSegments(segments);
+    }
+
+    /**
+     * Expired DB statistics
+     * @return null if it was not enabled
+     */
+    public Statistics getExpiredDbStatistics() {
+        return expiredDbStatistics;
+    }
+
+    /**
+     * DB statistics
+     * @return null if it was not enabled
+     */
+    public Statistics getDbStatistics() {
+        return dbStatistics;
     }
 
     private byte[] marshall(Object entry) throws IOException, InterruptedException {

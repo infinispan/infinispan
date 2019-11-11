@@ -48,6 +48,11 @@ public class CustomStoreConfigurationWithoutBuilder implements StoreConfiguratio
    }
 
    @Override
+   public boolean enableStatistics() {
+      return false;
+   }
+
+   @Override
    public Properties properties() {
       return null;
    }

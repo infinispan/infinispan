@@ -61,6 +61,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public S enableStatistics(boolean b) {
+      return (S)builder.enableStatistics(b);
+   }
+
+   @Override
    public S addProperty(String key, String value) {
       return (S)builder.addProperty(key, value);
    }

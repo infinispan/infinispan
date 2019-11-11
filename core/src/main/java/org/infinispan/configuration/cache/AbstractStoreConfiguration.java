@@ -10,7 +10,8 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
-public class AbstractStoreConfiguration implements StoreConfiguration, ConfigurationInfo {
+public abstract class AbstractStoreConfiguration implements StoreConfiguration, ConfigurationInfo {
+
    public static final AttributeDefinition<Boolean> FETCH_PERSISTENT_STATE = AttributeDefinition.builder("fetchPersistentState", false).xmlName("fetch-state").immutable().build();
    public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder("purgeOnStartup", false).immutable().xmlName("purge").build();
    public static final AttributeDefinition<Boolean> IGNORE_MODIFICATIONS = AttributeDefinition.builder("ignoreModifications", false).immutable().xmlName("read-only").build();
@@ -19,6 +20,8 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
    public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder("maxBatchSize", 100).immutable().build();
    public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder("segmented", true).immutable().build();
+   final static AttributeDefinition<Boolean> ENABLE_STATISTICS = AttributeDefinition.builder("enableStatistics", false, Boolean.class).immutable().build();
+
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
@@ -26,7 +29,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP,
-            IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
+            IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, ENABLE_STATISTICS, PROPERTIES);
    }
 
    private final Attribute<Boolean> fetchPersistentState;
@@ -38,6 +41,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    private final Attribute<Integer> maxBatchSize;
    private final Attribute<Boolean> segmented;
    private final Attribute<TypedProperties> properties;
+   private final Attribute<Boolean> enableStatistics;
 
    protected final AttributeSet attributes;
    private final AsyncStoreConfiguration async;
@@ -59,6 +63,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
+      this.enableStatistics = attributes.attribute(ENABLE_STATISTICS);
       this.subElements.add(async);
    }
 
@@ -129,6 +134,11 @@ public class AbstractStoreConfiguration implements StoreConfiguration, Configura
    @Override
    public Properties properties() {
       return properties.get();
+   }
+
+   @Override
+   public boolean enableStatistics() {
+      return enableStatistics.get();
    }
 
    public AttributeSet attributes() {

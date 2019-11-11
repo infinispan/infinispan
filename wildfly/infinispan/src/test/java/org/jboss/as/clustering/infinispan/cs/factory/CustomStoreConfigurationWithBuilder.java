@@ -50,6 +50,11 @@ public class CustomStoreConfigurationWithBuilder implements StoreConfiguration {
    }
 
    @Override
+   public boolean enableStatistics() {
+      return false;
+   }
+
+   @Override
    public Properties properties() {
       return null;
    }

@@ -60,5 +60,10 @@ public interface StoreConfiguration extends ConfigurationInfo {
       return false;
    }
 
+   /**
+    * If true and the store support statistics, the statistic will be create during the startup.
+    */
+   boolean enableStatistics();
+
    Properties properties();
 }

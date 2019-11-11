@@ -90,6 +90,14 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
    S segmented(boolean b);
 
    /**
+    * If true and the store support statistics, the statistic will be create during the startup.
+    *
+    * @param enableStatistics true to enable statistics for the store
+    * @return whether this store support statistics
+    */
+   S enableStatistics(boolean enableStatistics);
+
+   /**
     * <p>
     * Defines a single property. Can be used multiple times to define all needed properties, but the
     * full set is overridden by {@link #withProperties(java.util.Properties)}.

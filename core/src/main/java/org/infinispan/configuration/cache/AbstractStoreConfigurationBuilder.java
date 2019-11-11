@@ -1,5 +1,6 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.ENABLE_STATISTICS;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_PERSISTENT_STATE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.IGNORE_MODIFICATIONS;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
@@ -152,6 +153,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S segmented(boolean b) {
       attributes.attribute(SEGMENTED).set(b);
+      return self();
+   }
+
+   @Override
+   public S enableStatistics(boolean b) {
+      attributes.attribute(ENABLE_STATISTICS).set(b);
       return self();
    }
 
