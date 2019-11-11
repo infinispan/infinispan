@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import static org.infinispan.configuration.cache.StorageType.OBJECT;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,6 +19,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StorageType;
@@ -49,7 +52,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
    private final Set<Object> keys;
 
    IndexWorker(String cacheName, IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner,
-         Set<Object> keys) {
+               Set<Object> keys) {
       this.cacheName = cacheName;
       this.indexedType = indexedType;
       this.flush = flush;
@@ -62,7 +65,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
    public Void apply(EmbeddedCacheManager embeddedCacheManager) {
       Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
       AdvancedCache<Object, Object> unwrapped = SecurityActions.getUnwrappedCache(cache).getAdvancedCache();
-      if (unwrapped.getCacheConfiguration().memory().storageType() == StorageType.OBJECT) {
+      StorageType storageType = unwrapped.getCacheConfiguration().memory().storageType();
+      if (storageType == StorageType.OBJECT) {
          cache = unwrapped.withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
       } else {
          cache = cache;  //todo [anistor] why not `unwrapped` instead ? do we need security for mass indexing ?
@@ -84,9 +88,13 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
          try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                .cacheEntrySet().stream()) {
             Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
+            Wrapper wrapper = unwrapped.getValueDataConversion().getWrapper();
             while (iterator.hasNext()) {
                CacheEntry<Object, Object> next = iterator.next();
                Object value = extractValue(next.getValue(), valueDataConversion);
+               if (value instanceof byte[] && storageType != OBJECT) {
+                  value = wrapper.wrap(value);
+               }
                //TODO do not use Class equality but refactor to type equality:
                if (value != null && value.getClass().equals(indexedType.getPojoType()))
                   indexUpdater.updateIndex(next.getKey(), value);
