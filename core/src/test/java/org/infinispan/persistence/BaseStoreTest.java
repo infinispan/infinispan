@@ -562,6 +562,15 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertNull(cl.load("20"));
    }
 
+   public void testEmptyWriteAndDeleteBatchIterable() {
+      assertIsEmpty();
+      assertNull("should not be present in the store", cl.load(0));
+      cl.writeBatch(Collections.emptyList());
+      assertEquals(0, cl.size());
+      cl.deleteBatch(Collections.emptyList());
+      assertEquals(0, cl.size());
+   }
+
    public void testIsAvailable() {
       assertTrue(cl.isAvailable());
    }
