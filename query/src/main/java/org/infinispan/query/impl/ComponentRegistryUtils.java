@@ -1,10 +1,12 @@
 package org.infinispan.query.impl;
 
 import org.hibernate.search.spi.SearchIntegrator;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
@@ -65,5 +67,9 @@ public final class ComponentRegistryUtils {
     */
    public static QueryCache getQueryCache(Cache<?, ?> cache) {
       return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(QueryCache.class);
+   }
+
+   public static MassIndexer getMassIndexer(AdvancedCache<?, ?> cache) {
+      return getRequiredComponent(cache, MassIndexer.class);
    }
 }

@@ -24,4 +24,9 @@ public interface MassIndexer {
 
    CompletableFuture<Void> reindex(Object... keys);
 
+   /**
+    * @return true if the MassIndexer process was started on this node and hasn't finished yet.
+    */
+   boolean isRunning();
+
 }

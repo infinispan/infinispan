@@ -30,7 +30,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       createCluster(holder -> {
-         String defaultName = "default";
+         String defaultName = getClass().getSimpleName();
          holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName).serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
