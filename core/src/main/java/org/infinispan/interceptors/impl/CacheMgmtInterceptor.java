@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.stream.Stream;
 
+import org.eclipse.microprofile.metrics.Timer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.functional.AbstractWriteManyCommand;
@@ -52,6 +53,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
@@ -66,6 +68,7 @@ import org.infinispan.topology.CacheTopology;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
+
    @Inject ComponentRef<AdvancedCache> cache;
    @Inject InternalDataContainer dataContainer;
    @Inject TimeService timeService;
@@ -76,10 +79,35 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private final StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
 
+   private Timer hitTimes;
+   private Timer missTimes;
+   private Timer storeTimes;
+   private Timer removeTimes;
+
    @Start
    public void start() {
       startNanoseconds.set(timeService.time());
       resetNanoseconds.set(startNanoseconds.get());
+   }
+
+   @ManagedAttribute(description = "Hit Times", displayName = "Hit Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
+   public void setHitTimes(Timer hitTimes) {
+      this.hitTimes = hitTimes;
+   }
+
+   @ManagedAttribute(description = "Miss times", displayName = "Miss times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
+   public void setMissTimes(Timer missTimes) {
+      this.missTimes = missTimes;
+   }
+
+   @ManagedAttribute(description = "Store Times", displayName = "Store Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
+   public void setStoreTimes(Timer storeTimes) {
+      this.storeTimes = storeTimes;
+   }
+
+   @ManagedAttribute(description = "Remove Times", displayName = "Remove Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
+   public void setRemoveTimes(Timer removeTimes) {
+      this.removeTimes = removeTimes;
    }
 
    @Override
@@ -104,9 +132,11 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       if (foundValue) {
          counters.add(StripeB.hitTimesFieldUpdater, stripe, timeNanoSeconds);
          counters.increment(StripeB.hitsFieldUpdater, stripe);
+         if (hitTimes != null) hitTimes.update(timeNanoSeconds, TimeUnit.NANOSECONDS);
       } else {
          counters.add(StripeB.missTimesFieldUpdater, stripe, timeNanoSeconds);
          counters.increment(StripeB.missesFieldUpdater, stripe);
+         if (missTimes != null) missTimes.update(timeNanoSeconds, TimeUnit.NANOSECONDS);
       }
    }
 
@@ -128,7 +158,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          int requests = rCommand.getKeys().size();
          int hitCount = 0;
          if (t == null) {
@@ -142,12 +172,16 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          int missCount = requests - hitCount;
          StripeB stripe = counters.stripeForCurrentThread();
          if (hitCount > 0) {
+            long hitTimesNanos = intervalNanos * hitCount / requests;
             counters.add(StripeB.hitsFieldUpdater, stripe, hitCount);
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds * hitCount / requests);
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, hitTimesNanos);
+            if (hitTimes != null) hitTimes.update(hitTimesNanos, TimeUnit.NANOSECONDS);
          }
          if (missCount > 0) {
+            long missTimesNanos = intervalNanos * missCount / requests;
             counters.add(StripeB.missesFieldUpdater, stripe, missCount);
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds * missCount / requests);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, missTimesNanos);
+            if (missTimes != null) missTimes.update(missTimesNanos, TimeUnit.NANOSECONDS);
          }
       });
    }
@@ -160,12 +194,13 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         final long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         final long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          final Map<Object, Object> data = rCommand.getMap();
          if (data != null && !data.isEmpty()) {
             StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.add(StripeB.storesFieldUpdater, stripe, data.size());
+            if (storeTimes != null) storeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
       });
    }
@@ -195,6 +230,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             StripeB stripe = counters.stripeForCurrentThread();
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.storesFieldUpdater, stripe);
+            if (storeTimes != null) storeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
       });
    }
@@ -212,10 +248,11 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCommand.isSuccessful()) {
-            long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+            long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.storesFieldUpdater, stripe);
+            if (storeTimes != null) storeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
       });
    }
@@ -230,15 +267,17 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          StripeB stripe = counters.stripeForCurrentThread();
          StatsEnvelope envelope = (StatsEnvelope) rv;
          if (envelope.isMiss()) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.missesFieldUpdater, stripe);
-         } else if (envelope.isHit()){
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds);
+            if (missTimes != null) missTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
+         } else if (envelope.isHit()) {
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.hitsFieldUpdater, stripe);
+            if (hitTimes != null) hitTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
          return envelope.value();
       });
@@ -254,7 +293,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          StripeB stripe = counters.stripeForCurrentThread();
          ByRef.Integer hitCount = new ByRef.Integer(0);
          ByRef.Integer missCount = new ByRef.Integer(0);
@@ -266,12 +305,16 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             retvals.add(e.value());
          });
          if (missCount.get() > 0) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, missCount.get() * intervalNanoseconds / numResults);
+            long missTimesNanos = missCount.get() * intervalNanos / numResults;
+            counters.add(StripeB.missTimesFieldUpdater, stripe, missTimesNanos);
             counters.add(StripeB.missesFieldUpdater, stripe, missCount.get());
+            if (missTimes != null) missTimes.update(missTimesNanos, TimeUnit.NANOSECONDS);
          }
          if (hitCount.get() > 0) {
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, hitCount.get() * intervalNanoseconds / numResults);
+            long hitTimesNanos = hitCount.get() * intervalNanos / numResults;
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, hitTimesNanos);
             counters.add(StripeB.hitsFieldUpdater, stripe, hitCount.get());
+            if (hitTimes != null) hitTimes.update(hitTimesNanos, TimeUnit.NANOSECONDS);
          }
          return retvals.stream();
       });
@@ -291,15 +334,17 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          StripeB stripe = counters.stripeForCurrentThread();
          StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
          if (envelope.isDelete()) {
-            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.removeHitsFieldUpdater, stripe);
+            if (removeTimes != null) removeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.storesFieldUpdater, stripe);
+            if (storeTimes != null) storeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
          assert envelope.value() == null;
          return null;
@@ -321,22 +366,26 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          StripeB stripe = counters.stripeForCurrentThread();
          StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
          if (envelope.isDelete()) {
-            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.removeHitsFieldUpdater, stripe);
+            if (removeTimes != null) removeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.storesFieldUpdater, stripe);
+            if (storeTimes != null) storeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
          if (envelope.isHit()) {
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.hitsFieldUpdater, stripe);
+            if (hitTimes != null) hitTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          } else if (envelope.isMiss()) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanos);
             counters.increment(StripeB.missesFieldUpdater, stripe);
+            if (missTimes != null) missTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
          }
          return envelope.value();
       });
@@ -370,7 +419,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          StripeB stripe = counters.stripeForCurrentThread();
 
          int hits = 0;
@@ -379,7 +428,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          int removals = 0;
          int numResults = rCommand.getAffectedKeys().size();
          List<Object> results = new ArrayList<>(numResults);
-         for(StatsEnvelope<?> envelope : ((Collection<StatsEnvelope<?>>) rv)) {
+         for (StatsEnvelope<?> envelope : ((Collection<StatsEnvelope<?>>) rv)) {
             if (envelope.isDelete()) {
                removals++;
             } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
@@ -393,20 +442,28 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             results.add(envelope.value());
          }
          if (removals > 0) {
-            counters.add(StripeB.removeTimesFieldUpdater, stripe, removals * intervalNanoseconds / numResults);
+            long removalsTimeNanos = removals * intervalNanos / numResults;
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, removalsTimeNanos);
             counters.add(StripeB.removeHitsFieldUpdater, stripe, removals);
+            if (removeTimes != null) removeTimes.update(removalsTimeNanos, TimeUnit.NANOSECONDS);
          }
          if (stores > 0) {
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, stores * intervalNanoseconds / numResults);
+            long storesTimeNanos = stores * intervalNanos / numResults;
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, storesTimeNanos);
             counters.add(StripeB.storesFieldUpdater, stripe, stores);
+            if (storeTimes != null) storeTimes.update(storesTimeNanos, TimeUnit.NANOSECONDS);
          }
          if (misses > 0) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, misses * intervalNanoseconds / numResults);
+            long missTimesNanos = misses * intervalNanos / numResults;
+            counters.add(StripeB.missTimesFieldUpdater, stripe, missTimesNanos);
             counters.add(StripeB.missesFieldUpdater, stripe, misses);
+            if (missTimes != null) missTimes.update(missTimesNanos, TimeUnit.NANOSECONDS);
          }
          if (hits > 0) {
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, hits * intervalNanoseconds / numResults);
+            long hitTimesNanos = hits * intervalNanos / numResults;
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, hitTimesNanos);
             counters.add(StripeB.hitsFieldUpdater, stripe, hits);
+            if (hitTimes != null) hitTimes.update(hitTimesNanos, TimeUnit.NANOSECONDS);
          }
          return results;
       });
@@ -440,10 +497,11 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private void increaseRemoveHits(long start) {
-      long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+      long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
       StripeB stripe = counters.stripeForCurrentThread();
-      counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanoseconds);
+      counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanos);
       counters.increment(StripeB.removeHitsFieldUpdater, stripe);
+      if (removeTimes != null) removeTimes.update(intervalNanos, TimeUnit.NANOSECONDS);
    }
 
    private void increaseRemoveMisses() {
@@ -487,7 +545,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @ManagedAttribute(
          description = "Number of cache attribute put operations",
-         displayName = "Number of cache puts" ,
+         displayName = "Number of cache puts",
          measurementType = MeasurementType.TRENDSUP
    )
    public long getStores() {
@@ -743,6 +801,8 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       counters.reset(StripeB.removeTimesFieldUpdater);
       counters.reset(StripeB.removeMissesFieldUpdater);
       resetNanoseconds.set(timeService.time());
+
+      //todo [anistor] how do we reset microprofile metrics ?
    }
 
    private boolean getStatisticsEnabled(FlagAffectedCommand cmd) {

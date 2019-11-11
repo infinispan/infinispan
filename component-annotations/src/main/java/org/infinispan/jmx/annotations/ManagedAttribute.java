@@ -7,18 +7,23 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that a public method or a field (any visibility) in an MBean class defines an MBean attribute. This
- * annotation can be applied to either a field or a public setter and/or getter method of a public class that is itself
- * annotated with an @MBean annotation, or inherits such an annotation from a superclass.
+ * Indicates that a method in a MBean class defines a MBean attribute. This annotation can be applied to a non-static
+ * non-private getter or setter method of a public class that is itself annotated with an @MBean annotation, or inherits
+ * such an annotation from a superclass.
  *
  * @author (various)
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target(ElementType.METHOD)
 @Documented
 public @interface ManagedAttribute {
+
+   /**
+    * The name of the JMX attribute. If left empty it defaults to the name of the Java property.
+    */
+   String name() default "";
 
    /**
     * The human-readable description of the attribute. Probably more detailed than {@link #displayName}.
@@ -26,7 +31,8 @@ public @interface ManagedAttribute {
    String description() default "";
 
    /**
-    * Indicates if the attribute is writable or just read-only (default).
+    * Indicates if the attribute is writable or just read-only (default). If this flag is true a setter method must
+    * exist.
     */
    boolean writable() default false;
 

@@ -49,10 +49,12 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.jmx.annotations.Units;
 import org.kohsuke.MetaInfServices;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -198,19 +200,17 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
    }
 
    private static String extractAttributeName(String setterOrGetter) {
-      String field = null;
-      if (setterOrGetter.startsWith("set") || setterOrGetter.startsWith("get"))
-         field = setterOrGetter.substring(3);
-      else if (setterOrGetter.startsWith("is"))
-         field = setterOrGetter.substring(2);
+      String name = null;
 
-      if (field != null && field.length() > 1) {
-         StringBuilder sb = new StringBuilder();
-         sb.append(Character.toLowerCase(field.charAt(0)));
-         if (field.length() > 2)
-            sb.append(field.substring(1));
-         return sb.toString();
+      if (setterOrGetter.startsWith("set") || setterOrGetter.startsWith("get"))
+         name = setterOrGetter.substring(3);
+      else if (setterOrGetter.startsWith("is"))
+         name = setterOrGetter.substring(2);
+
+      if (name != null && name.length() > 1) {
+         return Character.toLowerCase(name.charAt(0)) + name.substring(1);
       }
+
       return null;
    }
 
@@ -370,7 +370,10 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
 
          if (e.getAnnotation(ManagedAttribute.class) != null && isValidMComponent(e, ManagedAttribute.class)) {
             ManagedAttribute attribute = e.getAnnotation(ManagedAttribute.class);
-            String name = extractAttributeName(methodName);
+            String name = attribute.name();
+            if (name.isEmpty()) {
+               name = extractAttributeName(methodName);
+            }
             boolean is = methodName.startsWith("is");
             String type;
             String boxedType;
@@ -386,6 +389,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
                error(e, "Method annotated with @ManagedAttribute does not start with `set`, `get`, or `is`");
                type = boxedType = "";
             }
+            validateUnits(e, attribute);
             currentType.mComponent.attributes.add(new Model.MAttribute(name, methodName, attribute, true, type, boxedType, is));
          }
 
@@ -406,6 +410,14 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
                   new Model.MOperation(methodName, operation, types().erasure(e.getReturnType()).toString(), parameters));
             }
          return super.visitExecutable(e, ignored);
+      }
+
+      private void validateUnits(Element e, ManagedAttribute attribute) {
+         if (attribute.dataType() == DataType.TIMER) {
+            if (!Units.TIME_UNITS.contains(attribute.units())) {
+               error(e, "@ManagedAttribute.units is expected to be a time unit since `dataType` is DataType.TIMER");
+            }
+         }
       }
 
       private <A extends Annotation>
@@ -473,6 +485,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
                TypeMirror t =  e.asType();
                String type = types().erasure(t).toString();
                String boxedType = t.getKind().isPrimitive() ? types().boxedClass((PrimitiveType) t).toString() : type;
+               validateUnits(e, attribute);
                currentType.mComponent.attributes.add(new Model.MAttribute(name, name, attribute, false, type, boxedType, false));
             }
          }

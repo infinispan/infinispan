@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -162,7 +164,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          if (field != null) {
             return new InvokableFieldBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
                   attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                  attributeMetadata.isIs(), field, attributeMetadata.accessorFunction());
+                  attributeMetadata.isIs(), field, attributeMetadata.getterFunction(), attributeMetadata.setterFunction());
          }
       }
 
@@ -170,7 +172,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       Method getter = findGetter(objectClass, attributeMetadata.getName());
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
             attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-            attributeMetadata.isIs(), getter, setter, attributeMetadata.accessorFunction());
+            attributeMetadata.isIs(), getter, setter, attributeMetadata.getterFunction(), attributeMetadata.setterFunction());
    }
 
    private MBeanOperationInfo toJmxInfo(MBeanMetadata.OperationMetadata operationMetadata) {
@@ -229,10 +231,21 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       if (i == null) {
          throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
       }
-      if (i.attributeAccessor == null) {
+      if (i.getterFunction == null) {
          return null;
       }
-      return () -> i.attributeAccessor.apply(obj);
+      return () -> i.getterFunction.apply(obj);
+   }
+
+   public Consumer<?> getAttributeConsumer(String attributeName) throws AttributeNotFoundException {
+      InvokableMBeanAttributeInfo i = atts.get(attributeName);
+      if (i == null) {
+         throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
+      }
+      if (i.setterFunction == null) {
+         return null;
+      }
+      return (v) -> i.setterFunction.accept(obj, v);
    }
 
    @Override
@@ -389,11 +402,14 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
    private static abstract class InvokableMBeanAttributeInfo {
 
       final MBeanAttributeInfo attributeInfo;
-      final Function<Object, ?> attributeAccessor;
+      final Function<Object, Object> getterFunction;
+      final BiConsumer<Object, Object> setterFunction;
 
-      InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Function<?, ?> attributeAccessor) {
+      InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable,
+                                  boolean isIs, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
          attributeInfo = new MBeanAttributeInfo(name, type, description, isReadable, isWritable, isIs);
-         this.attributeAccessor = (Function<Object, ?>) attributeAccessor;
+         this.getterFunction = (Function<Object, Object>) getterFunction;
+         this.setterFunction = (BiConsumer<Object, Object>) setterFunction;
       }
 
       abstract Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException;
@@ -402,8 +418,10 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
    private final class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
       private final Field field;
 
-      InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Field field, Function<?, ?> attributeAccessor) {
-         super(name, type, description, isReadable, isWritable, isIs, attributeAccessor);
+      InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable,
+                                            boolean isWritable, boolean isIs, Field field,
+                                            Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+         super(name, type, description, isReadable, isWritable, isIs, getterFunction, setterFunction);
          this.field = field;
       }
 
@@ -423,8 +441,10 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       private final Method setter;
       private final Method getter;
 
-      InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs, Method getter, Method setter, Function<?, ?> attributeAccessor) {
-         super(name, type, description, isReadable, isWritable, isIs, attributeAccessor);
+      InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable,
+                                             boolean isWritable, boolean isIs, Method getter, Method setter,
+                                             Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+         super(name, type, description, isReadable, isWritable, isIs, getterFunction, setterFunction);
          this.setter = setter;
          this.getter = getter;
       }

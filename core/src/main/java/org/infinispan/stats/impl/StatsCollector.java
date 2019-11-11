@@ -64,13 +64,14 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    // probably it's not *that* important to have perfect stats to make this variable volatile
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled = false;
 
    @ManagedAttribute(
          description = "Number of cache attribute hits",
          displayName = "Number of cache hits",
-         measurementType = MeasurementType.TRENDSUP)
+         measurementType = MeasurementType.TRENDSUP
+   )
+   @Override
    public long getHits() {
       return hits.sum();
    }
@@ -80,6 +81,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of cache misses",
          measurementType = MeasurementType.TRENDSUP
    )
+   @Override
    public long getMisses() {
       return misses.sum();
    }
@@ -89,6 +91,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of cache removal hits",
          measurementType = MeasurementType.TRENDSUP
    )
+   @Override
    public long getRemoveHits() {
       return removeHits.sum();
    }
@@ -98,6 +101,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of cache removal misses",
          measurementType = MeasurementType.TRENDSUP
    )
+   @Override
    public long getRemoveMisses() {
       return removeMisses.sum();
    }
@@ -107,6 +111,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of cache puts" ,
          measurementType = MeasurementType.TRENDSUP
    )
+   @Override
    public long getStores() {
       return stores.sum();
    }
@@ -121,6 +126,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of cache evictions",
          measurementType = MeasurementType.TRENDSUP
    )
+   @Override
    public long getEvictions() {
       return evictions.sum();
    }
@@ -157,6 +163,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Average read time",
          units = Units.MILLISECONDS
    )
+   @Override
    public long getAverageReadTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageReadTimeNanos());
    }
@@ -166,6 +173,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Average read time (ns)",
          units = Units.NANOSECONDS
    )
+   @Override
    public long getAverageReadTimeNanos() {
       long total = hits.sum() + misses.sum();
       if (total == 0)
@@ -178,6 +186,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Average write time",
          units = Units.MILLISECONDS
    )
+   @Override
    public long getAverageWriteTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
    }
@@ -187,6 +196,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Average write time (ns)",
          units = Units.NANOSECONDS
    )
+   @Override
    public long getAverageWriteTimeNanos() {
       long sum = stores.sum();
       if (sum == 0)
@@ -199,6 +209,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Average remove time",
          units = Units.MILLISECONDS
    )
+   @Override
    public long getAverageRemoveTime() {
       return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
    }
@@ -208,6 +219,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Average remove time (ns)",
          units = Units.NANOSECONDS
    )
+   @Override
    public long getAverageRemoveTimeNanos() {
       long removes = getRemoveHits();
       if (removes == 0)
@@ -230,6 +242,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return statisticsEnabled;
    }
 
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    @Override
    public void setStatisticsEnabled(boolean enabled) {
       statisticsEnabled = enabled;
@@ -243,11 +256,11 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
    }
 
-   @Override
    @ManagedAttribute(
          description = "Number of entries currently in-memory excluding expired entries",
          displayName = "Number of in-memory cache entries"
    )
+   @Override
    public int getCurrentNumberOfEntriesInMemory() {
       return dataContainer.size();
    }
@@ -258,6 +271,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          units = Units.SECONDS,
          measurementType = MeasurementType.TRENDSUP
    )
+   @Override
    public long getTimeSinceStart() {
       return timeService.timeDuration(startNanoseconds.get(), TimeUnit.SECONDS);
    }
@@ -267,6 +281,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Seconds since cache statistics were reset",
          units = Units.SECONDS
    )
+   @Override
    public long getTimeSinceReset() {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
    }
@@ -285,6 +300,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          description = "Amount of memory in bytes allocated for use in eviction for data in the cache",
          displayName = "Memory used by data in the cache"
    )
+   @Override
    public long getDataMemoryUsed() {
       if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
          return dataContainer.evictionSize();
@@ -305,6 +321,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          description = "Resets statistics gathered by this component",
          displayName = "Reset Statistics (Statistics)"
    )
+   @Override
    public void resetStatistics() {
       hits.reset();
       misses.reset();

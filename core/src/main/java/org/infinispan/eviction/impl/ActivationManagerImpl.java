@@ -49,7 +49,6 @@ public class ActivationManagerImpl implements ActivationManager {
 
    private boolean passivation;
 
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", displayName = "Statistics enabled", writable = true)
    private boolean statisticsEnabled = false;
 
    @Start(priority = 11) // After the cache loader manager, before the passivation manager
@@ -156,6 +155,15 @@ public class ActivationManagerImpl implements ActivationManager {
    )
    public void resetStatistics() {
       activations.reset();
+   }
+
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", displayName = "Statistics enabled", writable = true)
+   public boolean getStatisticsEnabled() {
+      return statisticsEnabled;
+   }
+
+   public void setStatisticsEnabled(boolean statisticsEnabled) {
+      this.statisticsEnabled = statisticsEnabled;
    }
 
    @Override

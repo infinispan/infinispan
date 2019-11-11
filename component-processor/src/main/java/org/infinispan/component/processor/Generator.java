@@ -235,17 +235,8 @@ public class Generator {
 
       int i = 0;
       for (Model.MAttribute attribute : attributes) {
-         String accessorFunction = "null";
-         // provide accessor function only for a select list of types that are interesting for metrics
-         if (attribute.attribute.dataType() == DataType.MEASUREMENT && (attribute.boxedType.equals("java.lang.Integer") || attribute.boxedType.equals("java.lang.Long") ||
-               attribute.boxedType.equals("java.lang.Short") || attribute.boxedType.equals("java.lang.Byte") ||
-               attribute.boxedType.equals("java.lang.Float") || attribute.boxedType.equals("java.lang.Double") ||
-               attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger"))) {
-            accessorFunction = "(java.util.function.Function<" + c.qualifiedName + ", " + attribute.boxedType + ">)"
-                  + (attribute.useSetter ? c.qualifiedName + "::" : " _x -> _x.") + attribute.propertyAccessor;
-         }
          writeManagedAttribute(writer, attribute.name, attribute.attribute, attribute.useSetter, attribute.type,
-               attribute.is, accessorFunction, optionalComma(i++, count));
+               attribute.is, makeGetterFunction(c, attribute), makeSetterFunction(c, attribute), optionalComma(i++, count));
       }
       for (Model.MOperation method : operations) {
          ManagedOperation operation = method.operation;
@@ -267,11 +258,33 @@ public class Generator {
       writer.printf("      ));\n");
    }
 
+   private String makeGetterFunction(Model.AnnotatedType clazz, Model.MAttribute attribute) {
+      // provide accessor function only for a select list of types that are interesting for metrics
+      if (attribute.attribute.dataType() == DataType.MEASUREMENT && (
+            attribute.boxedType.equals("java.lang.Integer") || attribute.boxedType.equals("java.lang.Long") ||
+                  attribute.boxedType.equals("java.lang.Short") || attribute.boxedType.equals("java.lang.Byte") ||
+                  attribute.boxedType.equals("java.lang.Float") || attribute.boxedType.equals("java.lang.Double") ||
+                  attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger"))) {
+         return "(java.util.function.Function<" + clazz.qualifiedName + ", " + attribute.boxedType + ">) "
+               + (attribute.useSetter ? clazz.qualifiedName + "::" : "_x -> _x.") + attribute.propertyAccessor;
+      }
+      return "null";
+   }
+
+   private String makeSetterFunction(Model.AnnotatedType clazz, Model.MAttribute attribute) {
+      // no need for setter unless it is a histogram or timer
+      if (attribute.attribute.dataType() == DataType.HISTOGRAM || attribute.attribute.dataType() == DataType.TIMER) {
+         return "(java.util.function.BiConsumer<" + clazz.qualifiedName + ", " + attribute.boxedType + ">) "
+               + (attribute.useSetter ? clazz.qualifiedName + "::" + attribute.propertyAccessor : "(_x, _y) -> _x." + attribute.propertyAccessor + " = _y");
+      }
+      return "null";
+   }
+
    private void writeManagedAttribute(PrintWriter writer, CharSequence name, ManagedAttribute attribute,
-                                      boolean useSetter, String type, boolean is, String accessorFunction, String comma) {
-      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> accessorFunction)
-      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s)%s\n",
-            name, attribute.description(), attribute.writable(), useSetter, type, is, accessorFunction, comma);
+                                      boolean useSetter, String type, boolean is, String getterFunction, String setterFunction, String comma) {
+      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction)
+      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s, %s)%s\n",
+            name, attribute.description(), attribute.writable(), useSetter, type, is, getterFunction, setterFunction, comma);
    }
 
    public void writeModuleClass(TypeElement[] sourceElements) throws IOException {

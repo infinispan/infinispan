@@ -17,6 +17,7 @@ import org.infinispan.jmx.ObjectNameKeys;
  */
 public final class ObjectNameMapper {
 
+   //todo [anistor] the cache manager name should be enough. jmx domain is misused here
    /**
     * A pseudo tag added to represent the JXM domain of the MBean.
     */
@@ -27,7 +28,7 @@ public final class ObjectNameMapper {
    }
 
    public static String makeMetricName(ObjectName objectName, String attributeName) {
-      return makeMetricNamePrefix(objectName) + attributeName;
+      return makeMetricNamePrefix(objectName) + attributeName.replace(';', '_');
    }
 
    public static String makeMetricNamePrefix(ObjectName objectName) {
@@ -35,13 +36,17 @@ public final class ObjectNameMapper {
 
       String typeKey = objectName.getKeyProperty(ObjectNameKeys.TYPE);
       if (typeKey != null) {
+         typeKey = typeKey.replace(';', '_');
          sb.append(typeKey).append('_');
       }
 
       String componentKey = objectName.getKeyProperty(ObjectNameKeys.COMPONENT);
-      // avoid situations where TYPE equals COMPONENT like CacheManager_CacheManager_numberOfCreatedCaches
-      if (componentKey != null && !componentKey.equals(typeKey)) {
-         sb.append(componentKey.replace('.', '_')).append('_');
+      if (componentKey != null) {
+         componentKey = componentKey.replace(';', '_');
+         // avoid situations where TYPE equals COMPONENT like CacheManager_CacheManager_numberOfCreatedCaches
+         if (!componentKey.equals(typeKey)) {
+            sb.append(componentKey.replace('.', '_')).append('_');
+         }
       }
 
       return sb.toString();
@@ -56,7 +61,7 @@ public final class ObjectNameMapper {
          }
       }
       // add a pseudo tag to represent the JMX domain
-      tags.add(new Tag(JMX_DOMAIN_TAG, objectName.getDomain()));
+      tags.add(new Tag(JMX_DOMAIN_TAG, objectName.getDomain()));   //todo [anistor] domain must start with a letter or else is not a valid tag
       return tags.toArray(new Tag[0]);
    }
 

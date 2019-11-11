@@ -146,8 +146,8 @@ public class Model {
       final MBean mbean;
       final String superBinaryName;
 
-      List<MAttribute> attributes = new ArrayList<>();
-      List<MOperation> operations = new ArrayList<>();
+      final List<MAttribute> attributes = new ArrayList<>();
+      final List<MOperation> operations = new ArrayList<>();
 
       MComponent(MBean mbean, String superBinaryName) {
          this.mbean = mbean;
