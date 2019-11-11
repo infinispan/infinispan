@@ -51,7 +51,10 @@
                   max_bytes="1M"
    />
    <pbcast.GMS print_local_addr="false"
-               join_timeout="${jgroups.join_timeout:2000}"/>
+               join_timeout="${jgroups.join_timeout:2000}"
+               max_join_attempts="1"
+               max_leave_attempts="1"
+   />
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
    <UFC_NB max_credits="3m" min_threshold="0.40"/>
