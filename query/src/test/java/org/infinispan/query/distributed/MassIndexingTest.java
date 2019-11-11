@@ -60,6 +60,8 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       IntStream.range(0, 300).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
       CompletableFuture<Void> first = massIndexer.startAsync();
+      eventually(massIndexer::isRunning);
+
       CompletableFuture<Void> second = massIndexer.startAsync();
 
       assertSuccessCompletion(first);

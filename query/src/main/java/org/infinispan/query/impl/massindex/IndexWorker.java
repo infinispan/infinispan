@@ -48,15 +48,17 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
    private final IndexedTypeIdentifier indexedType;
    private final boolean flush;
    private final boolean clean;
+   private final boolean skipIndex;
    private final boolean primaryOwner;
    private final Set<Object> keys;
 
-   IndexWorker(String cacheName, IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner,
-               Set<Object> keys) {
+   IndexWorker(String cacheName, IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean skipIndex,
+               boolean primaryOwner, Set<Object> keys) {
       this.cacheName = cacheName;
       this.indexedType = indexedType;
       this.flush = flush;
       this.clean = clean;
+      this.skipIndex = skipIndex;
       this.primaryOwner = primaryOwner;
       this.keys = keys;
    }
@@ -84,20 +86,22 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
       if (keys == null || keys.size() == 0) {
          preIndex(indexUpdater);
-         KeyValueFilter filter = getFilter(clusteringDependentLogic, keyDataConversion);
-         try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
-               .cacheEntrySet().stream()) {
-            Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
-            Wrapper wrapper = unwrapped.getValueDataConversion().getWrapper();
-            while (iterator.hasNext()) {
-               CacheEntry<Object, Object> next = iterator.next();
-               Object value = extractValue(next.getValue(), valueDataConversion);
-               if (value instanceof byte[] && storageType != OBJECT) {
-                  value = wrapper.wrap(value);
+         if (!skipIndex) {
+            KeyValueFilter filter = getFilter(clusteringDependentLogic, keyDataConversion);
+            try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
+                  .cacheEntrySet().stream()) {
+               Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
+               Wrapper wrapper = unwrapped.getValueDataConversion().getWrapper();
+               while (iterator.hasNext()) {
+                  CacheEntry<Object, Object> next = iterator.next();
+                  Object value = extractValue(next.getValue(), valueDataConversion);
+                  if (value instanceof byte[] && storageType != OBJECT) {
+                     value = wrapper.wrap(value);
+                  }
+                  //TODO do not use Class equality but refactor to type equality:
+                  if (value != null && value.getClass().equals(indexedType.getPojoType()))
+                     indexUpdater.updateIndex(next.getKey(), value);
                }
-               //TODO do not use Class equality but refactor to type equality:
-               if (value != null && value.getClass().equals(indexedType.getPojoType()))
-                  indexUpdater.updateIndex(next.getKey(), value);
             }
          }
          postIndex(indexUpdater);
@@ -147,6 +151,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
          output.writeBoolean(worker.flush);
          output.writeBoolean(worker.clean);
          output.writeBoolean(worker.primaryOwner);
+         output.writeBoolean(worker.skipIndex);
          output.writeObject(worker.keys);
       }
 
@@ -157,9 +162,10 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
          boolean flush = input.readBoolean();
          boolean clean = input.readBoolean();
          boolean primaryOwner = input.readBoolean();
+         boolean skipIndex = input.readBoolean();
          Set<Object> keys = (Set<Object>) input.readObject();
          return new IndexWorker(cacheName, PojoIndexedTypeIdentifier.convertFromLegacy(indexedClass), flush, clean,
-               primaryOwner, keys);
+               skipIndex, primaryOwner, keys);
       }
 
       @Override
