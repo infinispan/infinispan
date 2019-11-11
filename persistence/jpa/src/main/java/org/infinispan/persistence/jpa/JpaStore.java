@@ -332,6 +332,12 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void deleteBatch(Iterable<Object> keys) {
+      // If the iterable is empty, then we can return before creating the EntityManager. Empty collections are not
+      // supported by all DB in CriteriaDelete
+      List<Object> keyCollection = StreamSupport.stream(keys.spliterator(), false).collect(Collectors.toList());
+      if (keyCollection.isEmpty())
+         return;
+
       EntityManager em = emf.createEntityManager();
       try {
          EntityTransaction txn = em.getTransaction();
@@ -343,7 +349,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             CriteriaDelete query = cb.createCriteriaDelete(configuration.entityClass());
             Root root = query.from(configuration.entityClass());
             SingularAttribute id = getEntityId(em, configuration.entityClass());
-            List<Object> keyCollection = StreamSupport.stream(keys.spliterator(), false).collect(Collectors.toList());
+
             query.where(root.get(id).in(keyCollection));
             em.createQuery(query).executeUpdate();
 
