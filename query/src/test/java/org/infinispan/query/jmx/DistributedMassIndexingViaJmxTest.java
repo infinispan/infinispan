@@ -46,17 +46,17 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
          EmbeddedCacheManager cm = TestCacheManagerFactory
                .createClusteredCacheManager(holder);
          registerCacheManager(cm);
-         Cache cache = cm.getCache();
+         Cache cache = cm.getCache(getClass().getSimpleName());
          caches.add(cache);
       }
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm();
    }
 
    @Override
    protected void rebuildIndexes() throws Exception {
       String cacheManagerName = manager(0).getCacheManagerConfiguration().cacheManagerName();
       ObjectName massIndexerObjName = getMassIndexerObjectName(
-            BASE_JMX_DOMAIN + 0, cacheManagerName, manager(0).getCacheManagerConfiguration().defaultCacheName().get());
+            BASE_JMX_DOMAIN + 0, cacheManagerName, getClass().getSimpleName());
       mBeanServerLookup.getMBeanServer().invoke(massIndexerObjName, "start", new Object[0], new String[0]);
    }
 

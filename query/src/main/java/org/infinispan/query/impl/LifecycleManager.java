@@ -27,7 +27,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.TypedProperties;
@@ -49,6 +48,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.affinity.ShardAllocationManagerImpl;
 import org.infinispan.query.affinity.ShardAllocatorManager;
@@ -130,6 +130,9 @@ public class LifecycleManager implements ModuleLifecycle {
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
             cr.registerComponent(new QueryBox(), QueryBox.class);
+            DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchFactory,
+                  keyTransformationHandler, ComponentRegistryUtils.getTimeService(cache));
+            cr.registerComponent(massIndexer, MassIndexer.class);
          }
 
          registerMatcher(cr, searchFactory, aggregatedClassLoader);
@@ -270,10 +273,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       // Register mass indexer MBean
       try {
-         KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
-         TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
-         DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchIntegrator, keyTransformationHandler, timeService);
-         cr.registerComponent(massIndexer, DistributedExecutorMassIndexer.class);
+         MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
          jmxRegistration.registerMBean(massIndexer, queryGroupName);
       } catch (Exception e) {
          throw new CacheException("Unable to create MassIndexer MBean", e);

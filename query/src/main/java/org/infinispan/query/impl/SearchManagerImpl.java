@@ -15,7 +15,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
@@ -24,7 +23,6 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
-import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
 /**
@@ -43,7 +41,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    private final QueryInterceptor queryInterceptor;
    private final KeyTransformationHandler keyTransformationHandler;
    private final EmbeddedQueryEngine queryEngine;
-   private final TimeService timeService;
+   private final MassIndexer massIndexer;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
    public SearchManagerImpl(AdvancedCache<?, ?> cache) {
@@ -55,7 +53,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
       this.queryEngine = ComponentRegistryUtils.getEmbeddedQueryEngine(cache);
-      this.timeService = ComponentRegistryUtils.getTimeService(cache);
+      this.massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
    }
 
    @Override
@@ -132,8 +130,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public MassIndexer getMassIndexer() {
-      // TODO: Should a new instance be created every time?
-      return new DistributedExecutorMassIndexer(cache, searchFactory, keyTransformationHandler, timeService);
+      return massIndexer;
    }
 
    @Override

@@ -45,7 +45,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.1
  */
 @MBean(objectName = "MassIndexer",
-       description = "Component that rebuilds the Lucene index from the cached data")
+      description = "Component that rebuilds the Lucene index from the cached data")
 public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
@@ -55,6 +55,13 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final IndexUpdater indexUpdater;
    private final ClusterExecutor executor;
    private final ExecutorService localExecutor;
+   private final MassIndexLock lock;
+
+   private static final TriConsumer<Address, Void, Throwable> TRI_CONSUMER = (a, v, t) -> {
+      if (t != null) {
+         throw new CacheException(t);
+      }
+   };
 
    public DistributedExecutorMassIndexer(AdvancedCache cache, SearchIntegrator searchIntegrator,
                                          KeyTransformationHandler keyTransformationHandler, TimeService timeService) {
@@ -63,7 +70,8 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       this.executor = cache.getCacheManager().executor();
       this.localExecutor = cache.getCacheManager().getGlobalComponentRegistry()
-                                .getComponent(ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
+            .getComponent(ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
+      this.lock = MassIndexerLockFactory.buildLock(cache);
    }
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
@@ -107,7 +115,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       };
       if (everywhereSet.size() > 0) {
          IndexWorker indexWorkEverywhere =
-               new IndexWorker(cache.getName(),null, false, false, false, everywhereSet);
+               new IndexWorker(cache.getName(), null, false, false, false, everywhereSet);
 
          future = executor.submitConsumer(indexWorkEverywhere, triConsumer);
       }
@@ -134,7 +142,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
             }
             for (Map.Entry<Address, Set<Object>> entry : targets.entrySet()) {
                IndexWorker indexWorkEverywhere =
-                     new IndexWorker(cache.getName(),null, false, false, false, entry.getValue());
+                     new IndexWorker(cache.getName(), null, false, false, false, entry.getValue());
 
                // TODO: need to change this to not index
                futures.add(executor.filterTargets(Collections.singleton(entry.getKey())).submitConsumer(indexWorkEverywhere, triConsumer));
@@ -143,7 +151,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          } else {
             // This is a local only cache with no distribution manager
             IndexWorker indexWorkEverywhere =
-                  new IndexWorker(cache.getName(),null, false, false, false, primeownerSet);
+                  new IndexWorker(cache.getName(), null, false, false, false, primeownerSet);
             CompletableFuture<Void> localFuture = executor.submitConsumer(indexWorkEverywhere, triConsumer);
             if (future != null) {
                future = CompletableFuture.allOf(future, localFuture);
@@ -155,41 +163,54 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       return future != null ? future : CompletableFutures.completedNull();
    }
 
+   @Override
+   public boolean isRunning() {
+      return lock.isAcquired();
+   }
+
    private CompletableFuture<Void> executeInternal() {
-      List<CompletableFuture<Void>> futures = new ArrayList<>();
-      Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
+      if (lock.lock()) {
+         List<CompletableFuture<Void>> futures = new ArrayList<>();
+         Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
 
-      TriConsumer<Address, Void, Throwable> triConsumer = (a, v, t) -> {
-         if (t != null) {
-            throw new CacheException(t);
-         }
-      };
-      for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
-         EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
-         MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
-         boolean workerClean = true, workerFlush = true;
-         if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
-            indexUpdater.purge(indexedType);
-            workerClean = false;
-         }
-         if (strategy.getFlushStrategy() == FlushExecutionMode.ONCE_AFTER) {
-            toFlush.add(indexedType);
-            workerFlush = false;
-         }
+         BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
+            try {
+               for (IndexedTypeIdentifier type : toFlush) {
+                  indexUpdater.flush(type);
+               }
+            } finally {
+               lock.unlock();
+            }
+         };
+         CompletableFuture<Void> compositeFuture;
+         try {
+            for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
+               EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
+               MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
+               boolean workerClean = true, workerFlush = true;
+               if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
+                  indexUpdater.purge(indexedType);
+                  workerClean = false;
+               }
+               if (strategy.getFlushStrategy() == FlushExecutionMode.ONCE_AFTER) {
+                  toFlush.add(indexedType);
+                  workerFlush = false;
+               }
 
-         IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
-         IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
-               indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
+               IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
+               IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
+                     indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
 
-         futures.add(executor.submitConsumer(indexWork, triConsumer));
+               futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
+            }
+            compositeFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+            return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
+         } catch (Throwable t) {
+            lock.unlock();
+            return CompletableFutures.completedExceptionFuture(t);
+         }
+      } else {
+         return CompletableFutures.completedExceptionFuture(new MassIndexerAlreadyStartedException());
       }
-      CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
-            new CompletableFuture[0]));
-      BiConsumer<Void, Throwable> flushIfNeeded = (v, t) -> {
-         for (IndexedTypeIdentifier type : toFlush) {
-            indexUpdater.flush(type);
-         }
-      };
-      return compositeFuture.whenCompleteAsync(flushIfNeeded, localExecutor);
    }
 }

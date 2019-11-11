@@ -44,6 +44,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-clustered-lock</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-engine</artifactId>
          <classifier>tests</classifier>

@@ -9,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
@@ -37,7 +38,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
 
       waitForClusterToForm(getDefaultCacheName());
 
-      for(Cache cache : cacheList) {
+      for (Cache cache : cacheList) {
          caches.add(cache);
       }
    }
@@ -65,7 +66,9 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
    @Override
    protected void rebuildIndexes() {
       for (Cache cache : caches) {
-         Search.getSearchManager(cache).getMassIndexer().start();
+         MassIndexer massIndexer = Search.getSearchManager(cache).getMassIndexer();
+         eventually(() -> !massIndexer.isRunning());
+         massIndexer.start();
       }
    }
 }

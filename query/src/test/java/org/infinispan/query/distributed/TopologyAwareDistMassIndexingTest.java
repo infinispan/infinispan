@@ -17,7 +17,7 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
    @Override
    protected void createCacheManagers() throws Throwable {
       caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(NUM_NODES, CacheMode.DIST_SYNC, false, true, false,
-            "default", holder -> {
+            getClass().getSimpleName(), holder -> {
                Configuration cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
                      .clustering().stateTransfer().fetchInMemoryState(true).build();
                holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME).read(cacheCfg1);
@@ -30,6 +30,6 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
          cacheManagers.add(cacheObj.getCacheManager());
       }
 
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm();
    }
 }

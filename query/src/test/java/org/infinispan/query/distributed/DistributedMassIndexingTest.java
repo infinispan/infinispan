@@ -3,6 +3,8 @@ package org.infinispan.query.distributed;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
@@ -27,12 +29,11 @@ import org.testng.annotations.Test;
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 3;
-   protected static final String[] neededCacheNames = new String[]{
-         "default",
+   private final Collection<String> neededCacheNames = Arrays.asList(
          "LuceneIndexesMetadata",
          "LuceneIndexesData",
          "LuceneIndexesLocking",
-   };
+         getClass().getSimpleName());
 
    protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
@@ -40,15 +41,19 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       return "dynamic-indexing-distribution.xml";
    }
 
+   protected void waitForClusterToForm() {
+      waitForClusterToForm(neededCacheNames.toArray(new String[]{}));
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; i++) {
          EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml(getConfigurationFile());
          registerCacheManager(cacheManager);
-         Cache cache = cacheManager.getCache();
+         Cache cache = cacheManager.getCache(getClass().getSimpleName());
          caches.add(cache);
       }
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm();
    }
 
    public void testReindexing() throws Exception {
@@ -72,7 +77,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    public void testPartiallyReindex() throws Exception {
       caches.get(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F1NUM"), new Car("megane", "white", 300));
-      Search.getSearchManager(cache(0)).getMassIndexer().reindex(key("F1NUM")).get();
+      Search.getSearchManager(caches.get(0)).getMassIndexer().reindex(key("F1NUM")).get();
       verifyFindsCar(1, "megane");
       caches.get(0).remove(key("F1NUM"));
       verifyFindsCar(0, "megane");

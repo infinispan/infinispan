@@ -27,14 +27,13 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
             .addIndexedEntity(Car.class);
       ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
       List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
-      defineConfigurationOnAllManagers("default", cacheCfg);
       ConfigurationBuilder indexCache = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       indexCache.clustering().stateTransfer().fetchInMemoryState(true);
       defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, indexCache);
       defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCache);
       defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCache);
 
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm();
 
       caches.addAll(cacheList.stream().collect(Collectors.toList()));
    }

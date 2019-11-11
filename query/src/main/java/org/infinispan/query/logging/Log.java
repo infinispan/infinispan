@@ -194,4 +194,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Ignoring system property %s because the value %d is smaller than the current value (%d) of org.apache.lucene.search.BooleanQuery.getMaxClauseCount()", id = 14047)
    void ignoringBooleanQueryMaxClauseCount(String sysPropName, int maxClauseCount, int currentMaxClauseCount);
+
+   @Message(value = "Error acquiring MassIndexer Lock", id = 14048)
+   CacheException errorAcquiringMassIndexerLock(@Cause Throwable e);
+
+   @Message(value = "Error releasing MassIndexer Lock", id = 14049)
+   CacheException errorReleasingMassIndexerLock(@Cause Throwable e);
 }
