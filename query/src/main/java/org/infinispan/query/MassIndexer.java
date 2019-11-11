@@ -18,6 +18,11 @@ public interface MassIndexer {
    void start();
 
    /**
+    * Deletes all the indexes and skip the reindexing.
+    */
+   CompletableFuture<Void> purge();
+
+   /**
     * @return {@link CompletableFuture}
     */
    CompletableFuture<Void> startAsync();

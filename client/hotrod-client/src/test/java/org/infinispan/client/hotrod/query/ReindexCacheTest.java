@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
@@ -21,9 +20,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.MassIndexer;
-import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -95,9 +94,9 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    }
 
    private void wipeIndexes() {
-      AdvancedCache<?, ?> advancedCache = cacheManager.getCache(USER_CACHE).getAdvancedCache();
-      QueryInterceptor qi = advancedCache.getComponentRegistry().getComponent(QueryInterceptor.class);
-      qi.purgeAllIndexes();
+      Cache<?, ?> cache = cacheManager.getCache(USER_CACHE);
+      MassIndexer massIndexer = org.infinispan.query.Search.getSearchManager(cache).getMassIndexer();
+      CompletionStages.join(massIndexer.purge());
    }
 
    private void assertIndexEmpty() {

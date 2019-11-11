@@ -77,12 +77,17 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
    @Override
    public void start() {
-      CompletionStages.join(executeInternal());
+      CompletionStages.join(executeInternal(false));
+   }
+
+   @Override
+   public CompletableFuture<Void> purge() {
+      return executeInternal(true);
    }
 
    @Override
    public CompletableFuture<Void> startAsync() {
-      return executeInternal();
+      return executeInternal(false);
    }
 
    @Override
@@ -115,7 +120,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       };
       if (everywhereSet.size() > 0) {
          IndexWorker indexWorkEverywhere =
-               new IndexWorker(cache.getName(), null, false, false, false, everywhereSet);
+               new IndexWorker(cache.getName(), null, false, false, false, false, everywhereSet);
 
          future = executor.submitConsumer(indexWorkEverywhere, triConsumer);
       }
@@ -142,7 +147,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
             }
             for (Map.Entry<Address, Set<Object>> entry : targets.entrySet()) {
                IndexWorker indexWorkEverywhere =
-                     new IndexWorker(cache.getName(), null, false, false, false, entry.getValue());
+                     new IndexWorker(cache.getName(), null, false, false, false, false, entry.getValue());
 
                // TODO: need to change this to not index
                futures.add(executor.filterTargets(Collections.singleton(entry.getKey())).submitConsumer(indexWorkEverywhere, triConsumer));
@@ -151,7 +156,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          } else {
             // This is a local only cache with no distribution manager
             IndexWorker indexWorkEverywhere =
-                  new IndexWorker(cache.getName(), null, false, false, false, primeownerSet);
+                  new IndexWorker(cache.getName(), null, false, false, false, false, primeownerSet);
             CompletableFuture<Void> localFuture = executor.submitConsumer(indexWorkEverywhere, triConsumer);
             if (future != null) {
                future = CompletableFuture.allOf(future, localFuture);
@@ -168,7 +173,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       return lock.isAcquired();
    }
 
-   private CompletableFuture<Void> executeInternal() {
+   private CompletableFuture<Void> executeInternal(boolean skipIndex) {
       if (lock.lock()) {
          List<CompletableFuture<Void>> futures = new ArrayList<>();
          Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
@@ -197,9 +202,9 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
                   workerFlush = false;
                }
 
-               IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
-               IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
-                     indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
+            IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
+            IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
+                  skipIndex, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
 
                futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
             }
