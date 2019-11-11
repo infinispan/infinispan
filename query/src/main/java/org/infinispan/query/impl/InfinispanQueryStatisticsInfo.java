@@ -18,7 +18,7 @@ import org.infinispan.query.MassIndexer;
  * @author anistor@redhat.com
  * @since 6.1
  */
-@MBean(objectName = "Statistics")
+@MBean(objectName = "Statistics", description = "Query statistics for the Hibernate Search integration")
 public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean {
 
    private final SearchIntegrator searchIntegrator;

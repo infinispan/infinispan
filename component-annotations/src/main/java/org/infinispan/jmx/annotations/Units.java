@@ -1,5 +1,7 @@
 package org.infinispan.jmx.annotations;
 
+import java.util.EnumSet;
+
 public enum Units {
 
    NONE,
@@ -18,7 +20,13 @@ public enum Units {
 
    BITS,
 
-   BYTES;
+   BYTES,
+
+   KILO_BYTES,
+
+   MEGA_BYTES;
+
+   public static final EnumSet<Units> TIME_UNITS = EnumSet.of(SECONDS, MILLISECONDS, MICROSECONDS, NANOSECONDS);
 
    @Override
    public String toString() {

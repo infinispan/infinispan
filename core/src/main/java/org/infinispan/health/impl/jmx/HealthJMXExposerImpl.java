@@ -9,6 +9,7 @@ import org.infinispan.health.Health;
 import org.infinispan.health.jmx.HealthJMXExposer;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.Units;
 
 /**
  * A JMX exposer (or adapter) for Health API.
@@ -32,13 +33,13 @@ public class HealthJMXExposerImpl implements HealthJMXExposer {
         return health.getHostInfo().getNumberOfCpus();
     }
 
-    @ManagedAttribute(displayName = "The amount of total memory (KB) in the host", description = "The amount of total memory (KB) in the host")
+    @ManagedAttribute(displayName = "The amount of total memory (KB) in the host", description = "The amount of total memory (KB) in the host", units = Units.KILO_BYTES)
     @Override
     public long getTotalMemoryKb() {
         return health.getHostInfo().getTotalMemoryKb();
     }
 
-    @ManagedAttribute(displayName = "The amount of free memory (KB) in the host", description = "The amount of free memory (KB) in the host")
+    @ManagedAttribute(displayName = "The amount of free memory (KB) in the host", description = "The amount of free memory (KB) in the host", units = Units.KILO_BYTES)
     @Override
     public long getFreeMemoryKb() {
         return health.getHostInfo().getFreeMemoryInKb();

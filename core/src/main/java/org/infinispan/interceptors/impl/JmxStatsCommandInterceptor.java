@@ -15,11 +15,11 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  */
 @MBean
 public abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor implements JmxStatisticsExposer {
-   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+
    private boolean statisticsEnabled = false;
 
    @Start
-   public void checkStatisticsUsed() {
+   public final void onStart() {
       setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
    }
 
@@ -28,6 +28,7 @@ public abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor impl
     *
     * @return true if statistics are captured
     */
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    @Override
    public boolean getStatisticsEnabled() {
       return statisticsEnabled;
@@ -44,8 +45,8 @@ public abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor impl
    /**
     * Resets statistics gathered.  Is a no-op, and should be overridden if it is to be meaningful.
     */
-   @Override
    @ManagedOperation(displayName = "Reset Statistics", description = "Resets statistics gathered by this component")
+   @Override
    public void resetStatistics() {
    }
 }

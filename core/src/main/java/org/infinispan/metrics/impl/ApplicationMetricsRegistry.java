@@ -3,6 +3,7 @@ package org.infinispan.metrics.impl;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.management.AttributeNotFoundException;
@@ -13,9 +14,12 @@ import javax.management.ObjectName;
 import org.eclipse.microprofile.metrics.Gauge;
 import org.eclipse.microprofile.metrics.Metadata;
 import org.eclipse.microprofile.metrics.MetadataBuilder;
+import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.MetricType;
+import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.Tag;
+import org.eclipse.microprofile.metrics.Timer;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -30,8 +34,8 @@ import io.smallrye.metrics.MetricRegistries;
 //  statically resolvable (no reflection) are allowed. Should work even with Graalvm's limitations.
 
 /**
- * A bridge between ResourceDMBeans and microprofile metrics. Exposes all numeric JMX attributes as Gauge metrics
- * automatically. The metric id is generated automatically from the ObjectName.
+ * A bridge between ResourceDMBeans and microprofile metrics. Exposes all numeric JMX attributes (measurements) as Gauge
+ * metrics automatically. The metric id is generated automatically from the ObjectName.
  *
  * @author anistor@redhat.com
  * @since 10.0
@@ -71,12 +75,33 @@ public class ApplicationMetricsRegistry {
       Tag[] tags = ObjectNameMapper.makeTags(objectName);
 
       for (MBeanAttributeInfo attr : mBeanAttributes) {
+         String attrName = attr.getName();
+
+         try {
+            Consumer<Metric> attributeConsumer = (Consumer<Metric>) resourceDMBean.getAttributeConsumer(attrName);
+            if (attributeConsumer != null) {
+               String metricName = ObjectNameMapper.makeMetricName(objectName, attrName);
+               Metadata metadata = new MetadataBuilder()
+                     .withType(MetricType.TIMER)
+                     .withUnit(MetricUnits.NANOSECONDS)
+                     .withName(metricName)
+                     .withDisplayName(attrName)
+                     .withDescription(attr.getDescription())
+                     .build();
+
+               Timer timer = getRegistry().timer(metadata, tags);
+
+               attributeConsumer.accept(timer);
+            }
+         } catch (AttributeNotFoundException e) {
+            throw new IllegalStateException(e);
+         }
+
          if (!attr.isReadable()) {
             // skip unreadable attributes (if we ever come across such an odd case)
             continue;
          }
 
-         String attrName = attr.getName();
          Supplier valueSupplier;
          try {
             valueSupplier = resourceDMBean.getAttributeValueSupplier(attrName);
@@ -86,11 +111,13 @@ public class ApplicationMetricsRegistry {
          } catch (AttributeNotFoundException e) {
             throw new IllegalStateException(e);
          }
+
          Gauge<Number> gaugeMetric = () -> (Number) valueSupplier.get();
          String metricName = ObjectNameMapper.makeMetricName(objectName, attrName);
 
          Metadata metadata = new MetadataBuilder()
                .withType(MetricType.GAUGE)
+               .withUnit(MetricUnits.NONE)
                .withName(metricName)
                .withDisplayName(attr.getName())
                .withDescription(attr.getDescription())

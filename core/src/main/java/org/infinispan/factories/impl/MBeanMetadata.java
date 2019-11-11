@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.jmx.annotations.MBean;
@@ -88,16 +89,19 @@ public final class MBeanMetadata {
       private final boolean useSetter;
       private final String type;
       private final boolean is;
-      private final Function<?, ?> accessorFunction;  //optional
+      private final Function<?, ?> getterFunction;  // optional
+      private final BiConsumer<?, ?> setterFunction; // optional
 
-      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> accessorFunction) {
+      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
          this.name = name;
          this.description = description;
          this.writable = writable;
          this.useSetter = useSetter;
          this.type = type;
          this.is = is;
-         this.accessorFunction = accessorFunction;
+         this.getterFunction = getterFunction;
+         this.setterFunction = setterFunction;
       }
 
       public String getName() {
@@ -124,8 +128,12 @@ public final class MBeanMetadata {
          return is;
       }
 
-      public Function<?, ?> accessorFunction() {
-         return accessorFunction;
+      public Function<?, ?> getterFunction() {
+         return getterFunction;
+      }
+
+      public BiConsumer<?, ?> setterFunction() {
+         return setterFunction;
       }
 
       @Override
@@ -136,7 +144,8 @@ public final class MBeanMetadata {
                ", writable=" + writable +
                ", type='" + type + '\'' +
                ", is=" + is +
-               ", accessorFunction=" + accessorFunction +
+               ", getterFunction=" + getterFunction +
+               ", setterFunction=" + setterFunction +
                '}';
       }
    }

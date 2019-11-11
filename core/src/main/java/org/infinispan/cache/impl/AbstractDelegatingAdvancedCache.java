@@ -383,8 +383,6 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.computeIfAbsentAsync(key, mappingFunction, metadata);
    }
 
-
-
    @Override
    public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return cache.mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit);
@@ -508,7 +506,6 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
          return this;
       }
    }
-
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {

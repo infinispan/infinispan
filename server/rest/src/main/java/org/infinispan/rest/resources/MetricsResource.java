@@ -69,7 +69,7 @@ public final class MetricsResource implements ResourceHandler {
 
          RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder();
 
-         requestHandler.handleRequest(restRequest.path(), METRICS_PATH, restRequest.method().name(),
+         requestHandler.handleRequest(restRequest.path(), restRequest.method().name(),
                accept.stream(), (status, message, headers) -> {
                   builder.status(status).entity(message);
                   for (String header : headers.keySet()) {

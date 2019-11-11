@@ -35,7 +35,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -85,7 +84,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Inject KeyPartitioner keyPartitioner;
    @Inject MarshallableEntryFactory marshalledEntryFactory;
 
-   PersistenceConfiguration loaderConfig = null;
    final AtomicLong cacheStores = new AtomicLong(0);
 
    protected InvocationSuccessFunction<PutMapCommand> handlePutMapCommandReturn = this::handlePutMapCommandReturn;
@@ -94,11 +92,9 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return log;
    }
 
-
    @Start(priority = 15)
    protected void start() {
       this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
-      loaderConfig = cacheConfiguration.persistence();
    }
 
    @Override
