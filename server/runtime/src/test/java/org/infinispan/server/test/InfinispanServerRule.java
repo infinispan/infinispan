@@ -35,17 +35,21 @@ import net.spy.memcached.MemcachedClient;
  * @since 10.0
  **/
 public class InfinispanServerRule implements TestRule {
-   public static final Log log = LogFactory.getLog(InfinispanServerRule.class);
-   private final InfinispanServerTestConfiguration configuration;
-   private final InfinispanServerDriver serverDriver;
 
-   public InfinispanServerRule(InfinispanServerTestConfiguration configuration) {
-      this.configuration = configuration;
-      this.serverDriver = configuration.runMode().newDriver(configuration);
+   public static final Log log = LogFactory.getLog(InfinispanServerRule.class);
+
+   private final LazyInfinispanServerDriver lazyInfinispanServerDriver;
+
+   public InfinispanServerRule(String configurationFile) {
+      this.lazyInfinispanServerDriver = new LazyInfinispanServerDriver(new InfinispanServerRuleConfigurationBuilder(configurationFile));
+   }
+
+   public InfinispanServerRule(InfinispanServerRuleConfigurationBuilder configurationBuilder) {
+      this.lazyInfinispanServerDriver = new LazyInfinispanServerDriver(configurationBuilder);
    }
 
    public InfinispanServerDriver getServerDriver() {
-      return serverDriver;
+      return lazyInfinispanServerDriver.get();
    }
 
    @Override
@@ -59,17 +63,17 @@ public class InfinispanServerRule implements TestRule {
             if (!inSuite) {
                TestResourceTracker.testStarted(testName);
             }
-            boolean manageServer = serverDriver.getStatus() == ComponentStatus.INSTANTIATED;
+            boolean manageServer = getServerDriver().getStatus() == ComponentStatus.INSTANTIATED;
             try {
                if (manageServer) {
-                  serverDriver.before(testName);
+                  getServerDriver().before(testName);
                }
                InfinispanServerRule.this.before(testName);
                base.evaluate();
             } finally {
                InfinispanServerRule.this.after(testName);
                if (manageServer) {
-                  serverDriver.after(testName);
+                  getServerDriver().after(testName);
                }
                if (!inSuite) {
                   TestResourceTracker.testFinished(testName);
@@ -97,8 +101,8 @@ public class InfinispanServerRule implements TestRule {
     */
    RemoteCacheManager newHotRodClient(ConfigurationBuilder builder) {
       // Add all known server addresses
-      for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         InetSocketAddress serverAddress = serverDriver.getServerSocket(i, 11222);
+      for (int i = 0; i < getServerDriver().configuration.numServers(); i++) {
+         InetSocketAddress serverAddress = getServerDriver().getServerSocket(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       RemoteCacheManager remoteCacheManager = serverDriver.createRemoteCacheManager(builder);
@@ -111,8 +115,8 @@ public class InfinispanServerRule implements TestRule {
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {
       // Add all known server addresses
-      for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         InetSocketAddress serverAddress = serverDriver.getServerSocket(i, 11222);
+      for (int i = 0; i < getServerDriver().configuration.numServers(); i++) {
+         InetSocketAddress serverAddress = getServerDriver().getServerSocket(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       return RestClient.forConfiguration(builder.build());
@@ -123,8 +127,8 @@ public class InfinispanServerRule implements TestRule {
     */
    CloseableMemcachedClient newMemcachedClient() {
       List<InetSocketAddress> addresses = new ArrayList<>();
-      for (int i = 0; i < serverDriver.configuration.numServers(); i++) {
-         InetSocketAddress unresolved = serverDriver.getServerSocket(i, 11221);
+      for (int i = 0; i < getServerDriver().configuration.numServers(); i++) {
+         InetSocketAddress unresolved = getServerDriver().getServerSocket(i, 11221);
          addresses.add(new InetSocketAddress(unresolved.getHostName(), unresolved.getPort()));
       }
       MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(addresses));

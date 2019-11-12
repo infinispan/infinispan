@@ -7,7 +7,7 @@ import org.infinispan.cli.CLI;
 import org.infinispan.server.test.AeshTestConnection;
 import org.infinispan.server.test.AeshTestShell;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerTestConfiguration;
+import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -20,7 +20,7 @@ import org.junit.Test;
 public class CliIT {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/ClusteredServerTest.xml"));
+   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerRuleConfigurationBuilder("configuration/ClusteredServerTest.xml"));
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);

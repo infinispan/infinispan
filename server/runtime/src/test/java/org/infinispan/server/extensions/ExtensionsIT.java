@@ -1,7 +1,7 @@
 package org.infinispan.server.extensions;
 
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerTestConfiguration;
+import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
 import org.infinispan.server.test.ServerRunMode;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
@@ -20,9 +20,9 @@ public class ExtensionsIT {
 
    @ClassRule
    public static final InfinispanServerRule SERVERS = new InfinispanServerRule(
-         new InfinispanServerTestConfiguration("configuration/ClusteredServerTest.xml")
-               .runMode(ServerRunMode.CONTAINER)
+         new InfinispanServerRuleConfigurationBuilder("configuration/ClusteredServerTest.xml")
+               .serverRunMode(ServerRunMode.CONTAINER)
                .numServers(2)
-               .artifacts(HelloServerTask.artifact())
+               .archive(HelloServerTask.artifact())
    );
 }
