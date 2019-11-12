@@ -12,7 +12,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerTestConfiguration;
+import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.KeyCloakServerRule;
 import org.junit.ClassRule;
@@ -28,7 +28,7 @@ import org.wildfly.security.credential.BearerTokenCredential;
 public class AuthenticationKeyCloakIT {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("configuration/AuthenticationKeyCloakTest.xml"));
+   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerRuleConfigurationBuilder("configuration/AuthenticationKeyCloakTest.xml"));
 
    @ClassRule
    public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule("keycloak/infinispan-keycloak-realm.json");
