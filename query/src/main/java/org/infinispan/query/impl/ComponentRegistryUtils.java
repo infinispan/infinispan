@@ -72,4 +72,8 @@ public final class ComponentRegistryUtils {
    public static MassIndexer getMassIndexer(AdvancedCache<?, ?> cache) {
       return getRequiredComponent(cache, MassIndexer.class);
    }
+
+   public static InfinispanQueryStatisticsInfo getQueryStatistics(AdvancedCache<?, ?> cache) {
+      return getRequiredComponent(cache, InfinispanQueryStatisticsInfo.class);
+   }
 }

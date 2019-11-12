@@ -391,8 +391,13 @@ To obtain runtime statistics of a cache invoke a `GET` request:
 include::rest_examples/get_v2_stats.adoc[]
 ----
 
+[[rest_v2_querying_indexing]]
+=== Indexing and Search
+
+Use the REST API to search data, monitor and obtain stats about indexes and queries.
+
 [[rest_v2_query_cache]]
-=== Querying Caches
+==== Querying Caches
 
 Invoke a `GET` request to perform and Ickle query on a given cache:
 
@@ -448,6 +453,111 @@ The following example shows a query in the request body:
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::rest_examples/rest_query_request_body.json[]
+----
+
+[[rest_v2_query_reindex]]
+=== Reindexing data
+
+To re-index all data in a cache, use a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET  /v2/caches/{cacheName}/search/indexes?action=mass-index?mode={mode}
+----
+
+The `mode` param can be:
+
+* `sync`: a response with code `200` will be received only after the reindexing is finished
+* `async`: a response with code `200` will be returned right away, and the reindexing will keep running in the cluster.
+Use the link:#rest_v2_query_index_stats[Index Stats] REST call to check the status.
+
+[[rest_v2_query_purge_index]]
+=== Purging indexes
+
+To delete all indexes from a cache, execute a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET  /v2/caches/{cacheName}/search/indexes?action=clear
+----
+
+[[rest_v2_query_index_stats]]
+=== Obtaining index stats
+
+To obtain information about the indexes present in the cache, use a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/indexes/stats
+----
+
+The result will be a JSON document:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+    "indexed_class_names": ["org.infinispan.sample.User"],
+    "indexed_entities_count": {
+        "org.infinispan.sample.User": 4
+    },
+    "index_sizes": {
+        "cacheName_protobuf": 14551
+    },
+    "reindexing": false
+}
+----
+
+* `indexed_class_names`: The class names of the indexes present in the cache. For protobuf, this value will always be `org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper`
+* `indexed_entities_count`: The number of entities indexed per class
+* `index_sizes`: The size in bytes per index present in the cache
+* `reindexing`: If true, the MassIndexer was started in this cache
+
+[[rest_v2_query_stats]]
+=== Obtaining query stats
+
+To obtain information about the queries executed, use a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/query/stats
+----
+
+The result will be a JSON document:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+    "search_query_execution_count":20,
+    "search_query_total_time":5,
+    "search_query_execution_max_time":154,
+    "search_query_execution_avg_time":2,
+    "object_loading_total_time":1,
+    "object_loading_execution_max_time":1,
+    "object_loading_execution_avg_time":1,
+    "objects_loaded_count":20,
+    "search_query_execution_max_time_query_string": "FROM entity"
+}
+----
+
+* `search_query_execution_count`: Number of queries executed
+* `search_query_total_time`: Total time spent on queries
+* `search_query_execution_max_time`: Maximum time taken for a query
+* `search_query_execution_avg_time`: Average query time
+* `object_loading_total_time`: Total time spent loading objects from the cache after query execution
+* `object_loading_execution_max_time`: Maximum time spent loading objects execution
+* `object_loading_execution_avg_time`: Average time spent loading objects execution
+* `objects_loaded_count`: Count of object loaded
+* `search_query_execution_max_time_query_string`: Slowest query executed
+
+
+[[rest_v2_query_stats_clear]]
+=== Clearing query stats
+
+The runtime stats above can be reset by sending a `GET` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/query/stats?action=clear
 ----
 
 [[rest_v2_list_caches]]

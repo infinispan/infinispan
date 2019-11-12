@@ -1,6 +1,7 @@
 package org.infinispan.rest.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
@@ -81,4 +82,15 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot register path '%s' for invocation '%s', since it conflicts with resource '%s'", id = 12019)
    RegistrationException duplicateResource(String candidate, Invocation invocation, String existingPath);
 
+   @LogMessage(level = INFO)
+   @Message(value = "MassIndexer started", id = 12020)
+   void asyncMassIndexerStarted();
+
+   @LogMessage(level = INFO)
+   @Message(value = "MassIndexer completed successfully", id = 12021)
+   void asyncMassIndexerSuccess();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error executing MassIndexer", id = 12022)
+   void errorExecutingMassIndexer(@Cause Throwable e);
 }

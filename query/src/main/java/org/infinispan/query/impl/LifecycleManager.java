@@ -261,9 +261,11 @@ public class LifecycleManager implements ModuleLifecycle {
       String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cache.getName());
       CacheJmxRegistration jmxRegistration = cr.getComponent(CacheJmxRegistration.class);
 
+      MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
+
       // Register query statistics MBean, but only enable it if Infinispan config says so
       try {
-         InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator);
+         InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator, massIndexer);
          stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
          cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
          jmxRegistration.registerMBean(stats, queryGroupName);
@@ -273,7 +275,6 @@ public class LifecycleManager implements ModuleLifecycle {
 
       // Register mass indexer MBean
       try {
-         MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
          jmxRegistration.registerMBean(massIndexer, queryGroupName);
       } catch (Exception e) {
          throw new CacheException("Unable to create MassIndexer MBean", e);
