@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rocksdb;
 
+import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,9 +20,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -66,7 +65,9 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
-import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
+import io.reactivex.schedulers.Schedulers;
 
 @Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
@@ -75,7 +76,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     static final String DATABASE_PROPERTY_NAME_WITH_SUFFIX = "database.";
     static final String COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX = "data.";
 
-    private RocksDBStoreConfiguration configuration;
+    protected RocksDBStoreConfiguration configuration;
     private RocksDB db;
     private RocksDB expiredDb;
     private InitializationContext ctx;
@@ -154,7 +155,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         return dataWriteOptions;
     }
 
-    private DBOptions dataDbOptions() {
+    protected DBOptions dataDbOptions() {
         DBOptions dbOptions;
         if (databaseProperties != null) {
             dbOptions = DBOptions.getDBOptionsFromProps(databaseProperties);
@@ -172,7 +173,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
               .setCreateMissingColumnFamilies(true);
     }
 
-    private Options expiredDbOptions() {
+    protected Options expiredDbOptions() {
         return new Options()
               .setCreateIfMissing(true)
               // Make sure keys are sorted by bytes - we use this sorting to remove entries that have expired most recently

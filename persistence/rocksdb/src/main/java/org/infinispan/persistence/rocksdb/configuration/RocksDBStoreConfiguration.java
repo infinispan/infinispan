@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
+import static org.infinispan.persistence.rocksdb.configuration.Element.ROCKSDB_STORE;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -15,8 +17,6 @@ import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.rocksdb.RocksDBStore;
-
-import static org.infinispan.persistence.rocksdb.configuration.Element.ROCKSDB_STORE;
 
 /**
  *
