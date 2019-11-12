@@ -31,7 +31,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes = IndexingConfiguration.attributeDefinitionSet();
    }
 
-   boolean enabled() {
+   public boolean enabled() {
       return attributes.attribute(INDEX).get().isEnabled();
    }
 
@@ -174,7 +174,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          // Check that the query module is on the classpath.
          try {
             String clazz = "org.infinispan.query.Search";
-            Util.loadClassStrict( clazz, globalConfig.classLoader() );
+            Util.loadClassStrict(clazz, globalConfig.classLoader());
          } catch (ClassNotFoundException e) {
             throw CONFIG.invalidConfigurationIndexingWithoutModule();
          }
@@ -186,7 +186,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
       if (autoConfig()) {
          if (clustering().cacheMode().isDistributed()) {
-            IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties );
+            IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties);
          } else {
             IndexOverlay.NON_DISTRIBUTED_FS.apply(typedProperties);
          }

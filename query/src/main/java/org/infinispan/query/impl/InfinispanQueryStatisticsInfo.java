@@ -8,6 +8,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.query.MassIndexer;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -21,9 +22,13 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean {
 
    private final SearchIntegrator searchIntegrator;
+   private final QueryStatistics queryStatistics;
+   private final IndexStatistics indexStatistics;
 
-   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator) {
+   InfinispanQueryStatisticsInfo(SearchIntegrator searchIntegrator, MassIndexer massIndexer) {
       this.searchIntegrator = searchIntegrator;
+      this.queryStatistics = new QueryStatistics(searchIntegrator);
+      this.indexStatistics = new IndexStatistics(searchIntegrator, massIndexer);
    }
 
    @ManagedOperation
@@ -35,55 +40,55 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
    @ManagedAttribute
    @Override
    public long getSearchQueryExecutionCount() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionCount();
+      return queryStatistics.getSearchQueryExecutionCount();
    }
 
    @ManagedAttribute
    @Override
    public long getSearchQueryTotalTime() {
-      return searchIntegrator.getStatistics().getSearchQueryTotalTime();
+      return queryStatistics.getSearchQueryTotalTime();
    }
 
    @ManagedAttribute
    @Override
    public long getSearchQueryExecutionMaxTime() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTime();
+      return queryStatistics.getSearchQueryExecutionMaxTime();
    }
 
    @ManagedAttribute
    @Override
    public long getSearchQueryExecutionAvgTime() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionAvgTime();
+      return queryStatistics.getSearchQueryExecutionAvgTime();
    }
 
    @ManagedAttribute
    @Override
    public String getSearchQueryExecutionMaxTimeQueryString() {
-      return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
+      return queryStatistics.getSearchQueryExecutionMaxTimeQueryString();
    }
 
    @ManagedAttribute
    @Override
    public long getObjectLoadingTotalTime() {
-      return searchIntegrator.getStatistics().getObjectLoadingTotalTime();
+      return queryStatistics.getObjectLoadingTotalTime();
    }
 
    @ManagedAttribute
    @Override
    public long getObjectLoadingExecutionMaxTime() {
-      return searchIntegrator.getStatistics().getObjectLoadingExecutionMaxTime();
+      return queryStatistics.getObjectLoadingExecutionMaxTime();
    }
 
    @ManagedAttribute
    @Override
    public long getObjectLoadingExecutionAvgTime() {
-      return searchIntegrator.getStatistics().getObjectLoadingExecutionAvgTime();
+      return queryStatistics.getObjectLoadingExecutionAvgTime();
    }
 
    @ManagedAttribute
    @Override
    public long getObjectsLoadedCount() {
-      return searchIntegrator.getStatistics().getObjectsLoadedCount();
+      return queryStatistics.getObjectsLoadedCount();
    }
 
    @ManagedAttribute(writable = true)
@@ -106,19 +111,19 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
    @ManagedAttribute
    @Override
    public Set<String> getIndexedClassNames() {
-      return searchIntegrator.getStatistics().getIndexedClassNames();
+      return indexStatistics.getIndexedClassNames();
    }
 
    @ManagedOperation
    @Override
    public int getNumberOfIndexedEntities(String entity) {
-      return searchIntegrator.getStatistics().getNumberOfIndexedEntities(entity);
+      return indexStatistics.getNumberOfIndexedEntities(entity);
    }
 
    @ManagedOperation
    @Override
    public Map<String, Integer> indexedEntitiesCount() {
-      return searchIntegrator.getStatistics().indexedEntitiesCount();
+      return indexStatistics.getIndexedEntitiesCount();
    }
 
    @ManagedOperation
@@ -130,6 +135,94 @@ public final class InfinispanQueryStatisticsInfo implements StatisticsInfoMBean 
    @ManagedOperation
    @Override
    public Map<String, Long> indexSizes() {
-      return searchIntegrator.getStatistics().indexSizes();
+      return indexStatistics.getIndexSizes();
    }
+
+   public QueryStatistics getQueryStatistics() {
+      return queryStatistics;
+   }
+
+   public IndexStatistics getIndexStatistics() {
+      return indexStatistics;
+   }
+
+   public static class IndexStatistics {
+      private final SearchIntegrator searchIntegrator;
+      private final MassIndexer massIndexer;
+
+      IndexStatistics(SearchIntegrator searchIntegrator, MassIndexer massIndexer) {
+         this.searchIntegrator = searchIntegrator;
+         this.massIndexer = massIndexer;
+      }
+
+      public Set<String> getIndexedClassNames() {
+         return searchIntegrator.getStatistics().getIndexedClassNames();
+      }
+
+      public int getNumberOfIndexedEntities(String entity) {
+         return searchIntegrator.getStatistics().getNumberOfIndexedEntities(entity);
+      }
+
+      public Map<String, Integer> getIndexedEntitiesCount() {
+         return searchIntegrator.getStatistics().indexedEntitiesCount();
+      }
+
+      public Map<String, Long> getIndexSizes() {
+         return searchIntegrator.getStatistics().indexSizes();
+      }
+
+      public boolean getReindexing() {
+         return massIndexer.isRunning();
+      }
+   }
+
+   public static class QueryStatistics {
+
+      private final SearchIntegrator searchIntegrator;
+
+      public QueryStatistics(SearchIntegrator searchIntegrator) {
+         this.searchIntegrator = searchIntegrator;
+      }
+
+      public long getSearchQueryExecutionCount() {
+         return searchIntegrator.getStatistics().getSearchQueryExecutionCount();
+      }
+
+      public long getSearchQueryTotalTime() {
+         return searchIntegrator.getStatistics().getSearchQueryTotalTime();
+      }
+
+      public long getSearchQueryExecutionMaxTime() {
+         return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTime();
+      }
+
+      public long getSearchQueryExecutionAvgTime() {
+         return searchIntegrator.getStatistics().getSearchQueryExecutionAvgTime();
+      }
+
+      public String getSearchQueryExecutionMaxTimeQueryString() {
+         return searchIntegrator.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
+      }
+
+
+      public long getObjectLoadingTotalTime() {
+         return searchIntegrator.getStatistics().getObjectLoadingTotalTime();
+      }
+
+
+      public long getObjectLoadingExecutionMaxTime() {
+         return searchIntegrator.getStatistics().getObjectLoadingExecutionMaxTime();
+      }
+
+
+      public long getObjectLoadingExecutionAvgTime() {
+         return searchIntegrator.getStatistics().getObjectLoadingExecutionAvgTime();
+      }
+
+
+      public long getObjectsLoadedCount() {
+         return searchIntegrator.getStatistics().getObjectsLoadedCount();
+      }
+   }
+
 }
