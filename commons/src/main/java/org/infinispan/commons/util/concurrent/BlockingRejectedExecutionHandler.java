@@ -14,7 +14,7 @@ import org.infinispan.commons.logging.LogFactory;
  * @author wburns
  * @since 10.1
  */
-public class BlockingRejectedExecutionHandler extends ThreadPoolExecutor.AbortPolicy {
+public class BlockingRejectedExecutionHandler implements RejectedExecutionHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
@@ -35,7 +35,7 @@ public class BlockingRejectedExecutionHandler extends ThreadPoolExecutor.AbortPo
          if (trace) {
             log.tracef("Task %s was rejected from %s when submitted from non blocking thread", r, executor);
          }
-         super.rejectedExecution(r, executor);
+         throw new CacheBackpressureFullException();
       } else {
          r.run();
       }
