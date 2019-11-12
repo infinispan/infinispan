@@ -37,6 +37,7 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -165,7 +166,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
    protected void enableDiscoveryProtocol(JChannel c) {
       try {
-         c.getProtocolStack().findProtocol(Discovery.class).start();
+         String defaultClusterName = TestResourceTracker.getCurrentTestName();
+         ((Discovery) c.getProtocolStack().findProtocol(Discovery.class)).setClusterName(defaultClusterName);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -299,6 +301,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          ArrayList<JChannel> view2 = new ArrayList<>(partition.channels);
          partition.channels.stream().filter(c -> !channels.contains(c)).forEach(c -> channels.add(c));
          installMergeView(view1, view2);
+         enableDiscovery();
          waitForPartitionToForm(waitForNoRebalance);
          List<Partition> tmp = new ArrayList<>(Arrays.asList(BasePartitionHandlingTest.this.partitions));
          if (!tmp.remove(partition)) throw new AssertionError();

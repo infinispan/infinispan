@@ -46,6 +46,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.jgroups.JChannel;
@@ -62,10 +63,9 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      // cache stop takes quite long when the view splits
       builder.clustering().stateTransfer().timeout(10, TimeUnit.SECONDS);
       builder.clustering().remoteTimeout(5, TimeUnit.SECONDS);
-      createCluster(TestDataSCI.INSTANCE, builder, 3);
+      createClusteredCaches(3, TestDataSCI.INSTANCE, builder, new TransportFlags().withFD(true));
       waitForClusterToForm();
       key = getKeyForCache(cache(1), cache(2));
    }
@@ -73,11 +73,11 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
    @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
-      // When we send a ClearCommand from node that does not have a newer view installed to node that has already
-      // installed a view without the sender, the message is dropped and the ClearCommand has to time out.
-      // Therefore, don't issue the clear command at all.
-      TestingUtil.killCacheManagers(cacheManagers);
-      cacheManagers.clear();
+      // Merge the cluster back so that the leave requests don't have to time out
+      for (Cache<Object, Object> cache : caches()) {
+         installNewView(cache, caches().toArray(new Cache[0]));
+      }
+      super.clearContent();
    }
 
    public void testDelayed(Method m) {
