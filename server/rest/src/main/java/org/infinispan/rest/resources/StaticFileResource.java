@@ -6,13 +6,13 @@ import static org.infinispan.rest.framework.Method.GET;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -98,12 +98,9 @@ public class StaticFileResource implements ResourceHandler {
       responseBuilder.addProcessedDate(now);
       responseBuilder.header("Expires", DateUtils.toRFC1123(now.getTime() + TimeUnit.SECONDS.toMillis(CACHE_MAX_AGE_SECONDS)));
 
-      String mediaType = APPLICATION_OCTET_STREAM_TYPE;
-      try {
-         String probed = Files.probeContentType(file.toPath());
-         if (probed != null) mediaType = probed;
-      } catch (IOException ignored) {
-      }
+      String resolved = MediaTypeResolver.getMediaType(file.getName());
+      String mediaType = resolved != null ? resolved : APPLICATION_OCTET_STREAM_TYPE;
+
       responseBuilder.contentLength(file.length())
             .contentType(mediaType)
             .entity(file);

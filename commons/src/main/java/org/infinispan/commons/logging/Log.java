@@ -223,5 +223,9 @@ public interface Log extends BasicLogger {
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
    CounterException invalidCounterTypeEncoded();
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Cannot load %s", id = 29523)
+   void cannotLoadMimeTypes(String mimeTypes);
+
    //----- counters exceptions // don't use the same id range  ------
 }
