@@ -126,7 +126,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          try {
             register(first, getObjectName(jmxDomain, groupName, first.getMBeanName()), mBeanServer);
             break;
-         } catch (InstanceAlreadyExistsException e) {
+         } catch (InstanceAlreadyExistsException | IllegalArgumentException e) {
             if (globalJmxConfig.allowDuplicateDomains()) {
                // add 'unique' suffix and retry
                jmxDomain = globalJmxConfig.domain() + counter++;

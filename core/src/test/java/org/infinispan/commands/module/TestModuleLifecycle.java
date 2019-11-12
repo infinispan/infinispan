@@ -21,10 +21,9 @@ import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.factories.impl.WireContext;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.testng.AssertJUnit;
 
 /**
- * Allow tests to register global or cache components replacing the default ones
+ * Allow tests to register global or cache components replacing the default ones.
  *
  * @author Dan Berindei
  * @since 9.4
@@ -59,7 +58,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
 
       Set<String> componentNames = testGlobalConfiguration.globalTestComponents().keySet();
       for (String componentName : componentNames) {
-         AssertJUnit.assertSame(testGlobalConfiguration.globalTestComponents().get(componentName), gcr.getComponent(componentName));
+         assert testGlobalConfiguration.globalTestComponents().get(componentName) == gcr.getComponent(componentName);
       }
    }
 
@@ -74,7 +73,7 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
 
       Set<String> componentNames = testCacheComponents.keySet();
       for (String componentName : componentNames) {
-         AssertJUnit.assertSame(testCacheComponents.get(componentName), cr.getComponent(componentName));
+         assert testCacheComponents.get(componentName) == cr.getComponent(componentName);
       }
    }
 

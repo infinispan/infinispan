@@ -54,17 +54,18 @@ public class TestCacheManagerFactory {
     * TransportFlags)} instead when this is needed
     *
     * @param start         Whether to start this cache container
-    * @param gc            The global configuration builder to use
+    * @param gcb           The global configuration builder to use
     * @param c             The default configuration to use
     * @return The resultant cache manager that is created
     */
-   public static EmbeddedCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc,
+   public static EmbeddedCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gcb,
                                                              ConfigurationBuilder c) {
       if (c != null) {
-         amendDefaultCache(gc);
+         amendDefaultCache(gcb);
       }
-      setNodeName(gc);
-      GlobalConfiguration globalConfiguration = gc.build();
+      setNodeName(gcb);
+      TestApplicationMetricsRegistry.replace(gcb);
+      GlobalConfiguration globalConfiguration = gcb.build();
       checkJmx(globalConfiguration);
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
@@ -75,6 +76,7 @@ public class TestCacheManagerFactory {
       GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
       amendDefaultCache(gcb);
       setNodeName(gcb);
+      TestApplicationMetricsRegistry.replace(gcb);
       checkJmx(gcb.build());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
@@ -326,13 +328,9 @@ public class TestCacheManagerFactory {
          globalBuilder.serialization().addContextInitializer(sci);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder
-            .clustering()
-            .cacheMode(mode)
-            .indexing()
-            .index(indexing ? Index.ALL : Index.NONE)
-            .addProperty("lucene_version", "LUCENE_CURRENT")
-      ;
+      builder.clustering().cacheMode(mode)
+             .indexing().index(indexing ? Index.ALL : Index.NONE)
+             .addProperty("lucene_version", "LUCENE_CURRENT");
       if (mode.isClustered()) {
          return createClusteredCacheManager(globalBuilder, builder);
       } else {
