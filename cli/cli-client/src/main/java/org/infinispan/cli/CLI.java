@@ -308,6 +308,7 @@ public class CLI {
    }
 
    public void stop() {
+      context.disconnect();
       if (console != null) {
          console.stop();
       }

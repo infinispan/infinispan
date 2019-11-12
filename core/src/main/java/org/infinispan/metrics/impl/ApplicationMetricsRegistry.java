@@ -1,6 +1,8 @@
 package org.infinispan.metrics.impl;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import javax.management.AttributeNotFoundException;
@@ -18,6 +20,8 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.ResourceDMBean;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import io.smallrye.metrics.MetricRegistries;
 
@@ -34,19 +38,33 @@ import io.smallrye.metrics.MetricRegistries;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public final class ApplicationMetricsRegistry {
+public class ApplicationMetricsRegistry {
 
-   private final MetricRegistry applicationMetricRegistry = MetricRegistries.get(MetricRegistry.Type.APPLICATION);
+   private static final Log log = LogFactory.getLog(ApplicationMetricsRegistry.class);
+
+   private final MetricRegistry applicationMetricRegistry;
 
    public ApplicationMetricsRegistry() {
+      applicationMetricRegistry = makeRegistry();
    }
 
-   public MetricRegistry getRegistry() {
+   protected MetricRegistry makeRegistry() {
+      return MetricRegistries.get(MetricRegistry.Type.APPLICATION);
+   }
+
+   public final MetricRegistry getRegistry() {
       return applicationMetricRegistry;
    }
 
    public void register(ResourceDMBean resourceDMBean) {
+      MetricRegistry registry = getRegistry();
+
       ObjectName objectName = resourceDMBean.getObjectName();
+      int metricCounter = 0;
+      if (log.isTraceEnabled()) {
+         log.tracef("Metric registry @%x contains %d metrics. Registering metrics for ObjectName \"%s\" ...",
+                    System.identityHashCode(registry), registry.getMetrics().size(), objectName);
+      }
       MBeanInfo mBeanInfo = resourceDMBean.getMBeanInfo();
       MBeanAttributeInfo[] mBeanAttributes = mBeanInfo.getAttributes();
 
@@ -78,13 +96,40 @@ public final class ApplicationMetricsRegistry {
                .withDescription(attr.getDescription())
                .build();
 
-         getRegistry().register(metadata, gaugeMetric, tags);
+         if (log.isTraceEnabled()) {
+            log.tracef("Registering metric %s with tags %s", metricName, Arrays.toString(tags));
+            metricCounter++;
+         }
+         registry.register(metadata, gaugeMetric, tags);
+      }
+
+      if (log.isTraceEnabled()) {
+         log.tracef("Metric registry @%x contains %d metrics. Registered %d metrics for ObjectName \"%s\"",
+                    System.identityHashCode(registry), registry.getMetrics().size(), metricCounter, objectName);
       }
    }
 
    public void unregister(ObjectName objectName) {
+      MetricRegistry registry = getRegistry();
+
+      if (log.isTraceEnabled()) {
+         log.tracef("Metric registry @%x contains %d metrics. Unregistering metrics for ObjectName \"%s\" ...",
+                    System.identityHashCode(registry), registry.getMetrics().size(), objectName);
+      }
       String prefix = ObjectNameMapper.makeMetricNamePrefix(objectName);
       Map<String, String> tags = ObjectNameMapper.makeTagMap(objectName);
-      getRegistry().removeMatching((metricID, metric) -> metricID.getName().startsWith(prefix) && tags.equals(metricID.getTags()));
+      AtomicInteger metricCounter = new AtomicInteger();
+      registry.removeMatching((metricID, metric) -> {
+         boolean isMatching = metricID.getName().startsWith(prefix) && tags.equals(metricID.getTags());
+         if (log.isTraceEnabled() && isMatching) {
+            log.tracef("Unregistering metric %s with tags %s", metricID.getName(), tags);
+            metricCounter.getAndIncrement();
+         }
+         return isMatching;
+      });
+      if (log.isTraceEnabled()) {
+         log.tracef("Metric registry @%x contains %d metrics. Unregistered %d metrics for ObjectName \"%s\"",
+                    System.identityHashCode(registry), registry.getMetrics().size(), metricCounter.get(), objectName);
+      }
    }
 }
