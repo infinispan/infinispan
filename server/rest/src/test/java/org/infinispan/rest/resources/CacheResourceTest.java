@@ -296,7 +296,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key"))
             .method(HttpMethod.OPTIONS)
             .header(HttpHeader.HOST, "localhost")
-            .header(HttpHeader.ORIGIN, "http://localhost:80")
+            .header(HttpHeader.ORIGIN, "http://localhost:11222")
             .header("access-control-request-method", "GET")
             .send();
 
@@ -313,7 +313,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //when
       ContentResponse response = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ORIGIN, "http://127.0.0.1:80")
+            .header(HttpHeader.ORIGIN, "http://127.0.0.1:11222")
             .send();
 
       assertThat(response).isOk();

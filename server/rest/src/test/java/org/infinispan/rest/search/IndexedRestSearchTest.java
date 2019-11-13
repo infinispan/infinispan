@@ -48,7 +48,7 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
       ContentResponse preFlight = client.newRequest(searchUrl)
             .method(HttpMethod.OPTIONS)
             .header(HttpHeader.HOST, "localhost")
-            .header(HttpHeader.ORIGIN, "http://localhost:80")
+            .header(HttpHeader.ORIGIN, "http://localhost:11222")
             .header("access-control-request-method", "GET")
             .send();
 
