@@ -340,9 +340,11 @@ public class Server implements ServerManagement, AutoCloseable {
                   .filter(a -> servers.contains(a.toString()))
                   .collect(Collectors.toList());
             executor = executor.filterTargets(targets);
+            // Tell all the target servers to exit
+            sendExitStatusToServers(executor, ExitStatus.SERVER_SHUTDOWN);
+         } else {
+            serverStopHandler(ExitStatus.SERVER_SHUTDOWN);
          }
-         // Tell all the target servers to exit
-         sendExitStatusToServers(executor, ExitStatus.SERVER_SHUTDOWN);
       }
    }
 
@@ -446,5 +448,9 @@ public class Server implements ServerManagement, AutoCloseable {
 
    public Map<String, ProtocolServer> getProtocolServers() {
       return protocolServers;
+   }
+
+   public ComponentStatus getStatus() {
+      return status;
    }
 }

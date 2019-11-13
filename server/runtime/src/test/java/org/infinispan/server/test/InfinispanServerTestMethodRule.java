@@ -212,6 +212,10 @@ public class InfinispanServerTestMethodRule implements TestRule {
          return registerResource(infinispanServerRule.newRestClient(clientConfiguration));
       }
 
+      public RestClient get(int n) {
+         return registerResource(infinispanServerRule.newRestClient(clientConfiguration, n));
+      }
+
       public RestClient create() {
          RestClient restClient = get();
          String name = getMethodName(qualifier);

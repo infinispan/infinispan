@@ -117,7 +117,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
 
    @Override
    public boolean isRunning(int server) {
-      throw new UnsupportedOperationException();
+      return servers.get(server).getStatus().allowInvocations();
    }
 
    @Override
