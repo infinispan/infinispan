@@ -106,6 +106,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * @since 9.0
@@ -635,8 +636,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          boolean empty = cacheSet.isEmpty();
          // Check the store if the data container was empty
          if (empty) {
-            empty = Flowable.fromPublisher(persistenceManager.publishKeys(null, PersistenceManager.AccessMode.BOTH))
-                  .blockingFirst(null) == null;
+            Single<Boolean> emptySingle =
+                  Flowable.fromPublisher(persistenceManager.publishKeys(null, PersistenceManager.AccessMode.BOTH))
+                  .isEmpty();
+            @SuppressWarnings("checkstyle:forbiddenmethod")
+            boolean emptyReturn = emptySingle.blockingGet();
+            empty = emptyReturn;
          }
          return empty;
       }

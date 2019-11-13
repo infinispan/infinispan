@@ -45,7 +45,6 @@ import org.infinispan.LongCacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
@@ -73,6 +72,7 @@ import org.infinispan.stream.impl.intops.object.MapToLongOperation;
 import org.infinispan.stream.impl.intops.object.PeekOperation;
 import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
+import org.infinispan.util.Closeables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -586,7 +586,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       }
 
       if (stayLocal) {
-         return Closeables.iterator(Flowable.fromPublisher(localPublisher).blockingIterable().iterator());
+         return Closeables.iterator(localPublisher, distributedBatchSize);
       } else {
          Map<Address, IntSet> targets = determineTargets(ch, segmentsToFilter);
          Iterator<Map.Entry<Address, IntSet>> targetIter = targets.entrySet().iterator();

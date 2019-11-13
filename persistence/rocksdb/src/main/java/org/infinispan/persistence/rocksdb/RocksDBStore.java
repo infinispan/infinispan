@@ -51,6 +51,7 @@ import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
@@ -739,8 +740,10 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                                                                    boolean fetchValue, boolean fetchMetadata);
 
         int size(IntSet segments) {
-            long count = Flowable.fromPublisher(publishKeys(segments, null))
-                  .count().blockingGet();
+            CompletionStage<Long> stage = Flowable.fromPublisher(publishKeys(segments, null))
+                  .count().to(RxJavaInterop.singleToCompletionStage());
+
+            long count = CompletionStages.join(stage);
             if (count > Integer.MAX_VALUE) {
                 return Integer.MAX_VALUE;
             }

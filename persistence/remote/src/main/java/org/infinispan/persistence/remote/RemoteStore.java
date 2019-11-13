@@ -20,7 +20,6 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.EnumUtil;
@@ -29,6 +28,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.PersistenceUtil;
@@ -47,6 +47,7 @@ import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -322,7 +323,10 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
 
    @Override
    public void clear(IntSet segments) {
-      publishKeys(segments, null).blockingForEach(k -> remoteCache.remove(k));
+      CompletionStage<Void> stage = publishKeys(segments, null)
+            .doOnNext(k -> remoteCache.remove(k))
+            .to(RxJavaInterop.flowableToCompletionStage());
+      CompletionStages.join(stage);
    }
 
    @Override

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,6 +27,8 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -168,7 +171,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          log.debug("Building the index");
 
          Flowable<Integer> filePublisher = filePublisher();
-         handleFilePublisher(filePublisher.doAfterNext(compactor::completeFile), false, false,
+         CompletionStage<Void> stage = handleFilePublisher(filePublisher.doAfterNext(compactor::completeFile), false, false,
                (file, offset, size, serializedKey, entryMetadata, serializedValue, seqId, expiration) -> {
                   long prevSeqId;
                   while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
@@ -190,7 +193,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                      return null;
                   }
                   return null;
-               }).blockingSubscribe();
+               }).to(RxJavaInterop.flowableToCompletionStage());
+         CompletionStages.join(stage);
       }
       logAppender.setSeqId(maxSeqId.get() + 1);
    }

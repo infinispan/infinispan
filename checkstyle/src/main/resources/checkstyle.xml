@@ -11,6 +11,8 @@
     <!-- Source code is not formatted using tabs -->
     <module name="FileTabCharacter" />
 
+    <module name="SuppressWarningsFilter" />
+
     <module name="TreeWalker">
         <property name="cacheFile" value="${checkstyle.cache.file}" />
 
@@ -126,6 +128,13 @@
             <property name="argumentCount" value="1"/>
         </module>
 
+        <!-- Prevent invoking Flowable#blocking methods (We allow (Single|Maybe)#blockingGet for now) -->
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern" value="blocking(First|ForEach|Get|Iterable|Last|Latest|MostRecent|Next|Single|Subscribe)"/>
+        </module>
+
+        <!-- Allow annotated code to disable checkstyle check -->
+        <module name="SuppressWarningsHolder" />
     </module>
 
     <!-- We are not using NewLineAtEndOfFile because the new line chars change
@@ -146,8 +155,6 @@
         <property name="format" value="\s+$" />
         <property name="message" value="White spaces at the end of line" />
     </module>
-
-    <!--<module name="SuppressionCommentFilter" />-->
 
     <!-- Allow for some code sanity rules to be violated by test code -->
     <module name="org.infinispan.checkstyle.filters.ExcludeTestPackages" />
