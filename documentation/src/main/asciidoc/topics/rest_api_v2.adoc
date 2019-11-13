@@ -65,6 +65,16 @@ include::config_examples/infinispan_distributed_cache.json[]
 | `Flags` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
+[[rest_v2_cache_exists]]
+=== Checking if caches exist
+
+To verify if a cache is defined in {brandname} cluster, invoke a `HEAD` request:
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /v2/caches/{cacheName}
+----
+
 [[rest_v2_create_cache_template]]
 ==== Creating Caches with Templates
 

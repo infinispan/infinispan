@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static org.eclipse.jetty.http.HttpHeader.CONTENT_TYPE;
 import static org.eclipse.jetty.http.HttpMethod.GET;
+import static org.eclipse.jetty.http.HttpMethod.HEAD;
 import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
@@ -94,7 +95,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).hasReturnedText("value-new");
 
-      response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.HEAD).send();
+      response = client.newRequest(urlWithoutCM + "/key").method(HEAD).send();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasNoContent();
 
@@ -308,6 +309,19 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       JsonNode object = memory.get("object");
       assertEquals("SYNC", distCache.get("mode").asText());
       assertEquals(20, object.get("size").asInt());
+   }
+
+   @Test
+   public void testCacheExists() throws Exception {
+      assertEquals(404, checkCache("invalid"));
+      assertEquals(200, checkCache("default"));
+      assertEquals(200, checkCache("indexedCache"));
+   }
+
+   private int checkCache(String name)  throws Exception {
+      String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
+      ContentResponse response = client.newRequest(url).method(HEAD).send();
+      return response.getStatus();
    }
 
    private void registerSchema() throws Exception {
