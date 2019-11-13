@@ -53,7 +53,8 @@ public class NonSegmentedLocalPublisherManagerImpl<K, V> extends LocalPublisherM
       if (keysToExclude != null) {
          flowable = flowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
       }
-      return RxJavaInterop.<R>completionStageToPublisher().apply(transformer.apply(flowable));
+      return RxJavaInterop.completionStageToMaybe(transformer.apply(flowable))
+            .toFlowable();
    }
 
    @Override

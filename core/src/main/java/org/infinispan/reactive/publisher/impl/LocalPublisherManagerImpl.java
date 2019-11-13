@@ -42,6 +42,7 @@ import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Scheduler;
 import io.reactivex.parallel.ParallelFlowable;
 import io.reactivex.processors.FlowableProcessor;
@@ -435,11 +436,11 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          // We send 16 keys to each rail to be parallelized - if ParallelFlowable had a method like railCompose
          // we could use it, but unfortunately it does not.
          Flowable<R> stageFlowable = keyFlowable.window(16)
-               .flatMap(keys -> {
+               .flatMapSingle(keys -> {
                   CompletionStage<R> stage = keyTransformer.apply(keys)
                         .subscribeOn(asyncScheduler)
                         .to(collator::apply);
-                  return RxJavaInterop.<R>completionStageToPublisher().apply(stage);
+                  return RxJavaInterop.completionStageToSingle(stage);
                });
          return finalizer.apply(stageFlowable).thenApply(ignoreSegmentsFunction());
       } else {
@@ -512,21 +513,21 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    }
 
    protected <R> Flowable<R> combineStages(Flowable<? extends CompletionStage<R>> stagePublisher, boolean parallel) {
-      return stagePublisher.flatMap(stage -> {
+      return stagePublisher.flatMapMaybe(stage -> {
          // We purposely send completedNull stage for when a segment is suspected
          if (stage == CompletableFutures.completedNull()) {
-            return Flowable.empty();
+            return Maybe.empty();
          }
 
          if (CompletionStages.isCompletedSuccessfully(stage)) {
             R value = CompletionStages.join(stage);
             if (value == null) {
-               return Flowable.empty();
+               return Maybe.empty();
             }
-            return Flowable.just(value);
+            return Maybe.just(value);
          }
-         return RxJavaInterop.<R>completionStageToPublisher().apply(stage);
-      }, parallel ? cpuCount : 1);
+         return RxJavaInterop.completionStageToMaybe(stage);
+      }, false, parallel ? cpuCount : 1);
    }
 
    private AdvancedCache<K, V> getCacheWithFlags(boolean includeLoader) {

@@ -208,15 +208,15 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
    public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
       return Flowable.fromPublisher(publisher)
             .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
-            .flatMap(groupedFlowable ->
+            .flatMapCompletable(groupedFlowable ->
                   groupedFlowable
                         .buffer(configuration.maxBatchSize())
-                        .flatMap(batch -> {
+                        .flatMapCompletable(batch -> {
                            CompletionStage<Void> stage = stores.get(groupedFlowable.getKey()).bulkUpdate(Flowable.fromIterable(batch));
-                           return RxJavaInterop.<Void>completionStageToPublisher().apply(stage);
+                           return RxJavaInterop.completionStageToCompletable(stage);
                            // Make sure to set the parallelism level to how many groups will be created
-                        }), stores.length())
-            .to(RxJavaInterop.flowableToCompletionStage());
+                        }), false, stores.length())
+            .to(RxJavaInterop.completableToCompletionStage());
    }
 
    @Override
