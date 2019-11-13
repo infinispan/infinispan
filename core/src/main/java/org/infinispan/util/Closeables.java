@@ -27,7 +27,10 @@ public class Closeables {
     */
    public static <E> CloseableIterator<E> iterator(Publisher<E> publisher, int fetchSize) {
       // This iterator from rxjava2 implements Disposable akin to Closeable
-      Iterator<E> iterator = Flowable.fromPublisher(publisher).blockingIterable(fetchSize).iterator();
+      Flowable<E> flowable = Flowable.fromPublisher(publisher);
+      @SuppressWarnings("checkstyle:forbiddenmethod")
+      Iterable<E> iterable = flowable.blockingIterable(fetchSize);
+      Iterator<E> iterator = iterable.iterator();
       return new CloseableIterator<E>() {
          @Override
          public void close() {

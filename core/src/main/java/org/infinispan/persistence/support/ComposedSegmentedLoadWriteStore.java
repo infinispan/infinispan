@@ -26,6 +26,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -194,14 +195,15 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
 
    @Override
    public void deleteBatch(Iterable<Object> keys) {
-      Flowable.fromIterable(keys)
+      CompletionStage<Void> stage = Flowable.fromIterable(keys)
             // Separate out batches by segment
             .groupBy(keyPartitioner::getSegment)
-            .blockingForEach(groupedFlowable ->
+            .flatMap(groupedFlowable ->
                   groupedFlowable
                         .buffer(configuration.maxBatchSize())
-                        .blockingForEach(batch -> stores.get(groupedFlowable.getKey()).deleteBatch(batch))
-            );
+                        .doOnNext(batch -> stores.get(groupedFlowable.getKey()).deleteBatch(batch))
+                  , stores.length()).to(RxJavaInterop.flowableToCompletionStage());
+      CompletionStages.join(stage);
    }
 
    @Override

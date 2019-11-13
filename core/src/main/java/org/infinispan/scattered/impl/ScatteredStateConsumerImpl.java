@@ -14,6 +14,7 @@ import java.util.PrimitiveIterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -41,6 +42,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
@@ -52,6 +54,7 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -286,28 +289,29 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             persistenceManager.publishEntries(completedSegments, k -> !dataContainer.containsKey(k), true, true,
                                               Configurations::isStateTransferStore);
          try {
-            Flowable.fromPublisher(persistencePublisher)
-                    .blockingForEach(me -> {
-                       try {
-                          Metadata metadata = me.getMetadata();
-                          if (metadata instanceof RemoteMetadata) {
-                             Address backup = ((RemoteMetadata) metadata).getAddress();
-                             retrieveEntry(me.getKey(), backup);
-                             for (Address member : cacheTopology.getActualMembers()) {
-                                if (!member.equals(backup)) {
-                                   invalidate(me.getKey(), metadata.version(), member);
-                                }
-                             }
-                          } else {
-                             backupEntry(entryFactory.create(me.getKey(), me.getValue(), me.getMetadata()));
-                             for (Address member : nonBackupAddresses) {
-                                invalidate(me.getKey(), metadata.version(), member);
-                             }
-                          }
-                       } catch (CacheException e) {
-                          log.failedLoadingValueFromCacheStore(me.getKey(), e);
-                       }
-                    });
+            CompletionStage<Void> stage = Flowable.fromPublisher(persistencePublisher)
+                  .doOnNext(me -> {
+                     try {
+                        Metadata metadata = me.getMetadata();
+                        if (metadata instanceof RemoteMetadata) {
+                           Address backup = ((RemoteMetadata) metadata).getAddress();
+                           retrieveEntry(me.getKey(), backup);
+                           for (Address member : cacheTopology.getActualMembers()) {
+                              if (!member.equals(backup)) {
+                                 invalidate(me.getKey(), metadata.version(), member);
+                              }
+                           }
+                        } else {
+                           backupEntry(entryFactory.create(me.getKey(), me.getValue(), me.getMetadata()));
+                           for (Address member : nonBackupAddresses) {
+                              invalidate(me.getKey(), metadata.version(), member);
+                           }
+                        }
+                     } catch (CacheException e) {
+                        log.failedLoadingValueFromCacheStore(me.getKey(), e);
+                     }
+                  }).to(RxJavaInterop.flowableToCompletionStage());
+            CompletionStages.join(stage);
          } catch (CacheException e) {
             log.failedLoadingKeysFromCacheStore(e);
          }

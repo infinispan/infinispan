@@ -71,7 +71,7 @@ public class ForbiddenMethodCheck extends AbstractCheck {
                      if (argumentCount > 0) {
                         nameMatches = true;
                      } else {
-                        log(ast, "Forbidden method invocation found that matches {0}", methodPattern.pattern());
+                        log(ast, "[not required for tests] Forbidden method invocation found that matches {0}", methodPattern.pattern());
                      }
                   }
                }
@@ -80,7 +80,7 @@ public class ForbiddenMethodCheck extends AbstractCheck {
                if (nameMatches) {
                   int count = child.getChildCount(TokenTypes.COMMA) + 1;
                   if (argumentCount == count) {
-                     log(ast, "Forbidden method invocation found that matches {0} with {1} number of arguments",
+                     log(ast, "[not required for tests] Forbidden method invocation found that matches {0} with {1} number of arguments",
                            methodPattern.pattern(), argumentCount);
                   }
                }

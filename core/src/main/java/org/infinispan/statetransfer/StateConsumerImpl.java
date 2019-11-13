@@ -35,13 +35,13 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.EnumUtil;
@@ -76,6 +76,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -1055,7 +1056,10 @@ public class StateConsumerImpl implements StateConsumer {
          };
          Publisher<Object> publisher = persistenceManager.publishKeys(
                filter, PRIVATE);
-         Flowable.fromPublisher(publisher).blockingForEach(keysToRemove::add);
+         CompletionStage<Void> stage = Flowable.fromPublisher(publisher)
+               .doOnNext(keysToRemove::add)
+               .to(RxJavaInterop.flowableToCompletionStage());
+         CompletionStages.join(stage);
       } catch (CacheException e) {
          log.failedLoadingKeysFromCacheStore(e);
       }

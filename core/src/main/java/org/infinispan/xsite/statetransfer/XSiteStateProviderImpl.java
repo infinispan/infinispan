@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -32,11 +33,13 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -213,25 +216,26 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             }
 
             try {
-               Flowable.fromIterable(dataContainer)
-                       .filter(ice -> shouldSendKey(ice.getKey()))
-                       .map(ice -> {
-                          if (trace) {
-                             log.tracef("Added key '%s' to current chunk", ice.getKey());
-                          }
-                          return XSiteState.fromDataContainer(ice);
-                       })
-                       .buffer(chunkSize)
-                       .takeUntil(batch -> canceled)
-                       .blockingForEach(batch -> {
-                          try {
-                             // TODO Make non-blocking and use concatMapCompletable like OutboundTransferTask
-                             sendFromSharedBuffer(xSiteBackup, batch, this);
-                          } catch (Throwable t) {
-                             // This will terminate the flowable early
-                             throw new CacheException(t);
-                          }
-                       });
+               CompletionStage<Void> stage = Flowable.fromIterable(dataContainer)
+                     .filter(ice -> shouldSendKey(ice.getKey()))
+                     .map(ice -> {
+                        if (trace) {
+                           log.tracef("Added key '%s' to current chunk", ice.getKey());
+                        }
+                        return XSiteState.fromDataContainer(ice);
+                     })
+                     .buffer(chunkSize)
+                     .takeUntil(batch -> canceled)
+                     .doOnNext(batch -> {
+                        try {
+                           // TODO Make non-blocking and use concatMapCompletable like OutboundTransferTask
+                           sendFromSharedBuffer(xSiteBackup, batch, this);
+                        } catch (Throwable t) {
+                           // This will terminate the flowable early
+                           throw new CacheException(t);
+                        }
+                     }).to(RxJavaInterop.flowableToCompletionStage());
+                CompletionStages.join(stage);
             } catch (Throwable t) {
                error = true;
                log.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
@@ -252,12 +256,12 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
                   persistenceManager.publishEntries(k -> shouldSendKey(k) && !dataContainer.containsKey(k), true, true,
                                                     Configurations::isStateTransferStore);
-               Flowable.fromPublisher(loaderPublisher)
-                       .map(XSiteState::fromCacheLoader)
-                       .takeUntil(l -> canceled)
-                       .buffer(chunkSize)
-                       // We want the CacheException to be thrown to the catch block
-                       .blockingForEach(l -> {
+               CompletionStage<Void> stage = Flowable.fromPublisher(loaderPublisher)
+                     .map(XSiteState::fromCacheLoader)
+                     .takeUntil(l -> canceled)
+                     .buffer(chunkSize)
+                     // We want the CacheException to be thrown to the catch block
+                     .doOnNext(l -> {
                         try {
                            // TODO Make non-blocking and use concatMapCompletable like OutboundTransferTask
                            sendFromSharedBuffer(xSiteBackup, l, this);
@@ -265,8 +269,8 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                            // This will terminate the flowable early
                            throw new CacheException(throwable);
                         }
-                     });
-
+                     }).to(RxJavaInterop.flowableToCompletionStage());
+               CompletionStages.join(stage);
                if (canceled) {
                   log.debugf("[X-Site State Transfer - %s] State transfer canceled!", xSiteBackup.getSiteName());
                   return;

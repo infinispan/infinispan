@@ -29,6 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -62,7 +63,7 @@ public class PersistenceUtil {
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
 
       // This can't be null
-      Long result = Flowable.fromPublisher(acl.publishKeys(filter)).count().blockingGet();
+      Long result = singleToValue(Flowable.fromPublisher(acl.publishKeys(filter)).count());
       if (result > Integer.MAX_VALUE) {
          return Integer.MAX_VALUE;
       }
@@ -76,7 +77,7 @@ public class PersistenceUtil {
     * @return count of entries that are in the provided segments
     */
    public static int count(SegmentedAdvancedLoadWriteStore<?, ?> salws, IntSet segments) {
-      Long result = Flowable.fromPublisher(salws.publishKeys(segments, null)).count().blockingGet();
+      Long result = singleToValue(Flowable.fromPublisher(salws.publishKeys(segments, null)).count());
       if (result > Integer.MAX_VALUE) {
          return Integer.MAX_VALUE;
       }
@@ -97,11 +98,17 @@ public class PersistenceUtil {
       return toKeySet(acl, (Predicate<? super K>) filter);
    }
 
+   // This method is blocking - but only invoked by user code
+   @SuppressWarnings("checkstyle:forbiddenmethod")
+   private static <E> E singleToValue(Single<E> single) {
+      return single.blockingGet();
+   }
+
    public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
       if (acl == null)
          return Collections.emptySet();
-      return Flowable.fromPublisher(acl.publishKeys(filter))
-            .collectInto(new HashSet<K>(), Set::add).blockingGet();
+      return singleToValue(Flowable.fromPublisher(acl.publishKeys(filter))
+            .collectInto(new HashSet<>(), Set::add));
    }
 
    /**
@@ -123,9 +130,9 @@ public class PersistenceUtil {
    public static <K, V> Set<InternalCacheEntry<K, V>> toEntrySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter, final InternalEntryFactory ief) {
       if (acl == null)
          return Collections.emptySet();
-      return Flowable.fromPublisher(acl.entryPublisher(filter, true, true))
+      return singleToValue(Flowable.fromPublisher(acl.entryPublisher(filter, true, true))
             .map(me -> ief.create(me.getKey(), me.getValue(), me.getMetadata()))
-            .collectInto(new HashSet<InternalCacheEntry<K, V>>(), Set::add).blockingGet();
+            .collectInto(new HashSet<>(), Set::add));
    }
 
    /**
