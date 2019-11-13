@@ -74,6 +74,7 @@ public class CacheResourceV2 extends CacheResource {
             // Cache lifecycle
             .invocation().methods(POST).path("/v2/caches/{cacheName}").handleWith(this::createCache)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}").handleWith(this::removeCache)
+            .invocation().method(HEAD).path("/v2/caches/{cacheName}").handleWith(this::cacheExists)
 
             // Operations
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("clear").handleWith(this::clearEntireCache)
@@ -139,6 +140,16 @@ public class CacheResourceV2 extends CacheResource {
          responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> cacheExists(RestRequest restRequest) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      String cacheName = restRequest.variables().get("cacheName");
+
+      if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
+         responseBuilder.status(NOT_FOUND).build();
+      }
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
    private CompletableFuture<RestResponse> createCache(RestRequest request) {
