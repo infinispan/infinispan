@@ -100,11 +100,14 @@ public class DefaultThreadFactory implements ThreadFactory {
    private Thread createThread(final Runnable target) {
       final ThreadNameInfo nameInfo = new ThreadNameInfo(globalThreadIndexSequence.getAndIncrement(),
             factoryThreadIndexSequence.getAndIncrement(), factoryIndex, node, component);
-      Thread thread = new Thread(threadGroup, target);
+      Thread thread = actualThreadCreate(threadGroup, target);
       thread.setName(nameInfo.format(thread, threadNamePattern));
       thread.setPriority(initialPriority);
       thread.setDaemon(true);
       return thread;
    }
 
+   protected Thread actualThreadCreate(ThreadGroup threadGroup, Runnable target) {
+      return new Thread(threadGroup, target);
+   }
 }

@@ -9,6 +9,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
+import org.infinispan.factories.threads.DefaultNonBlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 
 class ThreadFactoryConfiguration implements ConfigurationInfo {
@@ -28,7 +29,6 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
    private final Attribute<ThreadGroup> group;
    private final Attribute<String> threadNamePattern;
    private final Attribute<Integer> priority;
-   private final DefaultThreadFactory threadFactory;
    private String nodeName;
 
    static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.THREAD_FACTORY.getLocalName());
@@ -44,7 +44,6 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
       this.threadNamePattern = attributes.attribute(THREAD_NAME_PATTERN);
       this.priority = attributes.attribute(PRIORITY);
       this.nodeName = nodeName;
-      this.threadFactory = new DefaultThreadFactory(name.get(), group.get(), priority.get(), threadNamePattern.get(), nodeName, null);
    }
 
    @Override
@@ -53,8 +52,11 @@ class ThreadFactoryConfiguration implements ConfigurationInfo {
 
    }
 
-   public DefaultThreadFactory getThreadFactory() {
-      return threadFactory;
+   public DefaultThreadFactory getThreadFactory(boolean isNonBlocking) {
+      if (isNonBlocking) {
+         return new DefaultNonBlockingThreadFactory(name.get(), group.get(), priority.get(), threadNamePattern.get(), nodeName, null);
+      }
+      return new DefaultThreadFactory(name.get(), group.get(), priority.get(), threadNamePattern.get(), nodeName, null);
    }
 
    public AttributeSet attributes() {

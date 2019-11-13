@@ -24,6 +24,7 @@ import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService
 import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.threads.DefaultNonBlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 
 /**
@@ -95,7 +96,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
       if (threadPoolConfiguration != null) {
          threadFactory = threadPoolConfiguration.threadFactory() != null
                ? threadPoolConfiguration.threadFactory()
-               : createThreadFactoryWithDefaults(globalConfiguration, componentName);
+               : createThreadFactoryWithDefaults(globalConfiguration, componentName, type);
 
          ThreadPoolExecutorFactory threadPoolFactory = threadPoolConfiguration.threadPoolFactory();
          if (threadPoolFactory != null) {
@@ -107,7 +108,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
             executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);
          }
       } else {
-         threadFactory = createThreadFactoryWithDefaults(globalConfiguration, componentName);
+         threadFactory = createThreadFactoryWithDefaults(globalConfiguration, componentName, type);
          executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);
       }
 
@@ -125,7 +126,12 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
       }
    }
 
-   private ThreadFactory createThreadFactoryWithDefaults(GlobalConfiguration globalCfg, final String componentName) {
+   private ThreadFactory createThreadFactoryWithDefaults(GlobalConfiguration globalCfg, final String componentName,
+                                                         ExecutorServiceType type) {
+      if (type.isNonBlocking()) {
+         return new DefaultNonBlockingThreadFactory(null, getDefaultThreadPrio(componentName),
+               DefaultThreadFactory.DEFAULT_PATTERN, globalCfg.transport().nodeName(), shortened(componentName));
+      }
       // Use defaults
       return new DefaultThreadFactory(null, getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
             globalCfg.transport().nodeName(), shortened(componentName));
@@ -152,6 +158,11 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
       REMOTE_BLOCKING,
       // This type of pool means that nothing should ever be executed upon it that may block
       NON_BLOCKING,
+      ;
+
+      boolean isNonBlocking() {
+         return this == NON_BLOCKING;
+      }
    }
 
 }

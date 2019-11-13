@@ -60,7 +60,7 @@ public class ScheduledThreadPoolConfigurationBuilder extends AbstractGlobalConfi
    public ThreadPoolConfiguration asThreadPoolConfigurationBuilder() {
       ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(getGlobalConfig());
       builder.threadPoolFactory(ScheduledThreadPoolExecutorFactory.create());
-      DefaultThreadFactory threadFactory = getGlobalConfig().threads().getThreadFactory(threadFactory()).create().getThreadFactory();
+      DefaultThreadFactory threadFactory = getGlobalConfig().threads().getThreadFactory(threadFactory()).create().getThreadFactory(false);
       builder.threadFactory(threadFactory);
       return builder.create();
    }

@@ -5,6 +5,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.executors.NonBlockingThread;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
@@ -31,7 +32,7 @@ public class BlockingRejectedExecutionHandler implements RejectedExecutionHandle
       if (executor.isShutdown()) {
          throw new IllegalLifecycleStateException();
       }
-      if (Thread.currentThread().getName().startsWith("async")) {
+      if (Thread.currentThread() instanceof NonBlockingThread) {
          if (trace) {
             log.tracef("Task %s was rejected from %s when submitted from non blocking thread", r, executor);
          }

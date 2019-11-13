@@ -103,10 +103,11 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
    @Override
    public ThreadPoolConfiguration asThreadPoolConfigurationBuilder() {
       ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(getGlobalConfig());
+      boolean isNonBlocking = name().startsWith("async");
       builder.threadPoolFactory(new BlockingThreadPoolExecutorFactory(maxThreads(), coreThreads(), queueLength(),
-            keepAliveTime(), name().startsWith("async")));
+            keepAliveTime(), isNonBlocking));
       if (threadFactory() != null) {
-         DefaultThreadFactory threadFactory = getGlobalConfig().threads().getThreadFactory(threadFactory()).create().getThreadFactory();
+         DefaultThreadFactory threadFactory = getGlobalConfig().threads().getThreadFactory(threadFactory()).create().getThreadFactory(isNonBlocking);
          builder.threadFactory(threadFactory);
       }
       return builder.create();
