@@ -2,6 +2,7 @@ package org.infinispan.server.functional;
 
 import static org.infinispan.commons.util.Eventually.eventually;
 import static org.infinispan.server.security.Common.sync;
+import static org.junit.Assert.assertFalse;
 
 import java.net.ConnectException;
 
@@ -30,13 +31,16 @@ public class ShutdownRestIT {
    public void testShutDown() {
       RestClient client = SERVER_TEST.rest().create();
       sync(client.server().stop());
-      eventually(() -> {
-         try {
-            sync(client.server().configuration());
-         } catch (RuntimeException r) {
-            return (Util.getRootCause(r) instanceof ConnectException);
-         }
-         return false;
-      });
+      eventually(() -> isServerShutdown(client));
+      assertFalse(SERVER.getServerDriver().isRunning(0));
+   }
+
+   static boolean isServerShutdown(RestClient client) {
+      try {
+         sync(client.server().configuration());
+      } catch (RuntimeException r) {
+         return (Util.getRootCause(r) instanceof ConnectException);
+      }
+      return false;
    }
 }

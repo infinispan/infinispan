@@ -90,14 +90,14 @@ public class InfinispanServerRule implements TestRule {
    }
 
    /**
-    * @return a client configured against the first Hot Rod endpoint exposed by the server
+    * @return a client configured against the Hot Rod endpoint exposed by the server
     */
    RemoteCacheManager newHotRodClient() {
       return newHotRodClient(new ConfigurationBuilder());
    }
 
    /**
-    * @return a client configured against the first Hot Rod endpoint exposed by the server
+    * @return a client configured against the Hot Rod endpoint exposed by the server
     */
    RemoteCacheManager newHotRodClient(ConfigurationBuilder builder) {
       // Add all known server addresses
@@ -119,6 +119,17 @@ public class InfinispanServerRule implements TestRule {
          InetSocketAddress serverAddress = getServerDriver().getServerSocket(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
+      return RestClient.forConfiguration(builder.build());
+   }
+
+   /**
+    * @param builder
+    * @param n the server number
+    * @return a client configured against the nth server
+    */
+   public RestClient newRestClient(RestClientConfigurationBuilder builder, int n) {
+      InetSocketAddress serverAddress = getServerDriver().getServerSocket(n, 11222);
+      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       return RestClient.forConfiguration(builder.build());
    }
 
