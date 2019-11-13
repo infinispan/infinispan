@@ -29,7 +29,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       Builder<RestServerConfiguration> {
 
    final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
-   public static final int CROSS_ORIGIN_PORT = 80;
+   public static final int CROSS_ORIGIN_PORT = 11222;
    public static final int CROSS_ORIGIN_ALT_PORT = 9000;
 
    private final AuthenticationConfigurationBuilder authentication;
