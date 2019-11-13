@@ -14,6 +14,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.processors.AsyncProcessor;
 import io.reactivex.subjects.CompletableSubject;
+import io.reactivex.subjects.MaybeSubject;
 import io.reactivex.subjects.SingleSubject;
 
 /**
@@ -25,6 +26,9 @@ import io.reactivex.subjects.SingleSubject;
 public class RxJavaInterop {
    private RxJavaInterop() { }
 
+   public static Function<Completable, CompletionStage<Void>> completableToCompletionStage() {
+      return completableToCompletionStage;
+   }
    /**
     * Provides an interop function that can be used to convert a Single into a CompletionStage. Note that this function
     * is not from the standard java.util.function package, but rather {@link Function} to interop better with the
@@ -58,20 +62,16 @@ public class RxJavaInterop {
       return (Function) flowableToCompletionStage;
    }
 
-   /**
-    * Provides an interop function that can be used to convert a CompletionStage into a Flowable. Note that this function
-    * is from the standard java.util.function package since we don't want the method to throw an exception
-    * <p>
-    * Remember that the CompletionStage when completing normally <b>MUST</b> have a non null value!
-    * @param <E> underlying type
-    * @return java.util function to convert CompletionStage to Flowable
-    */
-   public static <E> java.util.function.Function<CompletionStage<E>, Flowable<E>> completionStageToPublisher() {
-      return (java.util.function.Function) completionStageToPublisher;
-   }
-
-   public static java.util.function.Function<CompletionStage<?>, Completable> completionStageToCompletable() {
-      return completionStageCompletableFunction;
+   public static Completable completionStageToCompletable(CompletionStage<Void> stage) {
+      CompletableSubject cs = CompletableSubject.create();
+      stage.whenComplete((o, throwable) -> {
+         if (throwable != null) {
+            cs.onError(throwable);
+         } else {
+            cs.onComplete();
+         }
+      });
+      return cs;
    }
 
    public static <E> Single<E> completionStageToSingle(CompletionStage<E> stage) {
@@ -89,6 +89,23 @@ public class RxJavaInterop {
       });
 
       return ss;
+   }
+
+   public static <E> Maybe<E> completionStageToMaybe(CompletionStage<E> stage) {
+      MaybeSubject<E> ms = MaybeSubject.create();
+
+      stage.whenComplete((value, t) -> {
+         if (t != null) {
+            ms.onError(t);
+         }
+         if (value != null) {
+            ms.onSuccess(value);
+         } else {
+            ms.onComplete();
+         }
+      });
+
+      return ms;
    }
 
    /**
@@ -114,6 +131,12 @@ public class RxJavaInterop {
    public static <K, V> Function<Map.Entry<K, V>, K> entryToKeyFunction() {
       return (Function) entryToKeyFunction;
    }
+
+   private static final Function<Completable, CompletionStage<Void>> completableToCompletionStage = completable -> {
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+      completable.subscribe(() -> cf.complete(null), cf::completeExceptionally);
+      return cf;
+   };
 
    private static final Function<Single<Object>, CompletionStage<Object>> singleToCompletionStage = single -> {
       CompletableFuture<Object> cf = new CompletableFuture<>();
@@ -149,17 +172,4 @@ public class RxJavaInterop {
    };
 
    private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
-
-   private static final java.util.function.Function<CompletionStage<?>, Completable> completionStageCompletableFunction =
-      completionStage -> {
-         CompletableSubject cs = CompletableSubject.create();
-         completionStage.whenComplete((o, throwable) -> {
-            if (throwable != null) {
-               cs.onError(throwable);
-            } else {
-               cs.onComplete();
-            }
-         });
-         return cs;
-      };
 }

@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -144,7 +144,7 @@ public class OutboundTransferTask {
                    if (previousBatch.isEmpty())
                       return Completable.complete();
 
-                   return completionStageToCompletable().apply(sendEntries(previousBatch, false));
+                   return completionStageToCompletable(sendEntries(previousBatch, false));
                 }, 1)
                 .subscribe(new CompletableObserver() {
                    @Override
