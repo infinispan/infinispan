@@ -1,0 +1,79 @@
+[id='rest_v2_api']
+:context: rest
+= Interacting with the {brandname} REST API
+The {brandname} REST API lets you monitor, maintain, and manage {brandname}
+deployments and provides access to your data.
+
+[NOTE]
+====
+The details in this section apply to the REST v2 API only.
+
+The REST v1 API is deprecated and no longer supported in future {brandname}
+versions.
+====
+
+
+[id='rest_v2_cache_operations']
+== Creating and Managing Caches
+Create and manage {brandname} caches and perform operations on data.
+
+include::{topics}/ref_rest_caches.adoc[leveloffset=+2]
+
+
+[id='rest_v2_xsite_cache']
+=== Cross-Site Operations with Caches
+Perform cross-site replication operations with the {brandname} REST API.
+
+//Community
+ifndef::productized[]
+See link:../xsite/xsite.html[Cross Site replication] for more details about this feature.
+endif::productized[]
+
+include::{topics}/ref_rest_xsite.adoc[leveloffset=+3]
+
+
+[id='rest_v2_counters']
+== Creating and Managing Counters
+Create, delete, and modify counters via the REST API.
+
+include::{topics}/ref_rest_counters.adoc[leveloffset=+2]
+
+
+[id='rest_v2_cache_managers']
+== Working with Cache Managers
+Interact with {brandname} Cache Managers to get cluster and usage statistics.
+
+include::{topics}/ref_rest_cache_managers.adoc[leveloffset=+2]
+
+
+[id='rest_v2_xsite_cache_manager']
+=== Cross-Site Operations with Cache Managers
+Perform cross-site operations with Cache Managers to apply the operations to
+all caches.
+
+include::{topics}/ref_rest_xsite_cache_managers.adoc[leveloffset=+3]
+
+
+[id='rest_v2_server']
+== Working with {brandname} Servers
+Monitor and manage {brandname} server instances.
+
+include::{topics}/ref_rest_servers.adoc[leveloffset=+2]
+
+
+[id='rest_v2_cluster']
+== Working with {brandname} Clusters
+Monitor and perform administrative tasks on {brandname} clusters.
+
+include::{topics}/ref_rest_clusters.adoc[leveloffset=+2]
+
+[[rest_v2_tasks]]
+== Using Server Tasks
+Retrieve, execute, and upload {brandname} server tasks.
+
+include::{topics}/ref_rest_server_tasks.adoc[leveloffset=+2]
+
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

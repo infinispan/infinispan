@@ -1,0 +1,11 @@
+{
+    "search_query_execution_count":20,
+    "search_query_total_time":5,
+    "search_query_execution_max_time":154,
+    "search_query_execution_avg_time":2,
+    "object_loading_total_time":1,
+    "object_loading_execution_max_time":1,
+    "object_loading_execution_avg_time":1,
+    "objects_loaded_count":20,
+    "search_query_execution_max_time_query_string": "FROM entity"
+}

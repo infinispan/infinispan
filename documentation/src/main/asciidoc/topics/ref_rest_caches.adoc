@@ -1,0 +1,512 @@
+[id='rest_v2_create_cache']
+= Creating Caches
+Create named caches across {brandname} clusters with `POST` requests that
+include XML or JSON configuration in the payload.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}
+----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Content-Type`
+|REQUIRED
+|Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
+{brandname} configuration payload; either `application/xml` or
+`application/json`.
+| `Flags` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
+|===
+
+.References
+
+* link:#ref_xml_configuration[{brandname} XML Configuration]
+* link:#ref_json_configuration[{brandname} JSON Configuration]
+
+include::{topics}/ref_xml_configuration.adoc[leveloffset=+1]
+include::{topics}/ref_json_configuration.adoc[leveloffset=+1]
+
+[id='rest_v2_cache_exists']
+= Verifying Caches
+Check if caches are available in {brandname} clusters with `HEAD` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /v2/caches/{cacheName}
+----
+
+[id='rest_v2_create_cache_template']
+= Creating Caches with Templates
+Create caches from {brandname} templates with `POST` requests and the
+`?template=` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}?template={templateName}
+----
+
+[id='rest_v2_cache_configuration']
+= Retrieving Cache Configuration
+Retrieve {brandname} cache configurations with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{name}?action=config
+----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. Supported formats are `application/xml` and `application/json`. The default is `application/json`. See link:#rest_accept[Accept] for more information.
+|===
+
+[id='rest_v2_cache_config_convert']
+= Converting Cache Configurations to JSON
+Invoke a `POST` request with valid XML configuration and the `?action=toJSON`
+parameter. {brandname} responds with the equivalent JSON representation of the
+configuration.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches?action=toJSON
+----
+
+[id='rest_v2_cache_detail']
+= Retrieving All Cache Details
+Invoke a `GET` request to retreive all details for {brandname} caches.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{name}
+----
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_full_cache_detail.json[]
+----
+
+* `stats` current stats of the cache.
+* `size` the estimated size for the cache.
+* `configuration` the cache configuration.
+* `rehash_in_progress` true when a rehashing is in progress.
+* `indexing_in_progress` true when indexing is in progress.
+* `bounded` when expiration is enabled.
+* `indexed` true if the cache is indexed.
+* `persistent` true if the cache is persisted.
+* `transactional` true if the cache is transactional.
+* `secured` true if the cache is secured.
+* `has_remote_backup` true if the cache has remote backups.
+
+
+[id='rest_v2_add_entries']
+= Adding Entries
+Add entries to caches with `POST` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request places the payload, or request body, in the `cacheName`
+cache with the `cacheKey` key. The request replaces any data that already
+exists and updates the `Time-To-Live` and `Last-Modified` values, if they apply.
+
+If a value already exists for the specified key, the `POST` request returns an
+HTTP `CONFLICT` status and does not modify the value. To update values, you
+should use `PUT` requests. See link:#rest_v2_replace_entries[Replacing Entries].
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. See link:#rest_key_content_type[Key-Content-Type] for more information.
+
+|`Content-Type`
+|OPTIONAL
+|Sets the link:https://en.wikipedia.org/wiki/Media_type[MediaType] of the value for the key.
+
+|`timeToLiveSeconds`
+|OPTIONAL
+|Sets the number of seconds before the entry is automatically deleted. If you do not set this parameter, {brandname} uses the default value from the configuration. If you set a negative value, the entry is never deleted.
+
+|`maxIdleTimeSeconds`
+|OPTIONAL
+|Sets the number of seconds that entries can be idle. If a read or write operation does not occur for an entry after the maximum idle time elapses, the entry is automatically deleted. If you do not set this parameter, {brandname} uses the default value from the configuration. If you set a negative value, the entry is never deleted.
+
+|`flags`
+|OPTIONAL
+|The flags used to add the entry. See https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/context/Flag.html[Flag] for more information.
+
+|===
+
+[NOTE]
+The `flags` header also applies to all other operations involving data manipulation on the cache,
+
+[NOTE]
+====
+If both `timeToLiveSeconds` and `maxIdleTimeSeconds` have a value of `0`, {brandname} uses the default `lifespan` and `maxIdle` values from the configuration.
+
+If _only_ `maxIdleTimeSeconds` has a value of `0`, {brandname} uses:
+
+* the default `maxIdle` value from the configuration.
+* the value for `timeToLiveSeconds` that you pass as a request parameter or a value of `-1` if you do not pass a value.
+
+If _only_ `timeToLiveSeconds` has a value of `0`, {brandname} uses:
+
+* the default `lifespan` value from the configuration.
+* the value for `maxIdle` that you pass as a request parameter or a value of `-1` if you do not pass a value.
+====
+
+
+[id='rest_v2_replace_entries']
+= Replacing Entries
+Replace entries in caches with `PUT` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+PUT /rest/v2/caches/{cacheName}/{cacheKey}
+----
+
+If a value already exists for the specified key, the `PUT` request updates the
+value. If you do not want to modify existing values, use `POST` requests that
+return HTTP `CONFLICT` status instead of modifying values. See
+link:#rest_v2_add_entries[Adding Values].
+
+[id='rest_v2_retrieve_cache']
+= Retrieving Data By Keys
+Retrieve data for specific keys with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}/{cacheKey}
+----
+
+The server returns data from the given cache, `cacheName`, under the given key,
+`cacheKey`, in the response body. Responses contain `Content-Type` headers that
+correspond to the `MediaType` negotiation.
+
+[NOTE]
+====
+Browsers can also access caches directly, for example as a content delivery
+network (CDN). {brandname} returns a unique
+link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] for each entry along with the
+`Last-Modified` and `Expires` header fields.
+
+These fields provide information about the state of the data that is returned
+in your request. ETags allow browsers and other clients to request only data
+that has changed, which conserves bandwidth.
+====
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. See link:#rest_accept[Accept] for more information.
+|===
+
+[TIP]
+====
+Append the `extended` parameter to the query string to get additional information:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /cacheName/cacheKey?extended
+----
+
+The preceding request returns custom headers:
+
+* `Cluster-Primary-Owner` returns the node name that is the primary owner of the key.
+* `Cluster-Node-Name` returns the JGroups node name of the server that handled the request.
+* `Cluster-Physical-Address` returns the physical JGroups address of the server that handled the request.
+====
+
+
+[id='rest_v2_check_entries']
+= Checking if Entries Exist
+Verify that specific entries exists with `HEAD` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+HEAD /rest/v2/caches/{cacheName}/{cacheKey}
+----
+
+The preceding request returns only the header fields and the same content that
+you stored with the entry. For example, if you stored a String, the request
+returns a String. If you stored binary, base64-encoded, blobs or serialized
+Java objects, {brandname} does not de-serialize the content in the request.
+
+[NOTE]
+====
+`HEAD` requests also support the `extended` parameter.
+====
+
+.Headers
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
+|===
+
+
+[id='rest_v2_delete_entries']
+= Deleting Entries
+Remove entries from caches with `DELETE` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /rest/v2/caches/{cacheName}/{cacheKey}
+----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Key-Content-Type`
+|OPTIONAL
+|Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
+|===
+
+
+[id='rest_v2_remove_cache']
+= Deleting Caches
+Remove caches from {brandname} clusters with `DELETE` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /rest/v2/caches/{cacheName}
+----
+
+
+[id='rest_v2_get_keys']
+= Retrieving All Keys from Caches
+Invoke `GET` requests to retrieve all the keys in a cache in JSON format.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=keys
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`batch-size`
+|OPTIONAL
+|Specifies the internal batch size when retrieving the keys. The default value is `1000`.
+|===
+
+
+[id='rest_v2_clear_cache']
+= Clearing Caches
+
+To delete all data from a cache, invoke a `GET` request with the
+`?action=clear` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=clear
+----
+
+
+[id='rest_v2_cache_size']
+= Getting Cache Size
+Retrieve the size of caches across the entire cluster with `GET` requests and
+the `?action=size` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=size
+----
+
+
+[id='rest_v2_cache_stats']
+= Getting Cache Statistics
+Obtain runtime statistics for caches with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=stats
+----
+
+
+[id='rest_v2_query_cache']
+= Querying Caches
+Perform Ickle queries on caches with `GET` requests and the
+`?action=search&query` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
+----
+
+{brandname} responds with query hits such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_query_results.json[]
+----
+
+* `total_results` displays the total number of results from the query.
+* `hits` is an array of matches from the query.
+* `hit` is an object that matches the query.
++
+[TIP]
+====
+Hits can contain all fields or a subset of fields if you use a `Select` clause.
+====
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`query`
+|REQUIRED
+|Specifies the query string.
+
+|`max_results`
+|OPTIONAL
+|Sets the number of results to return. The default is `10`.
+
+|`offset`
+|OPTIONAL
+|Specifies the index of the first result to return. The default is `0`.
+
+|`query_mode`
+|OPTIONAL
+|Specifies how the {brandname} server executes the query. Values are `FETCH` and `BROADCAST`. The default is `FETCH`.
+|===
+
+To use the body of the request instead of specifying query parameters, invoke
+`POST` requests as follows:
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}?action=search
+----
+
+The following example shows a query in the request body:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_query_request_body.json[]
+----
+
+
+[id='rest_v2_query_reindex']
+= Re-indexing Data
+Re-index all data in caches with `GET` requests and the
+`?action=mass-index?mode={mode}` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET  /v2/caches/{cacheName}/search/indexes?action=mass-index?mode={mode}
+----
+
+Values for the `mode` parameter are as follows:
+
+* `sync` returns a response of `200` only after the re-indexing operation is complete.
+* `async` returns a response of `200` immediately and the re-indexing operation continues running in the cluster. You can check the status with the link:#rest_v2_query_index_stats[Index Statistics] REST call.
+
+[id='rest_v2_query_purge_index']
+= Purging Indexes
+Delete all indexes from caches with `GET` requests and the `?action=clear`
+parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET  /v2/caches/{cacheName}/search/indexes?action=clear
+----
+
+
+[id='rest_v2_query_index_stats']
+= Retrieving Index Statistics
+Obtain information about indexes in caches with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/indexes/stats
+----
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_index_stats.json[]
+----
+
+* `indexed_class_names` Provides the class names of the indexes present in the cache. For Protobuf the value is always `org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper`.
+* `indexed_entities_count` Provides the number of entities indexed per class.
+* `index_sizes` Provides the size, in bytes, for each index in the cache.
+* `reindexing` Indicates if a re-indexing operation was performed for the cache. If the value is `true`, the `MassIndexer` was started in the cache.
+
+
+[id='rest_v2_query_stats']
+= Retrieving Query Statistics
+Get information about the queries that have been run in caches with `GET`
+requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/query/stats
+----
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_query_stats.json[]
+----
+
+* `search_query_execution_count` Provides the number of queries that have been run.
+* `search_query_total_time` Provides the total time spent on queries.
+* `search_query_execution_max_time` Provides the maximum time taken for a query.
+* `search_query_execution_avg_time` Provides the average query time.
+* `object_loading_total_time` Provides the total time spent loading objects from the cache after query execution.
+* `object_loading_execution_max_time` Provides the maximum time spent loading objects execution.
+* `object_loading_execution_avg_time` Provides the average time spent loading objects execution.
+* `objects_loaded_count` Provides the count of objects loaded.
+* `search_query_execution_max_time_query_string` Provides the slowest query executed.
+
+
+[id='rest_v2_query_stats_clear']
+= Clearing Query Statistics
+Reset runtime statistics with `GET` requests and the `?action=clear` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/caches/{cacheName}/search/query/stats?action=clear
+----
+
+
+[id='rest_v2_list_caches']
+= Listing Caches
+List all available caches in {brandname} clusters with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/
+----

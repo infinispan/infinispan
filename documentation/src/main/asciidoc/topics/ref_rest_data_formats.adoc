@@ -1,0 +1,147 @@
+[id='rest_server_data_format_config']
+= Configuring Data Formats via the REST API
+
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration link:#encoding_media_type[here].
+
+An example of storage configuration is as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::{topics}/config_examples/encoding_media_type.xml[]
+----
+
+When no MediaType is configured, {brandname} assumes "application/octet-stream" for both keys and values, with the following exceptions:
+
+* If the cache is indexed, it assumes "application/x-protostream"
+
+[id='rest_server_data_format_support']
+== Supported Formats
+
+Data can be written and read in different formats than the storage format; {brandname} can convert between those formats when required.
+
+The following "standard" formats can be converted interchangeably:
+
+* _application/x-java-object_
+* _application/octet-stream_
+* _application/x-www-form-urlencoded_
+* _text/plain_
+
+The following formats can be converted to/from the formats above:
+
+* __application/xml__
+* _application/json_
+* _application/x-jboss-marshalling_
+* _application/x-protostream_
+* _application/x-java-serialized_
+
+Finally, the following conversion is also supported:
+
+* Between _application/x-protostream_ and _application/json_
+
+All the REST API calls can provide headers describing the content written or the required format of the content
+when reading. {brandname} supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
+plus the "Key-Content-Type" with similar effect for keys.
+
+
+[id='rest_accept']
+== Accept Headers
+
+The REST server is compliant with the link:https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
+and will negotiate the correct MediaType based on the conversions supported. Example, sending the following header when reading data:
+
+[source,options=nowrap]
+----
+Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
+----
+
+will cause {brandname} to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
+to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
+suitable for displaying automatically based on the cache configuration.
+
+[id='rest_key_content_type']
+== Key-Content-Type Headers
+
+Most REST API calls have the Key included in the URL. {brandname} will assume the Key is a _java.lang.String_ when handling those calls, but
+it's possible to use a specific header _Key-Content-Type_ for keys in different formats.
+
+Examples:
+
+* Specifying a byte[] Key as a Base64 string:
+
+API call:
+
+   `PUT /my-cache/AQIDBDM=`
+
+Headers:
+
+`Key-Content-Type: application/octet-stream`
+
+* Specifying a byte[] Key as a hexadecimal string:
+
+API call:
+
+`GET /my-cache/0x01CA03042F`
+
+Headers:
+
+[source,options=nowrap]
+----
+Key-Content-Type: application/octet-stream; encoding=hex
+----
+
+* Specifying a double Key:
+
+API call:
+
+`POST /my-cache/3.141456`
+
+Headers:
+
+[source,options=nowrap]
+----
+Key-Content-Type: application/x-java-object;type=java.lang.Double
+----
+
+The _type_ parameter for _application/x-java-object_ is restricted to:
+
+* Primitive wrapper types
+* java.lang.String
+* Bytes, making _application/x-java-object;type=Bytes_ equivalent to _application/octet-stream;encoding=hex_
+
+[id='rest_json_proto_conversion']
+== JSON/Protostream Conversion
+
+When caches are indexed, or specifically configured to store _application/x-protostream_, it's possible to send and receive
+JSON documents that are automatically converted to/from protostream. In order for the conversion to work, a protobuf schema must be registered.
+
+The registration can be done via REST, by doing a POST/PUT in the ____protobuf_metadata_ cache. Example using cURL:
+
+[source,bash]
+----
+curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:8080/rest/___protobuf_metadata/schema.proto
+----
+
+When writing a JSON document, a special field *__type_* must be present in the document to identity the protobuf _Message_
+corresponding to the document.
+
+For example, consider the following schema:
+
+[source,protobuf]
+----
+message Person  {
+  required string name = 1;
+  required int32 age = 2;
+}
+----
+
+A conformant JSON document would be:
+
+
+[source,json]
+----
+{
+   "_type": "Person",
+   "name": "user1",
+   "age": 32
+}
+----

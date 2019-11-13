@@ -1,0 +1,7 @@
+[id='rest_server_client_python']
+= Python 3 REST Example
+
+[source,python]
+----
+include::code_examples/rest_client.py[]
+----

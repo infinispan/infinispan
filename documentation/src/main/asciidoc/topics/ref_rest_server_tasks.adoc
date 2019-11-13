@@ -1,0 +1,41 @@
+[id='rest_v2_tasks_list']
+= Retrieving Server Tasks Information
+View information about available server tasks with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_tasks_list.adoc[]
+----
+
+{brandname} responds with a list of available tasks. The list includes the
+names of tasks, the engines that handle tasks, the named parameters for tasks,
+the execution modes of tasks, either `ONE_NODE` or `ALL_NODES`, and the allowed
+security role in `JSON` format, as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::rest_examples/rest_tasks_response.json[]
+----
+
+[id='rest_v2_tasks_execute']
+= Executing Tasks
+Execute tasks with `GET` requests that include the task name and required parameters prefixed with `param`.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_tasks_exec.adoc[]
+----
+
+{brandname} responds with the task result.
+
+[id='rest_v2_tasks_upload']
+= Uploading Script Tasks
+Upload script tasks with `PUT` or `POST` requests.
+
+Supply the script as the content payload of the request. After {brandname}
+uploads the script, you can execute it with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/post_v2_tasks_upload.adoc[]
+----

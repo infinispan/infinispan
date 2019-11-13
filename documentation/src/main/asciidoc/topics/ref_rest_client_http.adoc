@@ -1,0 +1,7 @@
+[id='rest_server_client_http']
+= `HttpClient` API REST Example
+
+[source,java]
+----
+include::{topics}/code_examples/RestHttpClient.java[]
+----
