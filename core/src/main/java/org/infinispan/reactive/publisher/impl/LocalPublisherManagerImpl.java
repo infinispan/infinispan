@@ -22,6 +22,8 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -404,7 +406,10 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       AdvancedCache<K, V> cache = deliveryGuarantee == DeliveryGuarantee.AT_MOST_ONCE ? this.cache : remoteCache;
       return handleSpecificObjects(parallelPublisher, keysToInclude, keysToExclude, keyFlowable ->
             // Filter out all the keys that aren't in the cache
-            keyFlowable.filter(cache::containsKey)
+            keyFlowable.concatMapMaybe(key ->
+               RxJavaInterop.completionStageToMaybe(cache.containsKeyAsync(key)
+                     .thenApply(contains -> contains ? key : null))
+            )
       , collator, finalizer);
    }
 
@@ -414,14 +419,18 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       AdvancedCache<K, V> cache = deliveryGuarantee == DeliveryGuarantee.AT_MOST_ONCE ? this.cache : remoteCache;
       return handleSpecificObjects(parallelPublisher, keysToInclude, keysToExclude, keyFlowable ->
-         keyFlowable.map(k -> {
-            CacheEntry<K, V> entry = cache.getCacheEntry(k);
-            if (entry == null) {
-               return NullCacheEntry.<K, V>getInstance();
-            }
-            return entry;
-         }).filter(e -> e != NullCacheEntry.getInstance())
-      , collator, finalizer);
+                  keyFlowable.concatMapMaybe(k -> {
+                     CompletableFuture<CacheEntry<K, V>> future = cache.getCacheEntryAsync(k);
+                     future = future.thenApply(entry -> {
+                        if (entry instanceof MVCCEntry) {
+                           // Scattered cache can return MVCCEntry instances
+                           entry = new ImmortalCacheEntry(entry.getKey(), entry.getValue());
+                        }
+                        return entry;
+                     });
+                     return RxJavaInterop.completionStageToMaybe(future);
+                  }).filter(e -> e != NullCacheEntry.getInstance())
+            , collator, finalizer);
    }
 
    private <I, R> CompletionStage<PublisherResult<R>> handleSpecificObjects(boolean parallelPublisher, Set<K> keysToInclude,
