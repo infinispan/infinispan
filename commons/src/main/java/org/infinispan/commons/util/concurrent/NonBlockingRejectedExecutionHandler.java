@@ -6,6 +6,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.executors.NonBlockingThread;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
@@ -33,7 +34,7 @@ public class NonBlockingRejectedExecutionHandler implements RejectedExecutionHan
          throw new IllegalLifecycleStateException();
       }
       Thread currentThread = Thread.currentThread();
-      if (currentThread.getName().startsWith("async")) {
+      if (currentThread instanceof NonBlockingThread) {
          r.run();
       } else {
          if (trace) {
