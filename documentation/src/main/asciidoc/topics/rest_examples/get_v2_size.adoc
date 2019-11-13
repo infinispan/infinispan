@@ -1,1 +1,0 @@
-GET /rest/v2/caches/{cacheName}?action=size

@@ -1,0 +1,14 @@
+{
+   "SFO-3":{
+      "status":"online"
+   },
+   "NYC-2":{
+      "status":"mixed",
+      "online":[
+         "CACHE_1"
+      ],
+      "offline":[
+         "CACHE_2"
+      ]
+   }
+}

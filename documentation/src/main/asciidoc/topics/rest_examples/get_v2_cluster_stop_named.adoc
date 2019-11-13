@@ -1,1 +1,0 @@
-GET /rest/v2/cluster?action=stop&server=server-38760&server=bespin-1223

@@ -6,14 +6,14 @@ Get {brandname} cluster health via the REST API.
 +
 [source,bash]
 ----
-include::rest_examples/get_v2_cluster_health.adoc[]
+GET /rest/v2/cache-managers/{cacheManagerName}/health
 ----
 
 {brandname} responds with a `JSON` document such as the following:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::rest_examples/rest_cache_health_response.json[]
+include::json_examples/rest_cache_health_response.json[]
 ----
 
 [TIP]
@@ -22,7 +22,7 @@ Get cache manager status as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-include::rest_examples/get_v2_health_status.adoc[]
+GET /rest/v2/cache-managers/{cacheManagerName}/health/status
 ----
 ====
 

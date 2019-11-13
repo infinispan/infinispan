@@ -1,0 +1,136 @@
+[id='rest_v2_server_info']
+= Retrieving Basic Server Information
+View basic information about {brandname} servers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server
+----
+
+{brandname} responds with the server name, codename, and version in JSON format
+as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_server_response.json[]
+----
+
+
+[id='rest_v2_server_cm']
+= Getting Cache Managers
+Retrieve lists of cache managers for {brandname} servers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/cache-managers
+----
+
+{brandname} responds with an array of the cache manager names configured for
+the server.
+
+
+[id='rest_v2_cache_ignore']
+= Adding Caches to Ignore Lists
+Configure {brandname} to temporarily exclude specific caches from client
+requests. Send empty `POST` requests that include the names of the cache manager
+name and the cache.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/server/ignored-caches/{cache-manager}/{cache}
+----
+
+{brandname} returns a service unavailable status (`503`) for REST client
+requests and a Server Error (`code 0x85`) for Hot Rod client requests.
+
+[NOTE]
+====
+{brandname} currently supports one cache manager per server only. For future
+compatibility you must provide the cache manager name in the requests.
+====
+
+
+[id='rest_v2_cache_ignore_remove']
+= Removing Caches from Ignore Lists
+Remove caches from the ignore list with `DELETE` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /v2/server/ignored-caches/{cache-manager}/{cache}
+----
+
+
+[id='rest_v2_cache_ignore_confirm']
+= Confirming Ignored Caches
+Confirm that caches are ignored with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /v2/server/ignored-caches/{cache-manager}
+----
+
+
+[id='rest_v2_server_config']
+= Obtaining Server Configuration
+Retrieve {brandname} server configurations with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/config
+----
+
+{brandname} responds with the configuration in JSON format, as follows:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/rest_server_config_response.json[]
+----
+
+
+[id='rest_v2_server_env']
+= Getting Environment Variables
+Retrieve all environment variables for {brandname} servers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/env
+----
+
+
+[id='rest_v2_server_memory']
+= Getting JVM Memory Details
+Retrieve JVM memory usage information for {brandname} servers with `GET`
+requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/memory
+----
+
+{brandname} responds with heap and non-heap memory statistics, direct memory
+usage, and information about memory pools and garbage collection in JSON
+format.
+
+
+[id='rest_v2_server_threads']
+= Getting JVM Thread Dumps
+Retrieve the current thread dump for the JVM with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/threads
+----
+
+{brandname} responds with the current thread dump in `text/plain` format.
+
+
+[id='rest_v2_server_stop']
+= Stopping {brandname} Servers
+Stop {brandname} servers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server?action=stop
+----
+
+{brandname} responds with `200(OK)` and then stops running.

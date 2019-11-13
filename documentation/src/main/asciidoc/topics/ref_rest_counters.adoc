@@ -1,0 +1,191 @@
+[id='rest_server_counters_create']
+= Creating Counters
+Create counters with `POST` requests that include configuration in the payload.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/counters/{counterName}
+----
+
+.Example Weak Counter
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/weak_counter.json[]
+----
+
+.Example Strong Counter
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/strong_counter.json[]
+----
+
+[id='rest_server_counters_delete']
+= Deleting Counters
+Remove specific counters with `DELETE` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /rest/v2/counters/{counterName}
+----
+
+[id='rest_server_counters_config']
+= Retrieving Counter Configuration
+Retrieve configuration for specific counters with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}/config
+----
+
+{brandname} responds with the counter configuration in JSON format.
+
+
+[id='rest_server_counters_add']
+= Adding Values to Counters
+Add values to specific counters with `POST` requests.
+
+[IMPORTANT]
+====
+This method processes `plain/text` content only.
+====
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/counters/{counterName}
+----
+
+If the request payload is empty, the counter is incremented by one, otherwise
+the payload is interpreted as a signed long and added to the counter.
+
+[NOTE]
+====
+`WEAK` counters never respond after operations.
+
+`STRONG` counters return the current value after each operation.
+====
+
+
+[id='rest_server_counters_get']
+= Getting Counter Values
+Retrieve counter values with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}
+----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`link:#rest_accept[Accept]`
+|OPTIONAL
+|The required format to return the content. Supported formats are _application/json_ and _text/plain_. JSON is assumed if no header is provided.
+|===
+
+
+[id='rest_server_counters_reset']
+= Resetting Counters
+Restore the intial value of counters without `GET` requests and the
+`?action=reset` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}?action=reset
+----
+
+
+[id='rest_server_counters_inc_weak']
+= Incrementing Counters
+Increment counter values with `GET` request` and the `?action=increment`
+parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}?action=increment
+----
+
+[NOTE]
+====
+`WEAK` counters never respond after operations.
+
+`STRONG` counters return the current value after each operation.
+====
+
+
+[id='rest_server_counters_add_weak']
+= Adding Deltas to Counters
+Add arbitrary values to counters with `GET` requests that include the
+`?action=add` and `delta` parameters.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}?action=add&delta={delta}
+----
+
+[NOTE]
+====
+`WEAK` counters never respond after operations.
+
+`STRONG` counters return the current value after each operation.
+====
+
+
+[id='rest_server_counters_dec']
+= Decrementing Counter Values
+Decrement counter values with `GET` requests and the `?action=decrement`
+parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}?action=decrement
+----
+
+[NOTE]
+====
+`WEAK` counters never respond after operations.
+
+`STRONG` counters return the current value after each operation.
+====
+
+
+[id='rest_server_counters_cmpset']
+= Performing compareAndSet Operations on Strong Counters
+Atomically set values for strong counters with `GET` requests and the
+`compareAndSet` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
+----
+
+{brandname} atomically sets the value to `{update}` if the current value is
+`{expect}`. If the operation is successful, {brandname} returns `_true_`.
+
+
+[id='rest_server_counters_cmpswp']
+= Performing compareAndSwap Operations on Strong Counters
+Atomically set values for strong counters with `GET` requests and the
+`compareAndSwap` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
+----
+
+{brandname} atomically sets the value to `{update}` if the current value is
+`{expect}`. If the operation is successful, {brandname} returns the previous
+value in the payload.
+
+
+[id='rest_server_counters_list']
+= Listing Counters
+Retrieve a list of counters in {brandname} clusters with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/counters/
+----

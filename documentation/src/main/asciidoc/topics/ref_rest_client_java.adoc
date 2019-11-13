@@ -1,0 +1,7 @@
+[id='rest_server_client_java']
+= Java REST Example
+
+[source,java]
+----
+include::{topics}/code_examples/RestClient.java[]
+----

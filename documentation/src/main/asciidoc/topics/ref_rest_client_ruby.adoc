@@ -1,0 +1,7 @@
+[id='rest_server_client_ruby']
+= Ruby REST Example
+
+[source,ruby]
+----
+include::code_examples/rest_client.rb[]
+----

@@ -1,0 +1,66 @@
+[id='rest_v2_cache_manager_site_status']
+= Getting Status of Backup Sites
+Retrieve the status for all backup sites from Cache Managers with `GET`
+requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/
+----
+
+{brandname} responds with status in JSON format, as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json_examples/xsite_backup_status.json[]
+----
+
+The `status` field has the following values:
+
+* `online`: all caches are online in the backup site.
+* `offline`: all caches are offline in the backup site.
+* `mixed`: some caches are online and others offline, and their names will be listed in the `online` and `offline` arrays respectively.
+
+
+[id='rest_v2_cache_manager_take_offline']
+= Taking Backup Sites Offline
+Take backup sites offline from Cache Managers with `GET` requests and the
+`?action=take-offline` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=take-offline
+----
+
+
+[id='rest_v2_cache_manager_bring_online']
+= Bringing Backup Sites Online
+Bring backup sites online from Cache Managers with `GET` requests and the
+`?action=bring-online` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
+----
+
+
+[id='rest_v2_cache_manager_start_push']
+= Pushing State
+Start pushing state of all caches for a Cache Manager to a backup site with
+`GET` requests and the `?action=start-push-state` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=start-push-state
+----
+
+
+[id='rest_v2_cache_manager_cancel_push']
+= Canceling State Push Operations
+Cancel ongoing state push operations for Cache Managers with `GET` requests and
+the `?action=cancel-push-state` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=cancel-push-state
+----

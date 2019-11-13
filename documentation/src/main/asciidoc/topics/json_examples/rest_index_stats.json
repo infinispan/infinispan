@@ -1,0 +1,10 @@
+{
+    "indexed_class_names": ["org.infinispan.sample.User"],
+    "indexed_entities_count": {
+        "org.infinispan.sample.User": 4
+    },
+    "index_sizes": {
+        "cacheName_protobuf": 14551
+    },
+    "reindexing": false
+}
