@@ -188,8 +188,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(GlobalConfigurationBuilder.class);
          T builder = constructor.newInstance(this);
-         this.modules.put(klass, builder);
-         return builder;
+         T existing = (T) this.modules.putIfAbsent(klass, builder);
+         return existing != null ? existing : builder;
       } catch (Exception e) {
          throw new CacheConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
       }
