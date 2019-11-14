@@ -40,10 +40,12 @@ public class ThreadPoolBuilder extends ComponentConfigurationBuilder<ThreadPoolC
 
     private final ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(null);
     private final ThreadPoolDefinition definition;
+    private final boolean nonBlocking;
 
-    ThreadPoolBuilder(ThreadPoolDefinition definition, String containerName) {
+    ThreadPoolBuilder(ThreadPoolDefinition definition, String containerName, boolean nonBlocking) {
         super(definition.getServiceName(containerName));
         this.definition = definition;
+        this.nonBlocking = nonBlocking;
     }
 
     @Override
@@ -52,7 +54,8 @@ public class ThreadPoolBuilder extends ComponentConfigurationBuilder<ThreadPoolC
                 this.definition.getMaxThreads().resolveModelAttribute(context, model).asInt(),
                 this.definition.getMinThreads().resolveModelAttribute(context, model).asInt(),
                 this.definition.getQueueLength().resolveModelAttribute(context, model).asInt(),
-                this.definition.getKeepAliveTime().resolveModelAttribute(context, model).asLong()
+                this.definition.getKeepAliveTime().resolveModelAttribute(context, model).asLong(),
+                this.nonBlocking
         );
         this.builder.threadPoolFactory(factory);
 

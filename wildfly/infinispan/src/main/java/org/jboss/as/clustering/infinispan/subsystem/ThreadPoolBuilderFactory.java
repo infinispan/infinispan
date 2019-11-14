@@ -44,6 +44,6 @@ public class ThreadPoolBuilderFactory implements ResourceServiceBuilderFactory<T
         PathAddress containerAddress = address.getParent();
         String containerName = containerAddress.getLastElement().getValue();
 
-        return new ThreadPoolBuilder(this.definition, containerName);
+        return new ThreadPoolBuilder(this.definition, containerName, address.getLastElement().getValue().startsWith("async"));
     }
 }
