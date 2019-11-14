@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static org.eclipse.jetty.http.HttpMethod.GET;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -31,28 +32,38 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    protected void defineCaches(EmbeddedCacheManager cm) {
    }
 
-   private ContentResponse call(String path) throws InterruptedException, ExecutionException, TimeoutException {
-      String url = String.format("http://localhost:%d/static%s", restServer().getPort(), path);
+   private ContentResponse call(String context, String path) throws InterruptedException, ExecutionException, TimeoutException {
+      String url = String.format("http://localhost:%d/%s/%s", restServer().getPort(), context, path);
       client.getContentDecoderFactories().clear();
       return client.newRequest(url).method(GET).send();
    }
 
    @Test
    public void testGetFile() throws InterruptedException, ExecutionException, TimeoutException {
-      ContentResponse response = call("nonexistent.html");
+      ContentResponse response = call("static", "nonexistent.html");
       ResponseAssertion.assertThat(response).isNotFound();
 
-      response = call("");
-      assertResponse(response, "index.html", "<h1>Hello</h1>", TEXT_HTML);
+      response = call("static", "");
+      assertResponse(response, "static-test/index.html", "<h1>Hello</h1>", TEXT_HTML);
 
-      response = call("/index.html");
-      assertResponse(response, "index.html", "<h1>Hello</h1>", TEXT_HTML);
+      response = call("static", "index.html");
+      assertResponse(response, "static-test/index.html", "<h1>Hello</h1>", TEXT_HTML);
 
-      response = call("/xml/file.xml");
-      assertResponse(response, "xml/file.xml", "<distributed-cache", MediaType.fromString("text/xml"), APPLICATION_XML);
+      response = call("static", "xml/file.xml");
+      assertResponse(response, "static-test/xml/file.xml", "<distributed-cache", MediaType.fromString("text/xml"), APPLICATION_XML);
 
-      response = call("/other/text/file.txt");
-      assertResponse(response, "other/text/file.txt", "This is a text file", TEXT_PLAIN);
+      response = call("static", "other/text/file.txt");
+      assertResponse(response, "static-test/other/text/file.txt", "This is a text file", TEXT_PLAIN);
+   }
+
+   @Test
+   public void testConsole() throws Exception {
+      ContentResponse response1 = call("console", "page.htm");
+      ContentResponse response2 = call("console", "folder/test.css");
+
+      assertResponse(response1, "static-test/console/page.htm", "console", TEXT_HTML);
+      assertResponse(response2, "static-test/console/folder/test.css", ".a", TEXT_CSS);
+      ResponseAssertion.assertThat(response2).isOk();
    }
 
    private void assertResponse(ContentResponse response, String path, String returnedText, MediaType... possibleTypes) {
@@ -65,7 +76,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
 
    private void assertCacheHeaders(String path, ContentResponse response) {
       int expireDuration = 60 * 60 * 24 * 31;
-      File test = getTestFile("static-test/" + path);
+      File test = getTestFile(path);
       assertNotNull(test);
       ResponseAssertion.assertThat(response).hasContentLength(test.length());
       ResponseAssertion.assertThat(response).hasLastModified(test.lastModified());

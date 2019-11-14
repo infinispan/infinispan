@@ -27,7 +27,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  *
  * @since 10.0
  */
-public class StaticFileResource implements ResourceHandler {
+public class StaticContentResource implements ResourceHandler {
 
    private final Path dir;
    private final String urlPath;
@@ -39,7 +39,7 @@ public class StaticFileResource implements ResourceHandler {
     * @param dir The path to serve files from
     * @param urlPath The url path to serve the files
     */
-   public StaticFileResource(Path dir, String urlPath) {
+   public StaticContentResource(Path dir, String urlPath) {
       this.dir = dir.toAbsolutePath();
       this.urlPath = urlPath;
    }
