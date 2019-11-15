@@ -71,7 +71,7 @@ public class LdapServerRule implements TestRule {
       this.initLDIF = initLDIF;
       this.withKdc = withKdc;
       if (withKdc) {
-         infinispanServerRule.getServerDriver().registerConfigurationEnhancer(configDir -> {
+         infinispanServerRule.registerConfigurationEnhancer(configDir -> {
             generateKeyTab(new File(configDir, "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
             generateKeyTab(new File(configDir, "http.keytab"), "HTTP/localhost@INFINISPAN.ORG", "httpPassword");
          });

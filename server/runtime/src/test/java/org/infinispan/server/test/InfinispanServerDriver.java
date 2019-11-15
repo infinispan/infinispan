@@ -21,9 +21,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -53,7 +51,8 @@ public abstract class InfinispanServerDriver {
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;
-   protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
+
+   private File rootDir;
    private File confDir;
    private ComponentStatus status;
    private AtomicLong certSerial = new AtomicLong(1);
@@ -72,13 +71,17 @@ public abstract class InfinispanServerDriver {
 
    protected abstract void stop();
 
-   public final void before(String name) {
-      // Prepare a server layout
+   /**
+    * Prepare a server layout
+    */
+   public void prepare(String name) {
       String testDir = TestingUtil.tmpDirectory(name);
       Util.recursiveFileRemove(testDir);
-      File rootDir = new File(testDir);
+      rootDir = new File(testDir);
       confDir = new File(rootDir, Server.DEFAULT_SERVER_CONFIG);
-      confDir.mkdirs();
+      if (!confDir.mkdirs()) {
+         throw new RuntimeException("Failed to create server configuration directory " + confDir);
+      }
       URL configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
       if (configurationFileURL == null) {
          throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
@@ -93,13 +96,16 @@ public abstract class InfinispanServerDriver {
       }
       createUserFile("default", true);
       createKeyStores();
+   }
+
+   public void start(String name) {
       InfinispanServerRule.log.infof("Starting server %s", name);
-      start(name, rootDir, configurationFilePath.getFileName().toString());
+      start(name, rootDir, new File(configuration.configurationFile()).getName());
       InfinispanServerRule.log.infof("Started server %s", name);
       status = ComponentStatus.RUNNING;
    }
 
-   public final void after(String name) {
+   public final void stop(String name) {
       status = ComponentStatus.STOPPING;
       InfinispanServerRule.log.infof("Stopping server %s", name);
       stop();
@@ -123,7 +129,9 @@ public abstract class InfinispanServerDriver {
             Server.DEFAULT_SERVER_LIB)
       ) {
          File d = new File(rootDir, dir);
-         d.mkdirs();
+         if (!d.mkdirs()) {
+            throw new IllegalStateException("Unable to create directory " + d);
+         }
          if (consumer != null) {
             consumer.accept(d, dir);
          }
@@ -161,6 +169,10 @@ public abstract class InfinispanServerDriver {
 
    public File getCertificateFile(String name) {
       return new File(confDir, name + ".pfx");
+   }
+
+   public File getConfDir() {
+      return confDir;
    }
 
    /**
@@ -305,7 +317,7 @@ public abstract class InfinispanServerDriver {
    /**
     * Pauses the server. Equivalent to kill -SIGSTOP
     *
-    * @param server
+    * @param server the index of the server
     */
    public void pause(int server) {
    }
@@ -313,28 +325,28 @@ public abstract class InfinispanServerDriver {
    /**
     * Resumes a paused server. Equivalent to kill -SIGCONT
     *
-    * @param server
+    * @param server the index of the server
     */
    public abstract void resume(int server);
 
    /**
     * Gracefully stops a running server
     *
-    * @param server
+    * @param server the index of the server
     */
    public abstract void stop(int server);
 
    /**
     * Forcefully stops a server. Equivalent to kill -SIGKILL
     *
-    * @param server
+    * @param server the index of the server
     */
    public abstract void kill(int server);
 
    /**
     * Restarts a previously stopped server.
     *
-    * @param server
+    * @param server the index of the server
     */
    public abstract void restart(int server);
 
@@ -351,13 +363,4 @@ public abstract class InfinispanServerDriver {
    public abstract MBeanServerConnection getJmxConnection(int server);
 
    public abstract RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder);
-   /**
-    * Registers a {@link Consumer} function which populates a server filesystem with additional files. The consumer will
-    * be invoked with the server's root directory
-    *
-    * @param enhancer
-    */
-   public void registerConfigurationEnhancer(Consumer<File> enhancer) {
-      configurationEnhancers.add(enhancer);
-   }
 }

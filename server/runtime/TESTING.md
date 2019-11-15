@@ -56,7 +56,7 @@ When used in suites, it needs to be initialized in the suite class:
 public class LotsOfTests {
 
    @ClassRule
-   public static final InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerTestConfiguration("config.xml").numServers(2));
+   public static final InfinispanServerRule SERVERS = InfinispanServerRuleBuilder.config("config.xml").numServers(2).build();
 }
 ```
 

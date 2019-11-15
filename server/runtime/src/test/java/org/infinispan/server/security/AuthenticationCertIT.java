@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
+import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.test.Exceptions;
@@ -25,7 +26,9 @@ import org.junit.experimental.categories.Category;
 public class AuthenticationCertIT {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule("configuration/AuthenticationServerTrustTest.xml");
+   public static InfinispanServerRule SERVERS =
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTrustTest.xml")
+                                    .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
