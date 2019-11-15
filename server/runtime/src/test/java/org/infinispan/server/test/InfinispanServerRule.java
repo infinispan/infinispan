@@ -1,15 +1,16 @@
 package org.infinispan.server.test;
 
 import java.io.Closeable;
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.logging.Log;
@@ -38,18 +39,28 @@ public class InfinispanServerRule implements TestRule {
 
    public static final Log log = LogFactory.getLog(InfinispanServerRule.class);
 
-   private final LazyInfinispanServerDriver lazyInfinispanServerDriver;
+   private InfinispanServerDriver serverDriver;
+   private InfinispanServerTestConfiguration configuration;
+   protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
 
-   public InfinispanServerRule(String configurationFile) {
-      this.lazyInfinispanServerDriver = new LazyInfinispanServerDriver(new InfinispanServerRuleConfigurationBuilder(configurationFile));
+   public InfinispanServerRule(InfinispanServerTestConfiguration configuration) {
+      this.configuration = configuration;
    }
 
-   public InfinispanServerRule(InfinispanServerRuleConfigurationBuilder configurationBuilder) {
-      this.lazyInfinispanServerDriver = new LazyInfinispanServerDriver(configurationBuilder);
+   /**
+    * Registers a {@link Consumer} function which populates a server filesystem with additional files.
+    *
+    * The consumer will be invoked with the server's configuration directory
+    */
+   public void registerConfigurationEnhancer(Consumer<File> enhancer) {
+      configurationEnhancers.add(enhancer);
    }
 
    public InfinispanServerDriver getServerDriver() {
-      return lazyInfinispanServerDriver.get();
+      if (serverDriver == null) {
+         throw new IllegalStateException("Operation not supported before test starts");
+      }
+      return serverDriver;
    }
 
    @Override
@@ -63,17 +74,24 @@ public class InfinispanServerRule implements TestRule {
             if (!inSuite) {
                TestResourceTracker.testStarted(testName);
             }
-            boolean manageServer = getServerDriver().getStatus() == ComponentStatus.INSTANTIATED;
+            // Don't manage the server when a test is using the same InfinispanServerRule instance as the parent suite
+            boolean manageServer = serverDriver == null;
             try {
                if (manageServer) {
-                  getServerDriver().before(testName);
+                  serverDriver = configuration.runMode().newDriver(configuration);
+                  serverDriver.prepare(testName);
+
+                  configurationEnhancers.forEach(c -> c.accept(serverDriver.getConfDir()));
+
+                  serverDriver.start(testName);
                }
                InfinispanServerRule.this.before(testName);
+
                base.evaluate();
             } finally {
                InfinispanServerRule.this.after(testName);
-               if (manageServer) {
-                  getServerDriver().after(testName);
+               if (manageServer && serverDriver != null) {
+                  serverDriver.stop(testName);
                }
                if (!inSuite) {
                   TestResourceTracker.testFinished(testName);
@@ -105,8 +123,7 @@ public class InfinispanServerRule implements TestRule {
          InetSocketAddress serverAddress = getServerDriver().getServerSocket(i, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
-      RemoteCacheManager remoteCacheManager = getServerDriver().createRemoteCacheManager(builder);
-      return remoteCacheManager;
+      return getServerDriver().createRemoteCacheManager(builder);
    }
 
    public RestClient newRestClient() {
@@ -123,7 +140,7 @@ public class InfinispanServerRule implements TestRule {
    }
 
    /**
-    * @param builder
+    * @param builder client configuration
     * @param n the server number
     * @return a client configured against the nth server
     */

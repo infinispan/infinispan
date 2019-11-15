@@ -12,7 +12,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
+import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.ServerRunMode;
 import org.junit.ClassRule;
@@ -25,8 +25,11 @@ import org.junit.Test;
 public class GracefulShutdownRestartIT {
 
    @ClassRule
-   public static final InfinispanServerRule SERVER = new InfinispanServerRule(
-         new InfinispanServerRuleConfigurationBuilder("configuration/ClusteredServerTest.xml").numServers(2).serverRunMode(ServerRunMode.CONTAINER));
+   public static final InfinispanServerRule SERVER =
+         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+                                    .numServers(2)
+                                    .runMode(ServerRunMode.CONTAINER)
+                                    .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);

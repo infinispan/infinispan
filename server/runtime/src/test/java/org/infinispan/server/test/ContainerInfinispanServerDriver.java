@@ -79,7 +79,6 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       this.rootDir = rootDir;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
-      configurationEnhancers.forEach(c -> c.accept(new File(rootDir, Server.DEFAULT_SERVER_CONFIG)));
       String baseImageName = System.getProperty("org.infinispan.test.server.baseImageName", "jboss/base-jdk:11");
       Path serverOutputDir = Paths.get(System.getProperty("server.output.dir"));
 

@@ -10,7 +10,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
+import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -22,8 +22,10 @@ import org.junit.Test;
 public class ConcurrentShutdownRestIT {
 
    @ClassRule
-   public static final InfinispanServerRule SERVER = new InfinispanServerRule(
-         new InfinispanServerRuleConfigurationBuilder("configuration/ClusteredServerTest.xml").numServers(2));
+   public static final InfinispanServerRule SERVER =
+         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+                                    .numServers(2)
+                                    .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);

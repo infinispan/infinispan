@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
+import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.LdapServerRule;
 import org.infinispan.server.test.category.Security;
@@ -32,8 +32,11 @@ import org.junit.runners.Parameterized;
 @Category(Security.class)
 public class AuthenticationKerberosIT {
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerRuleConfigurationBuilder("configuration/AuthenticationKerberosTest.xml")
-         .numServers(1).property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf"));
+   public static InfinispanServerRule SERVERS =
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationKerberosTest.xml")
+                                    .numServers(1)
+                                    .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+                                    .build();
 
    @ClassRule
    public static LdapServerRule LDAP = new LdapServerRule(SERVERS, "ldif/infinispan-kerberos.ldif", true);

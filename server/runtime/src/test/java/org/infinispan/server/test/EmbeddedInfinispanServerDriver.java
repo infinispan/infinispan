@@ -39,7 +39,6 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    protected void start(String name, File rootDir, String configurationFile) {
       servers = new ArrayList<>();
       serverFutures = new ArrayList<>();
-      configurationEnhancers.forEach(c -> c.accept(new File(rootDir, Server.DEFAULT_SERVER_CONFIG)));
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
          Properties properties = new Properties();

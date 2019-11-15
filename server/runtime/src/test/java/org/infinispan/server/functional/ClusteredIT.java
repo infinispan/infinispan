@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
+import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.test.Exceptions;
 import org.junit.ClassRule;
@@ -43,10 +43,10 @@ import org.junit.runners.Suite;
 public class ClusteredIT {
 
    @ClassRule
-   public static final InfinispanServerRule SERVERS = new InfinispanServerRule(
-         new InfinispanServerRuleConfigurationBuilder("configuration/ClusteredServerTest.xml")
-               .numServers(2)
-   );
+   public static final InfinispanServerRule SERVERS =
+         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+                                    .numServers(2)
+                                    .build();
 
    static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerTestMethodRule testMethodRule, boolean indexed) {
       ConfigurationBuilder config = new ConfigurationBuilder();

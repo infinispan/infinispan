@@ -9,7 +9,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
-import org.infinispan.server.test.InfinispanServerRuleConfigurationBuilder;
+import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.ServerRunMode;
 import org.infinispan.server.test.category.Resilience;
@@ -27,8 +27,10 @@ import org.junit.experimental.categories.Category;
 public class ResilienceIT {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = new InfinispanServerRule(new InfinispanServerRuleConfigurationBuilder("configuration/ClusteredServerTest.xml")
-         .serverRunMode(ServerRunMode.CONTAINER));
+   public static InfinispanServerRule SERVERS =
+         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+                                    .runMode(ServerRunMode.CONTAINER)
+                                    .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
