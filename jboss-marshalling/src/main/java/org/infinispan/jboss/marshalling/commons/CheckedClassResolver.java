@@ -16,6 +16,7 @@ public final class CheckedClassResolver extends DefaultContextClassResolver {
    public CheckedClassResolver(ClassWhiteList classWhiteList, ClassLoader defaultClassLoader) {
       super(defaultClassLoader);
       this.classWhiteList = classWhiteList;
+      classWhiteList.addClasses(JBossExternalizerAdapter.class);
    }
 
    @Override
