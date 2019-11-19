@@ -33,12 +33,6 @@ final class IndexingTagHandler implements TagHandler {
                .boost(1.0F)
                .build(), 1.0F, 1.0F);
 
-   private static final LuceneOptions STORED_NOT_ANALYZED = new LuceneOptionsImpl(
-         new DocumentFieldMetadata.Builder(null, BackReference.empty(), null, null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
-               .indexNullAs(NULL_TOKEN_CODEC)
-               .boost(1.0F)
-               .build(), 1.0F, 1.0F);
-
    private final Document document;
 
    private MessageContext<? extends MessageContext> messageContext;
