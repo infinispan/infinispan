@@ -7,9 +7,7 @@ import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONT
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.rest.logging.Log;
@@ -29,18 +27,16 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       Builder<RestServerConfiguration> {
 
    final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
-   public static final int CROSS_ORIGIN_PORT = 11222;
-   public static final int CROSS_ORIGIN_ALT_PORT = 9000;
 
    private final AuthenticationConfigurationBuilder authentication;
    private final CorsConfigurationBuilder cors;
    private Path staticResources;
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
-   public static final int DEFAULT_PORT = 8080;
-   public static final String DEFAULT_NAME = "rest";
-   public static final String SERVER_HOME = "infinispan.server.home.path";
-   public static final String STATIC_RESOURCES_PATH = "static";
+   private static final int DEFAULT_PORT = 8080;
+   private static final String DEFAULT_NAME = "rest";
+   private static final String SERVER_HOME = "infinispan.server.home.path";
+   private static final String STATIC_RESOURCES_PATH = "static";
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
@@ -68,11 +64,6 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    public RestServerConfigurationBuilder compressionLevel(int compressLevel) {
       attributes.attribute(COMPRESSION_LEVEL).set(compressLevel);
-      return this;
-   }
-
-   public RestServerConfigurationBuilder corsAllowForLocalhost(Set<String> schemes, int... ports) {
-      cors.corsAllowForLocalhost(schemes, ports);
       return this;
    }
 
@@ -110,10 +101,6 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
-      Set<String> schemes = new HashSet<>();
-      schemes.add("http");
-      schemes.add("https");
-      corsAllowForLocalhost(schemes, DEFAULT_PORT, CROSS_ORIGIN_PORT, CROSS_ORIGIN_ALT_PORT);
       return new RestServerConfiguration(attributes.protect(), ssl.create(), staticResources, authentication.create(), cors.create(), encryption.create());
    }
 

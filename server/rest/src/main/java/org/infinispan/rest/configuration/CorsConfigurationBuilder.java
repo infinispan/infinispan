@@ -2,12 +2,10 @@ package org.infinispan.rest.configuration;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.cors.CorsConfig;
 
 /**
@@ -21,21 +19,6 @@ public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
       CorsRuleConfigurationBuilder builder = new CorsRuleConfigurationBuilder();
       corsRules.add(builder);
       return builder;
-   }
-
-   CorsConfigurationBuilder corsAllowForLocalhost(Set<String> schemes, int[] ports) {
-      for (String scheme : schemes) {
-         for (int port : ports) {
-            String localIpv4 = scheme + "://" + "127.0.0.1" + ":" + port;
-            String localDomain = scheme + "://" + "localhost" + ":" + port;
-            String localIpv6 = scheme + "://" + "[::1]" + ":" + port;
-            addNewRule().allowOrigins(new String[]{localIpv4, localDomain, localIpv6})
-                  .allowCredentials(true)
-                  .allowMethods(new String[]{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"})
-                  .allowHeaders(new String[]{HttpHeaderNames.CONTENT_TYPE.toString()});
-         }
-      }
-      return this;
    }
 
    public CorsConfigurationBuilder add(List<CorsConfig> corsConfig) {

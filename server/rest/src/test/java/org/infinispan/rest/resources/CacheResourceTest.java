@@ -292,11 +292,12 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    public void testCORSPreflight() throws Exception {
       putValueInCache("default", "key", "value");
 
+      int port = restServer().getPort();
       ContentResponse preFlight = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", port, "default", "key"))
             .method(HttpMethod.OPTIONS)
             .header(HttpHeader.HOST, "localhost")
-            .header(HttpHeader.ORIGIN, "http://localhost:11222")
+            .header(HttpHeader.ORIGIN, "http://localhost:" + port)
             .header("access-control-request-method", "GET")
             .send();
 
@@ -311,9 +312,10 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       putStringValueInCache("default", "test", "test");
 
       //when
+      int port = restServer().getPort();
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
-            .header(HttpHeader.ORIGIN, "http://127.0.0.1:11222")
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", port, "default", "test"))
+            .header(HttpHeader.ORIGIN, "http://127.0.0.1:" + port)
             .send();
 
       assertThat(response).isOk();
