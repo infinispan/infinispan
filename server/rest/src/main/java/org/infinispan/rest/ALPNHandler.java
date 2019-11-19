@@ -3,6 +3,7 @@ package org.infinispan.rest;
 import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
 import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.netty.channel.Channel;
@@ -11,11 +12,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler.UpgradeCodecFactory;
 import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.codec.http2.CleartextHttp2ServerUpgradeHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
@@ -42,6 +46,9 @@ import io.netty.util.AsciiString;
  */
 @ChannelHandler.Sharable
 public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
+
+   private static final int CROSS_ORIGIN_ALT_PORT = 9000;
+   private static final String[] SCHEMES = new String[]{"http", "https"};
 
    protected final RestServer restServer;
 
@@ -108,11 +115,29 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
       List<CorsConfig> corsRules = restServer.getConfiguration().getCorsRules();
-      if (!corsRules.isEmpty()) pipeline.addLast(new CorsHandler(corsRules, true));
+      List<CorsConfig> localhostRules = allowForLocalhost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT);
+      corsRules.addAll(localhostRules);
+      pipeline.addLast(new CorsHandler(corsRules, true));
       pipeline.addLast(new ChunkedWriteHandler());
       pipeline.addLast(new Http11RequestHandler(restServer));
    }
 
+   private List<CorsConfig> allowForLocalhost(int... ports) {
+      List<CorsConfig> configs = new ArrayList<>();
+      for (int port : ports) {
+         for (String scheme : SCHEMES) {
+            String localIpv4 = scheme + "://" + "127.0.0.1" + ":" + port;
+            String localDomain = scheme + "://" + "localhost" + ":" + port;
+            String localIpv6 = scheme + "://" + "[::1]" + ":" + port;
+            CorsConfig config = CorsConfigBuilder.forOrigins(localIpv4, localDomain, localIpv6)
+                  .allowCredentials()
+                  .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.OPTIONS)
+                  .allowedRequestHeaders(HttpHeaderNames.CONTENT_TYPE.toString()).build();
+            configs.add(config);
+         }
+      }
+      return configs;
+   }
 
    protected int maxContentLength() {
       return this.restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;

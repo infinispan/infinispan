@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.rest.helper.RestServerHelper;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -44,11 +45,12 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
 
    @Test
    public void testCORS() throws Exception {
-      String searchUrl = getUrl(pickServer());
+      RestServerHelper server = pickServer();
+      String searchUrl = getUrl(server);
       ContentResponse preFlight = client.newRequest(searchUrl)
             .method(HttpMethod.OPTIONS)
             .header(HttpHeader.HOST, "localhost")
-            .header(HttpHeader.ORIGIN, "http://localhost:11222")
+            .header(HttpHeader.ORIGIN, "http://localhost:" + server.getPort())
             .header("access-control-request-method", "GET")
             .send();
 
