@@ -207,10 +207,7 @@ public class BlockingBundler implements Bundler, Runnable {
             int maxBundleSize = transport.getMaxBundleSize();
             assert size < maxBundleSize;
 
-            // Wait for space in the current bundle or for the serialization buffer to be free
-            // TODO This penalizes threads sending large messages, because they wake up and go back to the end of the queue
-            // We should implement a wait queue that can skip large messages when writing a bundle, but preserves
-            // their priority for the next bundle
+            // Wait for the serialization buffer to be free OR for space in the current bundle
             while (!bufferEmpty && currentBundleSize + size > maxBundleSize) {
                // TODO Add a time limit and drop messages if waiting too long
                addCondition.await();
@@ -222,10 +219,15 @@ public class BlockingBundler implements Bundler, Runnable {
                // Now the current bundle is empty and the serialization buffer is used
             }
 
+            // Now we have room in the current bundle
             currentBundle.add(message);
             currentBundleSize += size;
             if (currentBundleEmpty) {
                currentBundleEmpty = false;
+            }
+
+            if (bufferEmpty || currentBundleSize < maxBundleSize) {
+               addCondition.signal();
             }
          } finally {
             destinationLock.unlock();
@@ -252,7 +254,7 @@ public class BlockingBundler implements Bundler, Runnable {
 
                   // Application threads could wait for room in the current bundle only if it's not empty
                   if (!currentBundleEmpty) {
-                     addCondition.signalAll();
+                     addCondition.signal();
                   }
                } finally {
                   destinationLock.unlock();
@@ -269,7 +271,7 @@ public class BlockingBundler implements Bundler, Runnable {
                // Even if we didn't serialize the current bundle, we made room for an application thread
                // to serialize the current bundle itself and add its message
                if (!currentBundleEmpty) {
-                  addCondition.signalAll();
+                  addCondition.signal();
                }
             } finally {
                destinationLock.unlock();
