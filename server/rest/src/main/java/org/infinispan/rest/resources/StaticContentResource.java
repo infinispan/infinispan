@@ -54,7 +54,7 @@ public class StaticContentResource implements ResourceHandler {
    private File resolve(String resource) {
       Path resolved = dir.resolve(resource);
       try {
-         if (!resolved.toFile().getCanonicalPath().startsWith(dir.toAbsolutePath().toString())) {
+         if (!resolved.toFile().getCanonicalPath().startsWith(dir.toFile().getCanonicalPath())) {
             return null;
          }
       } catch (IOException e) {
