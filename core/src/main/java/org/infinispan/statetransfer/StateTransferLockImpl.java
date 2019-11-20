@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -88,6 +89,9 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) {
+      if (topologyId == TOPOLOGY_ID_STOPPED)
+         return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
+
       if (transactionDataTopologyId >= expectedTopologyId)
          return CompletableFutures.completedNull();
 
@@ -137,6 +141,9 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    @Override
    public CompletableFuture<Void> topologyFuture(int expectedTopologyId) {
+      if (topologyId == TOPOLOGY_ID_STOPPED)
+         return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
+
       if (topologyId >= expectedTopologyId)
          return CompletableFutures.completedNull();
 
