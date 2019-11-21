@@ -32,6 +32,8 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
 import org.infinispan.rest.CacheInputStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -238,9 +240,10 @@ public class CacheResourceV2 extends CacheResource {
       boolean statistics = configuration.jmxStatistics().enabled();
       int size = cache.getAdvancedCache().size();
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
+      InfinispanQueryStatisticsInfo.IndexStatistics indexStatistics = getIndexStatistics(cache);
       boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
-      // TODO: https://issues.jboss.org/browse/ISPN-10884
-      boolean indexingInProgress = false;
+      boolean indexingInProgress = indexStatistics == null ? false : indexStatistics.getReindexing();
+
       try {
          CacheFullDetail fullDetail = new CacheFullDetail();
          fullDetail.stats = stats;
@@ -264,6 +267,15 @@ public class CacheResourceV2 extends CacheResource {
          responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
       return responseBuilder.build();
+   }
+
+   private InfinispanQueryStatisticsInfo.IndexStatistics getIndexStatistics(Cache<?, ?> cache) {
+      if(!cache.getCacheConfiguration().indexing().index().isEnabled()) {
+         return null;
+      }
+
+      return ComponentRegistryUtils.
+               getQueryStatistics(cache.getAdvancedCache()).getIndexStatistics();
    }
 
    private CompletionStage<RestResponse> getCacheConfig(RestRequest request) {
