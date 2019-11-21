@@ -46,7 +46,6 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.stats.Stats;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;

@@ -109,8 +109,11 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       String json = response.getContentAsString();
       JsonNode jsonNode = mapper.readTree(json);
       List<String> names = asText(jsonNode.findValues("name"));
-      assertTrue(names.contains("cache1"));
-      assertTrue(names.contains("cache2"));
+      assertEquals("CacheManagerResourceTest", names.get(0));
+      assertEquals("___protobuf_metadata", names.get(1));
+      assertEquals("___script_cache", names.get(2));
+      assertEquals("cache1", names.get(3));
+      assertEquals("cache2", names.get(4));
 
       List<String> status = asText(jsonNode.findValues("status"));
       assertTrue(status.contains("RUNNING"));
@@ -144,7 +147,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertTrue(hasRemoteBackup.contains("false"));
    }
 
-   private List<String> asText( List<JsonNode> values) {
+   private List<String> asText(List<JsonNode> values) {
       return values.stream().map(JsonNode::asText).collect(Collectors.toList());
    }
 
