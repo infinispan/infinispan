@@ -114,12 +114,12 @@ public class BlockingBundler implements Bundler, Runnable {
    public void run() {
       while (running) {
          boolean sent = sendQueued();
-         if (sent) {
-            // Run at least one more iteration before blocking
-            blockBundlerThread = false;
-         } else {
-            bundlerLock.lock();
-            try {
+         bundlerLock.lock();
+         try {
+            if (sent) {
+               // Run at least one more iteration before blocking
+               blockBundlerThread = false;
+            } else {
                if (!blockBundlerThread) {
                   // We didn't send any message, block after the next iteration
                   blockBundlerThread = true;
@@ -129,11 +129,11 @@ public class BlockingBundler implements Bundler, Runnable {
                      bundlerCondition.await();
                   }
                }
-            } catch (InterruptedException e) {
-               assert !running;
-            } finally {
-               bundlerLock.unlock();
             }
+         } catch (InterruptedException e) {
+            assert !running;
+         } finally {
+            bundlerLock.unlock();
          }
       }
    }
@@ -165,13 +165,10 @@ public class BlockingBundler implements Bundler, Runnable {
 
 
    private void signalBundlerThread() {
-      if (!blockBundlerThread)
-         return;
-
       bundlerLock.lock();
       try {
          blockBundlerThread = false;
-         bundlerCondition.signalAll();
+         bundlerCondition.signal();
       } finally {
          bundlerLock.unlock();
       }
