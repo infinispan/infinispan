@@ -13,6 +13,7 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -212,10 +213,13 @@ public class CacheManagerResource implements ResourceHandler {
                            return cacheInfo;
                            // Only request 1 cache size at a time
                         }), false, 1)
-            .collectInto(new HashSet<>(), Set::add)
-            .map(caches -> {
+            .collectInto(new HashSet<CacheInfo>(), Set::add)
+            .map(cacheInfos -> {
                try {
-                  byte[] bytes = objectMapper.writeValueAsBytes(caches);
+                  List<CacheInfo> sortedCacheInfos = cacheInfos.stream()
+                        .sorted(Comparator.comparing(c -> c.name))
+                        .collect(Collectors.toList());
+                  byte[] bytes = objectMapper.writeValueAsBytes(sortedCacheInfos);
                   responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
                } catch (JsonProcessingException e) {
                   responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
