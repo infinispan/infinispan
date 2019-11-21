@@ -1,6 +1,5 @@
 {
   "stats": {
-    "misses": -1,
     "time_since_start": -1,
     "time_since_reset": -1,
     "hits": -1,
@@ -11,6 +10,7 @@
     "off_heap_memory_used": -1,
     "data_memory_used": -1,
     "retrievals": -1,
+    "misses": -1,
     "remove_hits": -1,
     "remove_misses": -1,
     "evictions": -1,
@@ -23,13 +23,22 @@
     "required_minimum_number_of_nodes": -1
   },
   "size": 0,
-  "configuration": "{\"distributed-cache\":{\"mode\":\"SYNC\",\"transaction\":{\"stop-timeout\":0,\"mode\":\"NONE\"}}}",
+  "configuration": {
+    "distributed-cache": {
+      "mode": "SYNC",
+      "transaction": {
+        "stop-timeout": 0,
+        "mode": "NONE"
+      }
+    }
+  },
   "rehash_in_progress": false,
-  "indexing_in_progress": true,
   "bounded": false,
-  "indexed": true,
+  "indexed": false,
   "persistent": false,
   "transactional": false,
   "secured": false,
-  "has_remote_backup": false
+  "has_remote_backup": false,
+  "indexing_in_progress": false,
+  "statistics": false
 }

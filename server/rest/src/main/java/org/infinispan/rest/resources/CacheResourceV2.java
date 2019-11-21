@@ -43,6 +43,8 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.stats.Stats;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -233,6 +235,7 @@ public class CacheResourceV2 extends CacheResource {
    private RestResponse getDetailResponse(NettyRestResponse.Builder responseBuilder, Cache<?, ?> cache) {
       Stats stats = cache.getAdvancedCache().getStats();
       Configuration configuration = cache.getCacheConfiguration();
+      boolean statistics = configuration.jmxStatistics().enabled();
       int size = cache.getAdvancedCache().size();
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
@@ -251,6 +254,7 @@ public class CacheResourceV2 extends CacheResource {
          fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
          fullDetail.secured = configuration.security().authorization().enabled();
          fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
+         fullDetail.statistics = statistics;
 
          byte[] detailsResponse = invocationHelper.getMapper().writeValueAsBytes(fullDetail);
          responseBuilder.contentType(APPLICATION_JSON)
@@ -319,6 +323,7 @@ public class CacheResourceV2 extends CacheResource {
    class CacheFullDetail {
       public Stats stats;
       public int size;
+      @JsonRawValue
       public String configuration;
       public boolean rehashInProgress;
       public boolean bounded;
@@ -328,6 +333,7 @@ public class CacheResourceV2 extends CacheResource {
       public boolean secured;
       public boolean hasRemoteBackup;
       public boolean indexingInProgress;
+      public boolean statistics;
    }
 
 }
