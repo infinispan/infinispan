@@ -252,7 +252,7 @@ public class CacheResourceV2 extends CacheResource {
          fullDetail.rehashInProgress = rehashInProgress;
          fullDetail.indexingInProgress = indexingInProgress;
          fullDetail.persistent = configuration.persistence().usingStores();
-         fullDetail.bounded = configuration.expiration().maxIdle() > -1 || configuration.expiration().lifespan() > -1;
+         fullDetail.bounded = configuration.memory().evictionStrategy().isEnabled();
          fullDetail.indexed = configuration.indexing().index().isEnabled();
          fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
          fullDetail.secured = configuration.security().authorization().enabled();
