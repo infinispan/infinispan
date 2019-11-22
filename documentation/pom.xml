@@ -167,7 +167,7 @@
                                 <docinfo>true</docinfo>
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
-                                <infinispancomponentversion>${version.component.infinispan}</infinispancomponentversion>
+                                <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
                                 <brandname>${infinispan.brand.name}</brandname>
                                 <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                 <wildflybrandname>${wildfly.brand.name}</wildflybrandname>
@@ -237,7 +237,7 @@
                                         <docinfo>true</docinfo>
                                         <experimental>true</experimental>
                                         <infinispanversion>${infinispan.base.version}</infinispanversion>
-                                        <infinispancomponentversion>${version.component.infinispan}</infinispancomponentversion>
+                                        <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
                                         <brandname>${infinispan.brand.name}</brandname>
                                         <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                         <defaults>${defaults.file}</defaults>
