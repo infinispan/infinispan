@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,6 +28,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.management.MBeanServer;
@@ -164,9 +165,9 @@ public class JGroupsTransport implements Transport {
    // and channelConnectedLatch is signaled
    protected volatile ClusterView clusterView =
          new ClusterView(ClusterView.INITIAL_VIEW_ID, Collections.emptyList(), null);
-   private volatile Set<String>  sitesView = Collections.emptySet();
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
+   private volatile Supplier<Set<String>> siteViewSupplier = Collections::emptySet;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -387,8 +388,7 @@ public class JGroupsTransport implements Transport {
       initChannel();
 
       channel.setUpHandler(channelCallbacks);
-      setXSiteViewListener(channelCallbacks);
-      setSiteMasterPicker(new SiteMasterPickerImpl());
+      installRelay2Listeners(channelCallbacks);
 
       startJGroupsChannelIfNeeded();
 
@@ -441,18 +441,24 @@ public class JGroupsTransport implements Transport {
       }
    }
 
-   private void setXSiteViewListener(RouteStatusListener listener) {
+   private void installRelay2Listeners(ChannelCallbacks callbacks) {
       RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
-      if (relay2 != null) {
-         relay2.setRouteStatusListener(listener);
+      if (relay2 == null) {
+         return;
       }
-   }
+      RouteStatusListener existing = relay2.getRouteStatusListener();
+      if (existing == null) {
+         siteViewSupplier = callbacks;
+         relay2.setRouteStatusListener(callbacks);
+      } else {
+         //jgroups subsystem (wildfly server) already registers a listener.
+         //use it to extract the view.
+         assert existing instanceof Supplier;
+         //noinspection unchecked
+         siteViewSupplier = (Supplier<Set<String>>) existing;
+      }
 
-   private void setSiteMasterPicker(SiteMasterPickerImpl siteMasterPicker) {
-      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
-      if (relay2 != null) {
-         relay2.siteMasterPicker(siteMasterPicker);
-      }
+      relay2.siteMasterPicker(new SiteMasterPickerImpl());
    }
 
    private void startJGroupsChannelIfNeeded() {
@@ -806,7 +812,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public Set<String> getSitesView() {
-      return sitesView;
+      return siteViewSupplier.get();
    }
 
    @Override
@@ -1172,20 +1178,6 @@ public class JGroupsTransport implements Transport {
       return channel;
    }
 
-   private void updateSitesView(Collection<String> sitesUp, Collection<String> sitesDown) {
-      viewUpdateLock.lock();
-      try {
-         Set<String> reachableSites = new HashSet<>(sitesView);
-         reachableSites.addAll(sitesUp);
-         reachableSites.removeAll(sitesDown);
-         log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
-         log.receivedXSiteClusterView(reachableSites);
-         sitesView = Collections.unmodifiableSet(reachableSites);
-      } finally {
-         viewUpdateLock.unlock();
-      }
-   }
-
    private void siteUnreachable(String site) {
       requests.forEach(request -> {
          if (request instanceof SingleSiteRequest) {
@@ -1386,7 +1378,10 @@ public class JGroupsTransport implements Transport {
       throw new IllegalArgumentException("Unable to decode order from flags " + flags);
    }
 
-   private class ChannelCallbacks implements RouteStatusListener, UpHandler {
+   private class ChannelCallbacks implements RouteStatusListener, UpHandler, Supplier<Set<String>> {
+
+      private final Set<String> siteView = new ConcurrentSkipListSet<>();
+
       @Override
       public void sitesUp(String... sites) {
          updateSitesView(Arrays.asList(sites), Collections.emptyList());
@@ -1396,6 +1391,19 @@ public class JGroupsTransport implements Transport {
       public void sitesDown(String... sites) {
          updateSitesView(Collections.emptyList(), Arrays.asList(sites));
       }
+
+      @Override
+      public Set<String> get() {
+         return Collections.unmodifiableSet(siteView);
+      }
+
+      private void updateSitesView(List<String> sitesUp, List<String> sitesDown) {
+         siteView.addAll(sitesUp);
+         siteView.removeAll(sitesDown);
+         log.tracef("Sites view changed: up %s, down %s", sitesUp, sitesDown);
+         log.receivedXSiteClusterView(siteView);
+      }
+
 
       @Override
       public Object up(Event evt) {
