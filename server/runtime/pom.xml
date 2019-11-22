@@ -209,7 +209,6 @@
                         <artifactItem>
                            <groupId>org.infinispan</groupId>
                            <artifactId>infinispan-console-ng</artifactId>
-                           <version>${version.console}</version>
                            <outputDirectory>${server.output.dir}/static/console</outputDirectory>
                         </artifactItem>
                      </artifactItems>
