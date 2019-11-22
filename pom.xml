@@ -316,7 +316,6 @@
       <versionx.io.protostuff.protostuff-runtime>${version.protostuff}</versionx.io.protostuff.protostuff-runtime>
       <versionx.io.protostuff.protostuff-runtime-registry>${version.protostuff}</versionx.io.protostuff.protostuff-runtime-registry>
       <versionx.io.reactivex.rxjava2.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava2.rxjava>
-      <versionx.io.undertow.undertow-core>2.0.9.Final</versionx.io.undertow.undertow-core>
       <versionx.jakarta-regexp.jakarta-regexp>1.4</versionx.jakarta-regexp.jakarta-regexp>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.activation.javax.activation-api>1.2.0</versionx.javax.activation.javax.activation-api>
@@ -356,7 +355,7 @@
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.ant.ant-launcher>${version.ant}</versionx.org.apache.ant.ant-launcher>
       <versionx.org.apache.avro.avro>1.7.6</versionx.org.apache.avro.avro>
-      <versionx.org.apache.commons.commons-compress>1.18</versionx.org.apache.commons.commons-compress>
+      <versionx.org.apache.commons.commons-compress>1.19</versionx.org.apache.commons.commons-compress>
       <versionx.org.apache.commons.commons-lang3>3.6</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.commons.commons-math3>3.2</versionx.org.apache.commons.commons-math3>
@@ -1267,11 +1266,6 @@
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>
             <version>${versionx.io.reactivex.rxjava2.rxjava}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
-            <version>${versionx.io.undertow.undertow-core}</version>
          </dependency>
          <dependency>
             <groupId>jakarta-regexp</groupId>
