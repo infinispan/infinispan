@@ -159,8 +159,12 @@ public class BlockingBundler implements Bundler, Runnable {
    }
 
    void sendBundle(ByteArrayDataOutputStream output, final Address dest) throws Exception {
-      log.trace("Sending message/bundle of %d bytes", output.position());
-      transport.doSend(output.buffer(), 0, output.position(), dest);
+      log.trace("Sending message/batch of %d bytes", output.position());
+      try {
+         transport.doSend(output.buffer(), 0, output.position(), dest);
+      } catch (Throwable t) {
+         log.warn("Error sending message/batch to %s", dest);
+      }
    }
 
 
