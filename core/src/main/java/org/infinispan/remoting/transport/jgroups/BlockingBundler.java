@@ -152,18 +152,21 @@ public class BlockingBundler implements Bundler, Runnable {
    }
 
    void writeMessages(ByteArrayDataOutputStream output, final Address src, final Collection<Message> messages)
-      throws Exception {
+         throws Exception {
       for (Message msg : messages) {
          msg.writeToNoAddrs(transport.localAddress(), output, excluded_headers);
       }
    }
 
-   void sendBundle(ByteArrayDataOutputStream output, final Address dest) throws Exception {
-      log.trace("Sending message/batch of %d bytes", output.position());
+   void sendBundle(ByteArrayDataOutputStream output, final Address dest) {
+      if (log.isTraceEnabled()) {
+
+         log.trace("Sending message/bundle of %d bytes", output.position());
+      }
       try {
          transport.doSend(output.buffer(), 0, output.position(), dest);
       } catch (Throwable t) {
-         log.warn("Error sending message/batch to %s", dest);
+         log.warn("Error sending message/bundle to %s", dest);
       }
    }
 
@@ -188,11 +191,15 @@ public class BlockingBundler implements Bundler, Runnable {
       final Lock destinationLock = new ReentrantLock();
       final Condition addCondition = destinationLock.newCondition();
       final Address destination;
-      int currentBundleSize;
+
+      @GuardedBy("destinationLock")
+      volatile int currentBundleSize;
+      @GuardedBy("destinationLock")
       List<Message> currentBundle;
+      @GuardedBy("destinationLock")
       ByteArrayDataOutputStream serializationBuffer;
-      volatile boolean currentBundleEmpty = true;
-      volatile boolean bufferEmpty = true;
+      @GuardedBy("destinationLock")
+      volatile int serializedMessageCount;
 
       Destination(Address destination) {
          this.destination = destination;
@@ -209,25 +216,22 @@ public class BlockingBundler implements Bundler, Runnable {
             assert size < maxBundleSize;
 
             // Wait for the serialization buffer to be free OR for space in the current bundle
-            while (!bufferEmpty && currentBundleSize + size > maxBundleSize) {
+            while (serializedMessageCount != 0 && currentBundleSize + size > maxBundleSize) {
                // TODO Add a time limit and drop messages if waiting too long
                addCondition.await();
             }
 
             if (currentBundleSize + size > maxBundleSize) {
                // The current bundle is full, but the serialization buffer is free
-               writeCurrentBundle();
-               // Now the current bundle is empty and the serialization buffer is used
+               serializeCurrentBundle();
             }
 
-            // Now we have room in the current bundle
+            // Now we are guaranteed to have room in the current bundle
             currentBundle.add(message);
             currentBundleSize += size;
-            if (currentBundleEmpty) {
-               currentBundleEmpty = false;
-            }
 
-            if (bufferEmpty || currentBundleSize < maxBundleSize) {
+            // Wake up any other thread was waiting for space in the bundle
+            if (currentBundleSize < maxBundleSize) {
                addCondition.signal();
             }
          } finally {
@@ -238,23 +242,23 @@ public class BlockingBundler implements Bundler, Runnable {
       }
 
       boolean trySendBundle() {
-         if (currentBundleEmpty)
+         // The writer thread will always add a message to the current bundle after serializing it,
+         // so we can ignore the buffer for now
+         if (currentBundleSize == 0)
             return false;
 
          try {
-            if (bufferEmpty) {
+            if (serializedMessageCount == 0) {
                destinationLock.lock();
                try {
-                  // No other thread can empty the buffer or the current bundle
-                  assert bufferEmpty;
-                  assert !currentBundleEmpty;
+                  if (serializedMessageCount == 0) {
+                     // We already checked that the bundle isn't empty before acquiring the lock
+                     // Because the buffer is empty, no other thread could have cleared the bundle
+                     assert currentBundleSize > 0;
 
-                  // The bundle isn't full, so we have to serialize it on the bundler thread
-                  // TODO Serialize the messages when they are added, and only serialize the header here
-                  writeCurrentBundle();
+                     serializeCurrentBundle();
 
-                  // Application threads could wait for room in the current bundle only if it's not empty
-                  if (!currentBundleEmpty) {
+                     // Application threads could wait for room in the current bundle only if it's not empty
                      addCondition.signal();
                   }
                } finally {
@@ -267,13 +271,11 @@ public class BlockingBundler implements Bundler, Runnable {
             destinationLock.lock();
             try {
                serializationBuffer.position(0);
-               bufferEmpty = true;
+               serializedMessageCount = 0;
 
                // Even if we didn't serialize the current bundle, we made room for an application thread
                // to serialize the current bundle itself and add its message
-               if (!currentBundleEmpty) {
-                  addCondition.signal();
-               }
+               addCondition.signal();
             } finally {
                destinationLock.unlock();
             }
@@ -284,7 +286,7 @@ public class BlockingBundler implements Bundler, Runnable {
       }
 
       @GuardedBy("destinationLock")
-      private void writeCurrentBundle() throws Exception {
+      private void serializeCurrentBundle() throws Exception {
          assert serializationBuffer.position() == 0;
          assert currentBundle.size() > 0;
          if (currentBundle.size() == 1) {
@@ -297,10 +299,9 @@ public class BlockingBundler implements Bundler, Runnable {
          if (log.isTraceEnabled()) {
             log.trace("Serialized %d message(s) in %d bytes", currentBundle.size(), serializationBuffer.position());
          }
+         serializedMessageCount = currentBundle.size();
          currentBundle.clear();
          currentBundleSize = 0;
-         currentBundleEmpty = true;
-         bufferEmpty = false;
       }
    }
 }

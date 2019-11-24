@@ -47,6 +47,11 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
    }
 
    public void suspend(boolean s) {
+      if (s) {
+         log.tracef("Stopped blocking");
+      } else {
+         log.tracef("Resumed blocking");
+      }
       this.suspended.set(s);
    }
 
