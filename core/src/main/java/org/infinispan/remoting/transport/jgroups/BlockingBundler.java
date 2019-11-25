@@ -158,10 +158,9 @@ public class BlockingBundler implements Bundler, Runnable {
       }
    }
 
-   void sendBundle(ByteArrayDataOutputStream output, final Address dest) {
+   void sendBundle(Address dest, ByteArrayDataOutputStream output, int messageCount) {
       if (log.isTraceEnabled()) {
-
-         log.trace("Sending message/bundle of %d bytes", output.position());
+         log.trace("Sending %d message(s) of %d bytes", messageCount, output.position());
       }
       try {
          transport.doSend(output.buffer(), 0, output.position(), dest);
@@ -266,7 +265,7 @@ public class BlockingBundler implements Bundler, Runnable {
                }
             }
 
-            sendBundle(serializationBuffer, destination);
+            sendBundle(destination, serializationBuffer, serializedMessageCount);
 
             destinationLock.lock();
             try {
@@ -295,9 +294,6 @@ public class BlockingBundler implements Bundler, Runnable {
             writeBundleHeader(serializationBuffer, destination, transport.localAddress(),
                               currentBundle.size());
             writeMessages(serializationBuffer, transport.localAddress(), currentBundle);
-         }
-         if (log.isTraceEnabled()) {
-            log.trace("Serialized %d message(s) in %d bytes", currentBundle.size(), serializationBuffer.position());
          }
          serializedMessageCount = currentBundle.size();
          currentBundle.clear();
