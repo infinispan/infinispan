@@ -37,16 +37,16 @@
    </xs:complexType>
 
    <xs:complexType name="interface">
-      <xs:choice>
-         <xs:element type="tns:interface-inet-address" name="inet-address"/>
-         <xs:element type="tns:interface-global" name="global"/>
-         <xs:element type="tns:interface-link-local" name="link-local"/>
-         <xs:element type="tns:interface-loopback" name="loopback"/>
-         <xs:element type="tns:interface-non-loopback" name="non-loopback"/>
-         <xs:element type="tns:interface-site-local" name="site-local"/>
-         <xs:element type="tns:interface-match-interface" name="match-interface"/>
-         <xs:element type="tns:interface-match-address" name="match-address"/>
-      </xs:choice>
+      <xs:all>
+         <xs:element type="tns:interface-inet-address" name="inet-address" minOccurs="0"/>
+         <xs:element type="tns:interface-global" name="global" minOccurs="0"/>
+         <xs:element type="tns:interface-link-local" name="link-local" minOccurs="0"/>
+         <xs:element type="tns:interface-loopback" name="loopback" minOccurs="0"/>
+         <xs:element type="tns:interface-non-loopback" name="non-loopback" minOccurs="0"/>
+         <xs:element type="tns:interface-site-local" name="site-local" minOccurs="0"/>
+         <xs:element type="tns:interface-match-interface" name="match-interface" minOccurs="0"/>
+         <xs:element type="tns:interface-match-address" name="match-address" minOccurs="0"/>
+      </xs:all>
       <xs:attribute type="xs:string" name="name"/>
    </xs:complexType>
 

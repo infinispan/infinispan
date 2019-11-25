@@ -2,12 +2,14 @@ package org.infinispan.server.configuration;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -175,62 +177,94 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void parseInterface(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
       String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME);
       String name = attributes[0];
-
-      Element element = nextElement(reader);
-      if (element == null) {
-         throw ParseUtils.unexpectedEndElement(reader);
+      InterfaceConfigurationBuilder iface = builder.interfaces().addInterface(name);
+      boolean matched = false;
+      CacheConfigurationException cce = Server.log.invalidNetworkConfiguration();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         try {
+            switch (element) {
+               case INET_ADDRESS:
+                  String value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.INET_ADDRESS, value);
+                  }
+                  break;
+               case LINK_LOCAL:
+                  ParseUtils.requireNoAttributes(reader);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.LINK_LOCAL, null);
+                  }
+                  break;
+               case GLOBAL:
+                  ParseUtils.requireNoAttributes(reader);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.GLOBAL, null);
+                  }
+                  break;
+               case LOOPBACK:
+                  ParseUtils.requireNoAttributes(reader);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.LOOPBACK, null);
+                  }
+                  break;
+               case NON_LOOPBACK:
+                  ParseUtils.requireNoAttributes(reader);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.NON_LOOPBACK, null);
+                  }
+                  break;
+               case SITE_LOCAL:
+                  ParseUtils.requireNoAttributes(reader);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.SITE_LOCAL, null);
+                  }
+                  break;
+               case MATCH_INTERFACE:
+                  value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.MATCH_INTERFACE, value);
+                  }
+                  break;
+               case MATCH_ADDRESS:
+                  value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.MATCH_ADDRESS, value);
+                  }
+                  break;
+               case MATCH_HOST:
+                  value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.MATCH_HOST, value);
+                  }
+                  break;
+               case ANY_ADDRESS:
+                  ParseUtils.requireNoAttributes(reader);
+                  ParseUtils.requireNoContent(reader);
+                  if (!matched) {
+                     iface.address(AddressType.ANY_ADDRESS, null);
+                  }
+                  break;
+               default:
+                  throw ParseUtils.unexpectedElement(reader);
+            }
+            matched = true;
+         } catch (IOException e) {
+            cce.addSuppressed(e);
+         }
       }
-      InterfacesConfigurationBuilder interfaces = builder.interfaces();
-      switch (element) {
-         case INET_ADDRESS:
-            String value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
-            interfaces.addInterface(name).address(AddressType.INET_ADDRESS, value);
-            ParseUtils.requireNoContent(reader);
-            break;
-         case LINK_LOCAL:
-            ParseUtils.requireNoAttributes(reader);
-            ParseUtils.requireNoContent(reader);
-            interfaces.addInterface(name).address(AddressType.LINK_LOCAL, null);
-            break;
-         case GLOBAL:
-            ParseUtils.requireNoAttributes(reader);
-            ParseUtils.requireNoContent(reader);
-            interfaces.addInterface(name).address(AddressType.GLOBAL, null);
-            break;
-         case LOOPBACK:
-            ParseUtils.requireNoAttributes(reader);
-            ParseUtils.requireNoContent(reader);
-            interfaces.addInterface(name).address(AddressType.LOOPBACK, null);
-            break;
-         case NON_LOOPBACK:
-            ParseUtils.requireNoAttributes(reader);
-            ParseUtils.requireNoContent(reader);
-            interfaces.addInterface(name).address(AddressType.NON_LOOPBACK, null);
-            break;
-         case SITE_LOCAL:
-            ParseUtils.requireNoAttributes(reader);
-            ParseUtils.requireNoContent(reader);
-            interfaces.addInterface(name).address(AddressType.SITE_LOCAL, null);
-            break;
-         case MATCH_INTERFACE:
-            value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
-            interfaces.addInterface(name).address(AddressType.MATCH_INTERFACE, value);
-            ParseUtils.requireNoContent(reader);
-            break;
-         case MATCH_ADDRESS:
-            value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
-            interfaces.addInterface(name).address(AddressType.MATCH_ADDRESS, value);
-            ParseUtils.requireNoContent(reader);
-            break;
-         case MATCH_HOST:
-            value = ParseUtils.requireSingleAttribute(reader, Attribute.VALUE);
-            interfaces.addInterface(name).address(AddressType.MATCH_HOST, value);
-            ParseUtils.requireNoContent(reader);
-            break;
-         default:
-            throw ParseUtils.unexpectedElement(reader);
+      if (!matched) {
+         throw cce;
       }
-      ParseUtils.requireNoContent(reader); // Consume the </interface> tag
    }
 
    private void parseSecurity(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {

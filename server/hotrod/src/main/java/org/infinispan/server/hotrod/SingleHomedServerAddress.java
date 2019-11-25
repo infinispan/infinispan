@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.remoting.transport.Address;
 
 /**
  * A Hot Rod server address
@@ -43,19 +42,6 @@ public class SingleHomedServerAddress implements ServerAddress {
       int result = host.hashCode();
       result = 31 * result + port;
       return result;
-   }
-
-   @Override
-   public int compareTo(Address o) {
-      if (o instanceof SingleHomedServerAddress) {
-         SingleHomedServerAddress oa = (SingleHomedServerAddress) o;
-         int cmp = host.compareTo(oa.host);
-         if (cmp == 0) {
-            cmp = port - oa.port;
-         }
-         return cmp;
-      }
-      return -1;
    }
 
    @Override

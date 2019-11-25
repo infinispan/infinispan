@@ -2,6 +2,8 @@ package org.infinispan.server.configuration;
 
 import static org.infinispan.server.configuration.InterfaceConfiguration.NAME;
 
+import java.io.IOException;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.network.NetworkAddress;
@@ -18,7 +20,7 @@ public class InterfaceConfigurationBuilder implements Builder<InterfaceConfigura
       attributes.attribute(NAME).set(name);
    }
 
-   public InterfaceConfigurationBuilder address(AddressType addressType, String addressValue) {
+   public InterfaceConfigurationBuilder address(AddressType addressType, String addressValue) throws IOException {
       address.type(addressType, addressValue);
       this.networkAddress = createNetworkAddress();
       return this;
@@ -32,11 +34,13 @@ public class InterfaceConfigurationBuilder implements Builder<InterfaceConfigura
       return attributes.attribute(NAME).get();
    }
 
-   private NetworkAddress createNetworkAddress() {
+   private NetworkAddress createNetworkAddress() throws IOException {
       String interfaceName = this.name();
       AddressType addressType = address.addressType();
       String addressValue = address.value();
       switch (addressType) {
+         case ANY_ADDRESS:
+            return NetworkAddress.anyAddress(interfaceName);
          case INET_ADDRESS:
             return NetworkAddress.fromString(interfaceName, addressValue);
          case LINK_LOCAL:

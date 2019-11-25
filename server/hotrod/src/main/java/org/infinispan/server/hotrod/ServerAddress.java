@@ -2,15 +2,13 @@ package org.infinispan.server.hotrod;
 
 import java.net.InetAddress;
 
-import org.infinispan.remoting.transport.Address;
-
 /**
  * A Hot Rod server address
  *
  * @author Galder Zamarreño
  * @since 5.1
  */
-public interface ServerAddress extends Address {
+public interface ServerAddress {
 
    /**
     * Returns the mapping for the
