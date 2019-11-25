@@ -14,7 +14,6 @@ import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.remoting.transport.Address;
 
 /**
  * A Hot Rod server address which encapsulates a multi-homed server. This class enumerates all available addresses on
@@ -68,19 +67,6 @@ public class MultiHomedServerAddress implements ServerAddress {
       int result = addresses.hashCode();
       result = 31 * result + port;
       return result;
-   }
-
-   @Override
-   public int compareTo(Address o) {
-      if (o instanceof MultiHomedServerAddress) {
-         MultiHomedServerAddress oa = (MultiHomedServerAddress) o;
-         int cmp = addresses.size() - oa.addresses.size();
-         if (cmp == 0) {
-            cmp = port - oa.port;
-         }
-         return cmp;
-      }
-      return -1;
    }
 
    @Override

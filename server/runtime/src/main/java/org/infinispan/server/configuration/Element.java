@@ -10,6 +10,7 @@ import java.util.Map;
 public enum Element {
    UNKNOWN(null), //must be first
 
+   ANY_ADDRESS,
    ATTRIBUTE,
    ATTRIBUTE_MAPPING,
    ENDPOINTS,

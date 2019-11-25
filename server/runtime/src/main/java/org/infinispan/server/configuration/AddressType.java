@@ -4,6 +4,7 @@ package org.infinispan.server.configuration;
  * @since 10.0
  */
 public enum AddressType {
+   ANY_ADDRESS,
    INET_ADDRESS,
    LINK_LOCAL,
    GLOBAL,
