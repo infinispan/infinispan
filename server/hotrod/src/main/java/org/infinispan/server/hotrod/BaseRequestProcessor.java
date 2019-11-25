@@ -92,7 +92,7 @@ public class BaseRequestProcessor {
       } else {
          header.op = HotRodOperation.ERROR;
       }
-      ByteBuf buf = header.encoder().errorResponse(header, server, channel.alloc(), msg, status);
+      ByteBuf buf = header.encoder().errorResponse(header, server, channel, msg, status);
       int responseBytes = buf.readableBytes();
       ChannelFuture future = channel.writeAndFlush(buf);
       if (header instanceof AccessLoggingHeader) {
@@ -102,30 +102,30 @@ public class BaseRequestProcessor {
 
    void writeSuccess(HotRodHeader header, byte[] result) {
       if (header.hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
-         writeResponse(header, header.encoder().successResponse(header, server, channel.alloc(), result));
+         writeResponse(header, header.encoder().successResponse(header, server, channel, result));
       } else {
-         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.Success));
       }
    }
 
    void writeSuccess(HotRodHeader header) {
-      writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
+      writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.Success));
    }
 
    void writeNotExecuted(HotRodHeader header, byte[] prev) {
       if (header.hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
-         writeResponse(header, header.encoder().notExecutedResponse(header, server, channel.alloc(), prev));
+         writeResponse(header, header.encoder().notExecutedResponse(header, server, channel, prev));
       } else {
-         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.OperationNotExecuted));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.OperationNotExecuted));
       }
    }
 
    void writeNotExecuted(HotRodHeader header) {
-      writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.OperationNotExecuted));
+      writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.OperationNotExecuted));
    }
 
    void writeNotExist(HotRodHeader header) {
-      writeResponse(header, header.encoder().notExistResponse(header, server, channel.alloc()));
+      writeResponse(header, header.encoder().notExistResponse(header, server, channel));
    }
 
    protected void writeResponse(HotRodHeader header, ByteBuf buf) {

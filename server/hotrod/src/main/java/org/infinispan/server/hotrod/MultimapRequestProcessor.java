@@ -41,7 +41,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
          if (result.isEmpty()) {
             status = OperationStatus.KeyDoesNotExist;
          }
-         writeResponse(header, header.encoder().multimapCollectionResponse(header, server, channel.alloc(), status,
+         writeResponse(header, header.encoder().multimapCollectionResponse(header, server, channel, status,
                mapToCollectionOfByteArrays(result)));
       } catch (Throwable t2) {
          writeException(header, t2);
@@ -68,7 +68,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
             ce = entry.get();
             result = mapToCollectionOfByteArrays(ce.getValue());
          }
-         writeResponse(header, header.encoder().multimapEntryResponse(header, server, channel.alloc(), status, ce, result));
+         writeResponse(header, header.encoder().multimapEntryResponse(header, server, channel, status, ce, result));
       } catch (Throwable t2) {
          writeException(header, t2);
       }
@@ -88,7 +88,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
          if (throwable != null) {
             writeException(header, throwable);
          } else {
-            writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
+            writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.Success));
          }
       });
    }
@@ -114,7 +114,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
          if (throwable != null) {
             writeException(header, throwable);
          } else {
-            writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), result));
+            writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel, result));
          }
       });
    }
@@ -143,7 +143,7 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
          if (throwable != null) {
             writeException(header, throwable);
          } else {
-            writeResponse(header, header.encoder().booleanResponse(header, server, channel.alloc(), result));
+            writeResponse(header, header.encoder().booleanResponse(header, server, channel, result));
          }
       };
    }

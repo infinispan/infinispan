@@ -16,7 +16,7 @@ public final class ExternalizerIds {
    public static final int MEMCACHED_METADATA = 1101;
    public static final int TOPOLOGY_ADDRESS = 1102;
    public static final int TOPOLOGY_VIEW = 1103;
-   public static final int SERVER_ADDRESS = 1104;
+   public static final int SINGLE_HOMED_SERVER_ADDRESS = 1104;
    public static final int MIME_METADATA = 1105;
    public static final int BINARY_FILTER = 1106;
    public static final int BINARY_CONVERTER = 1107;
@@ -35,5 +35,6 @@ public final class ExternalizerIds {
    public static final int PREPARED_FUNCTION = 1120;
    public static final int XID_PREDICATE = 1121;
    public static final int CONDITIONAL_MARK_ROLLBACK_FUNCTION = 1122;
+   public static final int MULTI_HOMED_SERVER_ADDRESS = 1123;
 
 }

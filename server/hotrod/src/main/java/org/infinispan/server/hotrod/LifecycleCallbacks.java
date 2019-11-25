@@ -9,9 +9,10 @@ import static org.infinispan.server.core.ExternalizerIds.DECISION_FUNCTION;
 import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.MULTI_HOMED_SERVER_ADDRESS;
 import static org.infinispan.server.core.ExternalizerIds.PREPARED_FUNCTION;
 import static org.infinispan.server.core.ExternalizerIds.PREPARING_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.SERVER_ADDRESS;
+import static org.infinispan.server.core.ExternalizerIds.SINGLE_HOMED_SERVER_ADDRESS;
 import static org.infinispan.server.core.ExternalizerIds.TX_STATE;
 import static org.infinispan.server.core.ExternalizerIds.XID_PREDICATE;
 
@@ -76,7 +77,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       this.globalComponentRegistry = gcr;
       this.globalCfg = globalCfg;
       Map<Integer, AdvancedExternalizer<?>> externalizers = globalCfg.serialization().advancedExternalizers();
-      externalizers.put(SERVER_ADDRESS, new ServerAddress.Externalizer());
+      externalizers.put(SINGLE_HOMED_SERVER_ADDRESS, new SingleHomedServerAddress.Externalizer());
+      externalizers.put(MULTI_HOMED_SERVER_ADDRESS, new MultiHomedServerAddress.Externalizer());
       externalizers.put(KEY_VALUE_VERSION_CONVERTER, new KeyValueVersionConverter.Externalizer());
       externalizers.put(KEY_VALUE_WITH_PREVIOUS_CONVERTER, new KeyValueWithPreviousEventConverterExternalizer());
       externalizers.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());

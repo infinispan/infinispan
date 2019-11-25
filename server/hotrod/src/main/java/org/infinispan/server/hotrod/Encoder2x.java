@@ -8,6 +8,8 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsign
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeXid;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.security.PrivilegedActionException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,8 +25,8 @@ import javax.transaction.xa.Xid;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
@@ -54,7 +56,7 @@ import org.infinispan.topology.CacheTopology;
 import org.jgroups.SuspectedException;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
 
 /**
  * @author Galder Zamarreño
@@ -73,8 +75,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf authResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] challenge) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf authResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] challenge) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       if (challenge != null) {
          buf.writeBoolean(false);
          ExtendedByteBuf.writeRangedBytes(challenge, buf);
@@ -86,8 +88,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf authMechListResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Set<String> mechs) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf authMechListResponse(HotRodHeader header, HotRodServer server, Channel channel, Set<String> mechs) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       ExtendedByteBuf.writeUnsignedInt(mechs.size(), buf);
       for (String s : mechs) {
          ExtendedByteBuf.writeString(s, buf);
@@ -96,18 +98,18 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] prev) {
-      return valueResponse(header, server, alloc, OperationStatus.NotExecutedWithPrevious, prev);
+   public ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] prev) {
+      return valueResponse(header, server, channel, OperationStatus.NotExecutedWithPrevious, prev);
    }
 
    @Override
-   public ByteBuf notExistResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc) {
-      return emptyResponse(header, server, alloc, OperationStatus.KeyDoesNotExist);
+   public ByteBuf notExistResponse(HotRodHeader header, HotRodServer server, Channel channel) {
+      return emptyResponse(header, server, channel, OperationStatus.KeyDoesNotExist);
    }
 
    @Override
-   public ByteBuf valueResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, byte[] prev) {
-      ByteBuf buf = writeHeader(header, server, alloc, status);
+   public ByteBuf valueResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, byte[] prev) {
+      ByteBuf buf = writeHeader(header, server, channel, status);
       if (prev == null) {
          ExtendedByteBuf.writeUnsignedInt(0, buf);
       } else {
@@ -120,20 +122,20 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf successResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] result) {
-      return valueResponse(header, server, alloc, OperationStatus.SuccessWithPrevious, result);
+   public ByteBuf successResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] result) {
+      return valueResponse(header, server, channel, OperationStatus.SuccessWithPrevious, result);
    }
 
    @Override
-   public ByteBuf errorResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, String message, OperationStatus status) {
-      ByteBuf buf = writeHeader(header, server, alloc, status);
+   public ByteBuf errorResponse(HotRodHeader header, HotRodServer server, Channel channel, String message, OperationStatus status) {
+      ByteBuf buf = writeHeader(header, server, channel, status);
       ExtendedByteBuf.writeString(message, buf);
       return buf;
    }
 
    @Override
-   public ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int size, CacheSet<Map.Entry<byte[], byte[]>> entries) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, Channel channel, int size, CacheSet<Map.Entry<byte[], byte[]>> entries) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = entries.iterator()) {
          int max = Integer.MAX_VALUE;
          if (size != 0) {
@@ -154,14 +156,14 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
-      return writeHeader(header, server, alloc, status);
+   public ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status) {
+      return writeHeader(header, server, channel, status);
    }
 
    @Override
-   public ByteBuf pingResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+   public ByteBuf pingResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status) {
       if (HotRodVersion.HOTROD_30.isAtLeast(header.version)) {
-         ByteBuf buf = writeHeader(header, server, alloc, status, true);
+         ByteBuf buf = writeHeader(header, server, channel, status, true);
          buf.writeByte(HotRodVersion.LATEST.getVersion());
          ExtendedByteBuf.writeUnsignedInt(HotRodOperation.REQUEST_COUNT, buf);
          for (HotRodOperation op : HotRodOperation.VALUES) {
@@ -172,13 +174,13 @@ class Encoder2x implements VersionedEncoder {
          }
          return buf;
       } else {
-         return writeHeader(header, server, alloc, status, true);
+         return writeHeader(header, server, channel, status, true);
       }
    }
 
    @Override
-   public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       int numStats = 9;
       if (transport != null) {
          numStats += 2;
@@ -225,8 +227,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] value, long version) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] value, long version) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       buf.writeLong(version);
       ExtendedByteBuf.writeRangedBytes(value, buf);
       return buf;
@@ -234,8 +236,8 @@ class Encoder2x implements VersionedEncoder {
 
 
    @Override
-   public ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CacheEntry<byte[], byte[]> entry) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> entry) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
             MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
       ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
@@ -243,8 +245,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf getStreamResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int offset, CacheEntry<byte[], byte[]> entry) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf getStreamResponse(HotRodHeader header, HotRodServer server, Channel channel, int offset, CacheEntry<byte[], byte[]> entry) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
             MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
       ExtendedByteBuf.writeRangedBytes(entry.getValue(), offset, buf);
@@ -252,8 +254,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Map<byte[], byte[]> entries) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, Channel channel, Map<byte[], byte[]> entries) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       ExtendedByteBuf.writeUnsignedInt(entries.size(), buf);
       for (Map.Entry<byte[], byte[]> entry : entries.entrySet()) {
          ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
@@ -263,8 +265,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CloseableIterator<byte[]> iterator) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, Channel channel, CloseableIterator<byte[]> iterator) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       while (iterator.hasNext()) {
          buf.writeByte(1);
          ExtendedByteBuf.writeRangedBytes(iterator.next(), buf);
@@ -274,15 +276,15 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf iterationStartResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, String iterationId) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf iterationStartResponse(HotRodHeader header, HotRodServer server, Channel channel, String iterationId) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       ExtendedByteBuf.writeString(iterationId, buf);
       return buf;
    }
 
    @Override
-   public ByteBuf iterationNextResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, IterableIterationResult iterationResult) {
-      ByteBuf buf = writeHeader(header, server, alloc, iterationResult.getStatusCode());
+   public ByteBuf iterationNextResponse(HotRodHeader header, HotRodServer server, Channel channel, IterableIterationResult iterationResult) {
+      ByteBuf buf = writeHeader(header, server, channel, iterationResult.getStatusCode());
       ExtendedByteBuf.writeRangedBytes(iterationResult.segmentsToBytes(), buf);
       List<CacheEntry> entries = iterationResult.getEntries();
       ExtendedByteBuf.writeUnsignedInt(entries.size(), buf);
@@ -320,16 +322,16 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf counterConfigurationResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CounterConfiguration configuration) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf counterConfigurationResponse(HotRodHeader header, HotRodServer server, Channel channel, CounterConfiguration configuration) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       encodeConfiguration(configuration, buf::writeByte, buf::writeLong,
             value -> ExtendedByteBuf.writeUnsignedInt(value, buf));
       return buf;
    }
 
    @Override
-   public ByteBuf counterNamesResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<String> counterNames) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf counterNamesResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<String> counterNames) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       write(buf, counterNames.size());
       for (String s : counterNames) {
          writeString(s, buf);
@@ -338,8 +340,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, Collection<byte[]> values) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, Collection<byte[]> values) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       ExtendedByteBuf.writeUnsignedInt(values.size(), buf);
       for (byte[] v : values) {
          ExtendedByteBuf.writeRangedBytes(v, buf);
@@ -348,8 +350,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> entry, Collection<byte[]> values) {
-      ByteBuf buf = writeHeader(header, server, alloc, status);
+   public ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> entry, Collection<byte[]> values) {
+      ByteBuf buf = writeHeader(header, server, channel, status);
       MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
             MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
       if (values == null) {
@@ -364,36 +366,36 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf booleanResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, boolean result) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf booleanResponse(HotRodHeader header, HotRodServer server, Channel channel, boolean result) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       buf.writeByte(result ? 1 : 0);
       return buf;
    }
 
    @Override
-   public ByteBuf unsignedLongResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, long value) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf unsignedLongResponse(HotRodHeader header, HotRodServer server, Channel channel, long value) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       ExtendedByteBuf.writeUnsignedLong(value, buf);
       return buf;
    }
 
    @Override
-   public ByteBuf longResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, long value) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf longResponse(HotRodHeader header, HotRodServer server, Channel channel, long value) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       buf.writeLong(value);
       return buf;
    }
 
    @Override
-   public ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int xaReturnCode) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, Channel channel, int xaReturnCode) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       buf.writeInt(xaReturnCode);
       return buf;
    }
 
    @Override
-   public ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<Xid> xids) {
-      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+   public ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<Xid> xids) {
+      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       writeUnsignedInt(xids.size(), buf);
       for (Xid xid : xids) {
          writeXid(xid, buf);
@@ -430,12 +432,12 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
-      return writeHeader(header, server, alloc, status, false);
+   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status) {
+      return writeHeader(header, server, channel, status, false);
    }
 
-   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, boolean sendMediaType) {
-      ByteBuf buf = alloc.ioBuffer();
+   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, boolean sendMediaType) {
+      ByteBuf buf = channel.alloc().ioBuffer();
       Cache<Address, ServerAddress> addressCache = HotRodVersion.forVersion(header.version) != HotRodVersion.UNKNOWN ?
             server.getAddressCache() : null;
 
@@ -479,11 +481,11 @@ class Encoder2x implements VersionedEncoder {
       if (newTopology.isPresent()) {
          AbstractTopologyResponse topology = newTopology.get();
          if (topology instanceof TopologyAwareResponse) {
-            writeTopologyUpdate((TopologyAwareResponse) topology, buf);
+            writeTopologyUpdate((TopologyAwareResponse) topology, buf, ((InetSocketAddress) channel.localAddress()).getAddress());
             if (header.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE)
                writeEmptyHashInfo(topology, buf);
          } else if (topology instanceof HashDistAware20Response) {
-            writeHashTopologyUpdate((HashDistAware20Response) topology, cacheTopology, buf);
+            writeHashTopologyUpdate((HashDistAware20Response) topology, cacheTopology, buf, ((InetSocketAddress) channel.localAddress()).getAddress());
          } else {
             throw new IllegalArgumentException("Unsupported response: " + topology);
          }
@@ -549,7 +551,7 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private void writeTopologyUpdate(TopologyAwareResponse t, ByteBuf buffer) {
+   private void writeTopologyUpdate(TopologyAwareResponse t, ByteBuf buffer, InetAddress localAddress) {
       Map<Address, ServerAddress> topologyMap = t.serverEndpointsMap;
       if (topologyMap.isEmpty()) {
          log.noMembersInTopology();
@@ -560,7 +562,7 @@ class Encoder2x implements VersionedEncoder {
          ExtendedByteBuf.writeUnsignedInt(t.topologyId, buffer);
          ExtendedByteBuf.writeUnsignedInt(topologyMap.size(), buffer);
          for (ServerAddress address : topologyMap.values()) {
-            ExtendedByteBuf.writeString(address.getHost(), buffer);
+            ExtendedByteBuf.writeString(address.getHost(localAddress), buffer);
             ExtendedByteBuf.writeUnsignedShort(address.getPort(), buffer);
          }
       }
@@ -572,7 +574,7 @@ class Encoder2x implements VersionedEncoder {
       ExtendedByteBuf.writeUnsignedInt(t.numSegments, buffer);
    }
 
-   private void writeHashTopologyUpdate(HashDistAware20Response h, CacheTopology cacheTopology, ByteBuf buf) {
+   private void writeHashTopologyUpdate(HashDistAware20Response h, CacheTopology cacheTopology, ByteBuf buf, InetAddress localAddress) {
       // Calculate members first, in case there are no members
       ConsistentHash ch = cacheTopology.getReadConsistentHash();
       Map<Address, ServerAddress> members = h.serverEndpointsMap.entrySet().stream().filter(e ->
@@ -596,7 +598,7 @@ class Encoder2x implements VersionedEncoder {
          ExtendedByteBuf.writeUnsignedInt(members.size(), buf);
          Map<Address, Integer> indexedMembers = new HashMap<>();
          members.forEach((addr, serverAddr) -> {
-            ExtendedByteBuf.writeString(serverAddr.getHost(), buf);
+            ExtendedByteBuf.writeString(serverAddr.getHost(localAddress), buf);
             ExtendedByteBuf.writeUnsignedShort(serverAddr.getPort(), buf);
             indexCount.incrementAndGet();
             indexedMembers.put(addr, indexCount.get()); // easier indexing

@@ -46,46 +46,6 @@ class TopologyAwareResponse extends AbstractTopologyResponse {
    }
 }
 
-class HashDistAwareResponse extends AbstractHashDistAwareResponse {
-
-   protected HashDistAwareResponse(int topologyId, Map<Address, ServerAddress> serverEndpointsMap, int numSegments, int numOwners, byte hashFunction, int hashSpace) {
-      super(topologyId, serverEndpointsMap, numSegments, numOwners, hashFunction, hashSpace);
-   }
-
-   @Override
-   public String toString() {
-      return "HashDistAwareResponse{" +
-             "topologyId=" + topologyId +
-             ", numSegments=" + numSegments +
-             ", numOwners=" + numOwners +
-             ", hashFunction=" + hashFunction +
-             ", hashSpace=" + hashSpace +
-             '}';
-   }
-}
-
-class HashDistAware11Response extends AbstractHashDistAwareResponse {
-   final int numVNodes;
-
-   protected HashDistAware11Response(int topologyId, Map<Address, ServerAddress> serverEndpointsMap, int numOwners,
-                                     byte hashFunction, int hashSpace, int numVNodes) {
-      super(topologyId, serverEndpointsMap, 0, numOwners, hashFunction, hashSpace);
-      this.numVNodes = numVNodes;
-   }
-
-   @Override
-   public String toString() {
-      return "HashDistAware11Response{" +
-             "topologyId=" + topologyId +
-             ", numSegments=" + numSegments +
-             ", numOwners=" + numOwners +
-             ", hashFunction=" + hashFunction +
-             ", hashSpace=" + hashSpace +
-             ", numVNodes=" + numVNodes +
-             '}';
-   }
-}
-
 class HashDistAware20Response extends AbstractTopologyResponse {
    final byte hashFunction;
 

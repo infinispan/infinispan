@@ -314,7 +314,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private void addSelfToTopologyView(EmbeddedCacheManager cacheManager) {
       addressCache = cacheManager.getCache(configuration.topologyCacheName());
       clusterAddress = cacheManager.getAddress();
-      address = new ServerAddress(configuration.publicHost(), configuration.publicPort());
+      address = ServerAddress.forAddress(configuration.publicHost(), configuration.publicPort());
       clusterExecutor = cacheManager.executor();
 
       viewChangeListener = new CrashedMemberDetectorListener(addressCache, this);
