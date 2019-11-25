@@ -25,6 +25,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    private final InterfacesConfigurationBuilder interfaces = new InterfacesConfigurationBuilder();
    private final SocketBindingsConfigurationBuilder socketBindings = new SocketBindingsConfigurationBuilder(this);
    private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder();
+   private final DataSourcesConfigurationBuilder dataSources = new DataSourcesConfigurationBuilder(this);
    private final EndpointsConfigurationBuilder endpoints = new EndpointsConfigurationBuilder(this);
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
@@ -51,6 +52,10 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return socketBindings;
    }
 
+   public DataSourcesConfigurationBuilder dataSources() {
+      return dataSources;
+   }
+
    public EndpointsConfigurationBuilder endpoints() {
       return endpoints;
    }
@@ -66,6 +71,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
             interfaces.create(),
             socketBindings.create(),
             security.create(),
+            dataSources.create(),
             endpoints.create()
       );
    }

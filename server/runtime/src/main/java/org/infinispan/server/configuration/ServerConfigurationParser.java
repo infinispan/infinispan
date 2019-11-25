@@ -47,6 +47,8 @@ import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 
+import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
+
 /**
  * Server endpoint configuration parser
  *
@@ -109,6 +111,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
       if (element == Element.SECURITY) {
          parseSecurity(reader, builder);
+         element = nextElement(reader);
+      }
+      if (element == Element.DATA_SOURCES) {
+         parseDataSources(reader, builder);
          element = nextElement(reader);
       }
       if (element == Element.ENDPOINTS) {
@@ -960,6 +966,138 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
          }
       }
+   }
+
+   private void parseDataSources(XMLExtendedStreamReader reader, ServerConfigurationBuilder builder) throws XMLStreamException {
+      DataSourcesConfigurationBuilder dataSources = builder.dataSources();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case DATA_SOURCE: {
+               parseDataSource(reader, dataSources);
+               break;
+            }
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseDataSource(XMLExtendedStreamReader reader, DataSourcesConfigurationBuilder dataSourcesBuilder) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.JNDI_NAME);
+      String name = attributes[0];
+      String jndiName = attributes[1];
+      DataSourceConfigurationBuilder dataSourceBuilder = dataSourcesBuilder.dataSource(name, jndiName);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case JNDI_NAME:
+            case NAME:
+               // already parsed
+               break;
+            case STATISTICS:
+               dataSourceBuilder.statistics(Boolean.parseBoolean(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      Element element = nextElement(reader);
+      if (element != Element.CONNECTION_FACTORY) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
+      parseDataSourceConnectionFactory(reader, dataSourceBuilder);
+      element = nextElement(reader);
+      if (element != Element.CONNECTION_POOL) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
+      parseDataSourceConnectionPool(reader, dataSourceBuilder);
+      element = nextElement(reader);
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader, element);
+      }
+   }
+
+   private void parseDataSourceConnectionFactory(XMLExtendedStreamReader reader, DataSourceConfigurationBuilder dataSourceBuilder) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.DRIVER);
+      dataSourceBuilder.driver(attributes[0]);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case DRIVER:
+               // already parsed
+               break;
+            case USERNAME:
+               dataSourceBuilder.username(value);
+               break;
+            case PASSWORD:
+               dataSourceBuilder.password(value);
+               break;
+            case URL:
+               dataSourceBuilder.url(value);
+               break;
+            case TRANSACTION_ISOLATION:
+               dataSourceBuilder.transactionIsolation(AgroalConnectionFactoryConfiguration.TransactionIsolation.valueOf(value));
+               break;
+            case NEW_CONNECTION_SQL:
+               dataSourceBuilder.newConnectionSql(value);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case CONNECTION_PROPERTY: {
+               dataSourceBuilder.addProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME), reader.getElementText());
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseDataSourceConnectionPool(XMLExtendedStreamReader reader, DataSourceConfigurationBuilder dataSourceBuilder) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.MAX_SIZE);
+      dataSourceBuilder.maxSize(Integer.parseInt(attributes[0]));
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case MAX_SIZE:
+               // already parsed
+               break;
+            case MIN_SIZE:
+               dataSourceBuilder.minSize(Integer.parseInt(value));
+               break;
+            case INITIAL_SIZE:
+               dataSourceBuilder.initialSize(Integer.parseInt(value));
+               break;
+            case BLOCKING_TIMEOUT:
+               dataSourceBuilder.blockingTimeout(Integer.parseInt(value));
+               break;
+            case BACKGROUND_VALIDATION:
+               dataSourceBuilder.backgroundValidation(Long.parseLong(value));
+               break;
+            case LEAK_DETECTION:
+               dataSourceBuilder.leakDetection(Long.parseLong(value));
+               break;
+            case IDLE_REMOVAL:
+               dataSourceBuilder.idleRemoval(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseEndpoints(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ServerConfigurationBuilder builder) throws XMLStreamException {

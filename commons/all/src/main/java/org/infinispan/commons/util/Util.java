@@ -271,7 +271,7 @@ public final class Util {
    public static <T> T getInstance(Class<T> clazz) {
       try {
          return getInstanceStrict(clazz);
-      } catch (IllegalAccessException | InstantiationException iae) {
+      } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException iae) {
          throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
       }
    }
@@ -285,7 +285,7 @@ public final class Util {
     * @throws InstantiationException
     */
    @SuppressWarnings("unchecked")
-   public static <T> T getInstanceStrict(Class<T> clazz) throws IllegalAccessException, InstantiationException {
+   public static <T> T getInstanceStrict(Class<T> clazz) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
       // first look for a getInstance() constructor
       T instance = null;
       try {
@@ -297,7 +297,7 @@ public final class Util {
          instance = null;
       }
       if (instance == null) {
-         instance = clazz.newInstance();
+         instance = clazz.getDeclaredConstructor().newInstance();
       }
       return instance;
    }
@@ -326,8 +326,10 @@ public final class Util {
     * @throws ClassNotFoundException
     * @throws InstantiationException
     * @throws IllegalAccessException
+    * @throws NoSuchMethodException
+    * @throws InvocationTargetException
     */
-   public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+   public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
       Class<T> clazz = loadClassStrict(classname, cl);
       return getInstanceStrict(clazz);

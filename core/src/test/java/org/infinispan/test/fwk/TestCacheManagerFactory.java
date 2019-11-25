@@ -5,6 +5,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -443,7 +444,7 @@ public class TestCacheManagerFactory {
          try {
             Marshaller marshaller = Util.getInstanceStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
             builder.serialization().marshaller(marshaller);
-         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             // No-op, stick to GlobalConfiguration default.
          }
       }
