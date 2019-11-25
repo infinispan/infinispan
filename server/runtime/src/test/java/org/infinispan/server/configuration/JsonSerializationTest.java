@@ -286,7 +286,7 @@ public class JsonSerializationTest {
       assertEquals("BASIC", items.next().asText());
 
       JsonNode corsRules = restConnector.get("cors-rules").get("cors-rule");
-      assertEquals(8, corsRules.size());
+      assertEquals(2, corsRules.size());
       Iterator<JsonNode> rules = corsRules.elements();
       JsonNode rule1 = rules.next();
       assertEquals("rule1", rule1.get("name").asText());
