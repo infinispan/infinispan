@@ -747,7 +747,7 @@ class Decoder extends ReplayingDecoder<Void> {
             for (int i = 0; i < numberClusterMembers; i++) {
                String host = readString(buf);
                int port = readUnsignedShort(buf);
-               viewArray[i] = new ServerAddress(host, port);
+               viewArray[i] = ServerAddress.forAddress(host, port);
             }
             topologyChangeResponse = new TestTopologyAwareResponse(topologyId, Arrays.asList(viewArray));
          } else if (op.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE) {
@@ -1020,7 +1020,7 @@ class Decoder extends ReplayingDecoder<Void> {
       int numServersInTopo = readUnsignedInt(buf);
       List<ServerAddress> members = new ArrayList<>();
       for (int i = 0; i < numServersInTopo; ++i) {
-         ServerAddress node = new ServerAddress(readString(buf), readUnsignedShort(buf));
+         ServerAddress node = ServerAddress.forAddress(readString(buf), readUnsignedShort(buf));
          members.add(node);
       }
 
@@ -1068,7 +1068,7 @@ class Decoder extends ReplayingDecoder<Void> {
       List<Integer> hashIdsOfAddr = new ArrayList<>();
       ServerAddress prevNode = null;
       for (int i = 1; i <= numServersInTopo; ++i) {
-         ServerAddress node = new ServerAddress(readString(buf), readUnsignedShort(buf));
+         ServerAddress node = ServerAddress.forAddress(readString(buf), readUnsignedShort(buf));
          int hashId = buf.readInt();
          if (prevNode == null || node.equals(prevNode)) {
             // First time node has been seen, so cache it
@@ -1104,7 +1104,7 @@ class Decoder extends ReplayingDecoder<Void> {
       int numVirtualNodes = readUnsignedInt(buf);
       Map<ServerAddress, Integer> hashToAddress = new HashMap<>();
       for (int i = 1; i <= numServersInTopo; ++i) {
-         hashToAddress.put(new ServerAddress(readString(buf), readUnsignedShort(buf)), buf.readInt());
+         hashToAddress.put(ServerAddress.forAddress(readString(buf), readUnsignedShort(buf)), buf.readInt());
       }
 
       return new TestHashDistAware11Response(topologyId, hashToAddress,

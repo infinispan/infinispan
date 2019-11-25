@@ -59,13 +59,13 @@ public class Authentication extends BaseRequestProcessor {
    }
 
    public void authMechList(HotRodHeader header) {
-      writeResponse(header, header.encoder().authMechListResponse(header, server, channel.alloc(), authenticationConfig.allowedMechs()));
+      writeResponse(header, header.encoder().authMechListResponse(header, server, channel, authenticationConfig.allowedMechs()));
    }
 
    public void auth(HotRodHeader header, String mech, byte[] response) {
       if (!enabled) {
          UnsupportedOperationException cause = log.invalidOperation();
-         ByteBuf buf = header.encoder().errorResponse(header, server, channel.alloc(), cause.toString(), OperationStatus.ServerError);
+         ByteBuf buf = header.encoder().errorResponse(header, server, channel, cause.toString(), OperationStatus.ServerError);
          int responseBytes = buf.readableBytes();
          ChannelFuture future = channel.writeAndFlush(buf);
          if (header instanceof AccessLoggingHeader) {
@@ -92,7 +92,7 @@ public class Authentication extends BaseRequestProcessor {
          authComplete(header, serverChallenge);
       } else {
          // Write the server challenge
-         writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
+         writeResponse(header, header.encoder().authResponse(header, server, channel, serverChallenge));
       }
    }
 
@@ -105,13 +105,13 @@ public class Authentication extends BaseRequestProcessor {
       String qop = (String) saslServer.getNegotiatedProperty(Sasl.QOP);
       if ("auth-int".equals(qop) || "auth-conf".equals(qop)) {
          channel.eventLoop().submit(() -> {
-            writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
+            writeResponse(header, header.encoder().authResponse(header, server, channel, serverChallenge));
             SaslQopHandler qopHandler = new SaslQopHandler(saslServer);
             channel.pipeline().addBefore("decoder", "saslQop", qopHandler);
          });
       } else {
          // Send the final server challenge
-         writeResponse(header, header.encoder().authResponse(header, server, channel.alloc(), serverChallenge));
+         writeResponse(header, header.encoder().authResponse(header, server, channel, serverChallenge));
          disposeSaslServer();
          saslServer = null;
       }

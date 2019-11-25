@@ -19,7 +19,7 @@ import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.stats.Stats;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
 
 /**
  * This class represents the work to be done by an encoder of a particular Hot Rod protocol version.
@@ -29,59 +29,59 @@ import io.netty.buffer.ByteBufAllocator;
  */
 public interface VersionedEncoder {
 
-   ByteBuf authResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] challenge);
+   ByteBuf authResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] challenge);
 
-   ByteBuf authMechListResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Set<String> mechs);
+   ByteBuf authMechListResponse(HotRodHeader header, HotRodServer server, Channel channel, Set<String> mechs);
 
-   ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] prev);
+   ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] prev);
 
-   ByteBuf notExistResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc);
+   ByteBuf notExistResponse(HotRodHeader header, HotRodServer server, Channel channel);
 
-   ByteBuf valueResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, byte[] prev);
+   ByteBuf valueResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, byte[] prev);
 
-   ByteBuf successResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] result);
+   ByteBuf successResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] result);
 
-   ByteBuf errorResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, String message, OperationStatus status);
+   ByteBuf errorResponse(HotRodHeader header, HotRodServer server, Channel channel, String message, OperationStatus status);
 
-   ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int size, CacheSet<Map.Entry<byte[], byte[]>> entries);
+   ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, Channel channel, int size, CacheSet<Map.Entry<byte[], byte[]>> entries);
 
-   ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status);
+   ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status);
 
-   default ByteBuf pingResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
-      return emptyResponse(header, server, alloc, status);
+   default ByteBuf pingResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status) {
+      return emptyResponse(header, server, channel, status);
    }
 
-   ByteBuf statsResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry);
+   ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry);
 
-   ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] value, long version);
+   ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] value, long version);
 
-   ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CacheEntry<byte[], byte[]> entry);
+   ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> entry);
 
-   ByteBuf getStreamResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int offset, CacheEntry<byte[], byte[]> entry);
+   ByteBuf getStreamResponse(HotRodHeader header, HotRodServer server, Channel channel, int offset, CacheEntry<byte[], byte[]> entry);
 
-   ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Map<byte[], byte[]> map);
+   ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, Channel channel, Map<byte[], byte[]> map);
 
-   ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CloseableIterator<byte[]> iterator);
+   ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, Channel channel, CloseableIterator<byte[]> iterator);
 
-   ByteBuf iterationStartResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, String iterationId);
+   ByteBuf iterationStartResponse(HotRodHeader header, HotRodServer server, Channel channel, String iterationId);
 
-   ByteBuf iterationNextResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, IterableIterationResult iterationResult);
+   ByteBuf iterationNextResponse(HotRodHeader header, HotRodServer server, Channel channel, IterableIterationResult iterationResult);
 
-   ByteBuf counterConfigurationResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CounterConfiguration configuration);
+   ByteBuf counterConfigurationResponse(HotRodHeader header, HotRodServer server, Channel channel, CounterConfiguration configuration);
 
-   ByteBuf counterNamesResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<String> counterNames);
+   ByteBuf counterNamesResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<String> counterNames);
 
-   ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, Collection<byte[]> values);
+   ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, Collection<byte[]> values);
 
-   ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce, Collection<byte[]> result);
+   ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce, Collection<byte[]> result);
 
-   ByteBuf booleanResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, boolean result);
+   ByteBuf booleanResponse(HotRodHeader header, HotRodServer server, Channel channel, boolean result);
 
-   ByteBuf unsignedLongResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, long value);
+   ByteBuf unsignedLongResponse(HotRodHeader header, HotRodServer server, Channel channel, long value);
 
-   ByteBuf longResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, long value);
+   ByteBuf longResponse(HotRodHeader header, HotRodServer server, Channel channel, long value);
 
-   ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int xaReturnCode);
+   ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, Channel channel, int xaReturnCode);
 
    OperationStatus errorStatus(Throwable t);
 
@@ -95,5 +95,5 @@ public interface VersionedEncoder {
     */
    void writeCounterEvent(ClientCounterEvent event, ByteBuf buffer);
 
-   ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<Xid> xids);
+   ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, Channel channel, Collection<Xid> xids);
 }

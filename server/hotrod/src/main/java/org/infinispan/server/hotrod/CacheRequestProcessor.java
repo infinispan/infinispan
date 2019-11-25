@@ -50,12 +50,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (!header.cacheName.isEmpty()) {
          server.cache(server.getCacheInfo(header), header, subject);
       }
-      writeResponse(header, header.encoder().pingResponse(header, server, channel.alloc(), OperationStatus.Success));
+      writeResponse(header, header.encoder().pingResponse(header, server, channel, OperationStatus.Success));
    }
 
    void stats(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      writeResponse(header, header.encoder().statsResponse(header, server, channel.alloc(), cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache)));
+      writeResponse(header, header.encoder().statsResponse(header, server, channel, cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache)));
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {
@@ -88,7 +88,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             try {
                switch (header.op) {
                   case GET:
-                     writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success, result.getValue()));
+                     writeResponse(header, header.encoder().valueResponse(header, server, channel, OperationStatus.Success, result.getValue()));
                      break;
                   case GET_WITH_VERSION:
                      NumericVersion numericVersion = (NumericVersion) result.getMetadata().version();
@@ -98,7 +98,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                      } else {
                         version = 0;
                      }
-                     writeResponse(header, header.encoder().valueWithVersionResponse(header, server, channel.alloc(), result.getValue(), version));
+                     writeResponse(header, header.encoder().valueWithVersionResponse(header, server, channel, result.getValue(), version));
                      break;
                   default:
                      throw new IllegalStateException();
@@ -138,12 +138,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          writeNotExist(header);
       } else if (header.op == HotRodOperation.GET_WITH_METADATA) {
          assert offset == 0;
-         writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel.alloc(), entry));
+         writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel, entry));
       } else {
          if (entry == null) {
             offset = 0;
          }
-         writeResponse(header, header.encoder().getStreamResponse(header, server, channel.alloc(), offset, entry));
+         writeResponse(header, header.encoder().getStreamResponse(header, server, channel, offset, entry));
       }
    }
 
@@ -442,7 +442,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
-         writeResponse(header, header.encoder().getAllResponse(header, server, channel.alloc(), map));
+         writeResponse(header, header.encoder().getAllResponse(header, server, channel, map));
       }
    }
 
@@ -460,7 +460,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
-         writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), size));
+         writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel, size));
       }
    }
 
@@ -474,7 +474,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          if (trace) {
             log.tracef("About to create bulk response count = %d", size);
          }
-         writeResponse(header, header.encoder().bulkGetResponse(header, server, channel.alloc(), size, cache.entrySet()));
+         writeResponse(header, header.encoder().bulkGetResponse(header, server, channel, size, cache.entrySet()));
       } catch (Throwable t) {
          writeException(header, t);
       }
@@ -490,7 +490,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          if (trace) {
             log.tracef("About to create bulk get keys response scope = %d", scope);
          }
-         writeResponse(header, header.encoder().bulkGetKeysResponse(header, server, channel.alloc(), cache.keySet().iterator()));
+         writeResponse(header, header.encoder().bulkGetKeysResponse(header, server, channel, cache.keySet().iterator()));
       } catch (Throwable t) {
          writeException(header, t);
       }
@@ -504,7 +504,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void queryInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] queryBytes) {
       try {
          byte[] queryResult = server.query(cache, queryBytes);
-         writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success, queryResult));
+         writeResponse(header, header.encoder().valueResponse(header, server, channel, OperationStatus.Success, queryResult));
       } catch (Throwable t) {
          writeException(header, t);
       }
@@ -551,7 +551,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             IterationState iterationState = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
                   filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata);
             iterationState.getReaper().registerChannel(channel);
-            writeResponse(header, header.encoder().iterationStartResponse(header, server, channel.alloc(), iterationState.getId()));
+            writeResponse(header, header.encoder().iterationStartResponse(header, server, channel, iterationState.getId()));
          } catch (Throwable t) {
             writeException(header, t);
          }
@@ -562,7 +562,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       executor.execute(() -> {
          try {
             IterableIterationResult iterationResult = server.getIterationManager().next(iterationId);
-            writeResponse(header, header.encoder().iterationNextResponse(header, server, channel.alloc(), iterationResult));
+            writeResponse(header, header.encoder().iterationNextResponse(header, server, channel, iterationResult));
          } catch (Throwable t) {
             writeException(header, t);
          }
@@ -573,7 +573,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       executor.execute(() -> {
          try {
             IterationState removed = server.getIterationManager().close(iterationId);
-            writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), removed != null ? OperationStatus.Success : OperationStatus.InvalidIteration));
+            writeResponse(header, header.encoder().emptyResponse(header, server, channel, removed != null ? OperationStatus.Success : OperationStatus.InvalidIteration));
          } catch (Throwable t) {
             writeException(header, t);
          }

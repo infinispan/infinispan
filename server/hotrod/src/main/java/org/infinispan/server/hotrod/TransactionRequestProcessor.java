@@ -266,10 +266,10 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
    }
 
    private ByteBuf createTransactionResponse(HotRodHeader header, int xaReturnCode) {
-      return header.encoder().transactionResponse(header, server, channel.alloc(), xaReturnCode);
+      return header.encoder().transactionResponse(header, server, channel, xaReturnCode);
    }
 
    private ByteBuf createRecoveryResponse(HotRodHeader header, Collection<Xid> xids) {
-      return header.encoder().recoveryResponse(header, server, channel.alloc(), xids);
+      return header.encoder().recoveryResponse(header, server, channel, xids);
    }
 }

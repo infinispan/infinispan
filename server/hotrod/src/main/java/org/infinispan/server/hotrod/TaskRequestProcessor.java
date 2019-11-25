@@ -46,7 +46,7 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
          if (result != null && !(result instanceof byte[])) {
             writeException(header, log.errorSerializingResponse(result));
          } else {
-            writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success,
+            writeResponse(header, header.encoder().valueResponse(header, server, channel, OperationStatus.Success,
                   result == null ? Util.EMPTY_BYTE_ARRAY : (byte[]) result));
          }
       }

@@ -31,9 +31,9 @@ public class CrashedMemberDetectorTest extends SingleCacheManagerTest {
 
    public void testDetectCrashedMembers() {
       Cache<Address, ServerAddress> cache = cacheManager.getCache();
-      cache.put(new TestAddress(1), new ServerAddress("a", 123));
-      cache.put(new TestAddress(2), new ServerAddress("b", 456));
-      cache.put(new TestAddress(3), new ServerAddress("c", 789));
+      cache.put(new TestAddress(1), ServerAddress.forAddress("a", 123));
+      cache.put(new TestAddress(2), ServerAddress.forAddress("b", 456));
+      cache.put(new TestAddress(3), ServerAddress.forAddress("c", 789));
 
       CrashedMemberDetectorListener detector = new CrashedMemberDetectorListener(cache, null);
 

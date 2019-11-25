@@ -72,7 +72,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
 
    void getCounterNames(HotRodHeader header, Subject subject) {
       Collection<String> counterNames = counterManager(header).getCounterNames();
-      writeResponse(header, header.encoder().counterNamesResponse(header, server, channel.alloc(), counterNames));
+      writeResponse(header, header.encoder().counterNamesResponse(header, server, channel, counterNames));
    }
 
    void counterRemove(HotRodHeader header, Subject subject, String counterName) {
@@ -135,7 +135,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
          checkCounterThrowable(header, throwable);
       } else {
          ByteBuf response = configuration == null ? missingCounterResponse(header) :
-               header.encoder().counterConfigurationResponse(header, server, channel.alloc(), configuration);
+               header.encoder().counterConfigurationResponse(header, server, channel, configuration);
          writeResponse(header, response);
       }
    }
@@ -172,9 +172,9 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    private ByteBuf createResponseFrom(HotRodHeader header, ListenerOperationStatus status) {
       switch (status) {
          case OK:
-            return header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.OperationNotExecuted);
+            return header.encoder().emptyResponse(header, server, channel, OperationStatus.OperationNotExecuted);
          case OK_AND_CHANNEL_IN_USE:
-            return header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success);
+            return header.encoder().emptyResponse(header, server, channel, OperationStatus.Success);
          case COUNTER_NOT_FOUND:
             return missingCounterResponse(header);
          default:
@@ -185,14 +185,14 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    private void checkCounterThrowable(HotRodHeader header, Throwable throwable) {
       Throwable cause = extractException(throwable);
       if (cause instanceof CounterOutOfBoundsException) {
-         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.NotExecutedWithPrevious));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.NotExecutedWithPrevious));
       } else {
          writeException(header, cause);
       }
    }
 
    private ByteBuf missingCounterResponse(HotRodHeader header) {
-      return header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.KeyDoesNotExist);
+      return header.encoder().emptyResponse(header, server, channel, OperationStatus.KeyDoesNotExist);
    }
 
    private void booleanResultHandler(HotRodHeader header, Boolean value, Throwable throwable) {
@@ -200,7 +200,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
          checkCounterThrowable(header, throwable);
       } else {
          OperationStatus status = value ? OperationStatus.Success : OperationStatus.OperationNotExecuted;
-         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), status));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel, status));
       }
    }
 
@@ -208,7 +208,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
       if (throwable != null) {
          checkCounterThrowable(header, throwable);
       } else {
-         writeResponse(header, header.encoder().longResponse(header, server, channel.alloc(), value));
+         writeResponse(header, header.encoder().longResponse(header, server, channel, value));
       }
    }
 
@@ -216,7 +216,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
       if (throwable != null) {
          checkCounterThrowable(header, throwable);
       } else {
-         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.Success));
       }
    }
 }
