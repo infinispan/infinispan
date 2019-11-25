@@ -1,4 +1,4 @@
-= Single-Port router
+= Single-Port Router
 
 Internally, Single-Port is based on the same router component used to enable multi-tenancy, and therefore it shares the same configuration.
 

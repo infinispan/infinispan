@@ -1,0 +1,5 @@
+<interfaces>
+    <interface name="public">
+        <match-interface value="eth0"/>
+    </interface>
+</interfaces>
