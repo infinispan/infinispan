@@ -3,6 +3,7 @@ package org.infinispan.server.configuration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.BuiltBy;
@@ -24,6 +25,7 @@ public class ServerConfiguration implements ConfigurationInfo {
    private final InterfacesConfiguration interfaces;
    private final SocketBindingsConfiguration socketBindings;
    private final SecurityConfiguration security;
+   private final DataSourcesConfiguration dataSources;
    private final EndpointsConfiguration endpoints;
    private Server server;
 
@@ -34,14 +36,17 @@ public class ServerConfiguration implements ConfigurationInfo {
          InterfacesConfiguration interfaces,
          SocketBindingsConfiguration socketBindings,
          SecurityConfiguration security,
+         DataSourcesConfiguration dataSources,
          EndpointsConfiguration endpoints) {
       this.interfaces = interfaces;
       this.socketBindings = socketBindings;
       this.security = security;
+      this.dataSources = dataSources;
       this.endpoints = endpoints;
       elements.add(interfaces);
       elements.add(socketBindings);
       elements.add(security);
+      elements.add(dataSources);
       elements.add(endpoints);
    }
 
@@ -63,8 +68,13 @@ public class ServerConfiguration implements ConfigurationInfo {
       return socketBindings.socketBindings().stream().collect(Collectors.toMap(SocketBindingConfiguration::name, SocketBindingConfiguration::getSocketBinding));
    }
 
+
    public SecurityConfiguration security() {
       return security;
+   }
+
+   public Map<String, DataSourceConfiguration> dataSources() {
+      return dataSources.dataSources().stream().collect(Collectors.toMap(DataSourceConfiguration::name, Function.identity()));
    }
 
    public EndpointsConfiguration endpoints() {

@@ -2,8 +2,13 @@ package org.infinispan.server;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
 import java.util.Properties;
+
+import javax.naming.spi.InitialContextFactoryBuilder;
+import javax.naming.spi.NamingManager;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -25,6 +30,14 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
  */
 final class SecurityActions {
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged(action);
+      } else {
+         return Security.doPrivileged(action);
+      }
+   }
+
+   private static <T> T doPrivilegedExceptionAction(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);
       } else {
@@ -88,5 +101,13 @@ final class SecurityActions {
    static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
       GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
       return doPrivileged(action);
+   }
+
+
+   static void setInitialContextFactoryBuilder(InitialContextFactoryBuilder initialContextFactoryBuilder) throws PrivilegedActionException {
+      doPrivilegedExceptionAction(() -> {
+         NamingManager.setInitialContextFactoryBuilder(initialContextFactoryBuilder);
+         return null;
+      });
    }
 }

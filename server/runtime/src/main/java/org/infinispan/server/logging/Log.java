@@ -3,6 +3,9 @@ package org.infinispan.server.logging;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
+import javax.naming.NamingException;
+import javax.naming.NoInitialContextException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -142,4 +145,14 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid level `%s`", id = 80036)
    IllegalArgumentException invalidLevel(String level);
+
+   @Message(value = "The name '%s' is already bound", id = 80037)
+   NamingException nameAlreadyBound(String name);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Created datasource '%s' bound to JNDI '%s'", id = 80038)
+   void dataSourceCreated(String name, String jndiName);
+
+   @Message(value = "Cannot find InitialContextFactory '%s'", id = 80039)
+   NoInitialContextException noInitialContextFactory(String className);
 }

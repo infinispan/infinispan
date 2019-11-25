@@ -4,6 +4,7 @@ import static org.infinispan.configuration.serializing.SerializeUtils.writeOptio
 import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -263,7 +264,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          try {
             ConfigurationSerializer<Object> serializer = Util.getInstanceStrict(serializedWith.value());
             serializer.serialize(writer, entry.getValue());
-         } catch (InstantiationException | IllegalAccessException e) {
+         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
          }
       }
@@ -678,7 +679,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             try {
                serializer = Util.getInstanceStrict(serializedWith.value());
                serializer.serialize(writer, configuration);
-            } catch (Exception e) {
+            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
             }
          }

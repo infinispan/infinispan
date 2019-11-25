@@ -7,6 +7,7 @@
    <xs:element name="server" type="tns:server"/>
 
    <xs:element name="interfaces" type="tns:interfaces"/>
+   <xs:element name="data-sources" type="tns:data-sources"/>
    <xs:element name="security" type="tns:security"/>
    <xs:element name="socket-bindings" type="tns:socket-bindings"/>
    <xs:element name="endpoints" type="tns:endpoints"/>
@@ -26,6 +27,7 @@
             </xs:unique>
          </xs:element>
          <xs:element type="tns:security" name="security"/>
+         <xs:element type="tns:data-sources" name="data-sources" minOccurs="0"/>
          <xs:element type="tns:endpoints" name="endpoints"/>
       </xs:sequence>
    </xs:complexType>
@@ -78,6 +80,146 @@
             <xs:attribute type="xs:string" name="interface"/>
          </xs:extension>
       </xs:simpleContent>
+   </xs:complexType>
+
+   <xs:complexType name="data-sources">
+      <xs:sequence>
+         <xs:element type="tns:data-source" name="data-source" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="data-source">
+      <xs:all>
+         <xs:element type="tns:data-source-connection-factory" name="connection-factory">
+            <xs:annotation>
+               <xs:documentation>Configuration for the connection factory</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element type="tns:data-source-connection-pool" name="connection-pool">
+            <xs:annotation>
+               <xs:documentation>Configuration for the connection pool</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:all>
+      <xs:attribute name="name" type="xs:token" use="required">
+         <xs:annotation>
+            <xs:documentation>Name for the datasource (used for management)</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="jndi-name" type="xs:token" use="required">
+         <xs:annotation>
+            <xs:documentation>JNDI name for the datasource</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="statistics" type="xs:boolean" default="false">
+         <xs:annotation>
+            <xs:documentation>Enable statistics for this datasource</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="data-source-connection-factory">
+      <xs:all>
+         <xs:element type="tns:property" name="connection-property" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Properties for the JDBC driver</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:all>
+      <xs:attribute name="driver" type="xs:token" use="required">
+         <xs:annotation>
+            <xs:documentation>Unique reference to the JDBC driver</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="url" type="xs:token">
+         <xs:annotation>
+            <xs:documentation>JDBC driver connection URL (e.g. "jdbc:h2:tcp://localhost:1234")</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="transaction-isolation" type="tns:data-source-transaction-isolation" default="READ_COMMITTED">
+         <xs:annotation>
+            <xs:documentation>Set the java.sql.Connection transaction isolation level to use. Defaults to READ_COMMITTED</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="new-connection-sql" type="xs:token">
+         <xs:annotation>
+            <xs:documentation>SQL statement to be executed on a connection after creation,]]></xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="username" type="xs:token">
+         <xs:annotation>
+            <xs:documentation>Username to use for basic authentication with the database</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="password" type="xs:token">
+         <xs:annotation>
+            <xs:documentation>Password to use for basic authentication with the database</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:simpleType name="data-source-transaction-isolation">
+      <xs:annotation>
+         <xs:documentation>
+            Define constants used as the possible transaction isolation levels in transaction-isolation type ]>
+            Include: NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE
+         </xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="NONE"/>
+         <xs:enumeration value="READ_UNCOMMITTED"/>
+         <xs:enumeration value="READ_COMMITTED"/>
+         <xs:enumeration value="REPEATABLE_READ"/>
+         <xs:enumeration value="SERIALIZABLE"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:complexType name="data-source-connection-pool">
+      <xs:attribute name="max-size" type="xs:nonNegativeInteger" use="required">
+         <xs:annotation>
+            <xs:documentation>Maximum number of connections in the pool</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="min-size" type="xs:nonNegativeInteger">
+         <xs:annotation>
+            <xs:documentation>Minimum number of connections the pool should hold</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="initial-size" type="xs:nonNegativeInteger">
+         <xs:annotation>
+            <xs:documentation>Initial number of connections the pool should hold</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="blocking-timeout" type="xs:nonNegativeInteger" default="0">
+         <xs:annotation>
+            <xs:documentation>
+               Maximum time in milliseconds to block while waiting for a connection before throwing an exception
+               This will never throw an exception if creating a new connection takes an inordinately long period of time
+               Default is 0 meaning that a call will wait indefinitely
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="background-validation" type="xs:nonNegativeInteger">
+         <xs:annotation>
+            <xs:documentation>
+               Time in milliseconds between background validation runs
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="leak-detection" type="xs:nonNegativeInteger">
+         <xs:annotation>
+            <xs:documentation>
+               Time in milliseconds a connection has to be held before a leak warning
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="idle-removal" type="xs:nonNegativeInteger">
+         <xs:annotation>
+            <xs:documentation>
+               Time in minutes a connection has to be idle before it can be removed
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security">

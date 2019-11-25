@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URL;
+import java.security.PrivilegedActionException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +20,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.naming.InitialContext;
+import javax.naming.spi.NamingManager;
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.logging.log4j.LogManager;
@@ -42,13 +45,16 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
+import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.datasource.DataSourceFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.logging.Log;
 import org.infinispan.server.router.RoutingTable;
@@ -152,6 +158,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private CacheIgnoreManager cacheIgnoreManager;
    private ScheduledExecutorService scheduler;
    private TaskManager taskManager;
+   private ServerInitialContextFactoryBuilder initialContextFactoryBuilder;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -200,6 +207,19 @@ public class Server implements ServerManagement, AutoCloseable {
       properties.putIfAbsent(INFINISPAN_CLUSTER_STACK, DEFAULT_CLUSTER_STACK);
 
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
+
+      // Register our simple naming context factory builder
+      try {
+         if (!NamingManager.hasInitialContextFactoryBuilder()) {
+            initialContextFactoryBuilder = new ServerInitialContextFactoryBuilder();
+            SecurityActions.setInitialContextFactoryBuilder(initialContextFactoryBuilder);
+         } else {
+            // This will only happen when running multiple server instances in the same JVM (i.e. embedded tests)
+            log.warn("Could not register the ServerInitialContextFactoryBuilder. JNDI will not be available");
+         }
+      } catch (PrivilegedActionException e) {
+         throw new RuntimeException(e.getCause());
+      }
 
       // Register only the providers that matter to us
       SecurityActions.addSecurityProvider(WildFlyElytronHttpBasicProvider.getInstance());
@@ -281,9 +301,21 @@ public class Server implements ServerManagement, AutoCloseable {
          extensions = new Extensions();
          extensions.load(Thread.currentThread().getContextClassLoader());
 
-         // Start the cache manager(s)
+         // Create the cache manager
          DefaultCacheManager cm = new DefaultCacheManager(configurationBuilderHolder, false);
          cacheManagers.put(cm.getName(), cm);
+
+         // Retrieve the server configuration
+         serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
+         serverConfiguration.setServer(this);
+
+         // Initialize the data sources
+         InitialContext initialContext = new InitialContext();
+         for (DataSourceConfiguration dataSourceConfiguration : serverConfiguration.dataSources().values()) {
+            initialContext.bind(dataSourceConfiguration.jndiName(), DataSourceFactory.create(dataSourceConfiguration));
+         }
+
+         // Start the cache manager
          SecurityActions.startCacheManager(cm);
 
          BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
@@ -294,10 +326,6 @@ public class Server implements ServerManagement, AutoCloseable {
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cm));
 
          // Start the protocol servers
-         serverConfiguration = SecurityActions.getCacheManagerConfiguration(cm).module(ServerConfiguration.class);
-         // Register this server instance
-         serverConfiguration.setServer(this);
-
          SinglePortRouteSource routeSource = new SinglePortRouteSource();
          ConcurrentMap<Route<? extends RouteSource, ? extends RouteDestination>, Object> routes = new ConcurrentHashMap<>();
          serverConfiguration.endpoints().connectors().parallelStream().forEach(configuration -> {
@@ -411,6 +439,11 @@ public class Server implements ServerManagement, AutoCloseable {
       // Shutdown the protocol servers in parallel
       protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
       cacheManagers.values().forEach(SecurityActions::stopCacheManager);
+      // Shutdown the context and all associated resources
+      if (initialContextFactoryBuilder != null) {
+         initialContextFactoryBuilder.close();
+      }
+      // Set the status to TERMINATED
       this.status = ComponentStatus.TERMINATED;
       // Don't wait for the scheduler to finish
       if (scheduler != null) {

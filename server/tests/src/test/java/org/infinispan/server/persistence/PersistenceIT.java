@@ -13,13 +13,14 @@ import org.junit.runners.Suite;
  **/
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-      PooledConnectionOperations.class
+      PooledConnectionOperations.class,
+      ManagedConnectionOperations.class
 })
 public class PersistenceIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/PersistenceTest.xml")
                                     .numServers(1)
                                     .runMode(ServerRunMode.CONTAINER)
                                     .mavenArtifacts("com.h2database:h2:1.4.199",
