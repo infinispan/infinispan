@@ -1,0 +1,5 @@
+<interfaces>
+  <interface name="public">
+    <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+  </interface>
+</interfaces>

@@ -10,6 +10,10 @@ include::{topics}/con_endpoints_rest.adoc[leveloffset=+2]
 include::{topics}/con_endpoints_memcached.adoc[leveloffset=+2]
 include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
 
+= Configuring {brandname} Server Endpoints
+{brandname} server provides listener endpoints that handle inbound connections
+from client applications.
+
 include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_hotrod_connector.adoc[leveloffset=+2]
 include::{topics}/ref_endpoints_rest_connector.adoc[leveloffset=+2]

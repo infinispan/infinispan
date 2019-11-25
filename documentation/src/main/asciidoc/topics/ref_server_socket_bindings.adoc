@@ -1,0 +1,44 @@
+[id='socket_bindings-{context}']
+= Socket Bindings
+Socket bindings map endpoint connectors to server interfaces and ports.
+
+By default, {brandname} servers provide the following socket bindings:
+
+[source,xml]
+----
+include::config_examples/server_network_socket_bindings.xml[]
+----
+
+* `socket-bindings` declares the default interface and port offset.
+* `default` binds to hotrod and rest connectors to the default port `11222`.
+* `memcached` binds the memcached connector to port `11221`.
++
+[NOTE]
+====
+The memcached endpoint is disabled by default.
+====
+
+To override the default interface for `socket-binding` declarations, specify the `interface` attribute.
+
+For example, you add an `interface` declaration named "private":
+
+[source,xml]
+----
+<interfaces>
+  ...
+  <interface name="private">
+    <inet-address value="10.1.2.3"/>
+  </interface>
+</interfaces>
+----
+
+You can then specify `interface="private"` in a `socket-binding` declaration to
+bind to the private IP address, as follows:
+
+[source,xml]
+----
+<socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+  ...
+  <socket-binding name="private_binding" interface="private" port="1234"/>
+</socket-bindings>
+----

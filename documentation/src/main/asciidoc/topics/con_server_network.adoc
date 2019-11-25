@@ -1,0 +1,4 @@
+= Network Configuration
+
+{brandname} servers map endpoints to interfaces/addresses and ports using the concept of `socket-bindings`.
+

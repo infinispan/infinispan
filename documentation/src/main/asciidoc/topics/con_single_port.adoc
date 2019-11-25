@@ -1,3 +1,6 @@
+[id='server_single_port-{context}']
+= Single Port
+
 Single-Port is a special type of router connector which allows exposing multiple protocols over the same TCP port.
 This approach is very convenient because it reduces the number of ports required by a server, with advantages in security, configuration and management.
 Protocol switching is handled in three ways:
@@ -8,5 +11,5 @@ Protocol switching is handled in three ways:
 
 [NOTE]
 ====
-The initial implementation supports only HTTP/1.1, HTTP/2 and Hot Rod protocols. The Memcached protocol is not supported.
+The initial implementation supports only HTTP/1.1, HTTP/2, and Hot Rod protocols. The Memcached protocol is not supported.
 ====

@@ -1,0 +1,5 @@
+<interfaces>
+    <interface name="public">
+        <any-address/>
+    </interface>
+</interfaces>

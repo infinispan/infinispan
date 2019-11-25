@@ -1,0 +1,21 @@
+[id='configuring_port_offsets-{context}']
+= Specifying Port Offsets
+Configure port offsets with {brandname} servers when running multiple instances
+on the same host. The default port offset is `0`.
+
+Use the `-o` switch with the {brandname} CLI or the
+`infinispan.socket.binding.port-offset` system property to set port offsets.
+
+For example, start a server instance with an offset of `100` as follows. With the default configuration, this results in the {brandname} server listening on port `11322`.
+
+Linux::
+[source,bash,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/server_offset_nix.adoc[]
+----
+
+Windows::
+[source,bash,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/server_offset_win.adoc[]
+----

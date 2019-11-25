@@ -1,0 +1,18 @@
+[id='changing_bind_address-{context}']
+= Changing the Default Bind Address for {brandname} Servers
+You can use the server `-b` switch or the `infinispan.bind.address`
+system property to bind to a different address.
+
+For example, bind the `public` interface to `127.0.0.2` as follows:
+
+Linux::
+[source,bash,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/server_bind_nix.adoc[]
+----
+
+Windows::
+[source,bash,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/server_bind_win.adoc[]
+----
