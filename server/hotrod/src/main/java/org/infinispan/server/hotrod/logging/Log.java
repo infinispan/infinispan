@@ -16,6 +16,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 
 /**
  * Log abstraction for the Hot Rod server module. For this module, message ids ranging from 6001 to 7000 inclusively
@@ -59,10 +60,12 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Conditional operation '%s' should be used with transactional caches, otherwise data inconsistency issues could arise under failure situations", id = 6010)
+   @Once
    void warnConditionalOperationNonTransactional(String op);
 
    @LogMessage(level = WARN)
    @Message(value = "Operation '%s' forced to return previous value should be used on transactional caches, otherwise data inconsistency issues could arise under failure situations", id = 6011)
+   @Once
    void warnForceReturnPreviousNonTransactional(String op);
 
    @Message(value = "Listener %s factory '%s' not found in server", id = 6013)
@@ -94,6 +97,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Not wrapping custom marshaller with media type '%s' since the format is already supported by the server", id = 28024)
+   @Once
    void skippingMarshallerWrapping(String mediaType);
 
    @Message(value = "Error serializing script response '%s'", id = 28025)
