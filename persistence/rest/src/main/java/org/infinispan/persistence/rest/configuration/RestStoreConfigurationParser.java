@@ -118,11 +118,11 @@ public class RestStoreConfigurationParser implements ConfigurationParser {
                builder.bufferSize(Integer.parseInt(value));
                break;
             }
-            case SOCKET_TIMEOUT:{
+            case SOCKET_TIMEOUT: {
                builder.socketTimeout(Integer.parseInt(value));
                break;
             }
-            case TCP_NO_DELAY:{
+            case TCP_NO_DELAY: {
                builder.tcpNoDelay(Boolean.parseBoolean(value));
                break;
             }
@@ -136,6 +136,10 @@ public class RestStoreConfigurationParser implements ConfigurationParser {
 
    private void parseRestStoreAttributes(XMLExtendedStreamReader reader, RestStoreConfigurationBuilder builder)
          throws XMLStreamException {
+      boolean restStoreV2 = reader.getSchema().since(10, 1);
+      boolean appendCacheName = false;
+      String path = null;
+      String cacheNameValue = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -143,11 +147,17 @@ public class RestStoreConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(attributeName);
          switch (attribute) {
             case APPEND_CACHE_NAME_TO_PATH: {
-               builder.appendCacheNameToPath(Boolean.parseBoolean(value));
+               if (restStoreV2) throw ParseUtils.unexpectedAttribute(reader, i);
+               appendCacheName = Boolean.parseBoolean(value);
                break;
             }
             case PATH: {
-               builder.path(value);
+               if (restStoreV2) throw ParseUtils.unexpectedAttribute(reader, i);
+               path = value;
+               break;
+            }
+            case CACHE_NAME: {
+               cacheNameValue = value;
                break;
             }
             case KEY_TO_STRING_MAPPER: {
@@ -168,6 +178,14 @@ public class RestStoreConfigurationParser implements ConfigurationParser {
             }
          }
       }
+
+      String cacheName = restStoreV2 ? cacheNameValue : getCacheNameFromLegacy(appendCacheName, path);
+      builder.cacheName(cacheName);
+   }
+
+   private String getCacheNameFromLegacy(boolean appendCacheName, String legacyPath) {
+      if (legacyPath == null || !legacyPath.contains("/") || appendCacheName) return null;
+      return legacyPath.substring(legacyPath.lastIndexOf("/") + 1);
    }
 
    @Override

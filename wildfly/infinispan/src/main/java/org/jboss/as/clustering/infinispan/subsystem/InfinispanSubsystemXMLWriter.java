@@ -725,8 +725,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property restStoreEntry : cache.get(ModelKeys.REST_STORE).asPropertyList()) {
                 ModelNode store = restStoreEntry.getValue();
                 writer.writeStartElement(Element.REST_STORE.getLocalName());
-                this.writeOptional(writer, Attribute.APPEND_CACHE_NAME_TO_PATH, store, ModelKeys.APPEND_CACHE_NAME_TO_PATH);
-                this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
+                this.writeOptional(writer, Attribute.CACHE_NAME, store, ModelKeys.CACHE_NAME);
 
                 this.writeStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);

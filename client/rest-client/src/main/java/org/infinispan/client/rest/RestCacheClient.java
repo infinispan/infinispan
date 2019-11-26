@@ -236,4 +236,9 @@ public interface RestCacheClient {
     * Clear the status of a state push in a site
     */
    CompletionStage<RestResponse> clearPushStateStatus();
+
+   /**
+    * Check if the cache exists
+    */
+   CompletionStage<RestResponse> exists();
 }

@@ -3,16 +3,23 @@ package org.infinispan.persistence.rest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfiguration;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
@@ -30,34 +37,13 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import io.reactivex.Flowable;
 import net.jcip.annotations.ThreadSafe;
 
@@ -78,20 +64,17 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final String LAST_USED = "lastUsed";
    private static final Log log = LogFactory.getLog(RestStore.class, Log.class);
    private volatile RestStoreConfiguration configuration;
-   private Bootstrap bootstrap;
    private InternalEntryFactory iceFactory;
    private MarshallingTwoWayKey2StringMapper key2StringMapper;
-   private String path;
    private MetadataHelper metadataHelper;
    private final URLCodec urlCodec = new URLCodec();
    private InitializationContext ctx;
    private Marshaller marshaller;
    private MarshallableEntryFactory<K, V> entryFactory;
 
-   private EventLoopGroup workerGroup;
-
-   private int maxContentLength;
-
+   private RestClient client;
+   private RestCacheClient cacheClient;
+   private String initialCtxCache;
 
    @Override
    public void init(InitializationContext initializationContext) {
@@ -99,6 +82,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       ctx = initializationContext;
       marshaller = ctx.getPersistenceMarshaller();
       entryFactory = ctx.getMarshallableEntryFactory();
+      initialCtxCache = initializationContext.getCache().getName();
    }
 
    @Override
@@ -108,75 +92,49 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
 
       ConnectionPoolConfiguration pool = configuration.connectionPool();
-      workerGroup = new NioEventLoopGroup();
-      Bootstrap b = new Bootstrap().group(workerGroup).channel(NioSocketChannel.class);
-      b.handler(new ChannelInitializer<SocketChannel>() {
-         @Override
-         protected void initChannel(SocketChannel ch) {
-            ch.pipeline().addLast(new HttpClientCodec());
-         }
-      });
-      b.option(ChannelOption.SO_KEEPALIVE, true); // TODO make this part of configuration options
-      b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, pool.connectionTimeout());
-      b.option(ChannelOption.SO_SNDBUF, pool.bufferSize());// TODO make sure this is appropriate
-      b.option(ChannelOption.SO_RCVBUF, pool.bufferSize());
-      b.option(ChannelOption.TCP_NODELAY, pool.tcpNoDelay());
-      bootstrap = b;
-      maxContentLength = configuration.maxContentLength();
+      RestClientConfiguration clientConfig = new RestClientConfigurationBuilder()
+            .addServer().host(configuration.host())
+            .port(configuration.port())
+            .connectionTimeout(pool.connectionTimeout())
+            .tcpNoDelay(pool.tcpNoDelay())
+            .socketTimeout(pool.socketTimeout())
+            .tcpKeepAlive(true)
+            .build();
+      client = RestClient.forConfiguration(clientConfig);
+      String cacheName = configuration.cacheName();
+
+      if (cacheName == null) cacheName = initialCtxCache;
+
+      cacheClient = client.cache(cacheName);
 
       this.key2StringMapper = Util.getInstance(configuration.key2StringMapper(), ctx.getCache().getAdvancedCache().getClassLoader());
       this.key2StringMapper.setMarshaller(marshaller);
-      this.path = configuration.path();
-      try {
-         if (configuration.appendCacheNameToPath()) {
-            path = path + urlCodec.encode(ctx.getCache().getName()) + "/";
-         }
-      } catch (EncoderException e) {
-      }
       this.metadataHelper = Util.getInstance(configuration.metadataHelper(), ctx.getCache().getAdvancedCache().getClassLoader());
-      /*
-       * HACK ALERT. Initialize some internal Netty structures early while we are within the scope of the correct classloader to
-       * avoid triggering ISPN-7602
-       * This needs to be fixed properly within the context of ISPN-7601
-       */
-      new HttpResponseHandler();
    }
 
    @Override
    public void stop() {
       try {
-         // Make the quiet period 100ms instead of 2s (Netty default)
-         workerGroup.shutdownGracefully(100, 15000, TimeUnit.MILLISECONDS).sync();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new IllegalLifecycleStateException(e);
+         client.close();
+      } catch (Exception e) {
+         log.cannotCloseClient(e);
       }
    }
 
    @Override
    public boolean isAvailable() {
       try {
-         DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
-         HttpResponseHandler handler = new HttpResponseHandler(true);
-         Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(
-               new HttpObjectAggregator(maxContentLength), handler).channel();
-         ch.writeAndFlush(get).sync().channel().closeFuture().sync();
-         return handler.getResponse().status().code() == 200;
+         CompletionStage<RestResponse> exists = cacheClient.exists();
+         RestResponse response = CompletionStages.join(exists);
+         return response != null && response.getStatus() == 200;
       } catch (Exception e) {
          return false;
       }
    }
 
-   public void setInternalCacheEntryFactory(InternalEntryFactory iceFactory) {
-      if (this.iceFactory != null) {
-         throw new IllegalStateException();
-      }
-      this.iceFactory = iceFactory;
-   }
-
-   private String keyToUri(Object key) {
+   private String encodeKey(Object key) {
       try {
-         return path + urlCodec.encode(key2StringMapper.getStringMapping(key));
+         return urlCodec.encode(key2StringMapper.getStringMapping(key));
       } catch (EncoderException e) {
          throw new PersistenceException(e);
       }
@@ -213,62 +171,33 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void write(MarshallableEntry entry) {
       try {
          String contentType = metadataHelper.getContentType(entry);
-         ByteBuf content = Unpooled.wrappedBuffer(marshall(contentType, entry));
-
-         DefaultFullHttpRequest put = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, keyToUri(entry.getKey()), content);
-         put.headers().add("Content-Type", contentType);
-         put.headers().add("Content-Length", content.readableBytes());
+         String key = encodeKey(entry.getKey());
+         byte[] payload = marshall(contentType, entry);
+         RestEntity restEntity = RestEntity.create(MediaType.fromString(contentType), payload);
          Metadata metadata = entry.getMetadata();
+         CompletionStage<RestResponse> req;
          if (metadata != null && entry.expiryTime() > -1) {
-            put.headers().add(TIME_TO_LIVE_SECONDS, Long.toString(timeoutToSeconds(metadata.lifespan())));
-            put.headers().add(MAX_IDLE_TIME_SECONDS, Long.toString(timeoutToSeconds(metadata.maxIdle())));
+            long ttl = timeoutToSeconds(metadata.lifespan());
+            long maxIdle = timeoutToSeconds(metadata.maxIdle());
+            req = cacheClient.put(key, restEntity, ttl, maxIdle);
+         } else {
+            req = cacheClient.put(key, restEntity);
          }
-
-         Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpResponseHandler()).channel();
-         ch.writeAndFlush(put).sync().channel().closeFuture().sync();
-
+         RestResponse response = CompletionStages.join(req);
+         if (!isSuccessful(response.getStatus())) {
+            throw new PersistenceException("Error writing entry");
+         }
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
    }
 
-   private static class HttpResponseHandler extends SimpleChannelInboundHandler<HttpResponse> {
-
-      private FullHttpResponse response;
-
-      private boolean retainResponse;
-
-      HttpResponseHandler() {
-         this(false);
-      }
-
-      HttpResponseHandler(boolean retainResponse) {
-         this.retainResponse = retainResponse;
-      }
-
-      protected void channelRead0(ChannelHandlerContext ctx, HttpResponse msg) throws Exception {
-         if (retainResponse) {
-            this.response = ((FullHttpResponse) msg).retain();
-         }
-         ctx.close();
-      }
-
-      @Override
-      public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-         throw new PersistenceException(cause);
-      }
-
-      public FullHttpResponse getResponse() {
-         return response;
-      }
-   }
-
    @Override
    public void clear() {
-      DefaultHttpRequest delete = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, path);
       try {
-         Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpResponseHandler()).channel();
-         ch.writeAndFlush(delete).sync().channel().closeFuture().sync();
+         CompletionStage<RestResponse> clear = cacheClient.clear();
+         RestResponse response = CompletionStages.join(clear);
+         if (!isSuccessful(response.getStatus())) throw new PersistenceException("Failed to clear remote store");
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
@@ -276,17 +205,10 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public boolean delete(Object key) {
-      DefaultHttpRequest delete = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, keyToUri(key));
       try {
-         HttpResponseHandler handler = new HttpResponseHandler(true);
-         Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength), handler).channel();
-         ch.writeAndFlush(delete).sync().channel().closeFuture().sync();
-         try {
-            return isSuccessful(handler.getResponse().status().code());
-         } finally {
-            handler.getResponse().release();
-         }
-
+         CompletionStage<RestResponse> remove = cacheClient.remove(encodeKey(key));
+         RestResponse response = CompletionStages.join(remove);
+         return isSuccessful(response.getStatus());
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
@@ -297,56 +219,57 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       return load(key, true, true);
    }
 
+   private String getHeader(String name, RestResponse restResponse) {
+      List<String> values = restResponse.headers().get(name);
+      if (values == null || values.isEmpty()) return null;
+      return values.iterator().next();
+   }
+
    private MarshallableEntry<K, V> load(Object key, boolean fetchValue, boolean fetchMetadata) {
+      RestResponse response = null;
       try {
-         DefaultHttpHeaders headers = new DefaultHttpHeaders();
-         DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, keyToUri(key), headers);
+         response = CompletionStages.join(cacheClient.get(encodeKey(key)));
 
-         HttpResponseHandler handler = new HttpResponseHandler(true);
-         Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength), handler).channel();
-         ch.writeAndFlush(get).sync().channel().closeFuture().sync();
-         FullHttpResponse response = handler.getResponse();
-         try {
-            if (HttpResponseStatus.OK.equals(response.status())) {
-               String contentType = response.headers().get(HttpHeaderNames.CONTENT_TYPE);
-               Metadata metadata;
-               long created, lastUsed;
-               if (fetchMetadata) {
-                  long ttl = timeHeaderToLong(response.headers().get(TIME_TO_LIVE_SECONDS));
-                  long maxidle = timeHeaderToLong(response.headers().get(MAX_IDLE_TIME_SECONDS));
-                  metadata = metadataHelper.buildMetadata(contentType, ttl, TimeUnit.SECONDS, maxidle, TimeUnit.SECONDS);
-                  created = timeHeaderToLong(response.headers().get(CREATED));
-                  lastUsed = timeHeaderToLong(response.headers().get(LAST_USED));
-               } else {
-                  metadata = null;
-                  created = -1;
-                  lastUsed = -1;
-               }
-               Object value;
-               if (fetchValue) {
-                  ByteBuf content = response.content();
-                  byte[] bytes = new byte[content.readableBytes()];
-                  content.readBytes(bytes);
-                  value = unmarshall(contentType, bytes);
-               } else {
-                  value = null;
-               }
-
-               return entryFactory.create(key, value, metadata, created, lastUsed);
-
-            } else if (HttpResponseStatus.NOT_FOUND.equals(response.status())) {
-               return null;
+         if (isSuccessful(response.getStatus())) {
+            String contentType = getHeader("Content-Type", response);
+            Metadata metadata;
+            long created, lastUsed;
+            if (fetchMetadata) {
+               long ttl = timeHeaderToLong(getHeader(TIME_TO_LIVE_SECONDS, response));
+               long maxidle = timeHeaderToLong(getHeader(MAX_IDLE_TIME_SECONDS, response));
+               metadata = metadataHelper.buildMetadata(contentType, ttl, TimeUnit.SECONDS, maxidle, TimeUnit.SECONDS);
+               created = timeHeaderToLong(getHeader(CREATED, response));
+               lastUsed = timeHeaderToLong(getHeader(LAST_USED, response));
             } else {
-               throw log.httpError(response.status().toString());
+               metadata = null;
+               created = -1;
+               lastUsed = -1;
             }
-         } finally {
-            response.release();
+            Object value;
+            if (fetchValue) {
+               byte[] bytes = response.getBodyAsByteArray();
+               value = unmarshall(contentType, bytes);
+            } else {
+               value = null;
+            }
+
+            return entryFactory.create(key, value, metadata, created, lastUsed);
+
+         } else if (response.getStatus() == 404) {
+            return null;
+         } else {
+            throw log.httpError(String.valueOf(response.getStatus()));
          }
       } catch (IOException e) {
          throw log.httpError(e);
       } catch (Exception e) {
          throw new PersistenceException(e);
+      } finally {
+         if(response != null) {
+            response.close();
+         }
       }
+
    }
 
    private long timeoutToSeconds(long timeout) {
@@ -365,37 +288,14 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    @Override
    public Flowable<K> publishKeys(Predicate<? super K> filter) {
       return Flowable.using(() -> {
-         DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path + "?global");
-         get.headers().add(HttpHeaderNames.ACCEPT, "text/plain");
-         get.headers().add(HttpHeaderNames.ACCEPT_CHARSET, "UTF-8");
-         HttpResponseHandler handler = new HttpResponseHandler(true);
-         try {
-            Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(
-                  new HttpObjectAggregator(maxContentLength), handler).channel();
-            ch.writeAndFlush(get).sync().channel().closeFuture().sync();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteBufInputStream((handler.getResponse()).content()), StandardCharsets.UTF_8));
-            // Response can't be null now
-            return new KeyValuePair<>(handler.getResponse(), reader);
-         } catch (Throwable t) {
-            FullHttpResponse response = handler.getResponse();
-            if (response != null) {
-               response.release();
-            }
-            throw t;
-         }
-      }, kvp -> Flowable.fromIterable(() -> new RestIterator(kvp, filter)), kvp -> {
-         try {
-            kvp.getValue().close();
-         } finally {
-            kvp.getKey().release();
-         }
-      });
+         RestResponse response = CompletionStages.join(cacheClient.keys());
+         return new BufferedReader(new InputStreamReader(response.getBodyAsStream()));
+      }, kvp -> Flowable.fromIterable(() -> new RestIterator(kvp, filter)), BufferedReader::close);
    }
 
    @Override
    public Flowable<MarshallableEntry<K, V>> entryPublisher(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
       Flowable<K> keyFlowable = publishKeys(filter);
-
       if (!fetchValue && !fetchMetadata) {
          return keyFlowable.map(k -> entryFactory.create(k));
       } else {
@@ -418,28 +318,13 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public int size() {
-      Channel ch = null;
-      DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path + "?global");
-      get.headers().add(HttpHeaders.Names.ACCEPT, "text/plain");
-
       try {
-         HttpResponseHandler handler = new HttpResponseHandler(true);
-         ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(
-               new HttpObjectAggregator(maxContentLength), handler).channel();
-         ch.writeAndFlush(get).sync().channel().closeFuture().sync();
+         RestResponse response = CompletionStages.join(cacheClient.size());
+         String sizeContent = response.getBody();
          try {
-            BufferedReader reader = null;
-            try {
-               reader = new BufferedReader(new InputStreamReader(new ByteBufInputStream(((FullHttpResponse) handler.getResponse()).content())));
-               int count = 0;
-               while (reader.readLine() != null)
-                  count++;
-               return count;
-            } finally {
-               reader.close();
-            }
-         } finally {
-            handler.getResponse().release();
+            return Integer.parseInt(sizeContent);
+         } catch (NumberFormatException e) {
+            throw log.errorGettingCacheSize(e);
          }
       } catch (Exception e) {
          throw log.errorLoadingRemoteEntries(e);
@@ -456,23 +341,36 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    private class RestIterator extends AbstractIterator<K> {
-      private final KeyValuePair<FullHttpResponse, BufferedReader> kvp;
       private final Predicate<? super K> filter;
+      private JsonParser jp;
 
-      public RestIterator(KeyValuePair<FullHttpResponse, BufferedReader> kvp, Predicate<? super K> filter) {
-         this.kvp = kvp;
+      RestIterator(BufferedReader reader, Predicate<? super K> filter) {
          this.filter = filter;
+         try {
+            jp = new JsonFactory().createJsonParser(reader);
+            JsonToken token = jp.nextToken();
+
+            if (token == null) {
+               throw new CacheException("empty response from keys");
+            }
+
+            if (!JsonToken.START_ARRAY.equals(token)) {
+               throw new CacheException("empty response from keys");
+            }
+
+         } catch (IOException e) {
+            throw new CacheException(e);
+         }
       }
 
       @Override
       protected K getNext() {
          K key = null;
-         String stringKey;
          try {
-            while (key == null && (stringKey = kvp.getValue().readLine()) != null) {
-               K tmpkey = (K) key2StringMapper.getKeyMapping(stringKey);
-               if (filter == null || filter.test(tmpkey)) {
-                  key = tmpkey;
+            while (key == null && !JsonToken.END_ARRAY.equals(jp.nextToken())) {
+               K tmpKey = (K) key2StringMapper.getKeyMapping(jp.getText());
+               if (filter == null || filter.test(tmpKey)) {
+                  key = tmpKey;
                }
             }
          } catch (IOException e) {

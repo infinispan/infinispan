@@ -877,8 +877,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                     };
                     dependencies.add(new Dependency<>(OutboundSocketBinding.OUTBOUND_SOCKET_BINDING_BASE_SERVICE_NAME.append(outboundSocketBinding), OutboundSocketBinding.class, injector));
                 }
-                builder.appendCacheNameToPath(RestStoreConfigurationResource.APPEND_CACHE_NAME_TO_PATH.resolveModelAttribute(context, store).asBoolean());
-                builder.path(RestStoreConfigurationResource.PATH.resolveModelAttribute(context, store).asString());
+                builder.cacheName(RestStoreConfigurationResource.CACHE_NAME.resolveModelAttribute(context, store).asString());
                 builder.maxContentLength(RestStoreConfigurationResource.MAX_CONTENT_LENGTH.resolveModelAttribute(context, store).asInt());
                 builder.rawValues(true);
 

@@ -10,7 +10,7 @@
          <persistence passivation="false">
             <rest-store xmlns="urn:infinispan:config:store:rest:${infinispan.core.schema.version}"
                         fetch-state="false" read-only="false" preload="false" purge="false" shared="true" raw-values="false"
-                        path="/rest/default" append-cache-name-to-path="false"
+                        cache-name="default"
                         key-to-string-mapper="org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper"
                         max-content-length="15000000" segmented="false">
                <remote-server host="localhost" port="18212" outbound-socket-binding="rest-server-1" />

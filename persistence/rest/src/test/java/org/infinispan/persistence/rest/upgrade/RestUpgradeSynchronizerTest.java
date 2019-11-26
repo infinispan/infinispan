@@ -61,7 +61,7 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
             .addStore(RestStoreConfigurationBuilder.class)
                .host("localhost")
                .port(sourceServer.getPort())
-               .path("/rest/" + TestingUtil.getDefaultCacheName(sourceContainer))
+               .cacheName(TestingUtil.getDefaultCacheName(sourceContainer))
                .rawValues(true)
                .segmented(false)
             .locking().isolationLevel(IsolationLevel.NONE);

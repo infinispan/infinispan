@@ -16,15 +16,9 @@
           <xs:element name="remote-server" type="config:remote-server" minOccurs="1" maxOccurs="unbounded"/>
           <xs:element name="connection-pool" type="tns:rest-connection-pool" minOccurs="1" maxOccurs="unbounded"/>
         </xs:sequence>
-
-        <xs:attribute name="append-cache-name-to-path" type="xs:boolean" default="${RestStore.appendCacheNameToPath}">
+        <xs:attribute name="cache-name" type="xs:string">
           <xs:annotation>
-            <xs:documentation>Whether to append the name of the cache to the path.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="path" type="xs:string" default="${RestStore.path}">
-          <xs:annotation>
-            <xs:documentation>The path portion of the URI of the remote REST endpoint.</xs:documentation>
+            <xs:documentation>The cache name of the remote REST endpoint. If omitted, it will assume the name of the local cache</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="key-to-string-mapper" type="xs:string" default="${RestStore.key2StringMapper}">

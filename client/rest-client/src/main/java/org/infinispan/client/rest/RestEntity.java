@@ -2,6 +2,7 @@ package org.infinispan.client.rest;
 
 import java.io.File;
 
+import org.infinispan.client.rest.impl.okhttp.ByteArrayRestEntityOkHttp;
 import org.infinispan.client.rest.impl.okhttp.FileRestEntityOkHttp;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -17,6 +18,10 @@ public interface RestEntity {
 
    static RestEntity create(MediaType contentType, String body) {
       return new StringRestEntityOkHttp(contentType, body);
+   }
+
+   static RestEntity create(MediaType contentType, byte[] body) {
+      return new ByteArrayRestEntityOkHttp(contentType, body);
    }
 
    static RestEntity create(MediaType contentType, File file) {

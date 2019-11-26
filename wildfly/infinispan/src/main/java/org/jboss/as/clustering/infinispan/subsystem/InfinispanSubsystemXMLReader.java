@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -2229,17 +2230,24 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
          ModelNode store = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
          Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
          ByRef<String> name = new ByRef<>(ModelKeys.REST_STORE_NAME);
+         boolean appendCacheName = false;
+         String path = null;
+         String cacheNameValue = null;
 
          for (int i = 0; i < reader.getAttributeCount(); i++) {
              String value = reader.getAttributeValue(i);
              Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
              switch (attribute) {
                  case APPEND_CACHE_NAME_TO_PATH: {
-                     RestStoreConfigurationResource.APPEND_CACHE_NAME_TO_PATH.parseAndSetParameter(value, store, reader);
+                     appendCacheName = Boolean.parseBoolean(value);
                      break;
                  }
                  case PATH: {
-                     RestStoreConfigurationResource.PATH.parseAndSetParameter(value, store, reader);
+                     path = value;
+                     break;
+                 }
+                 case CACHE_NAME: {
+                     cacheNameValue = value;
                      break;
                  }
                  case MAX_CONTENT_LENGTH: {
@@ -2252,6 +2260,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                  }
              }
          }
+         String cacheName = namespace.since(10, 1) ? cacheNameValue : getCacheNameFromLegacy(appendCacheName, path);
+         RestStoreConfigurationResource.CACHE_NAME.parseAndSetParameter(cacheName, store, reader);
 
          PathAddress storeAddress = setStoreOperationAddress(store, PathAddress.pathAddress(cache.get(OP_ADDR)),
                RestStoreConfigurationResource.REST_STORE_PATH, name.get());
@@ -2284,6 +2294,13 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
          operations.put(storeAddress, store);
          operations.putAll(additionalConfigurationOperations);
      }
+
+
+    private String getCacheNameFromLegacy(boolean appendCacheName, String legacyPath) {
+        if (legacyPath == null || !legacyPath.contains("/") || appendCacheName) return null;
+        return legacyPath.substring(legacyPath.lastIndexOf("/") + 1);
+    }
+
 
     private void parseRestConnectionPool(XMLExtendedStreamReader reader, ModelNode pool) throws XMLStreamException {
         for (int i = 0; i < reader.getAttributeCount(); i++) {

@@ -57,6 +57,7 @@ public class ModelKeys {
     static final String BUFFER_SIZE = "buffer-size";
     static final String CACHE = "cache";
     static final String CACHE_AVAILABILITY = "cache-availability";
+    static final String CACHE_NAME = "cache-name";
     static final String CACHE_SIZE = "cache-size";
     // static final String CACHE_MODE = "cache-mode";
     static final String CACHE_CONTAINER = "cache-container";

@@ -1,11 +1,10 @@
 package org.infinispan.persistence.rest.configuration;
 
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
-import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.CACHE_NAME;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.KEY2STRING_MAPPER;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.MAX_CONTENT_LENGTH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.METADATA_HELPER;
-import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PATH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.RAW_VALUES;
 
 import java.util.Arrays;
@@ -98,20 +97,14 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
    }
 
    @Override
-   public RestStoreConfigurationBuilder path(String path) {
-      attributes.attribute(PATH).set(path);
+   public RestStoreConfigurationBuilder cacheName(String cacheName) {
+      attributes.attribute(CACHE_NAME).set(cacheName);
       return this;
    }
 
    @Override
    public RestStoreConfigurationBuilder port(int port) {
       remoteServer.port(port);
-      return this;
-   }
-
-   @Override
-   public RestStoreConfigurationBuilder appendCacheNameToPath(boolean appendCacheNameToPath) {
-      attributes.attribute(APPEND_CACHE_NAME_TO_PATH).set(appendCacheNameToPath);
       return this;
    }
 
@@ -148,9 +141,5 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
       }
       this.connectionPool.validate();
       this.remoteServer.validate();
-      String path = attributes.attribute(PATH).get();
-      if (!path.endsWith("/")) {
-         path(path + "/");
-      }
    }
 }

@@ -49,19 +49,14 @@ public interface RestStoreConfigurationChildBuilder<S> extends StoreConfiguratio
    RestStoreConfigurationBuilder metadataHelper(Class<? extends MetadataHelper> metadataHelper);
 
    /**
-    * The path portion of the RESTful service. Defaults to /
+    * The cache name of the remote REST endpoint.
     */
-   RestStoreConfigurationBuilder path(String path);
+   RestStoreConfigurationBuilder cacheName(String cacheName);
 
    /**
     * The port to connect to. Defaults to 80
     */
    RestStoreConfigurationBuilder port(int port);
-
-   /**
-    * Determines whether to append the cache name to the path URI. Defaults to false.
-    */
-   RestStoreConfigurationBuilder appendCacheNameToPath(boolean appendCacheNameToPath);
 
    /**
     * Reads/writes "raw" values to the REST server instead of marshalling (used by the rolling upgrades feature)

@@ -30,7 +30,7 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
       loaders.addStore(RestStoreConfigurationBuilder.class)
             .host("localhost")
             .port(restServer.getPort())
-            .path("/rest/" + getDefaultCacheName())
+            .cacheName(getDefaultCacheName())
             .preload(preload)
             .segmented(false);
       return loaders;

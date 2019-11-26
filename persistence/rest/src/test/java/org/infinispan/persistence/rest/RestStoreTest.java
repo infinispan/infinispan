@@ -51,7 +51,7 @@ public class RestStoreTest extends BaseStoreTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       RestStoreConfigurationBuilder storeConfigurationBuilder = builder.persistence()
             .addStore(RestStoreConfigurationBuilder.class);
-      storeConfigurationBuilder.host(restServer.getHost()).port(restServer.getPort()).path("/rest/" + REMOTE_CACHE);
+      storeConfigurationBuilder.host(restServer.getHost()).port(restServer.getPort()).cacheName(REMOTE_CACHE);
       storeConfigurationBuilder.connectionPool().maxTotalConnections(10).maxConnectionsPerHost(10);
       storeConfigurationBuilder.segmented(false);
       RestStore restStore = new RestStore();

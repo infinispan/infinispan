@@ -57,13 +57,8 @@ public abstract class AbstractRestStoreConfigurationChildBuilder<S> extends Abst
    }
 
    @Override
-   public RestStoreConfigurationBuilder path(String path) {
-      return builder.path(path);
-   }
-
-   @Override
-   public RestStoreConfigurationBuilder appendCacheNameToPath(boolean appendCacheNameToPath) {
-      return builder.appendCacheNameToPath(appendCacheNameToPath);
+   public RestStoreConfigurationBuilder cacheName(String cacheName) {
+      return builder.cacheName(cacheName);
    }
 
    @Override

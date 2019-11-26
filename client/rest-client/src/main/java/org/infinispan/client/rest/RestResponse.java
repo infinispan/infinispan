@@ -19,5 +19,9 @@ public interface RestResponse extends RestEntity {
 
    InputStream getBodyAsStream();
 
+   byte[] getBodyAsByteArray();
+
    Protocol getProtocol();
+
+   void close();
 }

@@ -1,3 +1,11 @@
+= Upgrading from 10.0 to 10.1
+
+== REST Store
+
+The following configurations were removed from the REST store: ```append-cache-name-to-path``` and ```path```.
+
+To specify the remote server endpoint path, a single configuration ```cache-name``` should be used.
+
 = Upgrading from 9.4 to 10.0
 
 == Marshalling

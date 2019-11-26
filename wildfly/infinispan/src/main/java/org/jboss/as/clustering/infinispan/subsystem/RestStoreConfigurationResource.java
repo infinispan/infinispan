@@ -46,19 +46,12 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
     public static final PathElement REST_STORE_PATH = PathElement.pathElement(ModelKeys.REST_STORE);
 
     // attributes
-    static final SimpleAttributeDefinition PATH =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.PATH, ModelType.STRING, true)
+    static final SimpleAttributeDefinition CACHE_NAME =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_NAME, ModelType.STRING, true)
                     .setXmlName(Attribute.PATH.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set("/rest/___defaultcache"))
-                    .build();
-    static final SimpleAttributeDefinition APPEND_CACHE_NAME_TO_PATH =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.APPEND_CACHE_NAME_TO_PATH, ModelType.BOOLEAN, true)
-                    .setXmlName(Attribute.APPEND_CACHE_NAME_TO_PATH.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH.getDefaultValue()))
+                    .setDefaultValue(new ModelNode().set("default"))
                     .build();
     static final SimpleAttributeDefinition MAX_CONTENT_LENGTH =
           new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONTENT_LENGTH, ModelType.INT, true)
@@ -136,7 +129,7 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
             setRequired(true).
             build();
 
-    static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {PATH, APPEND_CACHE_NAME_TO_PATH, MAX_CONTENT_LENGTH, CONNECTION_POOL, REMOTE_SERVERS};
+    static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {CACHE_NAME, MAX_CONTENT_LENGTH, CONNECTION_POOL, REMOTE_SERVERS};
 
     public RestStoreConfigurationResource(CacheConfigurationResource parent, ManagementResourceRegistration containerReg) {
         super(REST_STORE_PATH, ModelKeys.REST_STORE, parent, containerReg, REST_STORE_ATTRIBUTES);

@@ -33,22 +33,20 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
 
    public static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", WrappedByteArrayOrPrimitiveMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
    public static final AttributeDefinition<String> METADATA_HELPER = AttributeDefinition.builder("metadataHelper", EmbeddedMetadataHelper.class.getName()).immutable().build();
-   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", "/").immutable().build();
-   public static final AttributeDefinition<Boolean> APPEND_CACHE_NAME_TO_PATH = AttributeDefinition.builder("appendCacheNameToPath", false).immutable().build();
+   public static final AttributeDefinition<String> CACHE_NAME = AttributeDefinition.builder("cacheName", null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> RAW_VALUES = AttributeDefinition.builder("rawValues", false).immutable().build();
    public static final AttributeDefinition<Integer> MAX_CONTENT_LENGTH = AttributeDefinition.builder("maxContentLength", 10 * 1024 * 1024).immutable().build();
    private final List<ConfigurationInfo> subElements;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RestStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER, METADATA_HELPER, PATH, APPEND_CACHE_NAME_TO_PATH, RAW_VALUES, MAX_CONTENT_LENGTH);
+      return new AttributeSet(RestStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER, METADATA_HELPER, CACHE_NAME, RAW_VALUES, MAX_CONTENT_LENGTH);
    }
 
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(REST_STORE.getLocalName());
 
    private final Attribute<String> key2StringMapper;
    private final Attribute<String> metadataHelper;
-   private final Attribute<String> path;
-   private final Attribute<Boolean> appendCacheNameToPath;
+   private final Attribute<String> cacheName;
    private final Attribute<Boolean> rawValues;
    private final Attribute<Integer> maxContentLength;
    private final ConnectionPoolConfiguration connectionPool;
@@ -60,8 +58,7 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
       super(attributes, async);
       key2StringMapper = attributes.attribute(KEY2STRING_MAPPER);
       metadataHelper = attributes.attribute(METADATA_HELPER);
-      path = attributes.attribute(PATH);
-      appendCacheNameToPath = attributes.attribute(APPEND_CACHE_NAME_TO_PATH);
+      cacheName = attributes.attribute(CACHE_NAME);
       rawValues = attributes.attribute(RAW_VALUES);
       maxContentLength = attributes.attribute(MAX_CONTENT_LENGTH);
       this.connectionPool = connectionPool;
@@ -105,12 +102,8 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
       return remoteServer.port();
    }
 
-   public String path() {
-      return path.get();
-   }
-
-   public boolean appendCacheNameToPath() {
-      return appendCacheNameToPath.get();
+   public String cacheName() {
+      return cacheName.get();
    }
 
    public boolean rawValues() {
