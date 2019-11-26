@@ -22,6 +22,7 @@ The <cors-rule> element can be configured as follows:
 | allow-credentials | Enable CORS requests to use credentials | no
 | allowed-origins | A comma separated list used to set the CORS 'Access-Control-Allow-Origin' header to indicate the response can be shared with the origins | yes
 | allowed-methods | A comma separated list used to set the CORS 'Access-Control-Allow-Methods' header in the preflight response to specify the methods allowed for the configured origin(s) | yes
+| allowed-headers | A comma separated list used to set the CORS 'Access-Control-Allow-Headers' in the preflight response to specify which headers can be used by the configured origin(s) | no
 | max-age-seconds | The amount of time CORS preflight request headers can be cached | no
 | expose-headers | A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s) | no
 |===
