@@ -33,7 +33,7 @@ public class RestStoreParallelIterationTest extends ParallelIterationTest {
       cb.persistence().addStore(RestStoreConfigurationBuilder.class)
             .host("localhost")
             .port(restServer.getPort())
-            .path("/rest/" + TestingUtil.getDefaultCacheName(localCacheManager))
+            .cacheName(TestingUtil.getDefaultCacheName(localCacheManager))
             .segmented(false)
             .preload(false);
    }

@@ -4,8 +4,15 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertSame;
 
+import java.net.URL;
+
 import org.infinispan.Cache;
+import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -29,6 +36,7 @@ import org.testng.annotations.Test;
 public class RestCacheStoreConfigTest extends AbstractInfinispanTest {
 
    public static final String CACHE_LOADER_CONFIG = "rest-cl-config.xml";
+   public static final String CACHE_LOADER_CONFIG_OLD = "rest-cl-config-old.xml";
    private EmbeddedCacheManager cacheManager;
    private RestServer restServer;
 
@@ -66,6 +74,19 @@ public class RestCacheStoreConfigTest extends AbstractInfinispanTest {
             assertEquals("v", cache.get("k"));
          }
       });
+   }
+
+   public void testLegacyAttributes() throws Exception {
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      ParserRegistry parserRegistry = new ParserRegistry(classLoader);
+
+      URL url = FileLookupFactory.newInstance().lookupFileLocation(CACHE_LOADER_CONFIG_OLD, classLoader);
+      ConfigurationBuilderHolder holder = parserRegistry.parse(url);
+      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get("cache-local");
+      Configuration configuration = builder.build();
+
+      RestStoreConfiguration storeConfiguration = (RestStoreConfiguration) configuration.persistence().stores().get(0);
+      assertEquals("my-cache-name", storeConfiguration.cacheName());
    }
 
    @AfterClass

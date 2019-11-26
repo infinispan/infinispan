@@ -153,7 +153,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       RestResponse response = sync(cache.xsiteBackups());
       assertEquals(200, response.getStatus());
 
-      JsonNode status = MAPPER.readTree(response.getBody());
+      JsonNode status = MAPPER.readTree(response.getBody().toString());
       assertEquals(ONLINE, status.get(NYC).asText());
    }
 

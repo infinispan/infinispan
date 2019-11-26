@@ -44,6 +44,14 @@ public class RestCacheClientOkHttp implements RestCacheClient {
       return client.execute(builder);
    }
 
+
+   @Override
+   public CompletionStage<RestResponse> exists() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl).head();
+      return client.execute(builder);
+   }
+
    @Override
    public CompletionStage<RestResponse> size() {
       Request.Builder builder = new Request.Builder();

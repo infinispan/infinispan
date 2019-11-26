@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:9.4 https://infinispan.org/schemas/infinispan-config-9.4.xsd
+                          urn:infinispan:config:store:rest:9.4 https://infinispan.org/schemas/infinispan-cachestore-rest-config-9.4.xsd"
+        xmlns="urn:infinispan:config:9.4">
+
+    <cache-container>
+        <local-cache name="cache-local">
+            <persistence>
+                <rest-store xmlns="urn:infinispan:config:store:rest:9.4" shared="true" raw-values="false" path="/rest/my-cache-name"
+                            max-content-length="15000000">
+                    <remote-server host="localhost" port="18212" outbound-socket-binding="rest-server-1"/>
+                    <connection-pool connection-timeout="10000" max-connections-per-host="10" max-total-connections="10"
+                                     buffer-size="20000" socket-timeout="10000" tcp-no-delay="true"/>
+                </rest-store>
+            </persistence>
+        </local-cache>
+    </cache-container>
+
+</infinispan>

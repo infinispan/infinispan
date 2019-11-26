@@ -85,7 +85,7 @@
             </memory>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <persistence>
-                <rest-store fetch-state="false" path="path" preload="true" purge="false" shared="true" append-cache-name-to-path="false" name="rest-store">
+                <rest-store fetch-state="false" cache-name="default" preload="true" purge="false" shared="true" name="rest-store">
                     <write-behind modification-queue-size="2048" thread-pool-size="1" />
                     <remote-server outbound-socket-binding="rest-server-1" />
                     <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />

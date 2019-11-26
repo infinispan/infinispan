@@ -23,6 +23,7 @@
 package org.infinispan.persistence.rest.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -56,4 +57,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Error loading entries from remote server", id = 22005)
    PersistenceException errorLoadingRemoteEntries(@Cause Exception e);
+
+   @Message(value = "Error getting cache size", id = 22006)
+   PersistenceException errorGettingCacheSize(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cound not close the REST client", id = 22007)
+   void cannotCloseClient(@Cause Throwable e);
 }

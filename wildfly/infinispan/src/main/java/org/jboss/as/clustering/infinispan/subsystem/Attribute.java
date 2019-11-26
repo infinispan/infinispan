@@ -54,6 +54,7 @@ public enum Attribute {
     BLOCK_SIZE(ModelKeys.BLOCK_SIZE),
     BUFFER_SIZE(ModelKeys.BUFFER_SIZE),
     CACHE(ModelKeys.CACHE),
+    CACHE_NAME(ModelKeys.CACHE_NAME),
     CACHE_SIZE(ModelKeys.CACHE_SIZE),
     CAPACITY_FACTOR(ModelKeys.CAPACITY_FACTOR),
     CHANNEL(ModelKeys.CHANNEL),

@@ -15,6 +15,7 @@ public enum Attribute {
 
    APPEND_CACHE_NAME_TO_PATH("append-cache-name-to-path"),
    BUFFER_SIZE("buffer-size"),
+   CACHE_NAME("cache-name"),
    CONNECTION_TIMEOUT("connection-timeout"),
    HOST("host"),
    KEY_TO_STRING_MAPPER("key-to-string-mapper"),
