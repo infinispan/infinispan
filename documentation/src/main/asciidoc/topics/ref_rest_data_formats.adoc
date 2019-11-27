@@ -1,13 +1,19 @@
 [id='rest_server_data_format_config']
 = Configuring Data Formats via the REST API
 
-Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration link:#encoding_media_type[here].
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType].
+
+//Community Link
+ifndef::productized[]
+See the link:../developing/developing.html#data_encoding[Encoding] section for
+more information about MediaTypes and encoding data with {brandname}.
+endif::productized[]
 
 An example of storage configuration is as follows:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::{topics}/config_examples/encoding_media_type.xml[]
+include::config_examples/encoding_media_type.xml[]
 ----
 
 When no MediaType is configured, {brandname} assumes "application/octet-stream" for both keys and values, with the following exceptions:

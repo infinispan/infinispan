@@ -1,4 +1,4 @@
-[rest_security]]
+[id='rest_security']
 = REST Authentication
 You can configure authentication to the REST endpoint with the `user-tool.sh` script in the {brandname} server distribution.
 
