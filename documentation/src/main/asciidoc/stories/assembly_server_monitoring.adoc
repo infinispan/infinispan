@@ -4,7 +4,6 @@
 
 include::{topics}/jmx_server.adoc[leveloffset=+1]
 include::{topics}/jmx.adoc[leveloffset=+2]
-include::{topics}/jmx_prometheus.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
