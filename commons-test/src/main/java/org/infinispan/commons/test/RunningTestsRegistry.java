@@ -129,7 +129,7 @@ class RunningTestsRegistry {
       }
    }
 
-   private static void dumpThreads(String safeTestName, List<String> pids) {
+   public static void dumpThreads(String safeTestName, List<String> pids) {
       try {
          String extension = OS.getCurrentOs() == OS.WINDOWS ? ".exe" : "";
          String javaHome = System.getProperty("java.home");
