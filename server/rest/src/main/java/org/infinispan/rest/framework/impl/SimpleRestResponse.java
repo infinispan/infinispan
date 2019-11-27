@@ -95,6 +95,11 @@ public class SimpleRestResponse implements RestResponse {
       }
 
       @Override
+      public Builder location(String location) {
+         return this;
+      }
+
+      @Override
       public Builder eTag(String tag) {
          return this;
       }

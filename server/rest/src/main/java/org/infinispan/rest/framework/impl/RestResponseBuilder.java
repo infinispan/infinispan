@@ -31,6 +31,8 @@ public interface RestResponseBuilder<B extends RestResponseBuilder<B>> {
 
    B lastModified(Long epoch);
 
+   B location(String location);
+
    B addProcessedDate(Date d);
 
    B eTag(String tag);
