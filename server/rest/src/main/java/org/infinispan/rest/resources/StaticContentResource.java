@@ -52,7 +52,7 @@ public class StaticContentResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().methods(GET).path(urlPath + "/").path(urlPath + "/*").handleWith(this::serveFile)
+            .invocation().methods(GET).anonymous(true).path(urlPath + "/").path(urlPath + "/*").handleWith(this::serveFile)
             .create();
    }
 
