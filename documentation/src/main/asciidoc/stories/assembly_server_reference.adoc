@@ -1,0 +1,10 @@
+[id='server_reference']
+:context: server
+= {brandname} Server Reference
+
+//Product only
+include::{topics}/readmes/server/runtime/README.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
