@@ -9,10 +9,10 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.xsite.BackupSender;
-import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.OfflineStatus;
+import org.infinispan.xsite.status.BringSiteOnlineResponse;
+import org.infinispan.xsite.status.DefaultTakeOfflineManager;
 import org.testng.annotations.Test;
 
 /**
@@ -33,12 +33,12 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
 
    public void testPutWithFailures() {
       populateKeys(cache(LON, 0));
-      BackupSenderImpl bs = (BackupSenderImpl) cache(LON, 0).getAdvancedCache().getComponentRegistry().getComponent(BackupSender.class);
-      OfflineStatus nycStatus = bs.getOfflineStatus(NYC);
+      DefaultTakeOfflineManager tom = takeOfflineManager(LON, 0);
+      OfflineStatus nycStatus = tom.getOfflineStatus(NYC);
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {
-            assertEquals(BackupSender.BringSiteOnlineResponse.ALREADY_ONLINE, bs.bringSiteOnline(NYC));
+            assertEquals(BringSiteOnlineResponse.ALREADY_ONLINE, tom.bringSiteOnline(NYC));
             cache(LON, 0).put(keys[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
@@ -56,9 +56,9 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
          assertEquals("v" + i, cache(LON, 0).get(keys[i]));
       }
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.NO_SUCH_SITE, bs.bringSiteOnline("NO_SITE"));
+      assertEquals(BringSiteOnlineResponse.NO_SUCH_SITE, tom.bringSiteOnline("NO_SITE"));
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
+      assertEquals(BringSiteOnlineResponse.BROUGHT_ONLINE, tom.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {

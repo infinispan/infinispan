@@ -12,6 +12,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * Command used for handling XSiteReplication administrative operations.
@@ -46,7 +47,7 @@ public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCo
    private Long minTimeToWait;
    private AdminOperation adminOperation;
 
-   private BackupSender backupSender;
+   private TakeOfflineManager takeOfflineManager;
 
    @SuppressWarnings("unused")
    public XSiteAdminCommand() {
@@ -67,30 +68,30 @@ public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCo
 
    @Override
    public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.backupSender = componentRegistry.getBackupSender().running();
+      this.takeOfflineManager = componentRegistry.getTakeOfflineManager().running();
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
       switch (adminOperation) {
          case SITE_STATUS: {
-            if (backupSender.getOfflineStatus(siteName).isOffline()) {
+            if (takeOfflineManager.isOffline(siteName)) {
                return CompletableFuture.completedFuture(Status.OFFLINE);
             } else {
                return CompletableFuture.completedFuture(Status.ONLINE);
             }
          }
          case STATUS: {
-            return CompletableFuture.completedFuture(backupSender.status());
+            return CompletableFuture.completedFuture(takeOfflineManager.status());
          }
          case TAKE_OFFLINE: {
-            return CompletableFuture.completedFuture(backupSender.takeSiteOffline(siteName));
+            return CompletableFuture.completedFuture(takeOfflineManager.takeSiteOffline(siteName));
          }
          case BRING_ONLINE: {
-            return CompletableFuture.completedFuture(backupSender.bringSiteOnline(siteName));
+            return CompletableFuture.completedFuture(takeOfflineManager.bringSiteOnline(siteName));
          }
          case AMEND_TAKE_OFFLINE: {
-            backupSender.getOfflineStatus(siteName).amend(afterFailures, minTimeToWait);
+            takeOfflineManager.amendConfiguration(siteName, afterFailures, minTimeToWait);
             return CompletableFutures.completedNull();
          }
          default: {
@@ -158,7 +159,6 @@ public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCo
             ", afterFailures=" + afterFailures +
             ", minTimeToWait=" + minTimeToWait +
             ", adminOperation=" + adminOperation +
-            ", backupSender=" + backupSender +
             '}';
    }
 }

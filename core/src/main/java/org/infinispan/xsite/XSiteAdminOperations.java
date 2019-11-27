@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -33,9 +34,12 @@ import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.infinispan.xsite.status.BringSiteOnlineResponse;
 import org.infinispan.xsite.status.CacheMixedSiteStatus;
 import org.infinispan.xsite.status.CacheSiteStatusBuilder;
 import org.infinispan.xsite.status.SiteStatus;
+import org.infinispan.xsite.status.TakeOfflineManager;
+import org.infinispan.xsite.status.TakeSiteOfflineResponse;
 
 /**
  * Managed bean exposing sys admin operations for Cross-Site replication functionality.
@@ -56,9 +60,9 @@ public class XSiteAdminOperations {
    private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
 
    @Inject RpcManager rpcManager;
-   @Inject volatile BackupSender backupSender;
    @Inject XSiteStateTransferManager stateTransferManager;
    @Inject CommandsFactory commandsFactory;
+   @Inject TakeOfflineManager takeOfflineManager;
 
    public static String siteStatusToString(SiteStatus status, Function<CacheMixedSiteStatus, String> mixedFunction) {
       if (status.isOffline()) {
@@ -76,7 +80,7 @@ public class XSiteAdminOperations {
    }
 
    public Map<String, SiteStatus> clusterStatus() {
-      Map<String, Boolean> localNodeStatus = backupSender.status();
+      Map<String, Boolean> localNodeStatus = takeOfflineManager.status();
       XSiteAdminCommand command = newStatusCommand();
       XSiteResponse<Map<String, Boolean>> response = invokeOnAll(command,
             new PerSiteBooleanResponseCollector(clusterSize()));
@@ -109,10 +113,7 @@ public class XSiteAdminOperations {
    @ManagedOperation(description = "Check whether the given backup site is offline or not.", displayName = "Check whether the given backup site is offline or not.")
    public String siteStatus(@Parameter(name = "site", description = "The name of the backup site") String site) {
       //also consider local node
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null)
-         return "Incorrect site name: " + site;
-      log.tracef("This node's status is %s", offlineStatus);
+      if (notContainSite(site)) return incorrectSiteName(site);
 
       Map<Address, String> statuses = nodeStatus(site);
       List<Address> online = new ArrayList<>(statuses.size());
@@ -138,10 +139,8 @@ public class XSiteAdminOperations {
     * @return a Map&lt;String, String&gt; with the Address and the status of each node in the site
     */
    public Map<Address, String> nodeStatus(String site) {
-      //also consider local node
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null) {
-         throw new IllegalArgumentException("Incorrect site name: " + site);
+      if (notContainSite(site)) {
+         throw new IllegalArgumentException(incorrectSiteName(site));
       }
 
       XSiteAdminCommand command = newAdminCommand(SITE_STATUS, site);
@@ -161,7 +160,7 @@ public class XSiteAdminOperations {
          }
       });
 
-      if (offlineStatus.isOffline()) {
+      if (takeOfflineManager.isOffline(site)) {
          statusMap.put(rpcManager.getAddress(), OFFLINE);
       } else {
          statusMap.put(rpcManager.getAddress(), ONLINE);
@@ -180,11 +179,8 @@ public class XSiteAdminOperations {
 
    @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.", displayName = "Takes this site offline in all nodes in the cluster.")
    public String takeSiteOffline(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null)
-         return incorrectSiteName(site);
-      backupSender.takeSiteOffline(site);
-      log.tracef("Is site offline in node %s? %s", rpcManager.getAddress(), offlineStatus.isOffline());
+      TakeSiteOfflineResponse rsp = takeOfflineManager.takeSiteOffline(site);
+      if (rsp == TakeSiteOfflineResponse.NO_SUCH_SITE) return incorrectSiteName(site);
 
       XSiteAdminCommand command = newAdminCommand(TAKE_OFFLINE, site);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
@@ -217,33 +213,28 @@ public class XSiteAdminOperations {
 
    @ManagedOperation(description = "Returns the value of the 'minTimeToWait' for the 'TakeOffline' functionality.", displayName = "Returns the value of the 'minTimeToWait' for the 'TakeOffline' functionality.")
    public String getTakeOfflineMinTimeToWait(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null) return incorrectSiteName(site);
-      return String.valueOf(offlineStatus.getTakeOffline().minTimeToWait());
+      TakeOfflineConfiguration config = getTakeOfflineConfiguration(site);
+      return config == null ? incorrectSiteName(site) : String.valueOf(config.minTimeToWait());
    }
 
    @ManagedOperation(description = "Returns the value of the 'afterFailures' for the 'TakeOffline' functionality.", displayName = "Returns the value of the 'afterFailures' for the 'TakeOffline' functionality.")
    public String getTakeOfflineAfterFailures(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null) return incorrectSiteName(site);
-      return String.valueOf(offlineStatus.getTakeOffline().afterFailures());
+      TakeOfflineConfiguration config = getTakeOfflineConfiguration(site);
+      return config == null ? incorrectSiteName(site) : String.valueOf(config.afterFailures());
    }
 
-   public OfflineStatus getOfflineStatus(String site) {
-      return backupSender.getOfflineStatus(site);
+   public TakeOfflineConfiguration getTakeOfflineConfiguration(String site) {
+      return takeOfflineManager.getConfiguration(site);
    }
 
-   public boolean checkSite(String site) {
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      return offlineStatus != null;
+   public boolean notContainSite(String site) {
+      return takeOfflineManager.notContainsSite(site);
    }
 
    @ManagedOperation(description = "Brings the given site back online on all the cluster.", displayName = "Brings the given site back online on all the cluster.")
    public String bringSiteOnline(@Parameter(name = "site", description = "The name of the backup site") String site) {
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null)
-         return "Incorrect site name: " + site;
-      backupSender.bringSiteOnline(site);
+      BringSiteOnlineResponse rsp = takeOfflineManager.bringSiteOnline(site);
+      if (rsp == BringSiteOnlineResponse.NO_SUCH_SITE) return incorrectSiteName(site);
 
       XSiteAdminCommand command = newAdminCommand(BRING_ONLINE, site);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
@@ -334,15 +325,13 @@ public class XSiteAdminOperations {
    }
 
    private String takeOffline(String site, Integer afterFailures, Long minTimeToWait) {
-      OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
-      if (offlineStatus == null)
-         return incorrectSiteName(site);
+      if (notContainSite(site)) return incorrectSiteName(site);
 
       XSiteAdminCommand command = newAmendTakeOfflineCommand(site, afterFailures, minTimeToWait);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       //also amend locally
-      offlineStatus.amend(afterFailures, minTimeToWait);
+      takeOfflineManager.amendConfiguration(site, afterFailures, minTimeToWait);
 
       return returnFailureOrSuccess(response.getErrors(), "Could not amend for nodes:");
    }

@@ -56,6 +56,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * Named cache specific components
@@ -83,6 +84,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<AdvancedCache> cache;
    private ComponentRef<AsyncInterceptorChain> asyncInterceptorChain;
    private ComponentRef<BackupSender> backupSender;
+   private ComponentRef<TakeOfflineManager> takeOfflineManager;
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
    private ComponentRef<CancellationService> cancellationService;
@@ -359,6 +361,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       asyncInterceptorChain = basicComponentRegistry.getComponent(AsyncInterceptorChain.class);
       biasManager = basicComponentRegistry.getComponent(BiasManager.class);
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
+      takeOfflineManager = basicComponentRegistry.getComponent(TakeOfflineManager.class);
       cache = basicComponentRegistry.getComponent(AdvancedCache.class);
       cacheNotifier = basicComponentRegistry.getComponent(CacheNotifier.class);
       cancellationService = basicComponentRegistry.getComponent(CancellationService.class);
@@ -420,6 +423,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<BackupSender> getBackupSender() {
       return backupSender;
+   }
+
+   public ComponentRef<TakeOfflineManager> getTakeOfflineManager() {
+      return takeOfflineManager;
    }
 
    public ComponentRef<BiasManager> getBiasManager() {

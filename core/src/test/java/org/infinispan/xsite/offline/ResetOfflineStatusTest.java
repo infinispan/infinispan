@@ -8,14 +8,13 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.xsite.BackupSender;
-import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.OfflineStatus;
+import org.infinispan.xsite.status.BringSiteOnlineResponse;
+import org.infinispan.xsite.status.DefaultTakeOfflineManager;
 import org.testng.annotations.Test;
 
 /**
@@ -41,9 +40,8 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
       DelegatingTransport delegatingTransport = new DelegatingTransport(transport);
       TestingUtil.replaceComponent(manager, Transport.class, delegatingTransport, true);
 
-      ComponentRegistry registry = cache(LON, 0).getAdvancedCache().getComponentRegistry();
-      BackupSenderImpl bs = (BackupSenderImpl) registry.getComponent(BackupSender.class);
-      OfflineStatus offlineStatus = bs.getOfflineStatus(NYC);
+      DefaultTakeOfflineManager tom = takeOfflineManager(LON, 0);
+      OfflineStatus offlineStatus = tom.getOfflineStatus(NYC);
 
       delegatingTransport.fail = true;
       for (int i = 0; i < FAILURES; i++) {
@@ -63,7 +61,7 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
          assertEquals("v" + i, cache(LON, 0).get(KEYS[i]));
       }
 
-      assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE, bs.bringSiteOnline(NYC));
+      assertEquals(BringSiteOnlineResponse.BROUGHT_ONLINE, tom.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES - 1; i++) {
          try {

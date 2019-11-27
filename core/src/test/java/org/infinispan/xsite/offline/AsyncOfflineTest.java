@@ -24,8 +24,6 @@ import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.xsite.AbstractXSiteTest;
-import org.infinispan.xsite.BackupSender;
-import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.testng.annotations.AfterMethod;
@@ -74,7 +72,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       cache(LON, cacheName, 0).put("key", "value");
       eventuallyEquals("value", () -> cache(SFO, cacheName, 0).get("key"));
 
-      assertEquals(0, backupSender(cacheName, primaryOwner).getOfflineStatus(SFO).getFailureCount());
+      assertEquals(0, takeOfflineManager(LON, cacheName, primaryOwner).getOfflineStatus(SFO).getFailureCount());
 
       List<DiscardInboundHandler> handlers = replaceSFOInboundHandler();
       handlers.forEach(h -> h.discard = true);
@@ -99,7 +97,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
       Cache<String, String> lonCache = cache(LON, cacheName, 0);
       Cache<String, String> sfoCache = cache(SFO, cacheName, 0);
-      OfflineStatus lonStatus = backupSender(cacheName, primaryOwner).getOfflineStatus(SFO);
+      OfflineStatus lonStatus = takeOfflineManager(LON, cacheName, primaryOwner).getOfflineStatus(SFO);
 
       lonCache.put(key, "value");
       eventuallyEquals("value", () -> sfoCache.get(key));
@@ -165,27 +163,22 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    }
 
    private void assertOnline(String cacheName, int index, String targetSiteName) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(targetSiteName);
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(targetSiteName);
       assertTrue(status.isEnabled());
       assertFalse("Site " + targetSiteName + " is offline. status=" + status, status.isOffline());
    }
 
    private void assertEventuallyOffline(String cacheName, int index) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
       eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline);
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue("Unable to bring " + SFO + " online. status=" + status, status.bringOnline());
    }
 
-   private BackupSenderImpl backupSender(String cacheName, int index) {
-      return (BackupSenderImpl) cache(LON, cacheName, index).getAdvancedCache()
-            .getComponentRegistry()
-            .getComponent(BackupSender.class);
-   }
 
    private int primaryOwnerIndex(String cacheName, String key) {
       for (int i = 0; i < NUM_NODES; ++i) {

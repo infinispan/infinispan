@@ -31,7 +31,6 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
-import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.status.AbstractMixedSiteStatus;
 import org.infinispan.xsite.status.OfflineSiteStatus;
@@ -171,8 +170,9 @@ public class XSiteResource implements ResourceHandler {
       String site = request.variables().get("site");
 
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
+      TakeOfflineConfiguration current = xsiteAdmin.getTakeOfflineConfiguration(site);
 
-      if (!xsiteAdmin.checkSite(site)) {
+      if (current == null) {
          return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
       byte[] byteContent = request.contents().rawContent();
@@ -180,7 +180,6 @@ public class XSiteResource implements ResourceHandler {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.BAD_REQUEST.code()).build());
       }
 
-      TakeOfflineConfiguration current = xsiteAdmin.getOfflineStatus(site).getTakeOffline();
       TakeOffline takeOffline;
       try {
          takeOffline = invocationHelper.getMapper().readValue(byteContent, TakeOffline.class);
@@ -204,12 +203,12 @@ public class XSiteResource implements ResourceHandler {
       String site = request.variables().get("site");
 
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
-      if (!xsiteAdmin.checkSite(site)) {
+      TakeOfflineConfiguration config = xsiteAdmin.getTakeOfflineConfiguration(site);
+      if (config == null) {
          return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
-      OfflineStatus offlineStatus = xsiteAdmin.getOfflineStatus(site);
 
-      addPayload(responseBuilder, new TakeOffline(offlineStatus.getTakeOffline()));
+      addPayload(responseBuilder, new TakeOffline(config));
 
       return completedFuture(responseBuilder.build());
    }
@@ -220,7 +219,7 @@ public class XSiteResource implements ResourceHandler {
 
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
 
-      if (!xsiteAdmin.checkSite(site)) {
+      if (xsiteAdmin.notContainSite(site)) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
       }
 
@@ -289,7 +288,7 @@ public class XSiteResource implements ResourceHandler {
 
       XSiteAdminOperations xsiteAdmin = getxsiteAdmin(request);
 
-      if (!xsiteAdmin.checkSite(site)) {
+      if (xsiteAdmin.notContainSite(site)) {
          return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND.code()).build());
       }
 

@@ -26,6 +26,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.xsite.status.DefaultTakeOfflineManager;
+import org.infinispan.xsite.status.TakeOfflineManager;
 import org.jgroups.protocols.relay.RELAY2;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -347,5 +349,17 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    @Override
    public String getDefaultCacheName() {
       return site(0).cacheManagers.get(0).getCacheManagerConfiguration().defaultCacheName().get();
+   }
+
+   protected DefaultTakeOfflineManager takeOfflineManager(String site, String cacheName, int index) {
+      return (DefaultTakeOfflineManager) cache(site, cacheName, index).getAdvancedCache()
+            .getComponentRegistry()
+            .getComponent(TakeOfflineManager.class);
+   }
+
+   protected DefaultTakeOfflineManager takeOfflineManager(String site, int index) {
+      return (DefaultTakeOfflineManager) cache(site, index).getAdvancedCache()
+            .getComponentRegistry()
+            .getComponent(TakeOfflineManager.class);
    }
 }
