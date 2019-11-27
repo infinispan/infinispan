@@ -3,4 +3,7 @@
 
 include::{stories}/assembly_rest.adoc[leveloffset=+1]
 include::{stories}/assembly_rest_api.adoc[leveloffset=+1]
+//Community Only
+ifndef::productized[]
 include::{stories}/assembly_rest_client_code.adoc[leveloffset=+1]
+endif::productized[]

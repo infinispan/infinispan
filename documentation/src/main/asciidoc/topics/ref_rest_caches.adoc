@@ -26,8 +26,8 @@ POST /rest/v2/caches/{cacheName}
 * link:#ref_xml_configuration[{brandname} XML Configuration]
 * link:#ref_json_configuration[{brandname} JSON Configuration]
 
-include::{topics}/ref_xml_configuration.adoc[leveloffset=+1]
-include::{topics}/ref_json_configuration.adoc[leveloffset=+1]
+include::ref_xml_configuration.adoc[leveloffset=+1]
+include::ref_json_configuration.adoc[leveloffset=+1]
 
 [id='rest_v2_cache_exists']
 = Verifying Caches

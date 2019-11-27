@@ -3,5 +3,5 @@
 
 [source,java]
 ----
-include::{topics}/code_examples/RestHttpClient.java[]
+include::code_examples/RestHttpClient.java[]
 ----
