@@ -29,7 +29,7 @@ include::transaction-attributes.adoc[]
 :server_home: $ISPN_HOME
 :server_root: ${infinispan.server.root}
 :server_config: ${infinispan.server.configuration}
-:runtime_readme: https://github.com/infinispan/infinispan/blob/master/server/runtime/README.md
+:runtime_readme: https://github.com/infinispan/infinispan/blob/master/server/runtime/README.adoc
 
 //
 // Operator
