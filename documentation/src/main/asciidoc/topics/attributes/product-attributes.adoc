@@ -82,7 +82,7 @@ include::transaction-attributes.adoc[]
 :server_home: $RHDG_HOME
 :server_root: ${rhdg.server.root}
 :server_config: ${rhdg.server.configuration}
-:runtime_readme: https://github.com/infinispan/infinispan/blob/master/server/runtime/README.md
+:runtime_readme: #server_readme
 
 //
 // Operator

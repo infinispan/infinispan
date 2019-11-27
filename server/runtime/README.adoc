@@ -1,3 +1,4 @@
+[id='server_readme']
 = Infinispan Server
 
 Infinispan server provides fast, reliable, and secure access to your data. This
