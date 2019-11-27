@@ -41,6 +41,7 @@ public class NettyRestResponse implements RestResponse {
    private final static String EXPIRES_HEADER = "Expires";
    private final static String LAST_MODIFIED_HEADER = "Last-Modified";
    private static final String LAST_USED_HEADER = "lastUsed";
+   private static final String LOCATION = "location";
    private final static String MAX_IDLE_TIME_HEADER = "maxIdleTimeSeconds";
    private final static String TIME_TO_LIVE_HEADER = "timeToLiveSeconds";
    private final static String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
@@ -161,6 +162,12 @@ public class NettyRestResponse implements RestResponse {
       @Override
       public Builder lastModified(Long epoch) {
          setDateHeader(LAST_MODIFIED_HEADER, epoch);
+         return this;
+      }
+
+      @Override
+      public Builder location(String location) {
+         setHeader(LOCATION, location);
          return this;
       }
 

@@ -33,7 +33,8 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    }
 
    private ContentResponse call(String context, String path) throws InterruptedException, ExecutionException, TimeoutException {
-      String url = String.format("http://localhost:%d/%s/%s", restServer().getPort(), context, path);
+      String format = path == null ? "http://localhost:%d/%s" : "http://localhost:%d/%s/%s";
+      String url = String.format(format, restServer().getPort(), context, path);
       client.getContentDecoderFactories().clear();
       return client.newRequest(url).method(GET).send();
    }
@@ -60,10 +61,13 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    public void testConsole() throws Exception {
       ContentResponse response1 = call("console", "page.htm");
       ContentResponse response2 = call("console", "folder/test.css");
+      ContentResponse response3 = call("console", null);
 
       assertResponse(response1, "static-test/console/page.htm", "console", TEXT_HTML);
       assertResponse(response2, "static-test/console/folder/test.css", ".a", TEXT_CSS);
       ResponseAssertion.assertThat(response2).isOk();
+
+      assertResponse(response3, "static-test/console/index.html", "console", TEXT_HTML);
    }
 
    private void assertResponse(ContentResponse response, String path, String returnedText, MediaType... possibleTypes) {

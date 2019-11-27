@@ -1,6 +1,8 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.MOVED_PERMANENTLY;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 
@@ -8,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +35,8 @@ public class StaticContentResource implements ResourceHandler {
 
    private static final int CACHE_MAX_AGE_SECONDS = 60 * 60 * 24 * 31;  // 1 Month
    private static final String DEFAULT_RESOURCE = "index.html";
+   private final String noFileUri;
+   private final String rootUri;
 
    /**
     * @param dir The path to serve files from
@@ -42,6 +45,8 @@ public class StaticContentResource implements ResourceHandler {
    public StaticContentResource(Path dir, String urlPath) {
       this.dir = dir.toAbsolutePath();
       this.urlPath = urlPath;
+      this.noFileUri = "/" + urlPath;
+      this.rootUri = noFileUri + "/";
    }
 
    @Override
@@ -71,12 +76,16 @@ public class StaticContentResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       String uri = restRequest.uri();
-      String resource = uri.equals("/" + urlPath) ? "" : uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
-      if (resource.isEmpty()) resource = DEFAULT_RESOURCE;
+
+      if (uri.equals(noFileUri)) {
+         return completedFuture(responseBuilder.location(rootUri).status(MOVED_PERMANENTLY).build());
+      }
+
+      String resource = uri.equals(rootUri) ? DEFAULT_RESOURCE : uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
 
       File file = resolve(resource);
       if (file == null) {
-         return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
+         return completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
       }
 
       String ifModifiedSince = restRequest.getIfModifiedSinceHeader();
@@ -84,7 +93,7 @@ public class StaticContentResource implements ResourceHandler {
          boolean isNotModified = DateUtils.isNotModifiedSince(ifModifiedSince, file.lastModified());
          if (isNotModified) {
             responseBuilder.status(NOT_MODIFIED);
-            return CompletableFuture.completedFuture(responseBuilder.build());
+            return completedFuture(responseBuilder.build());
          }
       }
 
@@ -104,6 +113,6 @@ public class StaticContentResource implements ResourceHandler {
       responseBuilder.contentLength(file.length())
             .contentType(mediaType)
             .entity(file);
-      return CompletableFuture.completedFuture(responseBuilder.build());
+      return completedFuture(responseBuilder.build());
    }
 }
