@@ -5,6 +5,7 @@ import static org.infinispan.server.security.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.security.Common;
+import org.infinispan.server.test.InfinispanServerDriver;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.infinispan.server.test.category.Security;
@@ -57,6 +59,20 @@ public class RestAuthentication {
    public RestAuthentication(Protocol protocol, String mechanism) {
       this.protocol = protocol;
       this.mechanism = mechanism;
+   }
+
+   @Test
+   public void testStaticResourcesAnonymously() {
+      InfinispanServerDriver serverDriver = SERVERS.getServerDriver();
+
+      InetSocketAddress serverAddress = serverDriver.getServerSocket(0, 11222);
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+
+      RestClient restClient = RestClient.forConfiguration(builder.build());
+
+      RestResponse response = sync(restClient.raw().get("/"));
+      assertEquals(200, response.getStatus());
    }
 
    @Test

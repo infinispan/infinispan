@@ -28,10 +28,10 @@ public class SplashResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder()
-            .invocation().method(Method.GET).path("/").handleWith(req -> this.serveStaticResource(req, "index.html"))
-            .invocation().method(Method.GET).path("/banner.png").handleWith(req -> this.serveStaticResource(req, "banner.png"))
-            .invocation().method(Method.GET).path("/favicon.png").handleWith(req -> this.serveStaticResource(req, "favicon.png"))
-            .invocation().method(Method.GET).path("/css.css").handleWith(req -> this.serveStaticResource(req, "css.css"))
+            .invocation().anonymous(true).method(Method.GET).path("/").handleWith(req -> this.serveStaticResource(req, "index.html"))
+            .invocation().anonymous(true).method(Method.GET).path("/banner.png").handleWith(req -> this.serveStaticResource(req, "banner.png"))
+            .invocation().anonymous(true).method(Method.GET).path("/favicon.png").handleWith(req -> this.serveStaticResource(req, "favicon.png"))
+            .invocation().anonymous(true).method(Method.GET).path("/css.css").handleWith(req -> this.serveStaticResource(req, "css.css"))
             .create();
    }
 

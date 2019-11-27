@@ -11,4 +11,6 @@ public interface RestRawClient {
    CompletionStage<RestResponse> postForm(String url, Map<String, String> headers, Map<String, String> formParameters);
 
    CompletionStage<RestResponse> putValue(String url, Map<String, String> headers, String body, String bodyMediaType);
+
+   CompletionStage<RestResponse> get(String url);
 }

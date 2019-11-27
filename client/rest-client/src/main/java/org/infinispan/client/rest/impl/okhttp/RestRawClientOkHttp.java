@@ -41,4 +41,10 @@ public class RestRawClientOkHttp implements RestRawClient {
       builder.put(RequestBody.create(MediaType.parse(bodyMediaType), body));
       return restClient.execute(builder);
    }
+
+   @Override
+   public CompletionStage<RestResponse> get(String url) {
+      Request.Builder builder = new Request.Builder().get().url(restClient.getBaseURL() + url);
+      return restClient.execute(builder);
+   }
 }
