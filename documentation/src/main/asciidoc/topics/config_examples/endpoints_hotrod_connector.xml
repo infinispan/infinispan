@@ -1,0 +1,9 @@
+<hotrod-connector name="hotrod">
+  <topology-state-transfer />
+  <authentication>
+    ...
+  </authentication>
+  <encryption>
+    ...
+  </encryption>
+</hotrod-connector>

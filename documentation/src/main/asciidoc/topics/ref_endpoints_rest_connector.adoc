@@ -1,0 +1,17 @@
+= REST Connectors
+REST connector declarations enable REST servers.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/endpoints_rest_connector.xml[]
+----
+
+* `name="rest"` logically names the REST connector.
+* `authentication` configures authentication mechanisms.
+* `cors-rules` specifies CORS (Cross Origin Resource Sharing) rules for cross-domain requests.
+* `encryption` configures TLS settings for client connections.
+
+.Reference
+
+link:{configdocroot}[urn:infinispan:server] schema provides all available
+REST connector configuration.

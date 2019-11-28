@@ -94,41 +94,37 @@
    <xs:complexType name="protocol-connector" abstract="true">
       <xs:attribute name="socket-binding" type="xs:string">
          <xs:annotation>
-            <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not
-               listen to TCP connections
-            </xs:documentation>
+            <xs:documentation>Specifies the socket this connector binds to. If no socket binding is declared, the server does not listen to TCP connections. </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="cache-container" type="xs:string">
          <xs:annotation>
-            <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
+            <xs:documentation>Names the cache container this connector exposes.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="io-threads" type="xs:int">
          <xs:annotation>
-            <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores</xs:documentation>
+            <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="worker-threads" type="xs:int">
          <xs:annotation>
-            <xs:documentation>Sets the number of worker threads. Defaults to 160</xs:documentation>
+            <xs:documentation>Sets the number of worker threads. Defaults to 160.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="idle-timeout" type="xs:int">
          <xs:annotation>
-            <xs:documentation>Specifies the maximum time in seconds that connections from clients will be kept open
-               without activity. Defaults to 0 (no timeout)
-            </xs:documentation>
+            <xs:documentation>Specifies the maximum time, in seconds, that client connections can remain inactive. Defaults to 0 (no timeout). </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="tcp-nodelay" type="xs:boolean">
          <xs:annotation>
-            <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
+            <xs:documentation>Enables TCP NODELAY on the TCP stack. Values are enabled (default) / disabled.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="tcp-keepalive" type="xs:boolean">
          <xs:annotation>
-            <xs:documentation>Affects TCP KEEPALIVE on the TCP stack. Defaults to disabled</xs:documentation>
+            <xs:documentation>Enables TCP KEEPALIVE on the TCP stack. Values are enabled / disabled (default).</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="send-buffer-size" type="xs:int">
@@ -153,13 +149,12 @@
             </xs:sequence>
             <xs:attribute name="socket-binding" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The socket on which the endpoint connector will bind itself</xs:documentation>
+                  <xs:documentation>Specifies the socket the endpoint connector binds to.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="security-realm" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The name of the security realm to use for authentication/authorization/encryption
-                  </xs:documentation>
+                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>
@@ -171,10 +166,7 @@
          <xs:extension base="tns:protocol-connector">
             <xs:attribute name="name" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The logical name to give to this connector. This attribute is required when there
-                     are more
-                     connectors of the same type defined.
-                  </xs:documentation>
+                  <xs:documentation>Logically names this connector. Use this attribute to separate multiple connector declarations for the same endpoint.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
 
@@ -192,17 +184,12 @@
             </xs:all>
             <xs:attribute name="external-host" type="xs:string" use="optional">
                <xs:annotation>
-                  <xs:documentation>Sets the external address of this node, i.e. the address which clients will connect
-                     to. Defaults to the server's socket-binding address
-                  </xs:documentation>
+                  <xs:documentation>Sets an external address for this node to accept client connections. Defaults to the server socket binding address.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="external-port" type="xs:int" use="optional">
                <xs:annotation>
-                  <xs:documentation>Sets the external port of this node, i.e. the port which clients will connect to.
-                     Defaults
-                     to the server's socket-binding port
-                  </xs:documentation>
+                  <xs:documentation>Sets an external port for this node. Defaults to the server socket binding port.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>
@@ -214,13 +201,13 @@
          <xs:extension base="tns:named-protocol-connector">
             <xs:attribute name="cache" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The name of the cache to use for the Memcached connector. Defaults to memcachedCache
+                  <xs:documentation>Names the cache that the Memcached connector exposes. Defaults to memcachedCache.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="client-encoding" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>The client encoding for the values, only applicable to the memcached text protocol.
+                  <xs:documentation>Sets client encoding for values. Applies to memcached text protocol only.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -238,14 +225,13 @@
             </xs:all>
             <xs:attribute name="context-path" type="xs:string" use="optional">
                <xs:annotation>
-                  <xs:documentation>The context path on which to register the REST connector. Defaults to '' (the root
-                     context)
+                  <xs:documentation>Context path on which to register the REST connector. Defaults to '' (the root context)
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional" default="ON_DEMAND">
                <xs:annotation>
-                  <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND
+                  <xs:documentation>Enables extended headers. Values are NEVER / ON_DEMAND (default).
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -256,7 +242,7 @@
             </xs:attribute>
             <xs:attribute name="compression-level" type="xs:int" use="optional">
                <xs:annotation>
-                  <xs:documentation>Sets the compression level when using compressed requests and responses.
+                  <xs:documentation>Sets the level for compressed requests and responses.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -267,29 +253,26 @@
    <xs:complexType name="topology-state-transfer">
       <xs:attribute name="lock-timeout" type="xs:int" use="optional">
          <xs:annotation>
-            <xs:documentation>Configures the lock acquisition timeout for the topology cache. Defaults to 10 seconds
+            <xs:documentation>Configures lock acquisition timeouts, in seconds, for topology caches. Defaults to 10.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="replication-timeout" type="xs:int" use="optional">
          <xs:annotation>
-            <xs:documentation>Configures the replication timeout for the topology cache. Defaults to 10 seconds
+            <xs:documentation>Configures replication timeouts, in seconds, for topology caches. Defaults to 10.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="lazy-retrieval" type="xs:boolean" default="false">
          <xs:annotation>
-            <xs:documentation>Configures whether to enable state transfer for the topology cache. If enabled, a
-               ClusterCacheLoader will be used to lazily retrieve topology information from the
-               other nodes. Defaults to false.
+            <xs:documentation>Enables lazy retrieval of cluster topology from nodes via a ClusterCacheLoader. Values are true / false (default).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional"
                     default="${Server.TopologyStateTransfer.await-initial-retrieval}">
          <xs:annotation>
-            <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Only
-               applies when lazy-retrieval is false. Defaults to true.
+            <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Applies only when lazy-retrieval is false. Values are true (default) / false.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -301,7 +284,7 @@
       </xs:all>
       <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
-            <xs:documentation>The name of the security realm to use for authentication/authorization.</xs:documentation>
+            <xs:documentation>Names the security realm to use for authentication and authorization.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -342,7 +325,7 @@
       </xs:attribute>
       <xs:attribute name="server-name" type="xs:string">
          <xs:annotation>
-            <xs:documentation>The name the server which is exposed to clients</xs:documentation>
+            <xs:documentation>Names the server that is exposed to clients.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="mechanisms" type="tns:name-list"/>
@@ -487,7 +470,7 @@
       <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
             <xs:documentation>The security realm to use for authentication/authorization purposes. Defaults to none (no
-               authentication)
+               authentication).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -502,7 +485,7 @@
          <xs:annotation>
             <xs:documentation>The principal to use as the server identity. The principal must be present in the security
                realm.
-               This is required for Kerberos-based SASL mechs (e.g. SPNEGO)
+               This is required for Kerberos-based SASL mechs (e.g. SPNEGO).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -515,13 +498,13 @@
       <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional"
                     default="${Server.Encryption.require-ssl-client-auth}">
          <xs:annotation>
-            <xs:documentation>Whether to require client certificate authentication. Defaults to false.
+            <xs:documentation>Requires client certificate authentication. Values are true / false (default).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="security-realm" type="xs:string" use="required">
          <xs:annotation>
-            <xs:documentation>The name of the security realm to use for obtaining the SSL keystore</xs:documentation>
+            <xs:documentation>Names the security realm that holds the SSL keystore.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>

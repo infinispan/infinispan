@@ -1,0 +1,11 @@
+<rest-connector name="rest">
+  <authentication>
+    ...
+  </authentication>
+  <cors-rules>
+    ...
+  </cors-rules>
+  <encryption>
+    ...
+  </encryption>
+</rest-connector>

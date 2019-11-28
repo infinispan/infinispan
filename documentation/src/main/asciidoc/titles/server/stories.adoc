@@ -3,8 +3,6 @@
 
 include::{stories}/assembly_server_getting_started.adoc[leveloffset=+1]
 include::{stories}/assembly_server_endpoints.adoc[leveloffset=+1]
-include::{stories}/assembly_server_logging.adoc[leveloffset=+1]
-include::{stories}/assembly_server_health.adoc[leveloffset=+1]
 include::{stories}/assembly_server_monitoring.adoc[leveloffset=+1]
 include::{stories}/assembly_server_security.adoc[leveloffset=+1]
 include::{stories}/assembly_server_single_port.adoc[leveloffset=+1]

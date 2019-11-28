@@ -1,0 +1,1 @@
+<memcached-connector name="memcached" socket-binding="memcached" cache="mycache" />

@@ -1,1 +1,0 @@
-<rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC"/>

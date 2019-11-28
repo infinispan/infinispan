@@ -1,0 +1,17 @@
+= Hot Rod Connectors
+Hot Rod connector declarations enable Hot Rod servers.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/endpoints_hotrod_connector.xml[]
+----
+
+* `name="hotrod"` logically names the Memcached connector.
+* `topology-state-transfer` tunes the state transfer operations that provide Hot Rod clients with cluster topology.
+* `authentication` configures SASL authentication mechanisms.
+* `encryption` configures TLS settings for client connections.
+
+.Reference
+
+link:{configdocroot}[urn:infinispan:server] schema provides all available
+Hot Rod connector configuration.
