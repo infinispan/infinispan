@@ -1,6 +1,6 @@
 <local-cache name="vehicleCache">
    <persistence>
-      <rocksdb-store path="/tmp/rocksdb/data">
+      <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:{schemaVersion}" path="/tmp/rocksdb/data">
          <expiration path="/tmp/rocksdb/expired"/>
          <property name="database.max_background_compactions">2</property>
          <property name="data.write_buffer_size">512MB</property>
