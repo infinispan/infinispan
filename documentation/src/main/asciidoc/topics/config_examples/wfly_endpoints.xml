@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:endpoint:9.4">
+<subsystem xmlns="urn:infinispan:server:endpoint:{schemaversion}">
   <hotrod-connector socket-binding="hotrod" cache-container="infinispan_container">
     <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
   </hotrod-connector>

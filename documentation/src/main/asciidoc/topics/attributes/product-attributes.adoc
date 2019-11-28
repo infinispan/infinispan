@@ -64,6 +64,7 @@ include::transaction-attributes.adoc[]
 
 :infinispanversion: 8.0
 :infinispancomponentversion: 10.0.0-SNAPSHOT
+:schemaversion: 10.1
 
 :moduleprefix: jdg
 :infinispanslot: jdg-8.0

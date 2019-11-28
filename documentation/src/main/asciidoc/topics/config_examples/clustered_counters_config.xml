@@ -6,7 +6,7 @@
             ...
         </global-state>
         <!-- your caches configuration goes here -->
-         <counters xmlns="urn:infinispan:config:counters:9.2" num-owners="3" reliability="CONSISTENT">
+         <counters xmlns="urn:infinispan:config:counters:{schemaversion}" num-owners="3" reliability="CONSISTENT">
              <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
              <strong-counter name="c2" initial-value="2" storage="VOLATILE">
                  <lower-bound value="0"/>

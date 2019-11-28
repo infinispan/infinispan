@@ -2,7 +2,7 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-10.1.xsd"
-        xmlns="urn:infinispan:config:10.1">
+        xmlns="urn:infinispan:config:{schemaversion}">
     ...
     <cache-container default-cache="default">
         <transport/>
@@ -10,7 +10,7 @@
             <locking concurrency-level="100" acquire-timeout="1000"/>
         </local-cache>
 
-        <clustered-locks xmlns="urn:infinispan:config:clustered-locks:10.1"
+        <clustered-locks xmlns="urn:infinispan:config:clustered-locks:{schemaversion}"
                          num-owners = "3"
                          reliability="AVAILABLE">
             <clustered-lock name="lock1" />

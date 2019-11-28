@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:jgroups:9.2">
+<subsystem xmlns="urn:infinispan:server:jgroups:{schemaversion}">
   <channels default="cluster">
     <channel name="cluster"/>
   </channels>
