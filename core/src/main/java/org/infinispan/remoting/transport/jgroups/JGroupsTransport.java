@@ -132,8 +132,9 @@ public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
-   public static final short REPLY_FLAGS =
-         (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
+   public static final short REPLY_FLAGS = encodeFlags(Message.Flag.NO_FC, Message.Flag.OOB,
+                                                       Message.Flag.NO_TOTAL_ORDER, Message.Flag.DONT_BUNDLE);
+
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
    public static final Log log = LogFactory.getLog(JGroupsTransport.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -1416,6 +1417,14 @@ public class JGroupsTransport implements Transport {
       } catch (Throwable t) {
          CLUSTER.errorProcessingResponse(requestId, src);
       }
+   }
+
+   private static short encodeFlags(Message.Flag... flags) {
+      short value = 0;
+      for (Message.Flag f : flags) {
+         value |= f.value();
+      }
+      return value;
    }
 
    private DeliverOrder decodeDeliverMode(short flags) {
