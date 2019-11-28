@@ -29,6 +29,8 @@
         <asciidoctor.maven.plugin.version>1.5.7.1</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>1.5.0-alpha.16</asciidoctorj.pdf.version>
         <jruby.version>9.2.6.0</jruby.version>
+        <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
+        <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
     </properties>
 
     <dependencies>
@@ -168,11 +170,12 @@
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
                                 <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
+                                <schemaversion>${schemaVersion}</schemaversion>
                                 <brandname>${infinispan.brand.name}</brandname>
                                 <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                 <wildflybrandname>${wildfly.brand.name}</wildflybrandname>
                                 <moduleprefix>${infinispan.module.slot.prefix}</moduleprefix>
-                                <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
+                                <infinispanslot>${infinispanslot}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
                                 <javadocroot>${javadoc.root}</javadocroot>
                                 <configdocroot>${configdoc.root}</configdocroot>
@@ -238,10 +241,11 @@
                                         <experimental>true</experimental>
                                         <infinispanversion>${infinispan.base.version}</infinispanversion>
                                         <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
+                                        <schemaversion>${schemaVersion}</schemaversion>
                                         <brandname>${infinispan.brand.name}</brandname>
                                         <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                         <defaults>${defaults.file}</defaults>
-                                        <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
+                                        <infinispanslot>${infinispanslot}</infinispanslot>
                                         <javadocroot>${javadoc.root}</javadocroot>
                                         <configdocroot>${configdoc.root}</configdocroot>
                                         <wildflydocroot>${wildfly.docroot}</wildflydocroot>

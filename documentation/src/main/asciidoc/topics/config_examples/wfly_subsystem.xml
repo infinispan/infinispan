@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:core:9.4">
+<subsystem xmlns="urn:infinispan:server:core:{schemaversion}">
  <cache-container module="org.infinispan.extension:{infinispanslot}" name="infinispan_container" default-cache="default">
    <transport/>
    <global-state/>
