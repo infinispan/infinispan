@@ -1,6 +1,6 @@
 [id='logs']
 :context: server
-= Monitoring {brandname} Server Logs
+= Working with {brandname} Server Logs
 {brandname} uses JBoss LogManager to provide configurable logging mechanisms
 that capture details about the environment and record cache operations for
 troubleshooting purposes and root cause analysis.

@@ -1,6 +1,4 @@
-= Server Protocol Comparison
-
-Choosing the right protocol depends on a number of factors.
+= Protocol Comparison
 
 [cols="20,^20,^20,^20",options="header"]
 |============================================================

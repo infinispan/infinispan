@@ -1,19 +1,19 @@
 [id='configuring_endpoints']
 :context: server
-= Configuring {brandname} Server Endpoints
+= Setting Up {brandname} Endpoints
+{brandname} servers provide listener endpoints that handle requests from remote
+client applications.
 
-{brandname} server provides listener endpoints that handle inbound connections from client applications.
+include::{topics}/con_endpoints.adoc[leveloffset=+1]
+include::{topics}/con_endpoints_hotrod.adoc[leveloffset=+2]
+include::{topics}/con_endpoints_rest.adoc[leveloffset=+2]
+include::{topics}/con_endpoints_memcached.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
 
-include::{topics}/con_server_module_hr.adoc[leveloffset=+1]
-include::{topics}/con_server_module_rest.adoc[leveloffset=+1]
-include::{topics}/con_server_module_memcached.adoc[leveloffset=+1]
-include::{topics}/ref_server_protocols.adoc[leveloffset=+1]
-
-include::{topics}/ref_endpoint_subsystem_config.adoc[leveloffset=+1]
-include::{topics}/ref_hotrod_connector_declaration.adoc[leveloffset=+2]
-include::{topics}/ref_memcached_connector_declaration.adoc[leveloffset=+2]
-include::{topics}/ref_rest_connector_declaration.adoc[leveloffset=+2]
-include::{topics}/ref_common_connector_settings.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]
+include::{topics}/ref_endpoints_hotrod_connector.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_rest_connector.adoc[leveloffset=+2]
+include::{topics}/ref_endpoints_memcached_connector.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

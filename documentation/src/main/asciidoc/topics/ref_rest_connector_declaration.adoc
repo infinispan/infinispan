@@ -1,6 +1,0 @@
-= REST
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/rest_connector.xml[]
-----

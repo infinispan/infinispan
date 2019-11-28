@@ -1,0 +1,24 @@
+= Endpoint Connectors
+You configure {brandname} server endpoints with connector declarations that
+specify socket bindings, authentication mechanisms, and encryption
+configuration.
+
+The default endpoint connector configuration is as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/endpoints_connectors.xml[]
+----
+
+* `endpoints` contains endpoint connector declarations and defines global
+configuration for endpoints such as default socket bindings, security realms,
+and whether clients must present valid TLS certificates.
+* `<hotrod-connector name="hotrod"/>` declares a Hot Rod connector.
+* `<rest-connector name="rest"/>` declares a Hot Rod connector.
+* `<memcached-connector socket-binding="memcached"/>` declares a Memcached
+connector that uses the memcached socket binding.
+
+.Reference
+
+link:{configdocroot}[urn:infinispan:server] schema provides all available
+endpoint configuration.
