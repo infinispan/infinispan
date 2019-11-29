@@ -8,6 +8,7 @@ import static java.lang.annotation.ElementType.PACKAGE;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -19,6 +20,7 @@ import java.lang.annotation.Target;
  */
 @Retention(CLASS)
 @Target({PACKAGE, TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR, FIELD})
+@Documented
 public @interface Experimental {
    String comment() default "";
 }
