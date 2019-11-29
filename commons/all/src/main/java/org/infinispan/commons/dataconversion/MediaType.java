@@ -133,6 +133,7 @@ public final class MediaType {
    private final String type;
    private final String subType;
    private final String typeSubtype;
+   private final boolean matchesAll;
    private final transient double weight;
 
    public MediaType(String type, String subtype) {
@@ -143,6 +144,7 @@ public final class MediaType {
       this.type = validate(type);
       this.subType = validate(subtype);
       this.typeSubtype = type + "/" + subtype;
+      this.matchesAll = typeSubtype.equalsIgnoreCase(MATCH_ALL_TYPE);
       if (params != null) {
          this.params.putAll(params);
          String weight = params.get(WEIGHT_PARAM_NAME);
@@ -240,11 +242,14 @@ public final class MediaType {
    }
 
    public boolean match(MediaType other) {
+      if (other == this)
+         return true;
+
       return other != null && (other.matchesAll() || this.matchesAll() || other.typeSubtype.equals(this.typeSubtype));
    }
 
    public boolean matchesAll() {
-      return this.typeSubtype.equals(MATCH_ALL_TYPE);
+      return matchesAll;
    }
 
    public String getTypeSubtype() {

@@ -82,7 +82,6 @@ public class Immutables {
    /**
     * Wraps an array with an immutable list. There is no copying involved.
     *
-    * @param <T>
     * @param array the array to wrap
     * @return a list containing the array
     */
@@ -166,14 +165,8 @@ public class Immutables {
       if (set == null) return null;
       if (set.isEmpty()) return Collections.emptySet();
       if (set.size() == 1) return Collections.singleton(set.iterator().next());
-      Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
-      if (copy == null)
-         // Set uses Collection copy-ctor
-         copy = attemptCopyConstructor(set, Collection.class);
-      if (copy == null)
-         copy = new HashSet<>(set);
 
-      return new ImmutableSetWrapper<>(copy);
+      return new ImmutableSetWrapper<>(new HashSet<>(set));
    }
 
 
@@ -201,14 +194,7 @@ public class Immutables {
          return Collections.singletonMap(me.getKey(), me.getValue());
       }
 
-      Map<? extends K, ? extends V> copy = ObjectDuplicator.duplicateMap(map);
-
-      if (copy == null)
-         copy = attemptCopyConstructor(map, Map.class);
-      if (copy == null)
-         copy = new HashMap<>(map);
-
-      return new ImmutableMapWrapper<>(copy);
+      return new ImmutableMapWrapper<>(new HashMap<>(map));
    }
 
    /**
@@ -222,13 +208,7 @@ public class Immutables {
       if (collection.isEmpty()) return Collections.emptySet();
       if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
 
-      Collection<? extends T> copy = ObjectDuplicator.duplicateCollection(collection);
-      if (copy == null)
-         copy = attemptCopyConstructor(collection, Collection.class);
-      if (copy == null)
-         copy = new ArrayList<>(collection);
-
-      return new ImmutableCollectionWrapper<>(copy);
+      return new ImmutableCollectionWrapper<>(new ArrayList<>(collection));
    }
 
    /**
@@ -239,17 +219,6 @@ public class Immutables {
     */
    public static <T> Collection<T> immutableCollectionWrap(Collection<? extends T> collection) {
       return new ImmutableCollectionWrapper<>(collection);
-   }
-
-   @SuppressWarnings("unchecked")
-   private static <T> T attemptCopyConstructor(T source, Class<? super T> clazz) {
-      try {
-         return (T) source.getClass().getConstructor(clazz).newInstance(source);
-      }
-      catch (Exception e) {
-      }
-
-      return null;
    }
 
    /**
@@ -283,7 +252,7 @@ public class Immutables {
     * simple to detect them (the class names are JDK dependent).
     */
    public static class ImmutableIteratorWrapper<E> implements Iterator<E> {
-      private Iterator<? extends E> iterator;
+      private final Iterator<? extends E> iterator;
 
       public ImmutableIteratorWrapper(Iterator<? extends E> iterator) {
          this.iterator = iterator;
@@ -401,9 +370,9 @@ public class Immutables {
     * Immutable version of Map.Entry for traversing immutable collections.
     */
    private static class ImmutableEntry<K, V> implements Entry<K, V>, Immutable {
-      private K key;
-      private V value;
-      private int hash;
+      private final K key;
+      private final V value;
+      private final int hash;
 
       ImmutableEntry(Entry<? extends K, ? extends V> entry) {
          this.key = entry.getKey();
@@ -462,19 +431,6 @@ public class Immutables {
 
       public ImmutableSetWrapper(Set<? extends E> set) {
          super(set);
-      }
-   }
-
-   private static class ImmutableReversibleOrderedSetWrapper<E> extends ImmutableCollectionWrapper<E> implements ReversibleOrderedSet<E>, Serializable, Immutable {
-      private static final long serialVersionUID = 7991492805176142615L;
-
-      public ImmutableReversibleOrderedSetWrapper(Set<? extends E> set) {
-         super(set);
-      }
-
-      @Override
-      public Iterator<E> reverseIterator() {
-         return new ImmutableIteratorWrapper<E>(((ReversibleOrderedSet<? extends E>) collection).reverseIterator());
       }
    }
 
@@ -539,7 +495,6 @@ public class Immutables {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends Set>> getTypeClasses() {
          return Util.asSet(ImmutableSetWrapper.class);
       }
@@ -548,7 +503,7 @@ public class Immutables {
    private static class ImmutableMapWrapper<K, V> implements Map<K, V>, Serializable, Immutable {
       private static final long serialVersionUID = 708144227046742221L;
 
-      private Map<? extends K, ? extends V> map;
+      private final Map<? extends K, ? extends V> map;
 
       public ImmutableMapWrapper(Map<? extends K, ? extends V> map) {
          this.map = map;
@@ -647,7 +602,6 @@ public class Immutables {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends Map>> getTypeClasses() {
          return Util.asSet(ImmutableMapWrapper.class);
       }
@@ -678,17 +632,17 @@ public class Immutables {
       }
 
       @Override
-      public synchronized void load(InputStream inStream) throws IOException {
+      public synchronized void load(InputStream inStream) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public synchronized void load(Reader reader) throws IOException {
+      public synchronized void load(Reader reader) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public synchronized void loadFromXML(InputStream in) throws IOException {
+      public synchronized void loadFromXML(InputStream in) {
          throw new UnsupportedOperationException();
       }
 

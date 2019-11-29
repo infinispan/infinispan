@@ -157,7 +157,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       return getAvailability().toString();
    }
 
-   public void setCacheAvailability(String availabilityString) throws Exception {
+   public void setCacheAvailability(String availabilityString) {
       setAvailability(AvailabilityMode.valueOf(availabilityString));
    }
 
@@ -188,6 +188,16 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
          } catch (Exception e) {
             throw new CacheException(e);
          }
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withFlags(Flag flag) {
+      AdvancedCache<K, V> flagCache = cache.withFlags(flag);
+      if (flagCache != cache) {
+         return rewrap(flagCache);
+      } else {
+         return this;
       }
    }
 
