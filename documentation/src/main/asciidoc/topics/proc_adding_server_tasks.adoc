@@ -1,0 +1,37 @@
+[id='server_tasks-{context}']
+= Deploying Server Tasks to {brandname} Servers
+Add your custom server task classes to {brandname} servers.
+
+.Prerequisites
+
+Stop any running {brandname} servers. {brandname} does not support runtime
+deployment of custom classes.
+
+.Procedure
+
+. Package your server task implementation in a JAR file.
+. Add a `META-INF/services/org.infinispan.tasks.ServerTask` file that contains
+the fully qualified names of server tasks, for example:
++
+[source]
+----
+example.HelloTask
+----
++
+. Copy the JAR file to the `{server_home}/server/lib` directory of your {brandname} server.
+. Add your classes to the deserialization whitelist in your {brandname}
+configuration. Alternatively set the whitelist using system properties.
+
+.Reference
+
+//Community
+ifndef::productized[]
+* link:../developing/developing.html#adding_java_classes_to_deserialization_white_lists[Adding Java Classes to Deserialization White Lists]
+* link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
+endif::productized[]
+
+//Product
+ifdef::productized[]
+* link:{dev_docs}#adding_java_classes_to_deserialization_white_lists[Adding Java Classes to Deserialization White Lists]
+* link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
+endif::productized[]

@@ -1,16 +1,14 @@
 [id='server_scripts']
-:context: scripting_server
-= Scripting
+:context: server
+= Creating Server Scripts
+Create custom scripts and add them to {brandname} servers.
 
-include::{topics}/con_server_scripting.adoc[leveloffset=+1]
-include::{topics}/proc_installing_scripts.adoc[leveloffset=+1]
-include::{topics}/con_script_metadata.doc[leveloffset=+2]
-include::{topics}/ref_script_comments.adoc[leveloffset=+3]
-include::{topics}/ref_script_metadata_properties.adoc[leveloffset=+3]
-include::{topics}/ref_script_bindings.adoc[leveloffset=+3]
-include::{topics}/ref_script_parameters.adoc[leveloffset=+3]
-include::{topics}/proc_running_scripts.adoc[leveloffset=+1]
-include::{topics}/ref_distributed_script_execution.adoc[leveloffset=+1]
+include::{topics}/ref_scripts.adoc[leveloffset=+1]
+include::{topics}/ref_script_metadata.adoc[leveloffset=+2]
+include::{topics}/ref_script_bindings.adoc[leveloffset=+2]
+include::{topics}/ref_script_parameters.adoc[leveloffset=+2]
+include::{topics}/proc_cli_adding_scripts.adoc[leveloffset=+1]
+include::{topics}/ref_script_hotrod_add.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -1,0 +1,50 @@
+[id='server_script_metdata']
+= Script Metadata
+Metadata provides additional information about scripts that {brandname} servers use when running scripts.
+
+Script metadata are `property=value` pairs that you add to comments in the
+first lines of scripts, such as the following example:
+
+[source,javascript]
+----
+// name=test, language=javascript
+// mode=local, parameters=[a,b,c]
+----
+
+* Use comment styles that match the scripting language (`//`, `;;`, `#`).
+* Separate `property=value` pairs with commas.
+* Separate values with single (') or double (") quote characters.
+
+.Metadata Properties
+
+|===
+|Property |Description
+
+|`mode`
+|Defines the exection mode and has the following values:
+
+`local` only the node that handles the request executes the script. Although
+scripts can still invoke clustered operations.
+
+`distributed` {brandname} uses clustered executors to run scripts across nodes.
+
+|`language`
+|Specifies the ScriptEngine that executes the script.
+
+|`extension`
+|Specifies filename extensions as an alternative method to set the ScriptEngine.
+
+|`role`
+|Specifies roles that users must have to execute scripts.
+
+|`parameters`
+|Specifies an array of valid parameter names for this script. Invocations which specify parameters not included in this list cause exceptions.
+
+|`datatype`
+|Optionally sets the MediaType (MIME type) for storing data as well as
+parameter and return values. This property is useful for remote clients that
+support particular data formats only.
+
+Currently you can set only `text/plain; charset=utf-8` to use the String UTF-8
+format for data.
+|===

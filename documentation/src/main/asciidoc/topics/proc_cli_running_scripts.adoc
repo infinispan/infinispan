@@ -1,0 +1,25 @@
+[id='running_scripts_cli']
+= Running Tasks and Scripts
+Use the command line interface to run tasks and scripts on {brandname} servers.
+
+.Prerequisites
+
+* Open a CLI connection to {brandname}.
+
+.Procedure
+
+Use the `task` command to run tasks and scripts on {brandname} servers, as in the following examples:
+
+* Execute a script named `multipler.js` and specify two parameters:
++
+----
+[//containers/default]> task exec multipler.js -Pmultiplicand=10 -Pmultiplier=20
+200.0
+----
+
+* Execute a task named `@@cache@names` to retrieve a list of all available caches:
++
+----
+//containers/default]> task exec @@cache@names
+["___protobuf_metadata","mycache","___script_cache"]
+----

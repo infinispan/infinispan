@@ -1,8 +1,21 @@
+[id='server_script_bindings']
 = Script Bindings
-The script engine within {brandname} exposes several internal objects as bindings in the scope of the script execution.
-These are:
+{brandname} exposes internal objects as bindings for script execution.
 
-* cache: the cache against which the script is being executed
-* marshaller: the marshaller to use for marshalling/unmarshalling data to the cache
-* cacheManager: the cacheManager for the cache
-* scriptingManager: the instance of the script manager which is being used to run the script. This can be used to run other scripts from a script.
+|===
+|Binding |Description
+
+|`cache`
+|Specifies the cache against which the script is run.
+
+|`marshaller`
+|Specifies the marshaller to use for serializing data to the cache.
+
+|`cacheManager`
+|Specifies the `cacheManager` for the cache.
+
+|`scriptingManager`
+|Specifies the instance of the script manager that runs the script. You can use
+this binding to run other scripts from a script.
+
+|===
