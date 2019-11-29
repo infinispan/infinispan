@@ -5,17 +5,38 @@ TASK(1)
 
 NAME
 ----
-task - executes or manipulates server-side tasks
+task - executes and uploads server-side tasks and scripts
 
 
 SYNOPSIS
 --------
-*task exec* ['TASK']
+*task upload* --file='script' 'TASK_NAME'
 
-*task upload* --file='script' 'TASK'
+*task exec* ['TASK_NAME']
+
+
+EXAMPLES
+--------
+`task upload --file=hello.js hello` +
+Uploads a script from a `hello.js` file and names it `hello`.
+
+`task exec @@cache@names` +
+Runs a task that returns available cache names.
+
+`task exec hello -Pgreetee=world` +
+Runs a script named `hello` and specifies the `greetee` parameter with a value
+of `world`.
 
 
 OPTIONS
 -------
+*-P, --parameters*='PARAMETERS'::
+Passes parameter values to tasks and scripts.
+
 *-f, --file*='FILE'::
-Uploads the specified file as a script task with the given name.
+Uploads script files with the given names.
+
+
+SEE ALSO
+--------
+ls(1)

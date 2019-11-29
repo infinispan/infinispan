@@ -1,0 +1,19 @@
+[id='scripts']
+= Server Scripts
+{brandname} server scripting is based on the `javax.script` API and is
+compatible with any JVM-based ScriptEngine implementation. Nashorn is the
+default JDK ScriptEngine and provides JavaScript capabilities.
+
+.Hello World Script Example
+
+The following script provides a simple example that runs on a single
+{brandname} server, has one parameter, and uses JavaScript:
+
+[source,javascript]
+----
+// mode=local,language=javascript,parameters=[greetee]
+"Hello " + greetee
+----
+
+When you run the preceding script, you pass a value for the `greetee` parameter
+and {brandname} returns `"Hello ${value}"`.

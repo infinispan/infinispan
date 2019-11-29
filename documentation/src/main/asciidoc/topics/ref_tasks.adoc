@@ -1,0 +1,62 @@
+[id='tasks']
+= Server Tasks
+{brandname} server tasks are classes that extend the
+`org.infinispan.tasks.ServerTask` interface and generally include the following
+method calls:
+
+`setTaskContext()`::
+Allows access to execution context information including task parameters, cache references on which tasks are executed, and so on. In most cases, implementations store this information locally and use it when tasks are actually executed.
+`getName()`::
+Returns unique names for tasks. Clients invoke tasks with these names.
+`getExecutionMode()`::
+Returns the execution mode for tasks.
++
+* `TaskExecutionMode.ONE_NODE` only the node that handles the request executes the script. Although scripts can still invoke clustered operations.
+* `TaskExecutionMode.ALL_NODES` {brandname} uses clustered executors to run scripts across nodes. For example, server tasks that invoke stream processing need to be executed on a single node because stream processing is distributed to all nodes.
+`call()`::
+Computes a result. This method is defined in the
+`java.util.concurrent.Callable` interface and is invoked with server tasks.
+
+[IMPORTANT]
+====
+Server task implementations must adhere to service loader pattern requirements.
+For example, implementations must have a zero-argument constructors.
+====
+
+The following `HelloTask` class implementation provides an example task that
+has one parameter:
+
+[source,java]
+----
+package example;
+
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
+
+public class HelloTask implements ServerTask<String> {
+
+   private TaskContext ctx;
+
+   @Override
+   public void setTaskContext(TaskContext ctx) {
+      this.ctx = ctx;
+   }
+
+   @Override
+   public String call() throws Exception {
+      String name = (String) ctx.getParameters().get().get("name");
+      return "Hello " + name;
+   }
+
+   @Override
+   public String getName() {
+      return "hello-task";
+   }
+
+}
+----
+
+.Reference
+* link:{javadocroot}/org/infinispan/tasks/ServerTask.html[`org.infinispan.tasks.ServerTask`]
+* http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html?is-external=true#call--[`java.util.concurrent.Callable.call()`]
+* link:https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html[`java.util.ServiceLoader`]

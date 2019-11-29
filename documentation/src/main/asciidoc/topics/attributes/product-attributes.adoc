@@ -44,9 +44,6 @@ include::transaction-attributes.adoc[]
 :ProductPreviousRelease: 7
 :ProductPreviousPreviousRelease: 6
 
-//Doc Home
-:doc_home: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
-
 //
 // Special characters
 //
@@ -101,9 +98,25 @@ include::transaction-attributes.adoc[]
 :osweb: OpenShift Web Console
 
 //
-// Product only OpenShift
+// Product Only OpenShift
 //
 :osproduct: Red Hat Data Grid for OpenShift
 :osproductshort: Data Grid for OpenShift
 :datagridservice: datagrid-service
 :cacheservice: cache-service
+
+//
+// Product Doc URLs
+//
+
+//Doc Home
+:doc_home: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//Dev
+:dev_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//Server
+:server_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//REST
+:rest_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
