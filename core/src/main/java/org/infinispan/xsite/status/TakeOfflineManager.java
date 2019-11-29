@@ -3,6 +3,8 @@ package org.infinispan.xsite.status;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.XSiteResponse;
 
 /**
@@ -11,8 +13,8 @@ import org.infinispan.remoting.transport.XSiteResponse;
  * @author Pedro Ruivo
  * @since 8.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface TakeOfflineManager {
-
 
    void registerRequest(XSiteResponse response);
 

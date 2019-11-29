@@ -63,6 +63,9 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.NoOpBackupSender;
+import org.infinispan.xsite.irac.DefaultIracManager;
+import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.NoOpIracManager;
 import org.infinispan.xsite.statetransfer.NoOpXSiteStateProvider;
 import org.infinispan.xsite.statetransfer.NoOpXSiteStateTransferManager;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -93,7 +96,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
-                              TakeOfflineManager.class
+                              TakeOfflineManager.class, IracManager.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -210,6 +213,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(TakeOfflineManager.class.getName())) {
          return configuration.sites().hasEnabledBackups() ? new DefaultTakeOfflineManager(componentRegistry.getCacheName())
                                                           : NoOpTakeOfflineManager.getInstance();
+      } else if (componentName.equals(IracManager.class.getName())) {
+         return configuration.sites().hasEnabledBackups() ?
+                new DefaultIracManager(globalConfiguration.sites().localSite()) :
+                NoOpIracManager.getInstance();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

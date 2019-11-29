@@ -30,6 +30,8 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -75,6 +77,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
@@ -629,4 +632,12 @@ public interface CommandsFactory {
    CancelPublisherCommand buildCancelPublisherCommand(Object requestId);
 
    <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events);
+
+   IracUpdateKeyCommand buildIracUpdateKeyCommand(Object key, Object value, Metadata metadata);
+
+   default <K,V> IracUpdateKeyCommand  buildIracUpdateKeyCommand(InternalCacheEntry<K, V> entry) {
+      return buildIracUpdateKeyCommand(entry.getKey(), entry.getValue(), entry.getMetadata());
+   }
+
+   IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner);
 }

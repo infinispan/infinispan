@@ -15,6 +15,8 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -372,6 +374,12 @@ public class RemoteCommandsFactory {
                break;
             case CancelPublisherCommand.COMMAND_ID:
                command = new CancelPublisherCommand(cacheName);
+               break;
+            case IracUpdateKeyCommand.COMMAND_ID:
+               command = new IracUpdateKeyCommand(cacheName);
+               break;
+            case IracCleanupKeyCommand.COMMAND_ID:
+               command = new IracCleanupKeyCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

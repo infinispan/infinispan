@@ -8,6 +8,8 @@ import java.util.Set;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -101,7 +103,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                RevokeBiasCommand.class, RenewBiasCommand.class, RetrieveLastAccessCommand.class,
                UpdateLastAccessCommand.class, ReductionPublisherRequestCommand.class,
                MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
-            CancelPublisherCommand.class);
+               CancelPublisherCommand.class, IracUpdateKeyCommand.class, IracCleanupKeyCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

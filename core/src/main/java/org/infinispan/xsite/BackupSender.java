@@ -2,10 +2,10 @@ package org.infinispan.xsite;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.remoting.transport.BackupResponse;
@@ -26,10 +26,16 @@ public interface BackupSender {
     */
    InvocationStage backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction, Transaction transaction) throws Exception;
 
+   void backupPrepareAsync(PrepareCommand command);
+
    InvocationStage backupCommit(CommitCommand command, Transaction transaction) throws Exception;
+
+   void backupCommitAsync(CommitCommand command);
 
    InvocationStage backupRollback(RollbackCommand command, Transaction transaction) throws Exception;
 
-   InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) throws Exception;
+   InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) throws Exception;
+
+   InvocationStage backupClear(ClearCommand command);
 
 }

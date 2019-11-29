@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
@@ -19,6 +20,12 @@ public interface BackupReceiver {
    Cache getCache();
 
    CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
+
+   CompletionStage<Void> putKeyValue(Object key, Object value, Metadata metadata);
+
+   CompletionStage<Void> removeKey(Object key);
+
+   CompletionStage<Void> clearKeys();
 
    /**
     * It handles the state transfer control from a remote site. The control command must be broadcast to the entire

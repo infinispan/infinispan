@@ -2,7 +2,6 @@ package org.infinispan.interceptors.xsite;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -39,20 +38,6 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
       return invokeNextThenApply(ctx, command, handleClearReturn);
    }
 
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      //if this is an "empty" tx no point replicating it to other clusters
-      if (!shouldInvokeRemoteTxCommand(ctx)) return invokeNext(ctx, command);
-
-      boolean isTxFromRemoteSite = isTxFromRemoteSite(command.getGlobalTransaction());
-      if (isTxFromRemoteSite) {
-         return invokeNext(ctx, command);
-      }
-
-      InvocationStage stage = backupSender.backupPrepare(command, ctx.getCacheTransaction(), ctx.getTransaction());
-      return invokeNextAndWaitForCrossSite(ctx, command, stage);
-   }
-
    Object invokeNextAndWaitForCrossSite(TxInvocationContext ctx, VisitableCommand command, InvocationStage stage) {
       return invokeNextThenApply(ctx, command, stage::thenReturn);
    }
@@ -78,8 +63,8 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
       return log;
    }
 
-   private Object handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) throws Throwable {
-      InvocationStage stage = backupSender.backupWrite(rCommand, rCommand);
+   private Object handleClearReturn(InvocationContext ctx, ClearCommand rCommand, Object rv) {
+      InvocationStage stage = backupSender.backupClear(rCommand);
       return stage.thenReturn(ctx, rCommand, rv);
    }
 }

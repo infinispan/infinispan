@@ -55,6 +55,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
@@ -84,7 +85,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<AdvancedCache> cache;
    private ComponentRef<AsyncInterceptorChain> asyncInterceptorChain;
    private ComponentRef<BackupSender> backupSender;
-   private ComponentRef<TakeOfflineManager> takeOfflineManager;
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
    private ComponentRef<CancellationService> cancellationService;
@@ -97,6 +97,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<InternalDataContainer> internalDataContainer;
    private ComponentRef<InternalEntryFactory> internalEntryFactory;
    private ComponentRef<InvocationContextFactory> invocationContextFactory;
+   private ComponentRef<IracManager> iracManager;
    private ComponentRef<LocalPublisherManager> localPublisherManager;
    private ComponentRef<LocalStreamManager> localStreamManager;
    private ComponentRef<LockManager> lockManager;
@@ -110,6 +111,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<StateTransferLock> stateTransferLock;
    private ComponentRef<StateTransferManager> stateTransferManager;
    private ComponentRef<StreamingMarshaller> internalMarshaller;
+   private ComponentRef<TakeOfflineManager> takeOfflineManager;
    private ComponentRef<TransactionTable> transactionTable;
    private ComponentRef<VersionGenerator> versionGenerator;
    private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
@@ -427,6 +429,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<TakeOfflineManager> getTakeOfflineManager() {
       return takeOfflineManager;
+   }
+
+   public ComponentRef<IracManager> getIracManager() {
+      return iracManager;
    }
 
    public ComponentRef<BiasManager> getBiasManager() {

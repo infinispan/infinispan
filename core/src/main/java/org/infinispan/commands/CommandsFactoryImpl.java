@@ -31,6 +31,8 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracUpdateKeyCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -662,5 +664,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events) {
       return new MultiClusterEventCommand<>(cacheName, events);
+   }
+
+   @Override
+   public IracUpdateKeyCommand buildIracUpdateKeyCommand(Object key, Object value, Metadata metadata) {
+      return new IracUpdateKeyCommand(cacheName, key, value, metadata);
+   }
+
+   @Override
+   public IracCleanupKeyCommand buildIracCleanupKeyCommand(Object key, Object lockOwner) {
+      return new IracCleanupKeyCommand(cacheName, key, lockOwner);
    }
 }

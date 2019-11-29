@@ -2,10 +2,10 @@ package org.infinispan.xsite;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -40,13 +40,28 @@ public class NoOpBackupSender implements BackupSender {
    }
 
    @Override
-   public InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) {
+   public void backupPrepareAsync(PrepareCommand command) {
+      //no-op
+   }
+
+   @Override
+   public InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) {
+      return SyncInvocationStage.completedNullStage();
+   }
+
+   @Override
+   public InvocationStage backupClear(ClearCommand command) {
       return SyncInvocationStage.completedNullStage();
    }
 
    @Override
    public InvocationStage backupCommit(CommitCommand command, Transaction transaction) {
       return SyncInvocationStage.completedNullStage();
+   }
+
+   @Override
+   public void backupCommitAsync(CommitCommand command) {
+      //no-op
    }
 
    @Override

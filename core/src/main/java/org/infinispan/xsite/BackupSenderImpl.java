@@ -63,10 +63,13 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
 import net.jcip.annotations.GuardedBy;
@@ -92,6 +95,7 @@ public class BackupSenderImpl implements BackupSender {
    @Inject GlobalConfiguration globalConfig;
    @Inject KeyPartitioner keyPartitioner;
    @Inject TakeOfflineManager takeOfflineManager;
+   @Inject IracManager iracManager;
 
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
    private final String localSiteName;
@@ -132,13 +136,32 @@ public class BackupSenderImpl implements BackupSender {
       //if we run a 2PC then filter out 1PC prepare backup calls as they will happen during the local commit phase.
       BackupFilter filter = !prepare.isOnePhaseCommit() ? BackupFilter.KEEP_2PC_ONLY : BackupFilter.KEEP_ALL;
       List<XSiteBackup> backups = calculateBackupInfo(filter);
+      if (backups.isEmpty()) {
+         return SyncInvocationStage.completedNullStage();
+      }
       return backupCommand(prepare, command, backups, transaction);
    }
 
    @Override
-   public InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) {
+   public void backupPrepareAsync(PrepareCommand command) {
+      if (!command.isOnePhaseCommit()) { //we only deal with 1PC for async-xsite
+         return;
+      }
+      asyncSendModifications(command.getModifications(), command.getGlobalTransaction());
+   }
+
+   @Override
+   public InvocationStage backupWrite(WriteCommand command, WriteCommand originalCommand) {
+      iracManager.trackUpdatedKeys(command.getAffectedKeys(), originalCommand.getCommandInvocationId());
       List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
       return backupCommand(command, originalCommand, xSiteBackups, null);
+   }
+
+   @Override
+   public InvocationStage backupClear(ClearCommand command) {
+      iracManager.trackClear();
+      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
+      return backupCommand(command, command, xSiteBackups, null);
    }
 
    @Override
@@ -149,6 +172,28 @@ public class BackupSenderImpl implements BackupSender {
       sendTo1PCBackups(command, aggregator);
       sendTo2PCBackups(command, aggregator);
       return aggregator.freeze();
+   }
+
+   @Override
+   public void backupCommitAsync(CommitCommand command) {
+      GlobalTransaction gtx = command.getGlobalTransaction();
+      Collection<WriteCommand> mods;
+      LocalTransaction localTx = txTable.getLocalTransaction(gtx);
+      if (localTx == null) {
+         RemoteTransaction remoteTx = txTable.getRemoteTransaction(gtx);
+         if (remoteTx == null) {
+             if (log.isDebugEnabled()) {
+                log.debugf("Transaction %s not found!", gtx);
+             }
+            return;
+         } else {
+            mods = remoteTx.getModifications();
+         }
+      } else {
+         mods = localTx.getModifications();
+      }
+
+      asyncSendModifications(mods, command.getGlobalTransaction());
    }
 
    @Override
@@ -208,6 +253,30 @@ public class BackupSenderImpl implements BackupSender {
       sendTo(xsiteCommand, xSiteBackups, aggregator);
    }
 
+   private void asyncSendModifications(Collection<WriteCommand> mods, GlobalTransaction lockOwner) {
+      if (mods == null || mods.isEmpty()) {
+         return;
+      }
+      for (WriteCommand wc : mods ) {
+         if (!wc.isSuccessful() || wc.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
+            continue;
+         }
+         iracManager.trackUpdatedKeys(wc.getAffectedKeys(), lockOwner);
+      }
+   }
+
+   private void asyncSendModifications(WriteCommand[] mods, GlobalTransaction lockOwner) {
+      if (mods == null) {
+         return;
+      }
+      for (WriteCommand wc : mods ) {
+         if (!wc.isSuccessful() || wc.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
+            continue;
+         }
+         iracManager.trackUpdatedKeys(wc.getAffectedKeys(), lockOwner);
+      }
+   }
+
    private List<XSiteBackup> calculateBackupInfo(BackupFilter backupFilter) {
       List<XSiteBackup> backupInfo = new ArrayList<>(2);
       SitesConfiguration sites = config.sites();
@@ -216,22 +285,22 @@ public class BackupSenderImpl implements BackupSender {
             log.cacheBackupsDataToSameSite(localSiteName);
             continue;
          }
-         boolean isSync = bc.strategy() == BackupConfiguration.BackupStrategy.SYNC;
-         if (backupFilter == BackupFilter.KEEP_1PC_ONLY) {
-            if (isSync && bc.isTwoPhaseCommit())
-               continue;
+         if (bc.isAsyncBackup()) {
+            //async are handled by IRAC!
+            continue;
          }
-
-         if (backupFilter == BackupFilter.KEEP_2PC_ONLY) {
-            if (!isSync || (!bc.isTwoPhaseCommit()))
-               continue;
+         boolean is2PC = bc.isTwoPhaseCommit();
+         if (backupFilter == BackupFilter.KEEP_1PC_ONLY && is2PC) {
+            continue;
          }
-
+         if (backupFilter == BackupFilter.KEEP_2PC_ONLY && !is2PC) {
+            continue;
+         }
          if (takeOfflineManager.isOffline(bc.site())) {
             log.tracef("The site '%s' is offline, not backing up information to it", bc.site());
             continue;
          }
-         XSiteBackup bi = new XSiteBackup(bc.site(), isSync, bc.replicationTimeout());
+         XSiteBackup bi = new XSiteBackup(bc.site(), true, bc.replicationTimeout());
          backupInfo.add(bi);
       }
       return backupInfo;

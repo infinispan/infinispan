@@ -32,10 +32,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
@@ -431,7 +431,6 @@ public class JGroupsTransport implements Transport {
 
       channel.setUpHandler(channelCallbacks);
       setXSiteViewListener(channelCallbacks);
-      setSiteMasterPicker(new SiteMasterPickerImpl());
 
       startJGroupsChannelIfNeeded();
 
@@ -488,13 +487,6 @@ public class JGroupsTransport implements Transport {
       RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
       if (relay2 != null) {
          relay2.setRouteStatusListener(listener);
-      }
-   }
-
-   private void setSiteMasterPicker(SiteMasterPickerImpl siteMasterPicker) {
-      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
-      if (relay2 != null) {
-         relay2.siteMasterPicker(siteMasterPicker);
       }
    }
 

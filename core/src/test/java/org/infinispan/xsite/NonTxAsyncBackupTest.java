@@ -26,11 +26,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.SiteMasterPickerImpl;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
-import org.jgroups.protocols.relay.RELAY2;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -67,16 +64,6 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
    @BeforeMethod
    void resetBlockingInterceptor() {
       blockingInterceptor.reset();
-   }
-
-   public void testSiteMasterPicked() {
-      for (TestSite testSite : sites) {
-         for (EmbeddedCacheManager cacheManager : testSite.cacheManagers) {
-            RELAY2 relay2 = getRELAY2(cacheManager);
-            Object site_master_picker = TestingUtil.extractField(RELAY2.class, relay2, "site_master_picker");
-            assertEquals(SiteMasterPickerImpl.class, site_master_picker.getClass());
-         }
-      }
    }
 
    public void testPut() throws Exception {

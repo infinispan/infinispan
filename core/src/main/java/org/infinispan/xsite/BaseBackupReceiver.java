@@ -3,6 +3,7 @@ package org.infinispan.xsite;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.util.concurrent.CompletableFutures.asCompletionException;
 import static org.infinispan.util.concurrent.CompletableFutures.completedExceptionFuture;
+import static org.infinispan.util.concurrent.CompletableFutures.toNullFunction;
 import static org.infinispan.util.logging.Log.XSITE;
 
 import java.util.Collection;
@@ -40,6 +41,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -99,6 +101,20 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
       }
    }
 
+   @Override
+   public CompletionStage<Void> putKeyValue(Object key, Object value, Metadata metadata) {
+      return defaultHandler.cache().putAsync(key, value, metadata).thenApply(toNullFunction());
+   }
+
+   @Override
+   public CompletionStage<Void> removeKey(Object key) {
+      return defaultHandler.cache().removeAsync(key).thenApply(toNullFunction());
+   }
+
+   @Override
+   public CompletionStage<Void> clearKeys() {
+      return defaultHandler.cache().clearAsync();
+   }
 
    final <T> CompletableFuture<T> checkInvocationAllowedFuture() {
       ComponentStatus status = cache.getStatus();
