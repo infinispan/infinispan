@@ -125,4 +125,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unknown server identity '%s'", id = 80031)
    IllegalArgumentException unknownServerIdentity(String serverPrincipal);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Logging configuration: %s", id = 80032)
+   void loggingConfiguration(String absolutePath);
 }

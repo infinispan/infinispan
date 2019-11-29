@@ -26,6 +26,7 @@ import org.infinispan.server.tool.Main;
 public class Bootstrap extends Main {
    private final ExitHandler exitHandler;
    private File configurationFile;
+   private File loggingFile;
 
    static {
       System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
@@ -49,6 +50,12 @@ public class Bootstrap extends Main {
             // Fall through
          case "--server-config":
             configurationFile = new File(parameter);
+            break;
+         case "-l":
+            parameter = args.next();
+            // Fall through
+         case "--logging-config":
+            loggingFile = new File(parameter);
             break;
          case "-s":
             parameter = args.next();
@@ -107,11 +114,18 @@ public class Bootstrap extends Main {
       File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
       properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, logDir.getAbsolutePath());
 
-      try (InputStream is = new FileInputStream(new File(confDir, "logging.properties"))) {
+      if (loggingFile == null) {
+         loggingFile = new File(confDir, Server.DEFAULT_LOGGING_FILE);
+      } else if (!loggingFile.isAbsolute()) {
+         loggingFile = Paths.get(confDir.getPath(), loggingFile.getPath()).toFile();
+      }
+
+      try (InputStream is = new FileInputStream(loggingFile)) {
          LogManager.getLogManager().readConfiguration(is);
       } catch (IOException e) {
-         stdErr.printf("Could not load logging.properties: %s", e.getMessage());
+         stdErr.printf("Could not load %s: %s", loggingFile, e.getMessage());
          e.printStackTrace(stdErr);
+         return;
       }
 
       logJVMInformation();
@@ -119,6 +133,7 @@ public class Bootstrap extends Main {
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
       Server.log.serverStarting(Version.getBrandName());
       Server.log.serverConfiguration(configurationFile.getAbsolutePath());
+      Server.log.loggingConfiguration(loggingFile.getAbsolutePath());
       try (Server server = new Server(serverRoot, configurationFile, properties)) {
          server.setExitHandler(exitHandler);
          server.run().get();
@@ -132,6 +147,7 @@ public class Bootstrap extends Main {
       out.printf("Usage:\n");
       out.printf("  -b, --bind-address=<address>  %s\n", MSG.serverHelpBindAddress());
       out.printf("  -c, --server-config=<config>  %s\n", MSG.serverHelpServerConfig(Server.DEFAULT_CONFIGURATION_FILE));
+      out.printf("  -l, --logging-config=<config> %s\n", MSG.serverHelpLoggingConfig(Server.DEFAULT_LOGGING_FILE));
       out.printf("  -h, --help                    %s\n", MSG.toolHelpHelp());
       out.printf("  -g, --cluster-name=<name>     %s\n", MSG.serverHelpClusterName(Server.DEFAULT_CLUSTER_NAME));
       out.printf("  -j, --cluster-stack=<name>    %s\n", MSG.serverHelpClusterStack(Server.DEFAULT_CLUSTER_STACK));

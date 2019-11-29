@@ -43,6 +43,9 @@ public interface Messages {
    @Message("Specifies a server configuration file. Defaults to `%s`.")
    String serverHelpServerConfig(String defaultConfiguration);
 
+   @Message("Specifies a logging configuration file. Defaults to `%s`.")
+   String serverHelpLoggingConfig(String defaultConfiguration);
+
    @Message("Sets the name of the cluster. Defaults to `%s`.")
    String serverHelpClusterName(String defaultClusterName);
 
