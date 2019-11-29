@@ -53,14 +53,7 @@ public class Intrinsics {
 
    public static String string(ByteBuf buf) {
       buf.markReaderIndex();
-      byte[] bytes = ExtendedByteBufJava.readMaybeRangedBytes(buf);
-      if (bytes == null) {
-         return null;
-      } else if (bytes.length == 0) {
-         return "";
-      } else {
-         return new String(bytes, CharsetUtil.UTF_8);
-      }
+      return ExtendedByteBufJava.readString(buf);
    }
 
    public static byte[] optionalArray(ByteBuf buf) {

@@ -2,8 +2,9 @@ package org.infinispan.marshall.core;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+
+import org.infinispan.commons.util.HopscotchHashMap;
 
 final class Primitives {
 
@@ -40,7 +41,7 @@ final class Primitives {
    static final int MEDIUM_ARRAY_MIN               = 0x101;
    static final int MEDIUM_ARRAY_MAX               = 0x10100;
 
-   static final Map<Class<?>, Integer> PRIMITIVES = new HashMap<>(18);
+   static final Map<Class<?>, Integer> PRIMITIVES = new HopscotchHashMap<>(18);
 
    static {
       PRIMITIVES.put(String.class, ID_STRING);

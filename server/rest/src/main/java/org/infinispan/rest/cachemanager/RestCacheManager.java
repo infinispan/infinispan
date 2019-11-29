@@ -71,7 +71,7 @@ public class RestCacheManager<V> {
          throw logger.missingRequiredMediaType(name);
       }
       checkCacheAvailable(name);
-      String cacheKey = name + "-" + keyContentType.toString() + valueContentType.getTypeSubtype();
+      String cacheKey = name + "-" + keyContentType.getTypeSubtype() + valueContentType.getTypeSubtype();
       AdvancedCache<Object, V> cache = knownCaches.get(cacheKey);
       if (cache == null) {
          cache = instance.<Object, V>getCache(name).getAdvancedCache();

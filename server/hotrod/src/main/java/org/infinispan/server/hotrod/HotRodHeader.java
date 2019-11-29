@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import java.util.EnumSet;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
@@ -101,10 +103,9 @@ public class HotRodHeader {
 
    AdvancedCache<byte[], byte[]> getOptimizedCache(AdvancedCache<byte[], byte[]> c,
                                                    boolean transactional, boolean clustered) {
-      AdvancedCache<byte[], byte[]> optCache = c;
-
+      EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
       if (hasFlag(ProtocolFlag.SkipListenerNotification)) {
-         optCache = c.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+         flags.add(Flag.SKIP_LISTENER_NOTIFICATION);
       }
 
       if (version < 20) {
@@ -112,10 +113,10 @@ public class HotRodHeader {
             switch (op) {
                case PUT:
                case PUT_IF_ABSENT:
-                  return optCache.withFlags(Flag.IGNORE_RETURN_VALUES);
+                  flags.add(Flag.IGNORE_RETURN_VALUES);
             }
          }
-         return optCache;
+         return c.withFlags(flags);
       }
 
       if (clustered && !transactional && op.isConditional()) {
@@ -123,20 +124,20 @@ public class HotRodHeader {
       }
 
       if (op.canSkipCacheLoading() && hasFlag(ProtocolFlag.SkipCacheLoader)) {
-         optCache = c.withFlags(Flag.SKIP_CACHE_LOAD);
+         flags.add(Flag.SKIP_CACHE_LOAD);
       }
 
       if (op.canSkipIndexing() && hasFlag(ProtocolFlag.SkipIndexing)) {
-         optCache = c.withFlags(Flag.SKIP_INDEXING);
+         flags.add(Flag.SKIP_INDEXING);
       }
       if (!hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
          if (op.isNotConditionalAndCanReturnPrevious()) {
-            optCache = optCache.withFlags(Flag.IGNORE_RETURN_VALUES);
+            flags.add(Flag.IGNORE_RETURN_VALUES);
          }
       } else if (!transactional && op.canReturnPreviousValue()) {
          log.warnForceReturnPreviousNonTransactional(op.toString());
       }
-      return optCache;
+      return c.withFlags(flags);
    }
 
    @Override

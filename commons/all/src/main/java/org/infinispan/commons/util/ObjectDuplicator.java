@@ -14,13 +14,14 @@ import java.util.TreeSet;
  * A helper that efficiently duplicates known object types.
  *
  * @author (various)
- * @since 4.0
+ * @deprecated Since 12, will be removed in version 15.0
  */
+@Deprecated
 public class ObjectDuplicator {
    @SuppressWarnings("unchecked")
    public static <K, V> Map<K, V> duplicateMap(Map<K, V> original) {
       if (original instanceof FastCopyHashMap)
-         return (Map<K, V>) ((FastCopyHashMap<K, V>) original).clone();
+         return ((FastCopyHashMap<K, V>) original).clone();
       if (original instanceof HashMap)
          return (Map<K, V>) ((HashMap<K, V>) original).clone();
       if (original instanceof TreeMap)
@@ -41,13 +42,13 @@ public class ObjectDuplicator {
       if (original instanceof TreeSet)
          return (Set<E>) ((TreeSet<E>) original).clone();
       if (original instanceof FastCopyHashMap.EntrySet || original instanceof FastCopyHashMap.KeySet)
-         return new HashSet<E>(original);
+         return new HashSet<>(original);
       if (original.getClass().equals(Collections.emptySet().getClass()))
          return Collections.emptySet();
       if (original.getClass().equals(Collections.singleton("").getClass()))
          return Collections.singleton(original.iterator().next());
       if (original.getClass().getSimpleName().contains("$"))
-         return new HashSet<E>(original);
+         return new HashSet<>(original);
 
       return attemptClone(original);
    }
@@ -69,6 +70,7 @@ public class ObjectDuplicator {
             return (T) source.getClass().getMethod("clone").invoke(source);
          }
          catch (Exception e) {
+            // Will return null
          }
       }
 

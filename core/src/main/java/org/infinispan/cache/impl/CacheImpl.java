@@ -1692,6 +1692,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<K, V> withFlags(Flag flag) {
+      return new DecoratedCache<>(this, EnumUtil.bitSetOf(flag));
+   }
+
+   @Override
    public AdvancedCache<K, V> withFlags(final Flag... flags) {
       if (flags == null || flags.length == 0)
          return this;
