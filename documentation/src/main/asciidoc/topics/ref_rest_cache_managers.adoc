@@ -134,6 +134,14 @@ configuration, as in the following example:
 include::json_examples/rest_cache_config_response.json[]
 ----
 
+[id='rest_v2_cache_manager_cache_templates']
+= Listing Cache Templates
+List all templates available for creating caches with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/cache-configs/templates
+----
 
 [id='rest_v2_cache_manager_cache_list']
 = (Experimental) Obtaining Cache Status and Information
