@@ -1,5 +1,5 @@
 QUIT(1)
-========
+=======
 :doctype: manpage
 
 

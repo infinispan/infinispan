@@ -38,6 +38,7 @@ include::{cli_help}/reset.adoc[leveloffset=+1]
 include::{cli_help}/schema.adoc[leveloffset=+1]
 include::{cli_help}/shutdown.adoc[leveloffset=+1]
 include::{cli_help}/site.adoc[leveloffset=+1]
+include::{cli_help}/task.adoc[leveloffset=+1]
 include::{cli_help}/version.adoc[leveloffset=+1]
 
 // Restore the parent context.

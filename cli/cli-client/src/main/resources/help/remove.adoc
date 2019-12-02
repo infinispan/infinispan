@@ -1,5 +1,5 @@
 REMOVE(1)
-=======
+=========
 :doctype: manpage
 
 
