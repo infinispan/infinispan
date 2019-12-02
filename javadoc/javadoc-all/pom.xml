@@ -250,7 +250,13 @@
                      <goal>jar</goal>
                   </goals>
                   <configuration>
-                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} Embedded API</doctitle>
+                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} API</doctitle>
+                     <doclet>org.infinispan.doclets.DocletMultiplexer</doclet>
+                     <docletArtifact>
+                        <groupId>org.infinispan.doclets</groupId>
+                        <artifactId>infinispan-doclets-java11</artifactId>
+                        <version>${version.infinispan.doclets}</version>
+                     </docletArtifact>
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>
                      <footer>${analytics.code}</footer>
@@ -308,6 +314,26 @@
                      <useStandardDocletOptions>true</useStandardDocletOptions>
                      <additionalOptions>--allow-script-in-comments</additionalOptions>
                      <source>8</source>
+                     <additionalJOptions>
+                        <!-- Custom doclet needs access to javadoc module internals -->
+                        <additionalJOption>-J--add-opens</additionalJOption>
+                        <additionalJOption>-Jjdk.javadoc/jdk.javadoc.internal.tool=ALL-UNNAMED</additionalJOption>
+
+                        <!--additionalJOption>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787</additionalJOption-->
+                     </additionalJOptions>
+                     <!-- Declare our custom javadoc tags and provide a replacement text for them to be used just in case exclusion fails. -->
+                     <tags>
+                        <tag>
+                           <name>public</name>
+                           <placement>a</placement>
+                           <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;Public API&lt;/b&gt;&lt;/div&gt;</head>
+                        </tag>
+                        <tag>
+                           <name>private</name>
+                           <placement>a</placement>
+                           <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;</head>
+                        </tag>
+                     </tags>
                      <additionalDependencies>
                         <additionalDependency>
                            <groupId>javax.enterprise</groupId>
@@ -330,36 +356,6 @@
                            <version>${version.io.agroal}</version>
                         </additionalDependency>
                      </additionalDependencies>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>jmx</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-                  <configuration>
-                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} Remote API</doctitle>
-                     <doclet>org.infinispan.doclets.jmx.JmxDoclet</doclet>
-                     <docletArtifact>
-                        <groupId>org.infinispan.doclets</groupId>
-                        <artifactId>infinispan-doclets</artifactId>
-                        <version>${version.infinispan.doclets}</version>
-                     </docletArtifact>
-                     <docfilessubdirs>true</docfilessubdirs>
-                     <detectLinks>false</detectLinks>
-                     <includeDependencySources>true</includeDependencySources>
-                     <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
-                     <dependencySourceIncludes>
-                        <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
-                     </dependencySourceIncludes>
-                     <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
-                     <excludePackageNames>org.infinispan.commons.jdkspecific*</excludePackageNames>
-                     <excludedocfilessubdir>org/infinispan/commons/jdkspecific</excludedocfilessubdir>
-                     <doclint>none</doclint>
-                     <useStandardDocletOptions>false</useStandardDocletOptions>
-                     <source>8</source>
-                     <!--additionalJOption>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787</additionalJOption-->
                   </configuration>
                </execution>
             </executions>
