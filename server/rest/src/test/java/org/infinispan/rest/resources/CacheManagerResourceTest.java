@@ -41,13 +41,18 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
    private Configuration cache2Config;
    private ObjectMapper mapper = new ObjectMapper();
    private JsonWriter jsonWriter = new JsonWriter();
+   private Configuration templateConfig;
 
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cache1Config = getCache1Config();
       cache2Config = getCache2Config();
+      ConfigurationBuilder templateConfigBuilder = new ConfigurationBuilder();
+      templateConfigBuilder.template(true).clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
+      templateConfig = templateConfigBuilder.build();
       cm.defineConfiguration("cache1", cache1Config);
       cm.defineConfiguration("cache2", cache2Config);
+      cm.defineConfiguration("template", templateConfig);
    }
 
    private Configuration getCache1Config() {
@@ -92,11 +97,28 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getContentAsString();
-      JsonNode jsonNode = mapper.readTree(json);
-      Map<String, String> cachesAndConfig = cacheAndConfig((ArrayNode) jsonNode);
+      ArrayNode jsonNode = (ArrayNode) mapper.readTree(json);
+      Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
-      assertEquals(cachesAndConfig.get("cache1"), jsonWriter.toJSON(cache1Config));
+      assertEquals(cachesAndConfig.get("template"), jsonWriter.toJSON(templateConfig));
       assertEquals(cachesAndConfig.get("cache2"), jsonWriter.toJSON(cache2Config));
+      assertEquals(cachesAndConfig.get("cache2"), jsonWriter.toJSON(cache2Config));
+   }
+
+   @Test
+   public void testCacheConfigsTemplates() throws Exception {
+      String accept = "text/plain; q=0.9, application/json; q=0.6";
+      String url = String.format("http://localhost:%d/rest/v2/cache-managers/default/cache-configs/templates", restServer().getPort());
+      ContentResponse response = client.newRequest(url).header("Accept", accept).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      String json = response.getContentAsString();
+      ArrayNode jsonNode = (ArrayNode) mapper.readTree(json);
+      Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
+
+      assertEquals(cachesAndConfig.get("template"), jsonWriter.toJSON(templateConfig));
+      assertFalse(cachesAndConfig.containsKey("cache1"));
+      assertFalse(cachesAndConfig.containsKey("cache2"));
    }
 
    @Test

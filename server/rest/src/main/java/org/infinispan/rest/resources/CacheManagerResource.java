@@ -84,6 +84,7 @@ public class CacheManagerResource implements ResourceHandler {
 
             // Config
             .invocation().methods(GET).path("/v2/cache-managers/{name}/cache-configs").handleWith(this::getAllCachesConfiguration)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/cache-configs/templates").handleWith(this::getAllCachesConfigurationTemplates)
             .invocation().methods(POST).path("/v2/cache-managers/{name}/config").withAction("toJSON").handleWith(this::convertToJson)
 
             // Cache Manager config
@@ -236,13 +237,40 @@ public class CacheManagerResource implements ResourceHandler {
       try {
          Set<String> cacheConfigurationNames = cacheManager.getCacheConfigurationNames();
 
-         Set<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
+         List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
                .filter(n -> !internalCacheRegistry.isInternalCache(n))
+               .distinct()
                .map(n -> {
                   Configuration cacheConfiguration = cacheManager.getCacheConfiguration(n);
                   String json = jsonWriter.toJSON(cacheConfiguration);
                   return new NamedCacheConfiguration(n, json);
-               }).collect(Collectors.toSet());
+               })
+               .sorted(Comparator.comparing(c -> c.name))
+               .collect(Collectors.toList());
+
+         byte[] bytes = objectMapper.writeValueAsBytes(configurations);
+         responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
+      } catch (JsonProcessingException e) {
+         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      return completedFuture(responseBuilder.build());
+   }
+
+   private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+
+      try {
+         Set<String> cacheConfigurationNames = cacheManager.getCacheConfigurationNames();
+
+         List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
+               .filter(n -> !internalCacheRegistry.isInternalCache(n))
+               .filter(n -> cacheManager.getCacheConfiguration(n).isTemplate())
+               .distinct()
+               .map(n -> new NamedCacheConfiguration(n, jsonWriter.toJSON(cacheManager.getCacheConfiguration(n))))
+               .sorted(Comparator.comparing(c -> c.name))
+               .collect(Collectors.toList());
 
          byte[] bytes = objectMapper.writeValueAsBytes(configurations);
          responseBuilder.contentType(APPLICATION_JSON).entity(bytes);
