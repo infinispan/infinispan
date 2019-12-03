@@ -1,11 +1,8 @@
 package org.infinispan.rest.resources;
 
 import static org.infinispan.rest.NettyRestRequest.EXTENDED_HEADER;
-import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
-import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 
 import java.util.Date;
@@ -20,7 +17,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -28,65 +24,29 @@ import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.ContentSource;
-import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
-import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
-import org.infinispan.rest.operations.mediatypes.Charset;
-import org.infinispan.rest.operations.mediatypes.EntrySetFormatter;
-import org.infinispan.rest.operations.mediatypes.OutputPrinter;
 
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Handler for the cache resource.
+ * Handle basic cache operations.
  *
  * @since 10.0
  */
-public class CacheResource implements ResourceHandler {
+public class BaseCacheResource {
 
    private static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
 
    final CacheResourceQueryAction queryAction;
    final InvocationHelper invocationHelper;
 
-   public CacheResource(InvocationHelper invocationHelper) {
+   public BaseCacheResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
       this.queryAction = new CacheResourceQueryAction(invocationHelper);
-   }
-
-   @Override
-   public Invocations getInvocations() {
-      return new Invocations.Builder()
-            .invocation().methods(PUT, POST).path("/{cacheName}/{cacheKey}").handleWith(this::putValueToCache)
-            .invocation().methods(GET, HEAD).path("/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
-            .invocation().method(DELETE).path("/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
-            .invocation().method(DELETE).path("/{cacheName}").handleWith(this::clearEntireCache)
-            .invocation().method(GET).path("/{cacheName}").handleWith(this::getCacheKeys)
-            .invocation().methods(GET, POST).path("/{cacheName}").withAction("search").handleWith(queryAction::search)
-            .create();
-   }
-
-   private CompletionStage<RestResponse> getCacheKeys(RestRequest request) throws RestResponseException {
-      String cacheName = request.variables().get("cacheName");
-
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      MediaType contentType = negotiateMediaType(cache, request);
-
-      Charset mediaCharset = Charset.fromMediaType(contentType.toString());
-      Charset charset = mediaCharset == null ? Charset.UTF8 : mediaCharset;
-      return CompletableFuture.supplyAsync(() -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         responseBuilder.contentType(contentType);
-         responseBuilder.header(HttpHeaderNames.CACHE_CONTROL.toString(), CacheControl.noCache());
-         OutputPrinter outputPrinter = EntrySetFormatter.forMediaType(contentType);
-         responseBuilder.entity(outputPrinter.print(cacheName, cache.keySet(), charset));
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
    }
 
    CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {

@@ -9,7 +9,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIAL
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
-import static org.infinispan.commons.dataconversion.StandardConversions.bytesToHex;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -114,7 +113,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    @Test
    public void shouldGetNonExistingValue() throws Exception {
       //when
-      ContentResponse response = client.GET("http://localhost:" + restServer().getPort() + "/rest/default/nonExisting");
+      ContentResponse response = client.GET("http://localhost:" + restServer().getPort() + "/rest/v2/caches/default/nonExisting");
 
       //then
       ResponseAssertion.assertThat(response).doesntExist();
@@ -142,7 +141,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -159,7 +158,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -175,7 +174,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s?extended=true", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s?extended=true", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -190,7 +189,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain;charset=UTF-8")
             .send();
 
@@ -207,7 +206,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "json", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "json", "test"))
             .header(HttpHeader.ACCEPT, "application/json")
             .send();
 
@@ -224,7 +223,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "xml", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "xml", "test"))
             .header(HttpHeader.ACCEPT, "application/xml")
             .send();
 
@@ -241,7 +240,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .send();
 
       //then
@@ -259,7 +258,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
             .send();
 
       TestClass convertedObject = convertFromBytes(response.getContent(), TestClass.class);
@@ -278,7 +277,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain")
             .send();
 
@@ -295,7 +294,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header(HttpHeader.ACCEPT, "text/plain;charset=utf-8")
             .send();
 
@@ -316,7 +315,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.HEAD)
             .send();
 
@@ -327,7 +326,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
       Request request = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
             .content(new StringContentProvider(value))
             .header("Content-type", contentType)
             .method(HttpMethod.PUT);
@@ -358,7 +357,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.DELETE)
             .send();
 
@@ -372,7 +371,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putBinaryValueInCache("serialized", "test", convertToBytes(42), APPLICATION_SERIALIZED_OBJECT);
 
       ContentResponse headResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
             .method(HttpMethod.HEAD)
             .header(HttpHeader.ACCEPT, "application/x-java-serialized-object")
             .send();
@@ -383,7 +382,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
             .method(HttpMethod.DELETE)
             .header(HttpHeader.CONTENT_TYPE, "text/plain;charset=UTF-8")
             .send();
@@ -399,7 +398,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "doesnt_exist"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "doesnt_exist"))
             .method(HttpMethod.DELETE)
             .send();
 
@@ -413,8 +412,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "default"))
-            .method(HttpMethod.DELETE)
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s?action=clear", restServer().getPort(), "default"))
+            .method(HttpMethod.GET)
             .send();
 
       //then
@@ -426,68 +425,14 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldGetAllEntriesFromEmptyCache() throws Exception {
       //when
       ContentResponse response = client
-            .newRequest("http://localhost:" + restServer().getPort() + "/rest/default")
+            .newRequest("http://localhost:" + restServer().getPort() + "/rest/v2/caches/default?action=keys")
             .method(HttpMethod.GET)
             .header("Content-Type", "text/plain; charset=utf-8")
             .send();
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasReturnedText("");
-   }
-
-   @Test
-   public void shouldGetAllEntriesConvertedToText() throws Exception {
-      //given
-      putStringValueInCache("textCache", "key1", "test1");
-      putStringValueInCache("textCache", "key2", "test2");
-
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
-            .header(HttpHeader.ACCEPT, "text/plain")
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType("text/plain");
-      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2", "key2\nkey1");
-   }
-
-   @Test
-   public void shouldGetAllEntriesConvertedToTextUtf8() throws Exception {
-      //given
-      putStringValueInCache("textCache", "key1", "test1");
-      putStringValueInCache("textCache", "key2", "test2");
-
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
-            .header(HttpHeader.ACCEPT, "text/plain;charset=UTF-8")
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType("text/plain;charset=UTF-8");
-      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2", "key2\nkey1");
-   }
-
-   @Test
-   public void shouldGetAllEntriesConvertedToTextIso_8859_1() throws Exception {
-      //given
-      putStringValueInCache("textCache", "key1", "test1");
-      putStringValueInCache("textCache", "key2", "test2");
-
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
-            .header(HttpHeader.ACCEPT, "text/plain; charset=ISO-8859-1")
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType("text/plain; charset=ISO-8859-1");
-      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2", "key2\nkey1");
+      ResponseAssertion.assertThat(response).hasReturnedText("[]");
    }
 
    @Test
@@ -498,7 +443,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s?action=keys", restServer().getPort(), "textCache"))
             .header(HttpHeader.ACCEPT, "application/json")
             .send();
 
@@ -506,48 +451,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
       // keys can be returned in any order
-      ResponseAssertion.assertThat(response).hasReturnedText("keys=[key1,key2]", "keys=[key2,key1]");
-   }
-
-   @Test
-   public void shouldGetAllEntriesConvertedToXml() throws Exception {
-      //given
-      putStringValueInCache("textCache", "key1", "test1");
-      putStringValueInCache("textCache", "key2", "test2");
-
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "textCache"))
-            .header(HttpHeader.ACCEPT, "application/xml")
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType("application/xml");
-      ResponseAssertion.assertThat(response).hasReturnedText(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys><key>key1</key><key>key2</key></keys>",
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys><key>key2</key><key>key1</key></keys>");
-   }
-
-   @Test
-   public void shouldGetAllEntriesConvertedToBytes() throws Exception {
-      //given
-      putStringValueInCache("default", "key1", "test1");
-      putStringValueInCache("default", "key2", "test2");
-
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "default"))
-            .header(HttpHeader.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
-      // keys can be returned in any order
-      ResponseAssertion.assertThat(response).hasReturnedText(
-            String.format("%s\n%s", bytesToHex("key1".getBytes()), bytesToHex("key2".getBytes())),
-            String.format("%s\n%s", bytesToHex("key2".getBytes()), bytesToHex("key1".getBytes())));
+      ResponseAssertion.assertThat(response).hasReturnedText("[\"key2\",\"key1\"]","[\"key1\",\"key2\"]");
    }
 
    @Test
@@ -557,7 +461,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "textCache", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "textCache", "key1"))
             .header(HttpHeader.ACCEPT, "ignored/wrong , text/plain")
             .send();
 
@@ -574,7 +478,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "key1"))
             .header(HttpHeader.ACCEPT, "application/wrong-content-type")
             .send();
 
@@ -589,7 +493,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "key1"))
             .method(HttpMethod.HEAD)
             .header(HttpHeader.ACCEPT, "garbage")
             .send();
@@ -604,14 +508,14 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse firstResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .method(HttpMethod.GET)
             .send();
 
       String etagFromFirstCall = firstResponse.getHeaders().get("ETag");
 
       ContentResponse secondResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header("If-None-Match", etagFromFirstCall)
             .method(HttpMethod.GET)
             .send();
@@ -628,7 +532,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .header("If-None-Match", "Invalid-etag")
             .method(HttpMethod.GET)
             .send();
@@ -642,7 +546,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldPutTextValueInCache() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "text/plain;charset=UTF-8")
             .send();
@@ -660,7 +564,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("textCache", "test", "Hey!");
 
       ContentResponse getResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "textCache", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "textCache", "test"))
             .method(HttpMethod.GET)
             .header("Accept", "application/json")
             .send();
@@ -674,7 +578,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldPutUnknownFormatValueInCache() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "unknown", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "unknown", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "application/unknown")
             .send();
@@ -694,7 +598,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       testClass.setName("test");
 
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "serialized", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "serialized", "test"))
             .content(new BytesContentProvider(convertToBytes(testClass)))
             .header("Content-type", "application/x-java-serialized-object")
             .send();
@@ -716,7 +620,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "text/plain;charset=UTF-8")
             .send();
@@ -732,7 +636,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .content(new StringContentProvider("Hey!"))
             .header("Content-type", "text/plain;charset=UTF-8")
             .method(HttpMethod.PUT)
@@ -777,7 +681,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldPutEntryWithDefaultTllAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .send();
 
@@ -795,7 +699,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldPutImmortalEntryWithMinusOneTtlAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .header("timeToLiveSeconds", "-1")
             .header("maxIdleTimeSeconds", "-1")
@@ -814,7 +718,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldPutImmortalEntryWithZeroTtlAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .header("timeToLiveSeconds", "0")
             .header("maxIdleTimeSeconds", "0")
@@ -834,7 +738,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("xml", "key", "<value/>");
 
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "xml", "key"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "xml", "key"))
             .header(HttpHeader.ACCEPT, "application/json")
             .method(HttpMethod.GET)
             .send();
@@ -847,7 +751,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldPutEntryWithTtlAndIdleTime() throws Exception {
       //when
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "expiration", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "expiration", "test"))
             .content(new StringContentProvider("test"))
             .header("timeToLiveSeconds", "50")
             .header("maxIdleTimeSeconds", "50")
@@ -867,7 +771,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //when
       ByteBuffer payload = ByteBuffer.allocate(1_000_000);
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "binary", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "binary", "test"))
             .content(new ByteBufferContentProvider(payload))
             .send();
 
@@ -885,7 +789,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //when
       ByteBuffer payload = ByteBuffer.allocate(1_100_000);
       ContentResponse response = client
-            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .POST(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .content(new ByteBufferContentProvider(payload))
             .send();
 
@@ -898,7 +802,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putStringValueInCache("default", "test", "test");
 
       ContentResponse getResponse = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", "test"))
             .accept("*/*")
             .method(HttpMethod.GET)
             .send();
@@ -909,7 +813,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    protected ContentResponse get(String cacheName, Object key, String keyContentType, String acceptHeader) throws Exception {
-      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
+      Request request = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
             .method(HttpMethod.GET);
       if (acceptHeader != null) {
          request.accept(acceptHeader);
@@ -923,7 +827,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    protected ContentResponse get(String cacheName, Object key, String acceptHeader) throws Exception {
-      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
+      Request request = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
             .method(HttpMethod.GET);
       if (acceptHeader != null) {
          request.accept(acceptHeader);
@@ -1099,7 +1003,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldHandleInvalidPath() throws Exception {
-      Request browserRequest = client.newRequest(String.format("http://localhost:%d/rest/%s", restServer().getPort(), "asdjsad"))
+      Request browserRequest = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), "asdjsad"))
             .header(HttpHeader.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
             .method(HttpMethod.GET);
 
@@ -1109,7 +1013,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void shouldHandleIncompletePath() throws Exception {
-      Request req = client.newRequest(String.format("http://localhost:%d/rest/%s?action", restServer().getPort(), "default"))
+      Request req = client.newRequest(String.format("http://localhost:%d/rest/v2/caches/%s?action", restServer().getPort(), "default"))
             .method(HttpMethod.GET);
 
       ContentResponse response = req.send();
@@ -1161,7 +1065,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putInCache("default", key, invalidXML, TEXT_PLAIN_TYPE);
 
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), "default", key))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), "default", key))
             .header(HttpHeader.ACCEPT, APPLICATION_XML_TYPE)
             .method(HttpMethod.GET).send();
 

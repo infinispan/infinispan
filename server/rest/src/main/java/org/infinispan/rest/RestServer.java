@@ -14,7 +14,6 @@ import org.infinispan.rest.framework.RestDispatcher;
 import org.infinispan.rest.framework.impl.ResourceManagerImpl;
 import org.infinispan.rest.framework.impl.RestDispatcherImpl;
 import org.infinispan.rest.resources.CacheManagerResource;
-import org.infinispan.rest.resources.CacheResource;
 import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.CounterResource;
@@ -114,7 +113,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       String rootContext = "/";
       ResourceManager resourceManager = new ResourceManagerImpl();
       resourceManager.registerResource(rootContext, new SplashResource());
-      resourceManager.registerResource(restContext, new CacheResource(invocationHelper));
       resourceManager.registerResource(restContext, new CacheResourceV2(invocationHelper));
       resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
       resourceManager.registerResource(restContext, new CacheManagerResource(invocationHelper));

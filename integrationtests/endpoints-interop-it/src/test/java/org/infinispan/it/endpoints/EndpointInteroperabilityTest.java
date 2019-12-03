@@ -405,7 +405,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    }
 
    private String getEndpoint(String cache) {
-      return String.format("http://localhost:%s/rest/%s", restServer.getPort(), cache);
+      return String.format("http://localhost:%s/rest/v2/caches/%s", restServer.getPort(), cache);
    }
 
    private String asString(Object content) {

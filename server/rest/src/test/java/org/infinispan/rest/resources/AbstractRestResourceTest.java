@@ -91,7 +91,7 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
 
    private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
       Request request = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
             .content(new StringContentProvider(value))
             .header("Content-type", contentType)
             .method(HttpMethod.PUT);
@@ -115,7 +115,7 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
 
    void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) throws InterruptedException, ExecutionException, TimeoutException {
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer().getPort(), cacheName, key))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer().getPort(), cacheName, key))
             .content(new BytesContentProvider(value))
             .header(HttpHeader.CONTENT_TYPE, mediaType.toString())
             .method(HttpMethod.PUT)

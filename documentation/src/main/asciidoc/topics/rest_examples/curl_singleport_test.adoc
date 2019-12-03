@@ -1,1 +1,1 @@
-$ curl -v -k --http2-prior-knowledge https://127.0.0.1:8443/rest/default/test
+$ curl -v -k --http2-prior-knowledge https://127.0.0.1:8443/rest/v2/caches/default/test

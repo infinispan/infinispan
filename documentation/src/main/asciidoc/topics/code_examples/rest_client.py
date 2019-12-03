@@ -1,7 +1,7 @@
 import urllib.request
 
 # Setup basic auth
-base_uri = 'http://localhost:8080/rest/default'
+base_uri = 'http://localhost:8080/rest/v2/caches/default'
 auth_handler = urllib.request.HTTPBasicAuthHandler()
 auth_handler.add_password(user='user', passwd='pass', realm='ApplicationRealm', uri=base_uri)
 opener = urllib.request.build_opener(auth_handler)

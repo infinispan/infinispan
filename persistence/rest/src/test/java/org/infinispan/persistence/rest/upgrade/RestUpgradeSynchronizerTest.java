@@ -80,18 +80,18 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       for (char ch = 'A'; ch <= 'Z'; ch++) {
          String s = Character.toString(ch);
-         PutMethod put = new PutMethod(String.format("http://localhost:%d/rest/%s/%s", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer), s));
+         PutMethod put = new PutMethod(String.format("http://localhost:%d/rest/v2/caches/%s/%s", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer), s));
          put.setRequestEntity(new StringRequestEntity(s, "text/plain", "UTF-8"));
          assertEquals(HttpStatus.SC_NO_CONTENT, client.executeMethod(put));
       }
 
       // Read a newly inserted entry
-      GetMethod getInserted = new GetMethod(String.format("http://localhost:%d/rest/%s/A", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer)));
+      GetMethod getInserted = new GetMethod(String.format("http://localhost:%d/rest/v2/caches/%s/A", sourceServer.getPort(), TestingUtil.getDefaultCacheName(sourceContainer)));
       assertEquals(HttpStatus.SC_OK, client.executeMethod(getInserted));
       assertEquals("A", getInserted.getResponseBodyAsString());
 
       // Verify access to some of the data from the new cluster
-      GetMethod get = new GetMethod(String.format("http://localhost:%d/rest/%s/A", targetServer.getPort(), TestingUtil.getDefaultCacheName(targetContainer)));
+      GetMethod get = new GetMethod(String.format("http://localhost:%d/rest/v2/caches/%s/A", targetServer.getPort(), TestingUtil.getDefaultCacheName(targetContainer)));
       assertEquals(HttpStatus.SC_OK, client.executeMethod(get));
       assertEquals("A", get.getResponseBodyAsString());
 

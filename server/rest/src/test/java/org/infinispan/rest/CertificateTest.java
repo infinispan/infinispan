@@ -58,7 +58,7 @@ public class CertificateTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("https://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("https://localhost:%d/rest/v2/caches/%s/%s", restServer.getPort(), "default", "test"))
             .method(HttpMethod.GET)
             .send();
 
