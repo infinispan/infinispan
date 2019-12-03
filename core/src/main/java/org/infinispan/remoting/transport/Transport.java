@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -237,6 +238,11 @@ public interface Transport extends Lifecycle {
     * @return a list of physical addresses
     */
    List<Address> getMembersPhysicalAddresses();
+
+
+   default Map<Address, Address> getLogicalPhysicalAddresses() {
+      return new HashMap<>();
+   }
 
    /**
     * Tests whether the transport supports true multicast

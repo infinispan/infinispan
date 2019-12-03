@@ -1045,6 +1045,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return cacheManagerInfo.getClusterMembersPhysicalAddresses().toString();
    }
 
+   @ManagedAttribute(description = "Mapping of members in the cluster", displayName = "Cluster logic/physical mapping", dataType = DataType.TRAIT)
+   public String getClusterMembersAddresses() {
+      return cacheManagerInfo.getClusterMembersAddresses().toString();
+   }
+
    @ManagedAttribute(description = "Size of the cluster in number of nodes", displayName = "Cluster size")
    public int getClusterSize() {
       return cacheManagerInfo.getClusterSize();

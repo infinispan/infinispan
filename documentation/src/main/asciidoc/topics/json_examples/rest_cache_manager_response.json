@@ -23,6 +23,10 @@
         "127.0.0.1:35770",
         "127.0.0.1:60031"
     ],
+    "cluster_members_addresses":{
+        "CacheManagerResourceTest-NodeA-49696":"127.0.0.1:35770",
+        "CacheManagerResourceTest-NodeB-28120":"127.0.0.1:60031"
+    },
     "cluster_size":2,
     "defined_caches":[
         {

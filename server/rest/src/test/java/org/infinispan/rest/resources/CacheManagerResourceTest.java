@@ -191,6 +191,7 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       assertFalse(cmInfo.get("version").asText().isEmpty());
       assertEquals(2, cmInfo.get("cluster_members").size());
       assertEquals(2, cmInfo.get("cluster_members_physical_addresses").size());
+      assertEquals(2, cmInfo.get("cluster_members_addresses").size());
    }
 
    @Test

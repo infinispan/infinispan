@@ -32,10 +32,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
@@ -390,6 +390,22 @@ public class JGroupsTransport implements Transport {
          physicalAddress = new JGroupsAddress(addr);
       }
       return Collections.singletonList(physicalAddress);
+   }
+
+   @Override
+   public Map<Address, Address> getLogicalPhysicalAddresses() {
+      if (channel != null) {
+         Map<org.jgroups.Address,PhysicalAddress> physical_addr = (Map<org.jgroups.Address,PhysicalAddress>)channel.down(new Event(Event.GET_LOGICAL_PHYSICAL_MAPPINGS, true));
+         Map<Address, Address> mapping = new HashMap<>();
+
+         for(Map.Entry<org.jgroups.Address,PhysicalAddress> entry: physical_addr.entrySet()) {
+            mapping.put(new JGroupsAddress(entry.getKey()), new JGroupsAddress(entry.getValue()));
+         }
+         return mapping;
+
+      } else {
+         return Collections.emptyMap();
+      }
    }
 
    @Override

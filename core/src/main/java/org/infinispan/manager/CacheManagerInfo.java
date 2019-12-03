@@ -1,8 +1,10 @@
 package org.infinispan.manager;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -96,6 +98,21 @@ public class CacheManagerInfo {
       if (cacheManager.getTransport() == null) return LOCAL_NODE;
       List<Address> addressList = cacheManager.getTransport().getMembersPhysicalAddresses();
       return addressList.stream().map(Objects::toString).collect(Collectors.toList());
+   }
+
+   public Map<String, String> getClusterMembersAddresses() {
+      if (cacheManager.getTransport() == null) return Collections.singletonMap("LOCAL", "LOCAL");
+
+      Map<Address, Address> logicalPhysicalAddresses = cacheManager.getTransport().getLogicalPhysicalAddresses();
+      Map<String, String> result = new HashMap<>();
+      List<String> clusterMembers = getClusterMembers();
+      for (Map.Entry<Address, Address> entry : logicalPhysicalAddresses.entrySet()) {
+         String logicalAdd = entry.getKey().toString();
+         if (clusterMembers.contains(logicalAdd)) {
+            result.put(logicalAdd, entry.getValue().toString());
+         }
+      }
+      return result;
    }
 
    public int getClusterSize() {
