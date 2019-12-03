@@ -6,7 +6,6 @@ package org.infinispan.jmx;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.jmx.PlatformMBeanServerLookup
  * @since 4.0
- * @public
  * @deprecated Use {@link org.infinispan.commons.jmx.MBeanServerLookup} instead
  */
 @Deprecated
