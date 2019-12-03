@@ -63,7 +63,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer.getPort(), "default", "test"))
             .method(HttpMethod.HEAD) //the method doesn't matter, we use the same tectics for all of them.
             .header(HttpHeader.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString("test:test".getBytes()))
             .send();
@@ -83,7 +83,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer.getPort(), "default", "test"))
             .method(HttpMethod.GET)
             .header(HttpHeader.AUTHORIZATION, "Invalid string")
             .send();
@@ -103,7 +103,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/v2/caches/%s/%s", restServer.getPort(), "default", "test"))
             .method(HttpMethod.GET)
             .send();
 

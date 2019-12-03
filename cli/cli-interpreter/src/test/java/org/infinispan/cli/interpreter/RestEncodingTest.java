@@ -91,7 +91,7 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    }
 
    private String getRestEndpoint(String cache, String key) {
-      return String.format("http://localhost:%s/rest/%s/%s", restServer.getPort(), cache, key);
+      return String.format("http://localhost:%s/rest/v2/caches/%s/%s", restServer.getPort(), cache, key);
    }
 
    private void testRestCodecWithCache(String cacheName) throws Exception {

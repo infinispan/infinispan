@@ -10,7 +10,6 @@ include::{topics}/ref_rest_security.adoc[leveloffset=+1]
 include::{topics}/ref_rest_protocols.adoc[leveloffset=+1]
 include::{topics}/ref_rest_data_formats.adoc[leveloffset=+1]
 include::{topics}/ref_rest_cors.adoc[leveloffset=+1]
-include::{topics}/ref_rest_api_v1.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

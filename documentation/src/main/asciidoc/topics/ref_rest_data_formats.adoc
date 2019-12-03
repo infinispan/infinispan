@@ -124,7 +124,7 @@ The registration can be done via REST, by doing a POST/PUT in the ____protobuf_m
 
 [source,bash]
 ----
-curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:8080/rest/___protobuf_metadata/schema.proto
+curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:8080/rest/v2/caches/___protobuf_metadata/schema.proto
 ----
 
 When writing a JSON document, a special field *__type_* must be present in the document to identity the protobuf _Message_

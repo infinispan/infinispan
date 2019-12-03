@@ -57,7 +57,7 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
    }
 
    public void testRestAccessLog() throws Exception {
-      client.newRequest(String.format("http://localhost:%d/rest/default/key", restServer.getPort()))
+      client.newRequest(String.format("http://localhost:%d/rest/v2/caches/default/key", restServer.getPort()))
             .content(new StringContentProvider("value"))
             .header("Content-type", "text/plain; charset=utf-8")
             .method(HttpMethod.PUT)
@@ -67,6 +67,6 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
 
       String logline = logAppender.getLog(0);
 
-      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\w+\\] \"PUT /rest/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ Jetty/\\p{Graph}+$"));
+      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\w+\\] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ Jetty/\\p{Graph}+$"));
    }
 }

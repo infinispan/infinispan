@@ -115,7 +115,7 @@ public class SinglePortTest {
         builder.addServer().host("localhost").port(port).protocol(Protocol.HTTP_20);
         httpClient = NettyHttpClient.forConfiguration(builder.build());
 
-        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
+        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/v2/caches/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
         FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);
@@ -159,7 +159,7 @@ public class SinglePortTest {
         EndpointRouter endpointRouter = router.getRouter(EndpointRouter.Protocol.SINGLE_PORT).get();
         String host = endpointRouter.getHost();
         int port = endpointRouter.getPort();
-        String restPrefix = String.format("/%s/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
+        String restPrefix = String.format("/%s/v2/caches/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
 
         // First off we verify that the HTTP side of things works
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
@@ -214,7 +214,7 @@ public class SinglePortTest {
               .security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray());
         httpClient = NettyHttpClient.forConfiguration(builder.build());
 
-        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/test",
+        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/v2/caches/default/test",
               wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
 
         FullHttpResponse response = httpClient.sendRequest(putValueInCacheRequest).toCompletableFuture().get(5, TimeUnit.SECONDS);

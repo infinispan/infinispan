@@ -40,6 +40,7 @@ import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
+import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
@@ -50,7 +51,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-public class CacheResourceV2 extends CacheResource {
+public class CacheResourceV2 extends BaseCacheResource implements ResourceHandler {
 
    private static final int STREAM_BATCH_SIZE = 1000;
 

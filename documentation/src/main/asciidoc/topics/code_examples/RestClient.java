@@ -104,7 +104,7 @@ public class RestExample {
         RestExample restExample = new RestExample();
         String user = "user";
         String pass = "pass";
-        restExample.putMethod("http://localhost:8080/rest/default/1", "Infinispan REST Test", user, pass);
-        restExample.getMethod("http://localhost:8080/rest/default/1", user, pass);
+        restExample.putMethod("http://localhost:8080/rest/v2/caches/default/1", "Infinispan REST Test", user, pass);
+        restExample.getMethod("http://localhost:8080/rest/v2/caches/default/1", user, pass);
     }
 }

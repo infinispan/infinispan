@@ -89,7 +89,7 @@ public class RestServerHelper {
    }
 
    public String getBasePath() {
-      return String.format("/%s/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
+      return String.format("/%s/v2/caches/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
    }
 
    public RestServerHelper withKeyStore(String keyStorePath, String secret, String type) {

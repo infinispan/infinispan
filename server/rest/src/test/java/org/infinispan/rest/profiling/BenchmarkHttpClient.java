@@ -14,8 +14,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
-import org.infinispan.rest.client.NettyHttpClient;
 import org.infinispan.commons.util.Eventually;
+import org.infinispan.rest.client.NettyHttpClient;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -48,7 +48,7 @@ public class BenchmarkHttpClient {
       for (int i = 0; i < numberOfGets; ++i) {
          String key = r.nextInt(100) < pertentageOfMisses ? nonExistingKey : existingKey;
          executorCompletionService.submit(() -> {
-            FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/rest/default/" + key);
+            FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/rest/v2/caches/default/" + key);
             count.incrementAndGet();
             nettyHttpClient.sendRequest(getRequest).whenComplete((response, e) -> count.decrementAndGet());
             return 1;
@@ -62,7 +62,7 @@ public class BenchmarkHttpClient {
       for (int i = 0; i < numberOfInserts; ++i) {
          String randomKey = UUID.randomUUID().toString();
          executorCompletionService.submit(() -> {
-            FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/" + randomKey,
+            FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/v2/caches/default/" + randomKey,
                   wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
             count.incrementAndGet();
             nettyHttpClient.sendRequest(putValueInCacheRequest).whenComplete((response, e) -> count.decrementAndGet());

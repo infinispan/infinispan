@@ -286,7 +286,7 @@ public class EndpointsCacheFactory<K, V> {
    }
 
    public String getRestUrl() {
-      return String.format("http://localhost:%s/rest/%s", restPort, cacheName);
+      return String.format("http://localhost:%s/rest/v2/caches/%s", restPort, cacheName);
    }
 
    HotRodServer getHotrodServer() {

@@ -5,7 +5,7 @@
 #
 require 'net/http'
 
-uri = URI.parse('http://localhost:8080/rest/default/MyKey')
+uri = URI.parse('http://localhost:8080/rest/v2/caches/default/MyKey')
 http = Net::HTTP.new(uri.host, uri.port)
 
 #Create new entry
@@ -47,7 +47,7 @@ puts "DELETE response code : " + resp.code
 
 #Create binary data like this... just the same...
 
-uri = URI.parse('http://localhost:8080/rest/default/MyLogo')
+uri = URI.parse('http://localhost:8080/rest/v2/caches/default/MyLogo')
 put = Net::HTTP::Put.new(uri.path, {"Content-Type" => "application/octet-stream"})
 put.basic_auth('user','pass')
 put.body = File.read('./logo.png')
@@ -61,7 +61,7 @@ require 'rubygems'
 require 'json'
 
 #now for fun, lets do some JSON !
-uri = URI.parse('http://localhost:8080/rest/jsonCache/user')
+uri = URI.parse('http://localhost:8080/rest/v2/caches/jsonCache/user')
 put = Net::HTTP::Put.new(uri.path, {"Content-Type" => "application/json"})
 put.basic_auth('user','pass')
 

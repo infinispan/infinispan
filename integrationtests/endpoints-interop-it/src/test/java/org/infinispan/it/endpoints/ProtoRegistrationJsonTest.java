@@ -31,7 +31,7 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
             .build());
 
       //initialize server-side serialization context via rest endpoint
-      String metadataCacheEndpoint = String.format("http://localhost:%s/rest/%s", restServer.getPort(), PROTOBUF_METADATA_CACHE_NAME);
+      String metadataCacheEndpoint = String.format("http://localhost:%s/rest/v2/caches/%s", restServer.getPort(), PROTOBUF_METADATA_CACHE_NAME);
       EntityEnclosingMethod put = new PutMethod(metadataCacheEndpoint + "/" + sci.getProtoFileName());
       put.setRequestEntity(new StringRequestEntity(sci.getProtoFile(), "text/plain", "UTF-8"));
 

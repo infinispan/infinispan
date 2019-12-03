@@ -79,8 +79,8 @@ public class RestEndpointRouterTest {
         int port = router.getRouter(EndpointRouter.Protocol.REST).get().getPort();
 
         //when
-        RestClient rest1Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest1").cache("default");
-        RestClient rest2Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest2").cache("default");
+        RestClient rest1Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest1/v2/caches/").cache("default");
+        RestClient rest2Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest2/v2/caches/").cache("default");
         rest1Client.put("test", "rest1");
         rest2Client.put("test", "rest2");
         String valueReturnedFromRest1 = rest1Client.get("test");

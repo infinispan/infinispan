@@ -84,7 +84,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       hotRodServer = startHotRodServer(cacheManager);
       remoteCacheManager = createRemoteCacheManager();
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-      restEndpoint = String.format("http://localhost:%s/rest/%s", restServer.getPort(), CACHE_NAME);
+      restEndpoint = String.format("http://localhost:%s/rest/v2/caches/%s", restServer.getPort(), CACHE_NAME);
    }
 
    protected String getEntityName() {
