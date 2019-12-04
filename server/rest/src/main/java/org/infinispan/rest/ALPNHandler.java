@@ -4,6 +4,7 @@ import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
 import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.netty.channel.Channel;
@@ -114,16 +115,15 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
       pipeline.addLast(new HttpContentCompressor(restServer.getConfiguration().getCompressionLevel()));
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
-      List<CorsConfig> corsRules = restServer.getConfiguration().getCorsRules();
-      List<CorsConfig> localhostRules = allowForLocalhost(restServer.getPort(), CROSS_ORIGIN_ALT_PORT);
-      corsRules.addAll(localhostRules);
-      pipeline.addLast(new CorsHandler(corsRules, true));
+      List<CorsConfig> configuredRules = restServer.getConfiguration().getCorsRules();
+      List<CorsConfig> rules = addLocalhostPermissions(configuredRules, restServer.getPort(), CROSS_ORIGIN_ALT_PORT);
+      pipeline.addLast(new CorsHandler(rules, true));
       pipeline.addLast(new ChunkedWriteHandler());
       pipeline.addLast(new Http11RequestHandler(restServer));
    }
 
-   private List<CorsConfig> allowForLocalhost(int... ports) {
-      List<CorsConfig> configs = new ArrayList<>();
+   private List<CorsConfig> addLocalhostPermissions(List<CorsConfig> corsRules, int... ports) {
+      List<CorsConfig> configs = new ArrayList<>(corsRules);
       for (int port : ports) {
          for (String scheme : SCHEMES) {
             String localIpv4 = scheme + "://" + "127.0.0.1" + ":" + port;
@@ -136,7 +136,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             configs.add(config);
          }
       }
-      return configs;
+      return Collections.unmodifiableList(configs);
    }
 
    protected int maxContentLength() {

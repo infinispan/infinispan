@@ -1,6 +1,7 @@
 package org.infinispan.rest.configuration;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,7 @@ public class CorsConfiguration implements ConfigurationInfo {
    }
 
    List<CorsConfig> corsConfigs() {
-      return nettyCorsConfigs;
+      return Collections.unmodifiableList(nettyCorsConfigs);
    }
 
 
