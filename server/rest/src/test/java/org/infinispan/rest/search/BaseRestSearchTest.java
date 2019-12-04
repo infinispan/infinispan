@@ -365,6 +365,9 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       index(2, person2.toString());
       index(3, person3.toString());
       index(4, person4.toString());
+
+      // Force remote query calls to all nodes
+       eventually(() -> getCount() == 4);
    }
 
    private void index(int id, String person) throws Exception {
