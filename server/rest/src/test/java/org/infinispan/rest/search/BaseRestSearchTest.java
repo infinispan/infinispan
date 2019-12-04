@@ -32,6 +32,7 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.rest.RestTestSCI;
@@ -108,8 +109,9 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    @BeforeClass
    public void setUp() throws Exception {
       IntStream.range(0, getNumNodes()).forEach(n -> {
-         RestServerHelper restServer = new RestServerHelper(cacheManagers.get(n));
-         restServer.start(TestResourceTracker.getCurrentTestShortName());
+         EmbeddedCacheManager manager = cacheManagers.get(n);
+         RestServerHelper restServer = new RestServerHelper(manager);
+         restServer.start(TestResourceTracker.getCurrentTestShortName() + "-" + manager.getAddress());
          restServers.add(restServer);
       });
 

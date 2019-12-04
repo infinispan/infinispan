@@ -64,7 +64,7 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
          cm.getClassWhiteList().addClasses(TestClass.class);
          waitForClusterToForm(cacheNames);
          RestServerHelper restServerHelper = new RestServerHelper(cm);
-         restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
+         restServerHelper.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
          restServers.add(restServerHelper);
       }
       client = new HttpClient();

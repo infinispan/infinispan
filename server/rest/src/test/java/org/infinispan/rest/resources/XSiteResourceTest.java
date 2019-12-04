@@ -73,7 +73,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
          String siteName = site.getSiteName();
          EmbeddedCacheManager cm = site.cacheManagers().iterator().next();
          RestServerHelper restServerHelper = new RestServerHelper(cm);
-         restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
+         restServerHelper.start(TestResourceTracker.getCurrentTestShortName() + "-" + cm.getAddress());
          restServerPerSite.put(siteName, restServerHelper);
          RestClientConfiguration clientConfig = new RestClientConfigurationBuilder()
                .addServer().host("127.0.0.1")
