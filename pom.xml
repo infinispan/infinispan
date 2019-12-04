@@ -2423,16 +2423,6 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-common</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring5-common</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring4-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
