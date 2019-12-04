@@ -61,6 +61,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
+   private static final int ENTRIES = 50;
+
    private static final String CACHE_NAME = "search-rest";
    private static final String PROTO_FILE_NAME = "person.proto";
    static final ObjectMapper MAPPER = new ObjectMapper();
@@ -173,11 +175,11 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testMultiResultQuery(HttpMethod method) throws Exception {
-      JsonNode results = query("from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'", method);
+      JsonNode results = query("from org.infinispan.rest.search.entity.Person p where p.id < 5 and p.gender = 'MALE'", method);
 
       assertEquals(results.get(TOTAL_RESULTS).intValue(), 3);
 
-      ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
+      ArrayNode hits = (ArrayNode) results.get("hits");
       assertEquals(hits.size(), 3);
    }
 
@@ -185,26 +187,26 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testProjections(HttpMethod method) throws Exception {
       JsonNode results = query("Select name, surname from org.infinispan.rest.search.entity.Person", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).intValue(), 4);
+      assertEquals(results.get(TOTAL_RESULTS).intValue(), ENTRIES);
 
       List<JsonNode> names = results.findValues("name");
       List<JsonNode> surnames = results.findValues("surname");
       List<JsonNode> streets = results.findValues("street");
       List<JsonNode> gender = results.findValues("gender");
 
-      assertEquals(4, names.size());
-      assertEquals(4, surnames.size());
+      assertEquals(10, names.size());
+      assertEquals(10, surnames.size());
       assertEquals(0, streets.size());
       assertEquals(0, gender.size());
    }
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testGrouping(HttpMethod method) throws Exception {
-      JsonNode results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p group by p.gender order by p.gender", method);
+      JsonNode results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p where p.id < 5 group by p.gender order by p.gender", method);
 
       assertEquals(results.get(TOTAL_RESULTS).intValue(), 2);
 
-      ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
+      ArrayNode hits = (ArrayNode) results.get("hits");
 
       JsonNode males = hits.get(0);
       assertEquals(males.path(HIT).path("name").intValue(), 3);
@@ -215,11 +217,11 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testOffset(HttpMethod method) throws Exception {
-      String q = "select p.name from org.infinispan.rest.search.entity.Person p order by p.name desc";
+      String q = "select p.name from org.infinispan.rest.search.entity.Person p where p.id < 5 order by p.name desc";
       JsonNode results = query(q, method, 2, 2, CACHE_NAME);
 
       assertEquals(results.get("total_results").intValue(), 4);
-      ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
+      ArrayNode hits = (ArrayNode) results.get("hits");
       assertEquals(hits.size(), 2);
 
       assertEquals(hits.get(0).path(HIT).path("name").asText(), "Jessica");
@@ -291,7 +293,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
       assertEquals(massIndexResponse.getStatus(), indexEnabled ? OK_200 : BAD_REQUEST_400);
 
-      eventually(() -> getCount() == 4);
+      eventually(() -> getCount() == ENTRIES);
    }
 
    @Test
@@ -366,8 +368,13 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       index(3, person3.toString());
       index(4, person4.toString());
 
-      // Force remote query calls to all nodes
-       eventually(() -> getCount() == 4);
+      for (int i = 5; i <= ENTRIES; i++) {
+         String text = "Generic" + i;
+         ObjectNode generic = createPerson(i, text, text, text, text, "MALE", 2122561084);
+         index(i, generic.toString());
+      }
+
+      eventually(() -> getCount() == ENTRIES);
    }
 
    private void index(int id, String person) throws Exception {
