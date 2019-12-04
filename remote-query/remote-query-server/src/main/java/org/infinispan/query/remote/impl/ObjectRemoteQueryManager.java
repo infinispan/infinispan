@@ -10,7 +10,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.objectfilter.Matcher;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
@@ -35,6 +34,23 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       this.cr = cr;
       this.isIndexed = cache.getCacheConfiguration().indexing().index().isEnabled();
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());
+      this.registerObjectQueryMatcher(cr);
+      this.registerProtobufObjectQueryMatcher(cr);
+   }
+
+
+   private void registerObjectQueryMatcher(ComponentRegistry cr) {
+      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
+      EntityNameResolver entityNameResolver = createEntityNamesResolver(MediaType.APPLICATION_OBJECT);
+      ObjectReflectionMatcher matcher = ObjectReflectionMatcher.create(entityNameResolver, searchIntegrator);
+      cr.registerComponent(matcher, matcher.getClass());
+   }
+
+   private void registerProtobufObjectQueryMatcher(ComponentRegistry cr) {
+      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
+      EntityNameResolver entityNameResolver = createEntityNamesResolver(APPLICATION_PROTOSTREAM);
+      ProtobufObjectReflectionMatcher matcher = ProtobufObjectReflectionMatcher.create(entityNameResolver, serCtx, searchIntegrator);
+      cr.registerComponent(matcher, matcher.getClass());
    }
 
    @Override
@@ -56,15 +72,9 @@ class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       BaseRemoteQueryEngine queryEngine = enginePerMediaType.get(mediaType.getTypeSubtype());
       if (queryEngine != null) return queryEngine;
 
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
+      Matcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ? cr.getComponent(ProtobufObjectReflectionMatcher.class) :
+            cr.getComponent(ObjectReflectionMatcher.class);
 
-      EntityNameResolver entityNameResolver = createEntityNamesResolver(mediaType);
-
-      ReflectionMatcher matcher = mediaType.match(APPLICATION_PROTOSTREAM) ?
-            ProtobufObjectReflectionMatcher.create(entityNameResolver, serCtx, searchIntegrator) :
-            ObjectReflectionMatcher.create(entityNameResolver, searchIntegrator);
-
-      cr.registerComponent(matcher, matcher.getClass());
       ObjectRemoteQueryEngine engine = new ObjectRemoteQueryEngine(cache, matcher.getClass(), isIndexed);
       enginePerMediaType.put(mediaType.getTypeSubtype(), engine);
       return engine;
