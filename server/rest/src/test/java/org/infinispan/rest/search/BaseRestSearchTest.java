@@ -17,7 +17,6 @@ import static org.testng.Assert.assertTrue;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.IntStream;
 
 import org.eclipse.jetty.client.HttpClient;
@@ -69,7 +68,6 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    protected HttpClient client;
    private List<RestServerHelper> restServers = new ArrayList<>();
-   private final Random random = new Random(1000);
 
    protected int getNumNodes() {
       return 3;
@@ -96,7 +94,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    protected RestServerHelper pickServer() {
-      return restServers.get(random.nextInt(getNumNodes()));
+      return restServers.get(0);
    }
 
    protected String getUrl(RestServerHelper restServerHelper) {
@@ -163,7 +161,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       JsonNode queryResult = query("from org.infinispan.rest.search.entity.Person p where p.surname = 'Cage'", method);
       assertEquals(queryResult.get("total_results").intValue(), 1);
 
-      ArrayNode hits = ArrayNode.class.cast(queryResult.get("hits"));
+      ArrayNode hits = (ArrayNode) queryResult.get("hits");
       assertEquals(hits.size(), 1);
 
       JsonNode result = hits.iterator().next();
@@ -443,7 +441,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    private void assertZeroHits(JsonNode queryResponse) {
-      ArrayNode hits = ArrayNode.class.cast(queryResponse.get("hits"));
+      ArrayNode hits = (ArrayNode) queryResponse.get("hits");
       assertEquals(hits.size(), 0);
    }
 
