@@ -2374,7 +2374,7 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-console-ng</artifactId>
+            <artifactId>infinispan-console</artifactId>
             <version>${version.console}</version>
          </dependency>
          <dependency>
