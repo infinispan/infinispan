@@ -25,6 +25,9 @@ public interface Messages {
    @Message(value = "Set a password for the user: ")
    String userToolPassword();
 
+   @Message(value = "Confirm the password for the user: ")
+   String userToolPasswordConfirm();
+
    @Message(value = "User `%s` already exists. Overwrite (y/n) ? ")
    String userToolUserExists(String username);
 

@@ -1,5 +1,7 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.server.logging.Messages.MSG;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -16,8 +18,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
 import org.infinispan.server.tool.Main;
-
-import static org.infinispan.server.logging.Messages.MSG;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -120,16 +120,6 @@ public class UserTool extends Main {
             throw new RuntimeException(e);
          }
       }
-      if (password == null && !users.containsKey(username)) {
-         if (!batchMode) {
-            while (password == null || password.isEmpty()) {
-               password = new String(System.console().readPassword(MSG.userToolPassword()));
-            }
-         } else {
-            stdErr.println(MSG.userToolNoPassword(username));
-            exit(1);
-         }
-      }
       if (!batchMode && users.containsKey(username)) {
          String answer;
          do {
@@ -139,7 +129,23 @@ public class UserTool extends Main {
             exit(0);
          }
       }
-
+      if (password == null) {
+         if (!batchMode) {
+            String confirm;
+            do {
+               while (password == null || password.isEmpty()) {
+                  password = new String(System.console().readPassword(MSG.userToolPassword()));
+               }
+               confirm = new String(System.console().readPassword(MSG.userToolPasswordConfirm()));
+               if (!password.equals(confirm)) {
+                  password = null;
+               }
+            } while (password == null);
+         } else {
+            stdErr.println(MSG.userToolNoPassword(username));
+            exit(1);
+         }
+      }
       users.put(username, hashPassword(username, password, realm));
       groups.put(username, addGroups.stream().collect(Collectors.joining(",")));
 
