@@ -12,6 +12,38 @@ Unmarshalling is the reverse process whereby data read from a binary format is t
 {brandname} handles marshalling for all internal types. Users only need to be concerned with the marshalling
 of the Java objects that they will store in the cache.
 
+
+== Deserialization White List
+
+Infinispan does not allow deserialization of custom payloads into Java classes for security reasons. This applies to JSON, XML,
+and marshalled byte[] content. To allow certain classes to be deserialized, it's possible to enable on per-class or regex basis,
+either via system properties or in the cache manager configuration
+
+=== Using system properties
+
+[source]
+----
+// Comma separated list of fully qualified class names
+-Dinfinispan.deserialization.whitelist.classes=java.time.Instant,com.myclass.Entity
+
+// Regex expression
+-Dinfinispan.deserialization.whitelist.regexps=.*
+----
+
+=== Using configuration:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container>
+   <serialization version="1.0" marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">
+      <white-list>
+         <class>org.infinispan.test.data.Person</class>
+         <regex>org.infinispan.test.data.*</regex>
+       </white-list>
+   </serialization>
+</cache-container>
+----
+
 == Marshaller Implementations
 [[protostream_cm_config]]
 === ProtoStream (Default)
