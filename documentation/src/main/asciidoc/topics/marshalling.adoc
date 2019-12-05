@@ -13,35 +13,30 @@ Unmarshalling is the reverse process whereby data read from a binary format is t
 of the Java objects that they will store in the cache.
 
 
-== Deserialization White List
+== Adding Java Classes to Deserialization White Lists
+{brandname} does not allow deserialization of custom payloads into Java classes
+for security reasons, which applies to JSON, XML, and marshalled `byte[]`
+content.
 
-Infinispan does not allow deserialization of custom payloads into Java classes for security reasons. This applies to JSON, XML,
-and marshalled byte[] content. To allow certain classes to be deserialized, it's possible to enable on per-class or regex basis,
-either via system properties or in the cache manager configuration
+You must add Java classes to a deserialization white list, either using system
+properties or specifying them in the {brandname} configuration.
 
-=== Using system properties
+.System properties
 
-[source]
+[source,options="nowrap",subs=attributes+]
 ----
-// Comma separated list of fully qualified class names
+// Specify a comma-separated list of fully qualified class names
 -Dinfinispan.deserialization.whitelist.classes=java.time.Instant,com.myclass.Entity
 
-// Regex expression
+// Specify a regular expression to match classes
 -Dinfinispan.deserialization.whitelist.regexps=.*
 ----
 
-=== Using configuration:
+.Declarative
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<cache-container>
-   <serialization version="1.0" marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">
-      <white-list>
-         <class>org.infinispan.test.data.Person</class>
-         <regex>org.infinispan.test.data.*</regex>
-       </white-list>
-   </serialization>
-</cache-container>
+include::config_examples/deserialization_whitelist.xml[]
 ----
 
 == Marshaller Implementations
