@@ -123,8 +123,8 @@ public class XSiteResource implements ResourceHandler {
             SiteStatus status = e.getValue();
             if (status instanceof OnlineSiteStatus) return GlobalStatus.ONLINE;
             if (status instanceof OfflineSiteStatus) return GlobalStatus.OFFLINE;
-            if (status instanceof AbstractMixedSiteStatus) {
-               AbstractMixedSiteStatus mixedSiteStatus = (AbstractMixedSiteStatus) status;
+            if (status instanceof AbstractMixedSiteStatus<?>) {
+               AbstractMixedSiteStatus<?> mixedSiteStatus = (AbstractMixedSiteStatus<?>) status;
                return GlobalStatus.mixed(mixedSiteStatus.getOnline(), mixedSiteStatus.getOffline());
             }
             return GlobalStatus.UNKNOWN;
@@ -309,16 +309,16 @@ public class XSiteResource implements ResourceHandler {
       static final GlobalStatus UNKNOWN = new GlobalStatus("unknown", null, null);
 
       private String status;
-      private List online;
-      private List offline;
+      private List<?> online;
+      private List<?> offline;
 
-      GlobalStatus(String status, List online, List offline) {
+      GlobalStatus(String status, List<?> online, List<?> offline) {
          this.status = status;
          this.online = online;
          this.offline = offline;
       }
 
-      static GlobalStatus mixed(List online, List offline) {
+      static GlobalStatus mixed(List<?> online, List<?> offline) {
          return new GlobalStatus("mixed", online, offline);
       }
 
@@ -327,12 +327,12 @@ public class XSiteResource implements ResourceHandler {
       }
 
       @JsonInclude(NON_NULL)
-      public List getOnline() {
+      public List<?> getOnline() {
          return online;
       }
 
       @JsonInclude(NON_NULL)
-      public List getOffline() {
+      public List<?> getOffline() {
          return offline;
       }
    }
