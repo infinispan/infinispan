@@ -35,6 +35,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.annotations.Test;
@@ -47,6 +48,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "stream.BaseSetupStreamIteratorTest")
 public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersTest {
+   public static final int NUM_NODES = 3;
    protected final String CACHE_NAME = "testCache";
    protected ConfigurationBuilder builderUsed;
    protected SerializationContextInitializer sci;
@@ -74,9 +76,9 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
       if (cacheMode.isClustered()) {
-         builderUsed.clustering().stateTransfer().chunkSize(50);
+         builderUsed.clustering().stateTransfer().chunkSize(5);
          enhanceConfiguration(builderUsed);
-         createClusteredCaches(3, CACHE_NAME, sci, builderUsed);
+         createClusteredCaches(NUM_NODES, CACHE_NAME, sci, builderUsed, new TransportFlags().withFD(true));
       } else {
          enhanceConfiguration(builderUsed);
          EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(sci, builderUsed);

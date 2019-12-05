@@ -2,7 +2,6 @@ package org.infinispan.test;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.withSettings;
 
 import java.lang.reflect.InvocationTargetException;
@@ -114,31 +113,15 @@ public class Mocks {
     * @return the original object to put back into the cache
     */
    public static <Mock> Mock blockingMock(final CheckPoint checkPoint, Class<? extends Mock> classToMock,
-         Cache<?, ?> cache, Function<? super Mock, Answer> answerFunction, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
+         Cache<?, ?> cache, Function<? super Mock, Answer<?>> answerFunction, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
       Mock realObject = TestingUtil.extractComponent(cache, classToMock);
-      Answer forwardedAnswer = answerFunction.apply(realObject);
+      Answer<?> forwardedAnswer = answerFunction.apply(realObject);
       Mock mock = mock(classToMock, withSettings().extraInterfaces(ClusterCacheNotifier.class).defaultAnswer(forwardedAnswer));
       mockStubConsumer.accept(doAnswer(blockingAnswer(forwardedAnswer, checkPoint)), mock);
       TestingUtil.replaceComponent(cache, classToMock, mock, true);
       return realObject;
    }
 
-   /**
-    * Spies on the given object, but allows the caller to block on any method defined in the <b>mockStubConsumer</b>.
-    * Please see {@link #blockingMock(CheckPoint, Class, Cache, BiConsumer)} for more information on how the blocking
-    * works.
-    * @param checkPoint the check point to use to control blocking
-    * @param objectToSpy the spied object
-    * @param mockStubConsumer the consumer to invoke the method on the stubber and the actual mock
-    * @param <Mock> type of the spied object
-    * @return the new spy mock that will delegate all calls to the original object
-    */
-   public static <Mock> Mock blockingSpy(final CheckPoint checkPoint, Mock objectToSpy,
-         BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
-      Mock mock = spy(objectToSpy);
-      mockStubConsumer.accept(doAnswer(blockingAnswer(AdditionalAnswers.delegatesTo(objectToSpy), checkPoint)), mock);
-      return mock;
-   }
 
    /**
     * Allows for decorating an existing answer to apply before and after invocation and release checkpoints as
