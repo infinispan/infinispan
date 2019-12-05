@@ -12,7 +12,7 @@ import org.infinispan.commons.util.Experimental;
  * @since 10.0
  **/
 @Experimental
-public interface RestResponse extends RestEntity {
+public interface RestResponse extends RestEntity, AutoCloseable {
    int getStatus();
 
    Map<String, List<String>> headers();
