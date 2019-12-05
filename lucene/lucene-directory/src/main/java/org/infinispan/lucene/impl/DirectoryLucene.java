@@ -51,6 +51,7 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
     * @param fileListUpdatedAsync When true, the writes to the list of currently existing files in the Directory will use the putAsync method rather than put.
     * @param deleteExecutor The Executor to run file deletes in the background
     * @param affinitySegmentId A hint interpreted by the consistent hashing function to force locality with a specific segment identifier
+    * @deprecated The Infinispan directory will be removed in a future version.
     */
    public DirectoryLucene(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync, Executor deleteExecutor, int affinitySegmentId) {
       this.deleteExecutor = deleteExecutor;
@@ -58,6 +59,7 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
       this.impl = new DirectoryImplementor(metadataCache, chunksCache, distLocksCache, indexName, chunkSize, readLocker, fileListUpdatedAsync, affinitySegmentId);
       this.indexName = indexName;
       this.lockFactory = lf;
+      log.warn("The Infinispan Lucene Directory is deprecated and will be removed in a future version");
    }
 
    /**

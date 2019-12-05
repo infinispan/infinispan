@@ -48,6 +48,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author gustavonalle
  * @since 8.2
+ * @deprecated The Affinity Index Manager is deprecated and will be removed in the next version. Please use non-shared indexes with file based storage.
  */
 @Listener(observation = Observation.POST)
 public class AffinityIndexManager extends DirectoryBasedIndexManager {
@@ -75,6 +76,7 @@ public class AffinityIndexManager extends DirectoryBasedIndexManager {
    @Override
    public void initialize(String indexName, Properties properties, Similarity similarity,
                           WorkerBuildContext buildContext) {
+      log.warn("The Affinity Index Manager is deprecated and will be removed in the next version. Please use non-shared indexes with file based storage.");
       ServiceManager serviceManager = buildContext.getServiceManager();
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       ComponentRegistry componentRegistry = componentRegistryService.getComponentRegistry();

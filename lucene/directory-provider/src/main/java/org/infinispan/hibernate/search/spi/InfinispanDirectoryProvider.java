@@ -31,6 +31,7 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  * reference to the Infinispan {@link EmbeddedCacheManager}.
  *
  * @author Sanne Grinovero
+ * @deprecated The Infinispan Directory is deprecated and will be removed in a future version.
  */
 public class InfinispanDirectoryProvider implements org.hibernate.search.store.DirectoryProvider<Directory> {
 
@@ -67,6 +68,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
 
    @Override
    public void initialize(String directoryProviderName, Properties properties, BuildContext context) {
+      log.warn("The Infinispan Directory is deprecated and will be removed in a future version");
       this.directoryProviderName = directoryProviderName;
       this.serviceManager = context.getServiceManager();
       this.cacheManager = serviceManager.requestService(CacheManagerService.class).getEmbeddedCacheManager();

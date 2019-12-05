@@ -6,6 +6,26 @@ The following configurations were removed from the REST store: ```append-cache-n
 
 To specify the remote server endpoint path, a single configuration ```cache-name``` should be used.
 
+== Infinispan Lucene Directory is deprecated
+
+The Infinispan Lucene directory is now deprecated and will be removed in a future release.
+Consequently, the Infinispan Directory provider for Hibernate Search will also be discontinued, with no replacement.
+
+Both IndexManagers that rely on the Lucene Directory are also deprecated, the InfinispanIndexManager and the AffinityIndexManager.
+Users are encouraged to reconfigure their indexes as non-shared, using the Near Real Time IndexManager, with file system storage:
+
+[source,xml]
+----
+<distributed-cache name="default">
+    <indexing index="PRIMARY_OWNER">
+        <property name="default.indexmanager">near-real-time</property>
+        <property name="default.indexBase">/opt/infinispan/server/data/indexes</property>
+    </indexing>
+</distributed-cache>
+----
+
+Queries need to be adjusted to use the ```BROADCAST``` runtime option.
+
 = Upgrading from 9.4 to 10.0
 
 == Marshalling
