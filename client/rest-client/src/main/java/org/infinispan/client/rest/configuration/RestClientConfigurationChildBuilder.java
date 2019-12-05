@@ -30,6 +30,8 @@ public interface RestClientConfigurationChildBuilder {
     */
    RestClientConfigurationBuilder priorKnowledge(boolean enabled);
 
+   RestClientConfigurationBuilder followRedirects(boolean followRedirects);
+
    /**
     * This property defines the maximum socket connect timeout before giving up connecting to the server.
     * Defaults to 60000 (1 minute)

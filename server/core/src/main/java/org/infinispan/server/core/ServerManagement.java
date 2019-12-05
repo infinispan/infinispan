@@ -1,6 +1,7 @@
 package org.infinispan.server.core;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.ConfigurationInfo;
@@ -23,4 +24,5 @@ public interface ServerManagement {
 
    CacheIgnoreManager getIgnoreManager(String cacheManager);
 
+   Map<String, String> getLoginConfiguration();
 }

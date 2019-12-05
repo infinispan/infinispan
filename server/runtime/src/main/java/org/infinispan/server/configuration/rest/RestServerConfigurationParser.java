@@ -2,6 +2,8 @@ package org.infinispan.server.configuration.rest;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
+import java.nio.file.Paths;
+
 import javax.net.ssl.SSLContext;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -75,6 +77,8 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          throws XMLStreamException {
       boolean dedicatedSocketBinding = false;
       RestServerConfigurationBuilder builder = serverBuilder.endpoints().addConnector(RestServerConfigurationBuilder.class);
+      String serverHome = reader.getProperties().getProperty(Server.INFINISPAN_SERVER_HOME_PATH);
+      builder.staticResources(Paths.get(serverHome, Server.DEFAULT_SERVER_STATIC_DIR));
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));

@@ -45,8 +45,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
       HttpAuthenticationFactory.Builder httpBuilder = HttpAuthenticationFactory.builder();
       httpBuilder.setSecurityDomain(realm.getSecurityDomain());
 
-      //final Provider elytronProvider = new WildFlyElytronProvider();
-      HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory(); //(() -> new Provider[]{elytronProvider});
+      HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory();
       httpServerFactory = new SetMechanismInformationMechanismFactory(httpServerFactory);
       httpBuilder.setFactory(httpServerFactory);
 

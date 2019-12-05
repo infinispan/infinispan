@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +39,11 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.RestServer;
+import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.admin.ServerAdminOperationsHandler;
+import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.core.CacheIgnoreManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
@@ -121,6 +124,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String DEFAULT_SERVER_LIB = "lib";
    public static final String DEFAULT_SERVER_LOG = "log";
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
+   public static final String DEFAULT_SERVER_STATIC_DIR = "static";
    public static final String DEFAULT_CONFIGURATION_FILE = "infinispan.xml";
    public static final String DEFAULT_LOGGING_FILE = "logging.properties";
    public static final String DEFAULT_CLUSTER_NAME = "cluster";
@@ -335,6 +339,25 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public ConfigurationInfo getConfiguration() {
       return serverConfiguration;
+   }
+
+   @Override
+   public Map<String, String> getLoginConfiguration() {
+      Map<String, String> loginConfiguration = new HashMap<>();
+      // Get the REST endpoint's authentication configuration
+      RestServerConfiguration rest = (RestServerConfiguration) serverConfiguration.endpoints().connectors().stream().filter(p -> p instanceof RestServerConfiguration).findFirst().get();
+      if (rest.authentication().mechanisms().contains("BEARER_TOKEN")) {
+         // Find the token realm
+         TokenRealmConfiguration realmConfiguration = serverConfiguration.security().realms().realms().get(0).tokenConfiguration();
+         loginConfiguration.put("mode", "OIDC");
+         loginConfiguration.put("url", realmConfiguration.authServerUrl());
+         loginConfiguration.put("realm", realmConfiguration.name());
+         loginConfiguration.put("clientId", realmConfiguration.oauth2Configuration().clientId());
+      } else {
+         loginConfiguration.put("mode", "HTTP");
+      }
+
+      return loginConfiguration;
    }
 
    @Override

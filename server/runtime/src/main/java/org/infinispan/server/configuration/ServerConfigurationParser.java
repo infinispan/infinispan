@@ -335,14 +335,16 @@ public class ServerConfigurationParser implements ConfigurationParser {
    }
 
    private void parseTokenRealm(XMLExtendedStreamReader reader, ServerConfigurationBuilder serverBuilder, TokenRealmConfigurationBuilder tokenRealmConfigBuilder) throws XMLStreamException {
-      tokenRealmConfigBuilder.name("token");
+      String[] required = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.AUTH_SERVER_URL);
+      tokenRealmConfigBuilder.name(required[0]).authServerUrl(required[1]);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case NAME:
-               tokenRealmConfigBuilder.name(value);
+            case AUTH_SERVER_URL:
+               // Already seen
                break;
             case PRINCIPAL_CLAIM:
                tokenRealmConfigBuilder.principalClaim(value);

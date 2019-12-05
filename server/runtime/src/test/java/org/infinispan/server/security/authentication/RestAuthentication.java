@@ -66,13 +66,13 @@ public class RestAuthentication {
       InfinispanServerDriver serverDriver = SERVERS.getServerDriver();
 
       InetSocketAddress serverAddress = serverDriver.getServerSocket(0, 11222);
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
       builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
 
       RestClient restClient = RestClient.forConfiguration(builder.build());
 
       RestResponse response = sync(restClient.raw().get("/"));
-      assertEquals(200, response.getStatus());
+      assertEquals(307, response.getStatus()); // The root resource redirects to the console
    }
 
    @Test

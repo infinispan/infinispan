@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.io.File;
@@ -105,6 +106,15 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       response = client.newRequest(url).method(GET).header("If-Modified-Since", DateUtils.toRFC1123(System.currentTimeMillis())).send();
       ResponseAssertion.assertThat(response).isNotModified();
       ResponseAssertion.assertThat(response).hasNoContent();
+   }
+
+   @Test
+   public void testRedirect() throws Exception {
+      String url = String.format("http://localhost:%d/", restServer().getPort());
+      client.getContentDecoderFactories().clear();
+      ContentResponse response = client.newRequest(url).method(GET).followRedirects(false).send();
+      ResponseAssertion.assertThat(response).isRedirect();
+      assertEquals("console/", response.getHeaders().get("Location"));
    }
 
 

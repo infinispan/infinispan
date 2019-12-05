@@ -16,6 +16,7 @@ import org.infinispan.server.configuration.Element;
 public class TokenRealmConfiguration implements ConfigurationInfo {
 
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
+   static final AttributeDefinition<String> AUTH_SERVER_URL = AttributeDefinition.builder("authServerUrl", null, String.class).build();
    static final AttributeDefinition<String> PRINCIPAL_CLAIM = AttributeDefinition.builder("principalClaim", null, String.class).build();
 
    private final JwtConfiguration jwtConfiguration;
@@ -23,7 +24,7 @@ public class TokenRealmConfiguration implements ConfigurationInfo {
    private final List<ConfigurationInfo> elements;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(KeyStoreConfiguration.class, NAME, PRINCIPAL_CLAIM);
+      return new AttributeSet(TokenRealmConfiguration.class, NAME, AUTH_SERVER_URL, PRINCIPAL_CLAIM);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.TOKEN_REALM.toString());
@@ -45,11 +46,15 @@ public class TokenRealmConfiguration implements ConfigurationInfo {
       return attributes.attribute(NAME).get();
    }
 
-   JwtConfiguration jwtConfiguration() {
+   public String authServerUrl() {
+      return attributes.attribute(AUTH_SERVER_URL).get();
+   }
+
+   public JwtConfiguration jwtConfiguration() {
       return jwtConfiguration;
    }
 
-   OAuth2Configuration oauth2Configuration() {
+   public OAuth2Configuration oauth2Configuration() {
       return oAuth2Configuration;
    }
 

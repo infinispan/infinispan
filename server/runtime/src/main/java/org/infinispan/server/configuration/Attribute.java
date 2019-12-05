@@ -12,6 +12,7 @@ public enum Attribute {
 
    ALIAS,
    AUDIENCE,
+   AUTH_SERVER_URL,
    CACHE_CONTAINER,
    CLIENT_ID,
    CLIENT_SECRET,

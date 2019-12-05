@@ -25,8 +25,9 @@ public class RestClientConfiguration {
    private final Protocol protocol;
    private final String contextPath;
    private final boolean priorKnowledge;
+   private final boolean followRedirects;
 
-   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge) {
+   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects) {
       this.servers = Collections.unmodifiableList(servers);
       this.protocol = protocol;
       this.connectionTimeout = connectionTimeout;
@@ -36,6 +37,7 @@ public class RestClientConfiguration {
       this.tcpKeepAlive = tcpKeepAlive;
       this.contextPath = contextPath;
       this.priorKnowledge = priorKnowledge;
+      this.followRedirects = followRedirects;
    }
 
    public Protocol protocol() {
@@ -44,6 +46,10 @@ public class RestClientConfiguration {
 
    public boolean priorKnowledge() {
       return priorKnowledge;
+   }
+
+   public boolean followRedirects() {
+      return followRedirects;
    }
 
    public long connectionTimeout() {

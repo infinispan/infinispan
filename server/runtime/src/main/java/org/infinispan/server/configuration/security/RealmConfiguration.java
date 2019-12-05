@@ -58,31 +58,31 @@ public class RealmConfiguration implements ConfigurationInfo {
       return elements;
    }
 
-   FileSystemRealmConfiguration fileSystemConfiguration() {
+   public FileSystemRealmConfiguration fileSystemConfiguration() {
       return fileSystemConfiguration;
    }
 
-   LdapRealmConfiguration ldapConfiguration() {
+   public LdapRealmConfiguration ldapConfiguration() {
       return ldapConfiguration;
    }
 
-   LocalRealmConfiguration localConfiguration() {
+   public LocalRealmConfiguration localConfiguration() {
       return localConfiguration;
    }
 
-   TokenRealmConfiguration tokenConfiguration() {
+   public TokenRealmConfiguration tokenConfiguration() {
       return tokenConfiguration;
    }
 
-   TrustStoreRealmConfiguration trustStoreConfiguration() {
+   public TrustStoreRealmConfiguration trustStoreConfiguration() {
       return trustStoreConfiguration;
    }
 
-   ServerIdentitiesConfiguration serverIdentitiesConfiguration() {
+   public ServerIdentitiesConfiguration serverIdentitiesConfiguration() {
       return serverIdentitiesConfiguration;
    }
 
-   PropertiesRealmConfiguration propertiesRealm() {
+   public PropertiesRealmConfiguration propertiesRealm() {
       return propertiesRealmConfiguration;
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.TokenRealmConfiguration.AUTH_SERVER_URL;
 import static org.infinispan.server.configuration.security.TokenRealmConfiguration.NAME;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -41,6 +42,11 @@ public class TokenRealmConfigurationBuilder implements Builder<TokenRealmConfigu
 
    public TokenRealmConfigurationBuilder name(String name) {
       attributes.attribute(NAME).set(name);
+      return this;
+   }
+
+   public TokenRealmConfigurationBuilder authServerUrl(String authServerUrl) {
+      attributes.attribute(AUTH_SERVER_URL).set(authServerUrl);
       return this;
    }
 

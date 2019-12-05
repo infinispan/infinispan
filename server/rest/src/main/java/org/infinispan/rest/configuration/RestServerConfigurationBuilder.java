@@ -6,7 +6,6 @@ import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED
 import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
@@ -35,13 +34,9 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    private static final int DEFAULT_PORT = 8080;
    private static final String DEFAULT_NAME = "rest";
-   private static final String SERVER_HOME = "infinispan.server.home.path";
-   private static final String STATIC_RESOURCES_PATH = "static";
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
-      String serverHome = System.getProperty(SERVER_HOME);
-      if (serverHome != null) staticResources = Paths.get(serverHome, STATIC_RESOURCES_PATH);
       name(DEFAULT_NAME);
       this.authentication = new AuthenticationConfigurationBuilder(this);
       this.cors = new CorsConfigurationBuilder();
