@@ -108,9 +108,9 @@ public class Mocks {
     * @return the original object to put back into the cache
     */
    public static <Mock> Mock blockingMock(final CheckPoint checkPoint, Class<? extends Mock> classToMock,
-         Cache<?, ?> cache, Function<? super Mock, Answer> answerFunction, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
+         Cache<?, ?> cache, Function<? super Mock, Answer<?>> answerFunction, BiConsumer<? super Stubber, ? super Mock> mockStubConsumer) {
       Mock realObject = TestingUtil.extractComponent(cache, classToMock);
-      Answer forwardedAnswer = answerFunction.apply(realObject);
+      Answer<?> forwardedAnswer = answerFunction.apply(realObject);
       Mock mock = mock(classToMock, withSettings().extraInterfaces(ClusterCacheNotifier.class).defaultAnswer(forwardedAnswer));
       mockStubConsumer.accept(doAnswer(blockingAnswer(forwardedAnswer, checkPoint)), mock);
       TestingUtil.replaceComponent(cache, classToMock, mock, true);
