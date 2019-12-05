@@ -101,6 +101,9 @@ public interface ScatteredVersionManager<K> {
 
    void setValuesTransferTopology(int topologyId);
 
+   /**
+    * @return A {@code CompletableFuture} that completes when value transfer has finished for the given topology id.
+    */
    CompletableFuture<Void> valuesFuture(int topologyId);
 
    /**

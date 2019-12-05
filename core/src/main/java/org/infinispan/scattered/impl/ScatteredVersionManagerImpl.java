@@ -54,6 +54,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -92,9 +93,14 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    private ReadWriteLock removedKeysLock = new ReentrantReadWriteLock();
    private ConcurrentMap<K, InvalidationInfo> removedKeys;
 
+   // Whether we are currently transferring values
    private volatile boolean transferringValues = false;
+   // The last topology for which we finished transferring values
    private volatile int valuesTopology = -1;
-   private CompletableFuture<Void> valuesFuture = CompletableFutures.completedNull();
+   // This future is completed when the current (or next, if transferringValues == false) value transfer finishes
+   // Should be completed and replaced with another future atomically, or valuesFuture() will enter an infinite loop
+   @GuardedBy("valuesLock")
+   private CompletableFuture<Void> valuesFuture = new CompletableFuture<>();
    private final Object valuesLock = new Object();
 
    @Start(priority = 15) // before StateConsumerImpl and StateTransferManagerImpl
@@ -302,7 +308,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
                case KEY_TRANSFER:
                   blockedFutures.get(i).completeExceptionally(new CacheException("Failed to request versions"));
                   log.warnf("Stopped applying state for segment %d in topology %d but the segment is in state %s", i, topologyId, state);
-                  // no break
+                  // fall through
                case VALUE_TRANSFER:
                   if (segmentStates.compareAndSet(i, state, SegmentState.OWNED)) {
                      break LOOP;
