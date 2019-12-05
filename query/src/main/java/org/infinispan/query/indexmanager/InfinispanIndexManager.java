@@ -14,6 +14,7 @@ import org.infinispan.util.logging.LogFactory;
  * A custom IndexManager to store indexes in the grid itself.
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2012 Red Hat Inc.
+ * @deprecated The Infinispan Index Manager is deprecated and will be removed in a future version. Please use non-shared indexes with file based storage.
  */
 public class InfinispanIndexManager extends DirectoryBasedIndexManager {
 
@@ -31,6 +32,7 @@ public class InfinispanIndexManager extends DirectoryBasedIndexManager {
 
    @Override
    protected DirectoryProvider createDirectoryProvider(String indexName, Properties cfg, WorkerBuildContext buildContext) {
+      log.warn("The Infinispan Index Manager is deprecated and will be removed in a future version. Please use non-shared indexes with file based storage.");
       //warn user we're overriding the configured DirectoryProvider - if anything different than Infinispan is selected.
       String directoryOption = cfg.getProperty("directory_provider", null);
       if (directoryOption != null && ! "infinispan".equals(directoryOption)) {
