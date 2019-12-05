@@ -38,6 +38,11 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion isRedirect() {
+      Assertions.assertThat(response.getStatus()).isIn(HttpStatus.MOVED_PERMANENTLY_301, HttpStatus.MOVED_TEMPORARILY_302, HttpStatus.TEMPORARY_REDIRECT_307, HttpStatus.PERMANENT_REDIRECT_308);
+      return this;
+   }
+
    public ResponseAssertion doesntExist() {
       Assertions.assertThat(response.getStatus()).isEqualTo(HttpStatus.NOT_FOUND_404);
       return this;

@@ -17,10 +17,11 @@ import org.infinispan.rest.resources.CacheManagerResource;
 import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.CounterResource;
+import org.infinispan.rest.resources.LoginResource;
 import org.infinispan.rest.resources.MetricsResource;
+import org.infinispan.rest.resources.RedirectResource;
 import org.infinispan.rest.resources.SearchAdminResource;
 import org.infinispan.rest.resources.ServerResource;
-import org.infinispan.rest.resources.SplashResource;
 import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
@@ -112,7 +113,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       String restContext = configuration.contextPath();
       String rootContext = "/";
       ResourceManager resourceManager = new ResourceManagerImpl();
-      resourceManager.registerResource(rootContext, new SplashResource());
       resourceManager.registerResource(restContext, new CacheResourceV2(invocationHelper));
       resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
       resourceManager.registerResource(restContext, new CacheManagerResource(invocationHelper));
@@ -125,10 +125,12 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          Path console = configuration.staticResources().resolve("console");
          resourceManager.registerResource(rootContext, new StaticContentResource(staticResources, "static"));
          resourceManager.registerResource(rootContext, new StaticContentResource(console, "console"));
+         resourceManager.registerResource(rootContext, new RedirectResource(rootContext, rootContext + "console/welcome.html", true));
       }
       if (server != null) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
+         resourceManager.registerResource(restContext, new LoginResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager);
    }

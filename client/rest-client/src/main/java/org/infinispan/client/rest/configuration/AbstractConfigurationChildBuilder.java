@@ -41,6 +41,11 @@ public abstract class AbstractConfigurationChildBuilder implements RestClientCon
    }
 
    @Override
+   public RestClientConfigurationBuilder followRedirects(boolean followRedirects) {
+      return builder.followRedirects(followRedirects);
+   }
+
+   @Override
    public RestClientConfigurationBuilder socketTimeout(long socketTimeout) {
       return builder.socketTimeout(socketTimeout);
    }

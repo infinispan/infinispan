@@ -650,34 +650,6 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    @Test
-   public void shouldServeHtmlFile() throws Exception {
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/", restServer().getPort()))
-            .method(HttpMethod.GET)
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType("text/html");
-      ResponseAssertion.assertThat(response).hasContentEqualToFile("index.html");
-   }
-
-   @Test
-   public void shouldServeBannerFile() throws Exception {
-      //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/banner.png", restServer().getPort()))
-            .method(HttpMethod.GET)
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType("image/png");
-      ResponseAssertion.assertThat(response).hasContentEqualToFile("banner.png");
-   }
-
-   @Test
    public void shouldPutEntryWithDefaultTllAndIdleTime() throws Exception {
       //when
       ContentResponse response = client

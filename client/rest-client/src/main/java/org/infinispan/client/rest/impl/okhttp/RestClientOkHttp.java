@@ -63,7 +63,7 @@ public class RestClientOkHttp implements RestClient {
       OkHttpClient.Builder builder = new OkHttpClient.Builder();
       builder
             .connectTimeout(configuration.connectionTimeout(), TimeUnit.MILLISECONDS)
-            .readTimeout(configuration.socketTimeout(), TimeUnit.MILLISECONDS);
+            .readTimeout(configuration.socketTimeout(), TimeUnit.MILLISECONDS).followRedirects(configuration.followRedirects());
 
       SSLContext sslContext = configuration.security().ssl().sslContext();
       if (sslContext != null) {

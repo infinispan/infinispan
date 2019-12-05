@@ -42,6 +42,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
          Properties properties = new Properties();
+         properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, serverRoot.getAbsolutePath());
          properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, new File(rootDir, Server.DEFAULT_SERVER_CONFIG).getAbsolutePath());
          properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(i * OFFSET_FACTOR));
          properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);

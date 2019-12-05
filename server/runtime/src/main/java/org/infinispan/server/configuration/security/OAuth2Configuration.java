@@ -38,4 +38,8 @@ public class OAuth2Configuration implements ConfigurationInfo {
    public AttributeSet attributes() {
       return attributes;
    }
+
+   public String clientId() {
+      return attributes.attribute(CLIENT_ID).get();
+   }
 }

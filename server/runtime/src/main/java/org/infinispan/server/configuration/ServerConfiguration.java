@@ -23,6 +23,7 @@ import org.infinispan.server.network.SocketBinding;
 public class ServerConfiguration implements ConfigurationInfo {
    private final InterfacesConfiguration interfaces;
    private final SocketBindingsConfiguration socketBindings;
+   private final SecurityConfiguration security;
    private final EndpointsConfiguration endpoints;
    private Server server;
 
@@ -36,6 +37,7 @@ public class ServerConfiguration implements ConfigurationInfo {
          EndpointsConfiguration endpoints) {
       this.interfaces = interfaces;
       this.socketBindings = socketBindings;
+      this.security = security;
       this.endpoints = endpoints;
       elements.add(interfaces);
       elements.add(socketBindings);
@@ -59,6 +61,10 @@ public class ServerConfiguration implements ConfigurationInfo {
 
    public Map<String, SocketBinding> socketBindings() {
       return socketBindings.socketBindings().stream().collect(Collectors.toMap(SocketBindingConfiguration::name, SocketBindingConfiguration::getSocketBinding));
+   }
+
+   public SecurityConfiguration security() {
+      return security;
    }
 
    public EndpointsConfiguration endpoints() {

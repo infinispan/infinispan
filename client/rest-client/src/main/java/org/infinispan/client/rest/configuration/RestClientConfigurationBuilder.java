@@ -34,6 +34,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private Protocol protocol = Protocol.HTTP_11;
    private String contextPath = "/rest";
    private boolean priorKnowledge;
+   private boolean followRedirects = true;
 
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
@@ -81,6 +82,12 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    @Override
    public RestClientConfigurationBuilder priorKnowledge(boolean enabled) {
       this.priorKnowledge = enabled;
+      return this;
+   }
+
+   @Override
+   public RestClientConfigurationBuilder followRedirects(boolean followRedirects) {
+      this.followRedirects = followRedirects;
       return this;
    }
 
@@ -154,7 +161,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
          servers.add(new ServerConfiguration("127.0.0.1", RestClientConfigurationProperties.DEFAULT_REST_PORT));
       }
 
-      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge);
+      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects);
    }
 
 
