@@ -1,6 +1,8 @@
 package org.infinispan.stream;
 
-import static org.mockito.Matchers.any;
+import static org.infinispan.test.Exceptions.unchecked;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doAnswer;
@@ -10,13 +12,12 @@ import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -24,22 +25,25 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.test.fwk.TransportFlags;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -67,7 +71,54 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
    }
 
    @Test
-   public void verifyNodeLeavesBeforeGettingData() throws TimeoutException, InterruptedException, ExecutionException {
+   public void testIterationDuringInitialTransfer() throws Exception {
+      Map<Object, String> values = putValueInEachCache(3);
+
+      // Go back to 2 caches, because we assign all 3 segments to the first 3 nodes
+      // And we need the joiner to request some state in order to block it
+      killMember(2, CACHE_NAME);
+
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      blockStateTransfer(cache0, checkPoint);
+
+      EmbeddedCacheManager joinerManager =
+            addClusterEnabledCacheManager(new ConfigurationBuilder(), new TransportFlags().withFD(true));
+      ConfigurationBuilder builderNoAwaitInitialTransfer = new ConfigurationBuilder();
+      builderNoAwaitInitialTransfer.read(builderUsed.build());
+      builderNoAwaitInitialTransfer.clustering().stateTransfer().awaitInitialTransfer(false);
+
+      joinerManager.defineConfiguration(CACHE_NAME, builderNoAwaitInitialTransfer.build());
+      Cache<String, String> joinerCache = joinerManager.getCache(CACHE_NAME, true);
+
+      // Not required, but it should make the logs clearer
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      Set<String> iteratorValues = new HashSet<>();
+      try {
+         Iterator<String> iter = joinerCache.entrySet().stream().map(Map.Entry::getValue).iterator();
+         // On NodeA, LocalStreamManagerImpl.handleSuspectSegmentsBeforeStream() suspects segments 1 and 2
+         // Even though the current phase is READ_OLD_WRITE_ALL and it's still the primary owner
+         // As a workaround we only wait for 1 value before we unblock state transfer
+         iteratorValues.add(iter.next());
+         checkPoint.trigger(Mocks.BEFORE_RELEASE, 2);
+
+         while (iter.hasNext()) {
+            iteratorValues.add(iter.next());
+         }
+      } finally {
+         checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+      }
+
+      for (Map.Entry<Object, String> entry : values.entrySet()) {
+         assertTrue("Entry wasn't found:" + entry, iteratorValues.contains(entry.getValue()));
+      }
+   }
+
+   @Test
+   public void verifyNodeLeavesBeforeGettingData() throws Exception {
       Map<Object, String> values = putValueInEachCache(3);
 
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
@@ -77,7 +128,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
       waitUntilSendingResponse(cache1, checkPoint);
 
-      final BlockingQueue<String> returnQueue = new ArrayBlockingQueue<>(10);
+      final BlockingQueue<String> returnQueue = new LinkedBlockingQueue<>();
       Future<Void> future = fork(() -> {
          Iterator<String> iter = cache0.entrySet().stream().map(Map.Entry::getValue).iterator();
          while (iter.hasNext()) {
@@ -112,8 +163,8 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       Map<Object, String> values = new HashMap<>();
       int chunkSize = cache0.getCacheConfiguration().clustering().stateTransfer().chunkSize();
-      // Now insert 10 more values than the chunk size into the node we will kill
-      for (int i = 0; i < chunkSize + 10; ++i) {
+      // Now insert 2 more values than the chunk size into the node we will kill
+      for (int i = 0; i < chunkSize + 2; ++i) {
          MagicKey key = new MagicKey(cache1);
          cache1.put(key, key.toString());
          values.put(key, key.toString());
@@ -157,7 +208,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
       Map<Object, String> values = new HashMap<>();
-      for (int i = 0; i < 501; ++i) {
+      for (int i = 0; i < 9; ++i) {
          MagicKey key = new MagicKey(cache1);
          cache1.put(key, key.toString());
          values.put(key, key.toString());
@@ -166,8 +217,10 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       CheckPoint checkPoint = new CheckPoint();
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
-      Mocks.blockingMock(checkPoint, ClusterStreamManager.class, cache0,
-            (stub, m) -> stub.when(m).remoteIterationPublisher(anyBoolean(), any(), any(), any(), anyBoolean(), anyBoolean(), any()));
+      Mocks.blockingMock(checkPoint, ClusterStreamManager.class, cache0, (stub, m) -> {
+               stub.when(m).remoteIterationPublisher(anyBoolean(), any(), any(), any(), anyBoolean(), anyBoolean(),
+                                                     any());
+            });
 
       final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
       Future<Void> future = fork(() -> {
@@ -209,15 +262,14 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
                   log.errorf("Segment %d, extra %s", segment, ans);
                }
             }
+            assertEquals(entry.getValue().size(), answerForSegment.size());
          }
          assertEquals("Segment " + segment + " had a mismatch", entry.getValue(), answerForSegment);
       }
    }
 
    @Test
-   public void testNodeLeavesWhileIteratingOverContainerCausingRehashToLoseValues() throws TimeoutException,
-                                                                                           InterruptedException,
-                                                                                           ExecutionException {
+   public void testNodeLeavesWhileIteratingOverContainerCausingRehashToLoseValues() throws Exception {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
@@ -281,29 +333,19 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
       Map<Object, String> values = new HashMap<>();
-      for (int i = 0; i < 501; ++i) {
-         switch (i % 3) {
-            case 0:
-               MagicKey key = new MagicKey(cache0);
-               cache0.put(key, key.toString());
-               values.put(key, key.toString());
-               break;
-            case 1:
-               // Force it so only cache0 has it's primary owned keys
-               key = magicKey(cache1, cache2);
-               // write from backup so that the test works on scattered cache, too
-               cache2.put(key, key.toString());
-               break;
-            case 2:
-               // Force it so only cache0 has it's primary owned keys
-               key = magicKey(cache2, cache1);
-               // write from backup so that the test works on scattered cache, too
-               cache1.put(key, key.toString());
-               break;
-            default:
-               fail("Unexpected switch case!");
-         }
-      }
+      MagicKey key1 = new MagicKey(cache0);
+      cache0.put(key1, key1.toString());
+      values.put(key1, key1.toString());
+
+      // Force it so only cache0 has it's primary owned keys
+      MagicKey key2 = magicKey(cache1, cache2);
+      // write from backup so that the test works on scattered cache, too
+      cache2.put(key2, key2.toString());
+
+      // Force it so only cache0 has it's primary owned keys
+      MagicKey key3 = magicKey(cache2, cache1);
+      // write from backup so that the test works on scattered cache, too
+      cache1.put(key3, key3.toString());
 
       int count = 0;
       Iterator<Map.Entry<Object, String>> iter = cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet().
@@ -385,12 +427,12 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       testStayLocalIfAllSegmentsPresentLocally(false);
    }
 
-   private void testStayLocalIfAllSegmentsPresentLocally(boolean rehashAware) throws Exception {
+   private void testStayLocalIfAllSegmentsPresentLocally(boolean rehashAware) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterStreamManager clusterStreamManager = replaceWithSpy(cache0);
+      ClusterStreamManager<?, ?> clusterStreamManager = replaceWithSpy(cache0);
 
-      IntStream.rangeClosed(0, 499).boxed().forEach(i -> cache0.put(i, i.toString()));
+      putValueInEachCache(3);
 
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
       ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getWriteConsistentHash();
@@ -408,17 +450,25 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       verifyZeroInteractions(clusterStreamManager);
    }
 
-   protected <K> void waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      Mocks.blockingMock(checkPoint, LocalStreamManager.class, cache,
-            (stub, m) -> stub.when(m).startIterator(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), anyLong()));
+   protected void waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+      Mocks.blockingMock(checkPoint, LocalStreamManager.class, cache, (stub, m) -> {
+                            stub.when(m).startIterator(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(),
+                                                       any(), anyLong());
+                         });
+   }
+
+   protected void blockStateTransfer(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+      Mocks.blockingMock(checkPoint, StateProvider.class, cache, (stub, stateProvider) -> unchecked(() -> {
+                            stub.when(stateProvider).startOutboundTransfer(any(), anyInt(), any(), anyBoolean());
+                         }));
    }
 
    protected void waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
+      InternalDataContainer<?, ?> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
-      InternalDataContainer mockContainer = mock(InternalDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
+      InternalDataContainer<?, ?> mockContainer = mock(InternalDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
       final AtomicInteger invocationCount = new AtomicInteger();
-      Answer blockingAnswer = invocation -> {
+      Answer<?> blockingAnswer = invocation -> {
          boolean waiting = false;
          if (invocationCount.getAndIncrement() == 0) {
             waiting = true;
