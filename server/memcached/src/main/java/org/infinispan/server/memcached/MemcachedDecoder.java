@@ -84,7 +84,9 @@ import io.netty.util.CharsetUtil;
  *
  * @author Galder Zamarreño
  * @since 4.1
+ * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
+@Deprecated
 public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
    public MemcachedDecoder(AdvancedCache<byte[], byte[]> memcachedCache, ScheduledExecutorService scheduler,
