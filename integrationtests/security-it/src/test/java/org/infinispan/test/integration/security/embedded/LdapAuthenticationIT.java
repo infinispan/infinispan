@@ -12,7 +12,7 @@ import javax.security.auth.login.LoginException;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.integration.security.tasks.AbstractSecurityDomainsServerSetupTask;
 import org.infinispan.test.integration.security.tasks.AbstractTraceLoggingServerSetupTask;
 import org.infinispan.test.integration.security.utils.ApacheDsLdap;

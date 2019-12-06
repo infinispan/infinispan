@@ -15,7 +15,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
-import org.infinispan.security.impl.CommonNameRoleMapper;
+import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;

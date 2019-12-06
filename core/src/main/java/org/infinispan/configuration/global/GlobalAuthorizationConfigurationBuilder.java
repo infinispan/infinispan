@@ -16,8 +16,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
-import org.infinispan.security.impl.LoggingAuditLogger;
-import org.infinispan.security.impl.NullAuditLogger;
+import org.infinispan.security.audit.LoggingAuditLogger;
+import org.infinispan.security.audit.NullAuditLogger;
 
 /**
  * GlobalAuthorizationConfigurationBuilder.

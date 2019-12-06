@@ -31,9 +31,9 @@ import java.util.stream.Stream;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.infinispan.security.impl.ClusterRoleMapper;
-import org.infinispan.security.impl.CommonNameRoleMapper;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.ClusterRoleMapper;
+import org.infinispan.security.mappers.CommonNameRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;

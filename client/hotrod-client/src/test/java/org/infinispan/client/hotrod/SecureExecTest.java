@@ -22,7 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.TestingUtil;

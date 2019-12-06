@@ -17,7 +17,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.TestEntity;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

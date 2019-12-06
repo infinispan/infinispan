@@ -16,7 +16,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.tasks.impl.TaskManagerImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;

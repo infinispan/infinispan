@@ -32,7 +32,7 @@
       <transport cluster="maximal-cluster" executor="infinispan-transport" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
                  initial-cluster-size="4" initial-cluster-timeout="30000" />
       <security>
-         <authorization audit-logger="org.infinispan.security.impl.NullAuditLogger">
+         <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper />
             <role name="peasant" permissions="READ" />
             <role name="vavasour" permissions="READ WRITE" />

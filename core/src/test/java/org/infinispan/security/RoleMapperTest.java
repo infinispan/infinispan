@@ -4,7 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
 
-import org.infinispan.security.impl.CommonNameRoleMapper;
+import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

@@ -61,7 +61,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.PrincipalRoleMapperContext;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -302,7 +302,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals("async", cacheContainer.get("async-executor").asText());
 
       JsonNode authorization = globalSecurity.get("authorization");
-      assertEquals("org.infinispan.security.impl.NullAuditLogger", authorization.get("audit-logger").asText());
+      assertEquals("org.infinispan.security.audit.NullAuditLogger", authorization.get("audit-logger").asText());
       JsonNode roleMapper = authorization.get("identity-role-mapper");
       assertNotNull(roleMapper);
       assertEquals(0, roleMapper.size());
