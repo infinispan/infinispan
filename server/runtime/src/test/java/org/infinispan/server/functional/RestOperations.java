@@ -3,6 +3,7 @@ package org.infinispan.server.functional;
 import static org.infinispan.server.security.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.List;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.test.InfinispanServerRule;
@@ -20,6 +22,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -67,5 +71,17 @@ public class RestOperations {
       response = sync(cache.get("k1"));
       assertEquals(404, response.getStatus());
       assertEquals(protocol, response.getProtocol());
+   }
+
+   @Test
+   public void taskFilter() throws Exception {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.protocol(protocol);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+
+      RestResponse tasks = sync(client.tasks().list(ResultType.USER));
+      JsonNode taskListNode = new ObjectMapper().readTree(tasks.getBody());
+
+      taskListNode.forEach(n -> assertFalse(n.get("name").asText().startsWith("@@")));
    }
 }

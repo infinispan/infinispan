@@ -11,9 +11,24 @@ import java.util.concurrent.CompletionStage;
 public interface RestTaskClient {
 
    /**
-    * Retrieves a list of tasks from the server
+    * Task type filter definition.
     */
-   CompletionStage<RestResponse> list();
+   enum ResultType {
+      /**
+       * User created tasks
+       */
+      USER,
+      /**
+       * All tasks, including admin tasks, that contains name starting with '@@'
+       */
+      ALL
+   }
+
+   /**
+    * Retrieves a list of tasks from the server
+    * @param resultType the type of task to return
+    */
+   CompletionStage<RestResponse> list(ResultType resultType);
 
    /**
     * Executes a task with the supplied parameters. Currently only supports String values

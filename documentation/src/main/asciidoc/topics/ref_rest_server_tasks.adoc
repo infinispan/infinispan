@@ -7,6 +7,17 @@ View information about available server tasks with `GET` requests.
 include::rest_examples/get_v2_tasks_list.adoc[]
 ----
 
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`type`
+|OPTIONAL
+| `user`: will exclude internal (admin) tasks from the results
+|===
+
+
 {brandname} responds with a list of available tasks. The list includes the
 names of tasks, the engines that handle tasks, the named parameters for tasks,
 the execution modes of tasks, either `ONE_NODE` or `ALL_NODES`, and the allowed

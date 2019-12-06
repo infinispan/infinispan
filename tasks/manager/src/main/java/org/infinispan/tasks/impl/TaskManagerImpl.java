@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 
@@ -128,4 +129,10 @@ public class TaskManagerImpl implements TaskManager {
       return tasks;
    }
 
+   @Override
+   public List<Task> getUserTasks() {
+      return engines.stream().flatMap(engine -> engine.getTasks().stream())
+            .filter(t -> !t.getName().startsWith("@@"))
+            .collect(Collectors.toList());
+   }
 }

@@ -70,6 +70,7 @@ import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestQueryMode;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -582,7 +583,7 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public Collection<String> getAvailableTasks(String container) throws IOException {
-      List<Map<String, String>> list = parseBody(fetch(() -> client.tasks().list()), List.class);
+      List<Map<String, String>> list = parseBody(fetch(() -> client.tasks().list(ResultType.ALL)), List.class);
       return list.stream().map(i -> i.get("name")).collect(Collectors.toList());
    }
 
@@ -635,7 +636,7 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public String describeTask(String container, String taskName) throws IOException {
-      List<Map<String, Object>> list = parseBody(fetch(() -> client.tasks().list()), List.class);
+      List<Map<String, Object>> list = parseBody(fetch(() -> client.tasks().list(ResultType.ALL)), List.class);
       Optional<Map<String, Object>> task = list.stream().filter(i -> taskName.equals(i.get("name"))).findFirst();
       return task.map(Object::toString).orElseThrow(() -> MSG.noSuchResource(taskName));
    }

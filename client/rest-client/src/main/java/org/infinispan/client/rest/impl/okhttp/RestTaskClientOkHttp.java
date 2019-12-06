@@ -26,8 +26,8 @@ public class RestTaskClientOkHttp implements RestTaskClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> list() {
-      return client.execute(baseURL);
+   public CompletionStage<RestResponse> list(ResultType resultType) {
+      return client.execute(baseURL + "?type=" + resultType.toString());
    }
 
    @Override

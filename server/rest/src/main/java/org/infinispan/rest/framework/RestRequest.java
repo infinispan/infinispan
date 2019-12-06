@@ -25,6 +25,8 @@ public interface RestRequest {
 
    Map<String, List<String>> parameters();
 
+   String getParameter(String name);
+
    Map<String, String> variables();
 
    String getAction();

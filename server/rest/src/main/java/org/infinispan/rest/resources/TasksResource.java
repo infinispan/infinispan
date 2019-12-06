@@ -50,11 +50,14 @@ public class TasksResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> listTasks(RestRequest request) {
+      String type = request.getParameter("type");
+      boolean userOnly = type != null && type.equalsIgnoreCase("user");
+
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
       NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
       try {
-         List<Task> tasks = taskManager.getTasks();
+         List<Task> tasks = userOnly ? taskManager.getUserTasks() : taskManager.getTasks();
          byte[] resultBytes = invocationHelper.getMapper().writeValueAsBytes(tasks);
          builder.contentType(APPLICATION_JSON_TYPE).entity(resultBytes);
       } catch (JsonProcessingException e) {
