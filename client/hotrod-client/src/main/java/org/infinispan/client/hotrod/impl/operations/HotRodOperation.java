@@ -143,7 +143,12 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       StringBuilder sb = new StringBuilder(64);
       sb.append(getClass().getSimpleName()).append('{').append(cn);
       addParams(sb);
-      sb.append(", flags=").append(Integer.toHexString(flags)).append('}');
+      sb.append(", flags=").append(Integer.toHexString(flags));
+      if (channel != null) {
+         sb.append(", connection=").append(channel.remoteAddress());
+      }
+      sb.append('}');
+
       return sb.toString();
    }
 
