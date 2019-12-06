@@ -76,6 +76,11 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
+   public String getParameter(String name) {
+      return null;
+   }
+
+   @Override
    public Map<String, String> variables() {
       return variables;
    }

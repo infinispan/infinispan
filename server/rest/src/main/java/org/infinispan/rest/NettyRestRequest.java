@@ -113,6 +113,13 @@ public class NettyRestRequest implements RestRequest {
    }
 
    @Override
+   public String getParameter(String name) {
+      if (parameters == null || !parameters.containsKey(name)) return null;
+      List<String> values = parameters.get(name);
+      return values.get(values.size() - 1);
+   }
+
+   @Override
    public Map<String, String> variables() {
       return variables;
    }

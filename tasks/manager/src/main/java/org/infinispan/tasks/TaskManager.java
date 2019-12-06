@@ -43,6 +43,12 @@ public interface TaskManager {
    List<Task> getTasks();
 
    /**
+    *
+    * @return Retrieves the list of all available tasks, excluding administrative tasks with names starting with '@@'
+    */
+   List<Task> getUserTasks();
+
+   /**
     * Registers a new {@link TaskEngine}
     *
     * @param taskEngine an instance of the task engine that has to be registered with the task manager
