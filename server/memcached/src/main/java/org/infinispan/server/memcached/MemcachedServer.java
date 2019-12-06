@@ -29,7 +29,9 @@ import io.netty.channel.ChannelOutboundHandler;
  *
  * @author Galder Zamarreño
  * @since 4.1
+ * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
+@Deprecated
 public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfiguration> {
    public MemcachedServer() {
       super("Memcached");

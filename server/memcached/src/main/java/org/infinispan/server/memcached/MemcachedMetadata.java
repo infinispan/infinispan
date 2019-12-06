@@ -17,7 +17,9 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  *
  * @author Galder Zamarreño
  * @since 5.3
+ * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
+@Deprecated
 @ProtoTypeId(ProtoStreamTypeIds.MEMCACHED_METADATA)
 class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetadata {
 

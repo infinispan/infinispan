@@ -43,8 +43,6 @@
       <endpoints socket-binding="default" security-realm="default">
          <hotrod-connector name="hotrod"/>
          <rest-connector name="rest"/>
-         <!-- Uncomment to enable the memcached connector -->
-         <!-- memcached-connector socket-binding="memcached" / -->
       </endpoints>
    </server>
 </infinispan>

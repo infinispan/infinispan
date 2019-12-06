@@ -10,8 +10,8 @@
 
    <artifactId>infinispan-server-memcached</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan Memcached Server</name>
-   <description>Infinispan Memcached Server</description>
+   <name>Infinispan Memcached Server [deprecated]</name>
+   <description>Infinispan Memcached Server [deprecated]</description>
 
    <dependencies>
       <dependency>

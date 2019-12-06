@@ -41,6 +41,13 @@ The security audit logger implementations have been moved from the `org.infinisp
 * `org.infinispan.security.impl.LoggingAuditLogger` => `org.infinispan.security.audit.LoggingAuditLogger`
 * `org.infinispan.security.impl.NullAuditLogger` => `org.infinispan.security.audit.NullAuditLogger`
 
+== Memcached protocol server is deprecated
+
+The Memcached protocol server is now deprecated and will be removed in a future release.
+This is being done because Infinispan only implements the very dated text-only protocol instead of the binary protocol
+which means no security (authentication / encryption), no support for some new Memcached features and no integration
+with Infinispan features like single-port. If someone in the community wishes to implement the binary protocol, we
+would revert the decision.
 
 = Upgrading from 9.4 to 10.0
 
