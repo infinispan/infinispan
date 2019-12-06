@@ -242,7 +242,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       InfinispanQueryStatisticsInfo.IndexStatistics indexStatistics = getIndexStatistics(cache);
       boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
-      boolean indexingInProgress = indexStatistics == null ? false : indexStatistics.getReindexing();
+      boolean indexingInProgress = indexStatistics != null && indexStatistics.getReindexing();
 
       try {
          CacheFullDetail fullDetail = new CacheFullDetail();
@@ -274,8 +274,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          return null;
       }
 
-      return ComponentRegistryUtils.
-               getQueryStatistics(cache.getAdvancedCache()).getIndexStatistics();
+      return ComponentRegistryUtils.getQueryStatistics(cache.getAdvancedCache()).getIndexStatistics();
    }
 
    private CompletionStage<RestResponse> getCacheConfig(RestRequest request) {

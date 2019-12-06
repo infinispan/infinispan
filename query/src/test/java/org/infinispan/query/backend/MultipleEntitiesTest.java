@@ -49,7 +49,7 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testIndexAndQuery() throws Exception {
+   public void testIndexAndQuery() {
       SearchManager searchManager = Search.getSearchManager(cache);
 
       cache.put(123405, new Bond(new Date(System.currentTimeMillis()), 450L));
