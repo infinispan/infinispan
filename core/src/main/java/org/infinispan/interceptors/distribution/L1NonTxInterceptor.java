@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +55,8 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -290,7 +293,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = keys.stream()
             .filter(k -> !cdl.getCacheTopology().isWriteOwner(k))
-            .map(k -> removeFromL1Command(ctx, k, keyPartitioner.getSegment(k))).iterator();
+            // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
+            .map(k -> CompletionStages.join(removeFromL1Command(ctx, k, keyPartitioner.getSegment(k)))).iterator();
       return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, WriteCommand writeCommand, Object rv, Throwable ex) -> {
          if (ex != null) {
             if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
@@ -313,16 +317,25 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command)
          throws Throwable {
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : invalidateL1Command.getKeys()) {
          abortL1UpdateOrWait(key);
          // If our invalidation was sent when the value wasn't yet cached but is still being requested the context
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
          if (ctx.lookupEntry(key) == null) {
-            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), true, false);
+            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                  true, false);
+            if (!CompletionStages.isCompletedSuccessfully(stage)) {
+               if (aggregateCompletionStage == null) {
+                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+               }
+               aggregateCompletionStage.dependsOn(stage);
+            }
          }
       }
-      return invokeNext(ctx, invalidateL1Command);
+      return aggregateCompletionStage != null ? asyncInvokeNext(ctx, invalidateL1Command, aggregateCompletionStage.freeze()) :
+            invokeNext(ctx, invalidateL1Command);
    }
 
    private void abortL1UpdateOrWait(Object key) {
@@ -378,16 +391,20 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          } else {
             if (mustSyncInvalidation(l1InvalidationFuture, dataWriteCommand)) {
                if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
-                  VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey(),
+                  CompletionStage<VisitableCommand> removeFromL1CommandStage = removeFromL1Command(rCtx, dataWriteCommand.getKey(),
                         dataWriteCommand.getSegment());
+                  // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
+                  VisitableCommand removeFromL1Command = CompletionStages.join(removeFromL1CommandStage);
                   return makeStage(asyncInvokeNext(rCtx, removeFromL1Command, l1InvalidationFuture))
                         .thenApply(null, null, (rCtx2, rCommand2, rv2) -> rv);
                } else {
                   return asyncValue(l1InvalidationFuture).thenApply(rCtx, dataWriteCommand, (rCtx1, rCommand1, rv1) -> rv);
                }
             } else if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
-               VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey(),
+               CompletionStage<VisitableCommand> removeFromL1CommandStage = removeFromL1Command(rCtx, dataWriteCommand.getKey(),
                      dataWriteCommand.getSegment());
+               // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
+               VisitableCommand removeFromL1Command = CompletionStages.join(removeFromL1CommandStage);
                return invokeNextThenApply(rCtx, removeFromL1Command, (rCtx2, rCommand2, rv2) -> rv);
             } else if (trace) {
                log.trace("Allowing entry to commit as local node is owner");
@@ -405,16 +422,16 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       return ctx.isOriginLocal() && !cdl.getCacheTopology().isWriteOwner(command.getKey());
    }
 
-   private VisitableCommand removeFromL1Command(InvocationContext ctx, Object key, int segment) {
+   private CompletionStage<VisitableCommand> removeFromL1Command(InvocationContext ctx, Object key, int segment) {
       if (trace) {
          log.tracef("Removing entry from L1 for key %s", key);
       }
       abortL1UpdateOrWait(key);
       ctx.removeLookedUpEntry(key);
-      entryFactory.wrapEntryForWriting(ctx, key, segment, true, false);
+      CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, segment, true, false);
 
-      return commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
-            Collections.singleton(key));
+      return stage.thenApply(ignore -> commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
+            Collections.singleton(key)));
    }
 
    private CompletableFuture<?> invalidateL1InCluster(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {

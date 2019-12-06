@@ -740,7 +740,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       }
       for (Object key : keys) {
-         InternalCacheEntry ice = dataContainer.get(key);
+         InternalCacheEntry ice = dataContainer.peek(key);
          if (ice != null) {
             boolean isLocal = distributionManager.getCacheTopology().isWriteOwner(key);
             if (!isLocal) {

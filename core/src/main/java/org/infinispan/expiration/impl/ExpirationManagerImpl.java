@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -62,7 +63,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * key will be removed or updated.  In the latter case we don't want to send an expiration event and then a remove
     * event when we could do just the removal.
     */
-   protected ConcurrentMap<K, Object> expiring = new ConcurrentHashMap<>();
+   protected ConcurrentMap<K, CompletableFuture<Boolean>> expiring = new ConcurrentHashMap<>();
    protected ScheduledFuture<?> expirationTask;
 
    // used only for testing
@@ -193,19 +194,19 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public void handleInStoreExpiration(K key) {
+   public CompletionStage<Void> handleInStoreExpirationInternal(K key) {
       // Note since this is invoked without the actual key lock it is entirely possible for a remove to occur
       // concurrently before the data container lock is acquired and then the oldEntry below will be null causing an
       // expiration event to be generated that is extra
-      handleInStoreExpiration(key, null, null);
+      return handleInStoreExpirationInternal(key, null, null);
    }
 
    @Override
-   public void handleInStoreExpiration(final MarshallableEntry<K, V> marshalledEntry) {
-      handleInStoreExpiration(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
+   public CompletionStage<Void> handleInStoreExpirationInternal(final MarshallableEntry<K, V> marshalledEntry) {
+      return handleInStoreExpirationInternal(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
    }
 
-   private void handleInStoreExpiration(K key, V value, Metadata metadata) {
+   private CompletionStage<Void> handleInStoreExpirationInternal(K key, V value, Metadata metadata) {
       dataContainer.running().compute(key, (oldKey, oldEntry, factory) -> {
          boolean shouldRemove = false;
          if (oldEntry == null) {
@@ -220,6 +221,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                      // so we have to check for null on either
                      if (shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
                              (value == null || value.equals(oldEntry.getValue()))) {
+                        // TODO: this is blocking! - this needs to be fixed in https://issues.redhat.com/browse/ISPN-10377
                         deleteFromStoresAndNotify(key, value, metadata);
                      }
                   }
@@ -231,6 +233,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
          }
          return oldEntry;
       });
+      return CompletableFutures.completedNull();
    }
 
    /**

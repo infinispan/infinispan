@@ -744,7 +744,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
+   public CompletableFuture<Boolean> removeLifespanExpired(K key, V value, Long lifespan) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.removeLifespanExpired(key, value, lifespan);
    }
