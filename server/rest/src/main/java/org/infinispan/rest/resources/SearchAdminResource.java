@@ -128,12 +128,10 @@ public class SearchAdminResource implements ResourceHandler {
       }).thenApply(v -> responseBuilder.build());
    }
 
-
    private CompletionStage<RestResponse> showStats(RestRequest request, Function<InfinispanQueryStatisticsInfo, Object> statExtractor) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
-
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
       try {
