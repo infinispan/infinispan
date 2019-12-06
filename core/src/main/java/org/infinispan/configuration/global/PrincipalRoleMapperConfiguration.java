@@ -7,9 +7,9 @@ import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.infinispan.security.impl.ClusterRoleMapper;
-import org.infinispan.security.impl.CommonNameRoleMapper;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.ClusterRoleMapper;
+import org.infinispan.security.mappers.CommonNameRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 
 /**
  * @since 10.0

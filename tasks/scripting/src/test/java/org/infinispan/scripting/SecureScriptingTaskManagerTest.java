@@ -18,7 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.impl.ScriptTask;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;

@@ -29,7 +29,7 @@
       <transport stack="udp" cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"
                  executor="transport" remote-command-executor="remote" />
       <security>
-         <authorization audit-logger="org.infinispan.security.impl.NullAuditLogger">
+         <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper/>
             <role name="peasant" permissions="READ"/>
             <role name="vavasour" permissions="READ WRITE"/>

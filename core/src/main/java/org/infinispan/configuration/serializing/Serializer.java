@@ -73,9 +73,9 @@ import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
-import org.infinispan.security.impl.ClusterRoleMapper;
-import org.infinispan.security.impl.CommonNameRoleMapper;
-import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.security.mappers.ClusterRoleMapper;
+import org.infinispan.security.mappers.CommonNameRoleMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 

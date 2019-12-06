@@ -19,7 +19,7 @@ import org.infinispan.configuration.parsing.Element;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
-import org.infinispan.security.impl.NullAuditLogger;
+import org.infinispan.security.audit.NullAuditLogger;
 
 /**
  * GlobalAuthorizationConfiguration.

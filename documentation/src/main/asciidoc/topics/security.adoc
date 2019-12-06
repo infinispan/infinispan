@@ -130,8 +130,8 @@ include::config_examples/cache_authorization.xml[]
 
 In order to convert the Principals in a Subject into a set of roles to be used when authorizing, a suitable +PrincipalRoleMapper+ must be specified in the global configuration. {brandname} comes with 3 mappers and also allows you to provide a custom one:
 
-* IdentityRoleMapper (Java: +org.infinispan.security.impl.IdentityRoleMapper+, XML: +<identity-role-mapper />+): this mapper just uses the Principal name as the role name
-* CommonNameRoleMapper (Java: +org.infinispan.security.impl.CommonRoleMapper+, XML: +<common-name-role-mapper />+): if the Principal name is a Distinguished Name (DN), this mapper extracts the Common Name (CN) and uses it as a role name. For example
+* IdentityRoleMapper (Java: +org.infinispan.security.mappers.IdentityRoleMapper+, XML: +<identity-role-mapper />+): this mapper just uses the Principal name as the role name
+* CommonNameRoleMapper (Java: +org.infinispan.security.mappers.CommonRoleMapper+, XML: +<common-name-role-mapper />+): if the Principal name is a Distinguished Name (DN), this mapper extracts the Common Name (CN) and uses it as a role name. For example
 the DN +cn=managers,ou=people,dc=example,dc=com+ will be mapped to the role +managers+
 * Custom role mappers (XML: +<custom-role-mapper class="a.b.c" />+): just supply the fully-qualified class name of an implementation of +org.infinispan.security.PrincipalRoleMapper+
 

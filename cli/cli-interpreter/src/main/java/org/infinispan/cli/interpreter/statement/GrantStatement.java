@@ -6,7 +6,7 @@ import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
-import org.infinispan.security.impl.ClusterRoleMapper;
+import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.util.logging.LogFactory;
 
 /**

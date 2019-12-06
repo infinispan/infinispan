@@ -20,7 +20,7 @@
                     persistence-executor="infinispan-cached" module="org.infinispan" statistics="true" shutdown-hook="DONT_REGISTER">
       <transport cluster="maximal-cluster" executor="infinispan-transport" total-order-executor="infinispan-cached" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"/>
       <security>
-         <authorization audit-logger="org.infinispan.security.impl.NullAuditLogger">
+         <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper />
             <role name="peasant" permissions="READ" />
             <role name="vavasour" permissions="READ WRITE" />

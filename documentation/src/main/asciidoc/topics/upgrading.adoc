@@ -26,6 +26,22 @@ Users are encouraged to reconfigure their indexes as non-shared, using the Near 
 
 Queries need to be adjusted to use the ```BROADCAST``` runtime option.
 
+== Security role mappers and audit loggers
+
+The security role mapper implementations have been moved from the `org.infinispan.security.impl` package to the
+`org.infinispan.security.mappers` package:
+
+* `org.infinispan.security.impl.CommonNameRoleMapper` => `org.infinispan.security.mappers.CommonNameRoleMapper`
+* `org.infinispan.security.impl.ClusterRoleMapper` => `org.infinispan.security.mappers.ClusterRoleMapper`
+* `org.infinispan.security.impl.IdentityRoleMapper` => `org.infinispan.security.mappers.IdentityRoleMapper`
+
+The security audit logger implementations have been moved from the `org.infinispan.security.impl` package to the
+`org.infinispan.security.audit` package:
+
+* `org.infinispan.security.impl.LoggingAuditLogger` => `org.infinispan.security.audit.LoggingAuditLogger`
+* `org.infinispan.security.impl.NullAuditLogger` => `org.infinispan.security.audit.NullAuditLogger`
+
+
 = Upgrading from 9.4 to 10.0
 
 == Marshalling
