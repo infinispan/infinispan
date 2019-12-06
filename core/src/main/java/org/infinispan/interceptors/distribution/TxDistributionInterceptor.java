@@ -73,6 +73,7 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -576,17 +577,19 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (mutationsOnKey.isEmpty()) {
          return cf;
       }
-      return cf.thenRun(() -> {
+      return cf.thenCompose(ignore -> {
          // TODO Dan: apply the modifications before wrapping the entry in the context
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
                false, true);
-         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
-         for (Mutation mutation : mutationsOnKey) {
-            EntryView.ReadWriteEntryView readWriteEntryView =
-                  EntryViews.readWrite(cacheEntry, mutation.keyDataConversion(), mutation.valueDataConversion());
-            mutation.apply(readWriteEntryView);
-            cacheEntry.updatePreviousValue();
-         }
+         return stage.thenRun(() -> {
+            MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
+            for (Mutation mutation : mutationsOnKey) {
+               EntryView.ReadWriteEntryView readWriteEntryView =
+                     EntryViews.readWrite(cacheEntry, mutation.keyDataConversion(), mutation.valueDataConversion());
+               mutation.apply(readWriteEntryView);
+               cacheEntry.updatePreviousValue();
+            }
+         });
       });
    }
 
@@ -603,7 +606,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Iterator<List<Mutation<Object, Object, ?>>> mutationsIterator = mutations.iterator();
       for (; keysIterator.hasNext() && mutationsIterator.hasNext(); ) {
          Object key = keysIterator.next();
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true);
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true);
+         // We rely on the fact that when isOwner is false that this never blocks
+         assert CompletionStages.isCompletedSuccessfully(stage);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
          EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
          for (Mutation mutation : mutationsIterator.next()) {

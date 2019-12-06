@@ -206,7 +206,13 @@ public interface ClusteringDependentLogic {
          if (cli != null) {
             entryLoader = cli;
          } else {
-            entryLoader = (ctx, key, segment, cmd) -> CompletableFuture.completedFuture(dataContainer.get(segment, key));
+            entryLoader = (ctx, key, segment, cmd) -> {
+               InternalCacheEntry ice = dataContainer.peek(segment, key);
+               if (ice != null && ice.canExpire() && ice.isExpired(timeService.wallClockTime())) {
+                  ice = null;
+               }
+               return CompletableFuture.completedFuture(ice);
+            };
          }
       }
 

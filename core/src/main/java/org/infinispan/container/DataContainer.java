@@ -38,7 +38,9 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     *
     * @param k key under which entry is stored
     * @return entry, if it exists and has not expired, or null if not
+    * @deprecated since 10.1 - Please use {@link #peek(Object)} instead.
     */
+   @Deprecated
    InternalCacheEntry<K, V> get(Object k);
 
    /**

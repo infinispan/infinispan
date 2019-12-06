@@ -155,6 +155,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessFunction<PrepareCommand> prepareHandler = this::prepareHandler;
    private final InvocationSuccessFunction<DataWriteCommand> applyAndFixVersion = this::applyAndFixVersion;
    private final InvocationSuccessFunction<WriteCommand> applyAndFixVersionForMany = this::applyAndFixVersionForMany;
+   private final InvocationFinallyFunction<GetAllCommand> getAllHandleFunction = this::getAllHandle;
 
    @Start
    public void start() {
@@ -212,63 +213,88 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       final Object key = command.getKey();
-      entryFactory.wrapEntryForReading(ctx, key, command.getSegment(), ignoreOwnership(command) || canRead(command));
-      return invokeNextThenApply(ctx, command, dataReadReturnHandler);
+      CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
+            ignoreOwnership(command) || canRead(command));
+      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
    }
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key), ignoreOwnership || canReadKey(key));
+         CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key));
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
-      return invokeNextAndHandle(ctx, command, (rCtx, getAllCommand, rv, t) -> {
-         if (useRepeatableRead) {
-            for (Object key : getAllCommand.getKeys()) {
-               CacheEntry cacheEntry = rCtx.lookupEntry(key);
-               if (cacheEntry == null) {
-                  // Data was lost
-                  if (trace) log.tracef(t, "Missing entry for " + key);
-               } else {
-                  cacheEntry.setSkipLookup(true);
-               }
-            }
-         }
 
-         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-         // Entry visit notifications used to happen in the CallInterceptor
-         // instanceof check excludes the case when the command returns UnsuccessfulResponse
-         if (t == null && rv instanceof Map) {
-            boolean notify = !command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION) && notifier.hasListener(CacheEntryVisited.class);
-            log.tracef("Notifying getAll? %s; result %s", notify, rv);
-            if (notify) {
-               Map<Object, Object> map = (Map<Object, Object>) rv;
-               for (Map.Entry<Object, Object> entry : map.entrySet()) {
-                  Object value = entry.getValue();
-                  if (value != null) {
-                     Object finalValue = command.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
-                     CompletionStage<Void> innerStage = notifier.notifyCacheEntryVisited(entry.getKey(), finalValue, true, rCtx, getAllCommand);
-                     stage.dependsOn(innerStage.thenCompose(ig -> notifier.notifyCacheEntryVisited(entry.getKey(), finalValue, false, rCtx, getAllCommand)));
-                  }
+      return makeStage(asyncInvokeNext(ctx, command, aggregatedStageOrCompleted(aggregateCompletionStage)))
+            .andHandle(ctx, command, getAllHandleFunction);
+   }
+
+   private Object getAllHandle(InvocationContext rCtx, GetAllCommand command, Object rv, Throwable t) {
+      if (useRepeatableRead) {
+         for (Object key : command.getKeys()) {
+            CacheEntry cacheEntry = rCtx.lookupEntry(key);
+            if (cacheEntry == null) {
+               // Data was lost
+               if (trace) log.tracef(t, "Missing entry for " + key);
+            } else {
+               cacheEntry.setSkipLookup(true);
+            }
+         }
+      }
+
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      // Entry visit notifications used to happen in the CallInterceptor
+      // instanceof check excludes the case when the command returns UnsuccessfulResponse
+      if (t == null && rv instanceof Map) {
+         boolean notify = !command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION) && notifier.hasListener(CacheEntryVisited.class);
+         log.tracef("Notifying getAll? %s; result %s", notify, rv);
+         if (notify) {
+            Map<Object, Object> map = (Map<Object, Object>) rv;
+            for (Map.Entry<Object, Object> entry : map.entrySet()) {
+               Object value = entry.getValue();
+               if (value != null) {
+                  Object finalValue = command.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
+                  CompletionStage<Void> innerStage = notifier.notifyCacheEntryVisited(entry.getKey(), finalValue, true, rCtx, command);
+                  stage.dependsOn(innerStage.thenCompose(ig -> notifier.notifyCacheEntryVisited(entry.getKey(), finalValue, false, rCtx, command)));
                }
             }
          }
-         return delayedValue(stage.freeze(), rv, t);
-      });
+      }
+      return delayedValue(stage.freeze(), rv, t);
    }
 
    @Override
-   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
-         throws Throwable {
+   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (command.getKeys() != null) {
          for (Object key : command.getKeys()) {
             // TODO: move this to distribution interceptors?
             // we need to try to wrap the entry to get it removed
             // for the removal itself, wrapping null would suffice, but listeners need previous value
-            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), true, false);
+            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                  true, false);
+            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
+   }
+
+   private CompletionStage<Void> aggregatedStageOrCompleted(AggregateCompletionStage<Void> aggregateCompletionStage) {
+      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
+   }
+
+   private AggregateCompletionStage<Void> accumulateStage(CompletionStage<Void> stage, AggregateCompletionStage<Void> current) {
+      if (!CompletionStages.isCompletedSuccessfully(stage)) {
+         if (current == null) {
+            current = CompletionStages.aggregateCompletionStage();
+         }
+         current.dependsOn(stage);
+      }
+      return current;
    }
 
    @Override
@@ -295,31 +321,33 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
-         throws Throwable {
+   public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) {
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getKeys()) {
          // TODO: move to distribution interceptors?
          // we need to try to wrap the entry to get it removed
          // for the removal itself, wrapping null would suffice, but listeners need previous value
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, false);
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               false, false);
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          if (trace)
            log.tracef("Entry to be removed: %s", toStr(key));
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    @Override
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
-   private void wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
+   private CompletionStage<Void> wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
-      entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+      return entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
    }
 
    private void removeFromContextOnRetry(InvocationContext ctx, Object key) {
@@ -365,34 +393,29 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
    public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
-      entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment(),
-            ignoreOwnership(command) || canRead(command));
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, CompletableFutures.completedNull());
    }
 
    @Override
    public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
@@ -401,12 +424,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getMap().keySet()) {
          // as listeners may need the value, we'll load the previous value
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    @Override
@@ -453,58 +479,60 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      CompletionStage<Void> stage;
       if (command instanceof TxReadOnlyKeyCommand) {
          // TxReadOnlyKeyCommand may apply some mutations on the entry in context so we need to always wrap it
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), true);
+         stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), true);
       } else {
-         entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command));
+         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command));
       }
 
       // Repeatable reads are not achievable with functional commands, as we don't store the value locally
       // and we don't "fix" it on the remote node; therefore, the value will be able to change and identity read
       // could return different values in the same transaction.
       // (Note: at this point TX mode is not implemented for functional commands anyway).
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, stage);
    }
 
    @Override
    public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (command instanceof TxReadOnlyManyCommand) {
          // TxReadOnlyManyCommand may apply some mutations on the entry in context so we need to always wrap it
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+            // TODO: need to handle this
+            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                   ignoreOwnership(command) || canReadKey(key), true);
+            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          }
       } else {
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
+            CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
                   ignoreOwnership || canReadKey(key));
+            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          }
       }
       // Repeatable reads are not achievable with functional commands, see visitReadOnlyKeyCommand
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    @Override
    public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
          throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
    public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
    public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
@@ -514,12 +542,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getArguments().keySet()) {
          //the put map never reads the keys
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), false);
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    @Override
@@ -529,18 +560,20 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), false);
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    @Override
    public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
-      wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
@@ -550,11 +583,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), true);
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    @Override
@@ -564,11 +600,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), true);
+         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
+            aggregatedStageOrCompleted(aggregateCompletionStage));
    }
 
    protected final CompletionStage<Void> commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
@@ -651,8 +690,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
-      return invokeNextThenApply(ctx, command, applyAndFixVersionForMany);
+   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command,
+         CompletionStage<Void> delay) {
+      return makeStage(asyncInvokeNext(ctx, command, delay)).thenApply(ctx, command, applyAndFixVersionForMany);
    }
 
    private Object applyAndFixVersionForMany(InvocationContext ctx, WriteCommand writeCommand, Object rv) {
@@ -695,8 +735,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
    protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
-                                                               DataWriteCommand command) {
-      return invokeNextThenApply(ctx, command, applyAndFixVersion);
+                                                               DataWriteCommand command, CompletionStage<Void> delay) {
+      return makeStage(asyncInvokeNext(ctx, command, delay)).thenApply(ctx, command, applyAndFixVersion);
    }
 
    private Object applyAndFixVersion(InvocationContext ctx, DataWriteCommand dataWriteCommand, Object rv) {
@@ -811,19 +851,27 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          return handleWriteManyCommand(ctx, command);
       }
 
-      private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(),
-               ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+      @Override
+      public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+         entryFactory.wrapEntryForExpired(ctx, command.getKey(), command.getSegment());
          return invokeNext(ctx, command);
+      }
+
+      private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(),
+               ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+         return asyncInvokeNext(ctx, command, stage);
       }
 
       private Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command) {
          boolean ignoreOwnership = ignoreOwnership(command);
+         AggregateCompletionStage<Void> aggregateCompletionStage = null;
          for (Object key : command.getAffectedKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                   ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
          }
-         return invokeNext(ctx, command);
+         return asyncInvokeNext(ctx, command, aggregatedStageOrCompleted(aggregateCompletionStage));
       }
    }
 

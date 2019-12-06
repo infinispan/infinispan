@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -55,6 +56,14 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
       // in addition to the original cache
       super.processExpiration();
       TestingUtil.extractComponent(extraCache, InternalExpirationManager.class).processExpiration();
+   }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() {
+      super.clearContent();
+      // We also have to clear the content of the extraManager
+      TestingUtil.clearContent(extraManager);
    }
 
    @Override
