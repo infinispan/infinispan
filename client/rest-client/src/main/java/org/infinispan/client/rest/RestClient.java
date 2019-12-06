@@ -14,7 +14,7 @@ import org.infinispan.commons.util.Experimental;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@Experimental
+@Experimental("This is not a supported API. Are you here for a perilous journey?")
 public interface RestClient extends Closeable {
 
    @Override

@@ -13,7 +13,7 @@ import org.infinispan.api.reactive.KeyValueStoreConfig;
  * @author Katia Aresti, karesti@redhat.com
  * @since 10.0
  */
-@Experimental
+@Experimental("This is not ready yet for general consumption. Major changes are still expected.")
 public interface Infinispan {
 
    static Infinispan newClient(ClientConfig config) {

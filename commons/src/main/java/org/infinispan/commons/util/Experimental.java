@@ -22,5 +22,5 @@ import java.lang.annotation.Target;
 @Target({PACKAGE, TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR, FIELD})
 @Documented
 public @interface Experimental {
-   String comment() default "";
+   String value() default "";
 }
