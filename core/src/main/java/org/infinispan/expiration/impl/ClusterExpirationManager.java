@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -32,12 +33,14 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,9 +76,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    @Inject protected RpcManager rpcManager;
    @Inject protected DistributionManager distributionManager;
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   private ExecutorService asyncExecutor;
+   protected ExecutorService asyncExecutor;
 
-   private AdvancedCache<K, V> cache;
+   protected AdvancedCache<K, V> cache;
    private Address localAddress;
    private long timeout;
    private String cacheName;
@@ -126,7 +129,12 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          BlockingQueue<CompletableFuture<?>> expirationPermits = new ArrayBlockingQueue<>(MAX_CONCURRENT_EXPIRATIONS);
          long currentTimeMillis = timeService.wallClockTime();
 
-         IntSet segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+         IntSet segments;
+         if (topology.getReadConsistentHash().getMembers().contains(localAddress)) {
+            segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+         } else {
+            segments = IntSets.immutableEmptySet();
+         }
 
          for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.running().iteratorIncludingExpired(segments);
               purgeCandidates.hasNext();) {
@@ -155,7 +163,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   if (expiredMortal) {
                      stage = handleLifespanExpireEntry(ice.getKey(), value, lifespan, false);
                   } else {
-                     stage = actualRemoveMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false);
+                     stage = handleMaxIdleExpireEntry(ice.getKey(), value, maxIdle, false);
                   }
                   stage.whenComplete((obj, t) -> {
                      expirationPermits.add(stage);
@@ -222,74 +230,101 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    // have the lock and remove lifespan expired is fired in a different thread with a different context. Otherwise the
    // expiration may occur in the wrong order and events may also be raised in the incorrect order. We assume the caller
    // holds the lock until this CompletableFuture completes. Without lock skipping this would deadlock.
-   CompletableFuture<Void> handleLifespanExpireEntry(K key, V value, long lifespan, boolean skipLocking) {
-      // The most used case will be a miss so no extra read before
-      if (expiring.putIfAbsent(key, key) == null) {
-         if (trace) {
-            log.tracef("Submitting expiration removal for key %s which had lifespan of %s", toStr(key), lifespan);
-         }
-         AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
-         CompletableFuture<Void> future;
-         if (transactional) {
-            // Transactional is still blocking - to be removed later
-            future = CompletableFuture.supplyAsync(() -> cacheToUse.removeLifespanExpired(key, value, lifespan), asyncExecutor)
-                  .thenCompose(Function.identity());
-         } else {
-            future = cacheToUse.removeLifespanExpired(key, value, lifespan);
-         }
-         return future.whenComplete((v, t) -> expiring.remove(key, key));
-      }
-      return CompletableFutures.completedNull();
+   CompletableFuture<Boolean> handleLifespanExpireEntry(K key, V value, long lifespan, boolean isWrite) {
+      return handleEitherExpiration(key, value, false, lifespan, isWrite);
    }
 
-   // Method invoked when an entry is found to be expired via get
-   CompletableFuture<Boolean> handleMaxIdleExpireEntry(K key, V value, long maxIdle, boolean skipLocking) {
-      return actualRemoveMaxIdleExpireEntry(key, value, maxIdle, skipLocking);
+   CompletableFuture<Boolean> removeLifespan(AdvancedCache<K, V> cacheToUse, K key, V value, long lifespan) {
+      return cacheToUse.removeLifespanExpired(key, value, lifespan);
    }
 
-   // Method invoked when entry should be attempted to be removed via max idle
-   CompletableFuture<Boolean> actualRemoveMaxIdleExpireEntry(K key, V value, long maxIdle, boolean skipLocking) {
+   CompletableFuture<Boolean> handleMaxIdleExpireEntry(K key, V value, long maxIdle, boolean isWrite) {
+      return handleEitherExpiration(key, value, true, maxIdle, isWrite);
+   }
+
+   CompletableFuture<Boolean> removeMaxIdle(AdvancedCache<K, V> cacheToUse, K key, V value) {
+      return cacheToUse.removeMaxIdleExpired(key, value);
+   }
+
+   private CompletableFuture<Boolean> handleEitherExpiration(K key, V value, boolean maxIdle, long time, boolean isWrite) {
       CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
-      Object expiringObject = expiring.putIfAbsent(key, completableFuture);
-      if (expiringObject == null) {
+      CompletableFuture<Boolean> previousFuture = expiring.putIfAbsent(key, completableFuture);
+      if (previousFuture == null) {
          if (trace) {
-            log.tracef("Submitting expiration removal for key %s which had maxIdle of %s", toStr(key), maxIdle);
+            log.tracef("Submitting expiration removal for key: %s which is maxIdle: %s of: %s", toStr(key), maxIdle, time);
          }
-         completableFuture.whenComplete((b, t) -> expiring.remove(key, completableFuture));
          try {
-            AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
+            AdvancedCache<K, V> cacheToUse = cacheToUse(isWrite);
             CompletableFuture<Boolean> future;
-            if (transactional) {
-               // Transactional is still blocking - to be removed later
-               future = CompletableFuture.supplyAsync(() -> cacheToUse.removeMaxIdleExpired(key, value), asyncExecutor)
-                     .thenCompose(Function.identity());
+            if (maxIdle) {
+               future = removeMaxIdle(cacheToUse, key, value);
             } else {
-               future = cacheToUse.removeMaxIdleExpired(key, value);
+               future = removeLifespan(cacheToUse, key, value, time);
             }
-            future.whenComplete((b, t) -> {
+            return future.whenComplete((b, t) -> {
+               // We have to remove the entry from the map before setting the exception status - otherwise retry for
+               // a write at the same time could get stuck in a recursive loop
+               expiring.remove(key);
                if (t != null) {
                   completableFuture.completeExceptionally(t);
                } else {
                   completableFuture.complete(b);
                }
             });
-            return completableFuture;
          } catch (Throwable t) {
+            // We have to remove the entry from the map before setting the exception status - otherwise retry for
+            // a write at the same time could get stuck in a recursive loop
+            expiring.remove(key);
             completableFuture.completeExceptionally(t);
             throw t;
          }
-      } else if (expiringObject instanceof CompletableFuture) {
-         // This means there was another thread that found it had expired via max idle
-         return (CompletableFuture<Boolean>) expiringObject;
-      } else {
-         // If it wasn't a CompletableFuture we had a lifespan removal occurring so it will be removed for sure
-         return CompletableFutures.completedTrue();
       }
+      if (isWrite) {
+         if (trace) {
+            log.tracef("Waiting on prior expiration removal for key %s as this command is a write", key);
+         }
+         return previousFuture.handle((expired, t) -> {
+            if (t != null) {
+               boolean foundTimeout = false;
+               Throwable cause = t;
+               while (cause != null) {
+                  if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+                     foundTimeout = true;
+                     break;
+                  }
+                  cause = cause.getCause();
+               }
+               if (foundTimeout) {
+                  if (trace) {
+                     log.tracef("Encountered timeout exception in previous when doing a write - need to retry!");
+                  }
+                  // Have to retry the command as the prior one most likely timed out
+                  return handleEitherExpiration(key, value, maxIdle, time, true);
+               } else {
+                  if (trace) {
+                     log.tracef(t, "Encountered exception in previous when doing a write - need to retry!");
+                  }
+                  return CompletableFutures.<Boolean>completedExceptionFuture(t);
+               }
+            } else {
+               return expired == Boolean.TRUE ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
+            }
+         }).thenCompose(Function.identity());
+      }
+      if (trace) {
+         log.tracef("There is a pending expiration removal for key %s, waiting until it completes.", key);
+      }
+      // This means there was another thread that found it had expired via max idle or we have optimistic tx
+      return previousFuture;
+   }
+
+   AdvancedCache<K, V> cacheToUse(boolean isWrite) {
+      return isWrite ? cache.withFlags(Flag.SKIP_LOCKING) : cache.withFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
    public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime,
-         boolean hasLock) {
+         boolean isWrite) {
       // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
       // so we can see both the new value and the metadata
       boolean expiredMortal;
@@ -301,63 +336,74 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, entry.getCreated(), currentTime);
       }
       if (expiredMortal) {
-         CompletableFuture<Void> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, hasLock);
-         if (hasLock) {
-            return future.thenCompose(CompletableFutures.composeTrue());
+         CompletableFuture<Boolean> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, isWrite);
+         if (waitOnLifespanExpiration(isWrite)) {
+            return future;
          }
-         // We don't want to block the user while the remove expired is happening for lifespan
+         // We don't want to block the user while the remove expired is happening for lifespan on a read
          return CompletableFutures.completedTrue();
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
-         return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), hasLock);
+         return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), isWrite);
       }
    }
 
+   // Designed to be overridden as needed
+   boolean waitOnLifespanExpiration(boolean isWrite) {
+      // We always have to wait for the prior expiration to complete if we are holding the lock. Otherwise we can have
+      // multiple invocations running at the same time.
+      return isWrite;
+   }
+
    @Override
-   public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
+   public boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
       // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
       // so we can see both the new value and the metadata
       boolean expiredMortal;
       synchronized (entry) {
          expiredMortal = ExpiryHelper.isExpiredMortal(entry.getLifespan(), entry.getCreated(), currentTime);
       }
-      if (expiredMortal) {
-         // Lifespan was expired - but we don't want to take the hit of causing an expire command to be fired
-         return CompletableFutures.completedTrue();
-      } else {
-         // Max idle expiration - we just return it (otherwise we would have to incur remote overhead)
-         // This entry will be removed on next get or reaper running
-         return CompletableFutures.completedFalse();
-      }
+      // Note we don't check for transient expiration (maxIdle). We always ignore those as it would require remote
+      // overhead to confirm. Instead we only return if the entry expired mortally (lifespan) as we always expire
+      // entries that are found to be in this state.
+      return expiredMortal;
    }
 
    @Override
-   public void handleInStoreExpiration(K key) {
-      if (expiring.putIfAbsent(key, key) == null) {
-         // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
-         // the entire value.  Unfortunately this could cause a concurrent write to be undone
-         try {
-            cache.withFlags(Flag.SKIP_SHARED_CACHE_STORE).removeLifespanExpired(key, null, null).join();
-         } finally {
-            expiring.remove(key, key);
-         }
-      }
+   public CompletionStage<Void> handleInStoreExpirationInternal(K key) {
+      return handleInStoreExpirationInternal(key, null);
    }
 
    @Override
-   public void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry) {
-      K key = marshalledEntry.getKey();
-      if (expiring.putIfAbsent(key, key) == null) {
-         try {
-            InternalMetadata metadata = marshalledEntry.getMetadata();
-            cache.withFlags(Flag.SKIP_SHARED_CACHE_STORE)
-                 .removeLifespanExpired(key, marshalledEntry.getValue(),
-                                        metadata.lifespan() == -1 ? null : metadata.lifespan())
-                 .join();
-         } finally {
-            expiring.remove(key, key);
+   public CompletionStage<Void> handleInStoreExpirationInternal(MarshalledEntry<K, V> marshalledEntry) {
+      return handleInStoreExpirationInternal(marshalledEntry.getKey(), marshalledEntry);
+   }
+
+   private CompletionStage<Void> handleInStoreExpirationInternal(K key, MarshalledEntry<K, V> marshallableEntry) {
+      CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
+      CompletableFuture<Boolean> previousFuture = expiring.putIfAbsent(key, completableFuture);
+      if (previousFuture == null) {
+         AdvancedCache<K, V> cacheToUse = cache.withFlags(Flag.SKIP_SHARED_CACHE_STORE, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+         CompletionStage<Boolean> resultStage;
+         if (marshallableEntry != null) {
+            Metadata metadata = marshallableEntry.getMetadata();
+            resultStage = cacheToUse.removeLifespanExpired(key, marshallableEntry.getValue(),
+                  metadata.lifespan() == -1 ? null : metadata.lifespan());
+         } else {
+            // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
+            // the entire value.  Unfortunately this could cause a concurrent write to be undone
+            resultStage = cacheToUse.removeLifespanExpired(key, null, null);
          }
+         return CompletionStages.ignoreValue(resultStage.whenComplete((b, t) -> {
+            expiring.remove(key);
+            if (t != null) {
+               completableFuture.completeExceptionally(t);
+            } else {
+               completableFuture.complete(b);
+            }
+         }));
       }
+      return CompletionStages.ignoreValue(previousFuture);
    }
 
    @Override
@@ -395,6 +441,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       @Override
       protected T addValidResponse(Address sender, ValidResponse response) {
          T value = (T) response.getResponseValue();
+         if (trace) {
+            log.tracef("Received response %s from %s when requesting access time for max idle", value, sender);
+         }
          if (value != null && (highest == null || highest.compareTo(value) < 0)) {
             highest = value;
          }

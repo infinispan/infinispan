@@ -433,7 +433,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
+   public CompletableFuture<Boolean> removeLifespanExpired(K key, V value, Long lifespan) {
       return cacheImplementation.removeLifespanExpired(key, value, lifespan, flags);
    }
 

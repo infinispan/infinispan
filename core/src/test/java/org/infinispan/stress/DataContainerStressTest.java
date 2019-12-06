@@ -3,6 +3,7 @@ package org.infinispan.stress;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
@@ -154,18 +155,18 @@ public class DataContainerStressTest {
                  }
 
                  @Override
-                 public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry entry, long currentTime) {
+                 public boolean entryExpiredInMemoryFromIteration(InternalCacheEntry entry, long currentTime) {
+                    return true;
+                 }
+
+                 @Override
+                 public CompletionStage<Void> handleInStoreExpirationInternal(Object key) {
                     return null;
                  }
 
                  @Override
-                 public void handleInStoreExpiration(Object key) {
-
-                 }
-
-                 @Override
-                 public void handleInStoreExpiration(MarshalledEntry marshalledEntry) {
-
+                 public CompletionStage<Void> handleInStoreExpirationInternal(MarshalledEntry marshalledEntry) {
+                    return null;
                  }
 
                  @Override

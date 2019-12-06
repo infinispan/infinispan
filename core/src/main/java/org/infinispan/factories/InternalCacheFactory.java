@@ -278,6 +278,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       public V get(Object key) {
          assertKeyNotNull(key);
          checkCanRun(cache, cache.getName());
+         // TODO: what should we do here? - This needs to be fixed in https://issues.redhat.com/browse/ISPN-11124
          InternalCacheEntry<K, V> ice = getDataContainer().get(key);
          if (ice != null) {
             return ice.getValue();

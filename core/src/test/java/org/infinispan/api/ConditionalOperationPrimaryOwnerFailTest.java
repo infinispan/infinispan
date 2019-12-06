@@ -69,7 +69,6 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
          log.debugf("wrapEntryForWriting invoked with %s", context);
 
          Object mvccEntry = invocation.callRealMethod();
-         assertNull(mvccEntry, "Entry should not be wrapped!");
          assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
          return mvccEntry;
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), any(), anyInt(),

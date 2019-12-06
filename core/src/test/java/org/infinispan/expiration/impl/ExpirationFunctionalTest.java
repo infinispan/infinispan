@@ -123,7 +123,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       timeService.advance(2);
 
       for (int i = 0; i < SIZE; i++) {
-         assertFalse(cache.containsKey("key-" + 1));
+         assertFalse(cache.containsKey("key-" + i));
          assertNull(cache.get("key-" + i));
          assertNull(cache.remove("key-" + i));
       }
@@ -136,7 +136,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       timeService.advance(2);
 
       for (int i = 0; i < SIZE; i++) {
-         assertFalse(cache.containsKey("key-" + 1));
+         assertFalse(cache.containsKey("key-" + i));
          assertNull(cache.get("key-" + i));
          assertNull(cache.remove("key-" + i));
       }

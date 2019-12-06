@@ -1,5 +1,7 @@
 package org.infinispan.container.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -93,13 +95,17 @@ public interface EntryFactory {
     * @param key key to look up and wrap
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
+    * @return stage that when complete the value should be in the context
     */
-   void wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner);
+   CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner);
 
    /**
     * Insert an entry that exists in the data container into the context.
     *
     * Doesn't do anything if the key was already wrapped.
+    *
+    * <p>
+    * The returned stage will always be complete if <b>isOwner</b> is false.
     *
     * @param ctx current invocation context
     * @param key key to look up and wrap
@@ -108,7 +114,7 @@ public interface EntryFactory {
     * @param isRead true if this operation is expected to read the value of the entry
     * @since 8.1
     */
-   void wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner, boolean isRead);
+   CompletionStage<Void> wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner, boolean isRead);
 
    /**
     * Insert an entry that exists in the data container into the context, even if it is expired
@@ -117,9 +123,8 @@ public interface EntryFactory {
     * @param ctx current invocation context
     * @param key key to look up and wrap
     * @param segment segment for the key
-    * @param isOwner true if this node is current owner in readCH (or we ignore CH)
     */
-   void wrapEntryForExpired(InvocationContext ctx, Object key, int segment, boolean isOwner);
+   void wrapEntryForExpired(InvocationContext ctx, Object key, int segment);
 
    /**
     * Insert an external entry (e.g. loaded from a cache loader or from a remote node) into the context.

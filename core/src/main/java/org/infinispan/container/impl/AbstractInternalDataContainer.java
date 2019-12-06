@@ -310,7 +310,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                   now = timeService.wallClockTime();
                   initializedTime = true;
                }
-               if (!entry.isExpired(now) || expirationManager.entryExpiredInMemoryFromIteration(entry, now).join()
+               if (!entry.isExpired(now) || expirationManager.entryExpiredInMemoryFromIteration(entry, now)
                      == Boolean.FALSE) {
                   if (trace) {
                      log.tracef("Return next entry %s", entry);
@@ -551,6 +551,6 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
     */
    protected Predicate<InternalCacheEntry<K, V>> expiredIterationPredicate(long accessTime) {
       return e -> ! e.canExpire() ||
-            ! (e.isExpired(accessTime) && expirationManager.entryExpiredInMemoryFromIteration(e, accessTime).join() == Boolean.TRUE);
+            ! (e.isExpired(accessTime) && expirationManager.entryExpiredInMemoryFromIteration(e, accessTime));
    }
 }

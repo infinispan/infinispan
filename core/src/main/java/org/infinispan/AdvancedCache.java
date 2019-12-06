@@ -895,7 +895,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param lifespan the lifespan that should match.  If null is provided it will match any lifespan value
     * @return if the entry was removed
     */
-   CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan);
+   CompletableFuture<Boolean> removeLifespanExpired(K key, V value, Long lifespan);
 
    /**
     * Attempts to remove the entry for the given key, if it has expired due to max idle. This command first locks

@@ -2,12 +2,14 @@ package org.infinispan.expiration.impl;
 
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -23,8 +25,8 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,7 +55,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
     * key will be removed or updated.  In the latter case we don't want to send an expiration event and then a remove
     * event when we could do just the removal.
     */
-   protected ConcurrentMap<K, Object> expiring = new ConcurrentHashMap<>();
+   protected ConcurrentMap<K, CompletableFuture<Boolean>> expiring = new ConcurrentHashMap<>();
    protected ScheduledFuture<?> expirationTask;
 
    // used only for testing
@@ -139,9 +141,36 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
+   public boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
       // Local we just remove the entry as we see them
-      return entryExpiredInMemory(entry, currentTime, false);
+      return CompletionStages.join(entryExpiredInMemory(entry, currentTime, false));
+   }
+
+   private void entryExpiredInMemorySync(InternalCacheEntry<K, V> entry, long currentTime) {
+      dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
+         if (oldEntry != null) {
+            synchronized (oldEntry) {
+               if (oldEntry.isExpired(currentTime)) {
+                  deleteFromStoresAndNotifySync(k, oldEntry.getValue(), oldEntry.getMetadata());
+               } else {
+                  return oldEntry;
+               }
+            }
+         }
+         return null;
+      }));
+   }
+
+   /**
+    * Same as {@link #deleteFromStoresAndNotify(Object, Object, Metadata)} except that the store removal is done
+    * synchronously - this means this method <b>MUST</b> be invoked in the blocking thread pool
+    * @param key
+    * @param value
+    * @param metadata
+    */
+   private void deleteFromStoresAndNotifySync(K key, V value, Metadata metadata) {
+      persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH);
+      cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null);
    }
 
    @Override
@@ -151,19 +180,19 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public void handleInStoreExpiration(K key) {
+   public CompletionStage<Void> handleInStoreExpirationInternal(K key) {
       // Note since this is invoked without the actual key lock it is entirely possible for a remove to occur
       // concurrently before the data container lock is acquired and then the oldEntry below will be null causing an
       // expiration event to be generated that is extra
-      handleInStoreExpiration(key, null, null);
+      return handleInStoreExpirationInternal(key, null, null);
    }
 
    @Override
-   public void handleInStoreExpiration(final MarshalledEntry<K, V> marshalledEntry) {
-      handleInStoreExpiration(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
+   public CompletionStage<Void> handleInStoreExpirationInternal(final MarshalledEntry<K, V> marshalledEntry) {
+      return handleInStoreExpirationInternal(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
    }
 
-   private void handleInStoreExpiration(K key, V value, Metadata metadata) {
+   private CompletionStage<Void> handleInStoreExpirationInternal(K key, V value, Metadata metadata) {
       dataContainer.running().compute(key, (oldKey, oldEntry, factory) -> {
          boolean shouldRemove = false;
          if (oldEntry == null) {
@@ -178,6 +207,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                      // so we have to check for null on either
                      if (shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
                              (value == null || value.equals(oldEntry.getValue()))) {
+                        // TODO: this is blocking! - this needs to be fixed in https://issues.redhat.com/browse/ISPN-10377
                         deleteFromStoresAndNotify(key, value, metadata);
                      }
                   }
@@ -189,27 +219,22 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
          }
          return oldEntry;
       });
+      return CompletableFutures.completedNull();
    }
 
    /**
     * Deletes the key from the store as well as notifies the cache listeners of the expiration of the given key,
     * value, metadata combination.
+    * <p>
+    * This method must be invoked while holding data container lock for the given key to ensure events are ordered
+    * properly.
     * @param key
     * @param value
     * @param metadata
     */
    private void deleteFromStoresAndNotify(K key, V value, Metadata metadata) {
-      deleteFromStores(key);
-      if (cacheNotifier != null) {
-         // To guarantee ordering of events this must be done on the entry, so that another write cannot be
-         // done at the same time
+         persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH);
          cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null);
-      }
-   }
-
-   private void deleteFromStores(K key) {
-      // We have to delete from shared stores as well to make sure there are not multiple expiration events
-      persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH);
    }
 
    protected Long localLastAccess(Object key, Object value, int segment) {
