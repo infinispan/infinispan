@@ -213,6 +213,34 @@ expired in clusters on other sites.
 {brandname} cannot determine if cache entries have reached the idle timeout in
 clusters on other sites.
 
+[[xsite_concurrent_writes]]
+==== Deadlocks and Conflicting Entries
+In active/active configurations, concurrent writes to the same key results in
+deadlocks or conflicts.
+
+Active/active configurations are those in which both the local and the backup
+sites replicate data to each other. For example, "SiteA" backs up to "SiteB"
+and "SiteB" also backs up to "SiteA".
+
+In synchronous mode (`SYNC`), concurrent writes result in deadlocks because
+both sites lock the same key in different orders. To resolve deadlocks,
+client applications must wait until the locks time out.
+
+In asynchronous mode (`ASYNC`), concurrent writes result in conflicting values because sites replicate after entries are modified locally. There is no guaranteed order for asynchronous replication operations so the following outcomes are possible:
+
+* Keys have different values each site. For example, `k=1` on "SiteA" and `k=2` on "SiteB". Asynchronous replication occurs at some point after the client writes to `k` with the result that `x=2` is replicated to "SiteA" and `x=1` is replicated to "SiteB".
+* One of the conflicting values is overwritten if sites do not replicate values at the same time. In this case, one of the values is lost and there is no guarantee which value is saved.
+
+In all cases, inconsistencies in key values are resolved after the next
+non-conflicting `PUT` operation updates the value.
+
+[NOTE]
+====
+There currently is no conflict resolution policy that client applications can
+use to handle conflicts in asynchronous mode. However, conflict resolution
+techniques are planned for a future {brandname} version.
+====
+
 === Taking a site offline
 If backing up to a site fails for a certain number of times during a time interval, then it is possible to automatically mark that site as offline. When a site is marked as offline the local site won't try to backup data to it anymore. In order to be taken online a system administrator intervention being required.
 

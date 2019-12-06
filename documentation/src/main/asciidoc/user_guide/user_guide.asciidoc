@@ -6,6 +6,6 @@
 :stem: asciimath
 
 // Load all default values here for use in all sub-chapters
-include::{defaults}[]
+//include::{defaults}[]
 
 include::topics.adoc[]
