@@ -28,6 +28,6 @@ public class IdentityRoleMapper implements PrincipalRoleMapper {
 
    @Override
    public boolean equals(Object obj) {
-      return (obj != null && obj instanceof IdentityRoleMapper);
+      return obj instanceof IdentityRoleMapper;
    }
 }
