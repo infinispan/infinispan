@@ -1,12 +1,14 @@
 package org.infinispan.expiration.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Interface describing the internal operations for the the ExpirationManager.
@@ -27,10 +29,10 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * so may cause inconsistency in data.
     * @param entry the entry that has expired
     * @param currentTime the current time when it expired
-    * @param hasLock if the expiration was found during a write operation
+    * @param isWrite if the expiration was found during a write operation
     * @return if this entry actually expired or not
     */
-   CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime, boolean hasLock);
+   CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime, boolean isWrite);
 
    /**
     * This method is very similar to {@link #entryExpiredInMemory(InternalCacheEntry, long, boolean)} except that it does the
@@ -41,7 +43,7 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * @param currentTime the current time when it expired
     * @return if this entry actually expired or not
     */
-   CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime);
+   boolean entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime);
 
    /**
     * This is to be invoked when a store entry expires.  This method may attempt to lock this key to preserve atomicity.
@@ -49,16 +51,27 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * Note this method doesn't currently take a {@link InternalCacheEntry} and this is due to a limitation in the
     * cache store API.  This may cause some values to be removed if they were updated at the same time.
     * @param key the key of the expired entry
+    * This method will be renamed to handleInStoreExpiration when the method can be removed from {@link ExpirationManager}
     */
-   void handleInStoreExpiration(K key);
+   CompletionStage<Void> handleInStoreExpirationInternal(K key);
+
+   @Override
+   default void handleInStoreExpiration(K key) {
+      CompletionStages.join(handleInStoreExpirationInternal(key));
+   }
 
    /**
     * This is to be invoked when a store entry expires and the value and/or metadata is available to be used.  This
     * method is preferred over {@link ExpirationManager#handleInStoreExpiration(Object)} as it allows for more
     * specific expiration to possibly occur.
     * @param marshalledEntry the entry that can be unmarshalled as needed
+    * This method will be renamed to handleInStoreExpiration when the method can be removed from {@link ExpirationManager}
     */
-   void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry);
+   CompletionStage<Void> handleInStoreExpirationInternal(MarshalledEntry<K, V> marshalledEntry);
+
+   default void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry) {
+      CompletionStages.join(handleInStoreExpirationInternal(marshalledEntry));
+   }
 
    /**
     * Retrieves the last access time for the given key in the data container if it is using max idle.

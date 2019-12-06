@@ -26,12 +26,24 @@ import org.infinispan.metadata.Metadata;
 public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
 
    /**
+    * {@inheritDoc}
+    * <p>
+    * We should only ever be using the non blocking variant {@link #peek(int, Object)} in Infinispan
+    * @deprecated since 10.1
+    */
+   @Deprecated
+   @Override
+   InternalCacheEntry<K, V> get(Object k);
+
+   /**
     * Same as {@link DataContainer#get(Object)} except that the segment of the key can provided to lookup entries
     * without calculating the segment for the given key
     * @param segment segment for the key
     * @param k key under which entry is stored
     * @return entry, if it exists and has not expired, or null if not
+    * @deprecated since 10.1
     */
+   @Deprecated
    InternalCacheEntry<K, V> get(int segment, Object k);
 
    /**

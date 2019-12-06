@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -34,8 +36,9 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
    private final InvocationExceptionFunction handleManyWriteReturn = this::handleManyWriteReturn;
 
    @Override
-   protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx, DataWriteCommand command) {
-      return invokeNextAndExceptionally(ctx, command, handleDataWriteReturn);
+   protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx, DataWriteCommand command,
+         CompletionStage<Void> delay) {
+      return makeStage(asyncInvokeNext(ctx, command, delay)).andExceptionally(ctx, command, handleDataWriteReturn);
    }
 
    Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
@@ -52,8 +55,9 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
    }
 
    @Override
-   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
-      return invokeNextAndExceptionally(ctx, command, handleManyWriteReturn);
+   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command,
+         CompletionStage<Void> delay) {
+      return makeStage(asyncInvokeNext(ctx, command, delay)).andExceptionally(ctx, command, handleManyWriteReturn);
    }
 
    Object handleManyWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {

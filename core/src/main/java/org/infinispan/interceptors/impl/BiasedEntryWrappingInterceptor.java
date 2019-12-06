@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -34,13 +36,15 @@ public class BiasedEntryWrappingInterceptor extends RetryingEntryWrappingInterce
    }
 
    @Override
-   protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx, DataWriteCommand command) {
-      return invokeNextAndHandle(ctx, command, handleDataWriteReturn);
+   protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx, DataWriteCommand command,
+         CompletionStage<Void> delay) {
+      return makeStage(asyncInvokeNext(ctx, command, delay)).andHandle(ctx, command, handleDataWriteReturn);
    }
 
    @Override
-   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
-      return invokeNextAndHandle(ctx, command, handleManyWriteReturn);
+   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command,
+         CompletionStage<Void> delay) {
+      return makeStage(asyncInvokeNext(ctx, command, delay)).andHandle(ctx, command, handleManyWriteReturn);
    }
 
    private Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv, Throwable throwable) throws Throwable {

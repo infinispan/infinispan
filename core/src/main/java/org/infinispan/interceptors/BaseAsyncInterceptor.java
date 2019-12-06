@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.
@@ -280,6 +281,54 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       } else {
          return new SyncInvocationStage(rv);
       }
+   }
+
+   /**
+    * Returns an InvocationStage if the provided CompletionStage is null, not completed or completed via exception.
+    * If these are not true the sync value is returned directly.
+    * @param stage wait for completion of this if not null
+    * @param syncValue sync value to return if stage is complete or as stage value
+    * @return invocation stage or sync value
+    */
+   public static Object delayedValue(CompletionStage<?> stage, Object syncValue) {
+      if (stage != null) {
+         CompletableFuture<?> future = stage.toCompletableFuture();
+         if (!future.isDone()) {
+            return asyncValue(stage.thenApply(v -> syncValue));
+         }
+         if (future.isCompletedExceptionally()) {
+            return asyncValue(stage);
+         }
+      }
+      return syncValue;
+   }
+
+   /**
+    * This method should be used instead of {@link #delayedValue(CompletionStage, Object)} when a
+    * {@link InvocationFinallyFunction} is used to properly handle the exception if any is present.
+    * @param stage
+    * @param syncValue
+    * @param throwable
+    * @return
+    */
+   public static Object delayedValue(CompletionStage<?> stage, Object syncValue, Throwable throwable) {
+      if (throwable == null) {
+         return delayedValue(stage, syncValue);
+      }
+      if (stage != null) {
+         CompletableFuture<?> future = stage.toCompletableFuture();
+         if (!future.isDone() || future.isCompletedExceptionally()) {
+            return asyncValue(
+                  stage.handle((ignore, t) -> {
+                     if (t != null) {
+                        throwable.addSuppressed(t);
+                     }
+                     return null;
+                  }).thenCompose(ignore -> CompletableFutures.completedExceptionFuture(throwable))
+            );
+         }
+      }
+      return new SimpleAsyncInvocationStage(throwable);
    }
 
    protected static boolean isSuccessfullyDone(Object maybeStage) {

@@ -74,7 +74,7 @@ public class InvalidateL1Command extends InvalidateCommand {
       final boolean trace = log.isTraceEnabled();
       if (trace) log.tracef("Preparing to invalidate keys %s", Arrays.asList(keys));
       for (Object k : getKeys()) {
-         InternalCacheEntry ice = dataContainer.get(k);
+         InternalCacheEntry ice = dataContainer.peek(k);
          if (ice != null) {
             boolean isLocal = dm.getCacheTopology().isWriteOwner(k);
             if (!isLocal) {
