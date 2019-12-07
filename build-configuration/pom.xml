@@ -201,7 +201,7 @@
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.projectodd>1.1.6</version.projectodd>
-      <version.protostream>4.3.0.Final</version.protostream>
+      <version.protostream>4.3.1.Final</version.protostream>
       <version.protostuff>1.6.0</version.protostuff>
       <version.reactivestreams>1.0.2</version.reactivestreams>
       <version.rocksdb>6.2.2</version.rocksdb>
