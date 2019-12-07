@@ -116,7 +116,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isRedirect();
       assertEquals("/console/welcome", response.getHeaders().get("Location"));
    }
-   
+
    private static File getTestFile(String path) {
       URL resource = StaticResourceTest.class.getClassLoader().getResource(path);
       try {

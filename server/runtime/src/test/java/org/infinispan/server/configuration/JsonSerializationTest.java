@@ -177,7 +177,7 @@ public class JsonSerializationTest {
       assertEquals("username-claim", tokenRealm.get("principal-claim").asText());
       JsonNode oath = tokenRealm.get("oauth2-introspection");
       assertEquals("ANY", oath.get("host-name-verification-policy").asText());
-      assertEquals("http://${org.infinispan.test.host .address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect", oath.get("introspection-url").asText());
+      assertEquals("http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect", oath.get("introspection-url").asText());
       assertEquals("infinispan-server", oath.get("client-id").asText());
       assertEquals("***", oath.get("client-secret").asText());
 
