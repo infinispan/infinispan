@@ -1105,7 +1105,8 @@ public class JGroupsTransport implements Transport {
          case PER_SENDER:
             return Message.Flag.NO_TOTAL_ORDER.value();
          case NONE:
-            return (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
+            return (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value() |
+                            Message.Flag.DONT_BUNDLE.value());
          default:
             throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
       }
