@@ -52,8 +52,8 @@ pipeline {
 
         stage('Version') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set-property -Dproperty=version.infinispan -DnewVersion=${version}"
                 sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${version} -DprocessAllModules=true"
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set-property -Dproperty=version.infinispan -DnewVersion=${version}"
             }
         }
 
