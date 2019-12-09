@@ -3,10 +3,10 @@
   ...
     <security-realm name="ClusterRealm">
       <authentication>
-        <properties path="cluster-users.properties" relative-to="jboss.server.config.dir"/>
+        <properties path="cluster-users.properties" relative-to="infinispan.server.config.path"/>
       </authentication>
       <authorization>
-        <properties path="cluster-roles.properties" relative-to="jboss.server.config.dir"/>
+        <properties path="cluster-roles.properties" relative-to="infinispan.server.config.path"/>
       </authorization>
     </security-realm>
   ...

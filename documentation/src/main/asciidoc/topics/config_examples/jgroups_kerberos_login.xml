@@ -5,7 +5,7 @@
       <module-option name="useKeyTab" value="true"/>
       <module-option name="refreshKrb5Config" value="true"/>
       <module-option name="principal" value="jgroups/node0/clustered@INFINISPAN.ORG"/>
-      <module-option name="keyTab" value="${jboss.server.config.dir}/keytabs/jgroups_node0_clustered.keytab"/>
+      <module-option name="keyTab" value="${infinispan.server.config.path}/keytabs/jgroups_node0_clustered.keytab"/>
       <module-option name="doNotPrompt" value="true"/>
     </login-module>
   </authentication>
