@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -1114,7 +1116,18 @@ public final class Util {
             }
          }
       }
-      absoluteFile.delete();
+      if (!absoluteFile.delete()) {
+         UserPrincipal owner;
+         Set<PosixFilePermission> permissions;
+         try {
+            owner = Files.getOwner(absoluteFile.toPath());
+            permissions = Files.getPosixFilePermissions(absoluteFile.toPath());
+         } catch (Exception e) {
+            owner = null;
+            permissions = Collections.emptySet();
+         }
+         throw new IllegalStateException("Cannot delete " + absoluteFile + " owner=" + owner + " permissions=" + permissions);
+      }
    }
 
    public static void recursiveDirectoryCopy(Path source, Path target) throws IOException {
