@@ -1,6 +1,5 @@
 [[marshalling]]
 = Marshalling
-
 Marshalling is the process of converting Java objects into a binary format that can be transferred over the wire or stored to disk.
 Unmarshalling is the reverse process whereby data read from a binary format is transformed back into Java objects.
 {brandname} uses marshalling/unmarshalling to:
@@ -12,34 +11,8 @@ Unmarshalling is the reverse process whereby data read from a binary format is t
 {brandname} handles marshalling for all internal types. Users only need to be concerned with the marshalling
 of the Java objects that they will store in the cache.
 
-
-== Adding Java Classes to Deserialization White Lists
-{brandname} does not allow deserialization of custom payloads into Java classes
-for security reasons, which applies to JSON, XML, and marshalled `byte[]`
-content.
-
-You must add Java classes to a deserialization white list, either using system
-properties or specifying them in the {brandname} configuration.
-
-.System properties
-
-[source,options="nowrap",subs=attributes+]
-----
-// Specify a comma-separated list of fully qualified class names
--Dinfinispan.deserialization.whitelist.classes=java.time.Instant,com.myclass.Entity
-
-// Specify a regular expression to match classes
--Dinfinispan.deserialization.whitelist.regexps=.*
-----
-
-.Declarative
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::config_examples/deserialization_whitelist.xml[]
-----
-
 == Marshaller Implementations
+
 [[protostream_cm_config]]
 === ProtoStream (Default)
 The default marshaller for {brandname} is link:#protostream[ProtoStream], which marshalls data as link:https://developers.google.com/protocol-buffers[Protocol Buffers].
@@ -67,7 +40,6 @@ include::code_examples/ProtoStreamMarshaller.java[]
 include::config_examples/protostream_marshaller.xml[]
 ----
 
-
 [[java_serialization_marshaller]]
 === Java Serialization Marshaller
 Java serialization can also be used to marshall your objects. The only requirements are that your Java objects implement
@@ -91,6 +63,9 @@ include::code_examples/SerializationMarshaller.java[]
 include::config_examples/serialization_marshaller.xml[]
 ----
 
+.Reference
+
+link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
 
 === JBoss Marshalling
 JBoss Marshalling is a Serialization based marshalling library which was the default marshaller in past versions of {brandname}.
@@ -111,7 +86,6 @@ include::code_examples/JBossUserMarshaller.java[]
 include::config_examples/jboss_user_marshaller.xml[]
 ----
 
-
 [IMPORTANT]
 ====
 JBoss Marshalling is deprecated and planned for removal in a future version of {brandname}.
@@ -122,6 +96,68 @@ JBoss Marshalling is deprecated and planned for removal in a future version of {
 {brandname} ignores implementations of the link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
 interface when persisting data unless you configure JBoss marshalling. However, this interface is also deprecated and planned for removal.
 ====
+
+.Reference
+
+link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
+
+=== Kryo Marshalling
+{brandname} provides a marshalling implementation that uses Kryo libraries.
+
+Register custom Kryo schemas for object marshalling as follows:
+
+. Implement a service provider for the `SerializerRegistryService.java` interface.
+. Place all serializer registrations in the `register(Kryo)` method; where serializers are registered with the supplied `Kryo` object using the Kryo API, for example:
++
+----
+kryo.register(ExampleObject.class, new ExampleObjectSerializer())
+----
++
+. Specify the full path of implementing classes in your deployment JAR file within:
++
+----
+META-INF/services/org/infinispan/marshaller/kryo/SerializerRegistryService
+----
+
+//Community only
+ifndef::productized[]
+{brandname} provides a link:http://central.maven.org/maven2/org/infinispan/infinispan-marshaller-kryo-bundle/{infinispanversion}/infinispan-marshaller-kryo-bundle-{infinispanversion}.jar[Kryo Bundle] that includes all runtime class files for the Kryo marshalling implementation. Download the JAR and add it to the `server/lib` directory of your {brandname} servers.
+endif::productized[]
+
+.Reference
+
+link:https://github.com/EsotericSoftware/kryo[Kryo on GitHub]
+
+=== Protostuff Marshalling
+{brandname} provides a marshalling implementation that uses Protostuff libraries.
+
+Do one of the following to register custom Protostuff schemas for object
+marshalling:
+
+
+* Call the `register()` method.
++
+[source,java]
+----
+include::code_examples/RegisterCustomProtostuffSchema.java[]
+----
+
+* Implement a service provider for the `SerializerRegistryService.java` interface that places all schema registrations in the `register()` method.
++
+You should then specify the full path of implementing classes in your deployment JAR file within:
++
+----
+META-INF/services/org/infinispan/marshaller/protostuff/SchemaRegistryService
+----
+
+//Community only
+ifndef::productized[]
+{brandname} provides a link:http://central.maven.org/maven2/org/infinispan/infinispan-marshaller-protostuff-bundle/{infinispanversion}/infinispan-marshaller-protostuff-bundle-{infinispanversion}.jar[Protostuff Bundle JAR] that includes all runtime class files for the Protostuff marshalling implementation. Download the JAR and add it to the `server/lib` directory of your {brandname} servers.
+endif::productized[]
+
+.Reference
+
+link:https://github.com/protostuff/protostuff[Protostuff on GitHub]
 
 === Custom Implementation
 You can provide custom marshaller classes with the link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[Marshaller interface].
@@ -141,10 +177,43 @@ include::code_examples/CustomMarshaller.java[]
 include::config_examples/custom_marshaller.xml[]
 ----
 
-
 TIP: It's possible custom marshaller implementations to access a configured white list via the
 link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(org.infinispan.commons.configuration.ClassWhiteList)
 method, which is called during startup.
+
+[id='deserialization_whitelist']
+== Adding Java Classes to Deserialization White Lists
+{brandname} does not allow deserialization of arbritrary Java classes for
+security reasons, which applies to JSON, XML, and marshalled `byte[]` content.
+
+You must add Java classes to a deserialization white list, either using system
+properties or specifying them in the {brandname} configuration.
+
+.System properties
+
+[source,options="nowrap",subs=attributes+]
+----
+// Specify a comma-separated list of fully qualified class names
+-Dinfinispan.deserialization.whitelist.classes=java.time.Instant,com.myclass.Entity
+
+// Specify a regular expression to match classes
+-Dinfinispan.deserialization.whitelist.regexps=.*
+----
+
+.Declarative
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/deserialization_whitelist.xml[]
+----
+
+== Storing Deserialized Objects in {brandname} Servers
+If you configure {brandname} caches to use the `application/x-java-object`
+MediaType as the storage format (storing POJOs instead of binary content), you
+must put class files for all custom objects on the classpath for {brandname}
+servers.
+
+* Add JAR files that contain custom classes and/or service provider implementations for marshaller implementations in the `server/lib` directory of your {brandname} servers.
 
 [[store_as_binary]]
 == Store As Binary
