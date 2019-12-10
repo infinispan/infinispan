@@ -5,7 +5,10 @@ package org.infinispan.query.dsl;
  *
  * @author anistor@redhat.com
  * @since 6.0
+ * @deprecated since 10.1. The Ickle query language is now preferred over the {@code QueryBuilder}. See {@link
+ * QueryFactory#create}. The {@code QueryBuilder} and associated context interfaces will be removed in version 11.
  */
+@Deprecated
 public interface QueryBuilder extends FilterConditionBeginContext, PaginationContext<QueryBuilder> {
 
    QueryBuilder orderBy(Expression expression);

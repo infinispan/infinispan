@@ -153,6 +153,7 @@ public abstract class BaseQuery implements Query {
       return projection;
    }
 
+   @Override
    public long getStartOffset() {
       return startOffset;
    }
