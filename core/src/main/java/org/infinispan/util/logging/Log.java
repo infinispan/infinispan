@@ -1926,4 +1926,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Thread Pool Factory %s is blocking, but this pool requires non blocking threads", id = 566)
    CacheConfigurationException threadPoolFactoryIsBlocking(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "SerializationConfiguration Version is deprecated since version 10.1 and will be removed in the future. The configured value has no affect on Infinispan marshalling.", id = 567)
+   void serializationVersionDeprecated();
 }

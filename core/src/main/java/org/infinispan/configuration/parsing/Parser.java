@@ -155,6 +155,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case VERSION: {
+               CONFIG.serializationVersionDeprecated();
                builder.serialization().version(value);
                break;
             }
