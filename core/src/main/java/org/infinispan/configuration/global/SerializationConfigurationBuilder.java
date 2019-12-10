@@ -5,6 +5,7 @@ import static org.infinispan.configuration.global.SerializationConfiguration.CLA
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
 import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,8 +56,11 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * the benefit of improvements in newer versions of the marshaller.
     *
     * @param marshallVersion
+    * @deprecated since 10.1 configured value is never used.
     */
+   @Deprecated
    public SerializationConfigurationBuilder version(short marshallVersion) {
+      CONFIG.serializationVersionDeprecated();
       attributes.attribute(VERSION).set(marshallVersion);
       return this;
    }
@@ -67,8 +71,11 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * the benefit of improvements in newer versions of the marshaller.
     *
     * @param marshallVersion
+    * @deprecated since 10.1 configured value is never used.
     */
+   @Deprecated
    public SerializationConfigurationBuilder version(String marshallVersion) {
+      CONFIG.serializationVersionDeprecated();
       this.version(Version.getVersionShort(marshallVersion));
       return this;
    }

@@ -80,6 +80,7 @@ public class SerializationConfiguration implements ConfigurationInfo {
       return marshaller.get();
    }
 
+   @Deprecated
    public short version() {
       return version.get();
    }
