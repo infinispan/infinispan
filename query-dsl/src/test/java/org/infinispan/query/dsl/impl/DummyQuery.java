@@ -48,8 +48,18 @@ class DummyQuery implements Query {
    }
 
    @Override
+   public long getStartOffset() {
+      return 0;
+   }
+
+   @Override
    public Query startOffset(long startOffset) {
       return this;
+   }
+
+   @Override
+   public int getMaxResults() {
+      return Integer.MAX_VALUE;
    }
 
    @Override

@@ -6,9 +6,10 @@ package org.infinispan.query.dsl;
  * @since 9.2
  */
 public enum IndexedQueryMode {
+
    /**
     * Query is sent to all nodes, and results are combined before returning to the caller. This allows each node to have
-    * its own index, and the query will return the cluster wide results.
+    * its own index, and the query will return the cluster-wide results.
     */
    BROADCAST,
 

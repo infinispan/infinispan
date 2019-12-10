@@ -6,7 +6,9 @@ import org.infinispan.query.dsl.impl.PathExpression;
 /**
  * @author anistor@redhat.com
  * @since 8.0
+ * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
  */
+@Deprecated
 public interface Expression {
 
    static Expression param(String paramName) {

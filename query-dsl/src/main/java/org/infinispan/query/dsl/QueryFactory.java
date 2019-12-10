@@ -28,7 +28,9 @@ public interface QueryFactory {
     *
     * @param entityType the Class of the entity
     * @return a builder capable of creating queries for the specified entity type
+    * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
     */
+   @Deprecated
    QueryBuilder from(Class<?> entityType);
 
    /**
@@ -36,7 +38,9 @@ public interface QueryFactory {
     *
     * @param entityType fully qualified entity type name
     * @return a builder capable of creating queries for the specified entity type
+    * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
     */
+   @Deprecated
    QueryBuilder from(String entityType);
 
    /**
@@ -44,7 +48,9 @@ public interface QueryFactory {
     *
     * @param expression a path Expression
     * @return the incomplete sub-condition
+    * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
     */
+   @Deprecated
    FilterConditionEndContext having(Expression expression);
 
    /**
@@ -52,20 +58,26 @@ public interface QueryFactory {
     *
     * @param attributePath the attribute path
     * @return the incomplete sub-condition
+    * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
     */
+   @Deprecated
    FilterConditionEndContext having(String attributePath);
 
    /**
     * Creates a negated condition that is to be completed later by using it as a sub-condition.
     *
     * @return the incomplete sub-condition
+    * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
     */
+   @Deprecated
    FilterConditionBeginContext not();
 
    /**
     * Creates a negated condition based on a given sub-condition. The negation is grouped.
     *
     * @return the incomplete sub-condition
+    * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
     */
+   @Deprecated
    FilterConditionContext not(FilterConditionContext fcc);
 }

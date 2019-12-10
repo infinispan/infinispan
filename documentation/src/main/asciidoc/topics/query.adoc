@@ -869,7 +869,7 @@ It is suitable for use in conjunction with link:#query_non_shared_index[non-shar
 IndexedQueryMode.FETCH will execute the query in the caller. If all the indexes for the cluster wide data are available locally, performance will be optimal, otherwise this query mode
 may involve fetching indexes data from remote nodes.
 
-The IndexedQueryMode is supported for Lucene Queries and Ickle String queries at the moment (no {brandname} Query DSL).
+The _IndexedQueryMode_ is supported for Ickle queries and Lucene Queries (but not for Query DSL).
 
 Example:
 
@@ -884,6 +884,9 @@ List<Person> result = broadcastQuery.list();
 
 [[query_dsl]]
 ==== {brandname} Query DSL
+
+NOTE: The Query DSL (QueryBuilder and related interfaces) are deprecated and will be removed in next major version.
+Please use Ickle queries instead.
 
 {brandname} provides its own query DSL, independent of Lucene and Hibernate Search.
 Decoupling the query API from the underlying query and indexing mechanism makes it possible to introduce new alternative

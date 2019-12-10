@@ -5,7 +5,9 @@ import java.util.Map;
 /**
  * @author anistor@redhat.com
  * @since 9.0
+ * @deprecated since 10.1. See deprecation note on {@link QueryBuilder}.
  */
+@Deprecated
 public interface ParameterContext<Context extends ParameterContext> {
 
    /**
