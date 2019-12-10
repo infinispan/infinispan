@@ -49,8 +49,8 @@
     />
     <pbcast.GMS print_local_addr="false"
                 join_timeout="${jgroups.join_timeout:2000}"
-                max_join_attempts="1"
-                max_leave_attempts="1"
+                max_join_attempts="3"
+                max_leave_attempts="3"
     />
 
     <UFC_NB max_credits="3m"
