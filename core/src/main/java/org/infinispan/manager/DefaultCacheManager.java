@@ -32,9 +32,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassWhiteList;
@@ -280,7 +280,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       cacheManagerInfo = new CacheManagerInfo(this, configurationManager, internalCacheRegistry);
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
-      this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
+      this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), null,
                                                             globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       if (start)
          start();
@@ -381,7 +381,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
-                                                          globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
+                                                          null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {

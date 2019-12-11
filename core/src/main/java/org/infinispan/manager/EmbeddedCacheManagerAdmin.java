@@ -1,8 +1,11 @@
 package org.infinispan.manager;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
 /**
  * Cache manager operations which affect the whole cluster. An instance of this can be retrieved from
@@ -64,4 +67,13 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @return the cache
     */
    <K, V> Cache<K, V> getOrCreateCache(String name, Configuration configuration);
+
+   /**
+    * Performs any cache manager operations using the specified {@link Subject}. Only applies to cache managers with authorization
+    * enabled (see {@link GlobalConfigurationBuilder#security()}.
+    *
+    * @param subject
+    * @return an {@link EmbeddedCacheManagerAdmin} instance on which a real operation is to be invoked, using the specified subject
+    */
+   EmbeddedCacheManagerAdmin withSubject(Subject subject);
 }
