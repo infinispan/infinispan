@@ -3,6 +3,7 @@ package org.infinispan.rest.cachemanager;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 
+import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -20,6 +21,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
@@ -29,6 +31,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.security.Security;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.logging.LogFactory;
 
@@ -163,6 +166,15 @@ public class RestCacheManager<V> {
 
    public EmbeddedCacheManager getInstance() {
       return instance;
+   }
+
+   public EmbeddedCacheManagerAdmin getCacheManagerAdmin(RestRequest restRequest) {
+      Subject subject = restRequest.getSubject();
+      if (subject == null) {
+         return instance.administration();
+      } else {
+         return Security.doAs(subject, (PrivilegedAction<EmbeddedCacheManagerAdmin>) () -> instance.administration().withSubject(subject));
+      }
    }
 
    @SuppressWarnings("unchecked")

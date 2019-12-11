@@ -1,5 +1,6 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
@@ -9,6 +10,9 @@ import java.util.Map;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerRuleBuilder;
@@ -31,7 +35,7 @@ public class AuthorizationLDAPIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthorizationLDAPTest.xml")
-                                    .build();
+               .build();
 
    @ClassRule
    public static LdapServerRule LDAP = new LdapServerRule(SERVERS);
@@ -39,36 +43,44 @@ public class AuthorizationLDAPIT {
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
-   final Map<String, ConfigurationBuilder> builderMap;
+   final Map<String, ConfigurationBuilder> hotRodBuilders;
+   final Map<String, RestClientConfigurationBuilder> restBuilders;
 
    final Map<String, String> bulkData;
 
    public AuthorizationLDAPIT() {
-      builderMap = new HashMap<>();
-      addBuilder("admin", "strongPassword");
-      addBuilder("writer", "somePassword");
-      addBuilder("reader", "password");
-      addBuilder("supervisor", "lessStrongPassword");
+      hotRodBuilders = new HashMap<>();
+      restBuilders = new HashMap<>();
+      addClientBuilders("admin", "strongPassword");
+      addClientBuilders("writer", "somePassword");
+      addClientBuilders("reader", "password");
+      addClientBuilders("supervisor", "lessStrongPassword");
       bulkData = new HashMap<>();
       for (int i = 0; i < 10; i++) {
          bulkData.put("k" + i, "v" + i);
       }
    }
 
-   private void addBuilder(String username, String password) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.security().authentication()
+   private void addClientBuilders(String username, String password) {
+      ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
+      hotRodBuilder.security().authentication()
             .saslMechanism("SCRAM-SHA-1")
             .serverName("infinispan")
             .realm("default")
             .username(username)
             .password(password);
-      builderMap.put(username, builder);
+      hotRodBuilders.put(username, hotRodBuilder);
+      RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
+      restBuilder.security().authentication()
+            .mechanism("AUTO")
+            .username(username)
+            .password(password);
+      restBuilders.put(username, restBuilder);
    }
 
    @Test
-   public void testAdminCanDoEverything() {
-      RemoteCache<String, String> adminCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("admin")).withCacheMode(CacheMode.DIST_SYNC).create();
+   public void testHotRodAdminCanDoEverything() {
+      RemoteCache<String, String> adminCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get("admin")).withCacheMode(CacheMode.DIST_SYNC).create();
       adminCache.put("k", "v");
       assertEquals("v", adminCache.get("k"));
       adminCache.putAll(bulkData);
@@ -76,55 +88,100 @@ public class AuthorizationLDAPIT {
    }
 
    @Test
-   public void testNonAdminsMustNotCreateCache() {
+   public void testRestAdminCanDoEverything() {
+      RestCacheClient adminCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get("admin")).withCacheMode(CacheMode.DIST_SYNC).create().cache(SERVER_TEST.getMethodName());
+      sync(adminCache.put("k", "v"));
+      assertEquals("v", sync(adminCache.get("k")).getBody());
+   }
+
+   @Test
+   public void testHotRodNonAdminsMustNotCreateCache() {
       for (String user : Arrays.asList("reader", "writer", "supervisor")) {
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
-               () -> SERVER_TEST.hotrod().withClientConfiguration(builderMap.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
+               () -> SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
       }
    }
 
    @Test
-   public void testWriterCannotRead() {
-      createAuthzCache();
-      RemoteCache<String, String> writerCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("writer")).get();
+   public void testRestNonAdminsMustNotCreateCache() {
+      for (String user : Arrays.asList("reader", "writer", "supervisor")) {
+         Exceptions.expectException(RuntimeException.class, "(?s).*403.*",
+               () -> SERVER_TEST.rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
+         );
+      }
+   }
+
+   @Test
+   public void testHotRodWriterCannotRead() {
+      hotRodCreateAuthzCache();
+      RemoteCache<String, String> writerCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get("writer")).get();
       writerCache.put("k1", "v1");
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> writerCache.get("k1")
       );
       for (String user : Arrays.asList("reader", "supervisor")) {
-         RemoteCache<String, String> userCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get(user)).get();
+         RemoteCache<String, String> userCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          assertEquals("v1", userCache.get("k1"));
       }
    }
 
    @Test
-   public void testReaderCannotWrite() {
-      createAuthzCache();
-      RemoteCache<String, String> readerCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("reader")).get();
+   public void testRestWriterCannotRead() {
+      restCreateAuthzCache();
+      RestCacheClient writerCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get("writer")).get().cache(SERVER_TEST.getMethodName());
+      sync(writerCache.put("k1", "v1"));
+      assertEquals(403, sync(writerCache.get("k1")).getStatus());
+      for (String user : Arrays.asList("reader", "supervisor")) {
+         RestCacheClient userCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get(user)).get().cache(SERVER_TEST.getMethodName());
+         assertEquals("v1", sync(userCache.get("k1")).getBody());
+      }
+   }
+
+   @Test
+   public void testHotRodReaderCannotWrite() {
+      hotRodCreateAuthzCache();
+      RemoteCache<String, String> readerCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get("reader")).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.put("k1", "v1")
       );
       for (String user : Arrays.asList("writer", "supervisor")) {
-         RemoteCache<String, String> userCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get(user)).get();
+         RemoteCache<String, String> userCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          userCache.put(user, user);
       }
    }
 
    @Test
-   public void testBulkOperations() {
-      createAuthzCache().putAll(bulkData);
-      RemoteCache<String, String> readerCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("reader")).get();
+   public void testRestReaderCannotWrite() {
+      restCreateAuthzCache();
+      RestCacheClient readerCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get("reader")).get().cache(SERVER_TEST.getMethodName());
+      assertEquals(403, sync(readerCache.put("k1", "v1")).getStatus());
+      for (String user : Arrays.asList("writer", "supervisor")) {
+         RestCacheClient userCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get(user)).get().cache(SERVER_TEST.getMethodName());
+         userCache.put(user, user);
+      }
+   }
+
+   @Test
+   public void testHotRodBulkOperations() {
+      hotRodCreateAuthzCache().putAll(bulkData);
+      RemoteCache<String, String> readerCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get("reader")).get();
       Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
             () -> readerCache.getAll(bulkData.keySet())
       );
-      RemoteCache<String, String> supervisorCache = SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("supervisor")).get();
+      RemoteCache<String, String> supervisorCache = SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get("supervisor")).get();
       supervisorCache.getAll(bulkData.keySet());
    }
 
-   private RemoteCache<Object, Object> createAuthzCache() {
+   private RemoteCache<Object, Object> hotRodCreateAuthzCache() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable().role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
-      return SERVER_TEST.hotrod().withClientConfiguration(builderMap.get("admin")).withServerConfiguration(builder).create();
+      return SERVER_TEST.hotrod().withClientConfiguration(hotRodBuilders.get("admin")).withServerConfiguration(builder).create();
+   }
+
+   private RestClient restCreateAuthzCache() {
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable().role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");
+      return SERVER_TEST.rest().withClientConfiguration(restBuilders.get("admin")).withServerConfiguration(builder).create();
    }
 }

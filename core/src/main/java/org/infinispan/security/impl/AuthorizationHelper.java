@@ -74,6 +74,10 @@ public class AuthorizationHelper {
       checkPermission(configuration, null, perm, null);
    }
 
+   public void checkPermission(Subject subject, AuthorizationPermission perm) {
+      checkPermission(null, subject, perm, null);
+   }
+
    public void checkPermission(AuthorizationConfiguration configuration, Subject subject, AuthorizationPermission perm,
          String role) {
       if (globalConfiguration.authorization().enabled()) {

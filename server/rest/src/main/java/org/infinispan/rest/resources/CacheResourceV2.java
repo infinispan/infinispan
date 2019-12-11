@@ -140,7 +140,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
       return CompletableFuture.supplyAsync(() -> {
-         restCacheManager.getInstance().administration().removeCache(cacheName);
+         restCacheManager.getCacheManagerAdmin(request).removeCache(cacheName);
          responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -162,7 +162,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
 
       EnumSet<AdminFlag> adminFlags = request.getAdminFlags();
-      EmbeddedCacheManagerAdmin initialAdmin = invocationHelper.getRestCacheManager().getInstance().administration();
+      EmbeddedCacheManagerAdmin initialAdmin = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
       EmbeddedCacheManagerAdmin administration = adminFlags == null ? initialAdmin : initialAdmin.withFlags(adminFlags);
 
       if (template != null && !template.isEmpty()) {
