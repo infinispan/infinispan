@@ -34,7 +34,7 @@ public class StaticContentResource implements ResourceHandler {
    private final String urlPath;
 
    private static final int CACHE_MAX_AGE_SECONDS = 60 * 60 * 24 * 31;  // 1 Month
-   private static final String DEFAULT_RESOURCE = "index.html";
+   private static final String CONSOLE_RESOURCE = "index.html";
    private final String noFileUri;
    private final String rootUri;
 
@@ -81,8 +81,9 @@ public class StaticContentResource implements ResourceHandler {
          return completedFuture(responseBuilder.location(rootUri).status(MOVED_PERMANENTLY).build());
       }
 
-      String resource = uri.equals(rootUri) ? DEFAULT_RESOURCE : uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
-
+      // if the path is a '/console' url path, we need to serve the console application, served from the index.html
+      // if the path contains a '.', in this case we are asking for a file (css, js...) so we serve the file
+      String resource = isInfinispanConsolePath(uri) ? CONSOLE_RESOURCE : uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
       File file = resolve(resource);
       if (file == null) {
          return completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
@@ -114,5 +115,9 @@ public class StaticContentResource implements ResourceHandler {
             .contentType(mediaType)
             .entity(file);
       return completedFuture(responseBuilder.build());
+   }
+
+   private boolean isInfinispanConsolePath(String uri) {
+      return uri.startsWith(rootUri) && !uri.contains(".");
    }
 }
