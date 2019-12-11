@@ -1,0 +1,44 @@
+[id='jdbc_cache_store_config']
+= JDBC String-Based Cache Store Configuration
+You can configure `JdbcStringBasedStore` programmatically or declaratively.
+
+Specify a connection factory declaratively with the `<connectionPool />`,
+`<dataSource />`, or `<simpleConnection />` elements.
+
+Specify a connection factory programmatically with the `connectionPool()`,
+`dataSource()`, or `simpleConnection()` methods in the
+`JdbcStringBasedStoreConfigurationBuilder` class.
+
+.Declarative configuration with `PooledConnectionFactory`
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_example_jdbc.xml[]
+----
+
+.Declarative configuration with `ManagedConnectionFactory`
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_example_ds_jndi.xml[]
+----
+
+.Programmatic configuration with `PooledConnectionFactory`
+
+[source,java]
+----
+include::code_examples/PersistenceJdbcStringBasedStore.java[]
+----
+
+.Programmatic configuration with `ManagedConnectionFactory`
+
+[source,java]
+----
+include::code_examples/PersistenceDatasourceJndi.java[]
+----
+
+.Reference
+
+* link:{configdocroot}infinispan-cachestore-jdbc-config-{schemaversion}.html[JDBC cache store configuration schema]
+* link:{javadocroot}/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html[JdbcStringBasedStore]
+* link:{javadocroot}/org/infinispan/persistence/jdbc/configuration/JdbcStringBasedStoreConfiguration.html[JdbcStringBasedStoreConfiguration]

@@ -1,0 +1,36 @@
+[id='cluster_cache_loader']
+= Cluster Cache Loaders
+`ClusterCacheLoader` retrieves data from other {brandname} cluster members but
+does not persist data. In other words, `ClusterCacheLoader` is not a cache
+store.
+
+`ClusterCacheLoader` provides a non-blocking partial alternative to state
+transfer. `ClusterCacheLoader` fetches keys from other nodes on demand if those
+keys are not available on the local node, which is similar to lazily loading
+cache content.
+
+The following points also apply to `ClusterCacheLoader`:
+
+* Preloading does not take effect (`preload=true`).
+* Fetching persistent state is not supported (`fetch-state=true`).
+* Segmentation is not supported.
+
+.Declarative configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_cluster_loader.xml[]
+----
+
+.Programmatic configuration
+
+[source,java]
+----
+include::code_examples/PersistenceClusterLoader.java[]
+----
+
+.Reference
+
+* link:{configdocroot}infinispan-config-{schemaversion}.html[{brandname} configuration schema]
+* link:{javadocroot}/org/infinispan/persistence/cluster/ClusterLoader.html[ClusterLoader]
+* link:{javadocroot}/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[ClusterLoaderConfiguration]

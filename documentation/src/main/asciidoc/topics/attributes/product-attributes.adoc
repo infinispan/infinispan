@@ -68,7 +68,7 @@ include::transaction-attributes.adoc[]
 
 :download_url: https://access.redhat.com/downloads
 :javadocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api
-:configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/Configuration/
+:configdocroot: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/8.0/configdocs/
 :wildflydocroot: https://docs.jboss.org/author/display/WFLY11
 :jdkdocroot: https://docs.oracle.com/javase/8/docs/api
 :javaeedocroot: https://docs.oracle.com/javaee/7/api

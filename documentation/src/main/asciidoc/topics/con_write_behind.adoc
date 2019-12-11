@@ -1,0 +1,31 @@
+[id='write_behind']
+= Write-Behind
+Write-Behind is an cache writing mode where writes to memory are synchronous
+and writes to cache stores are asynchronous. When a client application
+updates a cache entry, {brandname} adds the update to a modification queue and
+then modifies the cache store in a different thread than the client thread.
+
+You can configure the number of threads that consume the modification queue and
+apply updates to the underlying cache store. The modification queue fills up if
+there are not enough threads to handle the updates or if the underlying cache
+store becomes unavailable. When this occurs, {brandname} uses Write-Through
+mode until the modification queue can accept new entries.
+
+Write-Behind mode provides a performance advantage over Write-Through mode
+because cache operations do not need to wait for updates to the underlying cache
+store to complete. However, data in the cache store remains inconsistent with
+data in the cache until the modification queue is processed. For this reason, 
+Write-Behind mode is suitable for cache stores with low latency, such as
+unshared and local filesystem-based cache stores, where the time between the
+write to the cache and the write to the cache store is as small as possible.
+
+.Write-behind configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_write_through_async.xml[]
+----
+
+.Reference
+
+link:#write_through[Write-Through]

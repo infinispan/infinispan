@@ -1,0 +1,33 @@
+[id='passivation']
+= Passivation
+Passivation configures {brandname} to write entries to cache stores when it
+evicts those entries from memory. In this way, passivation ensures that only a
+single copy of an entry is maintained, either in-memory or in a cache store,
+which prevents unnecessary and potentially expensive writes to persistent
+storage.
+
+Activation is the process of restoring entries to memory from the cache store
+when threads attempt to access passivated entries. For this reason, when you
+enable passivation, you must configure cache stores that implement both
+`CacheWriter` and `CacheLoader` interfaces so they can write and load entries
+from persistent storage.
+
+When {brandname} evicts an entry from the cache, it notifies cache listeners
+that the entry is passivated then stores the entry in the cache store. When
+{brandname} gets an access request for an evicted entry, it lazily loads the
+entry from the cache store into memory and then notifies cache listeners that
+the entry is activated.
+
+[NOTE]
+====
+* Passivation uses the first cache loader in the {brandname} configuration and
+ignores all others.
+
+* Passivation is not supported with:
+
+** Transactional stores. Passivation writes and removes entries from the store
+outside the scope of the actual {brandname} commit boundaries.
+** Shared stores. Shared cache stores require entries to always exist in the
+store for other owners. For this reason, passivation is not supported because
+entries cannot be removed.
+====

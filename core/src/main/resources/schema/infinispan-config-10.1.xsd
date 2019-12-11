@@ -800,7 +800,9 @@
       </xs:element>
       <xs:element name="persistence" type="tns:persistence" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>Configures the cache's persistence layer.</xs:documentation>
+          <xs:documentation>
+            Configures the persistence layer for caches.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="memory" type="tns:memory" minOccurs="0">
@@ -1113,7 +1115,9 @@
       </xs:element>
       <xs:element name="file-store" type="tns:file-store">
         <xs:annotation>
-          <xs:documentation>Defines a file-based cache store.</xs:documentation>
+          <xs:documentation>
+            Defines a filesystem-based cache store.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:any namespace="##other" />
@@ -1121,23 +1125,28 @@
     <xs:attribute name="passivation" type="xs:boolean" default="${Persistence.passivation}">
       <xs:annotation>
         <xs:documentation>
-          If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back to memory and removed from the persistent store. This gives you the ability to 'overflow' to disk, similar to swapping in an operating system. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a 'write-through' configuration. Defaults to false.
+          Enables passivation so that data is written to cache stores only if
+          it is evicted from memory. Subsequent requests for passivated entries
+          restore them to memory and remove them from persistent storage.
+          If you do not enable passivation, writes to entries in memory result
+          in writes to cache stores.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="connection-attempts" type="xs:int" default="${Persistence.connectionAttempts}">
       <xs:annotation>
         <xs:documentation>
-          The maximum number of unsuccessful attempts to start each of the
-          configured CacheWriter/CacheLoader before an exception is thrown and
-          the cache fails to start.
+          Sets the maximum number of attempts to start each configured
+          `CacheWriter` or `CacheLoader`. An exception is thrown and the cache
+          does not start if the number of connection attempts exceeds the
+          maximum.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="connection-interval" type="xs:int" default="${Persistence.connectionInterval}">
       <xs:annotation>
         <xs:documentation>
-          The time, in milliseconds, to wait between subsequent connection
+          Specifies the time, in milliseconds, to wait between connection
           attempts on startup. A negative or zero value means no wait between
           connection attempts.
         </xs:documentation>
@@ -1146,13 +1155,13 @@
     <xs:attribute name="availability-interval" type="xs:int" default="${Persistence.availabilityInterval}">
       <xs:annotation>
         <xs:documentation>
-          The time, in milliseconds, between availability checks to determine
-          if the PersistenceManager is available. In other words, this interval
-          sets how often stores/loaders are polled via their
-          `org.infinispan.persistence.spi.CacheWriter#isAvailable`
-          or `org.infinispan.persistence.spi.CacheLoader#isAvailable`
-          implementation. If a single store/loader is not available,
-          an exception is thrown during cache operations.
+          Specifies the time, in milliseconds, between availability checks to
+          determine if the PersistenceManager is available. In other words,
+          this interval sets how often stores and loaders are polled via their
+          `org.infinispan.persistence.spi.CacheWriter#isAvailable` or
+          `org.infinispan.persistence.spi.CacheLoader#isAvailable`
+          implementation. If a single store or loader is not available, an
+          exception is thrown during cache operations.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1378,7 +1387,9 @@
         </xs:sequence>
         <xs:attribute name="segments" type="xs:int" default="${Hash.numSegments}">
           <xs:annotation>
-            <xs:documentation>Sets the number of hash space segments per cluster. The default value is 256. The value should be at least 20 * the cluster size.
+            <xs:documentation>
+              Sets the number of hash space segments per cluster. The default
+              value is 256. The value should be at least 20 * the cluster size.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -1565,12 +1576,32 @@
     </xs:attribute>
     <xs:attribute name="shared" type="xs:boolean" default="${AbstractStore.shared}">
       <xs:annotation>
-        <xs:documentation>This setting should be set to true when multiple cache instances share the same cache store (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared database.) Setting this to true avoids multiple cache instances writing the same modification multiple times. If enabled, only the node where the modification originated will write to the cache store. If disabled, each individual cache reacts to a potential remote update by storing the data to the cache store.</xs:documentation>
+        <xs:documentation>
+          Determines if a cache loader is shared between cache instances.
+          Values are true / false (default). This property prevents duplicate
+          writes of data to the cache loader by different cache instances. An
+          example is where all cache instances in a cluster use the same JDBC
+          settings for the same remote, shared database. If true, only the
+          nodes where modifications originate write to the cache store. If
+          false, each cache reacts to potential remote updates by storing the
+          data to the cache store.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="preload" type="xs:boolean" default="${AbstractStore.preload}">
       <xs:annotation>
-        <xs:documentation>If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process.</xs:documentation>
+        <xs:documentation>
+          Pre-loads data into memory from the cache loader when the cache
+          starts. Values are true / false (default). This property is useful
+          when data in the cache loader is required immediately after startup
+          to prevent delays with cache operations when the data is loaded
+          lazily. This property can provide a "warm cache" on startup but it
+          impacts performance because it affects start time. Pre-loading data
+          is done locally, so any data loaded is stored locally in the node
+          only. Pre-loaded data is not replicated or distributed. Likewise,
+          data is pre-loaded only up to the maximum configured number of
+          entries in eviction.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -1591,12 +1622,16 @@
     <xs:sequence>
       <xs:element name="write-behind" type="tns:write-behind" minOccurs="0" maxOccurs="1">
         <xs:annotation>
-          <xs:documentation>Configures a cache store as write-behind instead of write-through.</xs:documentation>
+          <xs:documentation>
+            Configures cache stores as write-behind instead of write-through.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
-          <xs:documentation>A cache store property with name and value.</xs:documentation>
+          <xs:documentation>
+            Defines a cache store property with name and value.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
     </xs:sequence>
@@ -1617,22 +1652,47 @@
     </xs:attribute>
     <xs:attribute name="fetch-state" type="xs:boolean" default="${AbstractStore.fetchPersistentState}">
       <xs:annotation>
-        <xs:documentation>If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, only one of them can have this property enabled.</xs:documentation>
+        <xs:documentation>Fetches the persistent state of a cache when joining
+          a cluster. Values are true / false (default). The purpose of this
+          property is to retrieve the persistent state of a cache and apply it to the local cache store of a node when it joins a cluster. Fetching
+          the persistent state does not apply if a cache store is shared because it accesses the same data as the other stores. This property can be `true` for one configured cache loader only. If more than
+          one cache loader fetches the persistent state, a configuration exception is thrown when the cache service starts.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="purge" type="xs:boolean" default="${AbstractStore.purgeOnStartup}">
       <xs:annotation>
-        <xs:documentation>If true, purges this cache store when it starts up.</xs:documentation>
+        <xs:documentation>
+          Empties the specified cache loader at startup. Values are true /
+          false (default). This property takes effect only if read-only is
+          false.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="read-only" type="xs:boolean" default="${AbstractStore.ignoreModifications}">
       <xs:annotation>
-        <xs:documentation>If true, the cache store will only be used to load entries. Any modifications made to the caches will not be applied to the store.</xs:documentation>
+        <xs:documentation>
+          Prevents data from being persisted to cache stores. Values are true /
+          false (default). If true, cache stores load entries only. Any
+          modifications to data in the cache do not apply to cache stores.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="max-batch-size" type="xs:int" default="${AbstractStore.maxBatchSize}">
       <xs:annotation>
-        <xs:documentation>The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.</xs:documentation>
+        <xs:documentation>
+          Sets the maximum size of a batch to insert or delete from the cache
+          store. If the value is less than one, no upper limit applies to the
+          number of operations in a batch.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="segmented" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>
+          Configures cache stores to store data in hash space segments, with the
+          "hash.numSegments" property defining the number of segments.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -1641,32 +1701,35 @@
     <xs:attribute name="modification-queue-size" type="xs:int" default="${AsyncStore.modificationQueueSize}">
       <xs:annotation>
         <xs:documentation>
-          Maximum number of entries in the asynchronous queue. When the queue is full, the store becomes write-through.
-          until it can accept new entries
+          Specifies the maximum number of entries in the asynchronous
+          modification queue. When the queue is full, write-through mode is
+          used until the queue can accept new entries.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="thread-pool-size" type="xs:int" default="${AsyncStore.threadPoolSize}">
       <xs:annotation>
         <xs:documentation>
-          Size of the thread pool whose threads are responsible for applying the modifications to the cache store.
+          Specifies the number of threads to apply modifications to the cache
+          store.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="fail-silently" type="xs:boolean" default="${AsyncStore.failSilently}">
       <xs:annotation>
         <xs:documentation>
-          If true, the async store attempts to perform write operations only
-          as many times as configured with `connection-attempts` in the
-          PersistenceConfiguration. If all attempts fail, the errors are
-          ignored and the write operations are not executed on the store.
-          If false, write operations that fail are attempted again when the
-          underlying store becomes available. If the modification queue becomes
-          full before the underlying store becomes available, an error is
-          thrown on all future write operations to the store until the
+          Controls how asynchronous write operations take place when cache
+          stores become unavailable. If "true", asynchronous write operations
+          that fail are re-attempted with the number of times specified in the
+          "connection-attempts" parameter. If all attempts fail, errors are
+          ignored and write operations are not executed on the cache store. If
+          "false", asynchronous write operations that fail are re-attempted
+          when the underlying store becomes available. If the modification
+          queue becomes full before the underlying store becomes available, an
+          error is thrown on all future write operations to the store until the
           modification queue is flushed. The modification queue is not
           persisted. If the underlying store does not become available before
-          the Async store is stopped, queued modifications are lost.
+          the asynchronous store is stopped, queued modifications are lost.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1677,7 +1740,9 @@
       <xs:extension base="tns:store">
         <xs:attribute name="class" type="xs:string" use="required">
           <xs:annotation>
-            <xs:documentation>The class name of the cache store implementation.</xs:documentation>
+            <xs:documentation>Defines the class name of a cache store that
+              implements either `CacheLoader`, `CacheWriter`, or both.
+            </xs:documentation>
           </xs:annotation>
         </xs:attribute>
       </xs:extension>
@@ -1690,22 +1755,32 @@
         <xs:attribute name="max-entries" type="xs:int">
           <xs:annotation>
             <xs:documentation>
-              Sets the maximum number of in-memory mappings between keys and their position in the store.
-              Normally this is unlimited, but to avoid excess memory usage, an upper bound can be configured.
-              If this limit is exceeded, entries are removed permanently using the LRU algorithm both from
-              the in-memory index and the underlying file based cache store. Warning: setting this value
-              may cause data loss.
+              Specifies the maximum number of entries that the file store can
+              hold. To increase the speed of lookups, Single File cache stores
+              index keys and their locations in the file. To avoid excessive
+              memory usage, you can configure the maximum number of entries so
+              that entries are removed permanently from both memory and the
+              cache store when the maximum is exceeded. However, this can lead
+              to data loss. You should only set a maximum number of entries if
+              data can be recomputed or retrieved from an authoritative data
+              store. By default, the value is `-1` which means that there is no
+              maximum number of entries.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="relative-to" type="xs:string">
-          <xs:annotation><xs:documentation>A property name indicating the root path where data is stored.</xs:documentation></xs:annotation>
+          <xs:annotation>
+            <xs:documentation>
+              Defines the root path on the file system where data is stored.
+            </xs:documentation>
+          </xs:annotation>
         </xs:attribute>
         <xs:attribute name="path" type="xs:string">
           <xs:annotation>
             <xs:documentation>
-              The path within "relative-to" in which to store the cache state.
-              If undefined, the path defaults to the cache container name.
+              Defines a location in the root path, specified in "relative-to",
+              where the cache state is stored. Defaults to the name of the
+              cache container.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

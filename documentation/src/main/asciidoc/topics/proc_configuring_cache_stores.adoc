@@ -1,0 +1,45 @@
+[id='configuring_cache_stores]
+= Configuring Cache Stores
+Add cache stores to {brandname} caches in a chain either declaratively or
+programmatically. Cache read operations check each cache store in the
+configured order until they locate a valid non-null element of data. Write
+operations affect all cache stores except for those that you configure as read
+only.
+
+.Procedure
+
+. Use the `persistence` parameter to configure the persistence layer for caches.
+. Add {brandname} cache stores with the appropriate configuration, as in the
+following examples:
+
+.Declarative configuration for a file-based cache store
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/file_store.xml[]
+----
+
+.Declarative configuration for a custom cache store configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/custom_cache_store.xml[]
+----
+
+[NOTE]
+====
+Custom cache stores include `property` parameters that let you configure specific attributes for your cache store.
+====
+
+.Programmatic configuration for a single file cache store
+
+[source,java]
+----
+include::code_examples/SingleFileStore.java[]
+----
+
+.Reference
+
+* link:{configdocroot}[{brandname} Configuration Schema]
+* link:#cache_store_implementations[{brandname} Cache Store Implementations]
+* link:#create_custom_cache_store[Creating Custom Cache Stores]

@@ -1,0 +1,43 @@
+[id='remote_cache_store']
+= Remote Cache Stores
+Remote cache stores, `RemoteStore`, use a remote {brandname} cluster as storage.
+
+`RemoteStore` uses the Hot Rod protocol to communicate with remote {brandname}
+clusters.
+
+In the following configuration examples, `RemoteStore` uses the remote cache
+named "mycache" on {brandname} servers "one" and "two":
+
+.Declarative configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_remote_store.xml[]
+----
+
+.Programmatic configuration
+
+[source,java]
+----
+include::code_examples/ConfigRemoteStore.java[]
+----
+
+.Segmentation
+
+`RemoteStore` supports segmentation and can publish keys and entries by
+segment, which makes bulk operations more efficient. However, segmentation is
+available with {brandname} Hot Rod protocol version 2.3 or later.
+
+//dnaro: expand this out. how do you ensure?
+[WARNING]
+====
+Ensure the number of segments and hash are the same between the Remote cache
+store and {brandname} servers, otherwise bulk operations do not return correct
+results.
+====
+
+.Reference
+
+* link:{configdocroot}infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]
+* link:{javadocroot}/org/infinispan/persistence/remote/RemoteStore.html[RemoteStore]
+* link:{javadocroot}/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html[RemoteStoreConfigurationBuilder]
