@@ -125,7 +125,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          Path console = configuration.staticResources().resolve("console");
          resourceManager.registerResource(rootContext, new StaticContentResource(staticResources, "static"));
          resourceManager.registerResource(rootContext, new StaticContentResource(console, "console"));
-         resourceManager.registerResource(rootContext, new StaticContentResource(console, "console/welcome"));
          resourceManager.registerResource(rootContext, new RedirectResource(rootContext, rootContext + "console/welcome", true));
       }
       if (server != null) {

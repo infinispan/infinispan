@@ -69,6 +69,21 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response2).isOk();
 
       assertResponse(response3, "static-test/console/index.html", "console", TEXT_HTML);
+
+      String url = String.format("http://localhost:%d/console/", restServer().getPort());
+      client.getContentDecoderFactories().clear();
+      ContentResponse response = client.newRequest(url).method(GET).followRedirects(false).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      url = String.format("http://localhost:%d/console/create", restServer().getPort());
+      client.getContentDecoderFactories().clear();
+      response = client.newRequest(url).method(GET).followRedirects(false).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      url = String.format("http://localhost:%d/notconsole/", restServer().getPort());
+      client.getContentDecoderFactories().clear();
+      response = client.newRequest(url).method(GET).followRedirects(false).send();
+      ResponseAssertion.assertThat(response).isNotFound();
    }
 
    private void assertResponse(ContentResponse response, String path, String returnedText, MediaType... possibleTypes) {
