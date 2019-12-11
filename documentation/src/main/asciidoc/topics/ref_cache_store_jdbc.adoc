@@ -1,0 +1,23 @@
+[id='jdbc_cache_store']
+= JDBC String-Based Cache Stores
+JDBC String-Based cache stores, `JdbcStringBasedStore`, use JDBC drivers to load and store values in the underlying database.
+
+`JdbcStringBasedStore` stores each entry in its own row in the table to
+increase throughput for concurrent loads. `JdbcStringBasedStore` also uses a
+simple one-to-one mapping that maps each key to a `String` object using the `key-to-string-mapper` interface.
+
+{brandname} provides a default implementation, `DefaultTwoWayKey2StringMapper`,
+that handles primitive types.
+
+[NOTE]
+====
+By default {brandname} shares are not stored, which means that all nodes in the
+cluster write to the underlying store on each update. If you want operations to
+write to the underlying database once only, you must configure JDBC store as
+shared.
+====
+
+.Segmentation
+
+`JdbcStringBasedStore` supports segmentation and uses an additional column in
+the database table to represent the segment to which an entry belongs.

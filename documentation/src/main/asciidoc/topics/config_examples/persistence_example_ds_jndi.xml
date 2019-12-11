@@ -1,6 +1,9 @@
-<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:{schemaversion}" shared="true" fetch-state="false" read-only="false" purge="false">
+<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
+  shared="true">
    <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
-   <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+   <string-keyed-table drop-on-exit="true"
+     create-on-start="true"
+     prefix="ISPN_STRING_TABLE">
       <id-column name="ID_COLUMN" type="VARCHAR(255)" />
       <data-column name="DATA_COLUMN" type="BINARY" />
       <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />

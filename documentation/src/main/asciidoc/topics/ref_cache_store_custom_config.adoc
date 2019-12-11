@@ -1,0 +1,17 @@
+[id='configure_custom_cache_store']
+= Custom Cache Store Configuration
+After you implement your custom cache store, configure {brandname} to use it.
+
+.Declarative configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_store_class.xml[]
+----
+
+.Programmatic configuration
+
+[source,java]
+----
+include::code_examples/PersistenceCustomStore.java[]
+----

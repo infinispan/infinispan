@@ -1,0 +1,56 @@
+[id='jpa_cache_store']
+= JPA Cache Stores
+JPA (Java Persistence API) cache stores, `JpaStore`, use formal schema to persist data. Other applications can then read from persistent storage to load data from {brandname}. However, other applications should not use persistent storage concurrently with {brandname}.
+
+When using `JpaStore`, you should take the following into consideration:
+
+* Keys should be the ID of the entity. Values should be the entity object.
+* Only a single `@Id` or `@EmbeddedId` annotation is allowed.
+* Auto-generated IDs with the `@GeneratedValue` annotation are not supported.
+* All entries are stored as immortal.
+* `JpaStore` does not support segmentation.
+
+.Declarative configuration
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/persistence_jpa_store.xml[]
+----
+
+[options="header"]
+|===
+| Parameter | Description
+| `persistence-unit`
+| Specifies the JPA persistence unit name in the JPA configuration file, `persistence.xml`, that contains the JPA entity class.
+
+| `entity-class`
+| Specifies the fully qualified JPA entity class name that is expected to be stored in this cache. Only one class is allowed.
+|===
+
+.Programmatic configuration
+
+[source,java]
+----
+include::code_examples/ConfigJpaStore.java[]
+----
+
+[options="header"]
+|===
+| Parameter | Description
+| `persistenceUnitName`
+| Specifies the JPA persistence unit name in the JPA configuration file, `persistence.xml`, that contains the JPA entity class.
+
+| entityClass
+| Specifies the fully qualified JPA entity class name that is expected to be stored in this cache. Only one class is allowed.
+|===
+
+.Reference
+
+* link:{configdocroot}infinispan-cachestore-jpa-config-{schemaversion}.html[JPA cache store configuration schema]
+* link:{javadocroot}/org/infinispan/persistence/jpa/JpaStore.html[JpaStore]
+* link:{javadocroot}/org/infinispan/persistence/jpa/configuration/JpaStoreConfiguration.html[JpaStoreConfiguration]
+//Community only
+ifndef::productized[]
+* link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/configuration/JpaConfigurationTest.java[JPA Cache Store test]
+* link:https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/resources/config/jpa-config.xml[JPA Cache Store test configuration]
+endif::productized[]

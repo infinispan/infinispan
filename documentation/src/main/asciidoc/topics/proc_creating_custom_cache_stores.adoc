@@ -1,0 +1,32 @@
+[id='create_custom_cache_store']
+= Implementing Custom Cache Stores
+Create custom cache stores that implement both `CacheWriter` and `CacheLoader`
+interfaces to fetch and persist data to external storage.
+
+. Implement the appropriate {brandname} persistent SPIs.
+. Annotate your store class with the `@Store` annotation and specify the appropriate properties.
++
+For example, if your cache store is shared, use the `@Store(shared = true)`
+annotation.
++
+. Create a custom cache store configuration and builder.
+.. Extend `AbstractStoreConfiguration` and `AbstractStoreConfigurationBuilder`.
++
+Extend `AbstractSegmentedStoreConfiguration` instead of
+`AbstractStoreConfiguration` for a segmented cache store that creates a
+different store instance per segment.
++
+.. Optionally add the following annotations to ensure that your custom configuration builder parses your cache store configuration from XML:
++
+* `@ConfigurationFor`
+* `@BuiltBy`
+* `@ConfiguredBy`
++
+If you do not add these annotations, then `CustomStoreConfigurationBuilder` parses the common store attributes defined in `AbstractStoreConfiguration` and any additional elements are ignored.
++
+[NOTE]
+====
+If a store and its configuration do not declare the `@Store` and
+`@ConfigurationFor` annotations, a warning message is logged when {brandname}
+initializes the cache.
+====

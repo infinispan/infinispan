@@ -1,18 +1,25 @@
 [id='persistence']
-:context: admin
+:context: configure
+= Setting Up Persistent Storage
+{brandname} can persist in-memory data to external storage, giving you
+additional capabilities to manage your data such as:
 
-include::{topics}/persistence.adoc[leveloffset=+0]
-include::{topics}/persistence_sfs.adoc[leveloffset=+1]
-include::{topics}/persistence_sifs.adoc[leveloffset=+1]
-include::{topics}/persistence_jdbc.adoc[leveloffset=+1]
-include::{topics}/persistence_remote.adoc[leveloffset=+1]
-include::{topics}/persistence_cluster.adoc[leveloffset=+1]
-include::{topics}/persistence_cli.adoc[leveloffset=+1]
-include::{topics}/persistence_rocksdb.adoc[leveloffset=+1]
-include::{topics}/persistence_jpa.adoc[leveloffset=+1]
-include::{topics}/persistence_custom.adoc[leveloffset=+1]
-include::{topics}/persistence_storemigrator.adoc[leveloffset=+1]
-include::{topics}/persistence_spi.adoc[leveloffset=+1]
+Durability::
+Adding cache stores allows you to persist data to non-volatile storage so it
+survives restarts.
+Write-through caching::
+Configuring {brandname} as a caching layer in front of persistent storage
+simplifies data access for applications because {brandname} handles all
+interactions with the external storage.
+Data overflow::
+Using eviction and passivation techniques ensures that {brandname} keeps only
+frequently used data in-memory and writes older entries to persistent storage.
+
+include::assembly_cache_stores.adoc[leveloffset=+1]
+include::assembly_cache_store_implementations.adoc[leveloffset=+1]
+include::assembly_persistence_spi.adoc[leveloffset=+1]
+include::assembly_migrating_cache_stores.adoc[leveloffset=+1]
+
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

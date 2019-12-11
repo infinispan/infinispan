@@ -1,0 +1,13 @@
+[id='deploy_custom_cache_store']
+= Deploying Custom Cache Stores
+You can package custom cache stores into JAR files and deploy them to
+{brandname} servers as follows:
+
+. Package your custom cache store implementation in a JAR file.
+. Add a file under `META-INF/services/` that contains the fully qualified class name of your store implementation.
++
+The name of the service file should reflect the interface that your store implements. For example, if your store implements the `AdvancedCacheWriter` interface then you should create the following file:
++
+`/META-INF/services/org.infinispan.persistence.spi.AdvancedCacheWriter`
++
+. Add your JAR file to the `server/lib` directory of your {brandname} server.
