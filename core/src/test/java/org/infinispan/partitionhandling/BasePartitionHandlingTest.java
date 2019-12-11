@@ -1,6 +1,8 @@
 package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.extractJChannel;
 import static org.testng.Assert.assertEquals;
 
 import java.lang.invoke.MethodHandles;
@@ -8,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,14 +30,10 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.remoting.transport.AbstractDelegatingTransport;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
@@ -187,8 +184,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void partition() {
-         discardOtherMembers();
-
          log.trace("Partition forming");
          disableDiscovery();
          installNewView();
@@ -212,7 +207,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       private List<Address> installNewView() {
          final List<Address> viewMembers = new ArrayList<>();
          for (JChannel c : channels) viewMembers.add(c.getAddress());
-         View view = View.create(channels.get(0).getAddress(), viewId.incrementAndGet(), (Address[]) viewMembers.toArray(new Address[viewMembers.size()]));
+         View view = View.create(channels.get(0).getAddress(), viewId.incrementAndGet(),
+                                 viewMembers.toArray(new Address[0]));
 
          log.trace("Before installing new view...");
          for (JChannel c : channels) {
@@ -243,7 +239,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
             e.printStackTrace();
          }
 
-         MergeView mv = new MergeView(view1.get(0).getAddress(), (long)viewId.incrementAndGet(), allAddresses, allViews);
+         MergeView mv = new MergeView(view1.get(0).getAddress(), viewId.incrementAndGet(), allAddresses, allViews);
          // Compute the merge digest, without it nodes would request the retransmission of all messages
          // Including those that were removed by STABLE earlier
          MutableDigest digest = new MutableDigest(allAddresses.toArray(new Address[0]));
@@ -260,7 +256,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       private View toView(ArrayList<JChannel> channels) {
          final List<Address> viewMembers = new ArrayList<>();
          for (JChannel c : channels) viewMembers.add(c.getAddress());
-         return View.create(channels.get(0).getAddress(), viewId.incrementAndGet(), (Address[]) viewMembers.toArray(new Address[viewMembers.size()]));
+         return View.create(channels.get(0).getAddress(), viewId.incrementAndGet(),
+                            viewMembers.toArray(new Address[0]));
       }
 
       private void discardOtherMembers() {
@@ -274,6 +271,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
          for (JChannel c : channels) {
             DISCARD discard = new DISCARD();
+            log.tracef("%s discarding messages from %s", c.getAddress(), outsideMembers);
             for (Address a : outsideMembers) discard.addIgnoreMember(a);
             try {
                c.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
@@ -285,8 +283,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       @Override
       public String toString() {
-         String addresses = "";
-         for (JChannel c : channels) addresses += c.getAddress() + " ";
+         StringBuilder addresses = new StringBuilder();
+         for (JChannel c : channels) addresses.append(c.getAddress()).append(" ");
          return "Partition{" + addresses + '}';
       }
 
@@ -305,7 +303,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          waitForPartitionToForm(waitForNoRebalance);
          List<Partition> tmp = new ArrayList<>(Arrays.asList(BasePartitionHandlingTest.this.partitions));
          if (!tmp.remove(partition)) throw new AssertionError();
-         BasePartitionHandlingTest.this.partitions = tmp.toArray(new Partition[tmp.size()]);
+         BasePartitionHandlingTest.this.partitions = tmp.toArray(new Partition[0]);
       }
 
       private String printView(ArrayList<JChannel> view1) {
@@ -316,17 +314,13 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       private void waitForPartitionToForm(boolean waitForNoRebalance) {
          List<Cache<Object, Object>> caches = new ArrayList<>(getCaches(null));
-         Iterator<Cache<Object, Object>> i = caches.iterator();
-         while (i.hasNext()) {
-            if (!channels.contains(channel(i.next())))
-               i.remove();
-         }
+         caches.removeIf(objectObjectCache -> !channels.contains(channel(objectObjectCache)));
          Cache<Object, Object> cache = caches.get(0);
-         TestingUtil.blockUntilViewsReceived(10000, caches);
+         blockUntilViewsReceived(10000, caches);
 
          if (waitForNoRebalance) {
             if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
-               TestingUtil.waitForNoRebalance(caches);
+               waitForNoRebalance(caches);
             }
          }
       }
@@ -359,7 +353,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void assertKeyAvailableForRead(Object k, Object expectedValue) {
-         for (Cache c : cachesInThisPartition()) {
+         for (Cache<?, ?> c : cachesInThisPartition()) {
             BasePartitionHandlingTest.this.assertKeyAvailableForRead(c, k, expectedValue);
          }
       }
@@ -409,13 +403,13 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void assertAvailabilityMode(final AvailabilityMode state) {
-         for (final Cache c : cachesInThisPartition()) {
+         for (final Cache<?, ?> c : cachesInThisPartition()) {
             eventuallyEquals(state, () -> partitionHandlingManager(c).getAvailabilityMode());
          }
       }
 
       public void assertConsistentHashMembers(List<org.infinispan.remoting.transport.Address> expectedMembers) {
-         for (Cache c : cachesInThisPartition()) {
+         for (Cache<?, ?> c : cachesInThisPartition()) {
             assertEquals(new HashSet<>(c.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers()), new HashSet<>(expectedMembers));
          }
       }
@@ -425,7 +419,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
             cachesInThisPartition().stream()
                                    .map(c -> c.getAdvancedCache().getRpcManager().getAddress())
                                    .collect(Collectors.toSet());
-         for (Cache c : cachesInThisPartition()) {
+         for (Cache<?, ?> c : cachesInThisPartition()) {
             eventuallyEquals(expected, () -> new HashSet<>(c.getAdvancedCache().getDistributionManager().getCacheTopology().getActualMembers()));
          }
       }
@@ -467,13 +461,18 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
             p.addNode(channel(j));
          }
          partitions[i] = p;
+         p.discardOtherMembers();
+      }
+      // Only install the new views after installing DISCARD
+      // Otherwise broadcasts from the first partition would be visible in the other partitions
+      for (Partition p : partitions) {
          p.partition();
       }
    }
 
-   protected AdvancedCache[] getPartitionCaches(PartitionDescriptor descriptor) {
+   protected AdvancedCache<?, ?>[] getPartitionCaches(PartitionDescriptor descriptor) {
       int[] nodes = descriptor.getNodes();
-      AdvancedCache[] caches = new AdvancedCache[nodes.length];
+      AdvancedCache<?, ?>[] caches = new AdvancedCache[nodes.length];
       for (int i = 0; i < nodes.length; i++)
          caches[i] = advancedCache(nodes[i]);
       return caches;
@@ -496,12 +495,11 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    protected JChannel channel(Cache<?, ?> cache) {
-      Transport transport = cache.getAdvancedCache().getRpcManager().getTransport();
       return channel(cache.getCacheManager());
    }
 
    private JChannel channel(EmbeddedCacheManager manager) {
-      return extractJGroupsTransport(manager.getTransport()).getChannel();
+      return extractJChannel(manager);
    }
 
    protected Partition partition(int i) {
@@ -514,8 +512,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       return partitionHandlingManager(advancedCache(index));
    }
 
-   protected PartitionHandlingManager partitionHandlingManager(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(PartitionHandlingManager.class);
+   protected PartitionHandlingManager partitionHandlingManager(Cache<?, ?> cache) {
+      return extractComponent(cache, PartitionHandlingManager.class);
    }
 
    protected void assertExpectedValue(Object expectedVal, Object key) {
@@ -523,14 +521,4 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          assertEquals(cache(i).get(key), expectedVal);
       }
    }
-
-   private static JGroupsTransport extractJGroupsTransport(Transport transport) {
-      if (transport instanceof AbstractDelegatingTransport) {
-         return extractJGroupsTransport(((AbstractDelegatingTransport) transport).getDelegate());
-      } else if (transport instanceof JGroupsTransport) {
-         return (JGroupsTransport) transport;
-      }
-      throw new IllegalArgumentException("Transport is not a JGroupsTransport! It is " + transport.getClass());
-   }
-
 }
