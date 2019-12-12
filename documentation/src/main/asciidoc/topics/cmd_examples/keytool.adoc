@@ -1,18 +1,26 @@
-# Create the CA key pair
+# Generate a CA certificate and keystore
 keytool -genkeypair -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass secret -alias ca -dname "CN=CA,OU=Operations,O=Organization,L=ACME" -keystore ca.p12 -ext bc:c
-# Export the CA certificate
+
+# Export the CA certificate from the keystore
 keytool -exportcert -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass secret -alias ca -keystore ca.p12 -file ca.cer
-# Generate a Server certificate
+
+# Generate a server certificate and keystore
 keytool -genkeypair -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass secret -alias server -dname "CN=Server,OU=Operations,O=Organization,L=ACME" -keystore server.p12
+
 # Create a certificate signing request (CSR) for the server
 keytool -certreq -alias server -dname "CN=Server,OU=Operations,O=Organization,L=ACME" -keystore server.p12 -storepass secret -file server.csr
-# Sign the CSR with the CA
+
+# Sign the CSR with the CA certificate
 keytool -gencert -alias ca -keystore ca.p12 -storepass secret -infile server.csr -outfile server.cer
+
 # Import the CA certificate to the server keystore
 keytool -importcert -alias ca -keystore server.p12 -noprompt -storepass secret -file ca.cer
+
 # Import the signed server certificate to the server keystore
 keytool -importcert -alias server -keystore server.p12 -noprompt -storepass secret -file server.cer
-# Create a client truststore containing the CA public key
+
+# Create a client truststore that contains the CA public key
 keytool -importcert -alias ca -keystore client_truststore.p12 -storepass secret -file ca.cer
-# Inspect that the server keystore contains both certificates (CA and Server) [optional]
+
+# Optionally verify that the server keystore contains the CA and server certificates
 keytool -list -v -keystore server.p12 -storepass secret
