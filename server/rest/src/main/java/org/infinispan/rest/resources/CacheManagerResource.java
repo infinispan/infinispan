@@ -14,8 +14,10 @@ import static org.infinispan.rest.framework.Method.POST;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
@@ -33,6 +35,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -191,29 +194,32 @@ public class CacheManagerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
+      Map<String, HealthStatus> cachesHeath = new HashMap<>();
+
+      for(CacheHealth ch: SecurityActions.getHealth(cacheManager).getCacheHealth()) {
+         cachesHeath.put(ch.getCacheName(), ch.getStatus());
+      }
+
       // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
       return Flowable.fromIterable(cacheManager.getCacheNames())
             .map(cacheManager::getCache)
-            .flatMapSingle(cache ->
-                  RxJavaInterop.completionStageToSingle(cache.sizeAsync())
-                        .map(size -> {
-                           CacheInfo cacheInfo = new CacheInfo();
-                           cacheInfo.name = cache.getName();
-                           Configuration cacheConfiguration = cache.getCacheConfiguration();
-                           cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-                           cacheInfo.status = cache.getStatus().name();
-                           cacheInfo.size = size;
-                           cacheInfo.simpleCache = cacheConfiguration.simpleCache();
-                           cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
-                           cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
-                           cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
-                                 cacheConfiguration.expiration().lifespan() != -1;
-                           cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
-                           cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
-                           cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
-                           return cacheInfo;
-                           // Only request 1 cache size at a time
-                        }), false, 1)
+            .map(cache -> {
+               CacheInfo cacheInfo = new CacheInfo();
+               cacheInfo.name = cache.getName();
+               Configuration cacheConfiguration = cache.getCacheConfiguration();
+               cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
+               cacheInfo.status = cache.getStatus().name();
+               cacheInfo.simpleCache = cacheConfiguration.simpleCache();
+               cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+               cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
+               cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
+                     cacheConfiguration.expiration().lifespan() != -1;
+               cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
+               cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
+               cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
+               cacheInfo.health = cachesHeath.get(cache.getName());
+               return cacheInfo;
+            })
             .collectInto(new HashSet<CacheInfo>(), Set::add)
             .map(cacheInfos -> {
                try {
@@ -349,7 +355,6 @@ public class CacheManagerResource implements ResourceHandler {
       public String status;
       public String name;
       public String type;
-      public long size;
       public boolean simpleCache;
       public boolean transactional;
       public boolean persistent;
@@ -357,6 +362,7 @@ public class CacheManagerResource implements ResourceHandler {
       public boolean indexed;
       public boolean secured;
       public boolean hasRemoteBackup;
+      public HealthStatus health;
    }
 
 }
