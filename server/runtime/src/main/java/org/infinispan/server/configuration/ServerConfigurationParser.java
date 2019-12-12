@@ -44,6 +44,7 @@ import org.infinispan.server.configuration.security.TrustStoreRealmConfiguration
 import org.infinispan.server.configuration.security.UserPropertiesConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 
 /**
@@ -488,6 +489,18 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             case RDN_IDENTIFIER:
                ldapRealmConfigBuilder.rdnIdentifier(value);
+               break;
+            case CONNECTION_POOLING:
+               ldapRealmConfigBuilder.connectionPooling(Boolean.parseBoolean(value));
+               break;
+            case CONNECTION_TIMEOUT:
+               ldapRealmConfigBuilder.connectionTimeout(Integer.parseInt(value));
+               break;
+            case READ_TIMEOUT:
+               ldapRealmConfigBuilder.readTimeout(Integer.parseInt(value));
+               break;
+            case REFERRAL_MODE:
+               ldapRealmConfigBuilder.referralMode(DirContextFactory.ReferralMode.valueOf(value.toUpperCase()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

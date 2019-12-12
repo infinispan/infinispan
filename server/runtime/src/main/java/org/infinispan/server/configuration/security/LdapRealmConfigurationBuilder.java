@@ -2,6 +2,7 @@ package org.infinispan.server.configuration.security;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
@@ -66,7 +67,6 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
       return this;
    }
 
-
    public LdapRealmConfigurationBuilder credential(String credential) {
       attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(credential);
       dirContextBuilder.setSecurityCredential(credential);
@@ -102,6 +102,26 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
       return this;
    }
 
+   public LdapRealmConfigurationBuilder connectionTimeout(int connectionTimeout) {
+      attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).set(connectionTimeout);
+      return this;
+   }
+
+   public LdapRealmConfigurationBuilder readTimeout(int readTimeout) {
+      attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).set(readTimeout);
+      return this;
+   }
+
+   public LdapRealmConfigurationBuilder connectionPooling(boolean connectionPooling) {
+      attributes.attribute(LdapRealmConfiguration.CONNECTION_POOLING).set(connectionPooling);
+      return this;
+   }
+
+   public LdapRealmConfigurationBuilder referralMode(DirContextFactory.ReferralMode referralMode) {
+      attributes.attribute(LdapRealmConfiguration.REFERRAL_MODE).set(referralMode);
+      return this;
+   }
+
    @Override
    public void validate() {
       identityMappings.forEach(LdapIdentityMappingConfigurationBuilder::validate);
@@ -125,8 +145,14 @@ public class LdapRealmConfigurationBuilder implements Builder<LdapRealmConfigura
    public SecurityRealm build() {
       if (securityRealm == null) {
          identityMappingBuilder.build();
+         Properties connectionProperties = new Properties();
+         connectionProperties.setProperty("com.sun.jndi.ldap.connect.pool", attributes.attribute(LdapRealmConfiguration.CONNECTION_POOLING).get().toString());
+         dirContextBuilder
+               .setConnectTimeout(attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).get())
+               .setReadTimeout(attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).get());
+         dirContextBuilder.setConnectionProperties(connectionProperties);
          DirContextFactory dirContextFactory = dirContextBuilder.build();
-         ldapRealmBuilder.setDirContextSupplier(() -> dirContextFactory.obtainDirContext(DirContextFactory.ReferralMode.FOLLOW));
+         ldapRealmBuilder.setDirContextSupplier(() -> dirContextFactory.obtainDirContext(attributes.attribute(LdapRealmConfiguration.REFERRAL_MODE).get()));
          if (attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).isModified()) {
             ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
          }
