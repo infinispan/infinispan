@@ -3,8 +3,6 @@ package org.infinispan.server.security;
 import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
 
-import javax.security.auth.callback.Callback;
-
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
@@ -18,8 +16,6 @@ import org.infinispan.server.test.KeyCloakServerRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.credential.BearerTokenCredential;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -46,15 +42,8 @@ public class AuthenticationKeyCloakIT {
       builder.security().authentication()
             .saslMechanism("OAUTHBEARER")
             .serverName("infinispan")
-            .callbackHandler(callbacks -> {
-               for (Callback callback : callbacks) {
-                  if (callback instanceof CredentialCallback) {
-                     CredentialCallback cc = (CredentialCallback) callback;
-                     cc.setCredential(new BearerTokenCredential(token));
-                  }
-               }
-            })
-            .realm("default");
+            .realm("default")
+            .token(token);
 
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");

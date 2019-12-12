@@ -65,6 +65,7 @@ public class ConfigurationProperties {
    public static final String AUTH_SERVER_NAME = ICH + "auth_server_name";
    public static final String AUTH_USERNAME = ICH + "auth_username";
    public static final String AUTH_PASSWORD = ICH + "auth_password";
+   public static final String AUTH_TOKEN = ICH + "auth_token";
    public static final String AUTH_REALM = ICH + "auth_realm";
    public static final String AUTH_CLIENT_SUBJECT = ICH + "auth_client_subject";
    public static final String SASL_PROPERTIES_PREFIX = ICH + "sasl_properties";
@@ -377,6 +378,14 @@ public class ConfigurationProperties {
 
    public void setAuthPassword(String authPassword) {
       props.setProperty(AUTH_PASSWORD, authPassword);
+   }
+
+   public String getAuthToken() {
+      return props.getProperty(AUTH_TOKEN);
+   }
+
+   public void setAuthToken(String authToken) {
+      props.setProperty(AUTH_TOKEN, authToken);
    }
 
    public String getAuthRealm() {

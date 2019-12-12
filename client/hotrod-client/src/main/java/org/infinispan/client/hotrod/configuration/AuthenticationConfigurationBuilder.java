@@ -14,6 +14,7 @@ import javax.security.sasl.Sasl;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
+import org.infinispan.client.hotrod.security.TokenCallbackHandler;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.StringPropertyReplacer;
@@ -27,7 +28,13 @@ import org.infinispan.commons.util.Util;
  * @since 7.0
  */
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
-   public static final String DEFAULT_REALM = "ApplicationRealm";
+   public static final String DEFAULT_REALM = "default";
+   public static final String DEFAULT_SERVER_NAME = "infinispan";
+   public static final String DEFAULT_MECHANISM = "SCRAM-SHA-512";
+   private static final String EXTERNAL_MECH = "EXTERNAL";
+   private static final String OAUTHBEARER_MECH = "OAUTHBEARER";
+   private static final String GSSAPI_MECH = "GSSAPI";
+   private static final String GS2_KRB5_MECH = "GS2-KRB5";
    private CallbackHandler callbackHandler;
    private boolean enabled = false;
    private String serverName;
@@ -37,14 +44,15 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    private String username;
    private char[] password;
    private String realm;
+   private String token;
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
    }
 
    /**
-    * Specifies a {@link CallbackHandler} to be used during the authentication handshake.
-    * The {@link Callback}s that need to be handled are specific to the chosen SASL mechanism.
+    * Specifies a {@link CallbackHandler} to be used during the authentication handshake. The {@link Callback}s that
+    * need to be handled are specific to the chosen SASL mechanism.
     */
    public AuthenticationConfigurationBuilder callbackHandler(CallbackHandler callbackHandler) {
       this.callbackHandler = callbackHandler;
@@ -76,8 +84,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Selects the SASL mechanism to use for the connection to the server.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Selects the SASL mechanism to use for the connection to the server. Setting this property also implicitly enables
+    * authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslMechanism(String saslMechanism) {
       this.saslMechanism = saslMechanism;
@@ -85,8 +93,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Sets the SASL properties.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Sets the SASL properties. Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslProperties(Map<String, String> saslProperties) {
       this.saslProperties = saslProperties;
@@ -94,12 +101,12 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Sets the SASL QOP property. If multiple values are specified they will determine preference order.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Sets the SASL QOP property. If multiple values are specified they will determine preference order. Setting this
+    * property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslQop(SaslQop... qop) {
       StringBuilder s = new StringBuilder();
-      for(int i=0; i < qop.length; i++) {
+      for (int i = 0; i < qop.length; i++) {
          if (i > 0) {
             s.append(",");
          }
@@ -110,12 +117,12 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Sets the SASL strength property. If multiple values are specified they will determine preference order.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Sets the SASL strength property. If multiple values are specified they will determine preference order. Setting
+    * this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslStrength(SaslStrength... strength) {
       StringBuilder s = new StringBuilder();
-      for(int i=0; i < strength.length; i++) {
+      for (int i = 0; i < strength.length; i++) {
          if (i > 0) {
             s.append(",");
          }
@@ -126,8 +133,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Sets the name of the server as expected by the SASL protocol
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Sets the name of the server as expected by the SASL protocol Setting this property also implicitly enables
+    * authentication (see {@link #enable()} This defaults to {@link #DEFAULT_SERVER_NAME}.
     */
    public AuthenticationConfigurationBuilder serverName(String serverName) {
       this.serverName = serverName;
@@ -135,8 +142,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Sets the client subject, necessary for those SASL mechanisms which require it to access client credentials (i.e. GSSAPI).
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Sets the client subject, necessary for those SASL mechanisms which require it to access client credentials (i.e.
+    * GSSAPI). Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder clientSubject(Subject clientSubject) {
       this.clientSubject = clientSubject;
@@ -144,9 +151,9 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the username to be used for authentication. This will use a simple CallbackHandler.
-    * This is mutually exclusive with explicitly providing the CallbackHandler.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the username to be used for authentication. This will use a simple CallbackHandler. This is mutually
+    * exclusive with explicitly providing the CallbackHandler. Setting this property also implicitly enables
+    * authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder username(String username) {
       this.username = username;
@@ -154,8 +161,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the password to be used for authentication. A username is also required.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the password to be used for authentication. A username is also required. Setting this property also
+    * implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder password(String password) {
       this.password = password != null ? password.toCharArray() : null;
@@ -163,8 +170,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the password to be used for authentication. A username is also required.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the password to be used for authentication. A username is also required. Setting this property also
+    * implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder password(char[] password) {
       this.password = password;
@@ -172,27 +179,34 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Specifies the realm to be used for authentication. Username and password also need to be supplied. If none
-    * is specified, this defaults to 'ApplicationRealm'.
-    * Setting this property also implicitly enables authentication (see {@link #enable()}
+    * Specifies the realm to be used for authentication. Username and password also need to be supplied. If none is
+    * specified, this defaults to {@link #DEFAULT_REALM}. Setting this property also implicitly enables authentication
+    * (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder realm(String realm) {
       this.realm = realm;
       return enable();
    }
 
+   public AuthenticationConfigurationBuilder token(String token) {
+      this.token = token;
+      return enable();
+   }
+
    @Override
    public AuthenticationConfiguration create() {
-      String mech = saslMechanism == null ? "DIGEST-MD5" : saslMechanism;
+      String mech = saslMechanism == null ? DEFAULT_MECHANISM : saslMechanism;
       CallbackHandler cbh = callbackHandler;
       if (cbh == null) {
-         if (username != null) {
+         if (OAUTHBEARER_MECH.equals(mech)) {
+            cbh = new TokenCallbackHandler(token);
+         } else if (username != null) {
             cbh = new BasicCallbackHandler(username, realm != null ? realm : DEFAULT_REALM, password);
-         } else if ("EXTERNAL".equals(mech) || "GSSAPI".equals(mech) || "GS2-KRB5".equals(mech)) {
+         } else if (EXTERNAL_MECH.equals(mech) || GSSAPI_MECH.equals(mech) || GS2_KRB5_MECH.equals(mech)) {
             cbh = new VoidCallbackHandler();
          }
       }
-      return new AuthenticationConfiguration(cbh, clientSubject, enabled, mech, saslProperties, serverName);
+      return new AuthenticationConfiguration(cbh, clientSubject, enabled, mech, saslProperties, serverName != null ? serverName : DEFAULT_SERVER_NAME);
    }
 
    @Override
@@ -209,10 +223,13 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public void validate() {
       if (enabled) {
-         if (callbackHandler == null && clientSubject == null && username == null && !"EXTERNAL".equals(saslMechanism)) {
+         if (callbackHandler == null && clientSubject == null && username == null && token == null && !EXTERNAL_MECH.equals(saslMechanism)) {
             throw HOTROD.invalidCallbackHandler();
          }
-         if (callbackHandler != null && username != null) {
+         if (OAUTHBEARER_MECH.equals(saslMechanism) && callbackHandler == null && token == null) {
+            throw HOTROD.oauthBearerWithoutToken();
+         }
+         if (callbackHandler != null && (username != null || token != null)) {
             throw HOTROD.callbackHandlerAndUsernameMutuallyExclusive();
          }
       }
@@ -223,7 +240,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
       if (typed.containsKey(ConfigurationProperties.SASL_MECHANISM))
-        saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM, saslMechanism, true));
+         saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM, saslMechanism, true));
 
       Object prop = typed.get(ConfigurationProperties.AUTH_CALLBACK_HANDLER);
       if (prop instanceof String) {
@@ -239,6 +256,9 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
       if (typed.containsKey(ConfigurationProperties.AUTH_PASSWORD))
          password(typed.getProperty(ConfigurationProperties.AUTH_PASSWORD, null, true));
+
+      if (typed.containsKey(ConfigurationProperties.AUTH_TOKEN))
+         token(typed.getProperty(ConfigurationProperties.AUTH_TOKEN, token, true));
 
       if (typed.containsKey(ConfigurationProperties.AUTH_REALM))
          realm(typed.getProperty(ConfigurationProperties.AUTH_REALM, realm, true));

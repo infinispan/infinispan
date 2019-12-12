@@ -249,7 +249,7 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 4066)
 //   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
 
-   @Message(value = "Cannot specify both a callback handler and a username for authentication", id = 4067)
+   @Message(value = "Cannot specify both a callback handler and a username/token for authentication", id = 4067)
    CacheConfigurationException callbackHandlerAndUsernameMutuallyExclusive();
 
 //   @Message(value = "Class '%s' blocked by Java standard deserialization white list. Adjust the client configuration java serialization white list regular expression to include this class.", id = 4068)
@@ -329,4 +329,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "MBean unregistration failed", id = 4092)
    HotRodClientException jmxUnregistrationFailure(@Cause Throwable cause);
+
+   @Message(value = "OAUTHBEARER mechanism selected without providing a token", id = 4093)
+   CacheConfigurationException oauthBearerWithoutToken();
 }

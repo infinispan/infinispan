@@ -273,7 +273,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.sasl_mechanism</b></td>
  *          <td>String</td>
- *          <td>DIGEST-MD5 if username and password are set<br>EXTERNAL if a key store is set</td>
+ *          <td><pre>SCRAM-SHA-512</pre> if username and password are set<br>EXTERNAL if a trust store is set</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#saslMechanism(String) SASL&nbsp;mechanism} to use for authentication.</td>
  *       </tr>
  *       <tr>
@@ -300,6 +300,12 @@
  *          <td>N/A</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#password(char[]) password}</td>
  *       </tr>
+ *       <tr>
+ *  *          <td><b>infinispan.client.hotrod.auth_token</b></td>
+ *  *          <td>String</td>
+ *  *          <td>N/A</td>
+ *  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#token(String) OAuth token}</td>
+ *  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.auth_realm</b></td>
  *          <td>String</td>
