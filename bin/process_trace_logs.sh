@@ -20,6 +20,10 @@ fi
 ROOT_DIR="$1"
 DEST_PREFIX="$2"
 
+if [[ -z "$DELETE_COMMAND" ]]; then
+  DELETE_COMMAND="rm"
+fi
+
 for FAILURES_LOG in $(find "$ROOT_DIR" -name 'test-failures*.log'); do
   LOG_DIR=$(dirname "$FAILURES_LOG")
 
@@ -38,7 +42,7 @@ for FAILURES_LOG in $(find "$ROOT_DIR" -name 'test-failures*.log'); do
   done
 
   # Remove the tests that didn't fail
-  find ${LOG_DIR} -name '*Test*.log.gz' -delete
+  find ${LOG_DIR} -name '*Test*.log.gz' -exec $DELETE_COMMAND {} \;
 
   # Move any remaining logs
   for LOG in $(find ${LOG_DIR} -maxdepth 1 -name '*.log.gz'); do
