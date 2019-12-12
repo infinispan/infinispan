@@ -17,6 +17,9 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -26,6 +29,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -42,9 +46,50 @@ public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, User> remoteCache;
 
+   private StorageType storageType;
+   private EvictionType evictionType;
+
+   @Override
+   protected String parameters() {
+      return "[" + storageType + ", " + evictionType + "]";
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.OFF_HEAP),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.BINARY),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.OBJECT),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.OFF_HEAP).evictionType(EvictionType.COUNT),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.BINARY).evictionType(EvictionType.COUNT),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.OBJECT).evictionType(EvictionType.COUNT),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.OFF_HEAP).evictionType(EvictionType.MEMORY),
+            new ClientProtoStreamMarshallerTest().storageType(StorageType.BINARY).evictionType(EvictionType.MEMORY),
+      };
+   }
+
+   ClientProtoStreamMarshallerTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
+   ClientProtoStreamMarshallerTest evictionType(EvictionType evictionType) {
+      this.evictionType = evictionType;
+      return this;
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      org.infinispan.configuration.cache.ConfigurationBuilder cacheConfiguration = hotRodCacheConfiguration();
+      MemoryConfigurationBuilder memoryConfigurationBuilder = cacheConfiguration.memory();
+      memoryConfigurationBuilder
+               .storageType(storageType);
+      if (evictionType != null) {
+         memoryConfigurationBuilder
+               .evictionType(evictionType)
+               .size(10_000);
+      }
+      cacheManager = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       cache = cacheManager.getCache();
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
