@@ -1,0 +1,14 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+          xmlns="urn:infinispan:server:{schemaversion}">
+   <security-realms>
+      <security-realm name="default">
+         <server-identities>
+            <ssl>
+               <keystore path="server.p12" relative-to="infinispan.server.config.path" keystore-password="secret" alias="server"/>
+               <engine enabled-protocols="TLSv1.2 TLSv1.1" enabled-ciphersuites="SSL_RSA_WITH_AES_128_GCM_SHA256 SSL_RSA_WITH_AES_128_CBC_SHA256"/>
+            </ssl>
+         </server-identities>
+      </security-realm>
+   </security-realms>
+</security>

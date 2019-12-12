@@ -1,0 +1,12 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+          xmlns="urn:infinispan:server:{schemaversion}">
+   <security-realms>
+      <security-realm name="default">
+         <server-identities>
+            <kerberos keytab-path="hotrod.keytab" principal="hotrod/datagrid@INFINISPAN.ORG" required="true"/>
+            <kerberos keytab-path="http.keytab" principal="HTTP/localhost@INFINISPAN.ORG" required="true"/>
+         </server-identities>
+      </security-realm>
+   </security-realms>
+</security>
