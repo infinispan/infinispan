@@ -35,6 +35,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
@@ -82,7 +83,12 @@ public abstract class InfinispanServerDriver {
       if (!confDir.mkdirs()) {
          throw new RuntimeException("Failed to create server configuration directory " + confDir);
       }
-      URL configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
+      URL configurationFileURL;
+      if (new File(configuration.configurationFile()).isAbsolute()) {
+         configurationFileURL = Exceptions.unchecked(() -> new File(configuration.configurationFile()).toURI().toURL());
+      } else {
+         configurationFileURL = getClass().getClassLoader().getResource(configuration.configurationFile());
+      }
       if (configurationFileURL == null) {
          throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
       }
