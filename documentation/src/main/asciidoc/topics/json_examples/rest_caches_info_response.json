@@ -2,24 +2,24 @@
   "status" : "RUNNING",
   "name" : "cache1",
   "type" : "local-cache",
-  "size" : 123,
   "simple_cache" : false,
   "transactional" : false,
   "persistent" : false,
   "bounded": false,
   "secured": false,
   "indexed": true,
-  "has_remote_backup": true
+  "has_remote_backup": true,
+  "health":"HEALTHY"
 }, {
   "status" : "RUNNING",
   "name" : "cache2",
   "type" : "distributed-cache",
-  "size" : 23,
   "simple_cache" : false,
   "transactional" : true,
   "persistent" : false,
   "bounded": false,
   "secured": false,
   "indexed": true,
-  "has_remote_backup": true
+  "has_remote_backup": true,
+  "health":"HEALTHY"
 }]
