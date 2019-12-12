@@ -7,11 +7,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
@@ -26,8 +24,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
@@ -75,14 +71,11 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    @Inject protected ComponentRef<CommandsFactory> cf;
    @Inject protected RpcManager rpcManager;
    @Inject protected DistributionManager distributionManager;
-   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
-   protected ExecutorService blockingExecutor;
 
    private AdvancedCache<K, V> cache;
    private Address localAddress;
    private long timeout;
    private String cacheName;
-   private boolean transactional;
 
    @Override
    public void start() {
@@ -92,8 +85,6 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       this.cacheName = cache.getName();
       this.localAddress = cache.getCacheManager().getAddress();
       this.timeout = cache.getCacheConfiguration().clustering().remoteTimeout();
-
-      transactional = configuration.transaction().transactionMode().isTransactional();
    }
 
    @Override
@@ -232,17 +223,14 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             log.tracef("Submitting expiration removal for key %s which had lifespan of %s", toStr(key), lifespan);
          }
          AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
-         CompletableFuture<Void> future;
-         if (transactional) {
-            // Transactional is still blocking - to be removed later
-            future = CompletableFuture.supplyAsync(() -> cacheToUse.removeLifespanExpired(key, value, lifespan), blockingExecutor)
-                  .thenCompose(Function.identity());
-         } else {
-            future = cacheToUse.removeLifespanExpired(key, value, lifespan);
-         }
+         CompletableFuture<Void> future = removeLifespan(cacheToUse, key, value, lifespan);
          return future.whenComplete((v, t) -> expiring.remove(key, key));
       }
       return CompletableFutures.completedNull();
+   }
+
+   CompletableFuture<Void> removeLifespan(AdvancedCache<K, V> cacheToUse, K key, V value, long lifespan) {
+      return cacheToUse.removeLifespanExpired(key, value, lifespan);
    }
 
    // Method invoked when an entry is found to be expired via get
@@ -261,14 +249,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          completableFuture.whenComplete((b, t) -> expiring.remove(key, completableFuture));
          try {
             AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
-            CompletableFuture<Boolean> future;
-            if (transactional) {
-               // Transactional is still blocking - to be removed later
-               future = CompletableFuture.supplyAsync(() -> cacheToUse.removeMaxIdleExpired(key, value), blockingExecutor)
-                     .thenCompose(Function.identity());
-            } else {
-               future = cacheToUse.removeMaxIdleExpired(key, value);
-            }
+            CompletableFuture<Boolean> future = removeMaxIdle(cacheToUse, key, value);
             future.whenComplete((b, t) -> {
                if (t != null) {
                   completableFuture.completeExceptionally(t);
@@ -290,6 +271,10 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
+   CompletableFuture<Boolean> removeMaxIdle(AdvancedCache<K, V> cacheToUse, K key, V value) {
+      return cacheToUse.removeMaxIdleExpired(key, value);
+   }
+
    @Override
    public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime,
          boolean hasLock) {
@@ -305,7 +290,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
       if (expiredMortal) {
          CompletableFuture<Void> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, hasLock);
-         if (hasLock) {
+         if (waitOnLifespanExpiration(hasLock)) {
             return future.thenCompose(CompletableFutures.composeTrue());
          }
          // We don't want to block the user while the remove expired is happening for lifespan
@@ -314,6 +299,11 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          // This means it expired transiently - this will block user until we confirm the entry is okay
          return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), hasLock);
       }
+   }
+
+   // Designed to be extended as needed
+   boolean waitOnLifespanExpiration(boolean hasLock) {
+      return hasLock;
    }
 
    @Override
