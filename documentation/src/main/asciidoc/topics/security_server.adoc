@@ -47,7 +47,7 @@ include::cmd_examples/keytool.adoc[]
 
 Place the `server.p12` file in the server configuration directory.
 
-NOTE: To configure the client In order to connect to the server using the Hot Rod protocol, the client needs a trust store containing the public key
+NOTE: To configure the client in order to connect to the server using the Hot Rod protocol, the client needs a trust store containing the public key
 of the server(s) or of the CA that has signed the key of the server you are going to connect to, unless the key was signed by a Certification Authority (CA) trusted by
 the JRE.
 
@@ -67,7 +67,7 @@ clientBuilder
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 ----
 
-You can require that clients also present a certificate by adding `require-ssl-client-auth="true"` to the `endpoint` element:
+You can require that clients also present a certificate by adding `require-ssl-client-auth="true"` to the `endpoints` element:
 
 .Requiring client certificates
 [source,xml,options="nowrap",subs=attributes+]
@@ -76,7 +76,7 @@ include::config_examples/server_endpoint_require_client_cert.xml[]
 ----
 
 It is also possible to generate development certificates on server startup. In order to do this, just specify `generate-self-signed-certificate-host`
-in the keystore element as shown below:
+in the `keystore` element as shown below:
 
 .Generating Keystore automatically
 [source,xml,options="nowrap",subs=attributes+]
@@ -238,6 +238,11 @@ It will then extract the group entry's CN (as specified by `from`) and add it to
 +
 The above will get all `memberOf` attributes from the user and extract the CN (as specified by `from`) and add them to the user's `Roles`.
 
+.LDAP realm for Active Directory
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/server_ldap_realm_ad.xml[]
+----
 
 LDAP Realms support the following authentication mechanisms directly:
 

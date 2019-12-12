@@ -27,17 +27,19 @@ endif::productized[]
 include::proc_creating_hotrod_java_client_instances.adoc[leveloffset=+2]
 include::proc_configuring_hotrod_java_client_properties.adoc[leveloffset=+2]
 
-=== Authentication
-
-If the server has set up authentication, you need to configure your client accordingly. Depending on the mechs enabled on the server,
-the client must provide the required information. Aside from credentials, some mechanisms require the security realm name and / or the server name (as configured on the server protocol `authentication` element).
+=== Authentication Mechanisms
+{brandname} servers can require authentication for client connections with different mechanisms.
 
 ==== SCRAM
-The SCRAM family of authentication mechanisms is the recommended approach for simple username/password authentication scenarios.
-If you are using the default realm on the server (_"default"_) and `SCRAM-SHA-512` is in the declared server mechanisms,
-all you need to do is provide your credentials as follows:
+Provides username and password authentication with the (_"default"_) realm on {brandname} servers.
 
-.Hot Rod client configuration with SCRAM-SHA-512 authentication
+[NOTE]
+====
+SCRAM is recommended approach for simple authentication.
+====
+
+.SCRAM-SHA-512 Hot Rod client configuration
+
 [source,java]
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
@@ -53,13 +55,12 @@ remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
-
 ==== DIGEST
-The DIGEST family of authentication mechanisms has been deprecated in favor of the SCRAM mechs, so you should use those if possible.
-However, when connecting to older versions of {brandname} Server, it might be necessary to use it.
-Since the DIGEST mechanisms require the realm name, make sure you specify it:
+Deprecated by SCRAM and available only for backwards compatibility with
+previous versions of {brandname} server that do not support SCRAM.
 
-.Hot Rod client configuration with DIGEST-MD5 authentication
+.DIGEST-MD5 Hot Rod client configuration
+
 [source,java]
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
@@ -78,10 +79,15 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
 ==== PLAIN
-The PLAIN mechanism is not really recommended unless the connection is also encrypted, as anyone can sniff the clear-text
-password being sent along the wire.
+Sends credentials in clear-text to authenticate with {brandname} servers.
 
-.Hot Rod client configuration with PLAIN authentication
+[IMPORTANT]
+====
+PLAIN is recommended only for secure connections that use TLS encryption.
+====
+
+.PLAIN Hot Rod client configuration
+
 [source,java]
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
@@ -99,9 +105,11 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
 ==== OAUTHBEARER
-The OAUTHBEARER mechanism requires interaction with an OAuth2 token provider. It is up to your application to retrieve an OAuth2 token.
+Requires client applications to retrieve authentication tokens from OAuth2
+providers.
 
-.Hot Rod client configuration with OAUTHBEARER authentication
+.OAUTHBEARER Hot Rod client configuration
+
 [source,java]
 ----
 String token = "..."; // Obtain the token from your OAuth2 provider
@@ -120,9 +128,14 @@ remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
-Since OAuth2 tokens may need to be refreshed, it is better to
+[TIP]
+====
+You should configure clients with a `TokenCallbackHandler` to refresh OAuth2
+tokens before they expire.
+====
 
-.Hot Rod client configuration with OAUTHBEARER callback
+.OAUTHBEARER authentication with TokenCallbackHandler
+
 [source,java]
 ----
 String token = "..."; // Obtain the token from your OAuth2 provider
@@ -145,11 +158,12 @@ tokenHandler.setToken("newToken");
 ----
 
 ==== EXTERNAL
-The EXTERNAL mechanism is special in that it doesn't explicitly provide credentials but uses the client certificate as
-identity. In order for this to work, in addition to the _TrustStore_ (to validate the server certificate) you need to
-provide a _KeyStore_ (to supply the client certificate).
+Uses certificates to authenticate with {brandname} servers. You provide clients
+with truststores to validate server certificates and keystores to supply client
+certificates.
 
-.Hot Rod client configuration with EXTERNAL authentication (client cert)
+.EXTERNAL Hot Rod client configuration
+
 [source,java]
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
@@ -159,10 +173,10 @@ clientBuilder
         .port(11222)
     .security()
         .ssl()
-            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
+            // TrustStore stores trusted CA certificates for the server.
             .trustStoreFileName("/path/to/truststore")
             .trustStorePassword("truststorepassword".toCharArray())
-            // KeyStore containing this client's own certificate
+            // KeyStore stores valid client certificates.
             .keyStoreFileName("/path/to/keystore")
             .keyStorePassword("keystorepassword".toCharArray())
         .authentication()
@@ -171,25 +185,30 @@ remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
-For more details, read the link:#hr_encryption[Encryption] section below.
+.Reference
 
-==== GSSAPI (Kerberos)
+link:#hr_encryption[Setting Up Encryption]
 
-GSSAPI/Kerberos requires a much more complex setup, but it is used heavily in enterprises with centralized authentication
-servers. To successfully authenticate with Kerberos, you need to create a _LoginContext_. This will obtain
-a Ticket Granting Ticket (TGT) which will be used as a token to authenticate with the service.
+==== GSSAPI and Kerberos
+Uses the Kerberos protocol to provide clients with authentication tokens for
+centralized security services.
 
-You will need to define a login module in a login configuration file:
+To use the GSSAPI mechanism, you must create a _LoginContext_ for clients to
+obtain a Ticket Granting Ticket (TGT) as follows:
 
+. Define a login module in a login configuration file.
++
 .gss.conf
++
 [source]
 ----
 GssExample {
     com.sun.security.auth.module.Krb5LoginModule required client=TRUE;
 };
 ----
-If you are using the IBM JDK, the above becomes:
-
++
+For the IBM JDK:
++
 .gss-ibm.conf
 [source]
 ----
@@ -197,19 +216,25 @@ GssExample {
     com.ibm.security.auth.module.Krb5LoginModule required client=TRUE;
 };
 ----
++
+. Set the following system properties:
++
+----
+java.security.auth.login.config=gss.conf
 
-You will also need to set the following system properties:
+java.security.krb5.conf=/etc/krb5.conf
+----
++
+[NOTE]
+====
+`krb5.conf` provides the location of your KDC. Use the _kinit_ command to
+authenticate with Kerberos and verify `krb5.conf`.
+====
++
+. Configure your Hot Rod client for GSSAPI.
 
-+java.security.auth.login.config=gss.conf+
+.GSSAPI Hot Rod client configuration
 
-+java.security.krb5.conf=/etc/krb5.conf+
-
-The +krb5.conf+ file is dependent on your environment and needs to point to your KDC. Ensure that you can authenticate
-via Kerberos using _kinit_.
-
-Next up, configure your client as follows:
-
-.Hot Rod client GSSAPI configuration
 [source,java]
 ----
 LoginContext lc = new LoginContext("GssExample", new BasicCallbackHandler("krb_user", "krb_password".toCharArray()));
@@ -232,15 +257,30 @@ remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
-For brevity we used the same callback handler both for obtaining the client subject and for handling authentication in the SASL GSSAPI mech, however different callbacks will actually be invoked: NameCallback and PasswordCallback are needed to construct the client subject, while the AuthorizeCallback will be called during the SASL authentication.
+[NOTE]
+====
+The preceding configuration uses the `BasicCallbackHandler` to retrieve the
+client subject and handle authentication. However, this actually invokes
+different callbacks.
 
-==== Custom CallbackHandlers
+`NameCallback` and `PasswordCallback` construct the client subject.
 
-In all of the above examples, the Hot Rod client is setting up a default _CallbackHandler_ for you that supplies the
-provided credentials to the SASL mechanism. For advanced scenarios it may be necessary to provide your own custom
-_CallbackHandler_:
+`AuthorizeCallback` is called during SASL authentication.
+====
 
-.Hot Rod client configuration with authentication via callback
+==== Custom CallbackHandler
+Hot Rod clients set up a default `CallbackHandler` to pass credentials to SASL
+mechanisms. In some cases, you might need to provide a custom `CallbackHandler`.
+
+[NOTE]
+====
+Your `CallbackHandler` needs to handle callbacks that are specific to the
+authentication mechanism that you use. However, it is beyond the scope of this
+document to provide examples for each possible callback type.
+====
+
+.Custom CallbackHandler in Hot Rod client configuration
+
 [source,java]
 ----
 public class MyCallbackHandler implements CallbackHandler {
@@ -292,10 +332,8 @@ remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
-The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
-
 [[hr_encryption]]
-=== Encryption
+=== Setting Up Encryption
 Encryption uses TLS/SSL, so it requires setting up an appropriate server certificate chain. Generally, a certificate chain looks like the following:
 
 image::{images_dir}/cert_chain.png[align="center", title="Certificate chain"]

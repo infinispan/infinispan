@@ -139,7 +139,9 @@
       </xs:attribute>
       <xs:attribute name="require-ssl-client-auth" type="xs:boolean">
          <xs:annotation>
-            <xs:documentation>Enables the requirement for clients to use a certificate when connecting.</xs:documentation>
+            <xs:documentation>
+              Requires clients to use certificates for authentication.
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -503,13 +505,16 @@
       <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional"
                     default="${Server.Encryption.require-ssl-client-auth}">
          <xs:annotation>
-            <xs:documentation>Requires client certificate authentication. Values are true / false (default).
+            <xs:documentation>
+              Requires clients to use certificates for authentication.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="security-realm" type="xs:string" use="required">
          <xs:annotation>
-            <xs:documentation>Names the security realm that holds the SSL keystore.</xs:documentation>
+            <xs:documentation>
+              Names the security realm that contains the SSL keystore.
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -731,7 +736,7 @@
    <xs:complexType name="security-realm-ldap">
       <xs:annotation>
          <xs:documentation>
-            A security realm definition backed by LDAP.
+            Defines an LDAP security realm.
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
@@ -741,90 +746,95 @@
       <xs:attribute type="xs:string" name="name">
          <xs:annotation>
             <xs:documentation>
-               The name of this realm. It can be used to distinguish multiple realms of the same type.
+               Names the security realm to logically separate multiple realms of the same type.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:string" name="url" use="required">
          <xs:annotation>
             <xs:documentation>
-               The URL indicating a connection to the LDAP server in the format ldap[s]://{hostname}:{port}.
+               Specifies the URL for LDAP server connections in the format ldap[s]://{hostname}:{port}.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:string" name="principal">
          <xs:annotation>
             <xs:documentation>
-               The user principal used to connect to the LDAP server.
+               Specifies the user principal for LDAP server connections.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:string" name="credential">
          <xs:annotation>
             <xs:documentation>
-               The user credential used to connect to the LDAP server.
+               Specifies the user credential for LDAP server connections.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:boolean" name="direct-verification">
          <xs:annotation>
             <xs:documentation>
-               Should this realm instance support verification of credentials by directly connecting to LDAP as the account being authenticated?
+              Configures the realm to verify credentials by connecting to LDAP servers with the account. Values are true / false (default).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:int" name="page-size" default="50">
          <xs:annotation>
             <xs:documentation>
-               The page size for realm iteration. Defaults to 50.
+               Sets the page size for realm iteration. The default value is 50.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:string" name="search-dn">
          <xs:annotation>
             <xs:documentation>
-               The name of the context to be used when executing queries.
-               This option is specially useful when authenticating users based on names that don't use a X.500 format such as `plainUser`
-               In this case, you must also provide an rdn-identifier with the attribute name that contains the user name.
-               If the names used to authenticate users are based on the X.500 format, this configuration can be suppressed.
-               Please note that by using this option the realm is able to authenticate users based on their simple or X.500 names.
+              Names the context for query execution. This option provides a
+              useful method to authenticate users based on names that do not
+              use X.500 format, such as "plainUser". In this case, you must
+              also specify the rdn-identifier. If names to authenticate users
+              are based on the X.500 format, you can suppress this
+              configuration. You should also note that this option lets realms
+              authenticate users based on simple, or X.500, names.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:string" name="rdn-identifier">
          <xs:annotation>
             <xs:documentation>
-               Set the name of the attribute in LDAP that holds the user name and will appear in the path of new entries.
+               Specifies an LDAP attribute that contains the user name and
+               appears in the path of new entries.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:boolean" name="enable-connection-pooling" default="false">
          <xs:annotation>
             <xs:documentation>
-               Indicates if connection pooling is enabled.
+               Enables connection pooling.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="tns:referral-list" name="referral-mode" default="follow">
          <xs:annotation>
             <xs:documentation>
-               If LDAP referrals should be followed.
-               Corresponds to REFERRAL ("java.naming.referral") environment property.
-               Allowed values: "ignore", "follow", "throw". Defaults to follow
+               Specifies if LDAP server referrals are followed and corresponds
+               to the REFERRAL ("java.naming.referral") environment property.
+               Values are "ignore", "follow" (default), and "throw".
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:integer" name="connection-timeout" default="5000">
          <xs:annotation>
             <xs:documentation>
-               The timeout for connecting to the LDAP server in milliseconds. Defaults to 5 seconds.
+               Sets the timeout, in milliseconds, for LDAP server connections.
+               The default value is 5 seconds.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:integer" name="read-timeout" default="60000">
          <xs:annotation>
             <xs:documentation>
-               The read timeout for an LDAP operation in milliseconds. Defaults to 1 minute.
+               Sets the read timeout, in milliseconds, for LDAP server
+               operations. The default value is 1 minute.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -833,7 +843,8 @@
    <xs:complexType name="ldap-name-rewriter">
       <xs:annotation>
          <xs:documentation>
-            A name rewriter takes a name return by an LDAP server and rewrites it by extracting relevant parts from it.
+            Specifies a LDAP name rewriter that transforms names returned by
+            LDAP servers.
          </xs:documentation>
       </xs:annotation>
       <xs:choice>
@@ -844,14 +855,15 @@
    <xs:complexType name="principal-transformer" abstract="true">
       <xs:annotation>
          <xs:documentation>
-            Base type for all PrincipalTransformer definitions.
+            Specifies the base type for all PrincipalTransformer definitions.
          </xs:documentation>
       </xs:annotation>
       <xs:attribute name="name" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               The unique name for the PrincipalTransformer, note names used for PrincipalTransformer must be unique
-               across the whole context.
+               Specifies the unique name for the PrincipalTransformer.
+               PrincipalTransformer names must be unique across the entire
+               context.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -860,8 +872,7 @@
    <xs:complexType name="regex-principal-transformer">
       <xs:annotation>
          <xs:documentation>
-            A PrincipalTransformer definition using regular expressions and Matcher based
-            replacement.
+            Specifies a PrincipalTransformer definition using regular expressions and Matcher based replacement.
          </xs:documentation>
       </xs:annotation>
       <xs:complexContent>
@@ -869,21 +880,21 @@
             <xs:attribute name="pattern" type="xs:string" use="required">
                <xs:annotation>
                   <xs:documentation>
-                     The regular expression to use for this PrincipalTransformer.
+                     Specifies the regular expression for this PrincipalTransformer.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="replacement" type="xs:string" use="required">
                <xs:annotation>
                   <xs:documentation>
-                     The replacement string for this PrincipalTransformer.
+                     Specifies the replacement string for the PrincipalTransformer.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="replace-all" type="xs:boolean" default="false">
                <xs:annotation>
                   <xs:documentation>
-                     Should all occurrences be replaced or just the first?
+                     Replaces all occurrences instead of the first occurrence.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -894,7 +905,8 @@
    <xs:complexType name="ldap-identity-mapping">
       <xs:annotation>
          <xs:documentation>
-            The configuration options that define how principals are mapped to their corresponding entries in the underlying LDAP server.
+            Specifies configuration options that define how principals are
+            mapped to corresponding entries in LDAP servers.
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
@@ -904,14 +916,15 @@
       <xs:attribute type="xs:string" name="rdn-identifier">
          <xs:annotation>
             <xs:documentation>
-               The RDN part of the principal's DN to be used to obtain the principal's name from an LDAP entry.
+               Specifies the RDN for the principal DN to retrieve the principal
+               name from an LDAP entry.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute type="xs:string" name="search-dn">
          <xs:annotation>
             <xs:documentation>
-               The base DN to be used when executing queries.
+               Sets the base DN for query execution.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -920,7 +933,7 @@
    <xs:complexType name="ldap-attribute-mapping">
       <xs:annotation>
          <xs:documentation>
-            The attribute mappings defined for this resource.
+            Specifies the attribute mappings defined for this resource.
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
@@ -1019,7 +1032,8 @@
    <xs:complexType name="ldap-user-password-mapper">
       <xs:annotation>
          <xs:documentation>
-            The user password credential mapping defined for this resource.
+            Specifies the user password credential mapping defined for this
+            resource.
          </xs:documentation>
       </xs:annotation>
       <xs:attribute type="xs:string" name="from">
@@ -1099,98 +1113,106 @@
       <xs:attribute name="principal" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               The principal represented by the KeyTab
+               Specifies the principal that the KeyTab represents.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="keytab-path" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               The path to the KeyTab to use to obtain the credential.
+               Sets the path to the KeyTab for retrieving credentials.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="relative-to" type="xs:string">
          <xs:annotation>
             <xs:documentation>
-               The name of another previously named path, or of one of the standard paths provided by the system.
-               If 'relative-to' is provided, the value of the 'path' attribute is treated as relative
-               to the path specified by this attribute.
+               Specifies the name of a named path or a standard path that the
+               system provides. If set, the value of the "path" attribute
+               becomes relative to this path.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="minimum-remaining-lifetime" type="xs:int" default="0">
          <xs:annotation>
             <xs:documentation>
-               How much lifetime (in seconds) should a cached credential have remaining before it is recreated.
+               Specifies, in seconds, how long a cached credential can remain before it is recreated.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="request-lifetime" type="xs:int">
          <xs:annotation>
             <xs:documentation>
-               How much lifetime (in seconds) should be requested for newly created credentials.
+               Specifies, in seconds, how much lifetime to request for newly
+               created credentials.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="fail-cache" type="xs:int">
          <xs:annotation>
             <xs:documentation>
-               Amount of seconds before new try to obtain server credential should be done if it has failed last time.
-               Allows to prevent long waiting to unavailable KDC on every authentication.
+               Specifies the amount of time, in seconds, to wait before
+               attempting to obtain server credential if the previous attempt
+               failed. Prevents long waiting periods on every authentication
+               attempt if the KDC is unavailable.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="server" type="xs:boolean" default="true">
          <xs:annotation>
             <xs:documentation>
-               If this for use server side or client side?
+               Specifies if the realm is server-side (default) or client-side.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="obtain-kerberos-ticket" type="xs:boolean" default="false">
          <xs:annotation>
             <xs:documentation>
-               Should the KerberosTicket also be obtained and associated with the credential.
-
-               This is required to be true where credentials are delegated to the server.
+               Controls if a KerberosTicket is also obtained and associated
+               with the credential. The value must be true if credentials are
+               delegated to the server.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="debug" type="xs:boolean" default="false">
          <xs:annotation>
             <xs:documentation>
-               Should the JAAS step of obtaining the credential have debug logging enabled.
+               Defines if the JAAS step to obtain the credential has debug
+               logging enabled.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="wrap-gss-credential" type="xs:boolean" default="false">
          <xs:annotation>
             <xs:documentation>
-               Should generated GSS credentials be wrapped to prevent improper disposal or not?
+               Specifies if generated GSS credentials are wrapped to prevent
+               improper disposal.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="required" type="xs:boolean" default="false">
          <xs:annotation>
             <xs:documentation>
-               Is the keytab file with adequate principal required to exist at the time the service starts?
+               Specifies if the keytab file with adequate principal must exist
+               when the service starts.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="mechanism-names" type="tns:name-list" default="KRB5 SPNEGO">
          <xs:annotation>
             <xs:documentation>
-               The mechanism names the credential should be usable with.
-               Names will be converted to OIDs and used together with OIDs from mechanism-oids attribute.
+               Defines the mechanism names with which the credential can be
+               used. Names are converted to OIDs and used together with OIDs
+               from the mechanism-oids attribute.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="mechanism-oids" type="tns:name-list">
          <xs:annotation>
             <xs:documentation>
-               The mechanism OIDs the credential should be usable with.
-               Will be used together with OIDs derived from names from mechanism-names attribute.
+               Defines the mechanism OIDs with which the credential can be
+               used. Used with OIDs derived from names from the mechanism-names
+               attribute.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
