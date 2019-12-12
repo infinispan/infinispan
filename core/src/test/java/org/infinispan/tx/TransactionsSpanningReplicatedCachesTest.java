@@ -34,18 +34,8 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       defineConfigurationOnAllManagers("c2", c);
       defineConfigurationOnAllManagers("cache1", c);
       defineConfigurationOnAllManagers("cache2", c);
-   }
-
-   private void startAllCaches() {
-      startCache("c1");
-      startCache("c2");
-      startCache("cache1");
-      startCache("cache2");
-      startCache(getDefaultCacheName());
-   }
-
-   private void startCache(String c1) {
-      waitForClusterToForm(c1); //internally calls m.getCache(c1) which starts he cache
+      //internally calls m.getCache(c1) which starts he cache
+      waitForClusterToForm("c1", "c2", "cache1", "cache2", getDefaultCacheName());
    }
 
    protected ConfigurationBuilder getConfiguration() {
@@ -72,7 +62,6 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testCommitSpanningCaches() throws Exception {
-      startAllCaches();
       Cache<String, String> c1 = cache(0, "c1");
       Cache<String, String> c1Replica = cache(1, "c1");
       Cache<String, String> c2 = cache(0, "c2");
@@ -116,7 +105,6 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testRollbackSpanningCaches() throws Exception {
-      startAllCaches();
       Cache<String, String> c1 = cache(0, "c1");
       Cache<String, String> c1Replica = cache(1, "c1");
       Cache<String, String> c2 = cache(0, "c2");
@@ -161,20 +149,17 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    private void assertInitialValues(Cache<String, String> c1, Cache<String, String> c1Replica, Cache<String, String> c2, Cache<String, String> c2Replica) {
       for (Cache<String, String> c : Arrays.asList(c1, c1Replica)) {
-         assertTrue(!c.isEmpty());
          assertEquals(c.size(), 1);
          assertEquals(c.get("c1key"), "c1value");
       }
 
       for (Cache<String, String> c : Arrays.asList(c2, c2Replica)) {
-         assertTrue(!c.isEmpty());
          assertEquals(c.size(), 1);
          assertEquals(c.get("c2key"), "c2value");
       }
    }
 
    public void testRollbackSpanningCaches2() throws Exception {
-      startAllCaches();
       Cache<String, String> c1 = cache(0, "c1");
 
       assertTrue(c1.getCacheConfiguration().clustering().cacheMode().isClustered());
@@ -189,7 +174,6 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testSimpleCommit() throws Exception {
-      startAllCaches();
       Cache<String, String> c1 = cache(0, "c1");
       Cache<String, String> c1Replica = cache(1, "c1");
 
@@ -207,7 +191,6 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
    }
 
    public void testPutIfAbsent() throws Exception {
-      startAllCaches();
       Cache<String, String> c1 = cache(0, "c1");
       Cache<String, String> c1Replica = cache(1, "c1");
 
@@ -247,8 +230,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
       runTest(cache(0), cache(1, "cache1"));
    }
 
-   private void runTest(Cache cache1, Cache cache2) throws Exception {
-      startAllCaches();
+   private void runTest(Cache<String, String> cache1, Cache<String, String> cache2) throws Exception {
       assertFalse(cache1.containsKey("a"));
       assertFalse(cache2.containsKey("b"));
 
