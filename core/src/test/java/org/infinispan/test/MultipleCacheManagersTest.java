@@ -197,7 +197,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    /**
     * Allows a test to manipulate a cache manager before it is started. Does nothing by default
-    * @param cm
     */
    protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
       // Do nothing
@@ -487,7 +486,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected EmbeddedCacheManager[] managers() {
-      return cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]);
+      return cacheManagers.toArray(new EmbeddedCacheManager[0]);
    }
 
    protected EmbeddedCacheManager manager(int i) {
@@ -536,8 +535,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return manager(index).getCache();
    }
 
-   protected DataContainer dataContainer(int index) {
-      return advancedCache(index).getDataContainer();
+   protected <K, V> DataContainer<K, V> dataContainer(int index) {
+      return this.<K, V>advancedCache(index).getDataContainer();
    }
 
    /**
@@ -857,7 +856,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertNotLocked(final Object key) {
-      assertNotLocked(null, key);
+      assertNotLocked((String)null, key);
    }
 
    protected boolean checkTxCount(int cacheIndex, int localTx, int remoteTx) {
@@ -915,11 +914,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void assertKeyLockedCorrectly(Object key, String cacheName) {
       final Cache<?, ?> lockOwner = getLockOwner(key, cacheName);
-      assert checkLocked(lockOwner, key);
       for (Cache<?, ?> c : caches(cacheName)) {
-         if (c != lockOwner)
-            assert !checkLocked(c, key) : "Key " + key + " is locked on cache " + c + " (" + cacheName
-                  + ") and it shouldn't";
+         if (c != lockOwner) {
+            assertNotLocked(c, key);
+         } else {
+            assertLocked(c, key);
+         }
       }
    }
 
@@ -1065,6 +1065,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @Override
    public String getDefaultCacheName() {
-      return cacheManagers.get(0).getCacheManagerConfiguration().defaultCacheName().get();
+      return cacheManagers.get(0).getCacheManagerConfiguration().defaultCacheName().orElse(null);
    }
 }

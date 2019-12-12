@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
@@ -62,26 +63,30 @@ public abstract class AbstractCacheTest extends AbstractInfinispanTest {
       return (b1 || b2) && !(b1 && b2);
    }
 
-   protected void assertEventuallyNotLocked(final Cache cache, final Object key) {
+   protected void assertEventuallyNotLocked(final Cache<?, ?> cache, final Object key) {
       //lock release happens async, hence the eventually...
       eventually(format("Expected key '%s' to be unlocked on cache '%s'", key, cache),
             () -> !checkLocked(cache, key), 20000, 500, TimeUnit.MILLISECONDS);
    }
 
-   protected void assertEventuallyLocked(final Cache cache, final Object key) {
+   protected void assertEventuallyLocked(final Cache<?, ?> cache, final Object key) {
       eventually(format("Expected key '%s' to be locked on cache '%s'", key, cache),
             () -> checkLocked(cache, key), 20000, 500, TimeUnit.MILLISECONDS);
    }
 
-   protected void assertLocked(Cache cache, Object key) {
+   protected void assertLocked(Cache<?, ?> cache, Object key) {
       assertTrue(format("Expected key '%s' to be locked on cache '%s'", key, cache), checkLocked(cache, key));
    }
 
-   protected boolean checkLocked(Cache cache, Object key) {
+   protected void assertNotLocked(Cache<?, ?> cache, Object key) {
+      assertFalse(format("Expected key '%s' to not be locked on cache '%s'", key, cache), checkLocked(cache, key));
+   }
+
+   protected boolean checkLocked(Cache<?, ?> cache, Object key) {
       return TestingUtil.extractLockManager(cache).isLocked(key);
    }
 
-   public EmbeddedCacheManager manager(Cache c) {
+   public EmbeddedCacheManager manager(Cache<?, ?> c) {
       return c.getCacheManager();
    }
 
