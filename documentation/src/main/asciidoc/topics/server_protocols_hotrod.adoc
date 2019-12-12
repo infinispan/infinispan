@@ -30,11 +30,34 @@ include::proc_configuring_hotrod_java_client_properties.adoc[leveloffset=+2]
 === Authentication
 
 If the server has set up authentication, you need to configure your client accordingly. Depending on the mechs enabled on the server,
-the client must provide the required information.
+the client must provide the required information. Aside from credentials, some mechanisms require the security realm name and / or the server name (as configured on the server protocol `authentication` element).
 
-==== DIGEST-MD5
-DIGEST-MD5 is the recommended approach for simple username/password authentication scenarios. If you are using the default
-realm on the server (_"ApplicationRealm"_), all you need to do is provide your credentials as follows:
+==== SCRAM
+The SCRAM family of authentication mechanisms is the recommended approach for simple username/password authentication scenarios.
+If you are using the default realm on the server (_"default"_) and `SCRAM-SHA-512` is in the declared server mechanisms,
+all you need to do is provide your credentials as follows:
+
+.Hot Rod client configuration with SCRAM-SHA-512 authentication
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .username("myuser")
+            .password("qwer1234!");
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+
+==== DIGEST
+The DIGEST family of authentication mechanisms has been deprecated in favor of the SCRAM mechs, so you should use those if possible.
+However, when connecting to older versions of {brandname} Server, it might be necessary to use it.
+Since the DIGEST mechanisms require the realm name, make sure you specify it:
 
 .Hot Rod client configuration with DIGEST-MD5 authentication
 [source,java]
@@ -45,9 +68,11 @@ clientBuilder
         .host("127.0.0.1")
         .port(11222)
     .security()
-        .ssl()
+        .authentication()
+            .saslMechanism("DIGEST-MD5")
             .username("myuser")
-            .password("qwer1234!");
+            .password("qwer1234!")
+            .realm("default");
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
@@ -56,7 +81,7 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 The PLAIN mechanism is not really recommended unless the connection is also encrypted, as anyone can sniff the clear-text
 password being sent along the wire.
 
-.Hot Rod client configuration with DIGEST-MD5 authentication
+.Hot Rod client configuration with PLAIN authentication
 [source,java]
 ----
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
@@ -71,6 +96,52 @@ clientBuilder
             .password("qwer1234!");
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+==== OAUTHBEARER
+The OAUTHBEARER mechanism requires interaction with an OAuth2 token provider. It is up to your application to retrieve an OAuth2 token.
+
+.Hot Rod client configuration with OAUTHBEARER authentication
+[source,java]
+----
+String token = "..."; // Obtain the token from your OAuth2 provider
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .saslMechanism("OAUTHBEARER")
+            .serverName("servername")
+            .realm("default")
+            .token(token);
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+Since OAuth2 tokens may need to be refreshed, it is better to
+
+.Hot Rod client configuration with OAUTHBEARER callback
+[source,java]
+----
+String token = "..."; // Obtain the token from your OAuth2 provider
+TokenCallbackHandler tokenHandler = new TokenCallbackHandler(token);
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .saslMechanism("OAUTHBEARER")
+            .serverName("servername")
+            .realm("default")
+            .callbackHandler(tokenHandler);
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+// Refresh the token
+tokenHandler.setToken("newToken");
 ----
 
 ==== EXTERNAL
@@ -216,7 +287,7 @@ clientBuilder
             .enable()
             .serverName("myhotrodserver")
             .saslMechanism("DIGEST-MD5")
-            .callbackHandler(new MyCallbackHandler("myuser", "ApplicationRealm", "qwer1234!".toCharArray()));
+            .callbackHandler(new MyCallbackHandler("myuser", "default", "qwer1234!".toCharArray()));
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----

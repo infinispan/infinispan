@@ -1,0 +1,2 @@
+$ ktpass -princ HTTP/datagrid@DOMAIN.ORG -pass * -mapuser DOMAIN\USER_NAME
+$ ktab -k http.keytab -a HTTP/datagrid@DOMAIN.ORG
