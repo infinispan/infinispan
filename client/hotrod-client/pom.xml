@@ -64,6 +64,20 @@
       </dependency>
 
       <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-gs2</artifactId>
+         <version>${version.org.wildfly.elytron}</version>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-gssapi</artifactId>
+         <version>${version.org.wildfly.elytron}</version>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
          <scope>test</scope>
