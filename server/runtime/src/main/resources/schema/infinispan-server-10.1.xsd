@@ -137,6 +137,11 @@
             <xs:documentation>Sets the size of the receive buffer.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="require-ssl-client-auth" type="xs:boolean">
+         <xs:annotation>
+            <xs:documentation>Enables the requirement for clients to use a certificate when connecting.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="endpoints">
@@ -724,21 +729,113 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-ldap">
+      <xs:annotation>
+         <xs:documentation>
+            A security realm definition backed by LDAP.
+         </xs:documentation>
+      </xs:annotation>
       <xs:sequence>
          <xs:element type="tns:ldap-name-rewriter" name="name-rewriter" minOccurs="0"/>
          <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name"/>
-      <xs:attribute type="xs:string" name="url" use="required"/>
-      <xs:attribute type="xs:string" name="principal"/>
-      <xs:attribute type="xs:string" name="credential"/>
-      <xs:attribute type="xs:boolean" name="direct-verification"/>
-      <xs:attribute type="xs:int" name="page-size"/>
-      <xs:attribute type="xs:string" name="search-dn"/>
-      <xs:attribute type="xs:string" name="rdn-identifier"/>
+      <xs:attribute type="xs:string" name="name">
+         <xs:annotation>
+            <xs:documentation>
+               The name of this realm. It can be used to distinguish multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="url" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The URL indicating a connection to the LDAP server in the format ldap[s]://{hostname}:{port}.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="principal">
+         <xs:annotation>
+            <xs:documentation>
+               The user principal used to connect to the LDAP server.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="credential">
+         <xs:annotation>
+            <xs:documentation>
+               The user credential used to connect to the LDAP server.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:boolean" name="direct-verification">
+         <xs:annotation>
+            <xs:documentation>
+               Should this realm instance support verification of credentials by directly connecting to LDAP as the account being authenticated?
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:int" name="page-size" default="50">
+         <xs:annotation>
+            <xs:documentation>
+               The page size for realm iteration. Defaults to 50.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="search-dn">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the context to be used when executing queries.
+               This option is specially useful when authenticating users based on names that don't use a X.500 format such as `plainUser`
+               In this case, you must also provide an rdn-identifier with the attribute name that contains the user name.
+               If the names used to authenticate users are based on the X.500 format, this configuration can be suppressed.
+               Please note that by using this option the realm is able to authenticate users based on their simple or X.500 names.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="rdn-identifier">
+         <xs:annotation>
+            <xs:documentation>
+               Set the name of the attribute in LDAP that holds the user name and will appear in the path of new entries.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:boolean" name="enable-connection-pooling" default="false">
+         <xs:annotation>
+            <xs:documentation>
+               Indicates if connection pooling is enabled.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="tns:referral-list" name="referral-mode" default="follow">
+         <xs:annotation>
+            <xs:documentation>
+               If LDAP referrals should be followed.
+               Corresponds to REFERRAL ("java.naming.referral") environment property.
+               Allowed values: "ignore", "follow", "throw". Defaults to follow
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:integer" name="connection-timeout" default="5000">
+         <xs:annotation>
+            <xs:documentation>
+               The timeout for connecting to the LDAP server in milliseconds. Defaults to 5 seconds.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:integer" name="read-timeout" default="60000">
+         <xs:annotation>
+            <xs:documentation>
+               The read timeout for an LDAP operation in milliseconds. Defaults to 1 minute.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="ldap-name-rewriter">
+      <xs:annotation>
+         <xs:documentation>
+            A name rewriter takes a name return by an LDAP server and rewrites it by extracting relevant parts from it.
+         </xs:documentation>
+      </xs:annotation>
       <xs:choice>
          <xs:element type="tns:regex-principal-transformer" name="regex-principal-transformer"/>
       </xs:choice>
@@ -795,15 +892,37 @@
    </xs:complexType>
 
    <xs:complexType name="ldap-identity-mapping">
+      <xs:annotation>
+         <xs:documentation>
+            The configuration options that define how principals are mapped to their corresponding entries in the underlying LDAP server.
+         </xs:documentation>
+      </xs:annotation>
       <xs:sequence>
          <xs:element type="tns:ldap-attribute-mapping" name="attribute-mapping" minOccurs="0"/>
          <xs:element type="tns:ldap-user-password-mapper" name="user-password-mapper" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="rdn-identifier"/>
-      <xs:attribute type="xs:string" name="search-dn"/>
+      <xs:attribute type="xs:string" name="rdn-identifier">
+         <xs:annotation>
+            <xs:documentation>
+               The RDN part of the principal's DN to be used to obtain the principal's name from an LDAP entry.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="search-dn">
+         <xs:annotation>
+            <xs:documentation>
+               The base DN to be used when executing queries.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="ldap-attribute-mapping">
+      <xs:annotation>
+         <xs:documentation>
+            The attribute mappings defined for this resource.
+         </xs:documentation>
+      </xs:annotation>
       <xs:sequence>
          <xs:element type="tns:ldap-attribute" name="attribute" maxOccurs="unbounded"/>
       </xs:sequence>
@@ -817,10 +936,27 @@
    </xs:complexType>
 
    <xs:complexType name="ldap-user-password-mapper">
+      <xs:annotation>
+         <xs:documentation>
+            The user password credential mapping defined for this resource.
+         </xs:documentation>
+      </xs:annotation>
       <xs:attribute type="xs:string" name="from"/>
       <xs:attribute type="xs:boolean" name="verifiable"/>
       <xs:attribute type="xs:boolean" name="writable"/>
    </xs:complexType>
+
+   <xs:simpleType name="referral-list">
+      <xs:list>
+         <xs:simpleType>
+            <xs:restriction base="xs:token">
+               <xs:enumeration value="ignore"/>
+               <xs:enumeration value="follow"/>
+               <xs:enumeration value="throw"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:list>
+   </xs:simpleType>
 
    <xs:complexType name="security-realm-token">
       <xs:choice>

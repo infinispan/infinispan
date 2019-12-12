@@ -9,6 +9,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.DefaultElementDefinition;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.configuration.Element;
+import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.server.NameRewriter;
 
 /**
@@ -23,13 +24,17 @@ public class LdapRealmConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    static final AttributeDefinition<NameRewriter> NAME_REWRITER = AttributeDefinition.builder("nameRewriter", null, NameRewriter.class).build();
    static final AttributeDefinition<String> PRINCIPAL = AttributeDefinition.builder("principal", null, String.class).build();
-   static final AttributeDefinition<Integer> PAGE_SIZE = AttributeDefinition.builder("pageSize", null, Integer.class).build();
+   static final AttributeDefinition<Integer> PAGE_SIZE = AttributeDefinition.builder("pageSize", 50, Integer.class).build();
    static final AttributeDefinition<String> RDN_IDENTIFIER = AttributeDefinition.builder("rdnIdentifier", null, String.class).build();
    static final AttributeDefinition<String> SEARCH_DN = AttributeDefinition.builder("searchDn", null, String.class).build();
    static final AttributeDefinition<String> URL = AttributeDefinition.builder("url", null, String.class).build();
+   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", 5_000, Integer.class).build();
+   static final AttributeDefinition<Integer> READ_TIMEOUT = AttributeDefinition.builder("readTimeout", 60_000, Integer.class).build();
+   static final AttributeDefinition<Boolean> CONNECTION_POOLING = AttributeDefinition.builder("connectionPool", false, Boolean.class).build();
+   static final AttributeDefinition<DirContextFactory.ReferralMode> REFERRAL_MODE = AttributeDefinition.builder("referralMode", DirContextFactory.ReferralMode.IGNORE, DirContextFactory.ReferralMode.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LdapRealmConfiguration.class, CREDENTIAL, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, RDN_IDENTIFIER, SEARCH_DN, URL);
+      return new AttributeSet(LdapRealmConfiguration.class, CREDENTIAL, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, RDN_IDENTIFIER, SEARCH_DN, URL, CONNECTION_TIMEOUT, READ_TIMEOUT, CONNECTION_POOLING, REFERRAL_MODE);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.LDAP_REALM.toString());
