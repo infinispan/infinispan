@@ -28,7 +28,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 
 /**
- * Helper for handling the 'search' action of the {@link BaseCacheResource}.
+ * Helper for handling the 'search' action of the {@link CacheResource}.
  *
  * @since 10.0
  */
