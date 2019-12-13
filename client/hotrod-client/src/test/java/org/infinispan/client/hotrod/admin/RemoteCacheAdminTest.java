@@ -17,14 +17,12 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,9 +30,9 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -52,17 +50,11 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(host, serverPort);
-      builder.marshaller(new ProtoStreamMarshaller());
-      return builder;
-   }
-
-   @Override
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.defaultCacheName("default");
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      gcb.serialization().addContextInitializer(contextInitializer());
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(gcb, builder);
       cm.defineConfiguration("template", builder.build());
@@ -71,6 +63,11 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
       servers.add(server);
       return server;
+   }
+
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDomainSCI.INSTANCE;
    }
 
    public void cacheCreateRemoveTest(Method m) {
@@ -139,13 +136,6 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    public void cacheReindexTest(Method m) throws IOException {
       String cacheName = m.getName();
-      //initialize server-side serialization
-      RemoteCache<String, String> metadataCache = client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
-      MarshallerRegistration.registerMarshallers(client(0));
-
       // Create the cache
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);

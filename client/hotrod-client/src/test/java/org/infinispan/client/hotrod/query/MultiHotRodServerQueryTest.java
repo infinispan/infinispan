@@ -5,32 +5,27 @@ import static org.infinispan.query.dsl.Expression.property;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -71,24 +66,12 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort)
-            .marshaller(new ProtoStreamMarshaller());
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDomainSCI.INSTANCE;
    }
 
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
-      //initialize server-side serialization context
-      ProtobufMetadataManager protobufMetadataManager = TestingUtil.extractGlobalComponent(manager(0), ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
-      assertNull(protobufMetadataManager.getFilesWithErrors());
-
-      //initialize client-side serialization context
-      for (RemoteCacheManager rcm : clients) {
-         MarshallerRegistration.registerMarshallers(rcm);
-      }
-
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("Tom");

@@ -5,7 +5,6 @@ import static org.infinispan.query.dsl.Expression.max;
 import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -14,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -26,15 +26,11 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.filter.Filters;
-import org.infinispan.client.hotrod.marshall.EmbeddedUserMarshaller;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -44,9 +40,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.FilterResult;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.filter.IckleCacheEventFilterConverterFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -77,27 +71,12 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
       for (int i = 0; i < NUM_NODES; i++) {
          server(i).addCacheEventFilterConverterFactory(IckleCacheEventFilterConverterFactory.FACTORY_NAME, factory);
       }
-
       remoteCache = client(0).getCache();
-
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
-      for (int i = 0; i < NUM_NODES; i++) {
-         ProtobufMetadataManager protobufMetadataManager = manager(i).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-         protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
-         protobufMetadataManager.registerMarshaller(new GenderMarshaller());
-      }
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(client(0));
    }
 
    @Override
-   protected SerializationContextInitializer contextInitializer() {
-      return ClientEventSCI.INSTANCE;
+   protected List<SerializationContextInitializer> contextInitializers() {
+      return Arrays.asList(TestDomainSCI.INSTANCE, ClientEventSCI.INSTANCE);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -108,12 +87,6 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfgBuilder;
-   }
-
-   @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort)
-            .marshaller(new ProtoStreamMarshaller());
    }
 
    public void testEventFilter() throws Exception {

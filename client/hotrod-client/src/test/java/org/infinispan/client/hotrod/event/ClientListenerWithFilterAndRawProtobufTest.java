@@ -1,15 +1,13 @@
 package org.infinispan.client.hotrod.event;
 
 
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +16,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -33,7 +31,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.testng.annotations.Test;
 
 
@@ -52,33 +49,20 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       createHotRodServers(NUM_NODES, cfgBuilder);
       waitForClusterToForm();
 
-      // The server already has a Protostream <=> Object transcoder, register extra marshallers in the ProtobufMetadataManager.
-      // In standalone servers, those marshallers can be deployed using a jar to have the same effect.
       for (int i = 0; i < NUM_NODES; i++) {
          server(i).addCacheEventFilterFactory("custom-filter-factory", new CustomCacheEventFilterFactory());
-         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContext(server(i).getCacheManager()));
-         assertFalse(client(i).getCache(PROTOBUF_METADATA_CACHE_NAME).containsKey(ERRORS_KEY_SUFFIX));
       }
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(client(0));
 
       remoteCache = client(0).getCache();
    }
 
    @Override
-   protected SerializationContextInitializer contextInitializer() {
-      return ClientEventSCI.INSTANCE;
-   }
-
-   @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort)
-            .marshaller(new ProtoStreamMarshaller());
+   protected List<SerializationContextInitializer> contextInitializers() {
+      return Arrays.asList(ClientEventSCI.INSTANCE,  TestDomainSCI.INSTANCE);
    }
 
    public void testEventFilter() throws Exception {

@@ -13,17 +13,15 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -49,7 +47,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = createServerModeCacheManager(hotRodCacheConfiguration());
+      cacheManager = createServerModeCacheManager(contextInitializer(), hotRodCacheConfiguration());
       cacheManager.defineConfiguration(USER_CACHE, hotRodCacheConfiguration(buildIndexedConfig()).build());
       return cacheManager;
    }
@@ -71,12 +69,9 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
       return builder;
    }
 
-   @BeforeClass(alwaysRun = true)
-   protected void registerSerCtx() throws Exception {
-      ProtobufMetadataManager protobufMetadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      String proto = Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
-      protobufMetadataManager.registerProtofile("bank.proto", proto);
-      MarshallerRegistration.registerMarshallers(remoteCacheManager);
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDomainSCI.INSTANCE;
    }
 
    @Test

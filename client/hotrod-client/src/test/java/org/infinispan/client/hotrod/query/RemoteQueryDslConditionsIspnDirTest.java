@@ -1,9 +1,11 @@
 package org.infinispan.client.hotrod.query;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.marshall.NotIndexedSCI;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -20,8 +22,9 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder defaultCacheConfiguration = new ConfigurationBuilder();
-      createClusteredCaches(1, defaultCacheConfiguration, true);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().clusteredDefault();
+      globalBuilder.serialization().addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE);
+      createClusteredCaches(1, globalBuilder, new ConfigurationBuilder(), true);
 
       ConfigurationBuilder cfg = getConfigurationBuilder();
       manager(0).defineConfiguration(TEST_CACHE_NAME, cfg.build());
@@ -30,12 +33,9 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(manager(0));
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
-
-      initProtoSchema(remoteCacheManager);
    }
 
    @Override
