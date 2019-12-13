@@ -20,6 +20,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.MountableFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -70,7 +71,7 @@ public class KeyCloakServerRule implements TestRule {
       container = new FixedHostPortGenericContainer(KEYCLOAK_IMAGE);
       container.withFixedExposedPort(14567, 8080)
             .withEnv(environment)
-            .withFileSystemBind(keycloakImport.getAbsolutePath(), keycloakImport.getPath())
+            .withCopyFileToContainer(MountableFile.forHostPath(keycloakImport.getAbsolutePath()), keycloakImport.getPath())
             .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLog(testClass)))
             .waitingFor(Wait.forHttp("/"));
       container.start();
