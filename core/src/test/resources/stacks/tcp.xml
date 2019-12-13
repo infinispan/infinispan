@@ -9,7 +9,7 @@
          recv_buf_size="20m"
          send_buf_size="640k"
          enable_diagnostics="false"
-         bundler_type="org.infinispan.remoting.transport.jgroups.BlockingBundler"
+         bundler_type="org.jgroups.protocols.SimplifiedTransferQueueBundler"
 
          thread_naming_pattern="pl"
 
