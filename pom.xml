@@ -251,7 +251,7 @@
       <versionx.com.beust.jcommander>1.48</versionx.com.beust.jcommander>
       <versionx.com.carrotsearch.hppc>0.7.2</versionx.com.carrotsearch.hppc>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
-      <versionx.com.esotericsoftware.kryo>4.0.1</versionx.com.esotericsoftware.kryo>
+      <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
       <versionx.com.esotericsoftware.minlog>1.3.0</versionx.com.esotericsoftware.minlog>
       <versionx.com.esotericsoftware.reflectasm>1.11.3</versionx.com.esotericsoftware.reflectasm>
       <versionx.com.fasterxml.classmate>1.3.4</versionx.com.fasterxml.classmate>
