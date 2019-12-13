@@ -35,6 +35,7 @@ import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.MountableFile;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
@@ -153,7 +154,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                if ("lib".equals(dir)) {
                   copyArtifactsToUserLibDir(hostDir);
                }
-               container.withFileSystemBind(hostDir.getAbsolutePath(), containerDir);
+               container.withCopyFileToContainer(MountableFile.forHostPath(hostDir.getAbsolutePath()), containerDir);
                hostDir.setWritable(true, false);
             });
       // Process any enhancers
