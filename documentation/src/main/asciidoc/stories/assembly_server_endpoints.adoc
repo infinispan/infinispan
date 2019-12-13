@@ -1,6 +1,6 @@
 [id='configuring_endpoints']
 :context: server
-= Setting Up {brandname} Endpoints
+= Configuring {brandname} Server Endpoints
 {brandname} servers provide listener endpoints that handle requests from remote
 client applications.
 
@@ -9,10 +9,6 @@ include::{topics}/con_endpoints_hotrod.adoc[leveloffset=+2]
 include::{topics}/con_endpoints_rest.adoc[leveloffset=+2]
 include::{topics}/con_endpoints_memcached.adoc[leveloffset=+2]
 include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
-
-= Configuring {brandname} Server Endpoints
-{brandname} server provides listener endpoints that handle inbound connections
-from client applications.
 
 include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_hotrod_connector.adoc[leveloffset=+2]

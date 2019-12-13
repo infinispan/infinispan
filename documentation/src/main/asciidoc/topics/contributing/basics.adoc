@@ -159,7 +159,6 @@ Download the code style JAR file from link:https://github.com/infinispan/infinis
 
 == Builds
 {brandname} uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
-For more information, read <<_building_infinispan,the Maven chapter>>.
 
 === Continuous Integration
 {brandname} uses link:http://www.jetbrains.com/teamcity[TeamCity] for continuous integration.
@@ -190,7 +189,7 @@ It is recommended that you use a spellchecker plugin for your IDE.
 
 === Check-in comments
 
-Please ensure any commit comments use <<_comments, this format>> if related to a task or issue in JIRA.
+Please ensure any commit comments use link:#check_in_comments[this format] if related to a task or issue in JIRA.
 This helps JIRA pick out these checkins and display them on the issue, making it very useful for back/forward porting fixes.
 If your comment does not follow this format, your commit may not be merged into upstream.
 
