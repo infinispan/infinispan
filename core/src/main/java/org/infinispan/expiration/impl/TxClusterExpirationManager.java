@@ -54,11 +54,11 @@ public class TxClusterExpirationManager<K, V> extends ClusterExpirationManager<K
 
    @Override
    boolean waitOnLifespanExpiration(boolean hasLock) {
-      // We always have to wait when using optimistic transactions. A scenario where a single writer may call get
-      // and then put may get write skew problems otherwise. The problem is that the get when it sees the expired
-      // entry will fire the remove expired. If we don't wait on this we may end up running the put command at the
-      // same time and get a write skew issue in either caller, which would be very confusing when there is only a
-      // single user of the cache
+      // We always have to wait when using optimistic transactions when an entry was found to be expired.
+      // An example is a user calling get then put if the value was null.
+      // This can cause an expiration event to be fired concurrently with the put.
+      // In an optimistic transaction this can cause an issue as the put may get a write skew exception.
+      // By waiting we prevent this case which can be confusing getting a write skew with a single requestor.
       return hasLock || optimisticTransaction;
    }
 }

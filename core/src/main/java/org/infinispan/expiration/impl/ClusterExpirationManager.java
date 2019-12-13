@@ -116,7 +116,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             log.tracef("Purging data container on cache %s for topology %d", cacheName, topology.getTopologyId());
             start = timeService.time();
          }
-         // We limit it so there is only so many non blocking expiration removals done at the same time
+         // We limit how many non blocking expiration removals performed concurrently
+         // The addition to the queue shouldn't ever block but rather pollForCompletion when we are waiting for
+         // prior tasks to complete
          BlockingQueue<CompletableFuture<?>> expirationPermits = new ArrayBlockingQueue<>(MAX_CONCURRENT_EXPIRATIONS);
          long currentTimeMillis = timeService.wallClockTime();
 
@@ -250,14 +252,13 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          try {
             AdvancedCache<K, V> cacheToUse = skipLocking ? cache.withFlags(Flag.SKIP_LOCKING) : cache;
             CompletableFuture<Boolean> future = removeMaxIdle(cacheToUse, key, value);
-            future.whenComplete((b, t) -> {
+            return future.whenComplete((b, t) -> {
                if (t != null) {
                   completableFuture.completeExceptionally(t);
                } else {
                   completableFuture.complete(b);
                }
             });
-            return completableFuture;
          } catch (Throwable t) {
             completableFuture.completeExceptionally(t);
             throw t;
@@ -301,7 +302,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   // Designed to be extended as needed
+   // Designed to be overridden as needed
    boolean waitOnLifespanExpiration(boolean hasLock) {
       return hasLock;
    }
