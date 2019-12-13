@@ -667,7 +667,6 @@ Please use instead `AtomicMapLookup.getAtomicMap(cache.getAdvancedCache().withFl
 
 * Package `org.infinispan.config` (and all methods involving the old configuration classes).
 All methods removed has an overloaded method which receives the new configuration classes as parameters.
-Please refer to <<_configuration>> for more information about the new configuration classes.
 
 NOTE: This only affects the programmatic configuration.
 

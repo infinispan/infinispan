@@ -1,6 +1,7 @@
-[[transactions]]
-= Transactions
+[id='transaction_manager']
+= {brandname} Transactions
 {brandname} can be configured to use and to participate in JTA compliant transactions.
+
 Alternatively, if transaction support is disabled, it is equivalent to using autocommit in JDBC calls, where modifications are potentially replicated after every change (if replication is enabled).
 
 On every cache operation {brandname} does the following:

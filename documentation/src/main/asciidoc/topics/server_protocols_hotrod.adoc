@@ -1028,7 +1028,13 @@ transcoders from Protobuf format to most common formats like JSON and POJO.
 When using filters/converters with those caches, and it's desirable to use filter/converters with Java Objects rather
 binary Protobuf data, it's necessary to configure the extra ProtoStream marshallers so that the server can unmarshall
 the data before filtering/converting. To do so, you must configure the required <<protostream,SerializationContextInitializer(s)>>
-as part of the <<protostream_cm_config,server's configuration>>.
+as part of the {brandname} server configuration.
+
+//Community Only
+ifndef::productized[]
+See link:../developing/developing.html#protostream_cm_config[ProtoStream] for
+more information.
+endif::productized[]
 
 === Listener State Handling
 
