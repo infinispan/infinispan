@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDo
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -52,12 +51,6 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
    @Override
    protected SerializationContextInitializer contextInitializer() {
       return TestDomainSCI.INSTANCE;
-   }
-
-   @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort)
-            .marshaller(new ProtoStreamMarshaller());
    }
 
    public void testSimpleIteration() {

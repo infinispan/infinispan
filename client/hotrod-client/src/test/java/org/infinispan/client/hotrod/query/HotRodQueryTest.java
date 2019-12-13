@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -16,12 +15,10 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -31,7 +28,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -64,6 +60,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
             .jmxDomain(getClass().getSimpleName())
             .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      gcb.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
 
       ConfigurationBuilder builder = getConfigurationBuilder();
 
@@ -74,20 +71,10 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializer(TestDomainSCI.INSTANCE);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
-
-      //initialize server-side serialization
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(remoteCacheManager);
-
       return cacheManager;
    }
 

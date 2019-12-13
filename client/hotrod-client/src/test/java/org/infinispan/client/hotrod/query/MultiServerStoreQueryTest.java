@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -150,12 +149,6 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       metadataCache.put("news.proto", protoFile);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
-   }
-
-   @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort)
-            .marshaller(new ProtoStreamMarshaller());
    }
 
    public void testIndexing() {

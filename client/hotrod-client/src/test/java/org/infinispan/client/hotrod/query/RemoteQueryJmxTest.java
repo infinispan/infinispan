@@ -24,11 +24,10 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -88,8 +87,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializer(TestDomainSCI.INSTANCE);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
@@ -100,10 +98,6 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       assertEquals(protofile, protobufMetadataManagerMBean.getProtofile("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManagerMBean.getFilesWithErrors());
       assertTrue(Arrays.asList(protobufMetadataManagerMBean.getProtofileNames()).contains("sample_bank_account/bank.proto"));
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(remoteCacheManager);
-
       return cacheManager;
    }
 

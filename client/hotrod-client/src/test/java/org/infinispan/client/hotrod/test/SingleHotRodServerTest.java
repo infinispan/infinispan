@@ -38,12 +38,19 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {
+      ConfigurationBuilder builder = createHotRodClientConfigurationBuilder("127.0.0.1", hotrodServer.getPort());
+      return new InternalRemoteCacheManager(builder.build());
+   }
+
+   protected ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+      builder.addServer()
+            .host(host)
+            .port(serverPort);
       SerializationContextInitializer sci = contextInitializer();
       if (sci != null)
          builder.addContextInitializer(sci);
-      return new InternalRemoteCacheManager(builder.build());
+      return builder;
    }
 
    protected SerializationContextInitializer contextInitializer() {

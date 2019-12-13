@@ -6,7 +6,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -37,7 +36,6 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(host, serverPort);
-      builder.marshaller(new ProtoStreamMarshaller());
       builder.security().authentication().enable().saslMechanism("CRAM-MD5").username("admin").password("password");
       return builder;
    }
@@ -48,6 +46,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
       gcb.defaultCacheName("default");
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       gcb.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL);
+      gcb.serialization().addContextInitializer(contextInitializer());
 
       ConfigurationBuilder template = new ConfigurationBuilder();
       template.read(builder.build());

@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
@@ -14,26 +13,24 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.client.hotrod.marshall.NotIndexedSCI;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AnalyzerTestEntity;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AnalyzerTestEntityMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.marshall.AbstractSerializationContextInitializer;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -48,20 +45,25 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryStringTest")
 public class RemoteQueryStringTest extends QueryStringTest {
 
-   private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "message NotIndexed {\n" +
-         "\toptional string notIndexedField = 1;\n" +
-         "}\n";
+   private static final SerializationContextInitializer CUSTOM_ANALYZER_SCI = new AbstractSerializationContextInitializer("custom_analyzer.proto") {
+      @Override
+      public String getProtoFile() {
+         return "package sample_bank_account;\n" +
+               "/* @Indexed \n" +
+               "   @Analyzer(definition = \"standard-with-stop\") */" +
+               "message AnalyzerTestEntity {\n" +
+               "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
+               "\toptional string f1 = 1;\n" +
+               "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
+               "\toptional int32 f2 = 2;\n" +
+               "}\n";
+      }
 
-   private static final String CUSTOM_ANALYZER_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "/* @Indexed \n" +
-         "   @Analyzer(definition = \"standard-with-stop\") */" +
-         "message AnalyzerTestEntity {\n" +
-         "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
-         "\toptional string f1 = 1;\n" +
-         "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
-         "\toptional int32 f2 = 2;\n" +
-         "}\n";
+      @Override
+      public void registerMarshallers(SerializationContext serCtx) {
+         serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
+      }
+   };
 
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
@@ -106,36 +108,19 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(getNodesCount(), cfg, true);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().clusteredDefault();
+      globalBuilder.serialization().addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE, CUSTOM_ANALYZER_SCI);
+      createClusteredCaches(getNodesCount(), globalBuilder, getConfigurationBuilder(), true);
 
       cache = manager(0).getCache();
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(manager(0));
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
+            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE, CUSTOM_ANALYZER_SCI);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
-      initProtoSchema(remoteCacheManager);
-   }
-
-   protected void initProtoSchema(RemoteCacheManager remoteCacheManager) throws IOException {
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
-      metadataCache.put("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA);
-      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
-
-      //initialize client-side serialization context
-      SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      MarshallerRegistration.registerMarshallers(serCtx);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA));
-      serCtx.registerMarshaller(new NotIndexedMarshaller());
-      serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

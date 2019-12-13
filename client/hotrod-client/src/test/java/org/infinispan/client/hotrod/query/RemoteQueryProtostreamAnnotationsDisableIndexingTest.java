@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
@@ -96,7 +95,6 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    protected RemoteCacheManager getRemoteCacheManager() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
       return new RemoteCacheManager(clientBuilder.build());
    }
 

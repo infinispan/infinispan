@@ -1,26 +1,22 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
-import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
 import java.util.Collections;
 
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
 /**
@@ -31,7 +27,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.ProtobufJsonScriptTest")
 public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
 
-   private static final String PROTO_NAME = "/sample_bank_account/bank.proto";
    private static final String SCRIPT_NAME = "protobuf-json-script.js";
    private static final int CLUSTER_SIZE = 2;
 
@@ -42,19 +37,11 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       cfgBuilder.encoding().value().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       createHotRodServers(CLUSTER_SIZE, cfgBuilder);
       waitForClusterToForm();
-
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = client(0).getCache(PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(PROTO_NAME, getResourceAsString(PROTO_NAME, getClass().getClassLoader()));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(client(0));
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort).marshaller(new ProtoStreamMarshaller());
+   protected SerializationContextInitializer contextInitializer() {
+      return TestDomainSCI.INSTANCE;
    }
 
    @Test
@@ -100,5 +87,4 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       String string = Util.getResourceAsString("/" + script, getClass().getClassLoader());
       scriptCache.put(SCRIPT_NAME, string);
    }
-
 }

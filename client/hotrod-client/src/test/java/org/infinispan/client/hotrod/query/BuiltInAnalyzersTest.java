@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.TestEntity;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -57,7 +56,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).marshaller(new ProtoStreamMarshaller());
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       return new InternalRemoteCacheManager(builder.build());
    }
 

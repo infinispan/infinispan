@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Date;
@@ -24,20 +23,19 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.CurrencyMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.AbstractSerializationContextInitializer;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
@@ -50,7 +48,6 @@ import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -67,11 +64,6 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
-   private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "message NotIndexed {\n" +
-         "\toptional string notIndexedField = 1;\n" +
-         "}\n";
-
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, Account> remoteCache;
@@ -80,8 +72,10 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = createConfigBuilder();
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.serialization().addContextInitializers(new ServerSCI());
 
-      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(builder);
+      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(globalBuilder, builder);
       cache = cacheManager.getCache();
 
       embeddedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
@@ -89,34 +83,11 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
+            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE);
+
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-
       remoteCache = remoteCacheManager.getCache();
-
-      //initialize client-side serialization context
-      SerializationContext clientSerCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      MarshallerRegistration.registerMarshallers(clientSerCtx);
-      clientSerCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
-      clientSerCtx.registerMarshaller(new NotIndexedMarshaller());
-
-      //initialize server-side serialization context
-      ProtobufMetadataManager protobufMetadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
-      protobufMetadataManager.registerProtofile("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
-      assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
-      assertNull(protobufMetadataManager.getFileErrors("not_indexed.proto"));
-      assertNull(protobufMetadataManager.getFilesWithErrors());
-
-      protobufMetadataManager.registerMarshaller(new EmbeddedAccountMarshaller());
-      protobufMetadataManager.registerMarshaller(new CurrencyMarshaller());
-      protobufMetadataManager.registerMarshaller(new EmbeddedLimitsMarshaller());
-      protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
-      protobufMetadataManager.registerMarshaller(new GenderMarshaller());
-      protobufMetadataManager.registerMarshaller(new EmbeddedTransactionMarshaller());
-      protobufMetadataManager.registerMarshaller(new NotIndexedMarshaller());
-
       return cacheManager;
    }
 
@@ -590,5 +561,30 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals(1, account.getId());
       assertEquals("test description", account.getDescription());
       assertEquals(42, account.getCreationDate().getTime());
+   }
+
+   static class ServerSCI extends AbstractSerializationContextInitializer {
+
+      ServerSCI() {
+         super("sample_bank_account/bank.proto");
+      }
+
+      @Override
+      public void registerSchema(SerializationContext ctx) {
+         super.registerSchema(ctx);
+         NotIndexedSCI.INSTANCE.registerSchema(ctx);
+      }
+
+      @Override
+      public void registerMarshallers(SerializationContext ctx) {
+         ctx.registerMarshaller(new EmbeddedAccountMarshaller());
+         ctx.registerMarshaller(new CurrencyMarshaller());
+         ctx.registerMarshaller(new EmbeddedLimitsMarshaller());
+         ctx.registerMarshaller(new EmbeddedUserMarshaller());
+         ctx.registerMarshaller(new GenderMarshaller());
+         ctx.registerMarshaller(new EmbeddedTransactionMarshaller());
+         ctx.registerMarshaller(new NotIndexedMarshaller());
+         NotIndexedSCI.INSTANCE.registerMarshallers(ctx);
+      }
    }
 }

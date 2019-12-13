@@ -14,9 +14,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -50,15 +49,10 @@ public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
-      clientBuilder.marshaller(new ProtoStreamMarshaller());
+      clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort()).addContextInitializer(TestDomainSCI.INSTANCE);
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
       remoteCache = remoteCacheManager.getCache();
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(remoteCacheManager);
-
       return cacheManager;
    }
 
