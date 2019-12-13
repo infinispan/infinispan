@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.event.impl;
 
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
+import org.infinispan.commons.util.Util;
 
 public class CustomEventImpl<T> extends AbstractClientEvent implements ClientCacheEntryCustomEvent<T> {
    private final T data;
@@ -31,6 +32,6 @@ public class CustomEventImpl<T> extends AbstractClientEvent implements ClientCac
 
    @Override
    public String toString() {
-      return "CustomEventImpl(" + "eventData=" + data + ", eventType=" + type + ")";
+      return "CustomEventImpl(" + "eventData=" + Util.toStr(data) + ", eventType=" + type + ")";
    }
 }
