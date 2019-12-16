@@ -1,8 +1,13 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.EXTRACT_RDN;
 import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.FILTER;
 import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.FILTER_DN;
 import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.FROM;
+import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.REFERENCE;
+import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.ROLE_RECURSION;
+import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.ROLE_RECURSION_NAME;
+import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.SEARCH_RECURSIVE;
 import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.TO;
 
 import org.infinispan.commons.configuration.Builder;
@@ -28,6 +33,12 @@ public class LdapAttributeConfigurationBuilder implements Builder<LdapAttributeC
       return this;
    }
 
+   public LdapAttributeConfigurationBuilder reference(String reference) {
+      attributes.attribute(REFERENCE).set(reference);
+      attributeMappingBuilder = AttributeMapping.fromReference(reference);
+      return this;
+   }
+
    public LdapAttributeConfigurationBuilder filterBaseDn(String filterBaseDn) {
       attributes.attribute(FILTER_DN).set(filterBaseDn);
       attributeMappingBuilder.searchDn(filterBaseDn);
@@ -43,6 +54,30 @@ public class LdapAttributeConfigurationBuilder implements Builder<LdapAttributeC
    public LdapAttributeConfigurationBuilder to(String to) {
       attributes.attribute(TO).set(to);
       attributeMappingBuilder.to(to);
+      return this;
+   }
+
+   public LdapAttributeConfigurationBuilder searchRecursive(boolean searchRecursive) {
+      attributes.attribute(SEARCH_RECURSIVE).set(searchRecursive);
+      attributeMappingBuilder.searchRecursively(searchRecursive);
+      return this;
+   }
+
+   public LdapAttributeConfigurationBuilder roleRecursion(int roleRecursion) {
+      attributes.attribute(ROLE_RECURSION).set(roleRecursion);
+      attributeMappingBuilder.roleRecursion(roleRecursion);
+      return this;
+   }
+
+   public LdapAttributeConfigurationBuilder roleRecursionName(String roleRecursionName) {
+      attributes.attribute(ROLE_RECURSION_NAME).set(roleRecursionName);
+      attributeMappingBuilder.roleRecursionName(roleRecursionName);
+      return this;
+   }
+
+   public LdapAttributeConfigurationBuilder extractRdn(String rdn) {
+      attributes.attribute(EXTRACT_RDN).set(rdn);
+      attributeMappingBuilder.extractRdn(rdn);
       return this;
    }
 

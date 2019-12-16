@@ -616,7 +616,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case ATTRIBUTE:
-               parseLdapAttribute(reader, attributeMapperBuilder.addAttribute());
+               parseLdapAttributeFilter(reader, attributeMapperBuilder.addAttribute());
+               break;
+            case ATTRIBUTE_REFERENCE:
+               parseLdapAttributeReference(reader, attributeMapperBuilder.addAttribute());
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -624,26 +627,47 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseLdapAttribute(XMLExtendedStreamReader reader, LdapAttributeConfigurationBuilder attributeBuilder) throws XMLStreamException {
+   private void parseLdapAttributeFilter(XMLExtendedStreamReader reader, LdapAttributeConfigurationBuilder attributeBuilder) throws XMLStreamException {
       String filter = ParseUtils.requireAttributes(reader, Attribute.FILTER)[0];
-      attributeBuilder.filter(filter);
+      parseLdapAttribute(reader, attributeBuilder.filter(filter));
+   }
+
+   private void parseLdapAttributeReference(XMLExtendedStreamReader reader, LdapAttributeConfigurationBuilder attributeBuilder) throws XMLStreamException {
+      String reference = ParseUtils.requireAttributes(reader, Attribute.REFERENCE)[0];
+      parseLdapAttribute(reader, attributeBuilder.reference(reference));
+   }
+
+
+   private void parseLdapAttribute(XMLExtendedStreamReader reader, LdapAttributeConfigurationBuilder attributeBuilder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case REFERENCE:
+            case FILTER:
+               // Already seen
+               break;
             case FROM:
                attributeBuilder.from(value);
                break;
             case TO:
                attributeBuilder.to(value);
                break;
-            case FILTER:
-               // Already seen
-               break;
             case FILTER_DN:
                attributeBuilder.filterBaseDn(value);
                break;
+            case SEARCH_RECURSIVE:
+               attributeBuilder.searchRecursive(Boolean.parseBoolean(value));
+               break;
+            case ROLE_RECURSION:
+               attributeBuilder.roleRecursion(Integer.parseInt(value));
+               break;
+            case ROLE_RECURSION_NAME:
+               attributeBuilder.roleRecursionName(value);
+               break;
+            case EXTRACT_RDN:
+               attributeBuilder.extractRdn(value);
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
