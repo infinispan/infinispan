@@ -363,4 +363,12 @@ public abstract class InfinispanServerDriver {
    public abstract MBeanServerConnection getJmxConnection(int server);
 
    public abstract RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder);
+
+   /**
+    * Access to container log
+    *
+    * @param server the index of the server
+    * @return a String snapshot of a container's entire log output
+    */
+   public abstract String getLog(int server);
 }
