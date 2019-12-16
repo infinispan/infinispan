@@ -42,17 +42,7 @@ SCRAM is recommended approach for simple authentication.
 
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .username("myuser")
-            .password("qwer1234!");
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodScram.java[]
 ----
 
 ==== DIGEST
@@ -63,19 +53,7 @@ previous versions of {brandname} server that do not support SCRAM.
 
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .saslMechanism("DIGEST-MD5")
-            .username("myuser")
-            .password("qwer1234!")
-            .realm("default");
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodDigest.java[]
 ----
 
 ==== PLAIN
@@ -90,18 +68,7 @@ PLAIN is recommended only for secure connections that use TLS encryption.
 
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .saslMechanism("PLAIN")
-            .username("myuser")
-            .password("qwer1234!");
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodPlain.java[]
 ----
 
 ==== OAUTHBEARER
@@ -112,20 +79,7 @@ providers.
 
 [source,java]
 ----
-String token = "..."; // Obtain the token from your OAuth2 provider
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .saslMechanism("OAUTHBEARER")
-            .serverName("servername")
-            .realm("default")
-            .token(token);
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodOAuthBearer.java[]
 ----
 
 [TIP]
@@ -138,23 +92,7 @@ tokens before they expire.
 
 [source,java]
 ----
-String token = "..."; // Obtain the token from your OAuth2 provider
-TokenCallbackHandler tokenHandler = new TokenCallbackHandler(token);
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .saslMechanism("OAUTHBEARER")
-            .serverName("servername")
-            .realm("default")
-            .callbackHandler(tokenHandler);
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
-// Refresh the token
-tokenHandler.setToken("newToken");
+include::code_examples/HotRodOAuthBearerTokenCBH.java[]
 ----
 
 ==== EXTERNAL
@@ -166,23 +104,7 @@ certificates.
 
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .ssl()
-            // TrustStore stores trusted CA certificates for the server.
-            .trustStoreFileName("/path/to/truststore")
-            .trustStorePassword("truststorepassword".toCharArray())
-            // KeyStore stores valid client certificates.
-            .keyStoreFileName("/path/to/keystore")
-            .keyStorePassword("keystorepassword".toCharArray())
-        .authentication()
-            .saslMechanism("EXTERNAL");
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodExternal.java[]
 ----
 
 .Reference
@@ -237,24 +159,7 @@ authenticate with Kerberos and verify `krb5.conf`.
 
 [source,java]
 ----
-LoginContext lc = new LoginContext("GssExample", new BasicCallbackHandler("krb_user", "krb_password".toCharArray()));
-lc.login();
-Subject clientSubject = lc.getSubject();
-
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .enable()
-            .serverName("infinispan-server")
-            .saslMechanism("GSSAPI")
-            .clientSubject(clientSubject)
-            .callbackHandler(new BasicCallbackHandler());
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodGSSAPI.java[]
 ----
 
 [NOTE]
@@ -283,53 +188,7 @@ document to provide examples for each possible callback type.
 
 [source,java]
 ----
-public class MyCallbackHandler implements CallbackHandler {
-   final private String username;
-   final private char[] password;
-   final private String realm;
-
-   public MyCallbackHandler(String username, String realm, char[] password) {
-      this.username = username;
-      this.password = password;
-      this.realm = realm;
-   }
-
-   @Override
-   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-      for (Callback callback : callbacks) {
-         if (callback instanceof NameCallback) {
-            NameCallback nameCallback = (NameCallback) callback;
-            nameCallback.setName(username);
-         } else if (callback instanceof PasswordCallback) {
-            PasswordCallback passwordCallback = (PasswordCallback) callback;
-            passwordCallback.setPassword(password);
-         } else if (callback instanceof AuthorizeCallback) {
-            AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-            authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
-                  authorizeCallback.getAuthorizationID()));
-         } else if (callback instanceof RealmCallback) {
-            RealmCallback realmCallback = (RealmCallback) callback;
-            realmCallback.setText(realm);
-         } else {
-            throw new UnsupportedCallbackException(callback);
-         }
-      }
-   }
-}
-
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .enable()
-            .serverName("myhotrodserver")
-            .saslMechanism("DIGEST-MD5")
-            .callbackHandler(new MyCallbackHandler("myuser", "default", "qwer1234!".toCharArray()));
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodCustomCBH.java[]
 ----
 
 [[hr_encryption]]
@@ -345,17 +204,7 @@ This certificate needs to placed in a keystore and used as a _TrustStore_ on the
 .Hot Rod client configuration with TLS (server cert)
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .ssl()
-            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
-            .trustStoreFileName("/path/to/truststore")
-            .trustStorePassword("truststorepassword".toCharArray());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodTLS.java[]
 ----
 
 ==== SNI
@@ -366,18 +215,7 @@ can specify which identity to connect to by specifying its name:
 .Hot Rod client configuration with SNI (server cert)
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .ssl()
-            .sniHostName("myservername")
-            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
-            .trustStoreFileName("/path/to/truststore")
-            .trustStorePassword("truststorepassword".toCharArray());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodSNI.java[]
 ----
 
 ==== Client certificates
@@ -389,20 +227,7 @@ This certificate must be stored in a keystore and used as follows:
 .Hot Rod client configuration with TLS (server and client cert)
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .ssl()
-            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
-            .trustStoreFileName("/path/to/truststore")
-            .trustStorePassword("truststorepassword".toCharArray())
-            // KeyStore containing this client's own certificate
-            .keyStoreFileName("/path/to/keystore")
-            .keyStorePassword("keystorepassword".toCharArray())
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+include::code_examples/HotRodTLSAuth.java[]
 ----
 
 Please read the link:{jdkroot}/technotes/tools/unix/keytool.html[KeyTool] documentation for more details on KeyStores.
