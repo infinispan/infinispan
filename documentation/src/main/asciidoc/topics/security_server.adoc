@@ -55,16 +55,7 @@ The following code snippet shows how to use the `client_truststore.p12` we gener
 
 [source,java]
 ----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-     .security()
-        .ssl()
-           .trustStoreFileName("client_truststore.p12")
-           .trustStorePassword("secret".toCharArray());
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+include::code_examples/HotRodTrustStore.java[]
 ----
 
 You can require that clients also present a certificate by adding `require-ssl-client-auth="true"` to the `endpoints` element:
