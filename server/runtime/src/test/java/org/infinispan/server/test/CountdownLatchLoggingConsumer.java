@@ -2,6 +2,7 @@ package org.infinispan.server.test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import org.testcontainers.containers.output.BaseConsumer;
@@ -29,7 +30,13 @@ public class CountdownLatchLoggingConsumer extends BaseConsumer<CountdownLatchLo
       }
    }
 
-   public void await(long timeout, TimeUnit unit) throws InterruptedException {
-      latch.await(timeout, unit);
+   public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+      return latch.await(timeout, unit);
+   }
+
+   public void awaitStrict(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+      if (!latch.await(timeout, unit)) {
+         throw new TimeoutException(String.format("After the await period %d %s the count down should be 0 and is %d", timeout, unit, latch.getCount()));
+      }
    }
 }

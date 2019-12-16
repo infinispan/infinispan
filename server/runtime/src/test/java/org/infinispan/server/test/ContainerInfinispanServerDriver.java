@@ -48,6 +48,8 @@ import com.github.dockerjava.api.model.Network;
  **/
 public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
+   private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
+   private static final int STARTUP_TIMEOUT_SECONDS = 45;
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    private final List<GenericContainer> containers;
@@ -56,6 +58,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
    private File rootDir;
+
    private final boolean preferContainerExposedPorts = Boolean.getBoolean("org.infinispan.test.server.container.preferContainerExposedPorts");
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
@@ -134,14 +137,14 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                               9999   // JMX Remoting
                         )
                         .build());
-      latch = new CountdownLatchLoggingConsumer(configuration.numServers(), ".*ISPN080001.*");
+      latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
       for (int i = 0; i < configuration.numServers(); i++) {
          GenericContainer container = createContainer(i, rootDir);
          containers.add(i, container);
          log.infof("Starting container %s-%d", name, i);
          container.start();
       }
-      Exceptions.unchecked(() -> latch.await(10, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.awaitStrict(STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    private GenericContainer createContainer(int i, File rootDir) {
@@ -242,24 +245,24 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       if (isRunning(server)) {
          throw new IllegalStateException("Server " + server + " is still running");
       }
-      latch = new CountdownLatchLoggingConsumer(1, ".*ISPN080001.*");
+      latch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
       GenericContainer container = createContainer(server, rootDir);
       containers.set(server, container);
       log.infof("Restarting container %s-%d", name, server);
       container.start();
-      Exceptions.unchecked(() -> latch.await(10, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.awaitStrict(STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
    public void restartCluster() {
-      latch = new CountdownLatchLoggingConsumer(configuration.numServers(), ".*ISPN080001.*");
+      latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
       for (int i = 0; i < configuration.numServers(); i++) {
          GenericContainer container = createContainer(i, rootDir);
          containers.set(i, container);
          log.infof("Restarting container %s-%d", name, i);
          container.start();
       }
-      Exceptions.unchecked(() -> latch.await(10, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.awaitStrict(STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
