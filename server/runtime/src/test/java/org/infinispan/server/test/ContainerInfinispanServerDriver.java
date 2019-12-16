@@ -274,6 +274,12 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    }
 
    @Override
+   public String getLog(int server) {
+      GenericContainer container = containers.get(server);
+      return container.getLogs();
+   }
+
+   @Override
    public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
       if (preferContainerExposedPorts) {
          return new ContainerRemoteCacheManager(containers).wrap(builder);
