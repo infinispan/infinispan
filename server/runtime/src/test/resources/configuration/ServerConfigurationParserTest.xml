@@ -53,6 +53,7 @@
                         <attribute from="cn2" to="Roles2"
                                    filter="(&amp;(objectClass=GroupOfUniqueNames)(member={0}))"
                                    filter-dn="ou=People,dc=infinispan,dc=org"/>
+                        <attribute-reference reference="memberOf" to="Roles3"/>
                      </attribute-mapping>
                      <user-password-mapper from="userPassword" verifiable="false" writable="false"/>
                   </identity-mapping>

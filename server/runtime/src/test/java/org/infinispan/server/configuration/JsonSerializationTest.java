@@ -141,7 +141,7 @@ public class JsonSerializationTest {
       assertEquals("ou=People,dc=infinispan,dc=org", ldapIdentityMapping.get("search-base-dn").asText());
       JsonNode attributeMapping = ldapIdentityMapping.get("attribute-mapping");
       JsonNode attributes = attributeMapping.get("attribute");
-      assertEquals(2, attributes.size());
+      assertEquals(3, attributes.size());
       Iterator<JsonNode> elements = attributes.elements();
       JsonNode attribute1 = elements.next();
       assertEquals("cn", attribute1.get("from").asText());
@@ -153,6 +153,9 @@ public class JsonSerializationTest {
       assertEquals("Roles2", attribute2.get("to").asText());
       assertEquals("(&(objectClass=GroupOfUniqueNames)(member={0}))", attribute2.get("filter").asText());
       assertEquals("ou=People,dc=infinispan,dc=org", attribute2.get("filter-dn").asText());
+      JsonNode attribute3 = elements.next();
+      assertEquals("memberOf", attribute3.get("reference").asText());
+      assertEquals("Roles3", attribute3.get("to").asText());
       JsonNode userPasswordMapping = ldapIdentityMapping.get("user-password-mapper");
       assertEquals("userPassword", userPasswordMapping.get("from").asText());
       assertFalse(userPasswordMapping.get("verifiable").asBoolean());

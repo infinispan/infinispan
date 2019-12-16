@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import javax.xml.XMLConstants;
-import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
@@ -279,10 +278,6 @@ public final class ParseUtils {
         if (!isNoNamespaceAttribute(reader, index)) {
             throw unexpectedAttribute(reader, index);
         }
-    }
-
-    public static String getWarningMessage(final String msg, final Location location) {
-        return String.format("Parsing problem at [row,col]:[%d ,%d]%nMessage: %s%n", location.getLineNumber(), location.getColumnNumber(), msg);
     }
 
     public static Namespace[] getNamespaceAnnotations(Class<?> cls) {

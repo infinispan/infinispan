@@ -15,9 +15,14 @@ public class LdapAttributeConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> FILTER_DN = AttributeDefinition.builder("filterDn", null, String.class).build();
    static final AttributeDefinition<String> FROM = AttributeDefinition.builder("from", null, String.class).build();
    static final AttributeDefinition<String> TO = AttributeDefinition.builder("to", null, String.class).build();
+   static final AttributeDefinition<String> REFERENCE = AttributeDefinition.builder("reference", null, String.class).build();
+   static final AttributeDefinition<Boolean> SEARCH_RECURSIVE = AttributeDefinition.builder("searchRecursive", true, Boolean.class).build();
+   static final AttributeDefinition<Integer> ROLE_RECURSION = AttributeDefinition.builder("roleRecursion", 0, Integer.class).build();
+   static final AttributeDefinition<String> ROLE_RECURSION_NAME = AttributeDefinition.builder("roleRecursionName", "cn", String.class).build();
+   static final AttributeDefinition<String> EXTRACT_RDN = AttributeDefinition.builder("extractRdn", null, String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LdapAttributeConfiguration.class, FILTER, FILTER_DN, FROM, TO);
+      return new AttributeSet(LdapAttributeConfiguration.class, FILTER, FILTER_DN, FROM, TO, REFERENCE, SEARCH_RECURSIVE, ROLE_RECURSION, ROLE_RECURSION_NAME, EXTRACT_RDN);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.ATTRIBUTE.toString());

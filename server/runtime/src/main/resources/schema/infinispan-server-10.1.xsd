@@ -924,15 +924,96 @@
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
-         <xs:element type="tns:ldap-attribute" name="attribute" maxOccurs="unbounded"/>
+         <xs:choice maxOccurs="unbounded">
+            <xs:element type="tns:ldap-attribute-filter" name="attribute"/>
+            <xs:element type="tns:ldap-attribute-reference" name="attribute-reference"/>
+         </xs:choice>
       </xs:sequence>
    </xs:complexType>
 
-   <xs:complexType name="ldap-attribute">
-      <xs:attribute type="xs:string" name="filter" use="required"/>
-      <xs:attribute type="xs:string" name="filter-dn"/>
-      <xs:attribute type="xs:string" name="from"/>
-      <xs:attribute type="xs:string" name="to"/>
+   <xs:complexType name="ldap-attribute-filter">
+      <xs:complexContent>
+         <xs:extension base="tns:ldap-attribute">
+            <xs:attribute type="xs:string" name="filter" use="required">
+               <xs:annotation>
+                  <xs:documentation>
+                     The filter to use to obtain the values for a specific attribute.
+                     String "{0}" will be replaced by username, "{1}" by user identity DN.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="ldap-attribute-reference">
+      <xs:complexContent>
+         <xs:extension base="tns:ldap-attribute">
+            <xs:attribute type="xs:string" name="reference" use="required">
+               <xs:annotation>
+                  <xs:documentation>
+                     The name of an LDAP attribute containing DN of entry to obtain value from.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="ldap-attribute" abstract="true">
+      <xs:attribute type="xs:string" name="filter-dn">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the context where the filter should be performed.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="from">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the LDAP attribute to map to an identity attribute.
+               If not defined, DN of the whole entry is used as value.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="to">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the identity attribute mapped from a specific LDAP attribute.
+               If not provided, the name of the attribute is the same as define in 'from'.
+               If the 'from' is not defined too, value 'dn' is used.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:boolean" name="search-recursive" default="true">
+         <xs:annotation>
+            <xs:documentation>
+               Indicates if attribute LDAP search queries are recursive.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:int" name="role-recursion" default="0">
+         <xs:annotation>
+            <xs:documentation>
+               Sets recursive roles assignment - value determine maximum depth of recursion. (0 for no recursion)
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="role-recursion-name" default="cn">
+         <xs:annotation>
+            <xs:documentation>
+               Determine LDAP attribute of role entry which will be substitute for "{0}" in filter-name when searching roles of role.
+               Used only when role-recursion is set.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="extract-rdn">
+         <xs:annotation>
+            <xs:documentation>
+               The RDN key to use as the value for an attribute, in case the value in its raw form is in X.500 format.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="ldap-user-password-mapper">
@@ -941,9 +1022,27 @@
             The user password credential mapping defined for this resource.
          </xs:documentation>
       </xs:annotation>
-      <xs:attribute type="xs:string" name="from"/>
-      <xs:attribute type="xs:boolean" name="verifiable"/>
-      <xs:attribute type="xs:boolean" name="writable"/>
+      <xs:attribute type="xs:string" name="from">
+         <xs:annotation>
+            <xs:documentation>
+               The name of the LDAP attribute to map to an identity user password credential.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:boolean" name="verifiable">
+         <xs:annotation>
+            <xs:documentation>
+               If the password credential is verifiable.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:boolean" name="writable">
+         <xs:annotation>
+            <xs:documentation>
+               If the password credential is writable.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:simpleType name="referral-list">
