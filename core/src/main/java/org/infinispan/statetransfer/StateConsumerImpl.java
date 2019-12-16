@@ -302,12 +302,8 @@ public class StateConsumerImpl implements StateConsumer {
             previousCacheTopology != null ? previousCacheTopology.getCurrentCH() : null;
       final ConsistentHash previousWriteCh =
             previousCacheTopology != null ? previousCacheTopology.getWriteConsistentHash() : null;
-      // Ensures writes to the data container use the right consistent hash
-      // No need for a try/finally block, since it's just an assignment
-      stateTransferLock.acquireExclusiveTopologyLock();
+
       beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
-      this.cacheTopology = cacheTopology;
-      distributionManager.setCacheTopology(cacheTopology);
 
       IntSet newWriteSegments = getOwnedSegments(newWriteCh);
       if (!configuration.clustering().cacheMode().isInvalidation()) {
@@ -323,7 +319,17 @@ public class StateConsumerImpl implements StateConsumer {
          commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
          commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
       }
-      stateTransferLock.releaseExclusiveTopologyLock();
+
+      // Ensures writes to the data container use the right consistent hash
+      // Writers block on the state transfer shared lock, so we keep the exclusive lock as short as possible
+      stateTransferLock.acquireExclusiveTopologyLock();
+      try {
+         this.cacheTopology = cacheTopology;
+         distributionManager.setCacheTopology(cacheTopology);
+      } finally {
+         stateTransferLock.releaseExclusiveTopologyLock();
+      }
+
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
       remoteCommandsExecutor.checkForReadyTasks();
 
