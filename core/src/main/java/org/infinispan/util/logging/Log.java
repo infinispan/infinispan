@@ -61,6 +61,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 import org.jgroups.View;
 
@@ -1933,4 +1934,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Failed to initialize base and vendor metrics from JMX MBeans", id = 568)
    IllegalStateException failedToInitBaseAndVendorMetrics(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to persist Infinispan internal caches as no global state enabled", id = 569)
+   @Once
+   void warnUnableToPersistInternalCaches();
 }
