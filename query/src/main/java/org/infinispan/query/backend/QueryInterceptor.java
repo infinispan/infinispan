@@ -1,15 +1,12 @@
 package org.infinispan.query.backend;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
@@ -38,6 +35,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -48,11 +46,9 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.query.logging.Log;
-import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
@@ -85,27 +81,17 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
    ExecutorService asyncExecutor;
-   @Inject InternalCacheRegistry internalCacheRegistry;
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler;
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
-   private QueryKnownClasses queryKnownClasses;
    private SearchWorkCreator searchWorkCreator = SearchWorkCreator.DEFAULT;
-   private SearchFactoryHandler searchFactoryHandler;
    private final DataConversion valueDataConversion;
    private final DataConversion keyDataConversion;
-   private boolean isPersistenceEnabled;
-
-   /**
-    * The classes declared by the indexing config as indexable. In 8.2 this can be null, indicating that no classes
-    * were declared and we are running in the (deprecated) autodetect mode. Autodetect mode will be removed in 9.0.
-    */
-   private Class<?>[] indexedEntities;
-
-   private final AdvancedCache<?, ?> cache;
+   private final boolean isPersistenceEnabled;
+   private final Map<String, Class<?>> indexedEntities;
 
    private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
 
@@ -117,32 +103,27 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.keyTransformationHandler = keyTransformationHandler;
       this.indexingMode = indexingMode;
       this.txOldValues = txOldValues;
-      this.cache = cache;
       this.valueDataConversion = cache.getValueDataConversion();
       this.keyDataConversion = cache.getKeyDataConversion();
+      Configuration cfg = cache.getCacheConfiguration();
+      this.isPersistenceEnabled = cfg.persistence().usingStores();
+
+      Map<String, Class<?>> indexedEntities = new HashMap<>();
+      for (Class<?> c : cfg.indexing().indexedEntities()) {
+         // include classes declared in indexing config
+         indexedEntities.put(c.getName(), c);
+      }
+      for (IndexedTypeIdentifier typeIdentifier : searchFactory.getIndexBindings().keySet()) {
+         // include possible programmatically declared classes via SearchMapping
+         Class<?> c = typeIdentifier.getPojoType();
+         indexedEntities.put(c.getName(), c);
+      }
+      this.indexedEntities = Collections.unmodifiableMap(indexedEntities);
    }
 
    @Start
    protected void start() {
-      Set<Class<?>> indexedEntities = cacheConfiguration.indexing().indexedEntities();
-      this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
-      queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cache.getCacheManager(), internalCacheRegistry) : new QueryKnownClasses(cache.getName(), indexedEntities);
-      searchFactoryHandler = new SearchFactoryHandler(searchFactory, queryKnownClasses, new TransactionHelper(cache.getTransactionManager()),
-            asyncExecutor, cache.getClassLoader());
-      if (this.indexedEntities == null) {
-         queryKnownClasses.start(searchFactoryHandler);
-         Set<Class<?>> classes = queryKnownClasses.keys();
-         Class<?>[] classesArray = classes.toArray(new Class<?>[classes.size()]);
-         //Important to enable them all in a single call, much more efficient:
-         searchFactoryHandler.enableClasses(classesArray);
-      }
-      isPersistenceEnabled = cacheConfiguration.persistence().usingStores();
       stopping.set(false);
-   }
-
-   @Stop
-   protected void stop() {
-      queryKnownClasses.stop();
    }
 
    public void prepareForStopping() {
@@ -330,31 +311,21 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Remove entries from all indexes by key.
     */
    void removeFromIndexes(TransactionContext transactionContext, Object key) {
-      Stream<IndexedTypeIdentifier> typeIdentifiers = getKnownClasses().stream()
-            .filter(searchFactoryHandler::hasIndex)
-            .map(PojoIndexedTypeIdentifier::new);
-      Set<Work> deleteWorks = typeIdentifiers
-            .map(e -> searchWorkCreator.createPerEntityWork(keyToString(key), e, WorkType.DELETE))
-            .collect(Collectors.toSet());
-      performSearchWorks(deleteWorks, transactionContext);
+      for (IndexedTypeIdentifier type : searchFactory.getIndexBindings().keySet()) {
+         performSearchWork(searchWorkCreator.createPerEntityWork(keyToString(key), type, WorkType.DELETE), transactionContext);
+      }
    }
 
    private void purgeIndex(TransactionContext transactionContext, Class<?> entityType) {
-      Boolean isIndexable = queryKnownClasses.get(entityType);
-      if (isIndexable != null && isIndexable.booleanValue()) {
-         if (searchFactoryHandler.hasIndex(entityType)) {
-            IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(entityType);
-            performSearchWork(searchWorkCreator.createPerEntityTypeWork(type, WorkType.PURGE_ALL), transactionContext);
-         }
+      IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(entityType);
+      if (searchFactory.getIndexBindings().containsKey(type)) {
+         performSearchWork(searchWorkCreator.createPerEntityTypeWork(type, WorkType.PURGE_ALL), transactionContext);
       }
    }
 
    private void purgeAllIndexes(TransactionContext transactionContext) {
-      for (Class<?> c : queryKnownClasses.keys()) {
-         if (searchFactoryHandler.hasIndex(c)) {
-            IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(c);
-            performSearchWork(searchWorkCreator.createPerEntityTypeWork(type, WorkType.PURGE_ALL), transactionContext);
-         }
+      for (IndexedTypeIdentifier type : searchFactory.getIndexBindings().keySet()) {
+         performSearchWork(searchWorkCreator.createPerEntityTypeWork(type, WorkType.PURGE_ALL), transactionContext);
       }
    }
 
@@ -374,15 +345,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       performSearchWork(searchWorkCreator.createPerEntityWork(value, id, workType), transactionContext);
    }
 
-   private void performSearchWorks(Collection<Work> works, TransactionContext transactionContext) {
-      Worker worker = searchFactory.getWorker();
-      for (Work work : works) {
-         if (work != null) {
-            worker.performWork(work, transactionContext);
-         }
-      }
-   }
-
    private void performSearchWork(Work work, TransactionContext transactionContext) {
       if (work != null) {
          Worker worker = searchFactory.getWorker();
@@ -391,12 +353,25 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    /**
-    * The set of known classes. Some might be indexable, some are not.
-    *
-    * @return an immutable set
+    * The indexed classes.
     */
-   public Set<Class<?>> getKnownClasses() {
-      return queryKnownClasses.keys();
+   public Map<String, Class<?>> indexedEntities() {
+      return indexedEntities;
+   }
+
+   private boolean isIndexedType(Object value) {
+      if (value == null) {
+         return false;
+      }
+      Class<?> c = value.getClass();
+      if (indexedEntities.containsValue(c)) {
+         return true;
+      }
+      if (searchFactory.getIndexBindings().containsKey(new PojoIndexedTypeIdentifier(c))) {
+         //todo [anistor] remove!
+         throw new IllegalStateException("Very odd case! : " + c.getName());
+      }
+      return false;
    }
 
    private Object extractValue(Object storedValue) {
@@ -405,10 +380,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private Object extractKey(Object storedKey) {
       return keyDataConversion.extractIndexable(storedKey);
-   }
-
-   public void enableClasses(Class<?>... classes) {
-      searchFactoryHandler.enableClasses(classes);
    }
 
    private String keyToString(Object key) {
@@ -445,7 +416,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
                removeFromIndexes(transactionContext, key);
             }
-         } else if (searchFactoryHandler.updateKnownTypesIfNeeded(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+         } else if (isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
             removeFromIndexes(oldValue, key, transactionContext);
          } else if (trace) {
@@ -454,7 +425,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       } else if (trace) {
          log.tracef("Skipped index cleanup for command %s", command);
       }
-      if (searchFactoryHandler.updateKnownTypesIfNeeded(newValue)) {
+      if (isIndexedType(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             updateIndexes(skipIndexCleanup, newValue, key, transactionContext);

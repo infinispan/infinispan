@@ -112,14 +112,13 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "Cannot run Lucene queries on a cache '%s' that does not have indexing enabled", id = 14019)
    IllegalStateException cannotRunLuceneQueriesIfNotIndexed(String cacheName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Autodetected a new indexed entity type in cache %s: %s. Autodetection support will be removed in Infinispan 10.0.", id = 14028)
-   void detectedUnknownIndexedEntity(String cacheName, String className);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Autodetected a new indexed entity type in cache %s: %s. Autodetection support will be removed in Infinispan 10.0.", id = 14028)
+//   void detectedUnknownIndexedEntity(String cacheName, String className);
 
-   //todo [anistor] This should become a CacheException in Infinispan 10.0
-   @LogMessage(level = WARN)
-   @Message(value = "Found undeclared indexable types in cache %s : %s. No indexes were created for these types because autodetection is not enabled for this cache.", id = 14029)
-   void detectedUnknownIndexedEntities(String cacheName, String classNames);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Found undeclared indexable types in cache %s : %s. No indexes were created for these types because autodetection is not enabled for this cache.", id = 14029)
+//   void detectedUnknownIndexedEntities(String cacheName, String classNames);
 
    @Message(value = "The type %s is not an indexed entity.", id = 14030)
    IllegalArgumentException notAnIndexedEntityException(String typeName);

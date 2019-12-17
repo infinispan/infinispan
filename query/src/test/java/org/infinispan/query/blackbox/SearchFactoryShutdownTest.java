@@ -1,5 +1,8 @@
 package org.infinispan.query.blackbox;
 
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,7 +19,7 @@ import org.testng.annotations.Test;
  * Ensures the search factory is properly shut down.
  *
  * @author Manik Surtani
- * @version 4.2
+ * @since 4.2
  */
 @Test(testName = "query.blackbox.SearchFactoryShutdownTest", groups = "functional")
 public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
@@ -38,15 +41,14 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
          Cache<?, ?> cache = cc.getCache();
          SearchIntegrator sfi = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
-         assert ! sfi.isStopped();
+         assertFalse(sfi.isStopped());
 
          cc.stop();
 
-         assert sfi.isStopped();
+         assertTrue(sfi.isStopped());
       } finally {
          // proper cleanup for exceptional execution
          TestingUtil.killCacheManagers(cc);
       }
    }
-
 }

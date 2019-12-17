@@ -58,14 +58,12 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
-      queryInterceptor.enableClasses(classes);
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       return queryEngine.buildCacheQuery(luceneQuery, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
    }
 
    @Override
    public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
-      queryInterceptor.enableClasses(classes);
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       try {
          return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
@@ -95,9 +93,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
       if (timeoutExceptionFactory != null) {
          hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
       }
-      Class<?>[] classes = hSearchQuery.getTargetedEntities().toPojosSet().toArray(new Class[hSearchQuery.getTargetedEntities().size()]);
-      queryInterceptor.enableClasses(classes);
-
       if (queryMode == IndexedQueryMode.BROADCAST) {
          ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
          return new ClusteredCacheQueryImpl<>(new QueryDefinition(hSearchQuery), asyncExecutor, cache, keyTransformationHandler, null);
@@ -118,7 +113,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public EntityContext buildQueryBuilderForClass(Class<?> entityType) {
-      queryInterceptor.enableClasses(entityType);
       return searchFactory.buildQueryBuilder().forEntity(entityType);
    }
 

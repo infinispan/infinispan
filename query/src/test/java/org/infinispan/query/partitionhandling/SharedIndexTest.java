@@ -1,4 +1,4 @@
-package org.infinispan.query.partition;
+package org.infinispan.query.partitionhandling;
 
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
 import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
@@ -6,7 +6,6 @@ import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.util.List;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
@@ -45,8 +44,9 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    protected ConfigurationBuilder cacheConfiguration() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.indexing()
-            .index(Index.PRIMARY_OWNER)
-            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
+                          .index(Index.PRIMARY_OWNER)
+                          .addIndexedEntity(Person.class)
+                          .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
       return configurationBuilder;
    }
 
@@ -56,29 +56,20 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-      postConfigure(cacheManagers);
-   }
-
-   protected void postConfigure(List<EmbeddedCacheManager> cacheManagers) {
-      ConfigurationBuilder replBuilder = new ConfigurationBuilder();
-      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC).partitionHandling()
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      Configuration replConfig = new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.REPL_SYNC).partitionHandling()
             .whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .indexing().index(Index.NONE);
-      Configuration replConfig = replBuilder.build();
+            .indexing().index(Index.NONE).build();
 
-      ConfigurationBuilder distBuilder = new ConfigurationBuilder();
-      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).partitionHandling()
+      Configuration distConfig = new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.DIST_SYNC).partitionHandling()
             .whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .indexing().index(Index.NONE);
-      Configuration distConfig = distBuilder.build();
+            .indexing().index(Index.NONE).build();
 
-      cacheManagers.forEach(cm -> {
-         cm.defineConfiguration(DEFAULT_LOCKING_CACHENAME, replConfig);
-         cm.defineConfiguration(DEFAULT_INDEXESDATA_CACHENAME, distConfig);
-         cm.defineConfiguration(DEFAULT_INDEXESMETADATA_CACHENAME, replConfig);
-      });
+      cm.defineConfiguration(DEFAULT_LOCKING_CACHENAME, replConfig);
+      cm.defineConfiguration(DEFAULT_INDEXESDATA_CACHENAME, distConfig);
+      cm.defineConfiguration(DEFAULT_INDEXESMETADATA_CACHENAME, replConfig);
    }
 
    @Test(expectedExceptions = AvailabilityException.class)
@@ -117,6 +108,6 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    }
 
    protected String getQuery() {
-      return "From " + Person.class.getName() + " p where p.name:'person*'";
+      return "from " + Person.class.getName() + " p where p.name:'person*'";
    }
 }

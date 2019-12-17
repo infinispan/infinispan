@@ -7,6 +7,7 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_E
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -140,9 +141,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
-      Set<Class<?>> indexedEntities = indexedEntities();
-      indexedEntities.add(indexedEntity);
-      attributes.attribute(INDEXED_ENTITIES).set(indexedEntities);
+      Set<Class<?>> indexedEntitySet = indexedEntities();
+      indexedEntitySet.add(indexedEntity);
+      attributes.attribute(INDEXED_ENTITIES).set(indexedEntitySet);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder addIndexedEntities(Class<?>... indexedEntities) {
+      Set<Class<?>> indexedEntitySet = indexedEntities();
+      Collections.addAll(indexedEntitySet, indexedEntities);
+      attributes.attribute(INDEXED_ENTITIES).set(indexedEntitySet);
       return this;
    }
 
@@ -158,14 +166,18 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             throw CONFIG.invalidConfigurationIndexingWithInvalidation();
          }
          if (indexedEntities().isEmpty() && !getBuilder().template()) {
-            //TODO [anistor] This does not take into account eventual programmatically defined entity mappings
+            //TODO  [anistor] This does not take into account eventual programmatically defined entity mappings
             CONFIG.noIndexableClassesDefined();
          }
          if (attributes.attribute(INDEX).get() == Index.ALL && !clustering().cacheMode().isReplicated()) {
             CONFIG.allIndexingInNonReplicatedCache();
          }
+      } else {
+         //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
+         if (!indexedEntities().isEmpty()) {
+           // throw new CacheConfigurationException("Cache configuration must not declare indexed entities if it is not indexed");
+         }
       }
-      //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
    }
 
    @Override

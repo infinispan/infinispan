@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
 import java.net.SocketAddress;
@@ -51,8 +52,8 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
 
       killServer();
       killServer();
-      assertEquals(null, client.get(keys.get(0))); // data gone
-      assertEquals(null, client.get(keys.get(1))); // data gone
+      assertNull(client.get(keys.get(0))); // data gone
+      assertNull(client.get(keys.get(1))); // data gone
 
       resetStats();
       assertEquals("two", client.get(keys.get(2)));
@@ -90,7 +91,7 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
    }
 
    private List<byte[]> genKeys() {
-      List<byte[]> keys = new ArrayList<byte[]>();
+      List<byte[]> keys = new ArrayList<>();
       for (Map.Entry<SocketAddress, HotRodServer> entry : addr2hrServer.entrySet()) {
          keys.add(HotRodClientTestingUtil.getKeyForServer(entry.getValue()));
       }
@@ -98,9 +99,7 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
    }
 
    private List<SocketAddress> getSocketAddressList() {
-      List<SocketAddress> addrs = new ArrayList<SocketAddress>();
-      addrs.addAll(addr2hrServer.keySet());
-      return addrs;
+      return new ArrayList<>(addr2hrServer.keySet());
    }
 
    private ConfigurationBuilder getConfiguration() {
@@ -108,5 +107,4 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
       builder.clustering().hash().numOwners(1);
       return hotRodCacheConfiguration(builder);
    }
-
 }

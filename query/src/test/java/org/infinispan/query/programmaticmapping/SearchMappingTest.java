@@ -24,8 +24,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Verify programmatic configuration of indexing properties via SearchMapping
- * is properly enabled in the Search engine. See also ISPN-1820.
+ * Verify programmatic configuration of indexing properties via SearchMapping is properly enabled in the Search engine.
+ * See also ISPN-1820.
  *
  * @author Michael Wittig
  * @author Sanne Grinovero
@@ -35,40 +35,41 @@ import org.testng.annotations.Test;
 public class SearchMappingTest extends AbstractInfinispanTest {
 
    /**
-    * Here we use SearchMapping to have the ability to add Objects to the cache
-    * where people can not (or don't want to) use Annotations.
+    * Here we use SearchMapping to have the ability to add Objects to the cache where people can not (or don't want to)
+    * use Annotations.
     */
    @Test
    public void testSearchMapping() {
-      final SearchMapping mapping = new SearchMapping();
+      SearchMapping mapping = new SearchMapping();
       mapping.entity(BondPVO.class).indexed()
-            .property("id", ElementType.METHOD).field()
-            .property("name", ElementType.METHOD).field()
-            .property("isin", ElementType.METHOD).field();
+             .property("id", ElementType.METHOD).field()
+             .property("name", ElementType.METHOD).field()
+             .property("isin", ElementType.METHOD).field();
 
-      final Properties properties = new Properties();
+      Properties properties = new Properties();
       properties.put("default.directory_provider", "local-heap");
       properties.put("lucene_version", "LUCENE_CURRENT");
       properties.put(Environment.MODEL_MAPPING, mapping);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing()
-            .index(Index.PRIMARY_OWNER).withProperties(properties);
+             .index(Index.PRIMARY_OWNER)
+             .addIndexedEntity(BondPVO.class)
+             .withProperties(properties);
 
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(builder)) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
-            final Cache<Long, BondPVO> cache = cm.getCache();
-            final SearchManager sm = Search.getSearchManager(cache);
+            Cache<Long, BondPVO> cache = cm.getCache();
+            SearchManager sm = Search.getSearchManager(cache);
 
-            final BondPVO bond = new BondPVO(1, "Test", "DE000123");
+            BondPVO bond = new BondPVO(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
 
-            final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
-            final Query q = qb.keyword().onField("name").matching("Test")
-                  .createQuery();
-            final CacheQuery<?> cq = sm.getQuery(q, BondPVO.class);
+            QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
+            Query q = qb.keyword().onField("name").matching("Test")
+                        .createQuery();
+            CacheQuery<?> cq = sm.getQuery(q, BondPVO.class);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
@@ -116,27 +117,27 @@ public class SearchMappingTest extends AbstractInfinispanTest {
     */
    @Test
    public void testWithoutSearchMapping() {
-      final Properties properties = new Properties();
+      Properties properties = new Properties();
       properties.put("default.directory_provider", "local-heap");
       properties.put("lucene_version", "LUCENE_CURRENT");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().index(Index.PRIMARY_OWNER).withProperties(properties);
+      builder.indexing()
+             .index(Index.PRIMARY_OWNER)
+             .addIndexedEntity(BondPVO2.class)
+             .withProperties(properties);
 
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(builder)) {
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
          public void call() {
-            final Cache<Long, BondPVO2> cache = cm.getCache();
-            final SearchManager sm = Search.getSearchManager(cache);
+            Cache<Long, BondPVO2> cache = cm.getCache();
+            SearchManager sm = Search.getSearchManager(cache);
 
-            final BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
+            BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
-            final QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO2.class)
-                  .get();
-            final Query q = qb.keyword().onField("name").matching("Test")
-                  .createQuery();
-            final CacheQuery<?> cq = sm.getQuery(q, BondPVO2.class);
+            QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO2.class).get();
+            Query q = qb.keyword().onField("name").matching("Test").createQuery();
+            CacheQuery<?> cq = sm.getQuery(q, BondPVO2.class);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
