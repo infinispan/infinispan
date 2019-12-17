@@ -1,6 +1,6 @@
 #!/bin/sh
 
-LOADER_CLASS=org.infinispan.server.loader.Loader
+LOADER_CLASS=org.infinispan.server.loader.InfinispanServerLoader
 MAIN_CLASS=org.infinispan.server.security.UserTool
 ARGUMENTS=
 PROCESS_NAME=${infinispan.brand.short-name}-user-tool

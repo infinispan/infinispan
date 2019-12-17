@@ -20,7 +20,7 @@ import java.util.Set;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class Loader {
+public class InfinispanServerLoader {
    /**
     * Property name indicating the path to the server installation. If unspecified, the current working directory will
     * be used
@@ -39,7 +39,7 @@ public class Loader {
          System.err.println("You must specify a classname to launch");
       }
       String home = System.getProperty(INFINISPAN_SERVER_HOME_PATH, System.getProperty("user.dir"));
-      ClassLoader bootClassLoader = Loader.class.getClassLoader();
+      ClassLoader bootClassLoader = InfinispanServerLoader.class.getClassLoader();
       ClassLoader serverClassLoader = classLoaderFromPath(Paths.get(home, "lib"), bootClassLoader);
       String root = System.getProperty(INFINISPAN_SERVER_ROOT_PATH, Paths.get(home, DEFAULT_SERVER_ROOT_DIR).toString());
       ClassLoader rootClassLoader = classLoaderFromPath(Paths.get(root, "lib"), serverClassLoader);
