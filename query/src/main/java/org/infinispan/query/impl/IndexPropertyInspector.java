@@ -19,7 +19,10 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
  *
  * @author gustavonalle
  * @since 7.0
+ * @deprecated since 10.1.2. This will be removed in a future version together with The Infinispan Index Manager which
+ * is deprecated.
  */
+@Deprecated
 public final class IndexPropertyInspector {
 
    private IndexPropertyInspector() {

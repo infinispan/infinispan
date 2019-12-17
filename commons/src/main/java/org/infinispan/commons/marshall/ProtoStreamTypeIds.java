@@ -60,7 +60,7 @@ public interface ProtoStreamTypeIds {
 
    // Query range 4200 -> 4399
    int QUERY_LOWER_BOUND = COUNTERS_LOWER_BOUND + 200;
-   int KNOWN_CLASS_KEY = QUERY_LOWER_BOUND;
+   //int KNOWN_CLASS_KEY = QUERY_LOWER_BOUND;
 
    // Remote Query range 4400 -> 4599
    int REMOTE_QUERY_LOWER_BOUND = QUERY_LOWER_BOUND + 200;

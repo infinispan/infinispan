@@ -82,12 +82,16 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
          ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
          ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
          if (searchIntegrator != null) {
-            // If indexing is enabled, then use the known set of classes for lookup and the global classloader as a fallback.
+            // If indexing is enabled then use the declared set of indexed classes for lookup but fallback to global classloader.
             QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
-            return name -> queryInterceptor.getKnownClasses().stream()
-                                           .filter(c -> c.getName().equals(name))
-                                           .findFirst()
-                                           .orElse(reflectionEntityNamesResolver.resolve(name));
+            Map<String, Class<?>> indexedEntities = queryInterceptor.indexedEntities();
+            return name -> {
+               Class<?> c = indexedEntities.get(name);
+               if (c == null) {
+                  c = reflectionEntityNamesResolver.resolve(name);
+               }
+               return c;
+            };
          }
          return reflectionEntityNamesResolver;
       }
