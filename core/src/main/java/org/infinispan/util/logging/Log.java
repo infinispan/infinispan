@@ -65,6 +65,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 import org.jgroups.View;
 
@@ -1843,4 +1844,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalidation mode only supports when-split=ALLOW_READ_WRITES", id = 550)
    CacheConfigurationException invalidationPartitionHandlingNotSuported();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to persist Infinispan internal caches as no global state enabled", id = 569)
+   @Once
+   void warnUnableToPersistInternalCaches();
 }
