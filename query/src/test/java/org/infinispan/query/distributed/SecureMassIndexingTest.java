@@ -29,7 +29,7 @@ public class SecureMassIndexingTest extends DistributedMassIndexingTest {
    @AfterMethod
    @Override
    protected void clearContent() {
-      runAs(ADMIN, () -> super.clearContent());
+      runAs(ADMIN, super::clearContent);
    }
 
    @Override

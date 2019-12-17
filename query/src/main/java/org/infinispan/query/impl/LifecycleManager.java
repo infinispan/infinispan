@@ -55,7 +55,6 @@ import org.infinispan.query.affinity.ShardAllocatorManager;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.NodeTopDocs;
@@ -136,11 +135,6 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
-      if (indexingConfiguration.indexedEntities().isEmpty()) {
-         // todo [anistor] remove dependency on QueryKnownClasses in Infinispan 10.0
-         // indexed classes are autodetected and propagated across cluster via this cache
-         SecurityActions.addCacheDependency(cacheManager, cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
-      }
       if (hasInfinispanDirectory(indexingConfiguration.properties())) {
          String metadataCacheName = getMetadataCacheName(indexingConfiguration.properties());
          if (!metadataCacheName.equals(cacheStarting)) {
@@ -217,6 +211,7 @@ public class LifecycleManager implements ModuleLifecycle {
       if (isInfinispanDirectoryInternalCache(cacheName, indexingProperties)) {
          // Infinispan Directory causes runtime circular dependencies so we have postponed creation of indexes until
          // all components and involved caches are initialised (see SearchableCacheConfiguration). Now is the right time!
+         // TODO classes defined programmatically via SearchMapping are lost!
          Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
          searchFactory.addClasses(indexedEntities);
       }
@@ -367,7 +362,7 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new  PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
 
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());

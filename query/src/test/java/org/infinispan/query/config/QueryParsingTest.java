@@ -61,7 +61,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       assertEquals(defaultConfiguration.indexing().properties().size(), 2);
       assertTrue(defaultConfiguration.indexing().index().isEnabled());
-      assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "someDefault");
+      assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "local-heap");
 
       Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
       assertFalse(nonSearchableCfg.indexing().index().isEnabled());

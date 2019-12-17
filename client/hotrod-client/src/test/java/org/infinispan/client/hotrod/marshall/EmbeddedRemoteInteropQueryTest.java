@@ -95,9 +95,11 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      builder.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      builder.indexing()
+             .index(Index.ALL)
+             .addIndexedEntities(UserHS.class, AccountHS.class, TransactionHS.class)
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;
    }
 

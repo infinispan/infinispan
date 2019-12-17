@@ -18,6 +18,9 @@
             </memory>
             <expiration max-idle="-1"/>
             <indexing index="PRIMARY_OWNER">
+                <indexed-entities>
+                    <indexed-entity>org.infinispan.test.integration.as.query.Book</indexed-entity>
+                </indexed-entities>
                 <property name="default.indexmanager">elasticsearch</property>
                 <property name="default.elasticsearch.refresh_after_write">true</property>
                 <property name="default.elasticsearch.required_index_status">yellow</property>
