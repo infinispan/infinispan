@@ -165,8 +165,8 @@ public class CacheManagerResourceTest extends AbstractRestResourceTest {
       List<String> hasRemoteBackup = asText(jsonNode.findValues("has_remote_backup"));
       assertTrue(hasRemoteBackup.contains("false"));
 
-      List<String> heath = asText(jsonNode.findValues("health"));
-      assertTrue(heath.contains("HEALTHY"));
+      List<String> health = asText(jsonNode.findValues("health"));
+      assertTrue(health.contains("HEALTHY"));
    }
 
    private List<String> asText(List<JsonNode> values) {
