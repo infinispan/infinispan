@@ -100,7 +100,6 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-
 @Namespace(root = "infinispan")
 @Namespace(uri = "urn:infinispan:config:*", root = "infinispan")
 public class Parser implements ConfigurationParser {
@@ -2562,7 +2561,7 @@ public class Parser implements ConfigurationParser {
       }
 
       Properties indexingProperties = new Properties();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+      while (reader.hasNext() && reader.nextTag() != XMLStreamConstants.END_ELEMENT) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case KEY_TRANSFORMERS: {

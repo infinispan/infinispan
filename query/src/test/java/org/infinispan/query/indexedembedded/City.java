@@ -11,5 +11,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 public class City implements Serializable {
 
    @ProtoField(number = 1)
-   public @Field String name;
+   @Field
+   public String name;
 }

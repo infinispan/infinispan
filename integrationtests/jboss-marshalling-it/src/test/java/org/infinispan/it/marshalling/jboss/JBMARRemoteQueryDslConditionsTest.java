@@ -65,7 +65,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder cfg = getConfigurationBuilder();
       createClusteredCaches(1, cfg, true);
 
@@ -86,8 +86,11 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity(getModelFactory().getUserImplClass())
+             .addIndexedEntity(getModelFactory().getAccountImplClass())
+             .addIndexedEntity(getModelFactory().getTransactionImplClass())
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;
    }
 

@@ -40,8 +40,11 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
             "   </local-cache>\n" +
             "   <local-cache name=\"indexingenabled\">\n" +
             "      <indexing index=\"LOCAL\" >\n" +
-            "            <property name=\"default.directory_provider\">local-heap</property>\n" +
-            "            <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
+            "         <indexed-entities>\n" +
+            "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
+            "         </indexed-entities>\n" +
+            "         <property name=\"default.directory_provider\">local-heap</property>\n" +
+            "         <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
             "      </indexing>\n" +
             "   </local-cache>\n" +
             "</cache-container>"

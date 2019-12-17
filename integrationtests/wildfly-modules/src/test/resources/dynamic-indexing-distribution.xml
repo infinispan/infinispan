@@ -21,6 +21,9 @@
          </memory>
          <expiration max-idle="-1" />
             <indexing index="PRIMARY_OWNER">
+               <indexed-entities>
+                  <indexed-entity>org.infinispan.test.integration.as.query.Book</indexed-entity>
+               </indexed-entities>
                <!-- Use our custom IndexManager; TODO autoinject by default? -->
                <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                <!-- specify the managed index is to be shared across the nodes -->
