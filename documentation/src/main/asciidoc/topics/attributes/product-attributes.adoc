@@ -62,6 +62,7 @@
 //
 //Spring Boot 1.5.x
 :sb_starter: 1.0.7.Final-redhat-00011
+
 //Spring Boot 2.x
 :sb2_starter: 2.1.8.redhat-00001
 
@@ -74,6 +75,6 @@
 :ug_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/red_hat_data_grid_user_guide/
 :sg_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/red_hat_data_grid_server_guide/
 :hr_url: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/java/org/infinispan/client/hotrod/
-:sb_starter: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/data_grid_spring_boot_starter/
+:sb_starter_url: https://access.redhat.com/documentation/en-us/red_hat_data_grid/7.3/html-single/data_grid_spring_boot_starter/
 :jmx_url: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/api/jmxComponents.html
 :jmx_client_url: https://access.redhat.com/webassets/avalon/d/red-hat-data-grid/7.3/java/jmxComponents.html
