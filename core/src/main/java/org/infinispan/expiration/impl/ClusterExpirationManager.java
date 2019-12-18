@@ -337,7 +337,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
          // the entire value.  Unfortunately this could cause a concurrent write to be undone
          try {
-            cache.removeLifespanExpired(key, null, null).join();
+            cache.withFlags(Flag.SKIP_SHARED_CACHE_STORE).removeLifespanExpired(key, null, null).join();
          } finally {
             expiring.remove(key, key);
          }
