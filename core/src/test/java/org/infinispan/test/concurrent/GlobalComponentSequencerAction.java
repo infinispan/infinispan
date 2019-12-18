@@ -1,9 +1,12 @@
 package org.infinispan.test.concurrent;
 
+import static org.infinispan.test.Exceptions.unchecked;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -43,7 +46,7 @@ public class GlobalComponentSequencerAction<T> {
 
    protected void replaceComponent() {
       if (ourHandler == null) {
-         originalComponent = cacheManager.getGlobalComponentRegistry().getComponent(componentClass);
+         originalComponent = TestingUtil.extractGlobalComponent(cacheManager, componentClass);
          if (originalComponent == null) {
             throw new IllegalStateException("Attempting to wrap a non-existing global component: " + componentClass);
          }
@@ -69,6 +72,17 @@ public class GlobalComponentSequencerAction<T> {
       return this;
    }
 
+   /**
+    * Set up a list of sequencer states after interceptor {@code interceptorClass} has returned.
+    * <p/>
+    * Each invocation accepted by {@code matcher} will enter/exit the next state from the list, and does nothing after the list is exhausted.
+    */
+   public GlobalComponentSequencerAction<T> afterAsync(String state1, String... additionalStates) {
+      replaceComponent();
+      ourHandler.afterStatesAsync(StateSequencerUtil.concat(state1, additionalStates));
+      return this;
+   }
+
    public T getOriginalComponent() {
       return originalComponent;
    }
@@ -77,6 +91,7 @@ public class GlobalComponentSequencerAction<T> {
       private final Object wrappedInstance;
       private final StateSequencer stateSequencer;
       private final InvocationMatcher matcher;
+      private boolean async;
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
 
@@ -94,14 +109,27 @@ public class GlobalComponentSequencerAction<T> {
          this.statesAfter = StateSequencerUtil.listCopy(states);
       }
 
+      public void afterStatesAsync(List<String> states) {
+         this.async = true;
+         this.statesAfter = StateSequencerUtil.listCopy(states);
+      }
+
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
          boolean matches = matcher.accept(wrappedInstance, method.getName(), args);
          StateSequencerUtil.advanceMultiple(stateSequencer, matches, statesBefore);
-         try {
-            return method.invoke(wrappedInstance, args);
-         } finally {
-            StateSequencerUtil.advanceMultiple(stateSequencer, matches, statesAfter);
+         if (async) {
+            CompletionStage<?> stage = (CompletionStage<?>) method.invoke(wrappedInstance, args);
+            return stage.whenComplete((o, throwable) -> unchecked(() -> {
+               StateSequencerUtil.advanceMultiple(stateSequencer, matches, statesAfter);
+            }));
+         }
+         else {
+            try {
+               return method.invoke(wrappedInstance, args);
+            } finally {
+               StateSequencerUtil.advanceMultiple(stateSequencer, matches, statesAfter);
+            }
          }
       }
 
