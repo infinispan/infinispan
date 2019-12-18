@@ -692,6 +692,8 @@ link:{javadocroot}/org/infinispan/AdvancedCache.html#removeGroup-java.lang.Strin
 Both methods iterate over the entire data container and store (if present), so they can
 be slow when a cache contains lots of small groups.
 
+//Scattered cache mode is community only
+ifndef::productized[]
 === Scattered Mode
 
 Scattered mode is very similar to Distribution Mode as it allows linear scaling of the cluster.
@@ -738,6 +740,7 @@ Scattered mode is not exposed in the server configuration as the server is usual
 protocol. The protocol automatically selects primary owner for the writes and therefore the write (in distributed
 mode with two owner) requires single RPC inside the cluster, too. Therefore, scattered cache would not bring
 the performance benefit.
+endif::productized[]
 
 ===  Asynchronous Options
 
