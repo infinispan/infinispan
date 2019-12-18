@@ -1,5 +1,6 @@
 package org.infinispan.metrics.impl;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +21,7 @@ import org.eclipse.microprofile.metrics.MetricType;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -28,6 +30,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import io.smallrye.metrics.MetricRegistries;
+import io.smallrye.metrics.setup.JmxRegistrar;
 
 // TODO this is temporarily coupled to our jmx infrastructure. It is not supposed to use any essential JMX stuff except
 //  ObjectName and MBeanInfo. No access to the MBeanServer allowed. Only the methods in ResourceDMBeans that are
@@ -56,6 +59,18 @@ public class ApplicationMetricsRegistry {
       return MetricRegistries.get(MetricRegistry.Type.APPLICATION);
    }
 
+   @Start
+   public void start() {
+      JmxRegistrar jmxRegistrar = new JmxRegistrar();
+      try {
+         jmxRegistrar.init();
+      } catch (IOException e) {
+         throw log.failedToInitBaseAndVendorMetrics(e);
+      } catch (IllegalArgumentException e) {
+         // ignore duplicate registrations
+      }
+   }
+
    public final MetricRegistry getRegistry() {
       return applicationMetricRegistry;
    }
@@ -78,8 +93,8 @@ public class ApplicationMetricsRegistry {
          String attrName = attr.getName();
 
          try {
-            Consumer<Metric> attributeConsumer = (Consumer<Metric>) resourceDMBean.getAttributeConsumer(attrName);
-            if (attributeConsumer != null) {
+            Consumer<Metric> setter = (Consumer<Metric>) resourceDMBean.getAttributeSetter(attrName);
+            if (setter != null) {
                String metricName = ObjectNameMapper.makeMetricName(objectName, attrName);
                Metadata metadata = new MetadataBuilder()
                      .withType(MetricType.TIMER)
@@ -91,7 +106,7 @@ public class ApplicationMetricsRegistry {
 
                Timer timer = getRegistry().timer(metadata, tags);
 
-               attributeConsumer.accept(timer);
+               setter.accept(timer);
             }
          } catch (AttributeNotFoundException e) {
             throw new IllegalStateException(e);
@@ -102,17 +117,17 @@ public class ApplicationMetricsRegistry {
             continue;
          }
 
-         Supplier valueSupplier;
+         Supplier getter;
          try {
-            valueSupplier = resourceDMBean.getAttributeValueSupplier(attrName);
-            if (valueSupplier == null) {
+            getter = resourceDMBean.getAttributeGetter(attrName);
+            if (getter == null) {
                continue;
             }
          } catch (AttributeNotFoundException e) {
             throw new IllegalStateException(e);
          }
 
-         Gauge<Number> gaugeMetric = () -> (Number) valueSupplier.get();
+         Gauge<Number> gaugeMetric = () -> (Number) getter.get();
          String metricName = ObjectNameMapper.makeMetricName(objectName, attrName);
 
          Metadata metadata = new MetadataBuilder()

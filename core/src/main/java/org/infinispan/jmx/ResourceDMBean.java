@@ -226,7 +226,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       return al;
    }
 
-   public Supplier<?> getAttributeValueSupplier(String attributeName) throws AttributeNotFoundException {
+   public Supplier<?> getAttributeGetter(String attributeName) throws AttributeNotFoundException {
       InvokableMBeanAttributeInfo i = atts.get(attributeName);
       if (i == null) {
          throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
@@ -237,7 +237,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       return () -> i.getterFunction.apply(obj);
    }
 
-   public Consumer<?> getAttributeConsumer(String attributeName) throws AttributeNotFoundException {
+   public Consumer<?> getAttributeSetter(String attributeName) throws AttributeNotFoundException {
       InvokableMBeanAttributeInfo i = atts.get(attributeName);
       if (i == null) {
          throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");

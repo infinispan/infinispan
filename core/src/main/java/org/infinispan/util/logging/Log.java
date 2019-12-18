@@ -22,11 +22,11 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -1930,4 +1930,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "SerializationConfiguration Version is deprecated since version 10.1 and will be removed in the future. The configured value has no affect on Infinispan marshalling.", id = 567)
    void serializationVersionDeprecated();
+
+   @Message(value = "Failed to initialize base and vendor metrics from JMX MBeans", id = 568)
+   IllegalStateException failedToInitBaseAndVendorMetrics(@Cause Exception e);
 }

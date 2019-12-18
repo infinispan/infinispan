@@ -60,6 +60,27 @@ public class RestMetricsResource {
    }
 
    @Test
+   public void testBaseAndVendor() throws Exception {
+      RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
+
+      RestResponse response = sync(metricsClient.metrics("base/classloader.loadedClasses.count"));
+      assertEquals(200, response.getStatus());
+
+      JsonNode loadedClassesCountNode = mapper.readTree(response.getBody());
+      assertTrue(loadedClassesCountNode.hasNonNull("classloader.loadedClasses.count"));
+      int loadedClassesCount = loadedClassesCountNode.get("classloader.loadedClasses.count").asInt();
+      assertTrue(loadedClassesCount > 0);
+
+      response = sync(metricsClient.metrics("vendor/memoryPool.Metaspace.usage"));
+      assertEquals(200, response.getStatus());
+
+      JsonNode memoryPoolMetaspaceUsageNode = mapper.readTree(response.getBody());
+      assertTrue(memoryPoolMetaspaceUsageNode.hasNonNull("memoryPool.Metaspace.usage"));
+      int metaspaceUsage = memoryPoolMetaspaceUsageNode.get("memoryPool.Metaspace.usage").asInt();
+      assertTrue(metaspaceUsage > 0);
+   }
+
+   @Test
    public void testMicroprofileMetrics() throws Exception {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
