@@ -1,15 +1,23 @@
-[id='server_single_port-{context}']
-= Single Port
+[id='single_port']
+= {brandname} Protocol Handling
+{brandname} servers use a router connector to expose multiple protocols over
+the same TCP port, `11222`. Using a single port for multiple protocols
+simplifies configuration and management and increases security by reducing the
+attack surface for unauthorized users.
 
-Single-Port is a special type of router connector which allows exposing multiple protocols over the same TCP port.
-This approach is very convenient because it reduces the number of ports required by a server, with advantages in security, configuration and management.
-Protocol switching is handled in three ways:
+{brandname} servers handle HTTP/1.1, HTTP/2, and Hot Rod protocol requests via
+port `11222` as follows:
 
-* *HTTP/1.1 Upgrade header*: initiate an HTTP/1.1 connection and send an `Upgrade: protocol` header where protocol is the name assigned to the desired endpoint.
-* *TLS/ALPN*: protocol selection is performed based on the SNI specified by the client.
-* *Hot Rod header detection*: if a Hot Rod endpoint is present in the router configuration, then any attempt to send a Hot Rod header will be detected and the protocol will be switched automatically.
+HTTP/1.1 upgrade headers::
+Client requests can include the `HTTP/1.1 upgrade` header field to initiate
+HTTP/1.1 connections with {brandname} servers. Client applications can then
+send the `Upgrade: protocol` header field, where `protocol` is a {brandname}
+server endpoint.
 
-[NOTE]
-====
-The initial implementation supports only HTTP/1.1, HTTP/2, and Hot Rod protocols. The Memcached protocol is not supported.
-====
+Application-Layer Protocol Negotiation (ALPN)/Transport Layer Security (TLS)::
+Client applications specify Server Name Indication (SNI) mappings for
+{brandname} server endpoints to negotiate protocols in a secure manner.
+
+Automatic Hot Rod detection::
+Client requests that include Hot Rod headers automatically route to Hot Rod
+endpoints if the single port router configuration includes Hot Rod.

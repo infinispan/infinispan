@@ -1,0 +1,34 @@
+[id='configure_alpn']
+= Configuring Clients for ALPN
+Configure clients to use Application-Layer Protocol Negotiation (ALPN) and
+Transport Layer Security (TLS) for {brandname} server connections.
+
+.Procedure
+
+. Configure {brandname} server endpoint connectors with encryption.
+. Enable ALPN support for Hot Rod clients that use JDK 8.
++
+JDK 9 and later supports ALPN by default. For JDK 8, you should use the
+`boringSSL` libraries that Netty provide to support ALPN.
++
+.Netty dependencies for JDK 8
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/netty_bom.xml[]
+----
++
+. Configure clients with trust stores that hold valid certificates.
++
+For example, use the `trustStoreFileName()` method in the `SslConfigurationBuilder` class:
++
+[source,java]
+----
+include::code_examples/ConfigurationBuilderTrustStore.java[]
+----
+
+.Reference
+
+* link:#endpoint_connectors[{brandname} Endpoint Connectors]
+* link:https://netty.io/wiki/forked-tomcat-native.html[boringssl]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/SslConfigurationBuilder.html[SslConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration properties]
