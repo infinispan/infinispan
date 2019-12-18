@@ -1,5 +1,5 @@
 ConfigurationBuilder builder = new ConfigurationBuilder()
-      .addServers("127.0.0.1:8443");
+      .addServers("127.0.0.1:11222");
 
 builder.security().ssl().enable()
       .trustStoreFileName("truststore.pkcs12")
