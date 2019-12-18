@@ -370,7 +370,7 @@ public interface PersistenceManager extends Lifecycle {
     * <p>
     * This only affects stores that are not shared as shared stores have to keep all segments running at all times
     * <p>
-    * This method returns true if all stores were able to handle the added segments. That is that either there are no
+    * This method returns true if all stores were able to handle the removed segments. That is that either there are no
     * stores or that all the configured stores are segmented. Note that configured loaders do not affect the return
     * value.
     * @param segments segments this cache no longer owns

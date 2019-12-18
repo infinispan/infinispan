@@ -51,17 +51,17 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       transactional = false;
    }
 
-   public BaseDistFunctionalTest numOwners(int numOwners) {
+   public BaseDistFunctionalTest<K, V> numOwners(int numOwners) {
       this.numOwners = numOwners;
       return this;
    }
 
-   public BaseDistFunctionalTest l1(boolean l1) {
+   public BaseDistFunctionalTest<K, V> l1(boolean l1) {
       this.l1CacheEnabled = l1;
       return this;
    }
 
-   public BaseDistFunctionalTest groupers(boolean groupers) {
+   public BaseDistFunctionalTest<K, V> groupers(boolean groupers) {
       this.groupers = groupers;
       return this;
    }
@@ -90,7 +90,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
 
       cacheAddresses = new ArrayList<>(INIT_CLUSTER_SIZE);
-      for (Cache cache : caches) {
+      for (Cache<K, V> cache : caches) {
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
       }
@@ -197,8 +197,8 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
 
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       for (Cache<K, V> c : caches) {
-         DataContainer dc = c.getAdvancedCache().getDataContainer();
-         InternalCacheEntry ice = dc.get(key);
+         DataContainer<K, V> dc = c.getAdvancedCache().getDataContainer();
+         InternalCacheEntry<K, V> ice = dc.get(key);
          if (isOwner(c, key)) {
             assert ice != null && ice.getValue() != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice;
             assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
@@ -208,7 +208,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
             } else {
                // Segments no longer owned are invalidated asynchronously
                eventually("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")", () -> {
-                  InternalCacheEntry ice2 = dc.get(key);
+                  InternalCacheEntry<K, V> ice2 = dc.get(key);
                   return ice2 == null || ice2.getValue() == null;
                });
             }
@@ -221,8 +221,8 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected boolean isInL1(Cache<?, ?> cache, Object key) {
-      DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(key);
+      DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> ice = dc.get(key);
       return ice != null && ice.getValue() != null && !(ice instanceof ImmortalCacheEntry);
    }
 
@@ -295,7 +295,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected DistributionManager getDistributionManager(Cache<?, ?> c) {
-      return c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
+      return TestingUtil.extractComponent(c, DistributionManager.class);
    }
 
    protected LocalizedCacheTopology getCacheTopology(Cache<?, ?> c) {
@@ -330,8 +330,8 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
-      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
-      BlockingInterceptor blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
+      AsyncInterceptorChain chain = TestingUtil.extractInterceptorChain(cache);
+      BlockingInterceptor<?> blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
       while (blockingInterceptor != null) {
          blockingInterceptor.suspend(true);
          chain.removeInterceptor(blockingInterceptor.getClass());

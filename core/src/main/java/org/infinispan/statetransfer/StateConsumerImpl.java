@@ -10,6 +10,10 @@ import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
+import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
+import static org.infinispan.util.concurrent.CompletionStages.ignoreValue;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,11 +86,12 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -137,7 +142,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected AsyncInterceptorChain interceptorChain;
    @Inject protected InvocationContextFactory icf;
    @Inject protected StateTransferLock stateTransferLock;
-   @Inject protected CacheNotifier cacheNotifier;
+   @Inject protected CacheNotifier<?, ?> cacheNotifier;
    @Inject protected TotalOrderManager totalOrderManager;
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
@@ -148,7 +153,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected TriangleOrderManager triangleOrderManager;
    @Inject protected DistributionManager distributionManager;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject InternalConflictManager conflictManager;
+   @Inject InternalConflictManager<?, ?> conflictManager;
    @Inject LocalPublisherManager<Object, Object> localPublisherManager;
 
    protected String cacheName;
@@ -198,7 +203,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected final Map<Integer, List<InboundTransferTask>> transfersBySegment = new HashMap<>();
 
    /**
-    * Push RPCs on a background thread
+    * Limit to one state request at a time.
     */
    protected LimitedExecutor stateRequestExecutor;
 
@@ -252,10 +257,23 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public CompletableFuture<Void> onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
+   public CompletionStage<CompletionStage<Void>> onTopologyUpdate(final CacheTopology cacheTopology,
+                                                                  final boolean isRebalance) {
+      final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
+      final CacheTopology previousCacheTopology = this.cacheTopology;
+      final ConsistentHash previousReadCh =
+            previousCacheTopology != null ? previousCacheTopology.getCurrentCH() : null;
+      final ConsistentHash previousWriteCh =
+            previousCacheTopology != null ? previousCacheTopology.getWriteConsistentHash() : null;
+      IntSet newWriteSegments = getOwnedSegments(newWriteCh);
+
       final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
-      final boolean startConflictResolution = !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
-      if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
+      final boolean wasMember = previousWriteCh != null &&
+                                previousWriteCh.getMembers().contains(rpcManager.getAddress());
+
+      if (trace)
+         log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName,
+                    isRebalance, isMember, cacheTopology);
 
       if (!ownsData && isMember) {
          ownsData = true;
@@ -266,139 +284,147 @@ public class StateConsumerImpl implements StateConsumer {
 
       // If a member leaves/crashes immediately after a rebalance was started, the new CH_UPDATE
       // command may be executed before the REBALANCE_START command, so it has to start the rebalance.
-      boolean startRebalance = isRebalance;
-      if (!isRebalance && !startConflictResolution) {
-         if (cacheTopology.getPendingCH() != null && this.cacheTopology.getPendingCH() == null) {
-            if (trace) log.tracef("Forcing startRebalance = true");
-            startRebalance = true;
-         }
+      boolean addedPendingCH = cacheTopology.getPendingCH() != null && wasMember &&
+                               previousCacheTopology.getPendingCH() == null;
+      boolean startConflictResolution =
+            !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
+      boolean startRebalance = isRebalance || (addedPendingCH && !startConflictResolution);
+      if (startRebalance && !isRebalance) {
+         if (trace) log.tracef("Forcing startRebalance = true");
       }
+      CompletionStage<Void> stage = CompletableFutures.completedNull();
       if (startRebalance) {
          // Only update the rebalance topology id when starting the rebalance, as we're going to ignore any state
          // response with a smaller topology id
          stateTransferTopologyId.compareAndSet(NO_STATE_TRANSFER_IN_PROGRESS, cacheTopology.getTopologyId());
          conflictManager.cancelVersionRequests();
          if (cacheNotifier.hasListener(DataRehashed.class)) {
-            CompletionStages.join(cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
-                  cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true));
+            stage = cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
+                                                    cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
          }
       }
+      stage = stage.thenCompose(ignored -> {
+         if (startConflictResolution) {
+            // This stops state being applied from a prior rebalance and also prevents tracking from being stopped
+            stateTransferTopologyId.set(NO_STATE_TRANSFER_IN_PROGRESS);
+         }
 
-      if (startConflictResolution) {
-         // This stops state being applied from a prior rebalance and also prevents tracking from being stopped
-         stateTransferTopologyId.set(NO_STATE_TRANSFER_IN_PROGRESS);
-      }
+         // TODO Total order will be removed soon, we can skip making it non-blocking
+         awaitTotalOrderTransactions(cacheTopology, startRebalance);
 
-      awaitTotalOrderTransactions(cacheTopology, startRebalance);
+         // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
+         // even if some of the tasks are removed and re-added
+         waitingForState.set(false);
+         stateTransferFuture = new CompletableFuture<>();
 
-      // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
-      // even if some of the tasks are removed and re-added
-      waitingForState.set(false);
-      stateTransferFuture = new CompletableFuture<>();
+         beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
 
-      final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
-      final CacheTopology previousCacheTopology = this.cacheTopology;
-      final ConsistentHash previousReadCh =
-            previousCacheTopology != null ? previousCacheTopology.getCurrentCH() : null;
-      final ConsistentHash previousWriteCh =
-            previousCacheTopology != null ? previousCacheTopology.getWriteConsistentHash() : null;
+         if (!configuration.clustering().cacheMode().isInvalidation()) {
+            // Owned segments
+            dataContainer.addSegments(newWriteSegments);
+            // TODO Should we throw an exception if addSegments() returns false?
+            return ignoreValue(persistenceManager.addSegments(newWriteSegments));
+         }
+         return CompletableFutures.completedNull();
+      });
+      stage = stage.thenCompose(ignored -> {
+         // We need to track changes so that user puts during conflict resolution are prioritised over
+         // state transfer or conflict resolution updates
+         // Tracking is stopped once the subsequent rebalance completes
+         if (startRebalance || startConflictResolution) {
+            if (trace) log.tracef("Start keeping track of keys for rebalance");
+            commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
+            commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
+         }
 
-      beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
+         // Ensures writes to the data container use the right consistent hash
+         // Writers block on the state transfer shared lock, so we keep the exclusive lock as short as possible
+         stateTransferLock.acquireExclusiveTopologyLock();
+         try {
+            this.cacheTopology = cacheTopology;
+            distributionManager.setCacheTopology(cacheTopology);
+         } finally {
+            stateTransferLock.releaseExclusiveTopologyLock();
+         }
 
-      IntSet newWriteSegments = getOwnedSegments(newWriteCh);
-      if (!configuration.clustering().cacheMode().isInvalidation()) {
-         // Owned segments
-         dataContainer.addSegments(newWriteSegments);
-         CompletionStages.join(persistenceManager.addSegments(newWriteSegments));
-      }
+         stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
+         remoteCommandsExecutor.checkForReadyTasks();
 
-      // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
-      // Tracking is stopped once the subsequent rebalance completes
-      if (startRebalance || startConflictResolution) {
-         if (trace) log.tracef("Start keeping track of keys for rebalance");
-         commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
-         commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
-      }
-
-      // Ensures writes to the data container use the right consistent hash
-      // Writers block on the state transfer shared lock, so we keep the exclusive lock as short as possible
-      stateTransferLock.acquireExclusiveTopologyLock();
-      try {
-         this.cacheTopology = cacheTopology;
-         distributionManager.setCacheTopology(cacheTopology);
-      } finally {
-         stateTransferLock.releaseExclusiveTopologyLock();
-      }
-
-      stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
-      remoteCommandsExecutor.checkForReadyTasks();
-
-      final boolean wasMember = previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
-      try {
          if (!wasMember && isMember) {
-            fetchClusterListeners(cacheTopology);
+            return fetchClusterListeners(cacheTopology);
          }
 
+         return CompletableFutures.completedNull();
+      });
+      stage = stage.thenCompose(ignored -> {
          // fetch transactions and data segments from other owners if this is enabled
-         if (!startConflictResolution && (isTransactional || isFetchEnabled)) {
-            IntSet addedSegments, removedSegments;
-            if (previousWriteCh == null) {
-               // If we have any segments assigned in the initial CH, it means we are the first member.
-               // If we are not the first member, we can only add segments via rebalance.
+         if (startConflictResolution || (!isTransactional && !isFetchEnabled)) {
+            return CompletableFutures.completedNull();
+         }
+         IntSet addedSegments, removedSegments;
+         if (previousWriteCh == null) {
+            // If we have any segments assigned in the initial CH, it means we are the first member.
+            // If we are not the first member, we can only add segments via rebalance.
+            removedSegments = IntSets.immutableEmptySet();
+            addedSegments = IntSets.immutableEmptySet();
+
+            if (trace) {
+               log.tracef("On cache %s we have: added segments: %s", cacheName, addedSegments);
+            }
+         } else {
+            IntSet previousSegments = getOwnedSegments(previousWriteCh);
+
+            if (newWriteSegments.size() == newWriteCh.getNumSegments()) {
+               // Optimization for replicated caches
                removedSegments = IntSets.immutableEmptySet();
-               addedSegments = IntSets.immutableEmptySet();
-
-               if (trace) {
-                  log.tracef("On cache %s we have: added segments: %s", cacheName, addedSegments);
-               }
             } else {
-               IntSet previousSegments = getOwnedSegments(previousWriteCh);
-
-               if (newWriteSegments.size() == newWriteCh.getNumSegments()) {
-                  // Optimization for replicated caches
-                  removedSegments = IntSets.immutableEmptySet();
-               } else {
-                  removedSegments = IntSets.mutableCopyFrom(previousSegments);
-                  removedSegments.removeAll(newWriteSegments);
-               }
-
-               // This is a rebalance, we need to request the segments we own in the new CH.
-               addedSegments = IntSets.mutableCopyFrom(newWriteSegments);
-               addedSegments.removeAll(previousSegments);
-
-               if (trace) {
-                  log.tracef("On cache %s we have: new segments: %s; old segments: %s", cacheName, newWriteSegments, previousSegments);
-                  log.tracef("On cache %s we have: added segments: %s; removed segments: %s", cacheName, addedSegments, removedSegments);
-               }
-
-               // remove inbound transfers for segments we no longer own
-               cancelTransfers(removedSegments);
-
-               // Scattered cache gets added segments on the first CH_UPDATE, and we want to keep these
-               if (!startRebalance && !addedSegments.isEmpty() && !configuration.clustering().cacheMode().isScattered()) {
-                  // If the last owner of a segment leaves the cluster, a new set of owners is assigned,
-                  // but the new owners should not try to retrieve the segment from each other.
-                  // If this happens during a rebalance, we might have already sent our rebalance
-                  // confirmation, so the coordinator won't wait for us to retrieve those segments anyway.
-                  log.debugf("Not requesting segments %s because the last owner left the cluster",
-                        addedSegments);
-                  addedSegments.clear();
-               }
-
-               // check if any of the existing transfers should be restarted from a different source because
-               // the initial source is no longer a member
-               restartBrokenTransfers(cacheTopology, addedSegments);
+               removedSegments = IntSets.mutableCopyFrom(previousSegments);
+               removedSegments.removeAll(newWriteSegments);
             }
 
-            handleSegments(startRebalance, addedSegments, removedSegments);
+            // This is a rebalance, we need to request the segments we own in the new CH.
+            addedSegments = IntSets.mutableCopyFrom(newWriteSegments);
+            addedSegments.removeAll(previousSegments);
+
+            if (trace) {
+               log.tracef("On cache %s we have: new segments: %s; old segments: %s", cacheName, newWriteSegments,
+                          previousSegments);
+               log.tracef("On cache %s we have: added segments: %s; removed segments: %s", cacheName,
+                          addedSegments, removedSegments);
+            }
+
+            // remove inbound transfers for segments we no longer own
+            cancelTransfers(removedSegments);
+
+            // Scattered cache gets added segments on the first CH_UPDATE, and we want to keep these
+            if (!startRebalance && !addedSegments.isEmpty() &&
+                !configuration.clustering().cacheMode().isScattered()) {
+               // If the last owner of a segment leaves the cluster, a new set of owners is assigned,
+               // but the new owners should not try to retrieve the segment from each other.
+               // If this happens during a rebalance, we might have already sent our rebalance
+               // confirmation, so the coordinator won't wait for us to retrieve those segments anyway.
+               log.debugf("Not requesting segments %s because the last owner left the cluster",
+                          addedSegments);
+               addedSegments.clear();
+            }
+
+            // check if any of the existing transfers should be restarted from a different source because
+            // the initial source is no longer a member
+            restartBrokenTransfers(cacheTopology, addedSegments);
          }
 
+         return handleSegments(startRebalance, addedSegments, removedSegments);
+      });
+      stage = stage.thenCompose(ignored -> {
          int stateTransferTopologyId = this.stateTransferTopologyId.get();
-         if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
-               (Object)stateTransferTopologyId, startRebalance, cacheTopology.getPendingCH());
-         if (stateTransferTopologyId != NO_STATE_TRANSFER_IN_PROGRESS && !startRebalance && !cacheTopology.getPhase().isRebalance()) {
+         if (trace)
+            log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
+                       (Object) stateTransferTopologyId, startRebalance, cacheTopology.getPendingCH());
+         if (stateTransferTopologyId != NO_STATE_TRANSFER_IN_PROGRESS && !startRebalance &&
+             !cacheTopology.getPhase().isRebalance()) {
             // we have received a topology update without a pending CH, signalling the end of the rebalance
-            boolean changed = this.stateTransferTopologyId.compareAndSet(stateTransferTopologyId, NO_STATE_TRANSFER_IN_PROGRESS);
+            boolean changed = this.stateTransferTopologyId.compareAndSet(stateTransferTopologyId,
+                                                                         NO_STATE_TRANSFER_IN_PROGRESS);
             if (changed) {
                stopApplyingState(stateTransferTopologyId);
 
@@ -408,21 +434,22 @@ public class StateConsumerImpl implements StateConsumer {
                if (nextConsistentHash == null) {
                   nextConsistentHash = cacheTopology.getCurrentCH();
                }
-               if (cacheNotifier.hasListener(DataRehashed.class)) {
-                  // TODO: this should be nonblocking in the future
-                  CompletionStages.join(cacheNotifier.notifyDataRehashed(previousReadCh, nextConsistentHash, previousWriteCh,
-                        cacheTopology.getTopologyId(), false));
-               }
 
-               if (trace) {
-                  log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
-               }
-               if (isTotalOrder) {
-                  totalOrderManager.notifyStateTransferEnd();
+               if (cacheNotifier.hasListener(DataRehashed.class)) {
+                  return cacheNotifier.notifyDataRehashed(previousReadCh, nextConsistentHash, previousWriteCh,
+                                                          cacheTopology.getTopologyId(), false);
                }
             }
          }
-      } finally {
+         return CompletableFutures.completedNull();
+      });
+      return handleAndCompose(stage, (ignored, throwable) -> {
+         if (trace) {
+            log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
+         }
+         if (isTotalOrder) {
+            totalOrderManager.notifyStateTransferEnd();
+         }
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
          remoteCommandsExecutor.checkForReadyTasks();
 
@@ -469,21 +496,28 @@ public class StateConsumerImpl implements StateConsumer {
                }
             }
 
-            try {
-               removeStaleData(removedSegments);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               throw new CacheException(e);
-            }
-            conflictManager.restartVersionRequests();
+            return removeStaleData(removedSegments)
+                  .thenApply(ignored1 -> {
+                     conflictManager.restartVersionRequests();
+
+                     // rethrow the original exception, if any
+                     CompletableFutures.rethrowException(throwable);
+                     return stateTransferFuture;
+                  });
          }
-      }
-      return stateTransferFuture;
+
+         CompletableFutures.rethrowException(throwable);
+         return CompletableFuture.completedFuture(stateTransferFuture);
+      });
    }
 
-   private void fetchClusterListeners(CacheTopology cacheTopology) {
-      if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isScattered()) {
-         Collection<ClusterListenerReplicateCallable<Object, Object>> callables = getClusterListeners(cacheTopology);
+   private CompletionStage<Void> fetchClusterListeners(CacheTopology cacheTopology) {
+      if (!configuration.clustering().cacheMode().isDistributed() &&
+          !configuration.clustering().cacheMode().isScattered()) {
+         return CompletableFutures.completedNull();
+      }
+
+      return getClusterListeners(cacheTopology.getTopologyId(), cacheTopology.getMembers()).thenAccept(callables -> {
          Cache<Object, Object> cache = this.cache.wired();
          for (ClusterListenerReplicateCallable<Object, Object> callable : callables) {
             try {
@@ -494,17 +528,21 @@ public class StateConsumerImpl implements StateConsumer {
                log.clusterListenerInstallationFailure(e);
             }
          }
-      }
+      });
    }
 
-   protected void beforeTopologyInstalled(int topologyId, boolean startRebalance, ConsistentHash previousWriteCh, ConsistentHash newWriteCh) {
+   protected void beforeTopologyInstalled(int topologyId, boolean startRebalance, ConsistentHash previousWriteCh,
+                                          ConsistentHash newWriteCh) {
    }
 
-   protected void handleSegments(boolean startRebalance, IntSet addedSegments, IntSet removedSegments) {
-      if (!addedSegments.isEmpty()) {
-         // add transfers for new or restarted segments
-         addTransfers(addedSegments);
+   protected CompletionStage<Void> handleSegments(boolean startRebalance, IntSet addedSegments,
+                                                  IntSet removedSegments) {
+      if (addedSegments.isEmpty()) {
+         return CompletableFutures.completedNull();
       }
+
+      // add transfers for new or restarted segments
+      return addTransfers(addedSegments);
    }
 
    private void awaitTotalOrderTransactions(CacheTopology cacheTopology, boolean isRebalance) {
@@ -514,7 +552,8 @@ public class StateConsumerImpl implements StateConsumer {
             log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
          }
          try {
-            for (TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId(), isRebalance)) {
+            for (TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId(),
+                                                                                    isRebalance)) {
                block.awaitUntilUnBlock();
             }
          } catch (InterruptedException e) {
@@ -648,12 +687,13 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private CompletionStage<?> doApplyState(Address sender, int segmentId,
-                                           Collection<InternalCacheEntry> cacheEntries) {
+                                           Collection<InternalCacheEntry<?, ?>> cacheEntries) {
       if (cacheEntries == null || cacheEntries.isEmpty())
          return CompletableFutures.completedNull();
 
-      if (trace) log.tracef("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",
-                            segmentId, cacheName, sender, cacheEntries.size());
+      if (trace) log.tracef(
+            "Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",
+            segmentId, cacheName, sender, cacheEntries.size());
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
       boolean transactional = transactionManager != null;
@@ -664,7 +704,7 @@ public class StateConsumerImpl implements StateConsumer {
          LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
          try {
             localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
-            for (InternalCacheEntry e : cacheEntries) {
+            for (InternalCacheEntry<?, ?> e : cacheEntries) {
                // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
                key = e.getKey();
                CompletableFuture<?> future = invokePut(segmentId, ctx, e);
@@ -692,7 +732,7 @@ public class StateConsumerImpl implements StateConsumer {
       } else {
          // non-tx cache
          AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
-         for (InternalCacheEntry e : cacheEntries) {
+         for (InternalCacheEntry<?, ?> e : cacheEntries) {
             InvocationContext ctx = icf.createSingleKeyNonTxInvocationContext();
             CompletionStage<?> putStage = invokePut(segmentId, ctx, e);
             aggregateStage.dependsOn(putStage.exceptionally(t -> {
@@ -723,7 +763,7 @@ public class StateConsumerImpl implements StateConsumer {
       return interceptorChain.invokeAsync(ctx, prepareCommand);
    }
 
-   private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, InternalCacheEntry e) {
+   private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, InternalCacheEntry<?, ?> e) {
       // CallInterceptor will preserve the timestamps if the metadata is an InternalMetadataImpl instance
       InternalMetadataImpl metadata = new InternalMetadataImpl(e);
       PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
@@ -822,7 +862,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    // not used in scattered cache
-   private void addTransfers(IntSet segments) {
+   private CompletionStage<Void> addTransfers(IntSet segments) {
       log.debugf("Adding inbound state transfer for segments %s", segments);
 
       // the set of nodes that reported errors when fetching data from them - these will not be retried in this topology
@@ -831,16 +871,16 @@ public class StateConsumerImpl implements StateConsumer {
       // the sources and segments we are going to get from each source
       Map<Address, IntSet> sources = new HashMap<>();
 
+      CompletionStage<Void> stage = CompletableFutures.completedNull();
       if (isTransactional && !isTotalOrder) {
-         requestTransactions(segments, sources, excludedSources);
+         stage = requestTransactions(segments, sources, excludedSources);
       }
 
       if (isFetchEnabled) {
-         requestSegments(segments, sources, excludedSources);
+         stage = stage.thenRun(() -> requestSegments(segments, sources, excludedSources));
       }
 
-      if (trace) log.tracef("Finished adding inbound state transfer for segments %s", segments,
-                            cacheName);
+      return stage;
    }
 
    private void findSources(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources) {
@@ -871,7 +911,8 @@ public class StateConsumerImpl implements StateConsumer {
       if (!owners.contains(rpcManager.getAddress())) {
          // We prefer that transactions are sourced from primary owners.
          // Needed in pessimistic mode, if the originator is the primary owner of the key than the lock
-         // command is not replicated to the backup owners. See PessimisticDistributionInterceptor.acquireRemoteIfNeeded.
+         // command is not replicated to the backup owners. See PessimisticDistributionInterceptor
+         // .acquireRemoteIfNeeded.
          for (Address o : owners) {
             if (!o.equals(rpcManager.getAddress()) && !excludedSources.contains(o)) {
                return o;
@@ -881,107 +922,122 @@ public class StateConsumerImpl implements StateConsumer {
       return null;
    }
 
-   private void requestTransactions(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources) {
+   private CompletionStage<Void> requestTransactions(IntSet segments, Map<Address, IntSet> sources,
+                                                     Set<Address> excludedSources) {
+      // TODO Remove excludedSources and always only for transactions/segments from the primary owner
       findSources(segments, sources, excludedSources);
 
-      boolean seenFailures = false;
-      while (true) {
-         IntSet failedSegments = IntSets.mutableEmptySet(configuration.clustering().hash().numSegments());
-         int topologyId = cacheTopology.getTopologyId();
-         for (Map.Entry<Address, IntSet> sourceEntry : sources.entrySet()) {
-            Address source = sourceEntry.getKey();
-            IntSet segmentsFromSource = sourceEntry.getValue();
-            boolean failed = false;
-            boolean exclude = false;
-            try {
-               Response response = getTransactions(source, segmentsFromSource, topologyId);
-               if (response instanceof SuccessfulResponse) {
-                  List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
-                  applyTransactions(source, transactions, topologyId);
-               } else if (response instanceof CacheNotFoundResponse) {
-                  log.debugf("Cache %s was stopped on node %s before sending transaction information", cacheName, source);
-                  failed = true;
-                  exclude = true;
-               } else {
-                  log.unsuccessfulResponseRetrievingTransactionsForSegments(source, response);
-                  failed = true;
-               }
-            } catch (SuspectException e) {
-               log.debugf("Node %s left the cluster before sending transaction information", source);
-               failed = true;
-               exclude = true;
-            } catch (Exception e) {
-               if (cache.wired().getStatus().isTerminated()) {
-                  log.debugf("Cache %s has stopped while requesting transactions", cacheName);
-                  sources.clear();
-                  return;
-               } else {
-                  log.failedToRetrieveTransactionsForSegments(cacheName, source, segments, e);
-               }
-               // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
-               failed = true;
-            }
+      AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
+      IntSet failedSegments = IntSets.concurrentSet(configuration.clustering().hash().numSegments());
+      Set<Address> sourcesToExclude = ConcurrentHashMap.newKeySet();
+      int topologyId = cacheTopology.getTopologyId();
+      for (Map.Entry<Address, IntSet> sourceEntry : sources.entrySet()) {
+         Address source = sourceEntry.getKey();
+         IntSet segmentsFromSource = sourceEntry.getValue();
+         CompletionStage<Response> sourceStage = getTransactions(source, segmentsFromSource, topologyId)
+               .whenComplete((response, throwable) -> {
+                  processTransactionsResponse(segments, sources, failedSegments, sourcesToExclude, topologyId,
+                                              source, segmentsFromSource, response, throwable);
+               });
+         aggregateStage.dependsOn(sourceStage);
+      }
 
-            // If requesting the transactions failed we need to retry
-            if (failed) {
-               failedSegments.addAll(segmentsFromSource);
-            }
-            // If the primary owner is no longer running, we can retry on a backup owner
-            if (exclude) {
-               excludedSources.add(source);
-            }
-         }
-
+      return aggregateStage.freeze().thenCompose(ignored -> {
          if (failedSegments.isEmpty()) {
-            break;
+            return CompletableFutures.completedNull();
          }
+
+         excludedSources.addAll(sourcesToExclude);
 
          // look for other sources for all failed segments
-         seenFailures = true;
          sources.clear();
          findSources(failedSegments, sources, excludedSources);
-      }
-
-      if (seenFailures) {
-         // start fresh when next step starts (fetching segments)
-         sources.clear();
-      }
+         return requestTransactions(segments, sources, excludedSources);
+      });
    }
 
-   private Collection<ClusterListenerReplicateCallable<Object, Object>> getClusterListeners(CacheTopology topology) {
-      for (Address source : topology.getMembers()) {
-         // Don't send to ourselves
-         if (!source.equals(rpcManager.getAddress())) {
-            if (trace) {
-               log.tracef("Requesting cluster listeners of cache %s from node %s", cacheName, source);
-            }
-            // get cluster listeners
-            try {
-               StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_CACHE_LISTENERS,
-                                                                                  rpcManager.getAddress(), topology.getTopologyId(), null);
-               Response response = rpcManager.blocking(
-                     rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions));
-               if (response instanceof SuccessfulResponse) {
-                  return (Collection<ClusterListenerReplicateCallable<Object, Object>>) ((SuccessfulResponse) response).getResponseValue();
-               } else {
-                  log.unsuccessfulResponseForClusterListeners(source, response);
-               }
-            } catch (CacheException e) {
-               log.exceptionDuringClusterListenerRetrieval(source, e);
-            }
+   private void processTransactionsResponse(IntSet segments, Map<Address, IntSet> sources, IntSet failedSegments,
+                                            Set<Address> sourcesToExclude, int topologyId, Address source,
+                                            IntSet segmentsFromSource, Response response, Throwable throwable) {
+      boolean failed = false;
+      boolean exclude = false;
+      if (throwable != null) {
+         if (cache.wired().getStatus().isTerminated()) {
+            log.debugf("Cache %s has stopped while requesting transactions", cacheName);
+            sources.clear();
+            return;
+         } else {
+            log.failedToRetrieveTransactionsForSegments(cacheName, source, segments, throwable);
          }
+         // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
+         failed = true;
       }
-      if (trace) log.trace("Unable to acquire cluster listeners from other members, assuming none are present");
-      return Collections.emptySet();
+      if (response instanceof SuccessfulResponse) {
+         List<TransactionInfo> transactions =
+               (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
+         applyTransactions(source, transactions, topologyId);
+      } else if (response instanceof CacheNotFoundResponse) {
+         log.debugf("Cache %s was stopped on node %s before sending transaction information", cacheName, source);
+         failed = true;
+         exclude = true;
+      } else {
+         log.unsuccessfulResponseRetrievingTransactionsForSegments(source, response);
+         failed = true;
+      }
+
+      // If requesting the transactions failed we need to retry
+      if (failed) {
+         failedSegments.addAll(segmentsFromSource);
+      }
+      if (exclude) {
+         sourcesToExclude.add(source);
+      }
    }
 
-   private Response getTransactions(Address source, IntSet segments, int topologyId) {
+   private CompletionStage<Collection<ClusterListenerReplicateCallable<Object, Object>>> getClusterListeners(
+         int topologyId, List<Address> sources) {
+      // Try the first member. If the request fails, fall back to the second member and so on.
+      if (sources.isEmpty()) {
+         if (trace) // TODO Ignore self again
+            log.trace("Unable to acquire cluster listeners from other members, assuming none are present");
+         return CompletableFuture.completedFuture(Collections.emptySet());
+      }
+
+      Address source = sources.get(0);
+      // Don't send the request to self
+      if (sources.get(0).equals(rpcManager.getAddress())) {
+         return getClusterListeners(topologyId, sources.subList(1, sources.size()));
+      }
+      if (trace)
+         log.tracef("Requesting cluster listeners of cache %s from node %s", cacheName, sources);
+      StateRequestCommand cmd =
+            commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_CACHE_LISTENERS,
+                                                     rpcManager.getAddress(), topologyId, null);
+      CompletionStage<ValidResponse> remoteStage =
+            rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions);
+      return handleAndCompose(remoteStage, (response, throwable) -> {
+         if (throwable != null) {
+            log.exceptionDuringClusterListenerRetrieval(source, throwable);
+         }
+
+         if (response instanceof SuccessfulResponse) {
+            return CompletableFuture.completedFuture(
+                  (Collection<ClusterListenerReplicateCallable<Object, Object>>) response.getResponseValue());
+         } else {
+            log.unsuccessfulResponseForClusterListeners(source, response);
+            return getClusterListeners(topologyId, sources.subList(1, sources.size()));
+         }
+      });
+   }
+
+   private CompletionStage<Response> getTransactions(Address source, IntSet segments, int topologyId) {
       if (trace) {
          log.tracef("Requesting transactions from node %s for segments %s", source, segments);
       }
       // get transactions and locks
-      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-      return rpcManager.blocking(rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions));
+      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS,
+                                                                         rpcManager.getAddress(), topologyId, segments);
+      return rpcManager.invokeCommand(source, cmd, PassthroughSingleResponseCollector.INSTANCE, rpcOptions);
    }
 
    // not used in scattered cache
@@ -993,6 +1049,7 @@ public class StateConsumerImpl implements StateConsumer {
       for (Map.Entry<Address, IntSet> e : sources.entrySet()) {
          addTransfer(e.getKey(), e.getValue());
       }
+      if (trace) log.tracef("Finished adding inbound state transfer for segments %s", segments, cacheName);
    }
 
    /**
@@ -1023,18 +1080,15 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   protected void removeStaleData(final IntSet removedSegments) throws InterruptedException {
+   protected CompletionStage<Void> removeStaleData(final IntSet removedSegments) {
       // Invalidation doesn't ever remove stale data
       if (configuration.clustering().cacheMode().isInvalidation()) {
-         return;
+         return CompletableFutures.completedNull();
       }
       log.debugf("Removing no longer owned entries for cache %s", cacheName);
       if (keyInvalidationListener != null) {
          keyInvalidationListener.beforeInvalidation(removedSegments, IntSets.immutableEmptySet());
       }
-
-      // Keys that we used to own, and need to be removed from the data container AND the cache stores
-      final Set<Object> keysToRemove = ConcurrentHashMap.newKeySet();
 
       // This has to be invoked before removing the segments on the data container
       localPublisherManager.segmentsLost(removedSegments);
@@ -1045,57 +1099,65 @@ public class StateConsumerImpl implements StateConsumer {
       // store removes all the temporary entries when removeSegments is invoked. However there is no reason to mess
       // with the store if no segments are removed, so just exit early.
       if (removedSegments.isEmpty())
-         return;
+         return CompletableFutures.completedNull();
 
+      return persistenceManager.removeSegments(removedSegments)
+                               .thenCompose(removed -> invalidateStaleEntries(removedSegments, removed));
+   }
+
+   private CompletionStage<Void> invalidateStaleEntries(IntSet removedSegments, Boolean removed) {
       // If there are no stores that couldn't remove segments, we don't have to worry about invaliding entries
-      if (!CompletionStages.join(persistenceManager.removeSegments(removedSegments))) {
-         return;
+      if (removed) {
+         return CompletableFutures.completedNull();
       }
 
-      // gather all keys from cache store that belong to the segments that are being removed/moved to L1
-      try {
-         Predicate<Object> filter = key -> {
-            if (dataContainer.containsKey(key))
-               return false;
-            int keySegment = getSegment(key);
-            return (removedSegments.contains(keySegment));
-         };
-         Publisher<Object> publisher = persistenceManager.publishKeys(
-               filter, PRIVATE);
-         CompletionStage<Void> stage = Flowable.fromPublisher(publisher)
-               .doOnNext(keysToRemove::add)
-               .to(RxJavaInterop.flowableToCompletionStage());
-         CompletionStages.join(stage);
-      } catch (CacheException e) {
-         log.failedLoadingKeysFromCacheStore(e);
-      }
+      // All these segments have been removed from the data container, so we only care about private stores
+      AtomicLong removedEntriesCounter = new AtomicLong();
+      Predicate<Object> filter = key -> removedSegments.contains(getSegment(key));
+      Publisher<Object> publisher = persistenceManager.publishKeys(filter, PRIVATE);
+      return Flowable.fromPublisher(publisher)
+                     .onErrorResumeNext(throwable -> {
+                        PERSISTENCE.failedLoadingKeysFromCacheStore(throwable);
+                        return Flowable.empty();
+                     })
+                     .buffer(configuration.clustering().stateTransfer().chunkSize())
+                     .concatMapCompletable(keysToRemove -> {
+                        removedEntriesCounter.addAndGet(keysToRemove.size());
+                        return completionStageToCompletable(invalidateBatch(keysToRemove));
+                     })
+                     .to(RxJavaInterop.completableToCompletionStage())
+                     .thenRun(() -> {
+                        if (trace) log.tracef("Removed %d keys, data container now has %d keys",
+                                              removedEntriesCounter.get(), dataContainer.sizeIncludingExpired());
+                     });
+   }
 
-      if (!keysToRemove.isEmpty()) {
-         try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(
-               EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
-            InvocationContext ctx = icf.createNonTxInvocationContext();
-            ctx.setLockOwner(invalidateCmd.getKeyLockOwner());
-            interceptorChain.invoke(ctx, invalidateCmd);
-
-            if (trace) log.tracef("Removed %d keys, data container now has %d keys", keysToRemove.size(),
-                                  dataContainer.sizeIncludingExpired());
-         } catch (IllegalLifecycleStateException e) {
-            // Ignore shutdown-related errors, because InvocationContextInterceptor starts rejecting commands
-            // before any component is stopped
-         } catch (CacheException e) {
-            log.failedToInvalidateKeys(e);
-         }
-      }
+   private CompletionStage<Void> invalidateBatch(Collection<Object> keysToRemove) {
+      InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(
+            EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
+      InvocationContext ctx = icf.createNonTxInvocationContext();
+      ctx.setLockOwner(invalidateCmd.getKeyLockOwner());
+      return interceptorChain.invokeAsync(ctx, invalidateCmd)
+                             .handle((ignored, throwable) -> {
+                                if (throwable instanceof IllegalLifecycleStateException) {
+                                   // Ignore shutdown-related errors, because InvocationContextInterceptor starts
+                                   // rejecting commands before any component is stopped
+                                } else if (throwable != null) {
+                                   log.failedToInvalidateKeys(throwable);
+                                }
+                                return null;
+                             });
    }
 
    /**
-    * Check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member.
+    * Check if any of the existing transfers should be restarted from a different source because the initial source
+    * is no longer a member.
     */
    private void restartBrokenTransfers(CacheTopology cacheTopology, IntSet addedSegments) {
       Set<Address> members = new HashSet<>(cacheTopology.getReadConsistentHash().getMembers());
       synchronized (transferMapsLock) {
-         for (Iterator<Map.Entry<Address, List<InboundTransferTask>>> it = transfersBySource.entrySet().iterator(); it.hasNext(); ) {
+         for (Iterator<Map.Entry<Address, List<InboundTransferTask>>> it =
+              transfersBySource.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<Address, List<InboundTransferTask>> entry = it.next();
             Address source = entry.getKey();
             if (!members.contains(source)) {
@@ -1144,15 +1206,12 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          inboundTransfer = new InboundTransferTask(segmentsFromSource, source, cacheTopology.getTopologyId(),
-               rpcManager, commandsFactory, timeout, cacheName, true);
+                                                   rpcManager, commandsFactory, timeout, cacheName, true);
          addTransfer(inboundTransfer, segmentsFromSource);
       }
 
       stateRequestExecutor.executeAsync(() -> {
-         CompletableFuture<Void> transferStarted = inboundTransfer.requestSegments();
-
-         if (trace)
-            log.tracef("Waiting for inbound transfer to finish: %s", inboundTransfer);
+         CompletionStage<Void> transferStarted = inboundTransfer.requestSegments();
          return transferStarted.whenComplete((aVoid, throwable) -> onTaskCompletion(inboundTransfer));
       });
       return inboundTransfer;

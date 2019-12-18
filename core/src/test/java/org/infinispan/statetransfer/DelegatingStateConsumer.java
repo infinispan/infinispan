@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.remoting.transport.Address;
@@ -26,7 +25,7 @@ public class DelegatingStateConsumer implements StateConsumer {
    }
 
    @Override
-   public CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+   public CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       return delegate.onTopologyUpdate(cacheTopology, isRebalance);
    }
 
