@@ -78,7 +78,11 @@ public class InboundRpcSequencerAction {
          boolean accepted = matcher.accept(command);
          advance(accepted, statesBefore, reply);
          try {
-            delegate.handle(command, reply, order);
+            delegate.handle(command, response -> {
+               if (advance(accepted, statesAfter, reply)) {
+                  reply.reply(response);
+               }
+            }, order);
          } finally {
             advance(accepted, statesAfter, Reply.NO_OP);
          }
@@ -92,15 +96,17 @@ public class InboundRpcSequencerAction {
          this.statesAfter = StateSequencerUtil.listCopy(states);
       }
 
-      private void advance(boolean accepted, List<String> states, Reply reply) {
+      private boolean advance(boolean accepted, List<String> states, Reply reply) {
          try {
             StateSequencerUtil.advanceMultiple(stateSequencer, accepted, states);
+            return true;
          } catch (TimeoutException e) {
             reply.reply(new ExceptionResponse(e));
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             reply.reply(new ExceptionResponse(e));
          }
+         return false;
       }
    }
 }
