@@ -233,14 +233,14 @@ public class OutboundTransferTask {
    }
 
    private void logSendException(Throwable throwable) {
-      if (throwable instanceof SuspectException) {
+      Throwable t = CompletableFutures.extractException(throwable);
+      if (t instanceof SuspectException) {
          log.debugf("Node %s left cache %s while we were sending state to it, cancelling transfer.",
                     destination, cacheName);
       } else if (isCancelled()) {
          log.debugf("Stopping cancelled transfer to node %s, segments %s", destination, segments);
       } else {
-         log.errorf(throwable, "Failed to send entries to node %s: %s", destination,
-                    throwable.getMessage());
+         log.errorf(t, "Failed to send entries to node %s: %s", destination, t.getMessage());
       }
    }
 

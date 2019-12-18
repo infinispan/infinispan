@@ -3,6 +3,8 @@ package org.infinispan.xsite.statetransfer;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
+import static org.infinispan.util.logging.Log.XSITE;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.FINISH_SEND;
 
 import java.util.ArrayList;
@@ -236,7 +238,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                 CompletionStages.join(stage);
             } catch (Throwable t) {
                error = true;
-               log.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
+               XSITE.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
                return;
             }
             if (canceled) {
@@ -275,11 +277,11 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                }
             } catch (CacheException e) {
                error = true;
-               log.failedLoadingKeysFromCacheStore(e);
+               PERSISTENCE.failedLoadingKeysFromCacheStore(e);
                return;
             } catch (Throwable t) {
                error = true;
-               log.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
+               XSITE.unableToSendXSiteState(xSiteBackup.getSiteName(), t);
                return;
             }
             if (debug) {
@@ -287,7 +289,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             }
          } catch (Throwable e) {
             error = true;
-            log.unableToSendXSiteState(xSiteBackup.getSiteName(), e);
+            XSITE.unableToSendXSiteState(xSiteBackup.getSiteName(), e);
          } finally {
             finished = true;
             log.debugf("[X-Site State Transfer - %s] State transfer finished!", xSiteBackup.getSiteName());

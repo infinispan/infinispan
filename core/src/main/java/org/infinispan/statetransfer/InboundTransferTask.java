@@ -1,21 +1,26 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
+
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import net.jcip.annotations.GuardedBy;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -94,8 +99,7 @@ public class InboundTransferTask {
    }
 
    /**
-    * Returns a copy of the unfinished segments
-    * @return
+    * @return a copy of the unfinished segments
     */
    public IntSet getUnfinishedSegments() {
       synchronized (segments) {
@@ -112,52 +116,59 @@ public class InboundTransferTask {
     *
     * @return a {@code CompletableFuture} that completes when the transfer is done.
     */
-   public CompletableFuture<Void> requestSegments() {
-      return startTransfer(applyState ? StateRequestCommand.Type.START_STATE_TRANSFER : StateRequestCommand.Type.START_CONSISTENCY_CHECK);
+   public CompletionStage<Void> requestSegments() {
+      return startTransfer(applyState ? StateRequestCommand.Type.START_STATE_TRANSFER :
+                           StateRequestCommand.Type.START_CONSISTENCY_CHECK);
    }
 
-   public CompletableFuture<Void> requestKeys() {
+   public CompletionStage<Void> requestKeys() {
       return startTransfer(StateRequestCommand.Type.START_KEYS_TRANSFER);
    }
 
-   private CompletableFuture<Void> startTransfer(StateRequestCommand.Type type) {
-      if (!isCancelled) {
-         IntSet segmentsCopy = getSegments();
-         if (segmentsCopy.isEmpty()) {
-            log.tracef("Segments list is empty, skipping source %s", source);
-            completionFuture.complete(null);
-            return completionFuture;
-         }
-         if (trace) {
-            log.tracef("Requesting state (%s) from node %s for segments %s", type, source, segmentsCopy);
-         }
-         // start transfer of cache entries
-         try {
-            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(type, rpcManager.getAddress(), topologyId, segmentsCopy);
-            Response response = rpcManager.blocking(rpcManager.invokeCommand(source, cmd,
-                                                                             SingleResponseCollector.validOnly(),
-                                                                             rpcOptions));
-            if (response instanceof SuccessfulResponse) {
-               if (trace) {
-                  log.tracef("Successfully requested state (%s) from node %s for segments %s", type, source, segmentsCopy);
-               }
-               return completionFuture;
-            } else {
-               Exception e = new CacheException(String.valueOf(response));
-               log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
-               completionFuture.completeExceptionally(e);
-            }
-         } catch (SuspectException e) {
-            log.tracef("State source %s was suspected, another source will be selected", e.getSuspect());
-            completionFuture.completeExceptionally(e);
-         } catch (Exception e) {
-            if (!isCancelled) {
-               log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
-               completionFuture.completeExceptionally(e);
-            }
-         }
+   /**
+    * Request the segments from the source
+    *
+    * @return A {@code CompletionStage} that completes when the segments have been applied
+    */
+   private CompletionStage<Void> startTransfer(StateRequestCommand.Type type) {
+      if (isCancelled)
+         return completionFuture;
+
+      IntSet segmentsCopy = getSegments();
+      if (segmentsCopy.isEmpty()) {
+         if (trace) log.tracef("Segments list is empty, skipping source %s", source);
+         completionFuture.complete(null);
+         return completionFuture;
       }
-      return completionFuture;
+      if (trace) {
+         log.tracef("Requesting state (%s) from node %s for segments %s", type, source, segmentsCopy);
+      }
+      // start transfer of cache entries
+      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(type, rpcManager.getAddress(), topologyId,
+                                                                         segmentsCopy);
+      CompletionStage<Response> remoteStage =
+            rpcManager.invokeCommand(source, cmd, PassthroughSingleResponseCollector.INSTANCE, rpcOptions);
+      return handleAndCompose(remoteStage, (response, throwable) -> {
+         if (throwable != null) {
+            if (!isCancelled) {
+               log.failedToRequestSegments(cacheName, source, segmentsCopy, throwable);
+               completionFuture.completeExceptionally(throwable);
+            }
+         } else if (response instanceof SuccessfulResponse) {
+            if (trace) {
+               log.tracef("Successfully requested state (%s) from node %s for segments %s",
+                          type, source, segmentsCopy);
+            }
+         } else if (response instanceof CacheNotFoundResponse) {
+            if (trace) log.tracef("State source %s was suspected, another source will be selected", source);
+            completionFuture.completeExceptionally(new SuspectException());
+         } else {
+            Exception e = new CacheException(String.valueOf(response));
+            log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
+            completionFuture.completeExceptionally(e);
+         }
+         return completionFuture;
+      });
    }
 
    /**

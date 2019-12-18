@@ -28,14 +28,14 @@ public class StateChunk {
    /**
     * The cache entries. They are all guaranteed to be long to the same segment: segmentId.
     */
-   private final Collection<InternalCacheEntry> cacheEntries;
+   private final Collection<InternalCacheEntry<?, ?>> cacheEntries;
 
    /**
     * Indicates to receiver if there are more chunks to come for this segment.
     */
    private final boolean isLastChunk;
 
-   public StateChunk(int segmentId, Collection<InternalCacheEntry> cacheEntries, boolean isLastChunk) {
+   public StateChunk(int segmentId, Collection<InternalCacheEntry<?, ?>> cacheEntries, boolean isLastChunk) {
       this.segmentId = segmentId;
       this.cacheEntries = cacheEntries;
       this.isLastChunk = isLastChunk;
@@ -45,7 +45,7 @@ public class StateChunk {
       return segmentId;
    }
 
-   public Collection<InternalCacheEntry> getCacheEntries() {
+   public Collection<InternalCacheEntry<?, ?>> getCacheEntries() {
       return cacheEntries;
    }
 
@@ -85,7 +85,7 @@ public class StateChunk {
       @SuppressWarnings("unchecked")
       public StateChunk readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int segmentId = input.readInt();
-         Collection<InternalCacheEntry> cacheEntries = (Collection<InternalCacheEntry>) input.readObject();
+         Collection<InternalCacheEntry<?, ?>> cacheEntries = (Collection<InternalCacheEntry<?, ?>>) input.readObject();
          boolean isLastChunk = input.readBoolean();
          return new StateChunk(segmentId, cacheEntries, isLastChunk);
       }

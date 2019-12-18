@@ -2,6 +2,7 @@ package org.infinispan.scattered.impl;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.Log.CONTAINER;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +14,6 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -54,6 +54,7 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,7 +75,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    @Inject protected InternalEntryFactory entryFactory;
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    protected ExecutorService asyncExecutor;
-   @Inject protected ScatteredVersionManager svm;
+   @Inject protected ScatteredVersionManager<?> svm;
 
    @GuardedBy("transferMapsLock")
    protected IntSet inboundSegments;
@@ -82,7 +83,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    protected AtomicLong chunkCounter = new AtomicLong();
 
    protected final ConcurrentMap<Address, BlockingQueue<Object>> retrievedEntries = new ConcurrentHashMap<>();
-   protected BlockingQueue<InternalCacheEntry> backupQueue;
+   protected BlockingQueue<InternalCacheEntry<?, ?>> backupQueue;
    protected final ConcurrentMap<Address, BlockingQueue<KeyAndVersion>> invalidations = new ConcurrentHashMap<>();
    protected Collection<Address> backupAddress;
    protected Collection<Address> nonBackupAddresses;
@@ -97,7 +98,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   public CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+   public CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       Address nextMember = getNextMember(cacheTopology);
       backupAddress = nextMember == null ? Collections.emptySet() : Collections.singleton(nextMember);
       nonBackupAddresses = new ArrayList<>(cacheTopology.getActualMembers());
@@ -140,14 +141,14 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void handleSegments(boolean startRebalance, IntSet addedSegments, IntSet removedSegments) {
+   protected CompletionStage<Void> handleSegments(boolean startRebalance, IntSet addedSegments, IntSet removedSegments) {
       if (!startRebalance) {
          log.trace("This is not a rebalance, not doing anything...");
-         return;
+         return CompletableFutures.completedNull();
       }
       if (addedSegments.isEmpty()) {
          log.trace("No segments missing");
-         return;
+         return CompletableFutures.completedNull();
       }
 
       synchronized (transferMapsLock) {
@@ -161,9 +162,9 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             StateRequestCommand.Type.CONFIRM_REVOKED_SEGMENTS,
             rpcManager.getAddress(), cacheTopology.getTopologyId(), addedSegments);
             // we need to wait synchronously for the completion
-      rpcManager.blocking(
-            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
-                                          rpcManager.getSyncRpcOptions()).whenComplete((responses, throwable) -> {
+      return rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
+                                           rpcManager.getSyncRpcOptions())
+                       .handle((responses, throwable) -> {
          if (throwable == null) {
             try {
                svm.startKeyTransfer(addedSegments);
@@ -185,7 +186,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             }
             notifyEndOfStateTransferIfNeeded();
          }
-      }));
+         return null;
+      });
    }
 
    private void requestKeyTransfer(IntSet segments) {
@@ -313,7 +315,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                   }).to(RxJavaInterop.flowableToCompletionStage());
             CompletionStages.join(stage);
          } catch (CacheException e) {
-            log.failedLoadingKeysFromCacheStore(e);
+            PERSISTENCE.failedLoadingKeysFromCacheStore(e);
          }
       }
 
@@ -335,7 +337,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                getValuesAndApply(pair.getKey(), keys);
             }
          }
-         List<InternalCacheEntry> entries = new ArrayList<>(backupQueue.size());
+         List<InternalCacheEntry<?, ?>> entries = new ArrayList<>(backupQueue.size());
          backupQueue.drainTo(entries);
          if (!entries.isEmpty()) {
             backupEntries(entries);
@@ -415,20 +417,20 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                 });
    }
 
-   private void backupEntry(InternalCacheEntry entry) {
+   private void backupEntry(InternalCacheEntry<?, ?> entry) {
       // we had the last version of the entry and are becoming a primary owner, so we have to back it up
-      List<InternalCacheEntry> entries = offerAndDrain(backupQueue, entry);
+      List<InternalCacheEntry<?, ?>> entries = offerAndDrain(backupQueue, entry);
       if (entries != null && !entries.isEmpty()) {
          backupEntries(entries);
       }
    }
 
-   private void backupEntries(List<InternalCacheEntry> entries) {
+   private void backupEntries(List<InternalCacheEntry<?, ?>> entries) {
       long incrementedCounter = chunkCounter.incrementAndGet();
       if (trace)
          log.tracef("Backing up entries, chunk counter is %d", incrementedCounter);
-      Map<Object, InternalCacheValue> map = new HashMap<>();
-      for (InternalCacheEntry entry : entries) {
+      Map<Object, InternalCacheValue<?>> map = new HashMap<>();
+      for (InternalCacheEntry<?, ?> entry : entries) {
          map.put(entry.getKey(), entry.toInternalCacheValue());
       }
       PutMapCommand putMapCommand = commandsFactory.buildPutMapCommand(map, null, STATE_TRANSFER_FLAGS);
@@ -465,7 +467,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       long incrementedCounter = chunkCounter.incrementAndGet();
       if (trace)
          log.tracef("Retrieving values, chunk counter is %d", incrementedCounter);
-      ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, SKIP_OWNERSHIP_FLAGS, null);
+      ClusteredGetAllCommand<?, ?> command = commandsFactory.buildClusteredGetAllCommand(keys, SKIP_OWNERSHIP_FLAGS, null);
       command.setTopologyId(rpcManager.getTopologyId());
       rpcManager.invokeCommand(address, command, SingleResponseCollector.validOnly(), rpcManager.getSyncRpcOptions())
          .whenComplete((response, throwable) -> {
@@ -495,14 +497,14 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       } else if (!response.isSuccessful()) {
          throw new CacheException("Response from " + address + " is unsuccessful: " + response);
       }
-      InternalCacheValue[] values = (InternalCacheValue[]) ((SuccessfulResponse) response).getResponseValue();
+      InternalCacheValue<?>[] values = (InternalCacheValue<?>[]) ((SuccessfulResponse) response).getResponseValue();
       if (values == null) {
          // TODO: The other node got higher topology
          throw new IllegalStateException();
       }
       for (int i = 0; i < keys.size(); ++i) {
          Object key = keys.get(i);
-         InternalCacheValue icv = values[i];
+         InternalCacheValue<?> icv = values[i];
          if (icv == null) {
             // The entry got lost in the meantime - this can happen when the container is cleared concurrently to processing
             // the GetAllCommand. We'll just avoid NPEs here: data is lost as > 1 nodes have left.
@@ -533,8 +535,9 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void removeStaleData(IntSet removedSegments) {
+   protected CompletionStage<Void> removeStaleData(IntSet removedSegments) {
       // Noop - scattered cache cannot remove data even if it is not an owner
+      return CompletableFutures.completedNull();
    }
 
    private Address getNextMember(CacheTopology cacheTopology) {

@@ -31,8 +31,6 @@ public interface StateTransferManager {
    /**
     * Checks if an inbound state transfer is in progress for a given key.
     *
-    * @param key
-    * @return
     * @deprecated since 10.0; to be removed in next major version
     */
    @Deprecated

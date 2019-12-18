@@ -197,7 +197,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             .before("st:block_second_state_request", "st:resume_second_state_request");
 
       DistributionManager dm0 = advancedCache(0).getDistributionManager();
-      StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
+      StateTransferManager stm0 = TestingUtil.extractComponentRegistry(cache(0)).getStateTransferManager();
 
       MagicKey k1 = new MagicKey("k1", cache(1));
       assertEquals(Arrays.asList(address(1), address(2), address(3)),

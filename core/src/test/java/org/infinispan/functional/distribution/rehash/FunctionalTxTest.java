@@ -103,7 +103,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       tm(2).begin();
       FunctionalMap.ReadWriteMap<String, Integer> rw = ReadWriteMapImpl.create(
             FunctionalMapImpl.create(this.<String, Integer>cache(2).getAdvancedCache()));
-      assertEquals(new Integer(1), op.apply(rw, "key"));
+      assertEquals(Integer.valueOf(1), op.apply(rw, "key"));
       Transaction tx = tm(2).suspend();
 
       chf.setOwnerIndexes(0, 2);
@@ -155,7 +155,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
          FunctionalMap.ReadWriteMap<String, Integer> rw = ReadWriteMapImpl.create(
                FunctionalMapImpl.create(this.<String, Integer>cache(2).getAdvancedCache()));
 
-         assertEquals(new Integer(1), op.apply(rw, "key"));
+         assertEquals(Integer.valueOf(1), op.apply(rw, "key"));
          return null;
       });
 
@@ -179,7 +179,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       return value;
    }
 
-   private class BlockingStateConsumer extends DelegatingStateConsumer {
+   private static class BlockingStateConsumer extends DelegatingStateConsumer {
       private CountDownLatch expectLatch = new CountDownLatch(1);
       private CountDownLatch blockLatch = new CountDownLatch(1);
 

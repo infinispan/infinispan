@@ -588,7 +588,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error invalidating keys from L1 after rehash", id = 147)
-   void failedToInvalidateKeys(@Cause Exception e);
+   void failedToInvalidateKeys(@Cause Throwable e);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Invalid %s value of %s. It can not be higher than %s which is %s", id = 148)
@@ -793,7 +793,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to retrieve transactions of cache %s from node %s, segments %s", id = 209)
-   void failedToRetrieveTransactionsForSegments(String cacheName, Address source, Collection<Integer> segments, @Cause Exception e);
+   void failedToRetrieveTransactionsForSegments(String cacheName, Address source, Collection<Integer> segments, @Cause Throwable t);
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to request state of cache %s from node %s, segments %s", id = 210)

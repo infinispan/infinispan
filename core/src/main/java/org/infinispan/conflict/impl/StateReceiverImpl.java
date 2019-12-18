@@ -224,7 +224,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          if (trace) log.tracef("Cache %s state chunks received from %s, with topologyId %s, statechunks %s", cacheName, sender, topologyId, stateChunks);
          for (StateChunk chunk : stateChunks) {
             boolean isLastChunk = chunk.isLastChunk();
-            chunk.getCacheEntries().forEach(ice -> addKeyToReplicaMap(sender, ice));
+            chunk.getCacheEntries().forEach(ice -> addKeyToReplicaMap(sender, (CacheEntry<K, V>) ice));
             transferTask.onStateReceived(chunk.getSegmentId(), isLastChunk);
 
             if (isLastChunk) {

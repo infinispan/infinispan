@@ -1,6 +1,6 @@
 package org.infinispan.conflict.impl;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -43,7 +43,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.InboundTransferTask;
@@ -134,11 +133,11 @@ public class StateReceiverTest extends AbstractInfinispanTest {
    @BeforeMethod
    private void createAndInitStateReceiver() {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
-      InternalDataContainer dataContainer = mock(InternalDataContainer.class);
+      InternalDataContainer<?, ?> dataContainer = mock(InternalDataContainer.class);
       RpcManager rpcManager = mock(RpcManager.class);
-      CacheNotifier cacheNotifier = mock(CacheNotifier.class);
+      CacheNotifier<?, ?> cacheNotifier = mock(CacheNotifier.class);
 
-      when(rpcManager.invokeRemotely(any(Collection.class), any(StateRequestCommand.class), any(RpcOptions.class)))
+      when(rpcManager.invokeCommand(any(Collection.class), any(StateRequestCommand.class), any(), any()))
             .thenAnswer(invocation -> {
                Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
                Address recipient = recipients.iterator().next();
@@ -156,7 +155,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
          return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], DeliverOrder.PER_SENDER);
       });
 
-      StateReceiverImpl stateReceiver = new StateReceiverImpl();
+      StateReceiverImpl<Object, Object> stateReceiver = new StateReceiverImpl<>();
       TestingUtil.inject(stateReceiver, cacheNotifier, commandsFactory, dataContainer, rpcManager, stateTransferExecutor);
       stateReceiver.start();
       stateReceiver.onDataRehash(createEventImpl(2, 4, Event.Type.DATA_REHASHED));
@@ -176,7 +175,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
    }
 
    private Collection<StateChunk> createStateChunks(Object key, Object value) {
-      Collection<InternalCacheEntry> entries = Collections.singleton(new ImmortalCacheEntry(key, value));
+      Collection<InternalCacheEntry<?, ?>> entries = Collections.singleton(new ImmortalCacheEntry(key, value));
       return Collections.singleton(new StateChunk(0, entries, true));
    }
 
