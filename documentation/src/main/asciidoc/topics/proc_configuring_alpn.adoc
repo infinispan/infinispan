@@ -1,34 +1,43 @@
 [id='configure_alpn']
 = Configuring Clients for ALPN
-Configure clients to use Application-Layer Protocol Negotiation (ALPN) and
-Transport Layer Security (TLS) for {brandname} server connections.
+Configure clients to provide ALPN messages for protocol negotiation during TLS
+handshakes with {brandname} servers.
+
+.Prerequisites
+
+* Enable {brandname} server endpoints with encryption.
 
 .Procedure
 
-. Configure {brandname} server endpoint connectors with encryption.
-. Enable ALPN support for Hot Rod clients that use JDK 8.
+. Provide your client application with the appropriate libraries to handle
+ALPN/TLS exchanges with {brandname} servers.
 +
-JDK 9 and later supports ALPN by default. For JDK 8, you should use the
-`boringSSL` libraries that Netty provide to support ALPN.
+[NOTE]
+====
+{brandname} uses Wildfly OpenSSL bindings for Java.
+====
 +
-.Netty dependencies for JDK 8
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::dependencies_maven/netty_bom.xml[]
-----
-+
-. Configure clients with trust stores that hold valid certificates.
-+
-For example, use the `trustStoreFileName()` method in the `SslConfigurationBuilder` class:
-+
+. Configure clients with trust stores as appropriate.
+
+.Programmatically
+
 [source,java]
 ----
 include::code_examples/ConfigurationBuilderTrustStore.java[]
 ----
 
+.Hot Rod client properties
+
+[source,properties]
+----
+include::config_examples/hotrod-client-truststore.properties[]
+----
+
+
+
 .Reference
 
 * link:#endpoint_connectors[{brandname} Endpoint Connectors]
-* link:https://netty.io/wiki/forked-tomcat-native.html[boringssl]
+* link:https://github.com/wildfly-security/wildfly-openssl[Wildfly OpenSSL]
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/SslConfigurationBuilder.html[SslConfigurationBuilder]
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration properties]
