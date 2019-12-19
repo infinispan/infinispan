@@ -122,7 +122,12 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          BlockingQueue<CompletableFuture<?>> expirationPermits = new ArrayBlockingQueue<>(MAX_CONCURRENT_EXPIRATIONS);
          long currentTimeMillis = timeService.wallClockTime();
 
-         IntSet segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+         IntSet segments;
+         if (topology.getReadConsistentHash().getMembers().contains(localAddress)) {
+            segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+         } else {
+            segments = IntSets.immutableEmptySet();
+         }
 
          for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.running().iteratorIncludingExpired(segments);
               purgeCandidates.hasNext();) {
