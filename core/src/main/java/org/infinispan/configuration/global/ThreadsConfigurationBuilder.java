@@ -88,6 +88,10 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       return remoteCommandThreadPool;
    }
 
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
       return stateTransferThreadPool;

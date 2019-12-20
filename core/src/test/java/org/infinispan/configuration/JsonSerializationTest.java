@@ -1,5 +1,6 @@
 package org.infinispan.configuration;
 
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -299,7 +300,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertTrue(cacheContainer.get("statistics").asBoolean());
       assertEquals("listener", cacheContainer.get("listener-executor").asText());
       assertEquals("persistence", cacheContainer.get("persistence-executor").asText());
-      assertEquals("state-transfer", cacheContainer.get("state-transfer-executor").asText());
+      assertNull(cacheContainer.get("state-transfer-executor"));
       assertEquals("async", cacheContainer.get("async-executor").asText());
 
       JsonNode authorization = globalSecurity.get("authorization");

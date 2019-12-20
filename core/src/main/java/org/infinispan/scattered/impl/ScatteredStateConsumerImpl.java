@@ -1,6 +1,5 @@
 package org.infinispan.scattered.impl;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.Log.CONTAINER;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
@@ -17,7 +16,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
@@ -36,7 +34,6 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
@@ -73,8 +70,6 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    protected static final long SKIP_OWNERSHIP_FLAGS = FlagBitSets.SKIP_OWNERSHIP_CHECK;
 
    @Inject protected InternalEntryFactory entryFactory;
-   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   protected ExecutorService asyncExecutor;
    @Inject protected ScatteredVersionManager<?> svm;
 
    @GuardedBy("transferMapsLock")

@@ -4,7 +4,6 @@ package org.infinispan.topology;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.infinispan.util.logging.Log.CLUSTER;
@@ -111,10 +110,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Inject EmbeddedCacheManager cacheManager;
    @Inject
    @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService asyncTransportExecutor;
-   @Inject
-   @ComponentName(STATE_TRANSFER_EXECUTOR)
-   ExecutorService stateTransferExecutor;
+   ExecutorService transportExecutor;
    @Inject
    @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutScheduledExecutor;
@@ -144,7 +140,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public void start() {
       helper = new TopologyManagementHelper(gcr.getComponent(BasicComponentRegistry.class));
       joinViewFuture = new ConditionFuture<>(timeoutScheduledExecutor);
-      actionSequencer = new ActionSequencer(asyncTransportExecutor, true);
+      actionSequencer = new ActionSequencer(transportExecutor, true);
 
       cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
@@ -383,7 +379,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                return recoverClusterStatus(newViewId);
             } else if (clusterManagerStatus == ClusterManagerStatus.COORDINATOR) {
                // Unblock any joiners waiting for the view
-               joinViewFuture.updateAsync(this, asyncTransportExecutor);
+               joinViewFuture.updateAsync(this, transportExecutor);
 
                // If we have recovered the cluster status, we rebalance the caches to include minor partitions
                // If we processed a regular view, we prune members that left.
@@ -428,7 +424,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          // Compute the new consistent hashes on separate threads
          int maxThreads = ProcessorInfo.availableProcessors() / 2 + 1;
          AggregateCompletionStage<Void> mergeStage = CompletionStages.aggregateCompletionStage();
-         LimitedExecutor cs = new LimitedExecutor("Merge-" + newViewId, stateTransferExecutor, maxThreads);
+         LimitedExecutor cs = new LimitedExecutor("Merge-" + newViewId, transportExecutor, maxThreads);
          for (final Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
             CacheJoinInfo joinInfo = e.getValue().values().iterator().next().getCacheJoinInfo();
             ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey(), joinInfo.getCacheMode());
@@ -462,7 +458,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             }
 
             // Unblock any joiners waiting for the view
-            joinViewFuture.updateAsync(this, asyncTransportExecutor);
+            joinViewFuture.updateAsync(this, transportExecutor);
          });
       });
    }

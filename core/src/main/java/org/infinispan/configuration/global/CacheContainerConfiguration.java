@@ -142,6 +142,10 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return attributes.attribute(PERSISTENCE_EXECUTOR).get();
    }
 
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    public String stateTransferExecutor() {
       return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
    }
@@ -170,6 +174,11 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return threads.persistenceThreadPool();
    }
 
+   /**
+    * @return An empty {@code ThreadPoolConfiguration}.
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    public ThreadPoolConfiguration stateTransferThreadPool() {
       return threads.stateTransferThreadPool();
    }

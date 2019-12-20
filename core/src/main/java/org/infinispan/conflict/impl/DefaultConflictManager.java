@@ -1,6 +1,6 @@
 package org.infinispan.conflict.impl;
 
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Collection;
@@ -90,8 +90,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Inject Configuration cacheConfiguration;
    @Inject CommandsFactory commandsFactory;
    @Inject DistributionManager distributionManager;
-   @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
-   ExecutorService stateTransferExecutor;
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
+   ExecutorService transportExecutor;
    @Inject InvocationContextFactory invocationContextFactory;
    @Inject RpcManager rpcManager;
    @Inject ComponentRef<StateConsumer> stateConsumer;
@@ -123,7 +123,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.conflictTimeout = cacheConfiguration.clustering().stateTransfer().timeout();
 
       // Limit the number of concurrent tasks to ensure that internal CR operations can never overlap
-      this.resolutionExecutor = new LimitedExecutor("ConflictManager-" + cacheName, stateTransferExecutor, 1);
+      this.resolutionExecutor = new LimitedExecutor("ConflictManager-" + cacheName, transportExecutor, 1);
       this.running = true;
       if (trace) log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
    }
@@ -282,7 +282,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       final Phaser phaser = new Phaser(1);
       getConflicts(topology).forEach(conflictMap -> {
          phaser.register();
-         stateTransferExecutor.execute(() -> {
+         transportExecutor.execute(() -> {
             if (trace) log.tracef("Cache %s conflict detected %s", cacheName, conflictMap);
 
             Collection<CacheEntry<K, V>> entries = conflictMap.values();

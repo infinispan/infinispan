@@ -1,9 +1,9 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -30,7 +30,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -159,7 +158,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(persistenceManager.addSegments(any())).thenReturn(CompletableFuture.completedFuture(false));
       when(persistenceManager.publishKeys(any(), any())).thenReturn(Flowable.empty());
 
-      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(SmallIntSet.class)))
+      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(IntSet.class)))
          .thenAnswer(invocation-> new StateRequestCommand(ByteString.fromString("cache1"),
                                                           (StateRequestCommand.Type) invocation.getArguments()[0],
                                                           (Address) invocation.getArguments()[1],
@@ -198,7 +197,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      TestingUtil.inject(stateConsumer, cache, TestingUtil.named(STATE_TRANSFER_EXECUTOR, pooledExecutorService),
+      TestingUtil.inject(stateConsumer, cache, TestingUtil.named(ASYNC_TRANSPORT_EXECUTOR, pooledExecutorService),
                          localTopologyManager, interceptorChain, icf, configuration, rpcManager,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
                          totalOrderManager, TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),

@@ -6,7 +6,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -631,8 +630,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case STATE_TRANSFER_EXECUTOR: {
-               builder.stateTransferThreadPoolName(value);
-               builder.stateTransferThreadPool().read(createThreadPoolConfiguration(value, STATE_TRANSFER_EXECUTOR, holder));
+               ignoreAttribute(reader, Attribute.STATE_TRANSFER_EXECUTOR);
                break;
             }
             case STATISTICS: {

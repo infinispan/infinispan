@@ -48,7 +48,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");
-   private final ConsistentHashFactory replicatedChf = new ReplicatedConsistentHashFactory();
+   private final ConsistentHashFactory<?> replicatedChf = new ReplicatedConsistentHashFactory();
    // The persistent UUIDs are different, the rest of the join info is the same
    private final CacheJoinInfo joinInfoA = makeJoinInfo();
    private final CacheJoinInfo joinInfoB = makeJoinInfo();
@@ -81,7 +81,6 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
       gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, executor, false);
-      gbcr.replaceComponent(KnownComponentNames.STATE_TRANSFER_EXECUTOR, executor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -160,7 +159,6 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
       gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, executor, false);
-      gbcr.replaceComponent(KnownComponentNames.STATE_TRANSFER_EXECUTOR, executor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -195,7 +193,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
                         .singleResponse(A, SuccessfulResponse.create(true)));
 
       // Wait for the initial view update in CTMI to finish
-      eventuallyEquals(ClusterTopologyManager.ClusterManagerStatus.REGULAR_MEMBER, () -> ctm.getStatus());
+      eventuallyEquals(ClusterTopologyManager.ClusterManagerStatus.REGULAR_MEMBER, ctm::getStatus);
 
       // The coordinator (node A) leaves the cluster
       transport.updateView(3, singletonList(B));
