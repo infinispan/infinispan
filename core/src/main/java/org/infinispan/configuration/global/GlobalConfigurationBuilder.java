@@ -135,6 +135,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return this;
    }
 
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    public GlobalConfigurationBuilder stateTransferThreadPoolName(String name) {
       cacheContainer().stateTransferExecutor(name);
       return this;

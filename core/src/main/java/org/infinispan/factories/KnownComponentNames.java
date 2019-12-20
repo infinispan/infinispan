@@ -1,7 +1,5 @@
 package org.infinispan.factories;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +29,10 @@ public class KnownComponentNames {
    public static final String MODULE_COMMAND_INITIALIZERS ="org.infinispan.modules.command.initializers";
    public static final String MODULE_COMMAND_FACTORIES ="org.infinispan.modules.command.factories";
    public static final String CLASS_LOADER = "java.lang.ClassLoader";
+   /**
+    * @deprecated Since 10.1, no longer used
+    */
+   @Deprecated
    public static final String STATE_TRANSFER_EXECUTOR = "org.infinispan.executors.stateTransferExecutor";
    public static final String TRANSACTION_VERSION_GENERATOR = "org.infinispan.transaction.versionGenerator";
    public static final String ASYNC_OPERATIONS_EXECUTOR = "org.infinispan.executors.async";
@@ -39,12 +41,6 @@ public class KnownComponentNames {
 
    public static final String INTERNAL_MARSHALLER = "org.infinispan.marshaller.internal";
    public static final String PERSISTENCE_MARSHALLER = "org.infinispan.marshaller.persistence";
-
-   // Please make sure this is kept up to date
-   public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(
-      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, CLASS_LOADER,
-      TRANSACTION_VERSION_GENERATOR, INTERNAL_MARSHALLER, PERSISTENCE_MARSHALLER
-   );
 
    private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(7);
    private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<>(7);

@@ -67,7 +67,7 @@ import org.jboss.msc.service.ServiceName;
 
 /**
  * Thread pool resource definitions for Infinispan subsystem. See {@link org.infinispan.factories.KnownComponentNames}
- * and {@link org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory#create(int, int)} for the hardcoded
+ * and {@link org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory#create(int, int, boolean)} for the hardcoded
  * Infinispan default values.
  *
  * @author Radoslav Husar
@@ -84,6 +84,10 @@ public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefiniti
    REMOTE_COMMAND("remote-command", getDefaultMinThreads(REMOTE_COMMAND_EXECUTOR),
                   getDefaultThreads(REMOTE_COMMAND_EXECUTOR), getDefaultQueueSize(REMOTE_COMMAND_EXECUTOR),
                   getDefaultKeepaliveMillis()),
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    STATE_TRANSFER("state-transfer", getDefaultMinThreads(STATE_TRANSFER_EXECUTOR),
                   getDefaultThreads(STATE_TRANSFER_EXECUTOR), getDefaultQueueSize(STATE_TRANSFER_EXECUTOR),
                   getDefaultKeepaliveMillis()),

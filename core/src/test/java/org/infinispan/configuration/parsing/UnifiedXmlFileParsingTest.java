@@ -3,6 +3,7 @@ package org.infinispan.configuration.parsing;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -307,14 +308,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(0, threadPool.keepAlive());
 
             threadFactory = getGlobalConfiguration(holder).stateTransferThreadPool().threadFactory();
-            assertEquals("infinispan", threadFactory.threadGroup().getName());
-            assertEquals("%G %i", threadFactory.threadNamePattern());
-            assertEquals(5, threadFactory.initialPriority());
+            assertNull(threadFactory);
             threadPool = getGlobalConfiguration(holder).stateTransferThreadPool().threadPoolFactory();
-            assertEquals(1, threadPool.coreThreads());
-            assertEquals(60, threadPool.maxThreads());
-            assertEquals(0, threadPool.queueLength());
-            assertEquals(0, threadPool.keepAlive());
+            assertNull(threadPool);
 
             assertTemplateConfiguration(holder, "local-template");
             assertTemplateConfiguration(holder, "invalidation-template");

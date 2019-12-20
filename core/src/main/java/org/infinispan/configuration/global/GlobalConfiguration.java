@@ -101,6 +101,11 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.persistenceThreadPool();
    }
 
+   /**
+    * @return An empty {@code ThreadPoolConfiguration}.
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    public ThreadPoolConfiguration stateTransferThreadPool() {
       return cacheContainerConfiguration.stateTransferThreadPool();
    }
@@ -153,6 +158,10 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainer().persistenceExecutor();
    }
 
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    public String stateTransferThreadPoolName() {
       return cacheContainer().stateTransferExecutor();
    }

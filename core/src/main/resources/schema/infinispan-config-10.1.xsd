@@ -351,7 +351,8 @@
     </xs:attribute>
     <xs:attribute name="state-transfer-executor" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Configuration for the executor service used when applying state from other nodes during the state transfer.</xs:documentation>
+        <xs:documentation>Deprecated since 10.1, no longer used.
+          Configuration for the executor service used when applying state from other nodes during the state transfer.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="module" type="xs:string" default="org.jboss.as.clustering.infinispan">

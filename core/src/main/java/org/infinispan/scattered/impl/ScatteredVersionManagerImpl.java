@@ -413,28 +413,27 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       } finally {
          writeLock.unlock();
       }
-      executorService.execute(() -> {
-         // we'll invalidate all keys in one run
-         // we don't have to keep any topology lock, because the versions increase monotonically
-         int numKeys = scheduledKeys.size();
-         Object[] keys = new Object[numKeys];
-         int[] topologyIds = new int[numKeys];
-         long[] versions = new long[numKeys];
-         boolean[] isRemoved = new boolean[numKeys];
-         int numRemoved = 0;
-         int i = 0;
-         for (Map.Entry<K, InvalidationInfo> entry : scheduledKeys.entrySet()) {
-            keys[i] = entry.getKey();
-            topologyIds[i] = entry.getValue().topologyId;
-            versions[i] = entry.getValue().version;
-            if (isRemoved[i] = entry.getValue().removal) { // intentional assignment
-               numRemoved++;
-            }
-            ++i;
+
+      // we'll invalidate all keys in one run
+      // we don't have to keep any topology lock, because the versions increase monotonically
+      int numKeys = scheduledKeys.size();
+      Object[] keys = new Object[numKeys];
+      int[] topologyIds = new int[numKeys];
+      long[] versions = new long[numKeys];
+      boolean[] isRemoved = new boolean[numKeys];
+      int numRemoved = 0;
+      int i = 0;
+      for (Map.Entry<K, InvalidationInfo> entry : scheduledKeys.entrySet()) {
+         keys[i] = entry.getKey();
+         topologyIds[i] = entry.getValue().topologyId;
+         versions[i] = entry.getValue().version;
+         if (isRemoved[i] = entry.getValue().removal) { // intentional assignment
+            numRemoved++;
          }
-         InvalidateVersionsCommand command = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, false);
-         sendRegularInvalidations(command, keys, topologyIds, versions, numRemoved, isRemoved, force);
-      });
+         ++i;
+      }
+      InvalidateVersionsCommand command = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, false);
+      sendRegularInvalidations(command, keys, topologyIds, versions, numRemoved, isRemoved, force);
    }
 
    private void sendRegularInvalidations(InvalidateVersionsCommand command, Object[] keys, int[] topologyIds, long[] versions, int numRemoved, boolean[] isRemoved, boolean force) {
@@ -489,20 +488,19 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       } finally {
          writeLock.unlock();
       }
-      executorService.execute(() -> {
-         int numKeys = removedKeys.size();
-         Object[] keys = new Object[numKeys];
-         int[] topologyIds = new int[numKeys];
-         long[] versions = new long[numKeys];
-         int i = 0;
-         for (Map.Entry<K, InvalidationInfo> entry : removedKeys.entrySet()) {
-            keys[i] = entry.getKey();
-            topologyIds[i] = entry.getValue().topologyId;
-            versions[i] = entry.getValue().version;
-         }
-         InvalidateVersionsCommand removeCommand = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, true);
-         sendRemoveInvalidations(removeCommand);
-      });
+
+      int numKeys = removedKeys.size();
+      Object[] keys = new Object[numKeys];
+      int[] topologyIds = new int[numKeys];
+      long[] versions = new long[numKeys];
+      int i = 0;
+      for (Map.Entry<K, InvalidationInfo> entry : removedKeys.entrySet()) {
+         keys[i] = entry.getKey();
+         topologyIds[i] = entry.getValue().topologyId;
+         versions[i] = entry.getValue().version;
+      }
+      InvalidateVersionsCommand removeCommand = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, true);
+      sendRemoveInvalidations(removeCommand);
    }
 
    private void sendRemoveInvalidations(InvalidateVersionsCommand removeCommand) {

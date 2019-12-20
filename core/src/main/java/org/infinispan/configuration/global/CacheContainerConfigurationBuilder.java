@@ -100,6 +100,10 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return threads.persistenceThreadPool();
    }
 
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
       return threads.stateTransferThreadPool();
@@ -173,6 +177,10 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return this;
    }
 
+   /**
+    * @deprecated Since 10.1, no longer used.
+    */
+   @Deprecated
    public CacheContainerConfigurationBuilder stateTransferExecutor(String name) {
       attributes.attribute(STATE_TRANSFER_EXECUTOR).set(name);
       return this;

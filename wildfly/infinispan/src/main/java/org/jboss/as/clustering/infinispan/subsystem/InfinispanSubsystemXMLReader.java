@@ -194,9 +194,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 case STATE_TRANSFER_EXECUTOR: {
                     if (namespace.since(8, 0)) {
-                        throw ParseUtils.unexpectedAttribute(reader, i);
-                    } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.STATE_TRANSFER_EXECUTOR, ModelKeys.STATE_TRANSFER_THREAD_POOL);
+                    } else {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
                     }
                     break;
                 }
@@ -315,30 +315,40 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.ASYNC_OPERATIONS, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case EXPIRATION_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
                         this.parseScheduledThreadPool(ScheduledThreadPoolResource.EXPIRATION, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case LISTENER_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.LISTENER, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case PERSISTENCE_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.PERSISTENCE, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case REMOTE_COMMAND_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.REMOTE_COMMAND, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case REPLICATION_QUEUE_THREAD_POOL: {
@@ -351,20 +361,27 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 case STATE_TRANSFER_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
+                        ROOT_LOGGER.deprecatedExecutor(ModelKeys.EXECUTOR, ModelKeys.STATE_TRANSFER_THREAD_POOL);
                         this.parseThreadPool(ThreadPoolResource.STATE_TRANSFER, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case TRANSPORT_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.TRANSPORT, reader, containerAddress, operations);
                         break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
                     }
                 }
                 case COUNTERS: {
                    if (namespace.since(9, 2) || namespace.equals(8, 5)) {
                        this.parseCounters(reader, containerAddress, operations);
                        break;
+                   } else {
+                       throw ParseUtils.unexpectedElement(reader);
                    }
                 }
                 default: {

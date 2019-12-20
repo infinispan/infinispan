@@ -1,7 +1,7 @@
 package org.infinispan.conflict.impl;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_NAME;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,12 +52,12 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @ComponentName(CACHE_NAME)
    @Inject String cacheName;
-   @Inject CacheNotifier cacheNotifier;
+   @Inject CacheNotifier<K, V> cacheNotifier;
    @Inject CommandsFactory commandsFactory;
    @Inject InternalDataContainer<K, V> dataContainer;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
-   ExecutorService stateTransferExecutor;
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
+   ExecutorService transportExecutor;
 
    private LimitedExecutor stateReceiverExecutor;
 
@@ -66,7 +66,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Start
    public void start() {
       cacheNotifier.addListener(this);
-      stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, stateTransferExecutor, 1);
+      stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, transportExecutor, 1);
    }
 
    @Stop
@@ -85,7 +85,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @DataRehashed
    @SuppressWarnings("WeakerAccess")
-   public void onDataRehash(DataRehashedEvent dataRehashedEvent) {
+   public void onDataRehash(DataRehashedEvent<K, V> dataRehashedEvent) {
       if (dataRehashedEvent.isPre()) {
          if (trace) log.tracef("Cache %s received event: %s", cacheName, dataRehashedEvent);
          for (SegmentRequest request : requestMap.values())
@@ -144,7 +144,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          this.segmentId = segmentId;
          this.topology = topology;
          this.timeout = timeout;
-         this.replicaHosts = topology.getDistributionForSegment(segmentId).writeOwners();
+         this.replicaHosts = topology.getSegmentDistribution(segmentId).writeOwners();
       }
 
       synchronized CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> requestState() {
