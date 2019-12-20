@@ -1,0 +1,37 @@
+[id='metric_endpoint']
+= Collecting {brandname} Metrics
+{brandname} servers provide monitoring data through an HTTP `metrics` endpoint
+that exposes OS, JVM, and application-level statistics.
+
+.Procedure
+
+. Start at least one {brandname} server.
+. Test the metrics endpoint with any HTTP client, for example:
++
+----
+curl -v http://localhost:11222/metrics
+----
++
+[NOTE]
+====
+If you configure {brandname} servers with security, you should include the
+appropriate credentials or client certificates to access the metrics endpoint.
+====
++
+{brandname} responds with monitoring data in JSON format.
+
+.Next steps
+
+Configure monitoring applications to scrape {brandname} metrics from the
+endpoint as appropriate. For example, add the following to your
+`prometheus.yml` file:
+
+----
+static_configs:
+    - targets: ['localhost:9090', 'localhost:11222']
+----
+
+.Reference
+
+* link:https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/MicroProfile_Metrics.adoc[MicroProfile Metrics Subsystem]
+* https://prometheus.io/docs/prometheus/latest/configuration/configuration/[Prometheus Configuration]
