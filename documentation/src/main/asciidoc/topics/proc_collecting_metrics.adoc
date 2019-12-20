@@ -6,10 +6,18 @@ that exposes OS, JVM, and application-level statistics.
 .Procedure
 
 . Start at least one {brandname} server.
-. Test the metrics endpoint with any HTTP client, for example:
+. Test the metrics endpoint with any HTTP client, as in the following examples:
++
+To get metrics in Prometheus or OpenMetrics format:
 +
 ----
-curl -v http://localhost:11222/metrics
+$ curl -v http://localhost:11222/metrics
+----
++
+To get metrics in Microprofile JSON format:
++
+----
+$ curl --header "Accept: application/json" http://localhost:11222/metrics
 ----
 +
 [NOTE]
@@ -18,11 +26,11 @@ If you configure {brandname} servers with security, you should include the
 appropriate credentials or client certificates to access the metrics endpoint.
 ====
 +
-{brandname} responds with monitoring data in JSON format.
+{brandname} responds with monitoring data.
 
 .Next steps
 
-Configure monitoring applications to scrape {brandname} metrics from the
+Configure monitoring applications to collect {brandname} metrics from the
 endpoint as appropriate. For example, add the following to your
 `prometheus.yml` file:
 
@@ -33,5 +41,5 @@ static_configs:
 
 .Reference
 
-* link:https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/MicroProfile_Metrics.adoc[MicroProfile Metrics Subsystem]
+* link:https://github.com/eclipse/microprofile-metrics/blob/master/README.adoc[Eclipse Microprofile Metrics]
 * https://prometheus.io/docs/prometheus/latest/configuration/configuration/[Prometheus Configuration]
