@@ -35,8 +35,8 @@ import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.eviction.ActivationManager;
-import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.ActivationManager;
+import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;

@@ -1,4 +1,4 @@
-package org.infinispan.eviction;
+package org.infinispan.eviction.impl;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.factories.annotations.Stop;

@@ -30,7 +30,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.eviction.PassivationManager;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -42,7 +41,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -601,20 +599,6 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
 
       @Override
-      public void passivate(InternalCacheEntry entry) {
-         final Runnable before = beforePassivate;
-         if (before != null) {
-            before.run();
-         }
-
-         delegate.passivate(entry);
-         final Runnable after = afterPassivate;
-         if (after != null) {
-            after.run();
-         }
-      }
-
-      @Override
       public CompletionStage<Void> passivateAsync(InternalCacheEntry entry) {
          final Runnable before = beforePassivate;
          if (before != null) {
@@ -627,11 +611,6 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
             return stage.thenRun(after);
          }
          return stage;
-      }
-
-      @Override
-      public void passivateAll() throws PersistenceException {
-         delegate.passivateAll();
       }
 
       @Override

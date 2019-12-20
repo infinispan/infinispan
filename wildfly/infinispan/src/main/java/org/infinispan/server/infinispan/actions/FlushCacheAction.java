@@ -1,7 +1,8 @@
 package org.infinispan.server.infinispan.actions;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.PassivationManager;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * FlushCacheAction.
@@ -18,7 +19,7 @@ public class FlushCacheAction extends AbstractAdvancedCacheAction<Void> {
    public Void run() {
       PassivationManager passivationManager = cache.getComponentRegistry().getComponent(PassivationManager.class);
       if (passivationManager != null) {
-          passivationManager.passivateAll();
+          CompletionStages.join(passivationManager.passivateAllAsync());
       }
       return null;
    }

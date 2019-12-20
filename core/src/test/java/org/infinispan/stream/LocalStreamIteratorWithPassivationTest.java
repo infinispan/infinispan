@@ -22,7 +22,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;

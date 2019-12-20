@@ -15,7 +15,7 @@ import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;

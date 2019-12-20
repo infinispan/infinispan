@@ -28,7 +28,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;

@@ -75,7 +75,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
-import org.infinispan.eviction.ActivationManager;
+import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
