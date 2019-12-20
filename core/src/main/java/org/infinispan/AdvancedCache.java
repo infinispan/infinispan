@@ -134,7 +134,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * @return the eviction manager - if one is configured - for this cache instance
+    *
+    * @deprecated Since 10.1, will be removed without a replacement
     */
+   @Deprecated
    EvictionManager getEvictionManager();
 
    /**

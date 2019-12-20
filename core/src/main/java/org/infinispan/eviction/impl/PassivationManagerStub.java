@@ -3,7 +3,6 @@ package org.infinispan.eviction.impl;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.eviction.AbstractPassivationManager;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -16,10 +15,6 @@ public class PassivationManagerStub extends AbstractPassivationManager {
    @Override
    public boolean isEnabled() {
       return false;
-   }
-
-   @Override
-   public void passivate(InternalCacheEntry entry) {
    }
 
    @Override

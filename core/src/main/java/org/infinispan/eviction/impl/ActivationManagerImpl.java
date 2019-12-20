@@ -1,17 +1,14 @@
 package org.infinispan.eviction.impl;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -55,51 +52,6 @@ public class ActivationManagerImpl implements ActivationManager {
    public void start() {
       statisticsEnabled = cfg.jmxStatistics().enabled();
       passivation = cfg.persistence().usingStores() && cfg.persistence().passivation();
-   }
-
-   @Override
-   public void onUpdate(Object key, boolean newEntry) {
-      if (!passivation || !newEntry) {
-         //we don't have passivation or the entry already exists in container.
-         return;
-      }
-      try {
-         if (persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), PRIVATE)
-               && statisticsEnabled) {
-            activations.increment();
-         }
-      } catch (CacheException e) {
-         CONTAINER.unableToRemoveEntryAfterActivation(key, e);
-      }
-   }
-
-   @Override
-   public void onRemove(Object key, boolean newEntry) {
-      if (!passivation) {
-         return;
-      }
-      //if we are the primary owner, we need to remove from the shared store,
-      final boolean primaryOwner = distributionManager != null && distributionManager.getCacheTopology().getDistribution(key).isPrimary();
-      try {
-         if (newEntry) {
-            //the entry does not exists in data container. We need to remove from private and shared stores.
-            //if we are the primary owner
-            PersistenceManager.AccessMode mode = primaryOwner ? BOTH : PRIVATE;
-            if (persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), mode) && statisticsEnabled) {
-               activations.increment();
-            }
-         } else {
-            //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
-            //so it was already activate in the private stores.
-            if (primaryOwner && persistenceManager.deleteFromAllStoresSync(key, keyPartitioner.getSegment(key), BOTH) &&
-                  statisticsEnabled) {
-               activations.increment();
-            }
-         }
-
-      } catch (CacheException e) {
-         CONTAINER.unableToRemoveEntryAfterActivation(key, e);
-      }
    }
 
    @Override

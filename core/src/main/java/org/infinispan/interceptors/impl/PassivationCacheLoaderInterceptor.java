@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.eviction.ActivationManager;
+import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;

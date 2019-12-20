@@ -1,4 +1,4 @@
-package org.infinispan.eviction;
+package org.infinispan.eviction.impl;
 
 import java.util.concurrent.CompletionStage;
 
@@ -13,20 +13,6 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface ActivationManager {
-
-   /**
-    * This method should no longer be used - please use {@link #activateAsync(Object, int)} instead.
-    * @deprecated since 10.0
-    */
-   @Deprecated
-   void onUpdate(Object key, boolean newEntry);
-
-   /**
-    * This method should no longer be used - please use {@link #activateAsync(Object, int)} instead.
-    * @deprecated since 10.0
-    */
-   @Deprecated
-   void onRemove(Object key, boolean newEntry);
 
    /**
     * Activates an entry, effectively removing it from the underlying persistence store. Note that the removal may
