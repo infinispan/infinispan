@@ -350,8 +350,10 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       if (expiring.putIfAbsent(key, key) == null) {
          try {
             InternalMetadata metadata = marshalledEntry.getMetadata();
-            cache.removeLifespanExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan())
-                  .join();
+            cache.withFlags(Flag.SKIP_SHARED_CACHE_STORE)
+                 .removeLifespanExpired(key, marshalledEntry.getValue(), 
+                                        metadata.lifespan() == -1 ? null : metadata.lifespan())
+                 .join();
          } finally {
             expiring.remove(key, key);
          }
