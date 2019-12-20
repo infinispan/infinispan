@@ -31,7 +31,9 @@ public interface Query extends PaginationContext<Query>, ParameterContext<Query>
     * Gets the total number of results matching the query, ignoring pagination (firstResult, maxResult).
     *
     * @return total number of results.
+    * @deprecated since 10.1. This will be removed with no direct replacement.
     */
+   @Deprecated
    int getResultSize(); //todo [anistor] this should probably be a long?
 
    /**
