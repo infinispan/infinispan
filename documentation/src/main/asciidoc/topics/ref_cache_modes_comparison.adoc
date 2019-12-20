@@ -88,7 +88,7 @@ ifdef::productized[]
 |===
 
 ^1^ Cluster capacity::
-Calculate cluster capacity for distributed caches as follows:
-+
-image::{images}/node_capacity_owners.png[]
+Calculate cluster capacity for distributed caches as follows: +
+image::{images_dir}/node_capacity_owners.png[]
+
 endif::productized[]

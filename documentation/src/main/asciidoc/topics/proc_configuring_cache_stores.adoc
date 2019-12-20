@@ -1,4 +1,4 @@
-[id='configuring_cache_stores]
+[id='configuring_cache_stores']
 = Configuring Cache Stores
 Add cache stores to {brandname} caches in a chain either declaratively or
 programmatically. Cache read operations check each cache store in the
