@@ -3,16 +3,15 @@ package org.infinispan.reactive.publisher.impl.commands.batch;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.util.ByteString;
 
-public class NextPublisherCommand extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 25;
 
    private PublisherHandler publisherHandler;
@@ -33,13 +32,9 @@ public class NextPublisherCommand extends BaseRpcCommand implements Initializabl
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      return (CompletableFuture) publisherHandler.getNext(requestId);
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.publisherHandler = componentRegistry.getPublisherHandler().running();
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
+      return publisherHandler.getNext(requestId);
    }
 
    @Override

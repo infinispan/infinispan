@@ -20,13 +20,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-public class CancelCommand extends BaseRpcCommand implements InitializableCommand {
+public class CancelCommand extends BaseRpcCommand {
 
    private static final Log log = LogFactory.getLog(CancelCommand.class);
    public static final byte COMMAND_ID = 34;
 
    private UUID commandToCancel;
-   private CancellationService service;
 
    private CancelCommand() {
       super(null);
@@ -42,14 +41,9 @@ public class CancelCommand extends BaseRpcCommand implements InitializableComman
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.service = componentRegistry.getCancellationService().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletableFuture<Object> invokeAsync(ComponentRegistry registry) throws Throwable {
       log.trace("Cancelling " + commandToCancel);
-      service.cancel(commandToCancel);
+      registry.getCancellationService().running().cancel(commandToCancel);
       log.trace("Cancelled " + commandToCancel);
       return CompletableFutures.completedNull();
    }

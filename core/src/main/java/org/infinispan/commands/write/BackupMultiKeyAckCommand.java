@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.commands.InitializableCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
 
@@ -19,13 +16,10 @@ import org.infinispan.util.concurrent.CommandAckCollector;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupMultiKeyAckCommand extends BaseRpcCommand implements InitializableCommand {
+public class BackupMultiKeyAckCommand extends BackupAckCommand {
 
    public static final byte COMMAND_ID = 41;
-   private CommandAckCollector commandAckCollector;
    private int segment;
-   private long id;
-   private int topologyId;
 
    public BackupMultiKeyAckCommand() {
       super(null);
@@ -37,34 +31,18 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand implements Initiali
 
    public BackupMultiKeyAckCommand(ByteString cacheName, long id, int segment,
          int topologyId) {
-      super(cacheName);
-      this.id = id;
+      super(cacheName, id, topologyId);
       this.segment = segment;
-      this.topologyId = topologyId;
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.commandAckCollector = componentRegistry.getCommandAckCollector().running();
-   }
-
-   public void ack() {
-      commandAckCollector.multiKeyBackupAck(id, getOrigin(), segment, topologyId);
+   public void ack(CommandAckCollector ackCollector) {
+      ackCollector.multiKeyBackupAck(id, getOrigin(), segment, topologyId);
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;
    }
 
    @Override

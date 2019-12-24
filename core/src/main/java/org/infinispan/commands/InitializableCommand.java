@@ -7,7 +7,9 @@ import org.infinispan.factories.ComponentRegistry;
  *
  * @author Ryan Emerson
  * @since 10.0
+ * @deprecated since 11.0, please implement {@link ReplicableCommand#invokeAsync(ComponentRegistry)} instead
  */
+@Deprecated
 public interface InitializableCommand {
 
    void init(ComponentRegistry componentRegistry, boolean isRemote);

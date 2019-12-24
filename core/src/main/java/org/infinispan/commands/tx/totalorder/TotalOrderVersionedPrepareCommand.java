@@ -5,6 +5,7 @@ import java.util.List;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 
@@ -53,7 +54,7 @@ public class TotalOrderVersionedPrepareCommand extends VersionedPrepareCommand i
    }
 
    @Override
-   public TotalOrderRemoteTransactionState getOrCreateState() {
+   public TotalOrderRemoteTransactionState getOrCreateState(TransactionTable txTable) {
       return txTable.getOrCreateRemoteTransaction(globalTx, modifications).getTransactionState();
    }
 

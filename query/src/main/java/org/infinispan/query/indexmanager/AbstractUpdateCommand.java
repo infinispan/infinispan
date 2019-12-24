@@ -3,17 +3,10 @@ package org.infinispan.query.indexmanager;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
-import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.Cache;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.util.ByteString;
 
 /**
@@ -22,28 +15,13 @@ import org.infinispan.util.ByteString;
  * @author gustavonalle
  * @since 7.0
  */
-public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand, InitializableCommand {
+public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand {
 
-   protected SearchIntegrator searchFactory;
    protected String indexName;
    protected byte[] serializedModel;
-   protected QueryInterceptor queryInterceptor;
 
    protected AbstractUpdateCommand(ByteString cacheName) {
       super(cacheName);
-   }
-
-   @Override
-   public abstract CompletableFuture<Object> invokeAsync() throws Throwable;
-
-   @Override
-   public abstract byte getCommandId();
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      Cache cache = componentRegistry.getCache().wired();
-      searchFactory = ComponentRegistryUtils.getSearchIntegrator(cache);
-      queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
    }
 
    @Override

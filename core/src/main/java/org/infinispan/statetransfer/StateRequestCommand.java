@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
@@ -29,7 +28,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateRequestCommand extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class StateRequestCommand extends BaseRpcCommand implements TopologyAffectedCommand {
 
    private static final Log log = LogFactory.getLog(StateRequestCommand.class);
 
@@ -50,13 +49,8 @@ public class StateRequestCommand extends BaseRpcCommand implements Initializable
    public static final byte COMMAND_ID = 15;
 
    private Type type = Type.CANCEL_STATE_TRANSFER; //default value for org.infinispan.remoting.AsynchronousInvocationTest
-
    private int topologyId;
-
    private IntSet segments;
-
-   private StateProvider stateProvider;
-   private BiasManager biasManager;
 
    private StateRequestCommand() {
       super(null);  // for command id uniqueness test
@@ -75,16 +69,11 @@ public class StateRequestCommand extends BaseRpcCommand implements Initializable
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.stateProvider = componentRegistry.getStateTransferManager().getStateProvider();
-      this.biasManager = componentRegistry.getBiasManager().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
+         StateProvider stateProvider = componentRegistry.getStateTransferManager().getStateProvider();
          switch (type) {
             case GET_TRANSACTIONS:
                CompletionStage transactionsStage =
@@ -113,6 +102,7 @@ public class StateRequestCommand extends BaseRpcCommand implements Initializable
                return CompletableFuture.completedFuture(listeners);
 
             case CONFIRM_REVOKED_SEGMENTS:
+               BiasManager biasManager = componentRegistry.getBiasManager().running();
                return ((ScatteredStateProvider) stateProvider).confirmRevokedSegments(topologyId)
                      .thenApply(nil -> {
                         if (biasManager != null) {

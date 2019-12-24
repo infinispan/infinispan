@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 
 /**
@@ -37,13 +40,13 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
       if (arg instanceof Throwable) {
          throw (Throwable) arg;
       }
 
       // echo the arg back to the caller
-      return arg;
+      return CompletableFuture.completedFuture(arg);
    }
 
    @Override

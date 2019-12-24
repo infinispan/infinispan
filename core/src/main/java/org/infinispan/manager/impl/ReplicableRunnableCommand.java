@@ -3,9 +3,10 @@ package org.infinispan.manager.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.GlobalRpcCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -14,14 +15,13 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author wburns
  * @since 8.2
  */
-public class ReplicableRunnableCommand implements ReplicableCommand {
+public class ReplicableRunnableCommand implements GlobalRpcCommand {
 
    public static final byte COMMAND_ID = 59;
 
    private Runnable runnable;
 
    public ReplicableRunnableCommand() {
-
    }
 
    public ReplicableRunnableCommand(Runnable runnable) {
@@ -29,7 +29,7 @@ public class ReplicableRunnableCommand implements ReplicableCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
       runnable.run();
       return CompletableFutures.completedNull();
    }

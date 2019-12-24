@@ -5,8 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
@@ -15,22 +15,20 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Informs node that it is not allowed to serve reads from the local record anymore.
  * After local bias is revoked a {@link BackupAckCommand} is sent to the originator, and this confirms all keys.
  */
 //TODO: consolidate this with InvalidateVersionsCommand
-public class RevokeBiasCommand extends BaseRpcCommand implements InitializableCommand {
+public class RevokeBiasCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 74;
 
    private Address ackTarget;
    private long id;
    private int topologyId;
    private Collection<Object> keys;
-   private transient ByteString cacheName;
-   private transient BiasManager biasManager;
-   private transient RpcManager rpcManager;
 
    public RevokeBiasCommand() {
       super(null);
@@ -49,21 +47,17 @@ public class RevokeBiasCommand extends BaseRpcCommand implements InitializableCo
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.biasManager = componentRegistry.getBiasManager().running();
-      this.cacheName = componentRegistry.getCacheByteString();
-      this.rpcManager = componentRegistry.getRpcManager().running();
-   }
-
-   @Override
-   public Object invoke() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      BiasManager biasManager = componentRegistry.getBiasManager().running();
       for (Object key : keys) {
          biasManager.revokeLocalBias(key);
       }
       // ackTarget null means that this message is sent synchronously by primary owner == originator
-      if (ackTarget != null)
+      if (ackTarget != null) {
+         RpcManager rpcManager = componentRegistry.getRpcManager().running();
          rpcManager.sendTo(ackTarget, new BackupAckCommand(cacheName, id, topologyId), DeliverOrder.NONE);
-      return null;
+      }
+      return CompletableFutures.completedNull();
    }
 
    @Override

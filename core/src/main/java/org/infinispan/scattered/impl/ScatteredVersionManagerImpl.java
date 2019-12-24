@@ -515,8 +515,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          }
       });
       // remove the entries on self, too
-      commandsFactory.initializeReplicableCommand(removeCommand, false);
-      removeCommand.invokeAsync();
+      removeCommand.invokeAsync(componentRegistry);
    }
 
    protected void removeInvalidationsFinished() {

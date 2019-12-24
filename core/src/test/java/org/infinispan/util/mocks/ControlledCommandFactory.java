@@ -298,7 +298,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
+   public SingleRpcCommand buildSingleRpcCommand(VisitableCommand call) {
       return actual.buildSingleRpcCommand(call);
    }
 

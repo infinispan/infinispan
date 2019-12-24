@@ -6,16 +6,18 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -28,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class TxCompletionNotificationCommand extends RecoveryCommand implements TopologyAffectedCommand {
+public class TxCompletionNotificationCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    private static final Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -37,9 +39,6 @@ public class TxCompletionNotificationCommand extends RecoveryCommand implements 
    private Xid xid;
    private long internalId;
    private GlobalTransaction gtx;
-   private TransactionTable txTable;
-   private LockManager lockManager;
-   private StateTransferManager stateTransferManager;
    private int topologyId = -1;
 
    private TxCompletionNotificationCommand() {
@@ -62,14 +61,6 @@ public class TxCompletionNotificationCommand extends RecoveryCommand implements 
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      super.init(componentRegistry, isRemote);
-      this.txTable = componentRegistry.getTransactionTableRef().running();
-      this.lockManager = componentRegistry.getLockManager().running();
-      this.stateTransferManager = componentRegistry.getStateTransferManager();
-   }
-
-   @Override
    public int getTopologyId() {
       return topologyId;
    }
@@ -85,10 +76,11 @@ public class TxCompletionNotificationCommand extends RecoveryCommand implements 
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       if (trace)
          log.tracef("Processing completed transaction %s", gtx);
       RemoteTransaction remoteTx = null;
+      RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
       if (recoveryManager != null) { //recovery in use
          if (xid != null) {
             remoteTx = (RemoteTransaction) recoveryManager.removeRecoveryInformation(xid);
@@ -97,11 +89,13 @@ public class TxCompletionNotificationCommand extends RecoveryCommand implements 
          }
       }
       if (remoteTx == null && gtx != null) {
+         TransactionTable txTable = componentRegistry.getTransactionTableRef().running();
          remoteTx = txTable.removeRemoteTransaction(gtx);
       }
       if (remoteTx == null) return CompletableFutures.completedNull();
-      forwardCommandRemotely(remoteTx);
+      forwardCommandRemotely(componentRegistry.getStateTransferManager(), remoteTx);
 
+      LockManager lockManager = componentRegistry.getLockManager().running();
       lockManager.unlockAll(remoteTx.getLockedKeys(), remoteTx.getGlobalTransaction());
       return CompletableFutures.completedNull();
    }
@@ -113,7 +107,7 @@ public class TxCompletionNotificationCommand extends RecoveryCommand implements 
    /**
     * This only happens during state transfer.
     */
-   private void forwardCommandRemotely(RemoteTransaction remoteTx) {
+   private void forwardCommandRemotely(StateTransferManager stateTransferManager, RemoteTransaction remoteTx) {
       Set<Object> affectedKeys = remoteTx.getAffectedKeys();
       if (trace)
          log.tracef("Invoking forward of TxCompletionNotification for transaction %s. Affected keys: %s", gtx,

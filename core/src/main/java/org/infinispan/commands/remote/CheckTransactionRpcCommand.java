@@ -7,9 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -23,21 +22,17 @@ import org.infinispan.util.ByteString;
 
 /**
  * A {@link CacheRpcCommand} that returns a {@link Collection} of local {@link GlobalTransaction} already completed.
- * <p>
- * This class implements {@link Predicate} where {@link Predicate#test(Object)} returns {@code true} if the {@link
- * GlobalTransaction} is a valid local transaction.
  *
  * @author Pedro Ruivo
  * @since 10.0
  */
-public class CheckTransactionRpcCommand implements InitializableCommand, CacheRpcCommand, Predicate<GlobalTransaction> {
+public class CheckTransactionRpcCommand implements CacheRpcCommand {
 
    public static final int COMMAND_ID = 83;
    private static final ResponseCollectorImpl INSTANCE = new ResponseCollectorImpl();
 
    private final ByteString cacheName;
    private Collection<GlobalTransaction> gtxToCheck;
-   private TransactionTable transactionTable;
 
    @SuppressWarnings("unused")
    public CheckTransactionRpcCommand() {
@@ -58,20 +53,15 @@ public class CheckTransactionRpcCommand implements InitializableCommand, CacheRp
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      transactionTable = componentRegistry.getTransactionTable();
-   }
-
-   @Override
    public ByteString getCacheName() {
       return cacheName;
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() {
-      //modify the collection destructively
-      //and return the list of completed transactions.
-      gtxToCheck.removeIf(this);
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      // Modify the collection destructively and return the list of completed transactions.
+      TransactionTable txTable = componentRegistry.getTransactionTable();
+      gtxToCheck.removeIf(txTable::containsLocalTx);
       return CompletableFuture.completedFuture(gtxToCheck);
    }
 
@@ -104,14 +94,6 @@ public class CheckTransactionRpcCommand implements InitializableCommand, CacheRp
    @Override
    public void setOrigin(Address origin) {
       //we don't need to keep track who sent the message
-   }
-
-   /**
-    * @return {@code true} if the {@link GlobalTransaction} is a local transaction.
-    */
-   @Override
-   public boolean test(GlobalTransaction globalTransaction) {
-      return transactionTable.containsLocalTx(globalTransaction);
    }
 
    @Override

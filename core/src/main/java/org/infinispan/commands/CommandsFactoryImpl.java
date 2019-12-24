@@ -297,7 +297,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
+   public SingleRpcCommand buildSingleRpcCommand(VisitableCommand call) {
       return new SingleRpcCommand(cacheName, call);
    }
 
@@ -323,8 +323,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @SuppressWarnings("unchecked")
-   private <T> T init(InitializableCommand cmd) {
-      cmd.init(componentRegistry, false);
+   private <T> T init(VisitableCommand cmd) {
+      cmd.init(componentRegistry);
       return (T) cmd;
    }
 
@@ -635,8 +635,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(Object requestId, DeliveryGuarantee deliveryGuarantee,
          int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-      return init(new InitialPublisherCommand<>(cacheName, requestId, deliveryGuarantee, batchSize, segments, keys,
-            excludedKeys, includeLoader, entryStream, trackKeys, transformer));
+      return new InitialPublisherCommand<>(cacheName, requestId, deliveryGuarantee, batchSize, segments, keys,
+            excludedKeys, includeLoader, entryStream, trackKeys, transformer);
    }
 
    @Override

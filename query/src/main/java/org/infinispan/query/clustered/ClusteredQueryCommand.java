@@ -5,10 +5,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
@@ -26,16 +26,13 @@ import org.infinispan.util.ByteString;
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
-public final class ClusteredQueryCommand extends BaseRpcCommand implements InitializableCommand {
+public final class ClusteredQueryCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.CLUSTERED_QUERY;
 
    private CQCommandType commandType;
 
    private QueryDefinition queryDefinition;
-
-   // local instance (set only when command arrives on target node)
-   private AdvancedCache<?, ?> cache;
 
    // identifies the query
    private UUID queryId;
@@ -46,11 +43,6 @@ public final class ClusteredQueryCommand extends BaseRpcCommand implements Initi
    private ClusteredQueryCommand(CQCommandType commandType, String cacheName) {
       super(ByteString.fromString(cacheName));
       this.commandType = commandType;
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.cache = componentRegistry.getCache().wired();
    }
 
    /**
@@ -99,7 +91,8 @@ public final class ClusteredQueryCommand extends BaseRpcCommand implements Initi
     * @return returns a {@code CompletableFuture} with a {@code List<Object>}.
     */
    @Override
-   public CompletableFuture<Object> invokeAsync() {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      AdvancedCache cache = componentRegistry.getCache().wired();
       return CompletableFuture.completedFuture(perform(cache));
    }
 

@@ -11,7 +11,9 @@ import org.infinispan.util.ByteString;
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
+ * @deprecated since 11.0, class will be removed with no direct replacement. BaseRpcCommand should be extended instead.
  */
+@Deprecated
 public abstract class RecoveryCommand extends BaseRpcCommand implements InitializableCommand {
 
    protected RecoveryManager recoveryManager;

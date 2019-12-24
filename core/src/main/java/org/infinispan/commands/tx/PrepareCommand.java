@@ -11,11 +11,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -37,12 +35,15 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
@@ -59,7 +60,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class PrepareCommand extends AbstractTransactionBoundaryCommand implements InitializableCommand, TransactionalRemoteLockCommand {
+public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
    private static boolean trace = log.isTraceEnabled();
@@ -68,22 +69,10 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    protected WriteCommand[] modifications;
    protected boolean onePhaseCommit;
-   protected CacheNotifier notifier;
-   protected RecoveryManager recoveryManager;
    private transient boolean replayEntryWrapping  = false;
    protected boolean retriedCommand;
 
    private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      super.init(componentRegistry, isRemote);
-      this.notifier = componentRegistry.getCacheNotifier().running();
-      this.recoveryManager = componentRegistry.getRecoveryManager().running();
-
-      for (ReplicableCommand nested : getModifications())
-         componentRegistry.getCommandsFactory().initializeReplicableCommand(nested, false);
-   }
 
    private PrepareCommand() {
       super(null); // For command id uniqueness test
@@ -108,16 +97,21 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      RemoteTxInvocationContext ctx = createContext();
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      markTransactionAsRemote(true);
+      RemoteTxInvocationContext ctx = createContext(registry);
       if (ctx == null) {
          return CompletableFutures.completedNull();
       }
 
       if (trace)
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
+      CacheNotifier notifier = registry.getCacheNotifier().running();
       CompletionStage<Void> stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
 
+      AsyncInterceptorChain invoker = registry.getInterceptorChain().running();
+      for (VisitableCommand nested : getModifications())
+         nested.init(registry);
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          return invoker.invokeAsync(ctx, this);
       } else {
@@ -126,13 +120,15 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public RemoteTxInvocationContext createContext() {
+   public RemoteTxInvocationContext createContext(ComponentRegistry componentRegistry) {
+      RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
       if (recoveryManager != null && recoveryManager.isTransactionPrepared(globalTx)) {
          log.tracef("The transaction %s is already prepared. Skipping prepare call.", globalTx);
          return null;
       }
 
       // 1. first create a remote transaction (or get the existing one)
+      TransactionTable txTable = componentRegistry.getTransactionTableRef().running();
       RemoteTransaction remoteTransaction = txTable.getOrCreateRemoteTransaction(globalTx, modifications);
       //set the list of modifications anyway, as the transaction might have already been created by a previous
       //LockControlCommand with null modifications.
@@ -141,6 +137,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       }
 
       // 2. then set it on the invocation context
+      InvocationContextFactory icf = componentRegistry.getInvocationContextFactory().running();
       return icf.createRemoteTxInvocationContext(remoteTransaction, getOrigin());
    }
 

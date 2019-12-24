@@ -11,10 +11,10 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.transaction.Status;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -25,6 +25,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
@@ -101,10 +102,10 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
          // And try to run another commit command
          CommitCommand command = new CommitCommand(ByteString.fromString(newBackupOwnerCache.getName()), gtx);
          command.setTopologyId(currentTopologyId);
-         CommandsFactory cf = TestingUtil.extractCommandsFactory(newBackupOwnerCache);
-         cf.initializeReplicableCommand(command, true);
+         command.markTransactionAsRemote(true);
+         ComponentRegistry componentRegistry = TestingUtil.extractComponentRegistry(newBackupOwnerCache);
          try {
-            command.invoke();
+            command.invokeAsync(componentRegistry);
          } catch (Throwable throwable) {
             throw new CacheException(throwable);
          }

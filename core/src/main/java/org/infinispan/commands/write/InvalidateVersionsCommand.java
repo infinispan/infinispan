@@ -3,9 +3,8 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.container.DataContainer;
@@ -26,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class InvalidateVersionsCommand extends BaseRpcCommand implements InitializableCommand {
+public class InvalidateVersionsCommand extends BaseRpcCommand {
    private static final Log log = LogFactory.getLog(InvalidateVersionsCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -39,12 +38,6 @@ public class InvalidateVersionsCommand extends BaseRpcCommand implements Initial
    private long[] versions;
    // Removed means that the comparison will remove current versions as well
    private boolean removed;
-
-   protected DataContainer dataContainer;
-   protected OrderedUpdatesManager orderedUpdatesManager;
-   protected StateTransferLock stateTransferLock;
-   protected DistributionManager distributionManager;
-   protected BiasManager biasManager;
 
    public InvalidateVersionsCommand() {
       this(null);
@@ -64,27 +57,20 @@ public class InvalidateVersionsCommand extends BaseRpcCommand implements Initial
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.dataContainer = componentRegistry.getInternalDataContainer().running();
-      this.orderedUpdatesManager = componentRegistry.getOrderedUpdatesManager().running();
-      this.stateTransferLock = componentRegistry.getStateTransferLock();
-      this.distributionManager = componentRegistry.getDistributionManager();
-      this.biasManager = componentRegistry.getBiasManager().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      StateTransferLock stateTransferLock = componentRegistry.getStateTransferLock();
       if (stateTransferLock != null) {
          stateTransferLock.acquireSharedTopologyLock();
       }
       try {
+         DistributionManager distributionManager = componentRegistry.getDistributionManager();
          if (topologyId >= 0 && distributionManager != null) {
             int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
             if (topologyId > currentTopologyId) {
                if (trace) {
                   log.tracef("Delaying command %s, current topology id %d", this, currentTopologyId);
                }
-               return stateTransferLock.topologyFuture(topologyId).thenCompose(nil -> invokeAsync());
+               return stateTransferLock.topologyFuture(topologyId).thenCompose(nil -> invokeAsync(componentRegistry));
             } else if (topologyId < currentTopologyId) {
                log.ignoringInvalidateVersionsFromOldTopology(this.topologyId, currentTopologyId);
                if (trace) {
@@ -97,9 +83,11 @@ public class InvalidateVersionsCommand extends BaseRpcCommand implements Initial
             Object key = keys[i];
             if (key == null) break;
             SimpleClusteredVersion version = new SimpleClusteredVersion(topologyIds[i], versions[i]);
+            BiasManager biasManager = componentRegistry.getBiasManager().running();
             if (biasManager != null) {
                biasManager.revokeLocalBias(key);
             }
+            DataContainer dataContainer = componentRegistry.getInternalDataContainer().running();
             dataContainer.compute(key, (k, oldEntry, factory) -> {
                if (oldEntry == null) {
                   return null;
@@ -118,6 +106,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand implements Initial
             stateTransferLock.releaseSharedTopologyLock();
          }
       }
+      OrderedUpdatesManager orderedUpdatesManager = componentRegistry.getOrderedUpdatesManager().running();
       return orderedUpdatesManager.invalidate(keys).thenApply(nil -> null).toCompletableFuture();
    }
 

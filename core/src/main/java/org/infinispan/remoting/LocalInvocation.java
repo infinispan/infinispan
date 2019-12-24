@@ -1,7 +1,7 @@
 package org.infinispan.remoting;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
@@ -25,43 +25,32 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
 
    private final ResponseGenerator responseGenerator;
    private final CacheRpcCommand command;
+   private final ComponentRegistry componentRegistry;
    private final CommandsFactory commandsFactory;
    private final Address self;
 
    private LocalInvocation(ResponseGenerator responseGenerator, CacheRpcCommand command,
-                           CommandsFactory commandsFactory, Address self) {
+                           ComponentRegistry componentRegistry, Address self) {
       this.responseGenerator = responseGenerator;
       this.command = command;
-      this.commandsFactory = commandsFactory;
+      this.componentRegistry = componentRegistry;
+      this.commandsFactory = componentRegistry.getCommandsFactory();
       this.self = self;
    }
 
    @Override
    public Response call() throws Exception {
-      try {
-         commandsFactory.initializeReplicableCommand(command, false);
-         command.setOrigin(self);
-         Object returnValue = command.invoke();
-         return responseGenerator.getResponse(command, returnValue);
-      } catch (Throwable throwable) {
-         throw new RemoteException("Problems invoking command locally.", throwable);
-      }
+      return CompletableFutures.await(callAsync().toCompletableFuture());
    }
 
    public static LocalInvocation newInstanceFromCache(Cache<?, ?> cache, CacheRpcCommand command) {
-      ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
-      ResponseGenerator responseGenerator = registry.getResponseGenerator();
-      CommandsFactory commandsFactory = registry.getCommandsFactory();
-      Address self = registry.getComponent(ClusteringDependentLogic.class).getAddress();
-      return newInstance(responseGenerator, command, commandsFactory, self);
+      return newInstance(cache.getAdvancedCache().getComponentRegistry(), command);
    }
 
-   public static LocalInvocation newInstance(ResponseGenerator responseGenerator, CacheRpcCommand command,
-                                             CommandsFactory commandsFactory, Address self) {
-      if (responseGenerator == null || command == null || commandsFactory == null || self == null) {
-         throw new NullPointerException("Null arguments are not allowed.");
-      }
-      return new LocalInvocation(responseGenerator, command, commandsFactory, self);
+   public static LocalInvocation newInstance(ComponentRegistry componentRegistry, CacheRpcCommand command) {
+      ResponseGenerator responseGenerator = componentRegistry.getResponseGenerator();
+      Address self = componentRegistry.getComponent(ClusteringDependentLogic.class).getAddress();
+      return new LocalInvocation(responseGenerator, command, componentRegistry, self);
    }
 
    @Override
@@ -80,11 +69,11 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
       return command.hashCode();
    }
 
-   public CompletableFuture<Response> callAsync() {
+   public CompletionStage<Response> callAsync() {
       commandsFactory.initializeReplicableCommand(command, false);
       command.setOrigin(self);
       try {
-         return command.invokeAsync().thenApply(this);
+         return command.invokeAsync(componentRegistry).thenApply(this);
       } catch (Throwable throwable) {
          return CompletableFutures.completedExceptionFuture(throwable);
       }

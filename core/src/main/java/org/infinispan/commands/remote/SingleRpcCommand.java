@@ -3,43 +3,43 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+import java.util.Objects;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Aggregates a single command for replication.
  *
  * @author Mircea.Markus@jboss.com
  */
-public class SingleRpcCommand extends BaseRpcInvokingCommand implements InitializableCommand {
-   public static final int COMMAND_ID = 1;
+public class SingleRpcCommand extends BaseRpcCommand {
 
-   private ReplicableCommand command;
+   public static final int COMMAND_ID = 1;
+   private static final Log log = LogFactory.getLog(SingleRpcCommand.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   private VisitableCommand command;
 
    private SingleRpcCommand() {
       super(null); // For command id uniqueness test
    }
 
-   public SingleRpcCommand(ByteString cacheName, ReplicableCommand command) {
+   public SingleRpcCommand(ByteString cacheName, VisitableCommand command) {
       super(cacheName);
       this.command = command;
    }
 
    public SingleRpcCommand(ByteString cacheName) {
       super(cacheName);
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.interceptorChain = componentRegistry.getInterceptorChain().running();
-      this.icf = componentRegistry.getInvocationContextFactory().running();
-
-      componentRegistry.getCommandsFactory().initializeReplicableCommand(command, false);
    }
 
    @Override
@@ -54,17 +54,21 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand implements Initiali
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      command = (ReplicableCommand) input.readObject();
+      command = (VisitableCommand) input.readObject();
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      return processVisitableCommandAsync(command);
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      command.init(componentRegistry);
+      InvocationContextFactory icf = componentRegistry.getInvocationContextFactory().running();
+      InvocationContext ctx = icf.createRemoteInvocationContextForCommand(command, getOrigin());
+      if (command instanceof RemoteLockCommand) {
+         ctx.setLockOwner(((RemoteLockCommand) command).getKeyLockOwner());
+      }
+      if (trace)
+         log.tracef("Invoking command %s, with originLocal flag set to %b", command, ctx
+               .isOriginLocal());
+      return componentRegistry.getInterceptorChain().running().invokeAsync(ctx, command);
    }
 
    @Override
@@ -73,19 +77,14 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand implements Initiali
       if (!(o instanceof SingleRpcCommand)) return false;
 
       SingleRpcCommand that = (SingleRpcCommand) o;
-
-      if (cacheName != null ? !cacheName.equals(that.cacheName) : that.cacheName != null) return false;
-      if (command != null ? !command.equals(that.command) : that.command != null) return false;
-      if (interceptorChain != null ? !interceptorChain.equals(that.interceptorChain) : that.interceptorChain != null)
+      if (Objects.equals(cacheName, that.cacheName))
          return false;
-
-      return true;
+      return Objects.equals(command, that.command);
    }
 
    @Override
    public int hashCode() {
-      int result = interceptorChain != null ? interceptorChain.hashCode() : 0;
-      result = 31 * result + (cacheName != null ? cacheName.hashCode() : 0);
+      int result = cacheName != null ? cacheName.hashCode() : 0;
       result = 31 * result + (command != null ? command.hashCode() : 0);
       return result;
    }

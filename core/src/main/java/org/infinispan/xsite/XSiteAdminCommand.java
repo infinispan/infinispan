@@ -5,8 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
@@ -19,7 +19,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Mircea Markus
  * @since 5.2
  */
-public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCommand {
+public class XSiteAdminCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 32;
 
@@ -46,8 +46,6 @@ public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCo
    private Long minTimeToWait;
    private AdminOperation adminOperation;
 
-   private BackupSender backupSender;
-
    @SuppressWarnings("unused")
    public XSiteAdminCommand() {
       super(null);// For command id uniqueness test
@@ -66,12 +64,8 @@ public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCo
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.backupSender = componentRegistry.getBackupSender().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      BackupSender backupSender = componentRegistry.getBackupSender().running();
       switch (adminOperation) {
          case SITE_STATUS: {
             if (backupSender.getOfflineStatus(siteName).isOffline()) {
@@ -158,7 +152,6 @@ public class XSiteAdminCommand extends BaseRpcCommand implements InitializableCo
             ", afterFailures=" + afterFailures +
             ", minTimeToWait=" + minTimeToWait +
             ", adminOperation=" + adminOperation +
-            ", backupSender=" + backupSender +
             '}';
    }
 }

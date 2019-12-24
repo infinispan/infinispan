@@ -5,10 +5,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -25,11 +24,8 @@ import org.infinispan.util.ByteString;
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  * @param <K> the key type
  */
-public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 31;
-
-   private LocalPublisherManager lpm;
-   private ComponentRegistry componentRegistry;
 
    private boolean parallelStream;
    private DeliveryGuarantee deliveryGuarantee;
@@ -75,24 +71,19 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.componentRegistry = componentRegistry;
-      this.lpm = componentRegistry.getLocalPublisherManager().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       if (transformer instanceof InjectableComponent) {
          ((InjectableComponent) transformer).inject(componentRegistry);
       }
       if (finalizer instanceof InjectableComponent) {
          ((InjectableComponent) finalizer).inject(componentRegistry);
       }
+      LocalPublisherManager lpm = componentRegistry.getLocalPublisherManager().running();
       if (entryStream) {
-         return (CompletableFuture<Object>) lpm.entryReduction(parallelStream, segments, keys, excludedKeys,
+         return lpm.entryReduction(parallelStream, segments, keys, excludedKeys,
                includeLoader, deliveryGuarantee, transformer, finalizer);
       } else {
-         return (CompletableFuture<Object>) lpm.keyReduction(parallelStream, segments, keys, excludedKeys,
+         return lpm.keyReduction(parallelStream, segments, keys, excludedKeys,
                includeLoader, deliveryGuarantee, transformer, finalizer);
       }
    }

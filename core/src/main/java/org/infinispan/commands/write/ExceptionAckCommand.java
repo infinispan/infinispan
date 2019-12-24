@@ -4,15 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.commands.InitializableCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A command that represents an exception acknowledge sent by any owner.
@@ -22,17 +17,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class ExceptionAckCommand extends BaseRpcCommand implements InitializableCommand {
-   private static final Log log = LogFactory.getLog(ExceptionAckCommand.class);
-
+public class ExceptionAckCommand extends BackupAckCommand {
    public static final byte COMMAND_ID = 42;
-   private CommandAckCollector commandAckCollector;
    private Throwable throwable;
-   private long id;
-   private int topologyId;
 
    public ExceptionAckCommand() {
-      super(null);
+      super();
    }
 
    public ExceptionAckCommand(ByteString cacheName) {
@@ -40,35 +30,19 @@ public class ExceptionAckCommand extends BaseRpcCommand implements Initializable
    }
 
    public ExceptionAckCommand(ByteString cacheName, long id, Throwable throwable, int topologyId) {
-      super(cacheName);
-      this.id = id;
+      super(cacheName, id, topologyId);
       this.throwable = throwable;
-      this.topologyId = topologyId;
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.commandAckCollector = componentRegistry.getCommandAckCollector().running();
-   }
-
-   public void ack() {
+   public void ack(CommandAckCollector ackCollector) {
       CacheException remoteException = ResponseCollectors.wrapRemoteException(getOrigin(), this.throwable);
-      commandAckCollector.completeExceptionally(id, remoteException, topologyId);
+      ackCollector.completeExceptionally(id, remoteException, topologyId);
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;
    }
 
    @Override

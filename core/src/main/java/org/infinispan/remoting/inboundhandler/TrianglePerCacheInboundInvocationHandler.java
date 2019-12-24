@@ -90,13 +90,9 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                handleMultiKeyBackupCommand((BackupWriteCommand) command);
                return;
             case BackupAckCommand.COMMAND_ID:
-               handleBackupAckCommand((BackupAckCommand) command);
-               return;
             case BackupMultiKeyAckCommand.COMMAND_ID:
-               handleBackupMultiKeyAckCommand((BackupMultiKeyAckCommand) command);
-               return;
             case ExceptionAckCommand.COMMAND_ID:
-               handleExceptionAck((ExceptionAckCommand) command);
+               handleBackupAckCommand((BackupAckCommand) command);
                return;
             case StateRequestCommand.COMMAND_ID:
                handleStateRequestCommand((StateRequestCommand) command, reply, order);
@@ -188,16 +184,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       remoteCommandsExecutor.execute(runnable);
    }
 
-   private void handleExceptionAck(ExceptionAckCommand command) {
-      command.ack();
-   }
-
-   private void handleBackupMultiKeyAckCommand(BackupMultiKeyAckCommand command) {
-      command.ack();
-   }
-
    private void handleBackupAckCommand(BackupAckCommand command) {
-      command.ack();
+      command.ack(commandAckCollector);
    }
 
    private void handleSingleRpcCommand(SingleRpcCommand command, Reply reply, DeliverOrder order) {

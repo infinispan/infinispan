@@ -77,6 +77,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -359,15 +360,30 @@ public interface CommandsFactory {
     *
     * @param command command to initialize.  Cannot be null.
     * @param isRemote
+    * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
+    * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
+    * to access any components required at invocation time.
     */
+   @Deprecated
    void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
 
    /**
     * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand
     * @param call ReplicableCommand to include in the envelope
     * @return a SingleRpcCommand
+    * @deprecated since 11.0 use {@link #buildSingleRpcCommand(VisitableCommand)} instead.
     */
-   SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call);
+   @Deprecated
+   default SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
+      return buildSingleRpcCommand((VisitableCommand) call);
+   }
+
+   /**
+    * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand
+    * @param command VisitableCommand to include in the envelope
+    * @return a SingleRpcCommand
+    */
+   SingleRpcCommand buildSingleRpcCommand(VisitableCommand command);
 
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command

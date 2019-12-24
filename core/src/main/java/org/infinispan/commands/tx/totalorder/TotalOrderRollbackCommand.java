@@ -3,8 +3,6 @@ package org.infinispan.commands.tx.totalorder;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * The 2nd phase command of 2PC, used when a transaction must be aborted. This implementation is used when Total Order
@@ -16,7 +14,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TotalOrderRollbackCommand extends RollbackCommand {
 
    public static final byte COMMAND_ID = 37;
-   private static final Log log = LogFactory.getLog(TotalOrderRollbackCommand.class);
 
    public TotalOrderRollbackCommand(ByteString cacheName, GlobalTransaction globalTransaction) {
       super(cacheName, globalTransaction);

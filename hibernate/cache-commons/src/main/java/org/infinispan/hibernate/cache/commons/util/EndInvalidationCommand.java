@@ -10,15 +10,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Sent in commit phase (after DB commit) to remote nodes in order to stop invalidating
@@ -26,10 +26,9 @@ import org.infinispan.util.ByteString;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class EndInvalidationCommand extends BaseRpcCommand implements InitializableCommand {
+public class EndInvalidationCommand extends BaseRpcCommand {
 	private Object[] keys;
 	private Object lockOwner;
-	private PutFromLoadValidator putFromLoadValidator;
 
 	public EndInvalidationCommand(ByteString cacheName) {
 		this(cacheName, null, null);
@@ -45,16 +44,12 @@ public class EndInvalidationCommand extends BaseRpcCommand implements Initializa
 	}
 
 	@Override
-	public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-		this.putFromLoadValidator = componentRegistry.getComponent(PutFromLoadValidator.class);
-	}
-
-	@Override
-	public Object perform(InvocationContext ctx) throws Throwable {
+	public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
 		for (Object key : keys) {
+			PutFromLoadValidator putFromLoadValidator = componentRegistry.getComponent(PutFromLoadValidator.class);
 			putFromLoadValidator.endInvalidatingKey(lockOwner, key);
 		}
-		return null;
+		return CompletableFutures.completedNull();
 	}
 
 	@Override
@@ -82,10 +77,6 @@ public class EndInvalidationCommand extends BaseRpcCommand implements Initializa
 	@Override
 	public boolean canBlock() {
 		return true;
-	}
-
-	public void setPutFromLoadValidator(PutFromLoadValidator putFromLoadValidator) {
-		this.putFromLoadValidator = putFromLoadValidator;
 	}
 
 	@Override

@@ -3,12 +3,13 @@ package org.infinispan.topology;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -26,10 +27,12 @@ public class TopologyManagementHelper {
    private static final Log log = LogFactory.getLog(TopologyManagementHelper.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private BasicComponentRegistry gcr;
+   private GlobalComponentRegistry gcr;
+   private BasicComponentRegistry bcr;
 
-   public TopologyManagementHelper(BasicComponentRegistry gcr) {
+   public TopologyManagementHelper(GlobalComponentRegistry gcr) {
       this.gcr = gcr;
+      this.bcr = gcr.getComponent(BasicComponentRegistry.class);
    }
 
    public <T> CompletionStage<T> executeOnClusterSync(Transport transport, ReplicableCommand command,
@@ -46,12 +49,12 @@ public class TopologyManagementHelper {
             transport.invokeCommandOnAll(command, delegatingCollector, DeliverOrder.NONE, timeout, MILLISECONDS);
 
       // Then invoke the command on the local node
-      CompletableFuture<Object> localFuture;
+      CompletionStage<?> localFuture;
       try {
          if (trace)
             log.tracef("Attempting to execute command on self: %s", command);
-         gcr.wireDependencies(command, true);
-         localFuture = command.invokeAsync();
+         bcr.wireDependencies(command, true);
+         localFuture = invokeAsync(command);
       } catch (Throwable throwable) {
          localFuture = CompletableFutures.completedExceptionFuture(throwable);
       }
@@ -73,8 +76,8 @@ public class TopologyManagementHelper {
          try {
             if (trace)
                log.tracef("Attempting to execute command on self: %s", command);
-            gcr.wireDependencies(command, true);
-            command.invokeAsync();
+            bcr.wireDependencies(command, true);
+            invokeAsync(command);
          } catch (Throwable throwable) {
             // The command already logs any exception in invoke()
          }
@@ -89,8 +92,8 @@ public class TopologyManagementHelper {
          try {
             if (trace)
                log.tracef("Attempting to execute command on self: %s", command);
-            gcr.wireDependencies(command, true);
-            responseStage = command.invokeAsync().handle((v, t) -> makeResponse(v, t, transport.getAddress()));
+            bcr.wireDependencies(command, true);
+            responseStage = invokeAsync(command).handle((v, t) -> makeResponse(v, t, transport.getAddress()));
          } catch (Throwable t) {
             throw CompletableFutures.asCompletionException(t);
          }
@@ -112,9 +115,9 @@ public class TopologyManagementHelper {
          if (trace)
             log.tracef("Attempting to execute command on self: %s", command);
          try {
-            gcr.wireDependencies(command, true);
+            bcr.wireDependencies(command, true);
             // ignore the result
-            command.invokeAsync();
+            invokeAsync(command);
          } catch (Throwable t) {
             log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
          }
@@ -127,7 +130,7 @@ public class TopologyManagementHelper {
 
    private <T> CompletionStage<T> addLocalResult(ResponseCollector<T> responseCollector,
                                                  CompletionStage<Void> remoteFuture,
-                                                 CompletableFuture<Object> localFuture, Address localAddress) {
+                                                 CompletionStage<?> localFuture, Address localAddress) {
       return remoteFuture.thenCompose(ignore -> localFuture.handle((v, t) -> {
          Response localResponse = makeResponse(v, t, localAddress);
 
@@ -150,6 +153,12 @@ public class TopologyManagementHelper {
          }
       }
       return localResponse;
+   }
+
+   private CompletionStage<?> invokeAsync(ReplicableCommand command) throws Throwable {
+      if (command instanceof GlobalRpcCommand)
+         return ((GlobalRpcCommand) command).invokeAsync(gcr);
+      return command.invokeAsync();
    }
 
    private static class DelegatingResponseCollector<T> implements ResponseCollector<Void> {

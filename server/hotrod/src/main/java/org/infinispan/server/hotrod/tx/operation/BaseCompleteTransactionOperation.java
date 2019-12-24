@@ -209,8 +209,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())
             .handle(handler())
             .toCompletableFuture();
-      commandsFactory.initializeReplicableCommand(command, false);
-      CompletableFuture<Void> local = command.invokeAsync().handle(handler());
+      CompletableFuture<Void> local = command.invokeAsync(cache.getComponentRegistry()).handle(handler()).toCompletableFuture();
       return CompletableFuture.allOf(remote, local);
    }
 

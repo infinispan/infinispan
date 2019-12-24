@@ -45,7 +45,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
@@ -138,7 +137,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Start(priority = 100)
    public void start() {
-      helper = new TopologyManagementHelper(gcr.getComponent(BasicComponentRegistry.class));
+      helper = new TopologyManagementHelper(gcr);
       joinViewFuture = new ConditionFuture<>(timeoutScheduledExecutor);
       actionSequencer = new ActionSequencer(transportExecutor, true);
 

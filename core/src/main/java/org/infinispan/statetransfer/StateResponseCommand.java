@@ -5,9 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -25,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateResponseCommand extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class StateResponseCommand extends BaseRpcCommand implements TopologyAffectedCommand {
 
    private static final Log log = LogFactory.getLog(StateResponseCommand.class);
 
@@ -52,12 +51,6 @@ public class StateResponseCommand extends BaseRpcCommand implements Initializabl
     */
    private boolean pushTransfer;
 
-   /**
-    * These objects are injected on target node via init() method before the command is performed.
-    */
-   private StateConsumer stateConsumer;
-   private StateReceiver stateReceiver;
-
    private StateResponseCommand() {
       super(null);  // for command id uniqueness test
    }
@@ -77,20 +70,15 @@ public class StateResponseCommand extends BaseRpcCommand implements Initializabl
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.stateConsumer = componentRegistry.getStateTransferManager().getStateConsumer();
-      this.stateReceiver = componentRegistry.getConflictManager().running().getStateReceiver();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
          if (applyState) {
-            return (CompletableFuture) stateConsumer.applyState(getOrigin(), topologyId, pushTransfer, stateChunks)
-                                                    .toCompletableFuture();
+            StateConsumer stateConsumer = componentRegistry.getStateTransferManager().getStateConsumer();
+            return stateConsumer.applyState(getOrigin(), topologyId, pushTransfer, stateChunks);
          } else {
+            StateReceiver stateReceiver = componentRegistry.getConflictManager().running().getStateReceiver();
             stateReceiver.receiveState(getOrigin(), topologyId, stateChunks);
          }
          return CompletableFutures.completedNull();

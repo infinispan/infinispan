@@ -42,6 +42,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -113,6 +114,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    ScheduledExecutorService timeoutExecutor;
    @Inject TransactionOriginatorChecker transactionOriginatorChecker;
    @Inject TransactionManager transactionManager;
+   @Inject ComponentRegistry componentRegistry;
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -374,9 +376,9 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    private void killTransaction(GlobalTransaction gtx) {
       RollbackCommand rc = new RollbackCommand(ByteString.fromString(cacheName), gtx);
-      commandsFactory.initializeReplicableCommand(rc, false);
+      rc.markTransactionAsRemote(false);
       try {
-         rc.invoke();
+         CompletionStages.join(rc.invokeAsync(componentRegistry));
          if (trace) log.tracef("Rollback of transaction %s complete.", gtx);
       } catch (Throwable e) {
          log.unableToRollbackGlobalTx(gtx, e);
@@ -612,9 +614,9 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    private void killTransactionAsync(GlobalTransaction gtx) {
       RollbackCommand rc = new RollbackCommand(ByteString.fromString(cacheName), gtx);
-      commandsFactory.initializeReplicableCommand(rc, false);
+      rc.markTransactionAsRemote(false);
       try {
-         rc.invokeAsync();
+         rc.invokeAsync(componentRegistry);
       } catch (Throwable throwable) {
          log.unableToRollbackGlobalTx(gtx, throwable);
       }

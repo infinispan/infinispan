@@ -5,7 +5,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -29,16 +29,14 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @since 5.2
  */
-public class CreateCacheCommand extends BaseRpcCommand implements InitializableCommand {
+public class CreateCacheCommand extends BaseRpcCommand {
 
    private static final Log log = LogFactory.getLog(CreateCacheCommand.class);
    public static final byte COMMAND_ID = 29;
 
-   private EmbeddedCacheManager cacheManager;
    private String cacheNameToCreate;
    private String cacheConfigurationName;
    private int expectedMembers;
-   private ConfigurationManager configurationManager;
 
    private CreateCacheCommand() {
       super(null);
@@ -61,32 +59,27 @@ public class CreateCacheCommand extends BaseRpcCommand implements InitializableC
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.cacheManager = componentRegistry.getGlobalComponentRegistry().getCacheManager();
-      this.configurationManager = componentRegistry.getComponent(ConfigurationManager.class);
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       if (cacheConfigurationName == null) {
          throw new NullPointerException("Cache configuration name is required");
       }
 
+      EmbeddedCacheManager cacheManager = componentRegistry.getGlobalComponentRegistry().getCacheManager();
+      ConfigurationManager configurationManager = componentRegistry.getComponent(ConfigurationManager.class);
       Configuration cacheConfig = configurationManager.getConfiguration(cacheConfigurationName, true);
       if (cacheConfig == null) {
          throw new IllegalStateException(
-               "Cache configuration " + cacheConfigurationName + " is not defined on node " +
-               this.cacheManager.getAddress());
+               "Cache configuration " + cacheConfigurationName + " is not defined on node " + cacheManager.getAddress());
       }
 
       cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
       Cache<Object, Object> cache = cacheManager.getCache(cacheNameToCreate);
-      waitForCacheToStabilize(cache, cacheConfig);
+      waitForCacheToStabilize(cacheManager, cache, cacheConfig);
       log.debugf("Defined and started cache %s", cacheNameToCreate);
       return CompletableFutures.completedNull();
    }
 
-   protected void waitForCacheToStabilize(Cache<Object, Object> cache, Configuration cacheConfig)
+   protected void waitForCacheToStabilize(EmbeddedCacheManager cacheManager, Cache<Object, Object> cache, Configuration cacheConfig)
          throws InterruptedException {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       DistributionManager distributionManager = componentRegistry.getDistributionManager();
@@ -169,7 +162,6 @@ public class CreateCacheCommand extends BaseRpcCommand implements InitializableC
    @Override
    public String toString() {
       return "CreateCacheCommand{" +
-            "cacheManager=" + cacheManager +
             ", cacheNameToCreate='" + cacheNameToCreate + '\'' +
             ", cacheConfigurationName='" + cacheConfigurationName + '\'' +
             ", expectedMembers=" + expectedMembers +

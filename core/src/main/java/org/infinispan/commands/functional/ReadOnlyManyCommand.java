@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.function.Function;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -18,7 +17,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.impl.Params;
 
-public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements InitializableCommand, LocalCommand {
+public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
 
    protected Collection<?> keys;
@@ -53,7 +52,7 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+   public void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
    }

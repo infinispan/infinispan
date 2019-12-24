@@ -3,6 +3,7 @@ package org.infinispan.commands.tx.totalorder;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
+import org.infinispan.transaction.impl.TransactionTable;
 
 /**
  * Interface with the utilities methods that the prepare command must have when Total Order based protocol is used
@@ -40,5 +41,5 @@ public interface TotalOrderPrepareCommand extends TransactionBoundaryCommand {
     *
     * @return returns the {@link TotalOrderRemoteTransactionState} associated with this transaction.
     */
-   TotalOrderRemoteTransactionState getOrCreateState();
+   TotalOrderRemoteTransactionState getOrCreateState(TransactionTable transactionTable);
 }

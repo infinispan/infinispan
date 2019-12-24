@@ -7,8 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -21,7 +20,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -85,22 +86,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return keys;
    }
 
-   public void replaceKey(Object oldKey, Object replacement) {
-      int i = keys.indexOf(oldKey);
-      if (i >= 0) {
-         keys.set(i, replacement);
-      }
-   }
-
-   public void replaceKeys(Map<Object, Object> replacements) {
-      for (int i = 0; i < keys.size(); i++) {
-         Object replacement = replacements.get(keys.get(i));
-         if (replacement != null) {
-            keys.set(i, replacement);
-         }
-      }
-   }
-
    public boolean multipleKeys() {
       return keys.size() > 1;
    }
@@ -118,16 +103,18 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      RemoteTxInvocationContext ctx = createContext();
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      globalTx.setRemote(true);
+      RemoteTxInvocationContext ctx = createContext(registry);
       if (ctx == null) {
          return CompletableFutures.completedNull();
       }
-      return invoker.invokeAsync(ctx, this);
+      return registry.getInterceptorChain().running().invokeAsync(ctx, this);
    }
 
    @Override
-   public RemoteTxInvocationContext createContext() {
+   public RemoteTxInvocationContext createContext(ComponentRegistry componentRegistry) {
+      TransactionTable txTable = componentRegistry.getTransactionTableRef().running();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 
       if (transaction == null) {
@@ -138,7 +125,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          //create a remote tx without any modifications (we do not know modifications ahead of time)
          transaction = txTable.getOrCreateRemoteTransaction(globalTx, null);
       }
-      return icf.createRemoteTxInvocationContext(transaction, getOrigin());
+      return componentRegistry.getInvocationContextFactory().running().createRemoteTxInvocationContext(transaction, getOrigin());
    }
 
    @Override
