@@ -16,6 +16,7 @@
       <module>commons</module>
       <module>embedded</module>
       <module>remote</module>
-      <module>tck-runner</module>
+      <module>tck-runner-embedded</module>
+      <module>tck-runner-remote</module>
    </modules>
 </project>
