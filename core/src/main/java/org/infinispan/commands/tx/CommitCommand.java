@@ -8,8 +8,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Command corresponding to the 2nd phase of 2PC.
@@ -19,8 +17,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 14;
-
-   private static final Log log = LogFactory.getLog(CommitCommand.class);
 
    private CommitCommand() {
       super(null); // For command id uniqueness test
@@ -41,7 +37,7 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    }
 
    @Override
-   protected Object invalidRemoteTxReturnValue() {
+   protected Object invalidRemoteTxReturnValue(TransactionTable txTable) {
       TransactionTable.CompletedTransactionStatus txStatus = txTable.getCompletedTransactionStatus(globalTx);
       switch (txStatus) {
          case COMMITTED:

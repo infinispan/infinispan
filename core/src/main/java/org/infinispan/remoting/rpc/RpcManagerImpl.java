@@ -19,6 +19,7 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -370,7 +371,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       checkTopologyId(command);
       return command instanceof CacheRpcCommand ?
             (CacheRpcCommand) command :
-            cf.wired().buildSingleRpcCommand(command);
+            cf.wired().buildSingleRpcCommand((VisitableCommand) command);
    }
 
    @Override

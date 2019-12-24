@@ -1,6 +1,9 @@
 package org.infinispan.commands.remote;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 
@@ -12,6 +15,19 @@ import org.infinispan.util.ByteString;
  * @since 4.0
  */
 public interface CacheRpcCommand extends ReplicableCommand {
+
+   /**
+    * Invoke the command asynchronously.
+    * <p>
+    * <p>This method replaces {@link #invoke()} for remote execution.
+    * The default implementation and {@link #invoke()} will be removed in future versions.
+    * </p>
+    *
+    * @since 11.0
+    */
+   default CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      return invokeAsync();
+   }
 
    /**
     * @return the name of the cache that produced this command.  This will also be the name of the cache this command is

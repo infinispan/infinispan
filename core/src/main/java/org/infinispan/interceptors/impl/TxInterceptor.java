@@ -547,7 +547,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          } else {
             prepareCommand = commandsFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
          }
-         commandsFactory.initializeReplicableCommand(prepareCommand, true);
+         prepareCommand.markTransactionAsRemote(true);
          prepareCommand.setOrigin(ctx.getOrigin());
          if (trace) {
             log.tracef("Replaying the transactions received as a result of state transfer %s",

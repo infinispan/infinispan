@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -25,29 +24,18 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public abstract class AbstractTransactionBoundaryCommand implements InitializableCommand, TransactionBoundaryCommand {
+public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
 
    private static final Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
    private static boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;
    protected final ByteString cacheName;
-   protected AsyncInterceptorChain invoker;
-   protected InvocationContextFactory icf;
-   protected TransactionTable txTable;
    private Address origin;
    private int topologyId = -1;
 
    public AbstractTransactionBoundaryCommand(ByteString cacheName) {
       this.cacheName = cacheName;
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.invoker = componentRegistry.getInterceptorChain().running();
-      this.icf = componentRegistry.getInvocationContextFactory().running();
-      this.txTable = componentRegistry.getTransactionTableRef().running();
-      markTransactionAsRemote(isRemote);
    }
 
    @Override
@@ -83,23 +71,25 @@ public abstract class AbstractTransactionBoundaryCommand implements Initializabl
     * Returning a null usually means the transactional command succeeded.
     * @return return value to respond to a remote caller with if the transaction context is invalid.
     */
-   protected Object invalidRemoteTxReturnValue() {
+   protected Object invalidRemoteTxReturnValue(TransactionTable txTable) {
       return null;
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      markGtxAsRemote();
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      globalTx.setRemote(true);
+      TransactionTable txTable = registry.getTransactionTableRef().running();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
          if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
-         return CompletableFuture.completedFuture(invalidRemoteTxReturnValue());
+         return CompletableFuture.completedFuture(invalidRemoteTxReturnValue(txTable));
       }
       visitRemoteTransaction(transaction);
+      InvocationContextFactory icf = registry.getInvocationContextFactory().running();
       RemoteTxInvocationContext ctx = icf.createRemoteTxInvocationContext(transaction, getOrigin());
 
       if (trace) log.tracef("About to execute tx command %s", this);
-      return invoker.invokeAsync(ctx, this);
+      return registry.getInterceptorChain().running().invokeAsync(ctx, this);
    }
 
    protected void visitRemoteTransaction(RemoteTransaction tx) {
@@ -139,10 +129,6 @@ public abstract class AbstractTransactionBoundaryCommand implements Initializabl
             ", cacheName='" + cacheName + '\'' +
             ", topologyId=" + topologyId +
             '}';
-   }
-
-   private void markGtxAsRemote() {
-      globalTx.setRemote(true);
    }
 
    @Override

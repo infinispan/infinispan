@@ -3,8 +3,6 @@ package org.infinispan.commands.tx.totalorder;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Commit Command used in the 2nd phase of 2PC. This command is used when non versioned entries are needed
@@ -15,7 +13,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TotalOrderCommitCommand extends CommitCommand {
 
    public static final byte COMMAND_ID = 35;
-   private static final Log log = LogFactory.getLog(TotalOrderCommitCommand.class);
 
    public TotalOrderCommitCommand(ByteString cacheName, GlobalTransaction gtx) {
       super(cacheName, gtx);

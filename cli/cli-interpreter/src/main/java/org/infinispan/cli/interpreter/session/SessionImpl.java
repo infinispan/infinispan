@@ -3,6 +3,7 @@ package org.infinispan.cli.interpreter.session;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 
 import java.util.Collection;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
@@ -117,8 +118,7 @@ public class SessionImpl implements Session {
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
          try {
             rpc.invokeRemotely(null, ccc, rpc.getSyncRpcOptions());
-            ccc.init(componentRegistry, false);
-            ccc.invoke();
+            ccc.invokeAsync(componentRegistry);
          } catch (Throwable e) {
             throw log.cannotCreateClusteredCaches(e, cacheName);
          }

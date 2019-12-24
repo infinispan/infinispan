@@ -88,6 +88,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.PublisherManagerFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -155,6 +156,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Inject ClusterPublisherManager clusterPublisherManager;
    @ComponentName(PublisherManagerFactory.LOCAL_CLUSTER_PUBLISHER)
    @Inject ClusterPublisherManager localClusterPublisherManager;
+   @Inject ComponentRegistry componentRegistry;
 
    // Internally we always deal with an unwrapped cache, so don't unwrap per invocation
    Cache unwrappedCache;
@@ -769,7 +771,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return command.perform(ctx);
+      return command.invoke();
    }
 
    @Override

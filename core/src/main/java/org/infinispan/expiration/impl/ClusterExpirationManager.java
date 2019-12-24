@@ -454,9 +454,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       touchCommand.setTopologyId(lct.getTopologyId());
 
       CompletionStage<Boolean> remoteStage = invokeTouchCommandRemotely(touchCommand, lct, segment);
-      touchCommand.init(componentRegistry, false);
       long accessTime = timeService.wallClockTime();
-      CompletableFuture<Object> localStage = touchCommand.invokeAsync(accessTime);
+      CompletionStage<Object> localStage = touchCommand.invokeAsync(componentRegistry, accessTime);
 
       return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
          if (remoteTouch == Boolean.TRUE && localTouch == Boolean.TRUE) {

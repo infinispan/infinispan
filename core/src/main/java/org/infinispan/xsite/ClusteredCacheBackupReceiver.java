@@ -13,8 +13,8 @@ import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.LocalInvocation;
@@ -122,8 +122,8 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
       final RpcManager rpcManager = cache.getRpcManager();
       CompletionStage<Map<Address, Response>> remote = rpcManager
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions());
-      CompletableFuture<Response> local = LocalInvocation.newInstanceFromCache(cache, command).callAsync();
-      return CompletableFuture.allOf(remote.toCompletableFuture(), local);
+      CompletionStage<Response> local = LocalInvocation.newInstanceFromCache(cache, command).callAsync();
+      return CompletableFuture.allOf(remote.toCompletableFuture(), local.toCompletableFuture());
    }
 
    private class StatePushTask extends CompletableFuture<Void>

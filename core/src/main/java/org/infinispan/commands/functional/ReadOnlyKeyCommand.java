@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.function.Function;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -19,7 +18,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
 
-public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand implements InitializableCommand {
+public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    public static final int COMMAND_ID = 62;
    protected Function<ReadEntryView<K, V>, R> f;
@@ -42,7 +41,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand implements 
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+   public void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
       if (f instanceof InjectableComponent)

@@ -150,7 +150,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
    private void assertDispatchForCommand(ReplicableCommand command, boolean expected) throws Exception {
       log.debugf("Testing " + command.getClass().getCanonicalName());
-      commandsFactory.initializeReplicableCommand(command, true);
       executorService.reset();
       CompletableFutureResponse response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.NONE);

@@ -4,17 +4,14 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -34,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand extends BaseClusteredReadCommand implements InitializableCommand, SegmentSpecificCommand {
+public class ClusteredGetCommand extends BaseClusteredReadCommand implements SegmentSpecificCommand {
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
@@ -42,11 +39,6 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Ini
 
    private Object key;
 
-   private InvocationContextFactory icf;
-   private CommandsFactory commandsFactory;
-   private AsyncInterceptorChain invoker;
-
-   private InternalEntryFactory entryFactory;
    //only used by extended statistics. this boolean is local.
    private boolean isWrite;
    private int segment;
@@ -69,41 +61,36 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Ini
       this.segment = segment;
    }
 
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.icf = componentRegistry.getInvocationContextFactory().running();
-      this.commandsFactory = componentRegistry.getCommandsFactory();
-      this.invoker = componentRegistry.getInterceptorChain().running();
-      this.entryFactory = componentRegistry.getInternalEntryFactory().wired();
-   }
-
    /**
     * Invokes a logical "get(key)" on a remote cache and returns results.
+    * @return
     */
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       // CACHE_MODE_LOCAL is not used as it can be used when we want to ignore the ownership with respect to reads
       long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP);
-      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, segment,
+      GetCacheEntryCommand command = componentRegistry.getCommandsFactory().buildGetCacheEntryCommand(key, segment,
             EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
       command.setTopologyId(topologyId);
+      InvocationContextFactory icf = componentRegistry.getInvocationContextFactory().running();
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
-      return future.thenApply(rv -> {
-         if (trace) log.tracef("Return value for key=%s is %s", key, rv);
-         //this might happen if the value was fetched from a cache loader
-         if (rv instanceof MVCCEntry) {
-            MVCCEntry mvccEntry = (MVCCEntry) rv;
-            return entryFactory.createValue(mvccEntry);
-         } else if (rv instanceof InternalCacheEntry) {
-            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
-            return internalCacheEntry.toInternalCacheValue();
-         } else { // null or Response
-            return rv;
-         }
-      });
+      AsyncInterceptorChain invoker = componentRegistry.getInterceptorChain().running();
+      return invoker.invokeAsync(invocationContext, command)
+            .thenApply(rv -> {
+               if (trace) log.tracef("Return value for key=%s is %s", key, rv);
+               //this might happen if the value was fetched from a cache loader
+               if (rv instanceof MVCCEntry) {
+                  MVCCEntry mvccEntry = (MVCCEntry) rv;
+                  return componentRegistry.getInternalEntryFactory().wired().createValue(mvccEntry);
+               } else if (rv instanceof InternalCacheEntry) {
+                  InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
+                  return internalCacheEntry.toInternalCacheValue();
+               } else { // null or Response
+                  return rv;
+               }
+            });
    }
 
    @Deprecated

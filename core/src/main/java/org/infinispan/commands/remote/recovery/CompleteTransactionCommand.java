@@ -4,9 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 
 /**
@@ -15,7 +19,7 @@ import org.infinispan.util.ByteString;
  * @author Mircea Markus
  * @since 5.0
  */
-public class CompleteTransactionCommand extends RecoveryCommand {
+public class CompleteTransactionCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 24;
 
@@ -44,8 +48,14 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
       return CompletableFuture.completedFuture(recoveryManager.forceTransactionCompletion(xid, commit));
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
    }
 
    @Override

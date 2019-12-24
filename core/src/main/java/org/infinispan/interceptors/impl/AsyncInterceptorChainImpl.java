@@ -14,8 +14,8 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -40,7 +40,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
          new ImmutableListCopy<>(new AsyncInterceptor[0]);
    private static final Log log = LogFactory.getLog(AsyncInterceptorChainImpl.class);
 
-   private final BasicComponentRegistry basicComponentRegistry;
+   private final ComponentRegistry componentRegistry;
 
    private final ReentrantLock lock = new ReentrantLock();
 
@@ -48,8 +48,8 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    private volatile List<AsyncInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
    private volatile AsyncInterceptor firstInterceptor = null;
 
-   public AsyncInterceptorChainImpl(BasicComponentRegistry basicComponentRegistry) {
-      this.basicComponentRegistry = basicComponentRegistry;
+   public AsyncInterceptorChainImpl(ComponentRegistry componentRegistry) {
+      this.componentRegistry = componentRegistry;
    }
 
    @Start

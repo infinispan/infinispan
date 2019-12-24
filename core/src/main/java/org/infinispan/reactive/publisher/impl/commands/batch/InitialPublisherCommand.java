@@ -5,10 +5,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -21,11 +20,8 @@ import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.util.ByteString;
 import org.reactivestreams.Publisher;
 
-public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 18;
-
-   private PublisherHandler publisherHandler;
-   private ComponentRegistry componentRegistry;
 
    private Object requestId;
    private DeliveryGuarantee deliveryGuarantee;
@@ -103,18 +99,13 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       if (transformer instanceof InjectableComponent) {
          ((InjectableComponent) transformer).inject(componentRegistry);
       }
 
-      return (CompletableFuture) publisherHandler.register(this);
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.publisherHandler = componentRegistry.getPublisherHandler().running();
-      this.componentRegistry = componentRegistry;
+      PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
+      return publisherHandler.register(this);
    }
 
    @Override

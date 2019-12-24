@@ -101,14 +101,14 @@ public class PrepareCoordinator {
     */
    public final void rollbackRemoteTransaction(GlobalTransaction gtx) {
       RpcManager rpcManager = cache.getRpcManager();
-      CommandsFactory factory = cache.getComponentRegistry().getCommandsFactory();
+      ComponentRegistry componentRegistry = cache.getComponentRegistry();
+      CommandsFactory factory = componentRegistry.getCommandsFactory();
       try {
          RollbackCommand rollbackCommand = factory.buildRollbackCommand(gtx);
          rollbackCommand.setTopologyId(rpcManager.getTopologyId());
          CompletionStage<Void> cs = rpcManager
                .invokeCommandOnAll(rollbackCommand, validOnly(), rpcManager.getSyncRpcOptions());
-         factory.initializeReplicableCommand(rollbackCommand, false);
-         rollbackCommand.invokeAsync().join();
+         rollbackCommand.invokeAsync(componentRegistry).toCompletableFuture().join();
          cs.toCompletableFuture().join();
       } catch (Throwable throwable) {
          throw Util.rewrapAsCacheException(throwable);
@@ -216,13 +216,13 @@ public class PrepareCoordinator {
     */
    public int onePhaseCommitRemoteTransaction(GlobalTransaction gtx, List<WriteCommand> modifications) {
       RpcManager rpcManager = cache.getRpcManager();
-      CommandsFactory factory = cache.getComponentRegistry().getCommandsFactory();
+      ComponentRegistry componentRegistry = cache.getComponentRegistry();
+      CommandsFactory factory = componentRegistry.getCommandsFactory();
       try {
          //only pessimistic tx are committed in 1PC and it doesn't use versions.
          PrepareCommand command = factory.buildPrepareCommand(gtx, modifications, true);
          CompletionStage<Void> cs = rpcManager.invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions());
-         factory.initializeReplicableCommand(command, false);
-         command.invokeAsync().join();
+         command.invokeAsync(componentRegistry).toCompletableFuture().join();
          cs.toCompletableFuture().join();
          forgetTransaction(gtx, rpcManager, factory);
          return loggingCompleted(true) == Status.OK ?

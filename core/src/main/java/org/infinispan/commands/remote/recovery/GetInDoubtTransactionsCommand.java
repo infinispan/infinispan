@@ -1,13 +1,14 @@
 package org.infinispan.commands.remote.recovery;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.Xid;
 
-import org.infinispan.context.InvocationContext;
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -19,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class GetInDoubtTransactionsCommand extends RecoveryCommand {
+public class GetInDoubtTransactionsCommand extends BaseRpcCommand {
 
    private static final Log log = LogFactory.getLog(GetInDoubtTransactionsCommand.class);
 
@@ -34,25 +35,21 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
    }
 
    @Override
-   public List<Xid> perform(InvocationContext ctx) throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      RecoveryManager recoveryManager = componentRegistry.getRecoveryManager().running();
       List<Xid> localInDoubtTransactions = recoveryManager.getInDoubtTransactions();
       log.tracef("Returning result %s", localInDoubtTransactions);
-      return localInDoubtTransactions;
+      return CompletableFuture.completedFuture(localInDoubtTransactions);
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      // No parameters
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      // No parameters
    }
 
    @Override

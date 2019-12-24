@@ -47,8 +47,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      super.init(componentRegistry, isRemote);
+   public void init(ComponentRegistry componentRegistry) {
+      super.init(componentRegistry);
       if (f instanceof InjectableComponent)
          ((InjectableComponent) f).inject(componentRegistry);
    }

@@ -17,6 +17,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -57,6 +58,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Inject StateTransferLock stateTransferLock;
    @Inject ResponseGenerator responseGenerator;
    @Inject CancellationService cancellationService;
+   @Inject ComponentRegistry componentRegistry;
    @Inject protected Configuration configuration;
 
    private volatile boolean stopped = false;
@@ -111,10 +113,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
          if (isTraceEnabled()) {
             getLog().tracef("Calling perform() on %s", cmd);
          }
-         if (cmd instanceof CancellableCommand) {
-            cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
-         }
-         CompletableFuture<Object> future = cmd.invokeAsync();
+         CompletableFuture<?> future = cmd.invokeAsync(componentRegistry).toCompletableFuture();
          if (CompletionStages.isCompletedSuccessfully(future)) {
             Object obj = future.join();
             if (cmd instanceof CancellableCommand) {

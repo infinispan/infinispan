@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -24,16 +23,12 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * <p>
  * This command returns a Boolean that is whether this command was able to touch the value or not.
  */
-public class TouchCommand extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class TouchCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 66;
 
    private Object key;
    private int segment;
    private int topologyId = -1;
-
-   private InternalDataContainer internalDataContainer;
-   private TimeService timeService;
-   private DistributionManager distributionManager;
 
    // Only here for CommandIdUniquenessTest
    private TouchCommand() { super(null); }
@@ -70,15 +65,6 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
       segment = UnsignedNumeric.readUnsignedInt(input);
    }
 
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      internalDataContainer = componentRegistry.getInternalDataContainer().running();
-      timeService = componentRegistry.getTimeService();
-      // Invalidation cache doesn't set topology id - so we don't want to throw OTE in invokeAsync
-      if (!componentRegistry.getConfiguration().clustering().cacheMode().isInvalidation()) {
-         distributionManager = componentRegistry.getDistributionManager();
-      }
-   }
 
    @Override
    public int getTopologyId() {
@@ -90,11 +76,13 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
       this.topologyId = topologyId;
    }
 
-   public CompletableFuture<Object> invokeAsync(long currentTimeMilli) {
+   public CompletionStage<Object> invokeAsync(ComponentRegistry componentRegistry, long currentTimeMilli) {
+      DistributionManager distributionManager = componentRegistry.getDistributionManager();
+      InternalDataContainer internalDataContainer = componentRegistry.getInternalDataContainer().running();
       boolean touched = internalDataContainer.touch(segment, key, currentTimeMilli);
       // Hibernate currently disables clustered expiration manager, which means we can have a topology id of -1
-      // when using a clustered cache mode
-      if (distributionManager != null && topologyId != -1) {
+      // when using a clustered cache mode. Invalidation mode will also result in a topology id of -1.
+      if (topologyId != -1) {
          LocalizedCacheTopology lct = distributionManager.getCacheTopology();
          int currentTopologyId = lct.getTopologyId();
          if (currentTopologyId != topologyId) {
@@ -112,7 +100,7 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() {
-      return invokeAsync(timeService.wallClockTime());
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      return invokeAsync(componentRegistry, componentRegistry.getTimeService().wallClockTime());
    }
 }

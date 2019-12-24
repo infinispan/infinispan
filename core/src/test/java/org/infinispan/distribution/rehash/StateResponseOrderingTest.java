@@ -118,7 +118,6 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), true, false);
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
-      TestingUtil.extractCommandsFactory(cache(0)).initializeReplicableCommand(stateResponseCommand, true);
       handler.handle(stateResponseCommand, Reply.NO_OP, DeliverOrder.PER_SENDER);
 
       sequencer.exit("st:simulate_old_response");

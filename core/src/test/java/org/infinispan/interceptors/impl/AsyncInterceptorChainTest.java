@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -10,11 +12,10 @@ import java.util.concurrent.Future;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.impl.BasicComponentRegistryImpl;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.manager.TestModuleRepository;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,9 +35,7 @@ public class AsyncInterceptorChainTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncInterceptorChainTest.class);
 
    public void testConcurrentAddRemove() throws Exception {
-      BasicComponentRegistryImpl basicComponentRegistry =
-         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), false, null);
-      AsyncInterceptorChainImpl ic = new AsyncInterceptorChainImpl(basicComponentRegistry);
+      AsyncInterceptorChainImpl ic = new AsyncInterceptorChainImpl(mock(ComponentRegistry.class));
       ic.addInterceptor(new DummyCallInterceptor(), 0);
       ic.addInterceptor(new DummyActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);

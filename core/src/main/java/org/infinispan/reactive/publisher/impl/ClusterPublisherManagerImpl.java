@@ -40,6 +40,7 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -96,6 +97,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    @Inject CommandsFactory commandsFactory;
    @Inject KeyPartitioner keyPartitioner;
    @Inject Configuration cacheConfiguration;
+   @Inject ComponentRegistry componentRegistry;
 
    // Make sure we don't create one per invocation
    private final KeyComposedType KEY_COMPOSED = new KeyComposedType<>();
@@ -1022,7 +1024,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          // This means the target is local - so skip calling the rpcManager
          if (local) {
             try {
-               return (CompletableFuture) cmd.invokeAsync();
+               return (CompletableFuture) cmd.invokeAsync(componentRegistry);
             } catch (Throwable throwable) {
                return CompletableFutures.completedExceptionFuture(throwable);
             }

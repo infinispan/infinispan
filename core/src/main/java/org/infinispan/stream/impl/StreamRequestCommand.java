@@ -5,9 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -22,10 +21,9 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  * @param <K> the key type
  */
-public class StreamRequestCommand<K> extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 47;
 
-   private LocalStreamManager lsm;
    private Object id;
    private Type type;
    private boolean parallelStream;
@@ -84,12 +82,8 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Initializ
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.lsm = componentRegistry.getLocalStreamManager().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      LocalStreamManager lsm = componentRegistry.getLocalStreamManager().running();
       switch (type) {
          case TERMINAL:
             lsm.streamOperation(id, getOrigin(), parallelStream, segments, keys, excludedKeys, includeLoader,

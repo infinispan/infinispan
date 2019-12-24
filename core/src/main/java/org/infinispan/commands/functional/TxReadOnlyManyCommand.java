@@ -34,8 +34,8 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      super.init(componentRegistry, isRemote);
+   public void init(ComponentRegistry componentRegistry) {
+      super.init(componentRegistry);
       if (mutations != null) {
          for (List<Mutation<K, V, ?>> list : mutations) {
             for (Mutation<K, V, ?> m : list) {

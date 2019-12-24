@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
@@ -22,14 +21,11 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class XSiteStateTransferControlCommand extends XSiteReplicateCommand implements InitializableCommand {
+public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
 
    public static final int COMMAND_ID = 28;
 
    private StateTransferControl control;
-   private XSiteStateProvider provider;
-   private XSiteStateConsumer consumer;
-   private XSiteStateTransferManager stateTransferManager;
    private String siteName;
    private boolean statusOk;
    private int topologyId;
@@ -55,14 +51,10 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand impl
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.stateTransferManager = componentRegistry.getXSiteStateTransferManager().running();
-      this.provider = stateTransferManager.getStateProvider();
-      this.consumer = stateTransferManager.getStateConsumer();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      XSiteStateTransferManager stateTransferManager = componentRegistry.getXSiteStateTransferManager().running();
+      XSiteStateProvider provider = stateTransferManager.getStateProvider();
+      XSiteStateConsumer consumer = stateTransferManager.getStateConsumer();
       switch (control) {
          case START_SEND:
             provider.startStateTransfer(siteName, getOrigin(), topologyId);
@@ -180,9 +172,6 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand impl
       //cache name is final. we need to copy the command.
       XSiteStateTransferControlCommand copy = new XSiteStateTransferControlCommand(cacheName);
       copy.control = this.control;
-      copy.provider = this.provider;
-      copy.consumer = this.consumer;
-      copy.stateTransferManager = this.stateTransferManager;
       copy.siteName = this.siteName;
       copy.statusOk = this.statusOk;
       copy.topologyId = this.topologyId;

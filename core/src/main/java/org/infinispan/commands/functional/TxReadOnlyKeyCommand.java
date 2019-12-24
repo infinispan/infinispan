@@ -45,8 +45,8 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      super.init(componentRegistry, isRemote);
+   public void init(ComponentRegistry componentRegistry) {
+      super.init(componentRegistry);
       // This may be called from parent's constructor when mutations are not initialized yet
       if (mutations != null) {
          for (Mutation<?, ?, ?> m : mutations) {

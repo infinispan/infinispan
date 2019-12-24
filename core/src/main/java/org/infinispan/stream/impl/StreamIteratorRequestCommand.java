@@ -6,9 +6,11 @@ import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.ByteString;
@@ -50,7 +52,8 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      LocalStreamManager lsm = componentRegistry.getLocalStreamManager().running();
       return CompletableFuture.completedFuture(lsm.startIterator(id, getOrigin(), segments, keys, excludedKeys,
             includeLoader, entryStream, intOps, batchSize));
    }

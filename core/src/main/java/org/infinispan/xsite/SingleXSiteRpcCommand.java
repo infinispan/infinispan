@@ -3,10 +3,10 @@ package org.infinispan.xsite;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 
 /**
@@ -39,8 +39,8 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      return command.invokeAsync();
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      throw new UnsupportedOperationException();
    }
 
    @Override

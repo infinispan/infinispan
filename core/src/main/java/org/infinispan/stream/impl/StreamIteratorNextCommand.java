@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -15,10 +15,8 @@ import org.infinispan.util.ByteString;
 /**
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  */
-public class StreamIteratorNextCommand extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
+public class StreamIteratorNextCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 71;
-
-   protected LocalStreamManager lsm;
 
    protected Object id;
    protected long batchSize;
@@ -52,12 +50,8 @@ public class StreamIteratorNextCommand extends BaseRpcCommand implements Initial
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.lsm = componentRegistry.getLocalStreamManager().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      LocalStreamManager lsm = componentRegistry.getLocalStreamManager().running();
       return CompletableFuture.completedFuture(lsm.continueIterator(id, batchSize));
    }
 

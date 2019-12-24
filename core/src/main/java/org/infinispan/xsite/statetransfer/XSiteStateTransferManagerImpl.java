@@ -26,11 +26,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -69,6 +69,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
+   @Inject ComponentRegistry componentRegistry;
    @Inject RpcManager rpcManager;
    @Inject Configuration configuration;
    @Inject CommandsFactory commandsFactory;
@@ -184,7 +185,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public Map<String, String> getClusterStatus() {
-      CacheRpcCommand command = commandsFactory.buildXSiteStateTransferControlCommand(STATUS_REQUEST, null);
+      XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(STATUS_REQUEST, null);
       Map<String, String> result = new HashMap<>();
 
       for (Response response : invokeRemotelyInLocalSite(command).values()) {
@@ -378,13 +379,12 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       return null;
    }
 
-   private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) {
-      commandsFactory.initializeReplicableCommand(command, false);
+   private Map<Address, Response> invokeRemotelyInLocalSite(XSiteStateTransferControlCommand command) {
       CompletionStage<Map<Address, Response>> remoteFuture = rpcManager.invokeCommandOnAll(
             command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       Response localResponse;
       try {
-         localResponse = LocalInvocation.newInstance(responseGenerator, command, commandsFactory, rpcManager.getAddress()).call();
+         localResponse = LocalInvocation.newInstance(componentRegistry, command).call();
       } catch (Exception e) {
          localResponse = new ExceptionResponse(e);
       }

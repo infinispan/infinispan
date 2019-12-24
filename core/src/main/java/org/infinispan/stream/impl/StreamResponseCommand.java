@@ -3,9 +3,8 @@ package org.infinispan.stream.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -19,10 +18,8 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * Stream response command used to handle returning intermediate or final responses from the remote node
  * @param <R> the response type
  */
-public class StreamResponseCommand<R> extends BaseRpcCommand implements InitializableCommand {
+public class StreamResponseCommand<R> extends BaseRpcCommand {
    public static final byte COMMAND_ID = 48;
-
-   protected ClusterStreamManager csm;
 
    protected Object id;
    protected boolean complete;
@@ -50,12 +47,8 @@ public class StreamResponseCommand<R> extends BaseRpcCommand implements Initiali
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.csm = componentRegistry.getClusterStreamManager().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      ClusterStreamManager csm = componentRegistry.getClusterStreamManager().running();
       csm.receiveResponse(id, getOrigin(), complete, missedSegments, response);
       return CompletableFutures.completedNull();
    }

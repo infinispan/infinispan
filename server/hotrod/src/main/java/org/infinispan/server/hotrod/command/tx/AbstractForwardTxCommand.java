@@ -4,11 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 
 /**
@@ -17,11 +14,10 @@ import org.infinispan.util.ByteString;
  * @author Ryan Emerson
  * @since 10.0
  */
-abstract class AbstractForwardTxCommand extends BaseRpcCommand implements InitializableCommand {
+abstract class AbstractForwardTxCommand extends BaseRpcCommand {
 
    protected XidImpl xid;
    protected long timeout;
-   protected AdvancedCache cache;
 
    AbstractForwardTxCommand(ByteString cacheName) {
       super(cacheName);
@@ -31,11 +27,6 @@ abstract class AbstractForwardTxCommand extends BaseRpcCommand implements Initia
       super(cacheName);
       this.xid = xid;
       this.timeout = timeout;
-   }
-
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.cache = componentRegistry.getCache().wired();
    }
 
    @Override

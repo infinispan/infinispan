@@ -1,7 +1,6 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.impl.FlagBitSets;
@@ -10,7 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
-public abstract class AbstractWriteManyCommand<K, V> implements InitializableCommand, WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
+public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
 
    CommandInvocationId commandInvocationId;
    boolean isForwarded = false;
@@ -44,7 +43,7 @@ public abstract class AbstractWriteManyCommand<K, V> implements InitializableCom
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+   public void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
    }

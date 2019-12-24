@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -18,7 +17,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 
-public class ComputeCommand extends AbstractDataWriteCommand implements InitializableCommand, MetadataAwareCommand {
+public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
    public static final int COMMAND_ID = 68;
 
@@ -52,7 +51,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Initiali
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
+   public void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(remappingBiFunction);
    }
 

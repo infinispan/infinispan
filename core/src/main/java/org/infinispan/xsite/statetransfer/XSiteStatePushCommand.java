@@ -3,10 +3,8 @@ package org.infinispan.xsite.statetransfer;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
@@ -20,12 +18,11 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class XSiteStatePushCommand extends XSiteReplicateCommand implements InitializableCommand {
+public class XSiteStatePushCommand extends XSiteReplicateCommand {
 
    public static final byte COMMAND_ID = 33;
    private XSiteState[] chunk;
    private long timeoutMillis;
-   private XSiteStateConsumer consumer;
 
    public XSiteStatePushCommand(ByteString cacheName, XSiteState[] chunk, long timeoutMillis) {
       super(cacheName);
@@ -47,11 +44,6 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand implements Init
       super(null);
    }
 
-   @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.consumer = componentRegistry.getXSiteStateTransferManager().running().getStateConsumer();
-   }
-
    public XSiteState[] getChunk() {
       return chunk;
    }
@@ -61,8 +53,9 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand implements Init
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      consumer.applyState(chunk);
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      XSiteStateConsumer stateConsumer = componentRegistry.getXSiteStateTransferManager().running().getStateConsumer();
+      stateConsumer.applyState(chunk);
       return CompletableFutures.completedNull();
    }
 

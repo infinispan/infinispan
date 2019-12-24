@@ -8,10 +8,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -31,7 +32,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 @Scope(Scopes.NONE)
-public class CacheTopologyControlCommand implements ReplicableCommand {
+public class CacheTopologyControlCommand implements GlobalRpcCommand {
 
    public enum Type {
       // Member to coordinator:
@@ -156,8 +157,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      return doPerform().thenApply(v -> (Object) SuccessfulResponse.create(v))
+   public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
+      return doPerform().thenApply(SuccessfulResponse::create)
                         .toCompletableFuture();
    }
 

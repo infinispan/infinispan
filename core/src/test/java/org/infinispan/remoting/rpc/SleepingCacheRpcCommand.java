@@ -3,10 +3,12 @@ package org.infinispan.remoting.rpc;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * @author Pedro Ruivo
@@ -31,9 +33,9 @@ public class SleepingCacheRpcCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
       Thread.sleep(sleepTime);
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override

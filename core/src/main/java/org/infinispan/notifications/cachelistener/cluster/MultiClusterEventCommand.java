@@ -8,10 +8,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
@@ -27,15 +25,13 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 10.0
  */
-public class MultiClusterEventCommand<K, V> extends BaseRpcCommand implements InitializableCommand {
+public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 19;
 
    private static final Log log = LogFactory.getLog(MultiClusterEventCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Cache<K, V> cache;
-   private ClusterCacheNotifier<K, V> clusterCacheNotifier;
    private Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
 
    public MultiClusterEventCommand() {
@@ -52,13 +48,7 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand implements In
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.cache = componentRegistry.getCache().wired();
-      this.clusterCacheNotifier = componentRegistry.getClusterCacheNotifier().running();
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
       if (trace) {
          log.tracef("Received multiple cluster event(s) %s", multiEvents);
       }
@@ -67,11 +57,12 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand implements In
          UUID identifier = event.getKey();
          Collection<ClusterEvent<K, V>> events = event.getValue();
          for (ClusterEvent<K, V> ce : events) {
-            ce.cache = cache;
+            ce.cache = componentRegistry.getCache().wired();
          }
+         ClusterCacheNotifier<K, V> clusterCacheNotifier = componentRegistry.getClusterCacheNotifier().running();
          innerComposed.dependsOn(clusterCacheNotifier.notifyClusterListeners(events, identifier));
       }
-      return (CompletableFuture) innerComposed.freeze().toCompletableFuture();
+      return innerComposed.freeze();
    }
 
    @Override
@@ -89,7 +80,7 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand implements In
       output.writeObject(getOrigin());
       if (multiEvents.size() == 1) {
          output.writeBoolean(true);
-         Entry entry = (Entry) multiEvents.entrySet().iterator().next();
+         Entry entry = multiEvents.entrySet().iterator().next();
          output.writeObject(entry.getKey());
          output.writeObject(entry.getValue());
       } else {

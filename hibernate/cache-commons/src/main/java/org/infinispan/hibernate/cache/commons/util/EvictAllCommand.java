@@ -8,11 +8,13 @@ package org.infinispan.hibernate.cache.commons.util;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Evict all command
@@ -46,13 +48,13 @@ public class EvictAllCommand extends BaseRpcCommand {
 	}
 
 	@Override
-	public Object perform(InvocationContext ctx) throws Throwable {
+	public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
 		// When a node is joining the cluster, it may receive an EvictAllCommand before the regions
 		// are started up. It's safe to ignore such invalidation at this point since no data got in.
 		if (region != null) {
 			region.invalidateRegion();
 		}
-		return null;
+		return CompletableFutures.completedNull();
 	}
 
 	@Override

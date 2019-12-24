@@ -20,6 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.marshall.MarshallingException;
@@ -35,7 +36,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
@@ -102,7 +102,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    // This must be invoked before GlobalStateManagerImpl.start
    @Start(priority = 0)
    public void preStart() {
-      helper = new TopologyManagementHelper(gcr.getComponent(BasicComponentRegistry.class));
+      helper = new TopologyManagementHelper(gcr);
       actionSequencer = new ActionSequencer(asyncTransportExecutor, true);
 
       if (globalStateManager != null) {
@@ -291,12 +291,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
          boolean rebalancingEnabled = true;
          // Avoid adding a direct dependency to the ClusterTopologyManager
-         ReplicableCommand command = new CacheTopologyControlCommand(null,
+         GlobalRpcCommand command = new CacheTopologyControlCommand(null,
                                                                      CacheTopologyControlCommand.Type.POLICY_GET_STATUS,
                                                                      transport.getAddress(), transport.getViewId());
          try {
             gcr.wireDependencies(command);
-            SuccessfulResponse response = (SuccessfulResponse) command.invoke();
+            SuccessfulResponse response = (SuccessfulResponse) CompletionStages.join(command.invokeAsync(gcr));
             rebalancingEnabled = (Boolean) response.getResponseValue();
          } catch (Throwable t) {
             log.warn("Failed to obtain the rebalancing status", t);

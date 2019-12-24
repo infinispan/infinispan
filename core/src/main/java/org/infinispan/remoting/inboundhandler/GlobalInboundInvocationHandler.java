@@ -3,15 +3,16 @@ package org.infinispan.remoting.inboundhandler;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -26,6 +27,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
@@ -117,15 +119,11 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          reply.reply(CacheNotFoundResponse.INSTANCE);
          return;
       }
-      initializeCacheRpcCommand(command, cr);
-      PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
-      handler.handle(command, reply, mode);
-   }
-
-   private void initializeCacheRpcCommand(CacheRpcCommand command, ComponentRegistry componentRegistry) {
-      CommandsFactory commandsFactory = componentRegistry.getCommandsFactory();
+      CommandsFactory commandsFactory = cr.getCommandsFactory();
       // initialize this command with components specific to the intended cache instance
       commandsFactory.initializeReplicableCommand(command, true);
+      PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
+      handler.handle(command, reply, mode);
    }
 
    private void handleReplicableCommand(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
@@ -157,9 +155,14 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       public void run() {
          try {
             globalComponentRegistry.wireDependencies(command);
-            CompletableFuture<Object> future = command.invokeAsync().whenComplete(this);
+            CompletionStage<?> stage;
+            if (command instanceof GlobalRpcCommand) {
+               stage = ((GlobalRpcCommand) command).invokeAsync(globalComponentRegistry).whenComplete(this);
+            } else {
+               stage = command.invokeAsync().whenComplete(this);
+            }
             if (preserveOrder) {
-               future.join();
+               CompletionStages.join(stage);
             }
          } catch (Throwable throwable) {
             accept(null, throwable);

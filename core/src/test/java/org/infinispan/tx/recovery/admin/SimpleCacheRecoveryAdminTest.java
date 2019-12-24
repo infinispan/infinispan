@@ -151,7 +151,8 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
    protected void checkProperlyCleanup(final int managerIndex) {
       eventually(() -> TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld() == 0);
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex, "test"), TransactionTable.class);
-      eventually(() -> (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0));
+      eventuallyEquals(0, tt::getRemoteTxCount);
+      eventuallyEquals(0, tt::getLocalTxCount);
       final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex, "test"), RecoveryManager.class);
       eventually(() -> rm.getInDoubtTransactions().size() == 0);
       eventually(() -> rm.getPreparedTransactionsFromCluster().all().length == 0);

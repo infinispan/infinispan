@@ -3,18 +3,18 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.InitializableCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
-public class RenewBiasCommand extends BaseRpcCommand implements InitializableCommand {
+public class RenewBiasCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 75;
 
    Object[] keys;
-   transient BiasManager biasManager;
 
    public RenewBiasCommand() {
       super(null);
@@ -30,16 +30,12 @@ public class RenewBiasCommand extends BaseRpcCommand implements InitializableCom
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry, boolean isRemote) {
-      this.biasManager = componentRegistry.getBiasManager().running();
-   }
-
-   @Override
-   public Object invoke() throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      BiasManager biasManager = componentRegistry.getBiasManager().running();
       for (Object key : keys) {
          biasManager.renewRemoteBias(key, getOrigin());
       }
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override
