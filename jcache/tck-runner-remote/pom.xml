@@ -9,24 +9,15 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-jcache-tck-runner</artifactId>
+   <artifactId>infinispan-jcache-tck-runner-remote</artifactId>
    <packaging>jar</packaging>
    <name>Infinispan JCACHE (JSR-107) TCK Runner</name>
    <description>JCACHE (JSR-107) TCK runner for Infinispan implementations</description>
 
    <properties>
-      <domain-lib-dir>${project.build.directory}/domainlib</domain-lib-dir>
-      <domain-jar>domain.jar</domain-jar>
       <tck.mbean.builder>org.infinispan.jcache.tck.TckMbeanServerBuilder</tck.mbean.builder>
       <tck.mbean.server>TckMbeanServer</tck.mbean.server>
 
-      <!-- TODO: do they need to be different? -->
-      <embedded.CacheManagerImpl>org.infinispan.jcache.embedded.JCacheManager</embedded.CacheManagerImpl>
-      <embedded.CacheImpl>org.infinispan.jcache.embedded.JCache</embedded.CacheImpl>
-      <embedded.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</embedded.CacheEntryImpl>
-      <embedded.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</embedded.CacheInvocationContextImpl>
-
-      <remote.CacheManagerImpl>org.infinispan.jcache.remote.JCacheManager</remote.CacheManagerImpl>
       <remote.CacheImpl>org.infinispan.jcache.remote.JCache</remote.CacheImpl>
       <remote.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</remote.CacheEntryImpl>
       <remote.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</remote.CacheInvocationContextImpl>
@@ -44,21 +35,12 @@
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
       <serverMemoryJvmArgs>-Xmx500m ${testjvm.commonArgs}</serverMemoryJvmArgs>
 
-      <failsafe.reportdir.embedded>${project.build.directory}/failsafe-reports-embedded</failsafe.reportdir.embedded>
-      <failsafe.reportdir.remote>${project.build.directory}/failsafe-reports-remote</failsafe.reportdir.remote>
-      <failsafe.summary.embedded>${failsafe.reportdir.embedded}/failsafe-summary.xml</failsafe.summary.embedded>
-      <failsafe.summary.remote>${failsafe.reportdir.remote}/failsafe-summary.xml</failsafe.summary.remote>
-
+      <!-- TODO Remove? -->
       <transport.stack>-Dinfinispan.cluster.stack=${infinispan.cluster.stack}</transport.stack>
       <jvm.x64.args />
    </properties>
 
    <dependencies>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jcache</artifactId>
-         <scope>test</scope>
-      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jcache-remote</artifactId>
@@ -68,7 +50,12 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jcache-commons</artifactId>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jcache-commons</artifactId>
          <type>test-jar</type>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -78,11 +65,6 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons-test</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -107,11 +89,12 @@
          <classifier>tests</classifier>
          <scope>test</scope>
       </dependency>
-      <dependency>
-         <groupId>javax.cache</groupId>
-         <artifactId>cdi-weld-annotations-test-harness</artifactId>
-         <scope>test</scope>
-      </dependency>
+      <!-- jcache-remote does not support method interception annotations yet, skip the interception tests -->
+<!--      <dependency>-->
+<!--         <groupId>javax.cache</groupId>-->
+<!--         <artifactId>cdi-weld-annotations-test-harness</artifactId>-->
+<!--         <scope>test</scope>-->
+<!--      </dependency>-->
    </dependencies>
 
    <build>
@@ -184,6 +167,7 @@
             </executions>
          </plugin>
 
+         <!-- TODO Remove? -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
@@ -214,19 +198,22 @@
 
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
+            <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
                <execution>
-                  <id>default-test</id>
-                  <phase>none</phase>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
                </execution>
             </executions>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
+               <dependenciesToScan>
+                  <!-- TCK tests -->
+                  <dependency>javax.cache:cache-tests</dependency>
+               </dependenciesToScan>
+               <disableXmlReport>false</disableXmlReport>
+               <!-- TODO  Remove? -->
                <includes>
                   <include>**/Test*.java</include>
                   <include>**/*Test.java</include>
@@ -234,7 +221,12 @@
                </includes>
                <disableXmlReport>false</disableXmlReport>
                <systemPropertyVariables>
-                  <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+                  <ExcludeList>ExcludeList_remote</ExcludeList>
+                  <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
+                  <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
+                  <jgroups.join_timeout>2000</jgroups.join_timeout>
+                  <infinispan.module-suffix>-${project.artifactId}-remote</infinispan.module-suffix>
+
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
@@ -247,86 +239,6 @@
                   <listener>${junitListener}</listener>
                </properties>
             </configuration>
-            <executions>
-               <execution>
-                  <id>tck-embedded</id>
-                  <phase>integration-test</phase>
-                  <goals>
-                     <goal>integration-test</goal>
-                  </goals>
-                  <configuration>
-                     <summaryFile>${failsafe.summary.embedded}</summaryFile>
-                     <reportsDirectory>${failsafe.reportdir.embedded}</reportsDirectory>
-                     <dependenciesToScan>
-                        <!-- TCK tests -->
-                        <dependency>javax.cache:cache-tests</dependency>
-                     </dependenciesToScan>
-                     <classpathDependencyExcludes>
-                        <classpathDependencyExcludes>${project.groupId}:infinispan-jcache-remote</classpathDependencyExcludes>
-                     </classpathDependencyExcludes>
-                     <disableXmlReport>false</disableXmlReport>
-                     <systemPropertyVariables>
-                        <ExcludeList>ExcludeList_embedded</ExcludeList>
-                        <javax.cache.Cache>${embedded.CacheImpl}</javax.cache.Cache>
-                        <javax.cache.Cache.Entry>${embedded.CacheEntryImpl}</javax.cache.Cache.Entry>
-                        <jgroups.join_timeout>2000</jgroups.join_timeout>
-                     </systemPropertyVariables>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>verify-tck-embedded</id>
-                  <phase>verify</phase>
-                  <goals>
-                     <goal>verify</goal>
-                  </goals>
-                  <configuration>
-                     <summaryFile>${failsafe.summary.embedded}</summaryFile>
-                     <reportsDirectory>${failsafe.reportdir.embedded}</reportsDirectory>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>tck-remote</id>
-                  <phase>integration-test</phase>
-                  <goals>
-                     <goal>integration-test</goal>
-                  </goals>
-                  <configuration>
-                     <summaryFile>${failsafe.summary.remote}</summaryFile>
-                     <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
-                     <dependenciesToScan>
-                        <!-- TCK tests -->
-                        <dependency>javax.cache:cache-tests</dependency>
-                     </dependenciesToScan>
-                     <additionalClasspathElements>
-                        <classpathElement>${project.build.testOutputDirectory}/hotrod-client.properties</classpathElement>
-                     </additionalClasspathElements>
-                     <classpathDependencyExcludes>
-                        <!-- Don't include the embedded JCache implementation -->
-                        <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
-                        <classpathDependencyExcludes>org.jboss.weld:weld-core</classpathDependencyExcludes>
-                        <classpathDependencyExcludes>org.jboss.weld.se:weld-se-core</classpathDependencyExcludes>
-                     </classpathDependencyExcludes>
-                     <disableXmlReport>false</disableXmlReport>
-                     <systemPropertyVariables>
-                        <ExcludeList>ExcludeList_remote</ExcludeList>
-                        <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
-                        <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
-                        <jgroups.join_timeout>2000</jgroups.join_timeout>
-                     </systemPropertyVariables>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>verify-tck-remote</id>
-                  <phase>verify</phase>
-                  <goals>
-                     <goal>verify</goal>
-                  </goals>
-                  <configuration>
-                     <summaryFile>${failsafe.summary.remote}</summaryFile>
-                     <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
-                  </configuration>
-               </execution>
-            </executions>
             <dependencies>
                <dependency>
                   <groupId>org.apache.maven.surefire</groupId>
@@ -335,7 +247,6 @@
                </dependency>
             </dependencies>
          </plugin>
-
       </plugins>
    </build>
 
@@ -352,7 +263,6 @@
                         <exclude>**/interceptor/*Test.java</exclude>
                      </excludes>
                      <systemPropertyVariables>
-                        <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
                         <jgroups.join_timeout>2000</jgroups.join_timeout>
                      </systemPropertyVariables>
                   </configuration>
@@ -383,27 +293,6 @@
          <properties>
             <skipTests>true</skipTests>
          </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>default-test</id>
-                        <phase>none</phase>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-failsafe-plugin</artifactId>
-                  <configuration>
-                     <skipITs>${skipTests}</skipITs>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
       <profile>
          <id>java8-test</id>
