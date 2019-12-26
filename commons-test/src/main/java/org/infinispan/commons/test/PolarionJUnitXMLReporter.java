@@ -296,22 +296,37 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                   res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class).invocationCount())
                   .append(" times");
          }
-         // JCache tests are a special case
-         if (getModuleSuffix().contains("jcache")) {
-            if (result.indexOf("(") == -1) {
-               result.append("(");
-            } else {
-               result.append(", ");
-            }
-            if (getModuleSuffix().contains("infinispan-jcache-remote")) {
+      }
+      // JCache tests are a special case
+      String moduleSuffix = getModuleSuffix();
+      if (moduleSuffix.contains("jcache") || moduleSuffix.contains("hibernate")) {
+         if (result.indexOf("(") == -1) {
+            result.append("(");
+         } else {
+            result.append(", ");
+         }
+
+         // module
+         if (moduleSuffix.contains("jcache")) {
+            if (moduleSuffix.contains("infinispan-jcache-remote")) {
                result.append("remote");
             } else {
                result.append("embedded");
             }
+         } else if (moduleSuffix.contains("hibernate")) {
+            if (moduleSuffix.endsWith("v51")) {
+               result.append("hibernate-51");
+            } else if (moduleSuffix.endsWith("v53")) {
+               result.append("hibernate-53");
+            } else {
+               throw new IllegalStateException("Cannot parse the hibernate submodule: " + moduleSuffix);
+            }
          }
-         if (result.indexOf("(") != -1) {
-            result.append(")");
-         }
+
+      }
+      // end
+      if (result.indexOf("(") != -1) {
+         result.append(")");
       }
       return result.toString();
    }
