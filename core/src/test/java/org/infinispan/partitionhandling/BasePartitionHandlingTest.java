@@ -52,6 +52,7 @@ import org.jgroups.protocols.pbcast.STABLE;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.MutableDigest;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.BasePartitionHandlingTest")
@@ -83,6 +84,15 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc,
                             new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
+   }
+
+   @AfterMethod(alwaysRun = true)
+   public void enableDiscovery() {
+      for (EmbeddedCacheManager manager : managers()) {
+         if (manager.getStatus().allowInvocations()) {
+            enableDiscoveryProtocol(channel(manager));
+         }
+      }
    }
 
    protected SerializationContextInitializer serializationContextInitializer() {
@@ -452,7 +462,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
 
    protected void splitCluster(PartitionDescriptor... partitions) {
-      splitCluster(Arrays.stream(partitions).map(p -> p.getNodes()).toArray(int[][]::new));
+      splitCluster(Arrays.stream(partitions).map(PartitionDescriptor::getNodes).toArray(int[][]::new));
    }
 
    protected void splitCluster(int[]... parts) {
