@@ -1,14 +1,19 @@
 package org.infinispan.distribution.rehash;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -97,20 +102,22 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
    protected void doTest(final TestWriteOperation op) throws Exception {
       final String key = "testkey";
-      final String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
+      final String cacheName = getDefaultCacheName();
       if (op.getPreviousValue() != null) {
          cache(0, cacheName).put(key, op.getPreviousValue());
       }
 
       CheckPoint checkPoint = new CheckPoint();
-      LocalTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
+      LocalTopologyManager ltm0 = extractGlobalComponent(manager(0), LocalTopologyManager.class);
       int preJoinTopologyId = ltm0.getCacheTopology(cacheName).getTopologyId();
+      int joinTopologyId = preJoinTopologyId + 1;
+      int stateReceivedTopologyId = joinTopologyId + 1;
 
       final AdvancedCache<Object, Object> cache0 = advancedCache(0);
-      addBlockingLocalTopologyManager(manager(0), checkPoint, preJoinTopologyId);
+      addBlockingLocalTopologyManager(manager(0), checkPoint, joinTopologyId, stateReceivedTopologyId);
 
       final AdvancedCache<Object, Object> cache1 = advancedCache(1);
-      addBlockingLocalTopologyManager(manager(1), checkPoint, preJoinTopologyId);
+      addBlockingLocalTopologyManager(manager(1), checkPoint, joinTopologyId, stateReceivedTopologyId);
 
       // Add a new member and block the rebalance before the final topology is installed
       ConfigurationBuilder c = getConfigurationBuilder();
@@ -124,16 +131,15 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
          stateTransferLatch.countDown();
       }
       addClusterEnabledCacheManager(DistributionRehashSCI.INSTANCE, c);
-      addBlockingLocalTopologyManager(manager(2), checkPoint, preJoinTopologyId);
+      addBlockingLocalTopologyManager(manager(2), checkPoint, joinTopologyId, stateReceivedTopologyId);
 
 
       log.tracef("Starting the cache on the joiner");
       final AdvancedCache<Object,Object> cache2 = advancedCache(2);
-      int duringJoinTopologyId = preJoinTopologyId + 1;
 
-      checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(0));
-      checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(1));
-      checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(2));
+      checkPoint.trigger("allow_topology_" + joinTopologyId + "_on_" + address(0));
+      checkPoint.trigger("allow_topology_" + joinTopologyId + "_on_" + address(1));
+      checkPoint.trigger("allow_topology_" + joinTopologyId + "_on_" + address(2));
 
       // Wait for the write CH to contain the joiner everywhere
       eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
@@ -141,7 +147,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
             cache2.getRpcManager().getMembers().size() == 3);
 
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(cacheName);
-      assertEquals(duringJoinTopologyId, duringJoinTopology.getTopologyId());
+      assertEquals(joinTopologyId, duringJoinTopology.getTopologyId());
       assertNotNull(duringJoinTopology.getPendingCH());
       log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s", key,
             duringJoinTopology.getCurrentCH().locateOwners(key), duringJoinTopology.getPendingCH().locateOwners(key));
@@ -152,16 +158,16 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
       // Every operation command will be blocked before reaching the distribution interceptor on cache1
       CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCache1Barrier,
+      BlockingInterceptor<?> blockingInterceptor1 = new BlockingInterceptor<>(beforeCache1Barrier,
             op.getCommandClass(), false, false);
-      cache1.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor1, TriangleDistributionInterceptor.class);
+      extractInterceptorChain(cache1).addInterceptorBefore(blockingInterceptor1, TriangleDistributionInterceptor.class);
 
       // Every operation command will be blocked after returning to the distribution interceptor on cache2
       CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor<>(afterCache2Barrier,
+      BlockingInterceptor<?> blockingInterceptor2 = new BlockingInterceptor<>(afterCache2Barrier,
             op.getCommandClass(), true, false,
             cmd -> !(cmd instanceof FlagAffectedCommand) || !((FlagAffectedCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
-      cache2.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
+      extractInterceptorChain(cache2).addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
       // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
       Future<Object> future = fork(() -> perform(op, cache0, key));
@@ -170,16 +176,13 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       afterCache2Barrier.await(10, TimeUnit.SECONDS);
       afterCache2Barrier.await(10, TimeUnit.SECONDS);
 
-      // Allow the topology updates to proceed on all the caches
-      for (int i = 1; i <= 3; ++i) {
-         int postJoinTopologyId = duringJoinTopologyId + i;
-         checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(0));
-         checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(1));
-         checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(2));
-      }
+      // Allow the READ_ALL_WRITE_ALL PHASE topology update to proceed on all the caches
+      checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(0));
+      checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(1));
+      checkPoint.trigger("allow_topology_" + stateReceivedTopologyId + "_on_" + address(2));
 
       // Wait for the topology to change everywhere
-      TestingUtil.waitForNoRebalance(cache0, cache1, cache2);
+      waitForNoRebalance(cache0, cache1, cache2);
 
       // Allow the put command to throw an OutdatedTopologyException on cache1
       log.tracef("Unblocking the put command on node " + address(1));
@@ -187,8 +190,8 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       beforeCache1Barrier.await(10, TimeUnit.SECONDS);
 
       // Allow the retry to proceed on cache1
-      CacheTopology postJoinTopology = ltm0.getCacheTopology(cacheName);
-      if (postJoinTopology.getCurrentCH().locateOwners(key).contains(address(1))) {
+      CacheTopology postReceiveStateTopology = ltm0.getCacheTopology(cacheName);
+      if (postReceiveStateTopology.getCurrentCH().locateOwners(key).contains(address(1))) {
          beforeCache1Barrier.await(10, TimeUnit.SECONDS);
          beforeCache1Barrier.await(10, TimeUnit.SECONDS);
       }
@@ -237,25 +240,24 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
    }
 
    private void addBlockingLocalTopologyManager(final EmbeddedCacheManager manager, final CheckPoint checkPoint,
-                                                final int currentTopologyId)
-         throws InterruptedException {
-      LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
+                                                final Integer... blockedTopologyIds) {
+      LocalTopologyManager component = extractGlobalComponent(manager, LocalTopologyManager.class);
       LocalTopologyManager spyLtm = spy(component);
       doAnswer(invocation -> {
          CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
          // Ignore the first topology update on the joiner, which is with the topology before the join
-         if (topology.getTopologyId() != currentTopologyId) {
+         if (Arrays.asList(blockedTopologyIds).contains(topology.getTopologyId())) {
             checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
             checkPoint.awaitStrict("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
-                  10, TimeUnit.SECONDS);
+                                   10, TimeUnit.SECONDS);
          }
          return invocation.callRealMethod();
       }).when(spyLtm).handleTopologyUpdate(eq(TestingUtil.getDefaultCacheName(manager)), any(CacheTopology.class),
                                            any(AvailabilityMode.class), anyInt(), any(Address.class));
-      TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLtm, true);
+      replaceComponent(manager, LocalTopologyManager.class, spyLtm, true);
    }
 
-   class StateTransferLatchInterceptor extends DDAsyncInterceptor {
+   static class StateTransferLatchInterceptor extends DDAsyncInterceptor {
       private final CountDownLatch latch;
 
       private StateTransferLatchInterceptor(CountDownLatch latch) {
@@ -265,7 +267,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
-            if (((PutKeyValueCommand) rCommand).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            if (rCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                latch.countDown();
             }
          });

@@ -203,21 +203,6 @@ public class CheckPoint {
       }
    }
 
-   public void triggerAll() {
-      lock.lock();
-      try {
-         released = true;
-         unblockCondition.signalAll();
-         events.values().forEach(status -> {
-            if (status.requests != null) {
-               status.requests.forEach(request -> request.future.complete(null));
-            }
-         });
-      } finally {
-         lock.unlock();
-      }
-   }
-
    @Override
    public String toString() {
       return "CheckPoint" + events;

@@ -448,7 +448,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       evictionCheckPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 
       // Let the put complete
-      operationCheckPoint.triggerAll();
+      operationCheckPoint.trigger(blockOnCompletion ? Mocks.BEFORE_RELEASE : Mocks.AFTER_RELEASE);
 
       // If the block is not on completion, that means that eviction holds the caffeine lock which means it may
       // be preventing the actual operation from completing - thus we free the eviction sooner
@@ -467,12 +467,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       finalResultConsumer.accept(cache.get(key));
    }
 
-   @SuppressWarnings("unchecked")
    protected void initializeKeyAndCheckData(Object key, Object value) {
       assertTrue("A cache store should be configured!", cache.getCacheConfiguration().persistence().usingStores());
       cache.put(key, value);
-      DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
@@ -481,10 +480,9 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       assertEquals("Wrong value for key " + key + " in cache loader.", value, entryLoaded.getValue());
    }
 
-   @SuppressWarnings("unchecked")
    protected void assertInMemory(Object key, Object value) {
-      DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
@@ -493,10 +491,9 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());
    }
 
-   @SuppressWarnings("unchecked")
    protected void assertNotInMemory(Object key, Object value) {
-      DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);

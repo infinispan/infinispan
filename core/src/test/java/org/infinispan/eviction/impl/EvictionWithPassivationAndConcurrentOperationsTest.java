@@ -94,7 +94,8 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
 
       // Let the operation complete, which in turn lets the eviction return, which lets the get return
       // (gets with passivation that hit store have to acquire orderer)
-      operationCheckPoint.triggerAll();
+      operationCheckPoint.trigger(Mocks.BEFORE_RELEASE);
+      operationCheckPoint.trigger(Mocks.AFTER_RELEASE);
       operationFuture.get(10, TimeUnit.SECONDS);
 
       assertNotNull(getFuture.get(10, TimeUnit.SECONDS));
@@ -135,7 +136,7 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       Exceptions.expectException(TimeoutException.class, () -> evictedKeyPutFuture.get(50, TimeUnit.MILLISECONDS));
 
       // Let the eviction finish, which will let the put happen
-      operationCheckPoint.triggerAll();
+      operationCheckPoint.trigger(Mocks.BEFORE_RELEASE);
 
       putFuture.get(10, TimeUnit.SECONDS);
 
@@ -149,13 +150,12 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       assertEquals(1l, TestingUtil.extractComponent(cache, PassivationManager.class).getPassivations());
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    protected void initializeKeyAndCheckData(Object key, Object value) {
       assertTrue("A cache store should be configured!", cache.getCacheConfiguration().persistence().usingStores());
       cache.put(key, value);
-      DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container.", entry);
       assertEquals("Wrong value for key " + key + " in data container.", value, entry.getValue());
@@ -163,22 +163,20 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       assertNull("Key " + key + " exists in cache loader.", entryLoaded);
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    protected void assertInMemory(Object key, Object value) {
-      DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNotNull("Key " + key + " does not exist in data container", entry);
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
       eventually(() -> loader.loadEntry(key) == null);
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    protected void assertNotInMemory(Object key, Object value) {
-      DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      DataContainer<?, ?> container = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry<?, ?> entry = container.get(key);
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
       assertNull("Key " + key + " exists in data container", entry);
       MarshallableEntry<Object, Object> entryLoaded = loader.loadEntry(key);
