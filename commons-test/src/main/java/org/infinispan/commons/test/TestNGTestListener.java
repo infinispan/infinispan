@@ -65,7 +65,14 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    private String testName(ITestResult res) {
       StringBuilder result = new StringBuilder();
-      result.append(res.getInstanceName()).append(".").append(res.getMethod().getMethodName());
+      // We prefer using the instance name, in case it's customized,
+      // but when running JUnit tests, TestNG sets the instance name to `methodName(className)`
+      if (res.getInstanceName().contains(res.getMethod().getMethodName())) {
+         result.append(res.getTestClass().getName());
+      } else {
+         result.append(res.getInstanceName());
+      }
+      result.append(".").append(res.getMethod().getMethodName());
       if (res.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
          String dataProviderName = res.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
                .dataProvider();
