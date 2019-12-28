@@ -40,10 +40,10 @@ import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegion;
+import org.junit.Assume;
 import org.junit.Test;
 
 import org.infinispan.AdvancedCache;
-import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -118,8 +118,10 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
    }
 
 	@Test
-   @Category(TestDisabledIn53.class) // per-key eviction is not supported in 5.3
 	public void testEvict() throws Exception {
+		Assume.assumeFalse("Per-key eviction is not supported in 5.3",
+								 org.hibernate.Version.getVersionString().startsWith("5.3"));
+
 		withSessionFactoriesAndRegions(2, ((sessionFactories, regions) -> {
 			InfinispanBaseRegion localRegion = regions.get(0);
          TestRegion testLocalRegion = TEST_SESSION_ACCESS.fromRegion(localRegion);
