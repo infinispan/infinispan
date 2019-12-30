@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
@@ -72,6 +73,19 @@ public class RestOperations {
       assertEquals(404, response.getStatus());
       assertEquals(protocol, response.getProtocol());
    }
+
+   @Test
+   public void testPutWithTimeToLive() throws InterruptedException {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.protocol(protocol);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      sync(cache.post("k1", "v1", 1, 1));
+      assertEquals(HttpResponseStatus.OK.code(), sync(cache.get("k1")).getStatus());
+      Thread.sleep(2000);
+      assertEquals(HttpResponseStatus.NOT_FOUND.code(), sync(cache.get("k1")).getStatus());
+   }
+
 
    @Test
    public void taskFilter() throws Exception {

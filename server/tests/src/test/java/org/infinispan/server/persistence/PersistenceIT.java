@@ -15,7 +15,9 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
       PooledConnectionOperations.class,
-      ManagedConnectionOperations.class
+      ManagedConnectionOperations.class,
+      JdbcStringBasedCacheStorePassivation.class,
+      AsyncJdbcStringBasedCacheStore.class
 })
 public class PersistenceIT {
 
