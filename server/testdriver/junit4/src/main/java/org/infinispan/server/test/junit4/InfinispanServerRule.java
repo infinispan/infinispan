@@ -78,8 +78,8 @@ public class InfinispanServerRule implements TestRule {
             } finally {
                InfinispanServerRule.this.after(testName);
                if (manageServer && testServer.isDriverInitialized()) {
-                  testServer.afterListeners();
                   testServer.getDriver().stop(testName);
+                  testServer.afterListeners();
                }
                if (!inSuite && !hasXsite) {
                   TestResourceTracker.testFinished(testName);
