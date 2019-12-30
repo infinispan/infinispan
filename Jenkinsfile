@@ -129,8 +129,8 @@ pipeline {
 
         cleanup {
             // Archive logs and dump files
-            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/target/*-reports*/**/TEST-*.xml'
+            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" -o -name "*.hprof" \\) -exec xz -3 {} \\;'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.log.gz,**/*.xz,documentation/target/generated-html/**,**/target/*-reports*/**/TEST-*.xml'
 
             // Remove all untracked files, ignoring .gitignore
             sh 'git clean -qfdx || echo "git clean failed, exit code $?"'
