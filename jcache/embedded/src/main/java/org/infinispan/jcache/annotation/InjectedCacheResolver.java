@@ -23,6 +23,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Injected cache resolver for situations where caches and/or cache managers
@@ -36,6 +38,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  */
 @ApplicationScoped
 public class InjectedCacheResolver implements CacheResolver {
+   private static final Log log = LogFactory.getLog(DefaultCacheResolver.class);
 
    private EmbeddedCacheManager defaultCacheManager;
 
@@ -81,6 +84,7 @@ public class InjectedCacheResolver implements CacheResolver {
 
       // If the cache name is empty the default cache of the default cache manager is returned.
       if (cacheName.trim().isEmpty()) {
+         if (log.isTraceEnabled()) log.tracef("Resolved cache %s on %s", cacheName, defaultJCacheManager.getURI());
          return getCacheFromDefaultCacheManager(cacheName);
       }
 
@@ -95,6 +99,7 @@ public class InjectedCacheResolver implements CacheResolver {
                if (cache != null)
                   return cache;
 
+               if (log.isTraceEnabled()) log.tracef("Resolved cache %s on %s", cacheName, jcacheManager.getURI());
                return jcacheManager.getOrCreateCache(
                      cacheName, cm.<K, V>getCache(cacheName).getAdvancedCache());
             }
