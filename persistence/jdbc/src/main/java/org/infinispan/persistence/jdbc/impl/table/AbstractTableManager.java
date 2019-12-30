@@ -41,8 +41,10 @@ public abstract class AbstractTableManager implements TableManager {
    private final String upsertRowSql;
    private final String selectRowSql;
    private final String selectIdRowSql;
+   private final String selectIdRowSqlWithLike;
    private final String deleteRowSql;
    private final String loadAllRowsSql;
+   private final String countNonExpiredRowsSql;
    private final String countRowsSql;
    private final String loadAllNonExpiredRowsSql;
    private final String deleteAllRows;
@@ -70,9 +72,11 @@ public abstract class AbstractTableManager implements TableManager {
       this.upsertRowSql = initUpsertRowSql();
       this.selectRowSql = initSelectRowSql();
       this.selectIdRowSql = initSelectIdRowSql();
+      this.selectIdRowSqlWithLike = initSelectIdRowSqlWithLike();
       this.deleteRowSql = initDeleteRowSql();
       this.loadAllRowsSql = initLoadAllRowsSql();
-      this.countRowsSql = initCountNonExpiredRowsSql();
+      this.countNonExpiredRowsSql = initCountNonExpiredRowsSql();
+      this.countRowsSql = initCountRowsSql();
       this.loadAllNonExpiredRowsSql = initLoadNonExpiredAllRowsSql();
       this.deleteAllRows = initDeleteAllRowsSql();
       this.selectExpiredRowsSql = initSelectOnlyExpiredRowsSql();
@@ -294,9 +298,18 @@ public abstract class AbstractTableManager implements TableManager {
       return String.format("SELECT %s FROM %s WHERE %s = ?", config.idColumnName(), tableName, config.idColumnName());
    }
 
+   protected String initSelectIdRowSqlWithLike() {
+      return String.format("SELECT %s FROM %s WHERE %s LIKE ?", config.idColumnName(), tableName, config.idColumnName());
+   }
+
    @Override
    public String getSelectIdRowSql() {
       return selectIdRowSql;
+   }
+
+   @Override
+   public String getSelectIdRowSqlWithLike() {
+      return selectIdRowSqlWithLike;
    }
 
    protected String initCountNonExpiredRowsSql() {
@@ -304,8 +317,17 @@ public abstract class AbstractTableManager implements TableManager {
             " WHERE " + config.timestampColumnName() + " < 0 OR " + config.timestampColumnName() + " > ?";
    }
 
+   protected String initCountRowsSql() {
+      return "SELECT COUNT(*) FROM " + tableName;
+   }
+
    @Override
    public String getCountNonExpiredRowsSql() {
+      return countNonExpiredRowsSql;
+   }
+
+   @Override
+   public String getCountRowsSql() {
       return countRowsSql;
    }
 

@@ -13,7 +13,10 @@ import org.junit.runners.Suite;
  **/
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-      PooledConnectionOperations.class
+      PooledConnectionOperations.class,
+      JdbcStringBasedCacheStorePassivationEnabled.class,
+      JdbcStringBasedCacheStorePassivationDisabled.class,
+      AsyncJdbcStringBasedCacheStore.class
 })
 public class PersistenceIT {
 
