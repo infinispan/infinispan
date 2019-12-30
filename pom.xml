@@ -234,7 +234,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
-      <log4j.configurationFile>${infinispan.root}/log4j2.xml</log4j.configurationFile>
+      <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
       <jboss.modules.settings.xml.url>file://${user.home}/.m2/settings.xml</jboss.modules.settings.xml.url>
 
@@ -5371,7 +5371,7 @@
             </file>
          </activation>
          <properties>
-            <infinispan.root>${basedir}/../etc</infinispan.root>
+            <infinispan.root>${basedir}/..</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -5382,7 +5382,7 @@
             </file>
          </activation>
          <properties>
-            <infinispan.root>${basedir}/../../etc</infinispan.root>
+            <infinispan.root>${basedir}/../..</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -5393,7 +5393,7 @@
             </file>
          </activation>
          <properties>
-            <infinispan.root>${basedir}/../../../etc</infinispan.root>
+            <infinispan.root>${basedir}/../../..</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -5404,7 +5404,7 @@
             </file>
          </activation>
          <properties>
-            <infinispan.root>${basedir}/../../../../etc</infinispan.root>
+            <infinispan.root>${basedir}/../../../..</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -5423,7 +5423,7 @@
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <log4j.configurationFile>${infinispan.root}/log4j2-trace.xml</log4j.configurationFile>
+            <log4j.configurationFile>${infinispan.root}/etc/log4j2-trace.xml</log4j.configurationFile>
          </properties>
       </profile>
       <profile>
