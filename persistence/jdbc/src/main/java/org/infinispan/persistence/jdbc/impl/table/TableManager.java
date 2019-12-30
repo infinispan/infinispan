@@ -43,6 +43,10 @@ public interface TableManager {
 
    String getSelectIdRowSql();
 
+   String getSelectIdRowSqlWithLike();
+
+   String getCountRowsSql();
+
    String getCountNonExpiredRowsSql();
 
    String getCountNonExpiredRowsSqlForSegments(int numSegments);

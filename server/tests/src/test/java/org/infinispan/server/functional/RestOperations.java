@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.http.HttpStatus;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
@@ -53,7 +54,7 @@ public class RestOperations {
    }
 
    @Test
-   public void testRestOperations() {
+   public void testRestOperations() throws InterruptedException {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
@@ -72,6 +73,19 @@ public class RestOperations {
       assertEquals(404, response.getStatus());
       assertEquals(protocol, response.getProtocol());
    }
+
+   @Test
+   public void testPutWithTimeToLive() throws InterruptedException {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.protocol(protocol);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      sync(cache.post("k1", "v1", 1, 1));
+      assertEquals(HttpStatus.SC_OK, sync(cache.get("k1")).getStatus());
+      Thread.sleep(2000);
+      assertEquals(HttpStatus.SC_NOT_FOUND, sync(cache.get("k1")).getStatus());
+   }
+
 
    @Test
    public void taskFilter() throws Exception {
