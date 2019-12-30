@@ -10,6 +10,7 @@ import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.GeneratedCacheKey;
 import javax.interceptor.InvocationContext;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -29,7 +30,9 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
 
    public Object cachePut(InvocationContext invocationContext) throws Exception {
       if (getLog().isTraceEnabled()) {
-         getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+         getLog().tracef("Interception of method '%s.%s'",
+                         invocationContext.getMethod().getDeclaringClass().getName(),
+                         invocationContext.getMethod().getName());
       }
 
       final CacheKeyInvocationContext<CachePut> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
@@ -43,7 +46,8 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
       if (!cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
          if (getLog().isTraceEnabled()) {
-            getLog().tracef("Value '%s' cached in cache '%s' with key '%s' before method invocation", valueToCache, cache.getName(), cacheKey);
+            getLog().tracef("Value stored before invocation in cache '%s' with key '%s': '%s'",
+                            cache.getName(), cacheKey, Util.toStr(valueToCache));
          }
       }
 
@@ -52,7 +56,8 @@ public abstract class AbstractCachePutInterceptor implements Serializable {
       if (cachePut.afterInvocation() && valueToCache != null) {
          cache.put(cacheKey, valueToCache);
          if (getLog().isTraceEnabled()) {
-            getLog().tracef("Value '%s' cached in cache '%s' with key '%s' after method invocation", valueToCache, cache.getName(), cacheKey);
+            getLog().tracef("Value stored after invocation in cache '%s' with key '%s': '%s'",
+                            cache.getName(), cacheKey, Util.toStr(valueToCache));
          }
       }
 

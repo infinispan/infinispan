@@ -38,7 +38,9 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
 
    public Object cacheRemoveEntry(InvocationContext invocationContext) throws Exception {
       if (getLog().isTraceEnabled()) {
-         getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+         getLog().tracef("Interception of method '%s.%s'",
+                         invocationContext.getMethod().getDeclaringClass().getName(),
+                         invocationContext.getMethod().getName());
       }
 
       final CacheKeyInvocationContext<CacheRemove> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
@@ -50,7 +52,7 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
       if (!cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);
          if (getLog().isTraceEnabled()) {
-            getLog().tracef("Remove entry with key '%s' in cache '%s' before method invocation", cacheKey, cache.getName());
+            getLog().tracef("Removed before invocation in cache '%s' key '%s'", cache.getName(), cacheKey);
          }
       }
 
@@ -59,7 +61,7 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
       if (cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);
          if (getLog().isTraceEnabled()) {
-            getLog().tracef("Remove entry with key '%s' in cache '%s' after method invocation", cacheKey, cache.getName());
+            getLog().tracef("Removed after invocation in cache '%s' key '%s'", cache.getName(), cacheKey);
          }
       }
 
