@@ -2,8 +2,8 @@ package org.infinispan.jcache.embedded;
 
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +61,8 @@ import org.infinispan.jcache.embedded.logging.Log;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -216,10 +218,26 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private <R> Map<K, R> evalMany(ReadWriteMap<K, V> map, Set<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> function) {
       // ReadWriteMap.evalMany is not that useful since it forces us to transfer keys
-      return keys.stream().map(k -> new SimpleEntry<>(k, map.eval(k, function)))
-            // intermediary list to force all removes to be invoked before waiting for any
-            .collect(Collectors.toList()).stream().filter(e -> e.getValue().join() != null)
-            .collect(Collectors.toMap(SimpleEntry::getKey, e -> e.getValue().join()));
+      List<? extends SimpleEntry<? extends K, CompletableFuture<R>>> list =
+            keys.stream()
+                .map(k -> new SimpleEntry<>(k, map.eval(k, function)))
+                .collect(Collectors.toList());
+
+      // Wait for all the eval operations to finish before checking for exceptions
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      for (SimpleEntry<? extends K, CompletableFuture<R>> e : list) {
+         stage.dependsOn(e.getValue());
+      }
+      CompletionStages.join(stage.freeze());
+
+      Map<K, R> result = new HashMap<>();
+      for (SimpleEntry<? extends K, CompletableFuture<R>> e : list) {
+         R value = e.getValue().join();
+         if (value != null) {
+            result.put(e.getKey(), value);
+         }
+      }
+      return result;
    }
 
    @Override
@@ -304,23 +322,25 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(entryProcessor, "entryProcessor");
       try {
          ReadWriteMap<K, V> rw = configuration.isReadThrough() ? rwMap : rwMapSkipCacheLoad;
+         boolean storeByValue = configuration.isStoreByValue();
          // ReadWriteMap.evalMany is not that useful since it forces us to transfer keys
-         return keys.stream().map(k -> new SimpleEntry<>(k, rw.eval(k, new Invoke<>(entryProcessor, arguments, !configuration.isStoreByValue()))))
-               // intermediary list to force all removes to be invoked before waiting for any
-               .collect(Collectors.toList()).stream().filter(e -> {
-                  try {
-                     return e.getValue().join() != null;
-                  } catch (CompletionException ex) {
-                     return true;
-                  }
-               })
-               .collect(Collectors.toMap(SimpleEntry::getKey, e -> {
-                  try {
-                     return new SuccessEntryProcessorResult(e.getValue().join());
-                  } catch (CompletionException ex) {
-                     return new FailureEntryProcessorResult<>(ex);
-                  }
-               }));
+         // intermediary list to force all removes to be invoked before waiting for any
+         List<? extends SimpleEntry<? extends K, CompletableFuture<T>>> futures =
+               keys.stream()
+                   .map(k -> new SimpleEntry<>(k, rw.eval(k, new Invoke<>(entryProcessor, arguments, !storeByValue))))
+                   .collect(Collectors.toList());
+
+         Map<K, EntryProcessorResult<T>> map = new HashMap<>();
+         for (SimpleEntry<? extends K, CompletableFuture<T>> e : futures) {
+            try {
+               if (e.getValue().join() != null) {
+                  map.put(e.getKey(), new SuccessEntryProcessorResult<>(e.getValue().join()));
+               }
+            } catch (CompletionException ex) {
+               map.put(e.getKey(), new FailureEntryProcessorResult<>(Exceptions.launderException(ex)));
+            }
+         }
+         return map;
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -425,8 +445,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          if (configuration.isWriteThrough()) {
             // Write-through caching expects that a failure persisting one entry
             // does not block the commit of other, already persisted entries
-            inputMap.entrySet().stream().map(e -> rwMap.eval(e.getKey(), e.getValue(), new Put<>()))
-                  .collect(Collectors.toList()).forEach(CompletableFuture::join);
+            AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+            inputMap.entrySet().stream()
+                    .map(e -> rwMap.eval(e.getKey(), e.getValue(), new Put<>()))
+                    .forEach(stage::dependsOn);
+            CompletionStages.join(stage.freeze());
          } else {
             rwMapSkipCacheLoad.evalMany(inputMap, new Put<>()).forEach(nil -> {});
          }
@@ -489,19 +512,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // TODO: What happens with entries only in store but not in memory?
 
       // Delete asynchronously and then wait for removals to complete
-      List<CompletableFuture<V>> futures = new ArrayList<>();
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      cache.keySet().stream()
+           .map(cache::removeAsync)
+           .forEach(stage::dependsOn);
       try {
-         for (final K key : cache.keySet()) {
-            futures.add(cache.removeAsync(key));
-         }
-      } catch (CompletionException e) {
-         throw Exceptions.launderException(e);
-      } catch (org.infinispan.commons.CacheException e) {
-         throw Exceptions.launderException(e);
-      }
-
-      try {
-         CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+         CompletionStages.join(stage.freeze());
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       }
@@ -515,8 +531,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          if (configuration.isWriteThrough()) {
             // Write-through caching expects that a failure persisting one entry
             // does not block the commit of other, already persisted entries
-            keys.stream().map(k -> rwMapSkipCacheLoad.eval(k, Remove.getInstance()))
-                  .collect(Collectors.toList()).forEach(CompletableFuture::join);
+            AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+            keys.stream()
+                .map(k -> rwMapSkipCacheLoad.eval(k, Remove.getInstance()))
+                .forEach(stage::dependsOn);
+            CompletionStages.join(stage.freeze());
          } else {
             rwMapSkipCacheLoad.evalMany(keys, Remove.getInstance()).forEach(b -> {});
          }
