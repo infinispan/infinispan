@@ -10,6 +10,7 @@ import javax.cache.annotation.CacheResult;
 import javax.cache.annotation.GeneratedCacheKey;
 import javax.interceptor.InvocationContext;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -47,7 +48,9 @@ public abstract class AbstractCacheResultInterceptor implements Serializable {
 
    public Object cacheResult(InvocationContext invocationContext) throws Exception {
       if (getLog().isTraceEnabled()) {
-         getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
+         getLog().tracef("Interception of method '%s.%s'",
+                         invocationContext.getMethod().getDeclaringClass().getName(),
+                         invocationContext.getMethod().getName());
       }
 
       final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
@@ -61,7 +64,8 @@ public abstract class AbstractCacheResultInterceptor implements Serializable {
       if (!cacheResult.skipGet()) {
          result = cache.get(cacheKey);
          if (trace) {
-            getLog().tracef("Entry with value '%s' has been found in cache '%s' with key '%s'", result, cache.getName(), cacheKey);
+            getLog().tracef("Found in cache '%s' key '%s' with value '%s'",
+                            cache.getName(), cacheKey, Util.toStr(result));
          }
       }
 
@@ -70,7 +74,8 @@ public abstract class AbstractCacheResultInterceptor implements Serializable {
          if (result != null) {
             cache.put(cacheKey, result);
             if (trace) {
-               getLog().tracef("Value '%s' cached in cache '%s' with key '%s'", result, cache.getName(), cacheKey);
+               getLog().tracef("Cached return value in cache '%s' with key '%s': '%s'",
+                                  cache.getName(), cacheKey, Util.toStr(result));
             }
          }
       }

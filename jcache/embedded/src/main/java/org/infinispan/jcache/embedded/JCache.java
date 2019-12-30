@@ -352,7 +352,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public Iterator<Cache.Entry<K, V>> iterator() {
       if (isClosed()) {
-         throw log.cacheClosed(cache.getStatus());
+         throw log.cacheClosed(cache.getName(), getCacheManager().getURI(), cache.getStatus());
       }
       // TODO
       return new Itr();
@@ -505,7 +505,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void removeAll() {
       if (isClosed()) {
-         throw log.cacheClosed(cache.getStatus());
+         throw log.cacheClosed(cache.getName(), getCacheManager().getURI(), cache.getStatus());
       }
       // Calling cache.clear() won't work since there's currently no way to
       // for an Infinispan cache store to figure out all keys store and pass
@@ -608,7 +608,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    protected AbstractJCache<K, V> checkNotClosed() {
       if (isClosed()) {
-         throw log.cacheClosed(cache.getStatus());
+         throw log.cacheClosed(cache.getName(), getCacheManager().getURI(), cache.getStatus());
       }
 
       return this;

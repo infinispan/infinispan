@@ -130,7 +130,7 @@ public class JCacheManager extends AbstractJCacheManager {
 
    @Override
    protected void delegateLogIsClosed() {
-      throw log.cacheManagerClosed(cm.getStatus());
+      throw log.cacheManagerClosed(getURI(), cm.getStatus());
    }
 
    @Override
