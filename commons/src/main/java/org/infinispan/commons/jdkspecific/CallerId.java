@@ -18,6 +18,7 @@ public class CallerId {
       hasGetCallerClass = result;
       callerOffset = offset;
       if (!hasGetCallerClass) {
+
          SECURITY_MANAGER = new LocalSecurityManager();
       } else {
          SECURITY_MANAGER = null;
