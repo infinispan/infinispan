@@ -46,7 +46,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -160,23 +159,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) {
       return visitManyDataCommand(ctx, command, command.getKeys());
-   }
-
-   @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
-      Object[] keys;
-      CompletionStage<Void> aggregatedStage = null;
-      if ((keys = command.getKeys()) != null && keys.length > 0) {
-         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         for (Object key : keys) {
-            CompletionStage<Void> stage = loadIfNeeded(ctx, key, command);
-            if (stage != null) {
-               aggregateCompletionStage.dependsOn(stage);
-            }
-         }
-         aggregatedStage = aggregateCompletionStage.freeze();
-      }
-      return asyncInvokeNext(ctx, command, aggregatedStage);
    }
 
    @Override
