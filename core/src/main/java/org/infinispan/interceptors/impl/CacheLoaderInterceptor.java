@@ -37,7 +37,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -142,18 +141,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          throws Throwable {
       for (Object key : command.getKeys()) {
          loadIfNeeded(ctx, key, command);
-      }
-      return invokeNext(ctx, command);
-   }
-
-   @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
-         throws Throwable {
-      Object[] keys;
-      if ((keys = command.getKeys()) != null && keys.length > 0) {
-         for (Object key : command.getKeys()) {
-            loadIfNeeded(ctx, key, command);
-         }
       }
       return invokeNext(ctx, command);
    }
