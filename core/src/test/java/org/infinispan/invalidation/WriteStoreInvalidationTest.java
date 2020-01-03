@@ -6,8 +6,11 @@ import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
+import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -34,16 +37,34 @@ public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
 
    @Test
    public void testSharedCacheStoreAfterInvalidation() {
-      assertNull(cache(0, cacheName).get(key));
+      // Because the store is shared, statistics are also shared
+      DummyInMemoryStore store0 = TestingUtil.getFirstLoader(cache(0, cacheName));
 
-      cache(0, cacheName).put(key, value);
+      store0.clearStats();
+
+      assertNull(cache(0, cacheName).get(key));
+      assertStoreStats(store0, 1, 0, 0);
+
+      // Put either loads the previous value or doesn't based on whether the originator is the primary owner
+      // So we use IGNORE_RETURN_VALUES to keep the number of loads stable
+      advancedCache(0, cacheName).withFlags(Flag.IGNORE_RETURN_VALUES).put(key, value);
+      assertStoreStats(store0, 1, 1, 0);
 
       assertEquals(value, cache(1, cacheName).get(key));
+      assertStoreStats(store0, 2, 1, 0);
 
-      cache(1, cacheName).put(key, changedValue);
+      advancedCache(1, cacheName).withFlags(Flag.IGNORE_RETURN_VALUES).put(key, changedValue);
+      assertStoreStats(store0, 2, 2, 0);
 
       assertFalse(cache(0, cacheName).getAdvancedCache().getDataContainer().containsKey(key));
 
       assertEquals(changedValue, cache(0, cacheName).get(key));
+      assertStoreStats(store0, 3, 2, 0);
+   }
+
+   private void assertStoreStats(DummyInMemoryStore store, int loads, int writes, int deletes) {
+      assertEquals(loads, store.stats().get("load").intValue());
+      assertEquals(writes, store.stats().get("write").intValue());
+      assertEquals(deletes, store.stats().get("delete").intValue());
    }
 }
