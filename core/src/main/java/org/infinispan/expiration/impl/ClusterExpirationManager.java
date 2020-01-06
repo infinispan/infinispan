@@ -351,7 +351,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          try {
             InternalMetadata metadata = marshalledEntry.getMetadata();
             cache.withFlags(Flag.SKIP_SHARED_CACHE_STORE)
-                 .removeLifespanExpired(key, marshalledEntry.getValue(), 
+                 .removeLifespanExpired(key, marshalledEntry.getValue(),
                                         metadata.lifespan() == -1 ? null : metadata.lifespan())
                  .join();
          } finally {
