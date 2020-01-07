@@ -173,6 +173,12 @@ public class AuthorizationLDAPIT {
       supervisorCache.getAll(bulkData.keySet());
    }
 
+   @Test
+   public void testAnonymousHealthPredefinedCache() {
+      RestClient client = SERVER_TEST.rest().get();
+      assertEquals("HEALTHY", sync(client.cacheManager("default").healthStatus()).getBody());
+   }
+
    private RemoteCache<Object, Object> hotRodCreateAuthzCache() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable().role("AdminRole").role("ReaderRole").role("WriterRole").role("SupervisorRole");

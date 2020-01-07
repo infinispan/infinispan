@@ -29,7 +29,7 @@ public class HealthImpl implements Health {
    @Override
    public List<CacheHealth> getCacheHealth() {
       return embeddedCacheManager.getCacheNames().stream()
-            .map(cacheName -> new CacheHealthImpl(embeddedCacheManager.getCache(cacheName)))
+            .map(cacheName -> new CacheHealthImpl(SecurityActions.getCache(embeddedCacheManager, cacheName)))
             .collect(Collectors.toList());
    }
 

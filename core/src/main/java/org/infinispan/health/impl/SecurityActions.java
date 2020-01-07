@@ -5,7 +5,9 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 
 final class SecurityActions {
@@ -22,4 +24,9 @@ final class SecurityActions {
       GetCacheDistributionManagerAction action = new GetCacheDistributionManagerAction(cache.getAdvancedCache());
       return doPrivileged(action);
    }
+
+   static Cache<?, ?> getCache(final EmbeddedCacheManager cacheManager, final String cacheName) {
+      return doPrivileged(new GetCacheAction(cacheManager, cacheName));
+   }
+
 }
