@@ -13,6 +13,7 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 
 import java.io.ByteArrayOutputStream;
+import java.security.PrivilegedAction;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.security.Security;
 import org.infinispan.stats.CacheContainerStats;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
@@ -247,7 +249,7 @@ public class CacheManagerResource implements ResourceHandler {
                .filter(n -> !internalCacheRegistry.isInternalCache(n))
                .distinct()
                .map(n -> {
-                  Configuration cacheConfiguration = cacheManager.getCacheConfiguration(n);
+                  Configuration cacheConfiguration = Security.doAs(request.getSubject(), (PrivilegedAction<Configuration>) () -> cacheManager.getCacheConfiguration(n));
                   String json = jsonWriter.toJSON(cacheConfiguration);
                   return new NamedCacheConfiguration(n, json);
                })
