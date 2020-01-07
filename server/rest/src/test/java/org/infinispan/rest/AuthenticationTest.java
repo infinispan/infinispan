@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.AuthenticationTest")
 public class AuthenticationTest extends AbstractInfinispanTest {
 
+   public static final String REALM = "ApplicationRealm";
    private HttpClient client;
    private RestServerHelper restServer;
 
@@ -58,7 +59,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       Subject user = TestingUtil.makeSubject("test");
       doReturn(user).when(securityDomainMock).authenticate(eq("test"), eq("test"));
 
-      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
+      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, REALM);
       restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
       //when
@@ -77,7 +78,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       //given
       SecurityDomain securityDomainMock = mock(SecurityDomain.class);
 
-      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
+      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, REALM);
 
       restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
@@ -97,7 +98,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       //given
       SecurityDomain securityDomainMock = mock(SecurityDomain.class);
 
-      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
+      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, REALM);
 
       restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
@@ -116,7 +117,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       SecurityDomain securityDomainMock = mock(SecurityDomain.class);
       Subject user = TestingUtil.makeSubject("test");
       doReturn(user).when(securityDomainMock).authenticate(eq("test"), eq("test"));
-      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
+      BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, REALM);
 
       restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
