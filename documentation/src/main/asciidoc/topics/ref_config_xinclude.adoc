@@ -20,6 +20,14 @@ For example, the following configuration uses an XInclude:
 <local-cache name="mycache"/>
 ----
 
+If you want to use a schema for your included fragments, use the `infinispan-config-fragment-{schemaversion}.xsd` schema:
+
+.include-with-schema.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_xincluded_with_schema.xml[]
+----
+
 [NOTE]
 ====
 {brandname} configurations provides only minimal support for the XInclude

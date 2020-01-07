@@ -1,0 +1,4 @@
+<local-cache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="urn:infinispan:config:{schemaversion} https://infinispan.org/schemas/infinispan-config-fragment-{schemaversion}.xsd"
+             xmlns="urn:infinispan:config:{schemaversion}"
+             name="mycache"/>
