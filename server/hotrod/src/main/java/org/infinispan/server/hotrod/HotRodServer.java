@@ -286,21 +286,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    @Override
-   protected void startTransport() {
-      // Start predefined caches
-      preStartCaches();
-
-      super.startTransport();
-   }
-
-   @Override
-   protected void startDefaultCache() {
+   protected void preStartCaches() {
       if (hasDefaultCache) {
          getCacheInfo("", (byte) 0, 0, false);
       }
-   }
 
-   private void preStartCaches() {
       // Start defined caches to avoid issues with lazily started caches
       // Skip internal caches
       for (String cacheName : cacheManager.getCacheNames()) {

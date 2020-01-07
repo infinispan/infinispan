@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
@@ -63,8 +63,8 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
       registerAdminOperationsHandler();
 
-      // Start default cache
-      startDefaultCache();
+      // Pre-start cache
+      preStartCaches();
 
       if (configuration.startTransport())
          startTransport();
@@ -223,10 +223,11 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       return configuration;
    }
 
-   protected void startDefaultCache() {
-      String name = defaultCacheName();
-      if (name != null) {
-         cacheManager.getCache(name);
+   protected void preStartCaches() {
+      // Start defined caches to avoid issues with lazily started caches
+      // Skip internal caches
+      for (String cacheName : cacheManager.getCacheNames()) {
+         cacheManager.getCache(cacheName);
       }
    }
 

@@ -73,7 +73,7 @@ public class MemcachedTestingUtil {
          }
 
          @Override
-         protected void startDefaultCache() {
+         protected void preStartCaches() {
             getCacheManager().getCache(cacheName);
          }
 
