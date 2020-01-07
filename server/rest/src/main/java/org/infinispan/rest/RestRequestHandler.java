@@ -61,7 +61,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
       restAccessLoggingHandler.preLog(request);
-      if (!Method.contains(request.getMethod().name())) {
+      if (!Method.contains(request.method().name())) {
          NettyRestResponse restResponse = new NettyRestResponse.Builder().status(FORBIDDEN).build();
          sendResponse(ctx, request, restResponse);
          return;

@@ -84,13 +84,17 @@ public final class Security {
          stack = new ArrayDeque<>();
          SUBJECT.set(stack);
       }
-      stack.push(subject);
+      if (subject != null) {
+         stack.push(subject);
+      }
       try {
          return action.run();
       } finally {
-         stack.pop();
-         if (stack.isEmpty()) {
-            SUBJECT.remove();
+         if (subject != null) {
+            stack.pop();
+            if (stack.isEmpty()) {
+               SUBJECT.remove();
+            }
          }
       }
    }
@@ -109,15 +113,19 @@ public final class Security {
          stack = new ArrayDeque<>();
          SUBJECT.set(stack);
       }
-      stack.push(subject);
+      if (subject != null) {
+         stack.push(subject);
+      }
       try {
          return action.run();
       } catch (Exception e) {
          throw new PrivilegedActionException(e);
       } finally {
-         stack.pop();
-         if (stack.isEmpty()) {
-            SUBJECT.remove();
+         if (subject != null) {
+            stack.pop();
+            if (stack.isEmpty()) {
+               SUBJECT.remove();
+            }
          }
       }
    }

@@ -1,4 +1,7 @@
-<cache-container name="default">
+<cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="urn:infinispan:config:10.1 https://infinispan.org/schemas/infinispan-config-fragment-10.1.xsd"
+                 xmlns="urn:infinispan:config:10.1"
+                 name="default">
    <transport cluster="${infinispan.cluster.name}" stack="test"/>
    <security>
       <authorization>
@@ -9,4 +12,6 @@
          <role name="SupervisorRole" permissions="READ WRITE EXEC BULK_READ"/>
       </authorization>
    </security>
+
+   <distributed-cache name="predefined"/>
 </cache-container>
