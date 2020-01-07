@@ -580,7 +580,8 @@ public class Parser implements ConfigurationParser {
       holder.pushScope(ParserScope.CACHE_CONTAINER);
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         if (!ParseUtils.isNoNamespaceAttribute(reader, i))
+            continue;
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {

@@ -120,7 +120,15 @@ include::config_examples/config_xinclude.xml[]
 .included.xml
 [source,xml,options="nowrap",subs=attributes+]
 ----
-<local-cache name="cache-1"/>
+include::config_examples/config_xincluded.xml[]
+----
+
+If you want to use a schema for your included fragments, use the `infinispan-config-fragment-{schemaversion}.xsd` schema:
+
+.include-with-schema.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_xincluded_with_schema.xml[]
 ----
 
 NOTE: the parser supports a minimal subset of the XInclude spec (no support for XPointer, fallback, text processing and content negotiation).
