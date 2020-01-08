@@ -57,6 +57,11 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
    }
 
    @Override
+   public boolean isMaxIdleExpirable() {
+      return true;
+   }
+
+   @Override
    public long getExpiryTime() {
       long lifespan = metadata.lifespan();
       long lset = lifespan > -1 ? created + lifespan : -1;

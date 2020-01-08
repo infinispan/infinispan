@@ -56,6 +56,16 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
    InternalCacheEntry<K, V> peek(int segment, Object k);
 
    /**
+    * Touches an entry in the data container. This will update the last access time of the entry as well as count this
+    * as a access for eviction based recency.
+    * @param segment segment for the key
+    * @param k key under which entry is stored
+    * @param currentTimeMillis the current time in milliseconds to touch the entry with
+    * @return true if the entry timestamp was touched
+    */
+   boolean touch(int segment, Object k, long currentTimeMillis);
+
+   /**
     * Same as {@link DataContainer#put(Object, Object, Metadata)} except that the segment of the key can provided to
     * write/lookup entries without calculating the segment for the given key.
     *

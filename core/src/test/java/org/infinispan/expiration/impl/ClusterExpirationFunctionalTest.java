@@ -9,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -21,6 +22,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,12 +47,16 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    protected Cache<Object, String> cache1;
    protected Cache<Object, String> cache2;
 
+   protected ConfigurationBuilder configurationBuilder;
+
    @Override
    public Object[] factory() {
       return new Object[] {
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
             new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(true),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
             new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
             new ClusterExpirationFunctionalTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
@@ -58,11 +64,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(cacheMode);
-      builder.transaction().transactionMode(transactionMode());
-      builder.expiration().disableReaper();
-      createCluster(builder, 3);
+      configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.clustering().cacheMode(cacheMode);
+      configurationBuilder.transaction().transactionMode(transactionMode()).lockingMode(lockingMode);
+      configurationBuilder.expiration().disableReaper();
+      createCluster(configurationBuilder, 3);
       waitForClusterToForm();
       injectTimeServices();
 
@@ -217,16 +223,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
       if (cacheMode == CacheMode.SCATTERED_SYNC) {
          // Scattered cache doesn't report last access time via getCacheEntry so we just verify the entry
-         // was removed only if primary expired - since it controls everything
+         // was not removed
          String expiredValue = expiredCache.get(key);
          String otherValue = otherCache.get(key);
-         if (expireOnPrimary) {
-            assertNull(expiredValue);
-            assertNull(otherValue);
-         } else {
-            assertNotNull(expiredValue);
-            assertNotNull(otherValue);
-         }
+         assertNotNull(expiredValue);
+         assertNotNull(otherValue);
       } else {
          long targetTime = ts0.wallClockTime();
          // Now both nodes should return the value
@@ -338,5 +339,40 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
          ts1.advance(secondOneMilliAdvanced);
          ts2.advance(secondOneMilliAdvanced);
       }
+   }
+
+   public void testMaxIdleReadNodeDiesPrimary() {
+      testMaxIdleNodeDies(c -> getKeyForCache(c, cache0));
+   }
+
+   public void testMaxIdleReadNodeDiesBackup() {
+      testMaxIdleNodeDies(c -> getKeyForCache(cache0, c));
+   }
+
+   private void testMaxIdleNodeDies(Function<Cache<?, ?>, MagicKey> keyToUseFunction) {
+      addClusterEnabledCacheManager(configurationBuilder);
+      waitForClusterToForm();
+
+      Cache<Object, String> cache3 = cache(3);
+
+      ControlledTimeService ts4 = new ControlledTimeService();
+      TestingUtil.replaceComponent(manager(3), TimeService.class, ts4, true);
+
+      MagicKey key = keyToUseFunction.apply(cache3);
+
+      // We always write to cache3 so that scattered uses it as a backup if the key isn't owned by it
+      cache3.put(key, "max-idle", -1, TimeUnit.MILLISECONDS, 100, TimeUnit.MILLISECONDS);
+
+      long justbeforeExpiration = 99;
+      incrementAllTimeServices(justbeforeExpiration, TimeUnit.MILLISECONDS);
+      ts4.advance(justbeforeExpiration);
+
+      assertNotNull(cache3.get(key));
+
+      killMember(3);
+
+      incrementAllTimeServices(2, TimeUnit.MILLISECONDS);
+
+      assertNotNull(cache1.get(key));
    }
 }

@@ -320,6 +320,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return globalComponents.getComponentMetadataRepo();
    }
 
+   @Override
+   public Configuration getConfiguration() {
+      return configuration;
+   }
+
    public final TransactionTable getTransactionTable() {
       return getComponent(org.infinispan.transaction.impl.TransactionTable.class);
    }

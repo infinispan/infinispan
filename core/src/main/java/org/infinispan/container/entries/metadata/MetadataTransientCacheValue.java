@@ -64,6 +64,11 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
    }
 
    @Override
+   public boolean isMaxIdleExpirable() {
+      return true;
+   }
+
+   @Override
    public Metadata getMetadata() {
       return metadata;
    }

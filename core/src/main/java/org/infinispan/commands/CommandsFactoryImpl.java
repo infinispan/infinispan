@@ -45,8 +45,6 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -102,6 +100,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -260,18 +259,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
-      return new RemoveExpiredCommand(key, value, null, true, notifier, segment, flagsBitSet,
+      return new RemoveExpiredCommand(key, value, null, false, notifier, segment, flagsBitSet,
             generateUUID(transactional), versionGenerator.nonExistingVersion(), timeService);
-   }
-
-   @Override
-   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value, int segment) {
-      return new RetrieveLastAccessCommand(cacheName, key, value, segment);
-   }
-
-   @Override
-   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, int segment, long accessTime) {
-      return new UpdateLastAccessCommand(cacheName, key, segment, accessTime);
    }
 
    @Override
@@ -527,14 +516,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
             removeExpiredCommand.init(notifier, versionGenerator.nonExistingVersion(), timeService);
             break;
-         case RetrieveLastAccessCommand.COMMAND_ID:
-            RetrieveLastAccessCommand retrieveLastAccessCommand = (RetrieveLastAccessCommand) c;
-            retrieveLastAccessCommand.inject(dataContainer, timeService);
-            break;
-         case UpdateLastAccessCommand.COMMAND_ID:
-            UpdateLastAccessCommand updateLastAccessCommand = (UpdateLastAccessCommand) c;
-            updateLastAccessCommand.inject(dataContainer);
-            break;
          case BackupAckCommand.COMMAND_ID:
             BackupAckCommand command = (BackupAckCommand) c;
             command.setCommandAckCollector(commandAckCollector);
@@ -595,6 +576,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case RenewBiasCommand.COMMAND_ID:
             ((RenewBiasCommand) c).init(biasManager.running());
+            break;
+         case TouchCommand.COMMAND_ID:
+            ((TouchCommand) c).init(componentRegistry, true);
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
@@ -882,5 +866,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand() {
       return new MultiKeyFunctionalBackupWriteCommand(cacheName);
+   }
+
+   @Override
+   public TouchCommand buildTouchCommand(Object key, int segment) {
+      return new TouchCommand(cacheName, key, segment);
    }
 }

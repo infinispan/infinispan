@@ -46,6 +46,13 @@ public interface InternalCacheValue<V> {
    boolean canExpire();
 
    /**
+    * @return true if this entry can expire via max idle, false otherwise
+    */
+   default boolean isMaxIdleExpirable() {
+      return false;
+   }
+
+   /**
     * @return timestamp when the entry was created
     */
    long getCreated();

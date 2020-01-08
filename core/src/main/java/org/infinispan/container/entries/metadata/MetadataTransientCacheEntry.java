@@ -71,6 +71,11 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    }
 
    @Override
+   public boolean canExpireMaxIdle() {
+      return true;
+   }
+
+   @Override
    public boolean isExpired(long now) {
       return ExpiryHelper.isExpiredTransient(metadata.maxIdle(), lastUsed, now);
    }

@@ -76,9 +76,8 @@ public class EntryFactoryImpl implements EntryFactory {
                addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
             }
          } else if (isOwner || readEntry.isL1Entry()) {
-            CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(readEntry, false);
-
-            if (expiredStage != null) {
+            if (readEntry.canExpire()) {
+               CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(readEntry, segment, false);
                if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                   Boolean expired = CompletionStages.join(expiredStage);
                   handleExpiredEntryContextAddition(expired, ctx, readEntry, key, isOwner);
@@ -104,32 +103,6 @@ public class EntryFactoryImpl implements EntryFactory {
       } else if (isOwner) {
          addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
       }
-   }
-
-   private CompletionStage<Boolean> handlePossibleExpiredEntry(InternalCacheEntry ice, boolean write) {
-      if (ice.canExpire()) {
-         long currentTime = timeService.wallClockTime();
-         if (ice.isExpired(currentTime)) {
-            if (trace) {
-               log.tracef("Retrieved entry for key %s was expired locally, attempting expiration removal", ice.getKey());
-            }
-            return expirationManager.entryExpiredInMemory(ice, currentTime, write)
-                  .thenApply(expired -> {
-                     if (expired == Boolean.FALSE) {
-                        if (trace) {
-                           log.tracef("Retrieved entry for key %s was found to not be expired, touching.", ice.getKey());
-                        }
-                        ice.touch(currentTime);
-                     } else if (trace) {
-                        log.tracef("Retrieved entry for key %s was confirmed to be expired.", ice.getKey());
-                     }
-                     return expired;
-                  });
-         } else {
-            ice.touch(currentTime);
-         }
-      }
-      return null;
    }
 
    private void addReadEntryToContext(InvocationContext ctx, CacheEntry cacheEntry, Object key) {
@@ -179,8 +152,8 @@ public class EntryFactoryImpl implements EntryFactory {
             if (ice == null) {
                addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
             } else {
-               CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(ice, true);
-               if (expiredStage != null) {
+               if (ice.canExpire()) {
+                  CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(ice, segment, true);
                   if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                      Boolean expired = CompletionStages.join(expiredStage);
                      handleWriteExpiredEntryContextAddition(expired, ctx, ice, key, isRead);

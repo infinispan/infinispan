@@ -71,6 +71,11 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
+   public boolean canExpireMaxIdle() {
+      return true;
+   }
+
+   @Override
    public boolean isExpired(long now) {
       return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed, now);
    }

@@ -32,6 +32,13 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    boolean canExpire();
 
    /**
+    * @return true if this entry can expire via max idle, false otherwise
+    */
+   default boolean canExpireMaxIdle() {
+      return false;
+   }
+
+   /**
     * Only used with entries that have a lifespan, this determines when an entry is due to expire.
     *
     * @return timestamp when the entry is due to expire, or -1 if it doesn't have a lifespan

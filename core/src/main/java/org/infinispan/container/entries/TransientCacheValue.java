@@ -60,6 +60,11 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
+   public boolean isMaxIdleExpirable() {
+      return true;
+   }
+
+   @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
       return new TransientCacheEntry(key, value, maxIdle, lastUsed);
    }
