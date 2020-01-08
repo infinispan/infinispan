@@ -51,7 +51,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
-import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -94,7 +93,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
    private QueryKnownClasses queryKnownClasses;
-   private SearchWorkCreator searchWorkCreator = new DefaultSearchWorkCreator();
+   private SearchWorkCreator searchWorkCreator = SearchWorkCreator.DEFAULT;
    private SearchFactoryHandler searchFactoryHandler;
    private final DataConversion valueDataConversion;
    private final DataConversion keyDataConversion;
@@ -335,7 +334,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             .filter(searchFactoryHandler::hasIndex)
             .map(PojoIndexedTypeIdentifier::new);
       Set<Work> deleteWorks = typeIdentifiers
-            .map(e -> searchWorkCreator.createEntityWork(keyToString(key), e, WorkType.DELETE))
+            .map(e -> searchWorkCreator.createPerEntityWork(keyToString(key), e, WorkType.DELETE))
             .collect(Collectors.toSet());
       performSearchWorks(deleteWorks, transactionContext);
    }
@@ -345,17 +344,16 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (isIndexable != null && isIndexable.booleanValue()) {
          if (searchFactoryHandler.hasIndex(entityType)) {
             IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(entityType);
-            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(type, WorkType.PURGE_ALL), transactionContext);
+            performSearchWork(searchWorkCreator.createPerEntityTypeWork(type, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
 
    private void purgeAllIndexes(TransactionContext transactionContext) {
-      for (Class c : queryKnownClasses.keys()) {
+      for (Class<?> c : queryKnownClasses.keys()) {
          if (searchFactoryHandler.hasIndex(c)) {
-            //noinspection unchecked
             IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(c);
-            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(type, WorkType.PURGE_ALL), transactionContext);
+            performSearchWork(searchWorkCreator.createPerEntityTypeWork(type, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
@@ -373,13 +371,21 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      Collection<Work> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
-      performSearchWorks(works, transactionContext);
+      performSearchWork(searchWorkCreator.createPerEntityWork(value, id, workType), transactionContext);
    }
 
    private void performSearchWorks(Collection<Work> works, TransactionContext transactionContext) {
       Worker worker = searchFactory.getWorker();
       for (Work work : works) {
+         if (work != null) {
+            worker.performWork(work, transactionContext);
+         }
+      }
+   }
+
+   private void performSearchWork(Work work, TransactionContext transactionContext) {
+      if (work != null) {
+         Worker worker = searchFactory.getWorker();
          worker.performWork(work, transactionContext);
       }
    }
@@ -401,7 +407,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return keyDataConversion.extractIndexable(storedKey);
    }
 
-   public void enableClasses(Class... classes) {
+   public void enableClasses(Class<?>... classes) {
       searchFactoryHandler.enableClasses(classes);
    }
 
@@ -463,12 +469,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean shouldRemove(Object value, Object previousValue) {
-      if (searchWorkCreator instanceof ExtendedSearchWorkCreator) {
-         ExtendedSearchWorkCreator eswc = (ExtendedSearchWorkCreator) searchWorkCreator;
-         return eswc.shouldRemove(new SearchWorkCreatorContext(previousValue, value));
-      } else {
-         return value != null && previousValue != null && value.getClass() != previousValue.getClass();
-      }
+      return value != null && previousValue != null && value.getClass() != previousValue.getClass();
    }
 
    private void processClearCommand(InvocationContext ctx, ClearCommand command, Object rv) {

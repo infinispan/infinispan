@@ -181,7 +181,7 @@ public final class LifecycleManager implements ModuleLifecycle {
 
             log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
             QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
-            queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx).get());
+            queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx));
          }
       }
    }
