@@ -1,0 +1,5 @@
+<distributed-cache name="customers">
+  <backups>
+    <backup site="LON" strategy="SYNC" />
+  </backups>
+</replicated-cache>

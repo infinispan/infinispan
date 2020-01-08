@@ -1,8 +1,8 @@
-[id='xsite_commands']
-:context: cli
-= Performing Cross-Site Replication Operations
-{brandname} clusters running in different locations can discover and
-communicate with each other to backup data.
+[id='xsite_operations_cli']
+:context: xsite
+= Cross-Site Operations with the CLI
+The {brandname} command line interface lets you remotely connect to {brandname}
+servers, manage sites, and push state transfer to backup locations.
 
 .Prerequisites
 * Start the {brandname} CLI.
@@ -10,6 +10,10 @@ communicate with each other to backup data.
 
 include::{topics}/proc_cli_xsite_sites.adoc[leveloffset=+1]
 include::{topics}/proc_cli_xsite_push.adoc[leveloffset=+1]
+
+.Reference
+
+link:{cli_docs}[{brandname} Command Line Interface]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

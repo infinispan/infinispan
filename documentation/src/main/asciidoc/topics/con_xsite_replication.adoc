@@ -1,0 +1,21 @@
+[id='xsite_replication-{context}']
+= Cross-Site Replication
+{brandname} clusters running in different locations can discover and
+communicate with each other.
+
+A site is a locally running {brandname} cluster. For demonstration purposes,
+this documentation illustrates sites as data centers in different geographic
+locations, as in the following diagram:
+
+image::xsite.svg[]
+
+**LON** is a datacenter in London, England. +
+**NYC** is a datacenter in New York City, USA.
+
+[NOTE]
+====
+{brandname} can form global clusters across two or more sites.
+
+For example, configure a third {brandname} cluster running in San Francisco,
+**SFO**, as backup location for **LON** and **NYC**.
+====

@@ -15,6 +15,28 @@ include::transaction-attributes.adoc[]
 :underscores: ___
 
 //
+// Doc Links
+//
+
+//Dev
+:dev_docs: ../developing/developing.html
+
+//Server
+:server_docs: ../server/server.html
+
+//REST
+:rest_docs: ../rest/rest.html
+
+//CLI
+:cli_docs: ../cli/cli.html
+
+//Configuration
+:config_docs: ../configuring/configuring.html
+
+//Jgroups
+:jgroups_docs: http://www.jgroups.org/manual4/index.html
+
+//
 // Server artifacts
 //
 :server_home: $ISPN_HOME

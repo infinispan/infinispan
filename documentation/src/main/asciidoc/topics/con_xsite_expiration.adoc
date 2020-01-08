@@ -1,0 +1,7 @@
+[id='xsite_expiration-{context}']
+= Expiration and Cross-Site Replication
+{brandname} expiration controls how long entries remain in the cache.
+
+* `lifespan` expiration is suitable for cross-site replication. When entries reach the maximum lifespan, {brandname} expires them independently of the remote sites.
+
+* `max-idle` expiration does not work with cross-site replication. {brandname} cannot determine when cache entries reach the idle timeout in remote sites.

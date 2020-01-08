@@ -1,0 +1,11 @@
+[id='xsite_backups-{context}']
+= Adding Backups to Caches
+Name remote sites as backup locations in your cache definitions.
+
+For example, the following diagram shows three caches, "customers", "eu-orders", and "us-orders":
+
+image::xsite-caches.svg[]
+
+* In **LON**, "customers" names **NYC** as a backup location.
+* In **NYC**, "customers" names **LON** as a backup location.
+* "eu-orders" and "us-orders" do not have backups and are local to the respective cluster.
