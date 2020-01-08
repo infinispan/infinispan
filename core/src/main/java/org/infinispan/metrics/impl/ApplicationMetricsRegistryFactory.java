@@ -7,6 +7,8 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
+ * Produces instances of ApplicationMetricsRegistry.
+ *
  * @author anistor@redhat.com
  * @since 10.0
  */
@@ -16,6 +18,11 @@ public final class ApplicationMetricsRegistryFactory implements ComponentFactory
 
    @Override
    public Object construct(String componentName) {
-      return new ApplicationMetricsRegistry();
+      try {
+         return new ApplicationMetricsRegistry();
+      } catch (NoClassDefFoundError e) {
+         // missing dependency ?
+         return null;
+      }
    }
 }

@@ -37,21 +37,25 @@
       <dependency>
          <groupId>org.eclipse.microprofile.config</groupId>
          <artifactId>microprofile-config-api</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
          <groupId>io.smallrye</groupId>
          <artifactId>smallrye-config</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
          <groupId>org.eclipse.microprofile.metrics</groupId>
          <artifactId>microprofile-metrics-api</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
          <groupId>io.smallrye</groupId>
          <artifactId>smallrye-metrics</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>

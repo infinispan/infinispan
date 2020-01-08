@@ -60,7 +60,7 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testBaseAndVendor() throws Exception {
+   public void testBaseAndVendorMetrics() throws Exception {
       RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
 
       RestResponse response = sync(metricsClient.metrics("base/classloader.loadedClasses.count"));
