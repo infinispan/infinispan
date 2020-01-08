@@ -14,7 +14,7 @@ To find more about how primary owners are assigned, please read the
 link:#key_ownership[Key Ownership] section.
 
 .Replicated mode
-image::{images_dir}/clustering-replicated.svg[align="center", title="Replicated mode"]
+image::clustering-replicated.svg[align="center", title="Replicated mode"]
 
 Replicated mode can be synchronous or asynchronous.
 

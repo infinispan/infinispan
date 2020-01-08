@@ -14,7 +14,7 @@
 //
 :stories: stories
 :topics: topics
-:images_dir: {topics}/images
+:imagesdir: {topics}/images
 :cli_help: {topics}/cli_help
 
 //

@@ -22,7 +22,7 @@ To find more about how primary and backup owners are assigned, please read the
 link:#key_ownership[Key Ownership] section.
 
 .Distributed mode
-image::{images_dir}/clustering-distributed.svg[align="center", title="Distributed mode"]
+image::clustering-distributed.svg[align="center", title="Distributed mode"]
 
 A read operation will request the value from the primary owner, but if it doesn't respond
 in a reasonable amount of time, we request the value from the backup owners as well.
@@ -214,7 +214,7 @@ period of time (configurable, 10 minutes by default), and repeated lookups will 
 the local L1 value instead of asking the owners again.
 
 .L1 caching
-image::{images_dir}/clustering-l1.svg[align="center", title="L1 caching"]
+image::clustering-l1.svg[align="center", title="L1 caching"]
 
 L1 caching is not free though.
 Enabling it comes at a cost, and this cost is that every entry update must broadcast an

@@ -12,7 +12,7 @@ caches in the cluster receive a message informing them that their data is now st
 should be removed from memory and from any local store.
 
 .Invalidation mode
-image::{images_dir}/clustering-invalidation.svg[align="center", title="Invalidation mode"]
+image::clustering-invalidation.svg[align="center", title="Invalidation mode"]
 
 Sometimes the application reads a value from the external store and wants to write it to
 the local cache, without removing it from the other nodes.
