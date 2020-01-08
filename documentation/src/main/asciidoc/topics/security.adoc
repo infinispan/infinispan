@@ -18,7 +18,7 @@ Applications interact with {brandname} using its API within the same JVM. The tw
 Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
 
 .Roles/Permissions mapping
-image::{images_dir}/SecurityRolesPermissions.png[Roles/Permissions mapping]
+image::SecurityRolesPermissions.png[Roles/Permissions mapping]
 
 [[security_embedded_permissions]]
 === Embedded Permissions

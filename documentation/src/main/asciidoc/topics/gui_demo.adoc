@@ -28,26 +28,26 @@ endif::productized[]
 
 An equivalent `runGuiDemo.bat` file is also provided for Windows users.
 
-image::{images_dir}/guidemo1.png[]
+image::guidemo1.png[]
 
 == Step 2: Start the cache
 Start the cache in the GUI that starts up, using the _Start Cache_ button.
 
-image::{images_dir}/guidemo2.png[]
+image::guidemo2.png[]
 
 == Step 3: Manipulate data
 In the _Manipulate Data_ tab, add entries, generate random data, etc.
 
-image::{images_dir}/guidemo3.png[]
+image::guidemo3.png[]
 
 == Step 4: Start more cache instances
 Repeat steps 1 and 2 to launch and start up more caches.
 Watch cluster formation in the _Cluster View_ tab.
 
-image::{images_dir}/guidemo4.png[]
+image::guidemo4.png[]
 
 == Step 5: Manipulate more data
 Add and remove data on any of the nodes, and watch state being distributed.
 Shut nodes down as well to witness data durability.
 
-image::{images_dir}/guidemo5.png[]
+image::guidemo5.png[]

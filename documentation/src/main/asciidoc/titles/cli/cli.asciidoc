@@ -1,7 +1,7 @@
 //Directory attributes
 :stories: ../../stories
 :topics: ../topics
-:images_dir: ../{topics}/images
+:imagesdir: ../{topics}/images
 :cli_help: ../../../../../cli/cli-client/src/main/resources/help/
 
 //Community doc attributes

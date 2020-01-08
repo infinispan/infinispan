@@ -1,7 +1,7 @@
 //Directory attributes
 :stories: ../../stories
 :topics: ../topics
-:images_dir: ../{topics}/images
+:imagesdir: ../{topics}/images
 
 //Community doc attributes
 include::../{topics}/attributes/community-attributes.adoc[]

@@ -183,6 +183,7 @@
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                 <download_url>${download.url}</download_url>
+                                <imagesdir>../../topics/images</imagesdir>
                             </attributes>
                         </configuration>
                     </execution>
@@ -252,6 +253,7 @@
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                         <download_url>${download.url}</download_url>
+                                        <imagesdir>../../topics/images</imagesdir>
                                     </attributes>
                                 </configuration>
                             </execution>
