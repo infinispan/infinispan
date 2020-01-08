@@ -451,9 +451,6 @@ public class JGroupsTransport implements Transport {
             // Cannot change the name if the channelLookup already connected the channel
             String transportNodeName = transportCfg.nodeName();
             if (transportNodeName != null && transportNodeName.length() > 0) {
-               long range = Short.MAX_VALUE * 2;
-               long randomInRange = (long) ((Math.random() * range) % range) + 1;
-               transportNodeName = transportNodeName + "-" + randomInRange;
                channel.setName(transportNodeName);
             }
          }
