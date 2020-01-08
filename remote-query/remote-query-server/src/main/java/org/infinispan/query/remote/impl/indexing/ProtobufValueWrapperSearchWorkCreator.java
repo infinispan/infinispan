@@ -2,7 +2,6 @@ package org.infinispan.query.remote.impl.indexing;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
 
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
@@ -12,9 +11,7 @@ import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.infinispan.query.backend.ExtendedSearchWorkCreator;
 import org.infinispan.query.backend.SearchWorkCreator;
-import org.infinispan.query.backend.SearchWorkCreatorContext;
 
 /**
  * Wraps a {@link SearchWorkCreator} in order to intercept values of type {@link ProtobufValueWrapper} and parse the
@@ -24,7 +21,7 @@ import org.infinispan.query.backend.SearchWorkCreatorContext;
  * @author anistor@redhat.com
  * @since 9.4.1
  */
-public final class ProtobufValueWrapperSearchWorkCreator {
+public final class ProtobufValueWrapperSearchWorkCreator implements SearchWorkCreator {
 
    private final SearchWorkCreator delegate;
 
@@ -41,42 +38,22 @@ public final class ProtobufValueWrapperSearchWorkCreator {
       this.wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
    }
 
-   public SearchWorkCreator get() {
-      return delegate instanceof ExtendedSearchWorkCreator ? new ExtendedDelegate() : new Delegate();
+   @Override
+   public Work createPerEntityWork(Object entity, Serializable id, WorkType workType) {
+      if (entity instanceof ProtobufValueWrapper) {
+         discoverMessageType((ProtobufValueWrapper) entity);
+      }
+      return delegate.createPerEntityWork(entity, id, workType);
    }
 
-   private class Delegate implements SearchWorkCreator {
-
-      @Override
-      public Collection<Work> createPerEntityTypeWorks(IndexedTypeIdentifier entityType, WorkType workType) {
-         return delegate.createPerEntityTypeWorks(entityType, workType);
-      }
-
-      @Override
-      public Collection<Work> createPerEntityWorks(Object entity, Serializable id, WorkType workType) {
-         return delegate.createPerEntityWorks(interceptValue(entity), id, workType);
-      }
-
-      @Override
-      public Work createEntityWork(Serializable id, IndexedTypeIdentifier entityType, WorkType workType) {
-         return delegate.createEntityWork(id, entityType, workType);
-      }
+   @Override
+   public Work createPerEntityTypeWork(IndexedTypeIdentifier entityType, WorkType workType) {
+      return delegate.createPerEntityTypeWork(entityType, workType);
    }
 
-   private final class ExtendedDelegate extends Delegate implements ExtendedSearchWorkCreator {
-
-      @Override
-      public boolean shouldRemove(SearchWorkCreatorContext context) {
-         return ((ExtendedSearchWorkCreator) delegate).shouldRemove(
-               new SearchWorkCreatorContext(interceptValue(context.getPreviousValue()), interceptValue(context.getCurrentValue())));
-      }
-   }
-
-   private Object interceptValue(Object value) {
-      if (value instanceof ProtobufValueWrapper) {
-         discoverMessageType((ProtobufValueWrapper) value);
-      }
-      return value;
+   @Override
+   public Work createPerEntityWork(Serializable id, IndexedTypeIdentifier entityType, WorkType workType) {
+      return delegate.createPerEntityWork(id, entityType, workType);
    }
 
    /**

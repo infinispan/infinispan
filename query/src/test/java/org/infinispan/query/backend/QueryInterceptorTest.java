@@ -8,14 +8,13 @@ import static org.testng.Assert.assertTrue;
 import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Files;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,7 +28,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -195,14 +193,24 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
-   private class IgnoreDeletesSearchWorkCreator extends DefaultSearchWorkCreator {
+   private static final class IgnoreDeletesSearchWorkCreator implements SearchWorkCreator {
 
       @Override
-      public Collection<Work> createPerEntityWorks(Object entity, Serializable id, WorkType workType) {
+      public Work createPerEntityTypeWork(IndexedTypeIdentifier entityType, WorkType workType) {
+         return SearchWorkCreator.DEFAULT.createPerEntityTypeWork(entityType, workType);
+      }
+
+      @Override
+      public Work createPerEntityWork(Object entity, Serializable id, WorkType workType) {
          if (workType.equals(WorkType.DELETE)) {
-            return Collections.emptySet();
+            return null;
          }
-         return super.createPerEntityWorks(entity, id, workType);
+         return SearchWorkCreator.DEFAULT.createPerEntityWork(entity, id, workType);
+      }
+
+      @Override
+      public Work createPerEntityWork(Serializable id, IndexedTypeIdentifier entityType, WorkType workType) {
+         return SearchWorkCreator.DEFAULT.createPerEntityWork(id, entityType, workType);
       }
    }
 

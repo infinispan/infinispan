@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -23,9 +22,8 @@ import org.testng.annotations.Test;
 public class CustomSearchWorkCreatorTest extends SingleCacheManagerTest {
 
    @Test
-   @SuppressWarnings("unchecked")
    public void testCustomWorkCreator() {
-      DefaultSearchWorkCreator customSearchWorkCreator = spy(new DefaultSearchWorkCreator());
+      SearchWorkCreator customSearchWorkCreator = spy(SearchWorkCreator.DEFAULT);
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       queryInterceptor.setSearchWorkCreator(customSearchWorkCreator);
       KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
@@ -34,7 +32,7 @@ public class CustomSearchWorkCreatorTest extends SingleCacheManagerTest {
       Person value = new Person("john", "blurb", 30);
       cache.put(key, value);
 
-      verify(customSearchWorkCreator).createPerEntityWorks(value, keyTransformationHandler.keyToString(key), WorkType.UPDATE);
+      verify(customSearchWorkCreator).createPerEntityWork(value, keyTransformationHandler.keyToString(key), WorkType.UPDATE);
    }
 
    @Override
