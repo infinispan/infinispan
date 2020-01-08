@@ -69,6 +69,11 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
    }
 
    @Override
+   public boolean isMaxIdleExpirable() {
+      return true;
+   }
+
+   @Override
    public final long getExpiryTime() {
       long lifespan = metadata.lifespan();
       long lset = lifespan > -1 ? created + lifespan : -1;

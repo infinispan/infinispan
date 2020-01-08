@@ -236,5 +236,4 @@ public abstract class AbstractVisitor implements Visitor {
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
-
 }

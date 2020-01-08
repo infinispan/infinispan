@@ -79,7 +79,7 @@ public class EntryFactoryImpl implements EntryFactory {
                addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
             }
          } else if (isOwner || readEntry.isL1Entry()) {
-            CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(readEntry, false);
+            CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(readEntry, segment, false);
 
             if (expiredStage != null) {
                if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
@@ -109,28 +109,9 @@ public class EntryFactoryImpl implements EntryFactory {
       }
    }
 
-   private CompletionStage<Boolean> handlePossibleExpiredEntry(InternalCacheEntry ice, boolean write) {
+   private CompletionStage<Boolean> handlePossibleExpiredEntry(InternalCacheEntry ice, int segment, boolean isWrite) {
       if (ice.canExpire()) {
-         long currentTime = timeService.wallClockTime();
-         if (ice.isExpired(currentTime)) {
-            if (trace) {
-               log.tracef("Retrieved entry for key %s was expired locally, attempting expiration removal", ice.getKey());
-            }
-            return expirationManager.entryExpiredInMemory(ice, currentTime, write)
-                  .thenApply(expired -> {
-                     if (expired == Boolean.FALSE) {
-                        if (trace) {
-                           log.tracef("Retrieved entry for key %s was found to not be expired, touching.", ice.getKey());
-                        }
-                        ice.touch(currentTime);
-                     } else if (trace) {
-                        log.tracef("Retrieved entry for key %s was confirmed to be expired.", ice.getKey());
-                     }
-                     return expired;
-                  });
-         } else {
-            ice.touch(currentTime);
-         }
+         return expirationManager.handlePossibleExpiration(ice, segment, isWrite);
       }
       return null;
    }
@@ -182,7 +163,7 @@ public class EntryFactoryImpl implements EntryFactory {
             if (ice == null) {
                addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
             } else {
-               CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(ice, true);
+               CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(ice, segment, true);
                if (expiredStage != null) {
                   if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                      Boolean expired = CompletionStages.join(expiredStage);

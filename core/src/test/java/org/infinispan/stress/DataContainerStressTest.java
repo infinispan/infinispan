@@ -115,11 +115,11 @@ public class DataContainerStressTest {
                     return null;
                  }
 
-                 @Override
-                 public CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment) {
-                    return null;
-                 }
-              });
+               @Override
+               public CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry entry, int segment, boolean isWrite) {
+                  return null;
+               }
+            });
    }
 
    private long threeQuarterMemorySize(int numKeys, int keyLength, int valueLength) {

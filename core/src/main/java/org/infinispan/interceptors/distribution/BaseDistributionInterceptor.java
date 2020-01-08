@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -27,11 +26,9 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
@@ -67,7 +64,6 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
-import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -813,95 +809,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                                                      ReadOnlyManyCommand command) {
          return null;
       }
-   }
-
-   @Override
-   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
-      // Lifespan expiration just behaves like a remove command
-      if (!command.isMaxIdle()) {
-         return visitRemoveCommand(ctx, command);
-      }
-
-      Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
-
-      if (isLocalModeForced(command)) {
-         return invokeNext(ctx, command);
-      }
-
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      int segment = command.getSegment();
-      DistributionInfo info = cacheTopology.getSegmentDistribution(segment);
-      if (entry == null) {
-         if (info.isPrimary()) {
-            throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
-         } else if (ctx.isOriginLocal()) {
-            // Primary has to handle max idle removal
-            return invokeRemotely(ctx, command, info.primary());
-         } else {
-            throw new IllegalStateException("Non primary owner recipient of remote remove expired command.");
-         }
-      } else {
-         if (info.isPrimary()) {
-            // We don't pass the value for performance as we already have the lock obtained for this key - so it can't
-            // change from its current value
-            CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null, segment);
-
-            return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
-               if (max != null) {
-                  // Make sure to fail the command for other interceptors, such as CacheWriterInterceptor, so it
-                  // won't remove it in the store
-                  command.fail();
-                  if (trace) {
-                     log.tracef("Received %s as the latest last access time for key %s", max, key);
-                  }
-                  long longMax = ((Long) max);
-                  if (longMax == -1) {
-                     // If it was -1 that means it has been written to, so in this case just assume it expired, but
-                     // was overwritten by a concurrent write
-                     return Boolean.TRUE;
-                  } else {
-                     // If it wasn't -1 it has to be > 0 so send that update
-                     UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, command.getSegment(), longMax);
-                     ulac.setTopologyId(cacheTopology.getTopologyId());
-                     CompletionStage<?> updateState = rpcManager.invokeCommand(info.readOwners(), ulac,
-                           VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-                     // We update locally as well
-                     ulac.invokeAsync();
-                     return asyncValue(updateState).thenApply(rCtx, rCommand, (rCtx2, rCommand2, ignore) -> Boolean.FALSE);
-                  }
-               } else {
-                  if (trace) {
-                     log.tracef("No node has a non expired max idle time for key %s, proceeding to remove entry", key);
-                  }
-                  RemoveExpiredCommand realRemoveCommand;
-                  if (!ctx.isOriginLocal()) {
-                     // Have to build a new command since the command id points to the originating node - causes
-                     // issues with triangle since it needs to know the originating node to respond to
-                     realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue(), segment,
-                           command.getFlagsBitSet());
-                     realRemoveCommand.setTopologyId(cacheTopology.getTopologyId());
-                  } else {
-                     realRemoveCommand = command;
-                  }
-
-                  return makeStage(invokeRemoveExpiredCommand(ctx, realRemoveCommand, info)).thenApply(rCtx, rCommand,
-                        (rCtx2, rCommand2, ignore) -> Boolean.TRUE);
-               }
-            });
-         } else if (ctx.isOriginLocal()) {
-            // Primary has to handle max idle removal
-            return invokeRemotely(ctx, command, info.primary());
-         } else {
-            return invokeNext(ctx, command);
-         }
-      }
-   }
-
-   protected Object invokeRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command, DistributionInfo distributionInfo)
-         throws Throwable {
-      assert distributionInfo.isPrimary();
-      return visitRemoveCommand(ctx, command);
    }
 
    private class ClusteredReadCommandGenerator implements Function<Address, ReplicableCommand> {

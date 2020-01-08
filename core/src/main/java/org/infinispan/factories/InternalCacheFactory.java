@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
@@ -25,10 +26,13 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.ImmutableContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.eviction.impl.PassivationManagerStub;
@@ -219,6 +223,10 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       @Inject
       protected ComponentRegistry componentRegistry;
+      @Inject
+      InternalExpirationManager<K, V> expirationManager;
+      @Inject
+      KeyPartitioner keyPartitioner;
 
       public AbstractGetAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
          super(cache, wrapper);
@@ -242,19 +250,37 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
        */
       protected void internalWire(T cache) {
          componentRegistry = cache.componentRegistry;
+         expirationManager = cache.expirationManager;
+         keyPartitioner = cache.keyPartitioner;
          wireRealCache();
       }
 
       @Override
+      public InternalDataContainer<K, V> getDataContainer() {
+         return (InternalDataContainer<K, V>) super.getDataContainer();
+      }
+
+      @Override
       public V get(Object key) {
-         assertKeyNotNull(key);
-         checkCanRun(cache, cache.getName());
-         // TODO: what should we do here? - This needs to be fixed in https://issues.redhat.com/browse/ISPN-11124
-         InternalCacheEntry<K, V> ice = getDataContainer().get(key);
+         InternalCacheEntry<K, V> ice = syncGet(key);
          if (ice != null) {
             return ice.getValue();
          }
          return null;
+      }
+
+      InternalCacheEntry<K, V> syncGet(Object key) {
+         int segment = keyPartitioner.getSegment(key);
+         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
+         if (ice != null) {
+            if (ice.canExpire()) {
+               CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
+               if (CompletionStages.join(stage)) {
+                  ice = null;
+               }
+            }
+         }
+         return ice;
       }
 
       @Override
@@ -270,11 +296,48 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       @Override
       public CompletableFuture<V> getAsync(K key) {
-         try {
-            return CompletableFuture.completedFuture(get(key));
-         } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+         return getCacheEntryAsync(key)
+               .thenApply(ice -> ice != null ? ice.getValue() : null);
+      }
+
+      private InternalCacheEntry<K, V> internalPeekCacheEntry(Object key, int segment) {
+         assertKeyNotNull(key);
+         checkCanRun(cache, cache.getName());
+         return getDataContainer().peek(segment, key);
+      }
+
+      @Override
+      public CacheEntry<K, V> getCacheEntry(Object key) {
+         return syncGet(key);
+      }
+
+      @Override
+      public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+         return asyncGet(key);
+      }
+
+      private CompletableFuture<CacheEntry<K, V>> asyncGet(Object key) {
+         int segment = keyPartitioner.getSegment(key);
+         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
+         if (ice != null) {
+            if (ice.canExpire()) {
+               CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
+               if (CompletionStages.isCompletedSuccessfully(stage)) {
+                  return CompletableFutures.completedNull();
+               } else {
+                  return stage.thenApply(expired -> {
+                     if (expired == Boolean.TRUE) {
+                        return null;
+                     }
+                     return (CacheEntry<K, V>) ice;
+                  }).toCompletableFuture();
+               }
+            }
          }
+         if (ice == null) {
+            return CompletableFutures.completedNull();
+         }
+         return CompletableFuture.completedFuture(ice);
       }
    }
 

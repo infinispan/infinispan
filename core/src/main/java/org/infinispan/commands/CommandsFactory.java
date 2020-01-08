@@ -43,8 +43,6 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -77,6 +75,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -196,21 +195,6 @@ public interface CommandsFactory {
     * @return a RemovedExpiredCommand
     */
    RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet);
-
-   /**
-    * Builds a retrieve max idle command that is used to get the last access time for a given key.
-    * @param key the key of the entry to get the last access time of
-    * @return a RetrieveLastAccessCommand
-    */
-   RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value, int segment);
-
-   /**
-    * Builds an update last access command that is used to update the last access time for a given key.
-    * @param key the key of the entry to update the last access time of
-    * @param accessTime the time to set the access time to
-    * @return a UpdateLastAccessCommand
-    */
-   UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, int segment, long accessTime);
 
    /**
     * Builds a ReplaceCommand
@@ -632,4 +616,6 @@ public interface CommandsFactory {
    <K, V> MultiClusterEventCommand<K, V> buildMultiClusterEventCommand(Map<UUID, Collection<ClusterEvent<K, V>>> events);
 
    CheckTransactionRpcCommand buildCheckTransactionRpcCommand(Collection<GlobalTransaction> globalTransactions);
+
+   TouchCommand buildTouchCommand(Object key, int segment);
 }
