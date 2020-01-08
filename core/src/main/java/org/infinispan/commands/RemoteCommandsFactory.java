@@ -26,8 +26,6 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -59,6 +57,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -353,12 +352,6 @@ public class RemoteCommandsFactory {
             case RenewBiasCommand.COMMAND_ID:
                command = new RenewBiasCommand(cacheName);
                break;
-            case RetrieveLastAccessCommand.COMMAND_ID:
-               command = new RetrieveLastAccessCommand(cacheName);
-               break;
-            case UpdateLastAccessCommand.COMMAND_ID:
-               command = new UpdateLastAccessCommand(cacheName);
-               break;
             case ReductionPublisherRequestCommand.COMMAND_ID:
                command = new ReductionPublisherRequestCommand<>(cacheName);
                break;
@@ -376,6 +369,9 @@ public class RemoteCommandsFactory {
                break;
             case CheckTransactionRpcCommand.COMMAND_ID:
                command = new CheckTransactionRpcCommand(cacheName);
+               break;
+            case TouchCommand.COMMAND_ID:
+               command = new TouchCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

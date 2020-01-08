@@ -12,12 +12,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -26,6 +29,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -53,6 +57,10 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Inject protected CacheNotifier<K, V> cacheNotifier;
    @Inject protected TimeService timeService;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected ComponentRef<CommandsFactory> cf;
+   @Inject protected ComponentRef<AsyncInterceptorChain> invokerRef;
+   @Inject protected ComponentRef<InvocationContextFactory> cfRef;
+   @Inject protected ComponentRegistry componentRegistry;
 
    protected boolean enabled;
    protected String cacheName;
@@ -252,22 +260,36 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
             cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null)));
    }
 
-   protected Long localLastAccess(Object key, Object value, int segment) {
-      InternalCacheEntry ice = dataContainer.running().peek(segment, key);
-      if (ice != null && (value == null || value.equals(ice.getValue())) &&
-            !ice.isExpired(timeService.wallClockTime())) {
-         return ice.getLastUsed();
+   @Override
+   public CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry<K, V> ice, int segment, boolean isWrite) {
+      long currentTime = timeService.wallClockTime();
+      if (ice.isExpired(currentTime)) {
+         if (trace) {
+            log.tracef("Retrieved entry for key %s was expired locally, attempting expiration removal", ice.getKey());
+         }
+         CompletableFuture<Boolean> expiredStage = entryExpiredInMemory(ice, currentTime, isWrite);
+         if (trace) {
+            expiredStage = expiredStage.thenApply(expired -> {
+               if (expired == Boolean.FALSE) {
+                  log.tracef("Retrieved entry for key %s was found to not be expired.", ice.getKey());
+               } else {
+                  log.tracef("Retrieved entry for key %s was confirmed to be expired.", ice.getKey());
+               }
+               return expired;
+            });
+         }
+         return expiredStage;
+      } else if (!isWrite && ice.isMaxIdleExpirable()) {
+         return touchEntry(ice, segment);
       }
-      return null;
+      return CompletableFutures.completedFalse();
    }
 
-   @Override
-   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment) {
-      Long lastAccess = localLastAccess(key, value, segment);
-      if (lastAccess != null) {
-         return CompletableFuture.completedFuture(lastAccess);
-      }
-      return CompletableFutures.completedNull();
+   protected CompletionStage<Boolean> touchEntry(InternalCacheEntry entry, int segment) {
+      TouchCommand touchCommand = cf.running().buildTouchCommand(entry.getKey(), segment);
+      touchCommand.init(componentRegistry, false);
+      CompletableFuture<Boolean> future = (CompletableFuture) touchCommand.invokeAsync();
+      return future.thenApply(touched -> !touched);
    }
 
    @Stop(priority = 5)

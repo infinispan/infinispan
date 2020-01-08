@@ -52,8 +52,6 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -86,6 +84,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.Params;
@@ -214,16 +213,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
       return actual.buildRemoveExpiredCommand(key, value, segment, flagsBitSet);
-   }
-
-   @Override
-   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value, int segment) {
-      return actual.buildRetrieveLastAccessCommand(key, value, segment);
-   }
-
-   @Override
-   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, int segment, long accessTime) {
-      return actual.buildUpdateLastAccessCommand(key, segment, accessTime);
    }
 
    @Override
@@ -617,5 +606,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public CheckTransactionRpcCommand buildCheckTransactionRpcCommand(Collection<GlobalTransaction> globalTransactions) {
       return actual.buildCheckTransactionRpcCommand(globalTransactions);
+   }
+
+   @Override
+   public TouchCommand buildTouchCommand(Object key, int segment) {
+      return actual.buildTouchCommand(key, segment);
    }
 }

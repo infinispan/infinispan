@@ -45,8 +45,6 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -93,6 +91,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -211,16 +210,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
       return new RemoveExpiredCommand(key, value, null, true, segment, flagsBitSet,
             generateUUID(transactional));
-   }
-
-   @Override
-   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value, int segment) {
-      return new RetrieveLastAccessCommand(cacheName, key, value, segment);
-   }
-
-   @Override
-   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, int segment, long accessTime) {
-      return init(new UpdateLastAccessCommand(cacheName, key, segment, accessTime));
    }
 
    @Override
@@ -668,5 +657,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public CheckTransactionRpcCommand buildCheckTransactionRpcCommand(Collection<GlobalTransaction> globalTransactions) {
       return new CheckTransactionRpcCommand(cacheName, globalTransactions);
+   }
+
+   @Override
+   public TouchCommand buildTouchCommand(Object key, int segment) {
+      return new TouchCommand(cacheName, key, segment);
    }
 }

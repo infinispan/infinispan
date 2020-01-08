@@ -1,7 +1,5 @@
 package org.infinispan.expiration;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -64,20 +62,6 @@ public interface ExpirationManager<K, V> {
     */
    @Deprecated
    void handleInStoreExpiration(MarshallableEntry<K, V> marshalledEntry);
-
-   /**
-    * Retrieves the last access time for the given key in the data container if it is using max idle.
-    * If the entry is not in the container or it is expired it will return null.
-    * If the entry is present but cannot expire via max idle, it will return -1
-    * If the entry is present and can expire via max idle but hasn't it will return a number > 0
-    * @param key the key to retrieve the access time for
-    * @param value the value to match if desired (this can be null)
-    * @param segment the segment for the given key
-    * @return the last access time if available
-    * @deprecated since 9.3 this method is not intended for external use
-    */
-   @Deprecated
-   CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment);
 
    /**
     * This is to be invoked with a when a write is known to occur to prevent expiration from happening.  This way we

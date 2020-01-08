@@ -40,8 +40,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
-import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -50,7 +48,6 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
@@ -75,8 +72,8 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.FunctionalNotifier;
@@ -682,60 +679,6 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleWriteCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
-      if (!command.isMaxIdle() || isLocalModeForced(command)) {
-         return visitRemoveCommand(ctx, command);
-      }
-
-      RepeatableReadEntry cacheEntry = (RepeatableReadEntry) ctx.lookupEntry(command.getKey());
-
-      LocalizedCacheTopology cacheTopology = checkTopology(command);
-      Object key = command.getKey();
-      DistributionInfo info = cacheTopology.getDistribution(key);
-      if (info.primary() == null) {
-         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-      }
-
-      if (ctx.isOriginLocal()) {
-         if (info.isPrimary()) {
-            // If primary originated it that means it is removed
-            return visitRemoveCommand(ctx, command);
-         } else {
-            // We are a backup, we just ask the primary what the last access time was
-            RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, command.getValue(), command.getSegment());
-            rlac.setTopologyId(rpcManager.getTopologyId());
-            CompletionStage<Long> completionStage = rpcManager.invokeCommand(info.primary(), rlac,
-                  new SingleResponseCollector(), rpcManager.getSyncRpcOptions())
-                  .thenApply(vr -> (Long) vr.getResponseValue());
-            return asyncValue(completionStage).thenApply(ctx, command, (rCtx, rCommand, access) -> {
-               // Make sure to add the entry to the context if it wasn't there before - which is likely since this
-               // isn't the primary owner
-               RepeatableReadEntry contextEntry = cacheEntry;
-               if (cacheEntry == null) {
-                  entryFactory.wrapExternalEntry(rCtx, key, null, false, true);
-                  contextEntry = (RepeatableReadEntry) rCtx.lookupEntry(key);
-               }
-               // If it responded with a time we assume it wasn't expired
-               if (access != null) {
-                  UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, rCommand.getSegment(), (long) access);
-                  // Update local access time to what primary had
-                  ulac.invokeAsync();
-                  // Make sure to notify other interceptors the command failed
-                  rCommand.fail();
-                  return Boolean.FALSE;
-               } else {
-                  // Go ahead with removal now
-                  return makeStage(commitSingleEntryOnReturn(ctx, command, contextEntry, null)).thenApply(rCtx, rCommand,
-                        (rCtx2, rCommand2, ignore) -> Boolean.TRUE);
-               }
-            });
-         }
-      } else {
-         throw new IllegalStateException("Remove expired should never be replicated!");
-      }
    }
 
    @Override

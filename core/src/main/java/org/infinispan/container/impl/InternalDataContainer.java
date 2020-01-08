@@ -61,6 +61,15 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
    InternalCacheEntry<K, V> peek(int segment, Object k);
 
    /**
+    *
+    * @param segment
+    * @param k
+    * @param currentTimeMillis
+    * @return true if the entry timestamp was updated
+    */
+   boolean touch(int segment, Object k, long currentTimeMillis);
+
+   /**
     * Same as {@link DataContainer#put(Object, Object, Metadata)} except that the segment of the key can provided to
     * write/lookup entries without calculating the segment for the given key.
     *
