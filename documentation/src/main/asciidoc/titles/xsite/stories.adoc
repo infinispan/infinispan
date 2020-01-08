@@ -2,3 +2,5 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_xsite_replication.adoc[leveloffset=+1]
+include::{stories}/assembly_xsite_configuring.adoc[leveloffset=+1]
+include::{stories}/assembly_xsite_operations.adoc[leveloffset=+1]

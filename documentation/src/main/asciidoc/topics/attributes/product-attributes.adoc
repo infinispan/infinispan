@@ -116,10 +116,19 @@ include::transaction-attributes.adoc[]
 :dev_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
 
 //Server
-:server_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+:server_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/running_data_grid_servers/index
 
 //REST
-:rest_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+:rest_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/using_the_data_grid_rest_api/index
 
 //HotRod Server
 :hotrod_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//CLI
+:cli_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/using_the_data_grid_command_line_interface/index
+
+//Configuration
+:config_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/8.0/html-single/configuring_data_grid/index
+
+//Jgroups
+:jgroups_docs: http://www.jgroups.org/manual4/index.html

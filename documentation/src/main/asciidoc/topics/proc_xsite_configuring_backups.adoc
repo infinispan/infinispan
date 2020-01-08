@@ -1,0 +1,36 @@
+[id='configure_backups-{context}']
+= Adding Backup Locations to Caches
+Specify the names of remote sites so {brandname} can back up data to those locations.
+
+.Procedure
+
+. Add the `backups` element to your cache definition.
+. Specify the name of each remote site with the `backup` element.
++
+As an example, in the **LON** configuration, specify **NYC** as the remote site.
++
+. Repeat the preceding steps so that each site is a backup for all other sites. For example, you cannot add **LON** as a backup for **NYC** without adding **NYC** as a backup for **LON**.
+
+[NOTE]
+====
+Cache configurations can be different across sites and use different backup
+strategies. {brandname} replicates data based on cache names.
+====
+
+.Example "customers" configuration in **LON**
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_dist_xsite_lon.xml[]
+----
+
+.Example "customers" configuration in **NYC**
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_repl_xsite_nyc.xml[]
+----
+
+.Reference
+
+* link:{configdocroot}[{brandname} Configuration Schema]

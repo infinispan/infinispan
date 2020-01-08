@@ -1,6 +1,6 @@
 [id='rest_v2_cache_manager_site_status']
-= Getting Status of Backup Sites
-Retrieve the status for all backup sites from Cache Managers with `GET`
+= Getting Status of Backup Locations
+Retrieve the status of all backup locations from Cache Managers with `GET`
 requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -15,39 +15,42 @@ GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/
 include::json_examples/xsite_backup_status.json[]
 ----
 
-The `status` field has the following values:
+.Returned Status
 
-* `online`: all caches are online in the backup site.
-* `offline`: all caches are offline in the backup site.
-* `mixed`: some caches are online and others offline, and their names will be listed in the `online` and `offline` arrays respectively.
+|===
+|Value |Description
 
+|`online`
+| All nodes in the local cluster have a cross-site view with the backup location.
+
+|`offline`
+| No nodes in the local cluster have a cross-site view with the backup location.
+
+|`mixed`
+| Some nodes in the local cluster have a cross-site view with the backup location, other nodes in the local cluster do not have a cross-site view. The response indicates status for each node.
+|===
 
 [id='rest_v2_cache_manager_take_offline']
-= Taking Backup Sites Offline
-Take backup sites offline from Cache Managers with `GET` requests and the
-`?action=take-offline` parameter.
+= Taking Backup Locations Offline
+Take backup locations offline with the `?action=take-offline` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=take-offline
 ----
 
-
 [id='rest_v2_cache_manager_bring_online']
-= Bringing Backup Sites Online
-Bring backup sites online from Cache Managers with `GET` requests and the
-`?action=bring-online` parameter.
+= Bringing Backup Locations Online
+Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
 ----
 
-
 [id='rest_v2_cache_manager_start_push']
-= Pushing State
-Start pushing state of all caches for a Cache Manager to a backup site with
-`GET` requests and the `?action=start-push-state` parameter.
+= Starting State Transfer
+Push state of all caches to remote sites with the `?action=start-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -56,9 +59,8 @@ GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=
 
 
 [id='rest_v2_cache_manager_cancel_push']
-= Canceling State Push Operations
-Cancel ongoing state push operations for Cache Managers with `GET` requests and
-the `?action=cancel-push-state` parameter.
+= Canceling State Transfer
+Cancel ongoing state transfer operations with the `?action=cancel-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----

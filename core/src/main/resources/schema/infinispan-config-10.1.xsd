@@ -748,27 +748,29 @@
     <xs:sequence>
       <xs:element name="backups" type="tns:backups" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>The state transfer configuration for distribution and replicated caches.</xs:documentation>
+          <xs:documentation>
+            Defines backup locations for cache data and modifies state transfer properties.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="backup-for" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>
-            Configures this cache as a backup for a remote cache.
+            Defines the local cache as a backup for a remote cache with a different name.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
           <xs:attribute name="remote-cache" type="xs:string" use="optional">
             <xs:annotation>
               <xs:documentation>
-                The name of the remote cache that backups data here.
+                Specifies the name of the remote cache that uses the local cache as a backup.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="remote-site" type="xs:string" use="optional">
             <xs:annotation>
               <xs:documentation>
-                The name of the remote site containing the cache that backups data here.
+                Specifies the name of the remote site that backs up data to the local cache.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -1859,7 +1861,9 @@
     <xs:sequence>
       <xs:element name="backup" type="tns:backup" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
-          <xs:documentation>Configures a specific site where this cache backups data.</xs:documentation>
+          <xs:documentation>
+            Configures a remote site as a backup location for cache data.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
     </xs:sequence>
@@ -1869,19 +1873,23 @@
     <xs:sequence>
       <xs:element name="take-offline" type="tns:take-offline" minOccurs="0">
         <xs:annotation>
-          <xs:documentation>Determines whether this backup is taken offline (ignored) after a certain number of tries.</xs:documentation>
+          <xs:documentation>
+            Specifies the number of failures that can occur before backup locations go offline.
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="state-transfer" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Configures the properties needed to transfer the state for this site.
+            Modifies state transfer operations.
           </xs:documentation>
         </xs:annotation>
         <xs:complexType>
           <xs:attribute name="chunk-size" type="xs:int" default="${XSiteStateTransfer.chunkSize}">
             <xs:annotation>
-               <xs:documentation>The number of cache entries to batch in each transfer.</xs:documentation>
+               <xs:documentation>
+                 Specifies how many cache entries are batched in each transfer request.
+               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="timeout" type="xs:long" default="${XSiteStateTransfer.timeout}">
@@ -1895,16 +1903,14 @@
           <xs:attribute name="max-retries" type="xs:int" default="${XSiteStateTransfer.maxRetries}">
             <xs:annotation>
               <xs:documentation>
-                The maximum number of retries when a push state command fails. A value &lt;= 0 (zero) mean that
-                the command will not retry. Default value is 30.
+                Sets the maximum number of retry attempts for push state failures. Specify a value of 0 (zero) to disable retry attempts. The default value is 30.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="wait-time" type="xs:long" default="${XSiteStateTransfer.waitTime}">
             <xs:annotation>
               <xs:documentation>
-                The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default
-                value is 2 seconds.
+                Sets the amount of time, in milliseconds, to wait between retry attempts for push state failures. You must specify a value of 1 or more. The default value is 2000.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -1913,44 +1919,52 @@
     </xs:sequence>
     <xs:attribute name="site" type="xs:string" use="required">
       <xs:annotation>
-        <xs:documentation>Name of the remote site where this cache backups data.</xs:documentation>
+        <xs:documentation>
+          Names the remote site to which the cache backs up data.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="strategy" type="tns:mode" default="${Backup.strategy}">
       <xs:annotation>
-        <xs:documentation>The strategy used for backing up data: "SYNC" or "ASYNC". Defaults to "ASYNC"</xs:documentation>
+        <xs:documentation>
+          Sets the strategy for backing up to a remote site.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="failure-policy" type="tns:backup-failure-policy" default="${Backup.backupFailurePolicy}">
       <xs:annotation>
-        <xs:documentation>Decides what the system would do in case of failure during backup. Defaults to "WARN"</xs:documentation>
+        <xs:documentation>
+          Controls how local writes to caches are handled if synchronous backup operations fail.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="timeout" type="xs:long" default="${Backup.replicationTimeout}">
       <xs:annotation>
-        <xs:documentation>The timeout(millis) to be used when backing up data remotely. Defaults to 10 secs.</xs:documentation>
+        <xs:documentation>
+          Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="enabled" type="xs:boolean" default="${Backup.enabled}">
       <xs:annotation>
-        <xs:documentation>If 'false' then no data is backed up to this site. Defaults to 'true'.</xs:documentation>
+        <xs:documentation>
+          Enables backup locations. Set the value to "false" to disable backups.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="two-phase-commit" use="optional" type="xs:boolean" default="${Backup.useTwoPhaseCommit}">
       <xs:annotation>
         <xs:documentation>
-          Configures whether the replication happens in a 1PC or 2PC when using SYNC backup strategy. Defaults to "${Backup.useTwoPhaseCommit}".
-          CacheConfigurationException is thrown when used with ASYNC backup strategy.
+          Enables two-phase commits for optimistic transactional caches with
+          the synchronous backup strategy only.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="failure-policy-class" use="optional" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          If the 'backupFailurePolicy' is set to 'CUSTOM' then this attribute is
-          required and should
-          contain the fully qualified name of a class implementing
-          org.infinispan.xsite.CustomFailurePolicy.
+          Specifies the fully qualified name of a class that implements the
+          CustomFailurePolicy interface. Use if failure-policy="CUSTOM".
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1959,12 +1973,22 @@
   <xs:complexType name="take-offline">
     <xs:attribute name="after-failures" type="xs:int" default="0">
       <xs:annotation>
-        <xs:documentation>The number of failed request operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after 'min-wait'.</xs:documentation>
+        <xs:documentation>
+          Sets the number of consecutive failures that can occur for backup
+          operations before sites go offline. Specify a negative or zero value
+          to ignore this attribute and use minimum wait time only ("min-wait").
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="min-wait" type="xs:long" default="0">
       <xs:annotation>
-        <xs:documentation>The minimal number of millis to wait before taking this site offline, even in the case 'after-failures' is reached. If smaller or equal to 0, then only 'after-failures' is considered.</xs:documentation>
+        <xs:documentation>
+          Sets the minimum time to wait, in milliseconds, before sites go
+          offline when backup operations fail. If subsequent operations are
+          successful, the minimum wait time is reset. If you set
+          "after-failures", sites go offline when the wait time is reached and
+          the number of failures occur.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -2118,12 +2142,16 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="ASYNC">
         <xs:annotation>
-          <xs:documentation>Enables asynchronous mode.</xs:documentation>
+          <xs:documentation>
+            Enables asynchronous mode.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="SYNC">
         <xs:annotation>
-          <xs:documentation>Enables synchronous mode.</xs:documentation>
+          <xs:documentation>
+            Enables synchronous mode.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
@@ -2155,22 +2183,30 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="IGNORE">
         <xs:annotation>
-          <xs:documentation>Ignore backup failures.</xs:documentation>
+          <xs:documentation>
+            Ignore failed backup operations and write to the local cache.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="WARN">
         <xs:annotation>
-          <xs:documentation>Warn of backup failures.</xs:documentation>
+          <xs:documentation>
+            Log exceptions when backup operations fail and write to the local cache.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="FAIL">
         <xs:annotation>
-          <xs:documentation>Fail local operations when a backup failure occurs.</xs:documentation>
+          <xs:documentation>
+            Throw exceptions when backup operations fail and attempt to stop writes to the local cache.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="CUSTOM">
         <xs:annotation>
-          <xs:documentation>Invoke a user-specified failure policy (set via the failure-policy-class attribute)</xs:documentation>
+          <xs:documentation>
+            Use a custom failure policy. Requires the "failure-policy-class" attribute.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
