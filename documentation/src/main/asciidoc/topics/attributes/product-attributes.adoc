@@ -68,6 +68,9 @@ include::transaction-attributes.adoc[]
 :jdkdocroot: https://docs.oracle.com/javase/8/docs/api
 :javaeedocroot: https://docs.oracle.com/javaee/7/api
 
+//Jgroups
+:jgroups_docs: http://www.jgroups.org/manual4/index.html
+
 //
 // Server artifacts
 //

@@ -1,0 +1,13 @@
+[id='cli_xsite_push-{context}']
+= Pushing State to Backup Locations
+Transfer cache state to remote backup locations.
+
+.Procedure
+
+* Use the `site` command to push state transfer, as in the following example:
++
+----
+//containers/default]> site push-site-state --cache=cacheName --site=NYC
+----
+
+For more information and examples, run the `help site` command.

@@ -1,0 +1,16 @@
+[id='configure_backupfor-{context}']
+= Backing Up to Caches with Different Names
+By default, {brandname} replicates data between caches that have the same name.
+
+.Procedure
+
+* Use `backup-for` to replicate data from a remote site into a cache with a
+different name on the local site.
+
+For example, the following configuration backs up the "customers" cache on
+**LON** to the "eu-customers" cache on **NYC**.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_xsite_backupfor.xml[]
+----

@@ -1,0 +1,5 @@
+[id='xsite_backup_strategies-{context}']
+= Backup Strategies
+{brandname} clusters can use different strategies for backing up data to remote sites.
+
+{brandname} replicates across sites at the same time that writes to local caches occur. For example, if a client writes "k1" to **LON**, {brandname} backs up "k1" to **NYC** at the same time.

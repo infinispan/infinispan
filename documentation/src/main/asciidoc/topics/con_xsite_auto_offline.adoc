@@ -1,0 +1,58 @@
+[id='xsite_auto_offline-{context}']
+= Taking Sites Offline Automatically
+Backup configurations include timeout values for operations to replicate
+data to remote sites. When backup operations reach the timeout, {brandname}
+records the operation as a failure.
+
+To automatically take sites offline, you can then configure the
+number of **consecutive** failures that can occur.
+
+For example, the **NYC** backup configuration specifies five as the number of
+failures after which **NYC** goes offline. If **LON** attempts five consecutive
+backup operations that fail, {brandname} automatically takes **NYC** offline.
+**LON** then stops backing up to **NYC** until you bring the site back online.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<backup site="NYC" strategy="ASYNC">
+	<take-offline after-failures="5"/>
+</backup>
+----
+
+You can also specify the amount of time to wait before taking sites offline.
+When backup operations fail, {brandname} waits before taking sites offline. If
+a backup request succeeds before the wait time runs out, {brandname} does not
+take the site offline.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<backup site="NYC" strategy="ASYNC">
+	<take-offline after-failures="5"
+                min-wait="10000"/>
+</backup>
+----
+
+In the preceding example, if failures occur for 5 consecutive operations,
+{brandname} waits 10 seconds and, if no requests are successful within the 10
+second wait time, {brandname} then takes **NYC** offline.
+
+To use only a minimum wait time for automatically taking locations offline, set
+a negative or zero value for the `after-failures` attribute; for example:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<backup site="NYC" strategy="ASYNC">
+	<take-offline after-failures="-1"
+                min-wait="10000"/>
+</backup>
+----
+
+[TIP]
+====
+You can manually take sites offline through the {brandname} command line
+interface or REST API.
+====
+
+.Reference
+
+link:#xsite_manage[Performing Cross-Site Replication Operations with the CLI or REST API]

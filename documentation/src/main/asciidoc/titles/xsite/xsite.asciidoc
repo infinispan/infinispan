@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Setting Up Cross-Site Replication with {brandname} {infinispanversion}
+= Replicating Data Across Sites with {brandname} {infinispanversion}
 
 //User stories
 include::stories.adoc[]

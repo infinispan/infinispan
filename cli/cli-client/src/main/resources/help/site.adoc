@@ -5,7 +5,7 @@ SITE(1)
 
 NAME
 ----
-site - manages backup sites and performs cross-site replication operations.
+site - manages backup locations and performs cross-site replication operations.
 
 
 SYNOPSIS
@@ -31,7 +31,7 @@ OPTIONS
 Specifies a cache.
 
 *--site*='SITE_NAME'::
-Specifies a site.
+Specifies a backup location.
 
 
 EXAMPLES
@@ -43,22 +43,22 @@ Returns the status of all backup locations for `mycache`.
 Returns the status of `NYC` for `mycache`.
 
 `site bring-online --cache=mycache --site=NYC` +
-Brings site `NYC` online for `mycache`.
+Brings the site `NYC` online for `mycache`.
 
 `site take-offline --cache=mycache --site=NYC` +
 Takes the site `NYC` offline for `mycache`.
 
 `site push-site-state --cache=mycache --site=NYC` +
-Backs up the `mycache` cache to `NYC`.
+Backs up caches to remote backup locations.
 
 `site push-site-status --cache=mycache` +
-Displays the status of the backup operation for the `mycache` cache to all backup locations.
+Displays the status of the operation to backup `mycache`.
 
 `site cancel-push-state --cache=mycache --site=NYC` +
-Cancels the backup operation for the `mycache` cache to `NYC`.
+Cancels the operation to backup `mycache` to `NYC`.
 
 `site cancel-receive-state --cache=mycache --site=NYC` +
-Cancels the operation to receive state from a remote location.
+Cancels the operation to receive state from `NYC`.
 
 `site clear-push-state-status --cache=myCache` +
-Clears the push state status for `mycache`.
+Clears the status of the push state operation for `mycache`.
