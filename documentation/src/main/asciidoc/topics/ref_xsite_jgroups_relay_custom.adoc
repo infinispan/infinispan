@@ -1,0 +1,34 @@
+[id='ref_relay_custom-{context}']
+= Custom JGroups RELAY2 Stacks
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<jgroups>
+   <stack-file name="relay-global" path="jgroups-relay.xml"/> <1>
+   <stack name="xsite" extends="udp">
+      <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"
+                    max_site_masters="10" <2>
+                    can_become_site_master="true"/>
+      <remote-sites default-stack="relay-global">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
+</jgroups>
+----
+
+<1> Adds a custom RELAY2 stack defined in `jgroups-relay.xml`.
+<2> Sets the maximum number of site masters and optionally specifies additional RELAY2 properties. See JGroups RELAY2 documentation.
+
+.Example `jgroups-relay.xml`
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jgroups-relay.xml[]
+----
+
+.Reference
+
+* link:{config_docs}#cluster_transport[Cluster Transport Configuration]
+* link:{jgroups_docs}#RELAY2[JGroups RELAY2]
+* link:{jgroups_docs}#Relay2Advanced[Relaying between multiple sites (RELAY2)]

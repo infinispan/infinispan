@@ -1,0 +1,12 @@
+[id='xsite_masters-{context}']
+= Site Masters
+Site masters are the nodes in {brandname} clusters that are responsible for
+sending and receiving requests from backup locations.
+
+If a node is not a site master, it must forward backup requests to a local site
+master. Only site masters can send requests to backup locations.
+
+For optimal performance, you should configure all nodes as site masters. This
+increases the speed of backup requests because each node in the cluster can
+backup to remote sites directly without having to forward backup requests to
+site masters.

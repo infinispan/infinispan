@@ -2,6 +2,7 @@
 Add caches with custom {brandname} configuration files in XML or JSON format.
 
 .Procedure
+
 * Add the path to your configuration file with the `--file=` option as follows:
 
 [source,options="nowrap",subs=attributes+]

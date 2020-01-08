@@ -1,0 +1,9 @@
+<jgroups>
+   <stack name="xsite" extends="udp">
+      <relay.RELAY2 site="LON" xmlns="urn:org:jgroups" max_site_masters="1000"/>
+      <remote-sites default-stack="tcp">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
+</jgroups>

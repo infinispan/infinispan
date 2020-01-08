@@ -1,0 +1,12 @@
+[id='xsite_operations_rest']
+:context: xsite
+= Cross-Site Operations with the REST API
+{brandname} servers provide a REST API that allows you to perform cross-site
+operations.
+
+include::{topics}/ref_rest_xsite.adoc[leveloffset=+1]
+include::{topics}/ref_rest_xsite_cache_managers.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
