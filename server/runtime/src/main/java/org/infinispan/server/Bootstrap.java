@@ -68,6 +68,7 @@ public class Bootstrap extends Main {
             // Fall through
          case "--bind-address":
             properties.setProperty(Server.INFINISPAN_BIND_ADDRESS, parameter);
+            properties.setProperty(Server.JGROUPS_BIND_ADDRESS, parameter);
             break;
          case "-p":
             parameter = args.next();

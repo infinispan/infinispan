@@ -90,6 +90,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String INFINISPAN_CLUSTER_STACK = "infinispan.cluster.stack";
    public static final String INFINISPAN_NODE_NAME = "infinispan.node.name";
    public static final String INFINISPAN_PORT_OFFSET = "infinispan.socket.binding.port-offset";
+   public static final String JGROUPS_BIND_ADDRESS = "jgroups.bind.address";
    /**
     * Property name indicating the path to the server installation. If unspecified, the current working directory will
     * be used
