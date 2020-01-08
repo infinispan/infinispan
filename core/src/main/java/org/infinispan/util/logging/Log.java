@@ -1395,7 +1395,7 @@ public interface Log extends BasicLogger {
                                                      Object clusterManagerStatus);
 
    @LogMessage(level = WARN)
-   @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 10.0).", id = 403)
+   @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 11).", id = 403)
    void noIndexableClassesDefined();
 
 //   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
