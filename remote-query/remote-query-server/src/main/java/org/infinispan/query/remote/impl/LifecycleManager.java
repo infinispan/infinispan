@@ -116,7 +116,8 @@ public final class LifecycleManager implements ModuleLifecycle {
    }
 
    /**
-    * Registers the interceptor in the cache before it gets started.
+    * Registers the interceptor in the ___protobuf_metadata cache before it gets started. Also creates query components
+    * for user caches.
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
@@ -140,6 +141,12 @@ public final class LifecycleManager implements ModuleLifecycle {
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
+
+         if (cfg.indexing().index().isEnabled()) {
+            log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
+            QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+            queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx));
+         }
       }
    }
 
@@ -167,22 +174,5 @@ public final class LifecycleManager implements ModuleLifecycle {
          querySerializers.addSerializer(APPLICATION_JSON, new JsonQuerySerializer(storageMediaType, jsonStorage, jsonObject));
       }
       return querySerializers;
-   }
-
-   @Override
-   public void cacheStarted(ComponentRegistry cr, String cacheName) {
-      GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
-      InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
-      if (!icr.isInternalCache(cacheName)) {
-         Configuration cfg = cr.getComponent(Configuration.class);
-         if (cfg.indexing().index().isEnabled()) {
-            ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
-            SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-
-            log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
-            QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
-            queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx));
-         }
-      }
    }
 }
