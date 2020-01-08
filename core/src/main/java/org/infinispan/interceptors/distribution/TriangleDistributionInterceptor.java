@@ -42,7 +42,6 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -117,12 +116,6 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
-   }
-
-   @Override
-   protected Object invokeRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command, DistributionInfo distributionInfo) throws Throwable {
-      assert distributionInfo.isPrimary();
-      return localPrimaryOwnerWrite(ctx, command, distributionInfo, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override

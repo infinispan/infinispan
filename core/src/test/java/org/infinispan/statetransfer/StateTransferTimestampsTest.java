@@ -30,7 +30,8 @@ public class StateTransferTimestampsTest extends MultipleCacheManagersTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-         // No need to test DIST_SYNC, it's exactly the same as REPL_SYNC
+         // DIST and REPL are different as REPL has a read optimization
+         new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC),
          new StateTransferTimestampsTest().cacheMode(CacheMode.REPL_SYNC),
          new StateTransferTimestampsTest().cacheMode(CacheMode.SCATTERED_SYNC),
       };

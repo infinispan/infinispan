@@ -113,6 +113,20 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    @Override
+   public boolean touch(int segment, Object k, long currentTimeMillis) {
+      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      if (entries != null) {
+         // We use get to also update eviction recency access
+         InternalCacheEntry<K, V> entry = entries.get(k);
+         if (entry != null) {
+            entry.touch(currentTimeMillis);
+            return true;
+         }
+      }
+      return false;
+   }
+
+   @Override
    public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {

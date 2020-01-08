@@ -5,8 +5,6 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.LockingMode;
 
 import net.jcip.annotations.ThreadSafe;

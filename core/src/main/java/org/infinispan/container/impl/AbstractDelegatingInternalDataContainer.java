@@ -27,6 +27,11 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> extends Abst
    }
 
    @Override
+   public boolean touch(int segment, Object k, long currentTimeMillis) {
+      return delegate().touch(segment, k, currentTimeMillis);
+   }
+
+   @Override
    public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
       delegate().put(segment, k, v, metadata, createdTimestamp, lastUseTimestamp);
    }

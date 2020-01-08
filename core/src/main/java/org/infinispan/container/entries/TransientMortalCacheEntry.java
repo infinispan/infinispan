@@ -66,6 +66,11 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
+   public boolean canExpireMaxIdle() {
+      return true;
+   }
+
+   @Override
    public long getCreated() {
       return created;
    }

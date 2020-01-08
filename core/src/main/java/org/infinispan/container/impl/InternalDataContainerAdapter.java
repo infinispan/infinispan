@@ -56,6 +56,11 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
    }
 
    @Override
+   public boolean touch(int segment, Object k, long currentTimeMillis) {
+      return ((InternalDataContainer) delegate()).touch(segment, k, currentTimeMillis);
+   }
+
+   @Override
    public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
       put(k, v, metadata);
    }

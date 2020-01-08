@@ -3,6 +3,7 @@ package org.infinispan.expiration.impl;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -16,8 +17,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -32,13 +32,13 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidResponseCollector;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -72,7 +72,6 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    private static final int MAX_CONCURRENT_EXPIRATIONS = 100;
 
    @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
-   @Inject protected ComponentRef<CommandsFactory> cf;
    @Inject protected RpcManager rpcManager;
    @Inject protected DistributionManager distributionManager;
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
@@ -91,7 +90,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       this.cache = AbstractDelegatingCache.unwrapCache(cacheRef.wired()).getAdvancedCache();
       this.cacheName = cache.getName();
       this.localAddress = cache.getCacheManager().getAddress();
-      this.timeout = cache.getCacheConfiguration().clustering().remoteTimeout();
+      this.timeout = configuration.clustering().remoteTimeout();
 
       transactional = configuration.transaction().transactionMode().isTransactional();
    }
@@ -285,26 +284,27 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          }
          return previousFuture.handle((expired, t) -> {
             if (t != null) {
-               boolean foundTimeout = false;
-               Throwable cause = t;
-               while (cause != null) {
-                  if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-                     foundTimeout = true;
-                     break;
-                  }
+               Throwable cause = CompletableFutures.extractException(t);
+               if (cause instanceof RemoteException) {
                   cause = cause.getCause();
                }
-               if (foundTimeout) {
+               // Note this exception is from a prior registered stage, not our own. If the prior one got a TimeoutException
+               // we try to reregister our write to do a remove expired call. This can happen if a read
+               // spawned remove expired times out as it has a 0 lock acquisition timeout. We don't want to propagate
+               // the TimeoutException to the caller of the write command as it is unrelated.
+               // Note that the remove expired command is never "retried" itself.
+               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
                   if (trace) {
                      log.tracef("Encountered timeout exception in previous when doing a write - need to retry!");
                   }
-                  // Have to retry the command as the prior one most likely timed out
+                  // Have to try the command ourselves as the prior one timed out (this could be valid if a read based
+                  // remove expired couldn't acquire the try lock
                   return handleEitherExpiration(key, value, maxIdle, time, true);
                } else {
                   if (trace) {
-                     log.tracef(t, "Encountered exception in previous when doing a write - need to retry!");
+                     log.tracef(t, "Encountered exception in previous when doing a write - propagating!");
                   }
-                  return CompletableFutures.<Boolean>completedExceptionFuture(t);
+                  return CompletableFutures.<Boolean>completedExceptionFuture(cause);
                }
             } else {
                return expired == Boolean.TRUE ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
@@ -407,58 +407,105 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment) {
-      Long access = localLastAccess(key, value, segment);
-
-      LocalizedCacheTopology topology = distributionManager.getCacheTopology();
-      DistributionInfo info = topology.getDistribution(key);
-
-      if (trace) {
-         log.tracef("Asking all read owners %s for key: %s - for latest access time", info.readOwners(), key);
-      }
-
-      // Need to gather last access times
-      RetrieveLastAccessCommand rlac = cf.running().buildRetrieveLastAccessCommand(key, value, segment);
-      rlac.setTopologyId(topology.getTopologyId());
-
-      // In scattered cache read owners will only contain primary
-      return rpcManager.invokeCommand(info.readOwners(), rlac, new MaxResponseCollector<>(access),
-            rpcManager.getSyncRpcOptions()).toCompletableFuture();
+   protected CompletionStage<Boolean> touchEntryAndReturnIfExpired(InternalCacheEntry ice, int segment) {
+      Object key = ice.getKey();
+      return attemptTouchAndReturnIfExpired(key, segment)
+            .handle((expired, t) -> {
+               if (t != null) {
+                  Throwable innerT = CompletableFutures.extractException(t);
+                  if (innerT instanceof OutdatedTopologyException) {
+                     if (trace) {
+                        log.tracef("Touch received OutdatedTopologyException, retrying");
+                     }
+                     return attemptTouchAndReturnIfExpired(key, segment);
+                  }
+                  return CompletableFutures.<Boolean>completedExceptionFuture(t);
+               } else {
+                  return CompletableFuture.completedFuture(expired);
+               }
+            })
+            .thenCompose(Function.identity());
    }
 
-   static class MaxResponseCollector<T extends Comparable<T>> extends ValidResponseCollector<T> {
-      T highest;
+   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(Object key, int segment) {
+      LocalizedCacheTopology lct = distributionManager.getCacheTopology();
 
-      MaxResponseCollector(T highest) {
-         this.highest = highest;
-      }
+      TouchCommand touchCommand = cf.running().buildTouchCommand(key, segment);
+      touchCommand.setTopologyId(lct.getTopologyId());
 
-      @Override
-      public T finish() {
-         return highest;
-      }
+      CompletionStage<Boolean> remoteStage = invokeTouchCommandRemotely(touchCommand, lct, segment);
+      touchCommand.init(componentRegistry, false);
+      CompletableFuture<Object> localStage = touchCommand.invokeAsync();
 
-      @Override
-      protected T addValidResponse(Address sender, ValidResponse response) {
-         T value = (T) response.getResponseValue();
-         if (trace) {
-            log.tracef("Received response %s from %s when requesting access time for max idle", value, sender);
+      return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
+         if (remoteTouch == Boolean.TRUE && localTouch == Boolean.TRUE) {
+            return Boolean.FALSE;
          }
-         if (value != null && (highest == null || highest.compareTo(value) < 0)) {
-            highest = value;
+         return Boolean.TRUE;
+      });
+   }
+
+   private CompletionStage<Boolean> invokeTouchCommandRemotely(TouchCommand touchCommand, LocalizedCacheTopology lct,
+         int segment) {
+      boolean isScattered = configuration.clustering().cacheMode().isScattered();
+      DistributionInfo di = lct.getSegmentDistribution(segment);
+      // Scattered any node could be a backup, so we have to touch all members
+      List<Address> owners =  isScattered ? lct.getActualMembers() : di.writeOwners();
+      return rpcManager.invokeCommand(owners, touchCommand,
+            isScattered ? new ScatteredTouchResponseCollector() : new TouchResponseCollector(),
+            rpcManager.getSyncRpcOptions());
+   }
+
+   private static abstract class AbstractTouchResponseCollector extends ValidResponseCollector<Boolean> {
+      @Override
+      protected Boolean addTargetNotFound(Address sender) {
+         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+      }
+
+      @Override
+      protected Boolean addException(Address sender, Exception exception) {
+         if (exception instanceof CacheException) {
+            throw (CacheException) exception;
+         }
+         throw new CacheException(exception);
+      }
+   }
+
+   private static class ScatteredTouchResponseCollector extends AbstractTouchResponseCollector {
+
+      @Override
+      public Boolean finish() {
+         // No other node was touched
+         return Boolean.FALSE;
+      }
+
+      @Override
+      protected Boolean addValidResponse(Address sender, ValidResponse response) {
+         Boolean touched = (Boolean) response.getResponseValue();
+         if (touched == Boolean.TRUE) {
+            // Return early if any node touched the value - as SCATTERED only exists on a single backup!
+            // TODO: what if the read was when one of the backups or primary died?
+            return Boolean.TRUE;
          }
          return null;
       }
+   }
 
+   private static class TouchResponseCollector extends AbstractTouchResponseCollector {
       @Override
-      protected T addTargetNotFound(Address sender) {
-         // We don't care about a node leaving
-         return null;
+      public Boolean finish() {
+         // If all were touched, then the value isn't expired
+         return Boolean.TRUE;
       }
 
       @Override
-      protected T addException(Address sender, Exception exception) {
-         throw ResponseCollectors.wrapRemoteException(sender, exception);
+      protected Boolean addValidResponse(Address sender, ValidResponse response) {
+         Boolean touched = (Boolean) response.getResponseValue();
+         if (touched == Boolean.FALSE) {
+            // Return early if any value wasn't touched!
+            return Boolean.FALSE;
+         }
+         return null;
       }
    }
 }
