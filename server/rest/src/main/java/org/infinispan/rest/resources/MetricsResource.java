@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OPENMETRICS_TYPE;
@@ -33,9 +34,14 @@ public final class MetricsResource implements ResourceHandler {
 
    private static final String METRICS_PATH = "/metrics";
 
-   private final MetricsRequestHandler requestHandler = new MetricsRequestHandler();
+   private MetricsRequestHandler requestHandler;
 
    public MetricsResource() {
+      try {
+         requestHandler = new MetricsRequestHandler();
+      } catch (NoClassDefFoundError e) {
+         // missing dependency ?
+      }
    }
 
    @Override
@@ -47,6 +53,12 @@ public final class MetricsResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> metrics(RestRequest restRequest) {
+      if (requestHandler == null) {
+         RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder()
+               .status(NOT_IMPLEMENTED).entity("Metrics are not available!");
+         return completedFuture(builder.build());
+      }
+
       try {
          List<String> accept = restRequest.headers(HttpHeaderNames.ACCEPT.toString());
 

@@ -265,7 +265,7 @@ public class Generator {
                   attribute.boxedType.equals("java.lang.Short") || attribute.boxedType.equals("java.lang.Byte") ||
                   attribute.boxedType.equals("java.lang.Float") || attribute.boxedType.equals("java.lang.Double") ||
                   attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger"))) {
-         return "(java.util.function.Function<" + clazz.qualifiedName + ", " + attribute.boxedType + ">) "
+         return "(java.util.function.Function<" + clazz.qualifiedName + ", ?>) "
                + (attribute.useSetter ? clazz.qualifiedName + "::" : "_x -> _x.") + attribute.propertyAccessor;
       }
       return "null";
@@ -274,8 +274,8 @@ public class Generator {
    private String makeSetterFunction(Model.AnnotatedType clazz, Model.MAttribute attribute) {
       // no need for setter unless it is a histogram or timer
       if (attribute.attribute.dataType() == DataType.HISTOGRAM || attribute.attribute.dataType() == DataType.TIMER) {
-         return "(java.util.function.BiConsumer<" + clazz.qualifiedName + ", " + attribute.boxedType + ">) "
-               + (attribute.useSetter ? clazz.qualifiedName + "::" + attribute.propertyAccessor : "(_x, _y) -> _x." + attribute.propertyAccessor + " = _y");
+         return "(" + clazz.qualifiedName + " _x, Object _y) -> _x." + attribute.propertyAccessor
+               + (attribute.useSetter ? "((" + attribute.boxedType + ") _y)" : " = (" + attribute.boxedType + ") _y");
       }
       return "null";
    }
@@ -359,8 +359,7 @@ public class Generator {
       }
    }
 
-   public static AbstractMap.SimpleEntry<String, Set<String>> readModuleClass(Filer filer,
-                                                                              String moduleImplementationName)
+   public static Map.Entry<String, Set<String>> readModuleClass(Filer filer, String moduleImplementationName)
       throws IOException {
       String moduleImplPath = String.format("%s.java", moduleImplementationName.replace(".", "/"));
       try {
