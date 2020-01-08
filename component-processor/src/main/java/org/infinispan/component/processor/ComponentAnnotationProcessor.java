@@ -4,7 +4,6 @@ import static org.infinispan.component.processor.AnnotationTypeValuesExtractor.g
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -161,8 +160,8 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          return;
       }
 
-      AbstractMap.SimpleEntry<String, Set<String>> moduleClassAndPackages =
-         Generator.readModuleClass(filer(), moduleImplementationName);
+      Map.Entry<String, Set<String>> moduleClassAndPackages =
+            Generator.readModuleClass(filer(), moduleImplementationName);
       if (moduleClassAndPackages == null) {
          info(null, "Ignoring removed or renamed module implementation %s", moduleImplementationName);
          return;
