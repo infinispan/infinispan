@@ -117,7 +117,7 @@ public class ApplicationMetricsRegistry {
             continue;
          }
 
-         Supplier getter;
+         Supplier<?> getter;
          try {
             getter = resourceDMBean.getAttributeGetter(attrName);
             if (getter == null) {

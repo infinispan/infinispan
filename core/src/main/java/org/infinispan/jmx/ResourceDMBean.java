@@ -168,8 +168,14 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          }
       }
 
-      Method setter = attributeMetadata.isWritable() ? findSetter(objectClass, attributeMetadata.getName()) : null;
-      Method getter = findGetter(objectClass, attributeMetadata.getName());
+      Method setter = null;
+      Method getter = null;
+      try {
+         setter = attributeMetadata.isWritable() ? findSetter(objectClass, attributeMetadata.getName()) : null;
+         getter = findGetter(objectClass, attributeMetadata.getName());
+      } catch (NoClassDefFoundError e) {
+         // missing dependency ?
+      }
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
             attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
             attributeMetadata.isIs(), getter, setter, attributeMetadata.getterFunction(), attributeMetadata.setterFunction());
@@ -312,7 +318,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       }
    }
 
-   private Throwable getRootCause(Throwable throwable) {
+   private static Throwable getRootCause(Throwable throwable) {
       Throwable cause;
       while ((cause = throwable.getCause()) != null) {
          throwable = cause;
