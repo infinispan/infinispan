@@ -44,7 +44,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
 
    public static final String CACHE_NAME = "test-cache";
    public static final String PROTO_FILE = "file.proto";
-   public static final int ENTRIES = 10;
+   public static final int ENTRIES = 2;
 
    private final AtomicInteger serverCount = new AtomicInteger(0);
 

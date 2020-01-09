@@ -54,13 +54,11 @@ public final class TxQueryInterceptor extends DDAsyncInterceptor {
          oldValues = Collections.emptyMap();
       }
       AbstractCacheTransaction transaction = txCtx.getCacheTransaction();
-      Set<Object> keys = transaction.getAffectedKeys();
-      if (!ctx.isOriginLocal() || transaction.getModifications().stream().anyMatch(mod -> mod.hasAnyFlag(FlagBitSets.SKIP_INDEXING))) {
-         keys = transaction.getModifications().stream()
-               .filter(mod -> !mod.hasAnyFlag(FlagBitSets.SKIP_INDEXING))
-               .flatMap(mod -> mod.getAffectedKeys().stream())
-               .collect(Collectors.toSet());
-      }
+      Set<Object> keys = transaction.getAllModifications().stream()
+            .filter(mod -> !mod.hasAnyFlag(FlagBitSets.SKIP_INDEXING))
+            .flatMap(mod -> mod.getAffectedKeys().stream())
+            .collect(Collectors.toSet());
+
       for (Object key : keys) {
          CacheEntry entry = txCtx.lookupEntry(key);
          if (entry != null) {
