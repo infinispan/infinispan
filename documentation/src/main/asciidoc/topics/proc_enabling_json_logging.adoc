@@ -5,17 +5,19 @@
 Ensure that {brandname} is not running. You cannot dynamically enable log handlers.
 
 .Procedure
-. Open `{server_home}/${infinispan.server.root}/conf/logging.properties` with any text editor.
-. Add `JSON-FILE` as a log handler, for example:
+. Open `{server_home}/${infinispan.server.root}/conf/log4j2.xml` with any text editor.
+. Uncomment the `JSON-FILE` appender and comment out the `FILE` appender:
 +
-[source,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs=attributes+]
 ----
-logger.handlers=CONSOLE,FILE,JSON-FILE
+      <!--<AppenderRef ref="FILE"/>-->
+      <AppenderRef ref="JSON-FILE"/>
 ----
 +
-. Optionally configure the JSON log handler and formatter.
-.. Use the `handler.JSON-FILE` property to configure the JSON log handler.
-.. Use the `formatter.JSON-FORMATTER` property to configure the JSON log formatter.
+. Optionally configure the JSON
+link:https://logging.apache.org/log4j/2.x/manual/appenders.html#RollingFileAppender[appender]
+and
+link:https://logging.apache.org/log4j/2.x/manual/layouts.html#JSONLayout[ layout].
 . Save and close `logging.properties`.
 
 When you start {brandname}, it writes each log message as a JSON map in the following file: +

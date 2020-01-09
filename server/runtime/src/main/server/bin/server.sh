@@ -21,7 +21,7 @@ while true; do
    else
       # Execute the JVM in the background
       eval \"$JAVA\" $JAVA_OPTS \
-         -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
+         -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
          -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
          -classpath \""$CLASSPATH"\" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS" "&"
       ISPN_PID=$!

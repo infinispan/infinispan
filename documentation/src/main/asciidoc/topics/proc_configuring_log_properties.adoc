@@ -1,8 +1,9 @@
 = Configuring {brandname} Log Properties
-You configure {brandname} logs with `logging.properties`, which is a
-standard Java properties file with the `property=value` format.
+
+You configure {brandname} logs with `log4j2.xml`, which is described in the
+link:https://logging.apache.org/log4j/2.x/manual[Log4j 2 manual].
 
 .Procedure
-. Open `{server_home}/${infinispan.server.root}/conf/logging.properties` with any text editor.
-. Configure logging properties as appropriate.
-. Save and close `logging.properties`.
+. Open `{server_home}/${infinispan.server.root}/conf/log4j2.xml` with any text editor.
+. Change logging configuration as appropriate.
+. Save and close `log4j2.xml`.

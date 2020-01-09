@@ -1,19 +1,20 @@
-= Log Formatters
-Log formatters:
+= Log Patterns
 
-* Configure log handlers and define the appearance of log messages.
-* Are strings that use syntax based on the `java.util.logging.Formatter` class.
+The `CONSOLE` and `FILE` appenders use a
+link:https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout[`PatternLayout`]
+to format the log messages according to a *pattern*.
 
-An example is the default pattern for messages with the FILE log handler: +
-`%d{yyyy-MM-dd HH\:mm\:ss,SSS} %-5p [%c] (%t) %s%e%n`
+An example is the default pattern in the FILE appender: +
+`%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable%n`
 
-* `%d` adds the current time and date.
-* `%-5p` specifies the log level.
-* `%c` specifies the logging category.
+* `%d{yyyy-MM-dd HH:mm:ss,SSS}` adds the current time and date.
+* `%-5p` specifies the log level, aligned to the right.
 * `%t` adds the name of the current thread.
-* `%s` specifies the simple log message.
-* `%e` adds the exception stack trace.
+* `%c{1}` adds the short name of the logging category.
+* `%m` adds the log message.
+* `%throwable` adds the exception stack trace.
 * `%n` adds a new line.
 
-.Reference
-link:https://docs.oracle.com/en/java/javase/11/docs/api/java.logging/java/util/logging/Formatter.html[java.util.logging.Formatter]
+Patterns are fully described in
+link:https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout[the `PatternLayout` documentation]
+.
