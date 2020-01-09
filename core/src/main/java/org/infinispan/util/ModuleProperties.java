@@ -1,9 +1,11 @@
 package org.infinispan.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,8 +36,33 @@ public final class ModuleProperties {
    private Map<Byte, ModuleCommandInitializer> commandInitializers;
    private Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
+   private static final String QUERY_LIFECYCLE = "org.infinispan.query.impl.LifecycleManager";
+   private static final String REMOTE_QUERY_LIFECYCLE = "org.infinispan.query.remote.impl.LifecycleManager";
+
    public static Collection<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
-      return ServiceFinder.load(ModuleLifecycle.class, cl);
+      Collection<ModuleLifecycle> moduleLifecycles = ServiceFinder.load(ModuleLifecycle.class, cl);
+      return addModuleDependency(moduleLifecycles, REMOTE_QUERY_LIFECYCLE, QUERY_LIFECYCLE);
+   }
+
+   /**
+    * Change the order of the discovered modules to make sure dependencies are processed first.
+    *
+    * @param modules The resolved modules
+    * @param moduleName The module name to add a dependency
+    * @param dependencyName The dependency of the module, that must be processed first
+    */
+   private static Collection<ModuleLifecycle> addModuleDependency(Collection<ModuleLifecycle> modules,
+                                                                  String moduleName, String dependencyName) {
+      List<ModuleLifecycle> sorted = new ArrayList<>(modules);
+      int mainIndex = -1, depIndex = -1;
+      for (int i = 0; i < sorted.size(); i++) {
+         String name = sorted.get(i).getClass().getName();
+         if (moduleName.equals(name)) mainIndex = i;
+         if (dependencyName.equals(name)) depIndex = i;
+      }
+      if (depIndex < mainIndex || mainIndex == -1) return modules;
+      Collections.swap(sorted, mainIndex, depIndex);
+      return sorted;
    }
 
    /**
