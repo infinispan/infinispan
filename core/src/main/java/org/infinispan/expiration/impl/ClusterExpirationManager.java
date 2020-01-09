@@ -35,6 +35,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -288,26 +289,27 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          }
          return previousFuture.handle((expired, t) -> {
             if (t != null) {
-               boolean foundTimeout = false;
-               Throwable cause = t;
-               while (cause != null) {
-                  if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-                     foundTimeout = true;
-                     break;
-                  }
+               Throwable cause = CompletableFutures.extractException(t);
+               if (cause instanceof RemoteException) {
                   cause = cause.getCause();
                }
-               if (foundTimeout) {
+               // Note this exception is from a prior registered stage, not our own. If the prior one got a TimeoutException
+               // we try to reregister our write to do a remove expired call. This can happen if a read
+               // spawned remove expired times out as it has a 0 lock acquisition timeout. We don't want to propagate
+               // the TimeoutException to the caller of the write command as it is unrelated.
+               // Note that the remove expired command is never "retried" itself.
+               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
                   if (trace) {
                      log.tracef("Encountered timeout exception in previous when doing a write - need to retry!");
                   }
-                  // Have to retry the command as the prior one most likely timed out
+                  // Have to try the command ourselves as the prior one timed out (this could be valid if a read based
+                  // remove expired couldn't acquire the try lock
                   return handleEitherExpiration(key, value, maxIdle, time, true);
                } else {
                   if (trace) {
-                     log.tracef(t, "Encountered exception in previous when doing a write - need to retry!");
+                     log.tracef(t, "Encountered exception in previous when doing a write - propagating!");
                   }
-                  return CompletableFutures.<Boolean>completedExceptionFuture(t);
+                  return CompletableFutures.<Boolean>completedExceptionFuture(cause);
                }
             } else {
                return expired == Boolean.TRUE ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
@@ -340,10 +342,10 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
       if (expiredMortal) {
          CompletableFuture<Boolean> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, isWrite);
+         // We don't want to block the user while the remove expired is happening for lifespan on a read
          if (waitOnLifespanExpiration(isWrite)) {
             return future;
          }
-         // We don't want to block the user while the remove expired is happening for lifespan on a read
          return CompletableFutures.completedTrue();
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
