@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertNull;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
@@ -69,9 +71,10 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
          InvocationContext context = (InvocationContext) invocation.getArguments()[0];
          log.debugf("wrapEntryForWriting invoked with %s", context);
 
-         Object mvccEntry = invocation.callRealMethod();
+         CompletionStage<Void> stage = (CompletionStage<Void>) invocation.callRealMethod();
+         CompletionStages.join(stage);
          assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
-         return mvccEntry;
+         return stage;
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), any(), anyInt(),
                                                       anyBoolean(), anyBoolean());
 
