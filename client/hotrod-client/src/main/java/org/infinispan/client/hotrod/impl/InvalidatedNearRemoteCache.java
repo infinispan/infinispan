@@ -124,11 +124,13 @@ public class InvalidatedNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
 
    @Override
    public void start() {
+      super.start();
       nearcache.start(this);
    }
 
    @Override
    public void stop() {
       nearcache.stop(this);
+      super.stop();
    }
 }
