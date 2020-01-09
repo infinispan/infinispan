@@ -126,7 +126,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
    public static final String DEFAULT_SERVER_STATIC_DIR = "static";
    public static final String DEFAULT_CONFIGURATION_FILE = "infinispan.xml";
-   public static final String DEFAULT_LOGGING_FILE = "logging.properties";
+   public static final String DEFAULT_LOGGING_FILE = "log4j2.xml";
    public static final String DEFAULT_CLUSTER_NAME = "cluster";
    public static final String DEFAULT_CLUSTER_STACK = "tcp";
    public static final int DEFAULT_BIND_PORT = 11222;

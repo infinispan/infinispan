@@ -3,9 +3,6 @@ package org.infinispan.server;
 import static org.infinispan.server.logging.Messages.MSG;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -13,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.StringJoiner;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.infinispan.commons.util.Version;
@@ -29,7 +25,7 @@ public class Bootstrap extends Main {
    private File loggingFile;
 
    static {
-      System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
+      System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
    }
 
    public Bootstrap(PrintStream stdOut, PrintStream stdErr, ExitHandler exitHandler, Properties properties) {
@@ -120,11 +116,9 @@ public class Bootstrap extends Main {
          loggingFile = Paths.get(confDir.getPath(), loggingFile.getPath()).toFile();
       }
 
-      try (InputStream is = new FileInputStream(loggingFile)) {
-         LogManager.getLogManager().readConfiguration(is);
-      } catch (IOException e) {
-         stdErr.printf("Could not load %s: %s", loggingFile, e.getMessage());
-         e.printStackTrace(stdErr);
+      System.setProperty("log4j.configurationFile", loggingFile.getAbsolutePath());
+      if (!loggingFile.canRead()) {
+         stdErr.printf("Cannot read %s", loggingFile);
          return;
       }
 

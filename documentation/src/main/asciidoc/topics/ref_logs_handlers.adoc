@@ -1,12 +1,13 @@
-= Log Handlers
-Log handlers define how {brandname} records log messages.
+= Log Appenders
+
+Log appenders define how {brandname} records log messages.
 
 CONSOLE::
 Write log messages to the host standard out (`stdout`) or standard error (`stderr`) stream. +
-Uses the `org.jboss.logmanager.handlers.ConsoleHandler` class by default.
+Uses the `org.apache.logging.log4j.core.appender.ConsoleAppender` class by default.
 FILE::
 Write log messages to a file. +
-Uses the `org.jboss.logmanager.handlers.PeriodicRotatingFileHandler` class by default.
+Uses the `org.apache.logging.log4j.core.appender.RollingFileAppender` class by default.
 JSON-FILE::
 Write log messages to a file in JSON format. +
-Uses the `org.jboss.logmanager.handlers.PeriodicRotatingFileHandler` class by default.
+Uses the `org.apache.logging.log4j.core.appender.RollingFileAppender` class by default.

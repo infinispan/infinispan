@@ -7,7 +7,7 @@ release of the server improves on previous versions and offers:
 * Small code-base with minimal duplication of existing functionality (e.g. configuration).
 * Embeddable: the server should allow for easy testability in both single and clustered configurations.
 * RESTful administration capabilities.
-* Logging with link:https://github.com/jboss-logging/jboss-logmanager[JBoss Log Manager].
+* Logging with link:https://logging.apache.org/log4j/2.x/[Apache Log4j 2].
 * Security with link:https://github.com/wildfly-security/wildfly-elytron[WildFly Elytron] SPIs.
 
 == Directory Structure
@@ -52,7 +52,7 @@ $ bin/server.sh -h
 ----
 
 == Logging Configuration
-You configure logging with `logging.properties` in the `server/conf` directory.
+You configure logging with `log4j2.xml` in the `server/conf` directory.
 
 == Configuration
 The server configuration extends the standard Infinispan configuration with the

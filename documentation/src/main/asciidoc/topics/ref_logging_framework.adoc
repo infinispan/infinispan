@@ -1,7 +1,14 @@
 = Logging Framework
-{brandname} uses the JBoss Logging Framework and delegates to logging providers in the following order:
 
-. JBoss Logging, if you are running {brandname} servers.
-. Apache Log4j, if `org.apache.log4j.LogManager` and `org.apache.log4j.Hierarchy` are on the classpath.
-. LogBack, if `ch.qos.logback.classic.Logger` is on the classpath.
-. JDK logging (`java.util.logging`), if no other logging provider is available.
+{brandname} uses the
+link:https://github.com/jboss-logging/jboss-logging[JBoss Logging] logging framework.
+JBoss Logging acts as a delegator to either JBoss Log Manager, Apache Log4j 2/1.2, Slf4j or JDK Logging.
+
+Normally JBoss Logging picks the first implementation it finds in the classpath,
+but you can control which implementation is selected with a system property.
+E.g. `-Dorg.jboss.logging.provider=jboss` selects the JBoss Log Manager implementation.
+
+The server uses Apache Log4j 2.x, and the configuration is in
+link:https://github.com/infinispan/infinispan/blob/master/server/runtime/src/main/server/server/conf/log4j2.xml[`conf/log4j2.xml`].
+
+You can also use the server logging configuration a base for your application's logging configuration in embedded mode, and you can pass it to your system via system parameter (e.g. `-Dlog4j.configurationFile=file:/path/to/log4j2.xml`).

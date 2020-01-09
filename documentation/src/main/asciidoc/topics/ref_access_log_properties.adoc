@@ -1,14 +1,15 @@
 = Access Log Properties
+
 The default format for access logs is as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-`%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n`
+`%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n`
 ----
 
 The preceding format creates log entries such as the following:
 
-`127.0.0.1 - [DD/MM/YYYY:HH:MM:SS] "PUT /rest/v2/caches/default/key HTTP/1.1" 404 5 77 10`
+`127.0.0.1 - [DD/MM/YYYY:HH:MM:SS +0000] "PUT /rest/v2/caches/default/key HTTP/1.1" 404 5 77 10`
 
 Logging properties use the `%X{name}` notation and let you modify the format of access logs. The following are the default logging properties:
 

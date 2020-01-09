@@ -218,7 +218,7 @@
                        <build.directory>${project.build.directory}</build.directory>
                        <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
 
-                       <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
+                       <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                        <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                        <ansi.strip>${ansi.strip}</ansi.strip>
                        <!-- Log the correct thread name after we call Thread.setName(),

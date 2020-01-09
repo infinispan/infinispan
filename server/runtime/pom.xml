@@ -119,12 +119,23 @@
          <artifactId>agroal-pool</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.jboss.logmanager</groupId>
-         <artifactId>jboss-logmanager</artifactId>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-api</artifactId>
+         <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.slf4j</groupId>
-         <artifactId>slf4j-jboss-logmanager</artifactId>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-core</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-slf4j-impl</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-jul</artifactId>
          <scope>compile</scope>
       </dependency>
       <dependency>
@@ -222,28 +233,6 @@
                            <outputDirectory>${server.output.dir}/static/console</outputDirectory>
                         </artifactItem>
                      </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>enforce-banned-dependencies</id>
-                  <goals>
-                     <goal>enforce</goal>
-                  </goals>
-                  <configuration>
-                     <rules>
-                        <bannedDependencies>
-                           <excludes>
-                              <exclude>org.apache.logging.log4j:log4j-slf4j-impl</exclude>
-                           </excludes>
-                        </bannedDependencies>
-                     </rules>
-                     <fail>true</fail>
                   </configuration>
                </execution>
             </executions>
@@ -435,7 +424,7 @@
                   <build.directory>${project.build.directory}</build.directory>
                   <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
 
-                  <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
+                  <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
                   <!-- Log the correct thread name after we call Thread.setName(),

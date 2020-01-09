@@ -12,6 +12,6 @@ DIRNAME=`dirname "$0"`
 
 eval \"$JAVA\" $JAVA_OPTS \
    -Dvisualvm.display.name=$PROCESS_NAME \
-   -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
+   -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
    -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
    -classpath \""$CLASSPATH"\" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS"
