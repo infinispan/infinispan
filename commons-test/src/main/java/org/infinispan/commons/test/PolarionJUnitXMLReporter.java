@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.xml.stream.XMLStreamException;
 
 import org.testng.ISuite;
@@ -29,6 +32,7 @@ import org.testng.internal.Utils;
  * @author <a href='mailto:afield[at]redhat[dot]com'>Alan Field</a>
  */
 public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListener {
+   public static final Pattern DUPLICATE_TESTS_MODULE_PATTERN = Pattern.compile(".*-(embedded|remote|v\\d+)");
    /**
     * keep lists of all the results
     */
@@ -307,22 +311,10 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
          }
 
          // module
-         if (moduleSuffix.contains("jcache")) {
-            if (moduleSuffix.contains("infinispan-jcache-remote")) {
-               result.append("remote");
-            } else {
-               result.append("embedded");
-            }
-         } else if (moduleSuffix.contains("hibernate")) {
-            if (moduleSuffix.endsWith("v51")) {
-               result.append("hibernate-51");
-            } else if (moduleSuffix.endsWith("v53")) {
-               result.append("hibernate-53");
-            } else {
-               throw new IllegalStateException("Cannot parse the hibernate submodule: " + moduleSuffix);
-            }
+         Matcher moduleMatcher = DUPLICATE_TESTS_MODULE_PATTERN.matcher(moduleSuffix);
+         if (moduleMatcher.matches()) {
+            result.append(moduleMatcher.group(1));
          }
-
       }
       // end
       if (result.indexOf("(") != -1) {
