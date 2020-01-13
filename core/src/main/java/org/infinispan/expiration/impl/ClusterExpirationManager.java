@@ -411,44 +411,53 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   protected CompletionStage<Boolean> touchEntry(InternalCacheEntry ice, int segment) {
+   protected CompletionStage<Boolean> touchEntryAndReturnIfExpired(InternalCacheEntry ice, int segment) {
       Object key = ice.getKey();
-      return attemptTouch(key, segment)
-            .thenApply((Function<Boolean, CompletionStage<Boolean>>) CompletableFuture::completedFuture)
-            .exceptionally(t -> {
-               if (t instanceof OutdatedTopologyException) {
-                  if (trace) {
-                     log.tracef("Touch received OutdatedTopologyException, retrying");
+      return attemptTouchAndReturnIfExpired(key, segment)
+            .handle((expired, t) -> {
+               if (t != null) {
+                  Throwable innerT = CompletableFutures.extractException(t);
+                  if (innerT instanceof OutdatedTopologyException) {
+                     if (trace) {
+                        log.tracef("Touch received OutdatedTopologyException, retrying");
+                     }
+                     return attemptTouchAndReturnIfExpired(key, segment);
                   }
-                  return attemptTouch(key, segment);
+                  return CompletableFutures.<Boolean>completedExceptionFuture(t);
+               } else {
+                  return CompletableFuture.completedFuture(expired);
                }
-               return CompletableFutures.completedExceptionFuture(t);
             })
             .thenCompose(Function.identity());
    }
 
-   private CompletionStage<Boolean> attemptTouch(Object key, int segment) {
+   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(Object key, int segment) {
       LocalizedCacheTopology lct = distributionManager.getCacheTopology();
-      DistributionInfo di = lct.getSegmentDistribution(segment);
 
-      boolean isScattered = configuration.clustering().cacheMode().isScattered();
-      List<Address> owners =  isScattered ? lct.getActualMembers() : di.writeOwners();
       TouchCommand touchCommand = cf.running().buildTouchCommand(key, segment);
       touchCommand.setTopologyId(lct.getTopologyId());
-      CompletionStage<Boolean> remoteStage = rpcManager.invokeCommand(owners, touchCommand,
-            isScattered ? new ScatteredTouchResponseCollector() : new TouchResponseCollector(),
-            rpcManager.getSyncRpcOptions());
+
+      CompletionStage<Boolean> remoteStage = invokeTouchCommandRemotely(touchCommand, lct, segment);
       touchCommand.init(componentRegistry, false);
       CompletableFuture<Object> localStage = touchCommand.invokeAsync();
 
       return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
-         // Response is whether the value should be treated as expired - thus if both local and remote were able to touch
-         // then the value is not expired
          if (remoteTouch == Boolean.TRUE && localTouch == Boolean.TRUE) {
             return Boolean.FALSE;
          }
          return Boolean.TRUE;
       });
+   }
+
+   private CompletionStage<Boolean> invokeTouchCommandRemotely(TouchCommand touchCommand, LocalizedCacheTopology lct,
+         int segment) {
+      boolean isScattered = configuration.clustering().cacheMode().isScattered();
+      DistributionInfo di = lct.getSegmentDistribution(segment);
+      // Scattered any node could be a backup, so we have to touch all members
+      List<Address> owners =  isScattered ? lct.getActualMembers() : di.writeOwners();
+      return rpcManager.invokeCommand(owners, touchCommand,
+            isScattered ? new ScatteredTouchResponseCollector() : new TouchResponseCollector(),
+            rpcManager.getSyncRpcOptions());
    }
 
    private static abstract class AbstractTouchResponseCollector extends ValidResponseCollector<Boolean> {

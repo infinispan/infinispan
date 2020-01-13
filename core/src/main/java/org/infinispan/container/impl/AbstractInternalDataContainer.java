@@ -122,10 +122,14 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public boolean touch(int segment, Object k, long currentTimeMillis) {
-      InternalCacheEntry<K, V> entry = peek(segment, k);
-      if (entry != null) {
-         entry.touch(currentTimeMillis);
-         return true;
+      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      if (entries != null) {
+         // We use get to also update eviction recency access
+         InternalCacheEntry<K, V> entry = entries.get(k);
+         if (entry != null) {
+            entry.touch(currentTimeMillis);
+            return true;
+         }
       }
       return false;
    }

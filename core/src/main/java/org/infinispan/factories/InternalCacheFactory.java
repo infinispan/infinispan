@@ -262,25 +262,11 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       @Override
       public V get(Object key) {
-         InternalCacheEntry<K, V> ice = syncGet(key);
+         InternalCacheEntry<K, V> ice = getCacheEntry(key);
          if (ice != null) {
             return ice.getValue();
          }
          return null;
-      }
-
-      InternalCacheEntry<K, V> syncGet(Object key) {
-         int segment = keyPartitioner.getSegment(key);
-         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
-         if (ice != null) {
-            if (ice.canExpire()) {
-               CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
-               if (CompletionStages.join(stage)) {
-                  ice = null;
-               }
-            }
-         }
-         return ice;
       }
 
       @Override
@@ -307,35 +293,42 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
 
       @Override
-      public CacheEntry<K, V> getCacheEntry(Object key) {
-         return syncGet(key);
-      }
-
-      @Override
-      public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
-         return asyncGet(key);
-      }
-
-      private CompletableFuture<CacheEntry<K, V>> asyncGet(Object key) {
+      public InternalCacheEntry<K, V> getCacheEntry(Object key) {
          int segment = keyPartitioner.getSegment(key);
          InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
          if (ice != null) {
             if (ice.canExpire()) {
                CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
-               if (CompletionStages.isCompletedSuccessfully(stage)) {
-                  return CompletableFutures.completedNull();
-               } else {
-                  return stage.thenApply(expired -> {
-                     if (expired == Boolean.TRUE) {
-                        return null;
-                     }
-                     return (CacheEntry<K, V>) ice;
-                  }).toCompletableFuture();
+               if (CompletionStages.join(stage)) {
+                  ice = null;
                }
             }
          }
+         return ice;
+      }
+
+      @Override
+      public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+         int segment = keyPartitioner.getSegment(key);
+         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
          if (ice == null) {
             return CompletableFutures.completedNull();
+         }
+         if (ice.canExpire()) {
+            CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
+            if (CompletionStages.isCompletedSuccessfully(stage)) {
+               if (CompletionStages.join(stage)) {
+                  return CompletableFutures.completedNull();
+               }
+               return CompletableFuture.completedFuture(ice);
+            } else {
+               return stage.thenApply(expired -> {
+                  if (expired == Boolean.TRUE) {
+                     return null;
+                  }
+                  return (CacheEntry<K, V>) ice;
+               }).toCompletableFuture();
+            }
          }
          return CompletableFuture.completedFuture(ice);
       }

@@ -27,7 +27,7 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    /**
     * @return true if this entry can expire via max idle, false otherwise
     */
-   default boolean isMaxIdleExpirable() {
+   default boolean canExpireMaxIdle() {
       return false;
    }
 

@@ -279,13 +279,21 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
             });
          }
          return expiredStage;
-      } else if (!isWrite && ice.isMaxIdleExpirable()) {
-         return touchEntry(ice, segment);
+      } else if (!isWrite && ice.canExpireMaxIdle()) {
+         return touchEntryAndReturnIfExpired(ice, segment);
       }
       return CompletableFutures.completedFalse();
    }
 
-   protected CompletionStage<Boolean> touchEntry(InternalCacheEntry entry, int segment) {
+   /**
+    * Response is whether the value should be treated as expired - thus if both local and remote were able to touch
+    * then the value is not expired. Note this is different then the touch command's response normally as that mentions
+    * if it was touched or not
+    * @param entry
+    * @param segment
+    * @return
+    */
+   protected CompletionStage<Boolean> touchEntryAndReturnIfExpired(InternalCacheEntry entry, int segment) {
       TouchCommand touchCommand = cf.running().buildTouchCommand(entry.getKey(), segment);
       touchCommand.init(componentRegistry, false);
       CompletableFuture<Boolean> future = (CompletableFuture) touchCommand.invokeAsync();

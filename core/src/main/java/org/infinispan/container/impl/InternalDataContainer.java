@@ -61,11 +61,12 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
    InternalCacheEntry<K, V> peek(int segment, Object k);
 
    /**
-    *
-    * @param segment
-    * @param k
-    * @param currentTimeMillis
-    * @return true if the entry timestamp was updated
+    * Touches an entry in the data container. This will update the last access time of the entry as well as count this
+    * as a access for eviction based recency.
+    * @param segment segment for the key
+    * @param k key under which entry is stored
+    * @param currentTimeMillis the current time in milliseconds to touch the entry with
+    * @return true if the entry timestamp was touched
     */
    boolean touch(int segment, Object k, long currentTimeMillis);
 

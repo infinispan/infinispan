@@ -343,21 +343,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testMaxIdleReadNodeDiesPrimary() {
-      testMaxIdleNodeDies(c -> {
-         if (cacheMode.isScattered()) {
-            return new MagicKey(c);
-         }
-         return new MagicKey(c, cache0);
-      });
+      testMaxIdleNodeDies(c -> getKeyForCache(c, cache0));
    }
 
    public void testMaxIdleReadNodeDiesBackup() {
-      testMaxIdleNodeDies(c -> {
-         if (cacheMode.isScattered()) {
-            return new MagicKey(cache0);
-         }
-         return new MagicKey(cache0, c);
-      });
+      testMaxIdleNodeDies(c -> getKeyForCache(cache0, c));
    }
 
    private void testMaxIdleNodeDies(Function<Cache<?, ?>, MagicKey> keyToUseFunction) {
