@@ -132,4 +132,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot find a network address which matches the supplied configuration", id = 80033)
    CacheConfigurationException invalidNetworkConfiguration();
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(value = "Server '%s' listening on %s://%s:%d", id = 80034)
+   void endpointUrl(Object name, String proto, String host, int port);
 }

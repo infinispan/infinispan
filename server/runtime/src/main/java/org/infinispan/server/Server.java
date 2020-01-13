@@ -324,6 +324,10 @@ public class Server implements ServerManagement, AutoCloseable {
          endpointServer.start(new RoutingTable(routes.keySet()));
          protocolServers.put("endpoint", endpointServer);
          log.protocolStarted(endpointServer.getName(), singlePortRouter.host(), singlePortRouter.port());
+         log.endpointUrl(
+               Util.requireNonNullElse(cm.getAddress(), "local"),
+               singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
+         );
          // Change status
          this.status = ComponentStatus.RUNNING;
          log.serverStarted(Version.getBrandName(), Version.getVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
