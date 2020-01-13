@@ -79,9 +79,8 @@ public class EntryFactoryImpl implements EntryFactory {
                addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
             }
          } else if (isOwner || readEntry.isL1Entry()) {
-            CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(readEntry, segment, false);
-
-            if (expiredStage != null) {
+            if (readEntry.canExpire()) {
+               CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(readEntry, segment, false);
                if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                   Boolean expired = CompletionStages.join(expiredStage);
                   handleExpiredEntryContextAddition(expired, ctx, readEntry, key, isOwner);
@@ -107,13 +106,6 @@ public class EntryFactoryImpl implements EntryFactory {
       } else if (isOwner) {
          addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
       }
-   }
-
-   private CompletionStage<Boolean> handlePossibleExpiredEntry(InternalCacheEntry ice, int segment, boolean isWrite) {
-      if (ice.canExpire()) {
-         return expirationManager.handlePossibleExpiration(ice, segment, isWrite);
-      }
-      return null;
    }
 
    private void addReadEntryToContext(InvocationContext ctx, CacheEntry cacheEntry, Object key) {
@@ -163,8 +155,8 @@ public class EntryFactoryImpl implements EntryFactory {
             if (ice == null) {
                addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
             } else {
-               CompletionStage<Boolean> expiredStage = handlePossibleExpiredEntry(ice, segment, true);
-               if (expiredStage != null) {
+               if (ice.canExpire()) {
+                  CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(ice, segment, true);
                   if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                      Boolean expired = CompletionStages.join(expiredStage);
                      handleWriteExpiredEntryContextAddition(expired, ctx, ice, key, isRead);

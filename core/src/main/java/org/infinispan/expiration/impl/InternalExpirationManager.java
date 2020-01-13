@@ -73,5 +73,13 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
       CompletionStages.join(handleInStoreExpirationInternal(marshalledEntry));
    }
 
+   /**
+    * Handles processing for an entry that may be expired. This will remove the entry if it is expired, otherwise may
+    * touch if it uses max idle. The return stage will contain whether the entry was actually expired or not
+    * @param entry entry that may be expired
+    * @param segment the segment of the entry
+    * @param isWrite whether the command that saw the expired value was a write or not
+    * @return a stage that when complete will return if the entry was expired
+    */
    CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry<K, V> entry, int segment, boolean isWrite);
 }

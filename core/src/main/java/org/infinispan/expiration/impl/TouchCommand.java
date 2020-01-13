@@ -11,12 +11,20 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
+/**
+ * This command can be invoked to update a cache entry's recent access. This can involve updating its last access
+ * with max idle as well as recent eviction access times.
+ * <p>
+ * This command returns a Boolean that is whether this command was able to touch the value or not.
+ */
 public class TouchCommand extends BaseRpcCommand implements InitializableCommand, TopologyAffectedCommand {
    public static final byte COMMAND_ID = 66;
 
@@ -84,9 +92,17 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
    public CompletableFuture<Object> invokeAsync() {
       boolean touched = internalDataContainer.touch(segment, key, timeService.wallClockTime());
       if (distributionManager != null) {
-         int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
+         LocalizedCacheTopology lct = distributionManager.getCacheTopology();
+         int currentTopologyId = lct.getTopologyId();
          if (currentTopologyId != topologyId) {
             return CompletableFutures.completedExceptionFuture(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY);
+         }
+         DistributionInfo di = lct.getSegmentDistribution(segment);
+         // If our node is a write owner but not read owner, that means we may not have the value yet - so we just
+         // say we were touched anyways
+         // TODO: is this is an issue with concurrent state response and not touching the new value?
+         if (di.isWriteOwner() && !di.isReadOwner()) {
+            return CompletableFuture.completedFuture(Boolean.TRUE);
          }
       }
       return CompletableFuture.completedFuture(touched);
