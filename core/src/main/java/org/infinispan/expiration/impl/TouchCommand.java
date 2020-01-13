@@ -75,7 +75,10 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
    public void init(ComponentRegistry componentRegistry, boolean isRemote) {
       internalDataContainer = componentRegistry.getInternalDataContainer().running();
       timeService = componentRegistry.getTimeService();
-      distributionManager = componentRegistry.getDistributionManager();
+      // Invalidation cache doesn't set topology id - so we don't want to throw OTE in invokeAsync
+      if (!componentRegistry.getConfiguration().clustering().cacheMode().isInvalidation()) {
+         distributionManager = componentRegistry.getDistributionManager();
+      }
    }
 
    @Override
@@ -91,7 +94,9 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
    @Override
    public CompletableFuture<Object> invokeAsync() {
       boolean touched = internalDataContainer.touch(segment, key, timeService.wallClockTime());
-      if (distributionManager != null) {
+      // Hibernate currently disables clustered expiration manager, which means we can have a topology id of -1
+      // when using a clustered cache mode
+      if (distributionManager != null && topologyId != -1) {
          LocalizedCacheTopology lct = distributionManager.getCacheTopology();
          int currentTopologyId = lct.getTopologyId();
          if (currentTopologyId != topologyId) {

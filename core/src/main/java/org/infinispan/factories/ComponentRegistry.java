@@ -438,6 +438,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return cancellationService;
    }
 
+   public Configuration getConfiguration() {
+      return configuration;
+   }
+
    public ComponentRef<InternalConflictManager> getConflictManager() {
       return conflictManager;
    }
