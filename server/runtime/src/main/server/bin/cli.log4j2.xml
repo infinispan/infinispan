@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration name="InfinispanCLIConfig" monitorInterval="60">
+   <Appenders>
+      <!-- Colored output on the console -->
+      <Console name="STDOUT">
+         <PatternLayout
+                 pattern="%highlight{%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
+      </Console>
+      <File name="FILE" createOnDemand="true"
+                   fileName="cli.log">
+         <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable%n"/>
+      </File>
+   </Appenders>
+
+   <Loggers>
+      <Logger name="org.aesh" additivity="false" level="WARN">
+         <AppenderRef ref="STDOUT"/>
+      </Logger>
+
+      <Root level="INFO">
+         <AppenderRef ref="STDOUT" level="INFO"/>
+         <!-- AppenderRef ref="FILE" level="DEBUG"/ -->
+      </Root>
+   </Loggers>
+</Configuration>
