@@ -42,6 +42,7 @@ import org.infinispan.commons.util.SslContextFactory;
 import okhttp3.Authenticator;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -151,7 +152,9 @@ public class RestClientOkHttp implements RestClient {
    @Override
    public void close() throws IOException {
       httpClient.dispatcher().executorService().shutdownNow();
-      httpClient.connectionPool().evictAll();
+      ConnectionPool connectionPool = httpClient.connectionPool();
+      connectionPool.evictAll();
+
       if (httpClient.cache() != null) {
          httpClient.cache().close();
       }

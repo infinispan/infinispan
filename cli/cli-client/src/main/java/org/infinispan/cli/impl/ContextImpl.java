@@ -26,6 +26,7 @@ import org.infinispan.cli.connection.ConnectionFactory;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.cli.util.SystemUtils;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 
 /**
@@ -80,6 +81,7 @@ public class ContextImpl implements Context, AeshContext {
          connection.connect();
       } catch (AccessDeniedException accessDenied) {
          try {
+            Util.close(connection);
             String username = null;
             String password = null;
             if (shell != null) {
@@ -95,11 +97,11 @@ public class ContextImpl implements Context, AeshContext {
             }
             connection.connect(username, password);
          } catch (Exception e) {
-            connection = null;
+            disconnect();
             showError(shell, e);
          }
       } catch (IOException e) {
-         connection = null;
+         disconnect();
          showError(shell, e);
       }
       refreshPrompt();
@@ -157,10 +159,7 @@ public class ContextImpl implements Context, AeshContext {
    @Override
    public void disconnect() {
       if (connection != null) {
-         try {
-            connection.close();
-         } catch (IOException e) {
-         }
+         Util.close(connection);
          connection = null;
       }
       refreshPrompt();
