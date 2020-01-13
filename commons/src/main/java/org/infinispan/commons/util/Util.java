@@ -43,6 +43,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -1229,5 +1230,10 @@ public final class Util {
       } catch (ClassNotFoundException e) {
          return null;
       }
+   }
+
+   // TODO: Replace with Objects.requireNonNullElse(T obj, T defaultObj) when upgrading to JDK 9+
+   public static <T> T requireNonNullElse(T obj, T defaultObj) {
+      return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "defaultObj");
    }
 }
