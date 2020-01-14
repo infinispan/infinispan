@@ -1749,6 +1749,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          }
          return null;
       }
+
+      @Override
+      public String toString() {
+         return "ClusteredListenerInvocation{id=" + identifier + '}';
+      }
    }
 
    protected static class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
@@ -2031,6 +2036,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       @Override
       public boolean isSync() {
          return sync;
+      }
+
+      @Override
+      public String toString() {
+         return "BaseCacheEntryListenerInvocation{id=" + identifier + '}';
       }
    }
 
