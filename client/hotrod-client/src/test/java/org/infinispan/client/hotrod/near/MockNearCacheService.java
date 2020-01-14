@@ -46,13 +46,13 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       @Override
       public void put(K key, MetadataValue<V> value) {
          delegate.put(key, value);
-         events.add(new MockPutEvent<K, V>(key, value));
+         events.add(new MockPutEvent<>(key, value));
       }
 
       @Override
       public void putIfAbsent(K key, MetadataValue<V> value) {
          delegate.putIfAbsent(key, value);
-         events.add(new MockPutIfAbsentEvent<K, V>(key, value));
+         events.add(new MockPutIfAbsentEvent<>(key, value));
       }
 
       @Override
@@ -101,6 +101,11 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       final K key;
       MockRemoveEvent(K key) {
          this.key = key;
+      }
+
+      @Override
+      public String toString() {
+         return "MockRemoveEvent{key=" + key + '}';
       }
    }
    static class MockClearEvent extends MockEvent {}

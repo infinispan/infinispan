@@ -46,7 +46,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    @Override
    protected String parameters() {
-      return "storageType-" + storageType;
+      return "[storageType-" + storageType + "]";
    }
 
    @Override
@@ -96,12 +96,12 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
          newAssertClient.expectNoNearEvents();
          newAssertClient.get(1, "one").expectNearGetValue(1, null).expectNearPutIfAbsent(1, "one");
          newAssertClient.get(2, "two").expectNearGetValue(2, null).expectNearPutIfAbsent(2, "two");
-         newAssertClient.remove(1).expectNearRemove(1);
-         newAssertClient.remove(2).expectNearRemove(2);
+         newAssertClient.remove(1).expectNearRemove(1, assertClient);
+         newAssertClient.remove(2).expectNearRemove(2, assertClient);
       } finally {
          newAssertClient.stop();
       }
-      assertClient.resetEvents();
+      assertClient.expectNoNearEvents();
    }
 
    public void testGetNearCache() {
