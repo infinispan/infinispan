@@ -25,12 +25,14 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
-import org.infinispan.client.hotrod.event.ClientEvents;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.commons.util.Util;
 
-public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
-   private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners = new HashMap<>(4);
+public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
+
+   public static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = () -> ClientEvent.Type.CLIENT_CACHE_FAILOVER;
+
+   private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners = new HashMap<>(5);
 
    static {
       allowedListeners.put(ClientCacheEntryCreated.class, new Class[]{ClientCacheEntryCreatedEvent.class, ClientCacheEntryCustomEvent.class});
@@ -40,8 +42,9 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
       allowedListeners.put(ClientCacheFailover.class, new Class[]{ClientCacheFailoverEvent.class});
    }
 
-   final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
-   final AddClientListenerOperation op;
+   private final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
+
+   private final AddClientListenerOperation op;
 
    ClientEventDispatcher(AddClientListenerOperation op, SocketAddress address, Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables, String cacheName, Runnable cleanup) {
       super(cacheName, op.listener, op.listenerId, address, cleanup);
@@ -127,8 +130,9 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    protected void invokeFailoverEvent() {
       List<ClientListenerInvocation> callbacks = invocables.get(ClientCacheFailover.class);
       if (callbacks != null) {
-         for (ClientListenerInvocation callback : callbacks)
-            callback.invoke(ClientEvents.mkCachefailoverEvent());
+         for (ClientListenerInvocation callback : callbacks) {
+            callback.invoke(FAILOVER_EVENT_SINGLETON);
+         }
       }
    }
 
