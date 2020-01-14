@@ -7,11 +7,17 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.logging.Logger;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.status.StatusConsoleListener;
+import org.apache.logging.log4j.status.StatusData;
+import org.apache.logging.log4j.status.StatusLogger;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
@@ -99,42 +105,86 @@ public class Bootstrap extends Main {
    }
 
    public void runInternal() {
-      if (!serverRoot.isAbsolute()) {
-         serverRoot = serverRoot.getAbsoluteFile();
-      }
-      File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
-      if (configurationFile == null) {
-         configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
-      } else if (!configurationFile.isAbsolute()) {
-         configurationFile = Paths.get(confDir.getPath(), configurationFile.getPath()).toFile();
-      }
-      File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
-      properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, logDir.getAbsolutePath());
 
-      if (loggingFile == null) {
-         loggingFile = new File(confDir, Server.DEFAULT_LOGGING_FILE);
-      } else if (!loggingFile.isAbsolute()) {
-         loggingFile = Paths.get(confDir.getPath(), loggingFile.getPath()).toFile();
-      }
+      Server server = null;
+      Logger logger = null;
 
-      System.setProperty("log4j.configurationFile", loggingFile.getAbsolutePath());
-      if (!loggingFile.canRead()) {
-         stdErr.printf("Cannot read %s", loggingFile);
-         return;
-      }
+      try {
 
-      logJVMInformation();
+         if (!serverRoot.isAbsolute()) {
+            serverRoot = serverRoot.getAbsoluteFile();
+         }
+         File confDir = new File(serverRoot, Server.DEFAULT_SERVER_CONFIG);
+         if (configurationFile == null) {
+            configurationFile = new File(confDir, Server.DEFAULT_CONFIGURATION_FILE);
+         } else if (!configurationFile.isAbsolute()) {
+            configurationFile = Paths.get(confDir.getPath(), configurationFile.getPath()).toFile();
+         }
+         File logDir = new File(serverRoot, Server.DEFAULT_SERVER_LOG);
+         properties.putIfAbsent(Server.INFINISPAN_SERVER_LOG_PATH, logDir.getAbsolutePath());
 
-      Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
-      Server.log.serverStarting(Version.getBrandName());
-      Server.log.serverConfiguration(configurationFile.getAbsolutePath());
-      Server.log.loggingConfiguration(loggingFile.getAbsolutePath());
-      try (Server server = new Server(serverRoot, configurationFile, properties)) {
+         if (loggingFile == null) {
+            loggingFile = new File(confDir, Server.DEFAULT_LOGGING_FILE);
+         } else if (!loggingFile.isAbsolute()) {
+            loggingFile = Paths.get(confDir.getPath(), loggingFile.getPath()).toFile();
+         }
+
+         System.setProperty("log4j.configurationFile", loggingFile.getAbsolutePath());
+         if (!loggingFile.canRead()) {
+            throw new IllegalStateException(String.format("Cannot read %s", loggingFile));
+         }
+
+         logger = getBootLogger();
+
+         logJVMInformation(logger);
+
+         Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
+         Server.log.serverStarting(Version.getBrandName());
+         Server.log.serverConfiguration(configurationFile.getAbsolutePath());
+         Server.log.loggingConfiguration(loggingFile.getAbsolutePath());
+
+         server = new Server(serverRoot, configurationFile, properties);
          server.setExitHandler(exitHandler);
          server.run().get();
-      } catch (Exception e) {
-         Server.log.serverFailedToStart(Version.getBrandName(), e);
+
+      } catch (Exception e) { // when starting, all failures should be handled
+
+         if (logger != null) {
+            Server.log.serverFailedToStart(Version.getBrandName(), e);
+         } else {
+            // @Message(value = "%s Server failed to start", id = 80028)
+            // ISPN080028: brandName Server failed to start
+            stdErr.printf("ISPN%5d: %s Server failed to start -> %s", 80028, Version.getBrandName(), e.getMessage());
+         }
+
+      } finally {
+
+         if (server != null)
+            server.close();
       }
+   }
+
+   private Logger getBootLogger() {
+
+      List<String> errors = new ArrayList<>(0);
+
+      // the listener call will be in the same getLogger thread
+      StatusConsoleListener listener = new StatusConsoleListener(Level.ERROR) {
+         @Override
+         public void log(StatusData data) {
+            super.log(data);
+            errors.add(data.getFormattedStatus());
+         }
+      };
+      StatusLogger.getLogger().registerListener(listener);
+      Logger logger = Logger.getLogger("BOOT");
+      StatusLogger.getLogger().removeListener(listener);
+
+      if (errors.size() > 0) {
+         throw new IllegalStateException(errors.toString());
+      }
+
+      return logger;
    }
 
    @Override
@@ -161,9 +211,8 @@ public class Bootstrap extends Main {
       out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
    }
 
-   private void logJVMInformation() {
+   private void logJVMInformation(Logger logger) {
       RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-      Logger logger = Logger.getLogger("BOOT");
       logger.info("JVM " + runtimeMxBean.getVmName() + " " + runtimeMxBean.getVmVendor() + " " + runtimeMxBean.getVmVersion());
       StringJoiner sj = new StringJoiner(" ");
       runtimeMxBean.getInputArguments().forEach(s -> sj.add(s));
