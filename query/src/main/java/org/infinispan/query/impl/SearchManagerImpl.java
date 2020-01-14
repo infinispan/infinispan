@@ -107,12 +107,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    }
 
    @Override
-   @Deprecated
-   public <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes) {
-      return getQuery(luceneQuery, IndexedQueryMode.BROADCAST, classes);
-   }
-
-   @Override
    public void registerKeyTransformer(Class<?> keyClass, Class<? extends Transformer> transformerClass) {
       keyTransformationHandler.registerTransformer(keyClass, transformerClass);
    }
