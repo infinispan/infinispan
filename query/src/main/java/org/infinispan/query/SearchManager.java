@@ -49,15 +49,6 @@ public interface SearchManager {
    EntityContext buildQueryBuilderForClass(Class<?> entityType);
 
    /**
-    * @param luceneQuery
-    * @param classes
-    * @return
-    * @deprecated since 9.2, to be removed in 10.0; equivalent to {@code getQuery(luceneQuery, IndexedQueryMode.BROADCAST, classes)}
-    */
-   @Deprecated
-   <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes);
-
-   /**
     * The MassIndexer can be used to rebuild the Lucene indexes from the entries stored in Infinispan.
     *
     * @return the MassIndexer component
