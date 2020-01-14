@@ -325,13 +325,14 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          boolean storeByValue = configuration.isStoreByValue();
          // ReadWriteMap.evalMany is not that useful since it forces us to transfer keys
          // intermediary list to force all removes to be invoked before waiting for any
-         List<? extends SimpleEntry<? extends K, CompletableFuture<T>>> futures =
+         Iterator<? extends SimpleEntry<? extends K, CompletableFuture<T>>> futures =
                keys.stream()
                    .map(k -> new SimpleEntry<>(k, rw.eval(k, new Invoke<>(entryProcessor, arguments, !storeByValue))))
-                   .collect(Collectors.toList());
+                   .iterator();
 
          Map<K, EntryProcessorResult<T>> map = new HashMap<>();
-         for (SimpleEntry<? extends K, CompletableFuture<T>> e : futures) {
+         while (futures.hasNext()) {
+            SimpleEntry<? extends K, CompletableFuture<T>> e = futures.next();
             try {
                if (e.getValue().join() != null) {
                   map.put(e.getKey(), new SuccessEntryProcessorResult<>(e.getValue().join()));
@@ -513,9 +514,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       // Delete asynchronously and then wait for removals to complete
       AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-      cache.keySet().stream()
-           .map(cache::removeAsync)
-           .forEach(stage::dependsOn);
+      for (K key : cache.keySet()) {
+         stage.dependsOn(cache.removeAsync(key));
+      }
       try {
          CompletionStages.join(stage.freeze());
       } catch (CompletionException e) {
