@@ -25,6 +25,7 @@ public class Bootstrap extends Main {
    private File loggingFile;
 
    static {
+      System.setProperty("log4j2.contextSelector", "org.apache.logging.log4j.core.selector.BasicContextSelector");
       System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
    }
 
