@@ -411,9 +411,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   protected CompletionStage<Boolean> touchEntryAndReturnIfExpired(InternalCacheEntry ice, int segment) {
+   protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry ice, int segment) {
       Object key = ice.getKey();
-      return attemptTouchAndReturnIfExpired(key, segment)
+      return checkExpiredMaxIdle(key, segment)
             .handle((expired, t) -> {
                if (t != null) {
                   Throwable innerT = CompletableFutures.extractException(t);
@@ -421,7 +421,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                      if (trace) {
                         log.tracef("Touch received OutdatedTopologyException, retrying");
                      }
-                     return attemptTouchAndReturnIfExpired(key, segment);
+                     return checkExpiredMaxIdle(key, segment);
                   }
                   return CompletableFutures.<Boolean>completedExceptionFuture(t);
                } else {
@@ -431,7 +431,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             .thenCompose(Function.identity());
    }
 
-   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(Object key, int segment) {
+   private CompletionStage<Boolean> checkExpiredMaxIdle(Object key, int segment) {
       LocalizedCacheTopology lct = distributionManager.getCacheTopology();
 
       TouchCommand touchCommand = cf.running().buildTouchCommand(key, segment);
@@ -454,7 +454,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       boolean isScattered = configuration.clustering().cacheMode().isScattered();
       DistributionInfo di = lct.getSegmentDistribution(segment);
       // Scattered any node could be a backup, so we have to touch all members
-      List<Address> owners =  isScattered ? lct.getActualMembers() : di.writeOwners();
+      List<Address> owners = isScattered ? lct.getActualMembers() : di.writeOwners();
       return rpcManager.invokeCommand(owners, touchCommand,
             isScattered ? new ScatteredTouchResponseCollector() : new TouchResponseCollector(),
             rpcManager.getSyncRpcOptions());
