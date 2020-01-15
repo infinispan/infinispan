@@ -33,7 +33,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -284,10 +283,15 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          }
          return previousFuture.handle((expired, t) -> {
             if (t != null) {
-               Throwable cause = CompletableFutures.extractException(t);
-               if (cause instanceof RemoteException) {
-                  cause = cause.getCause();
-               }
+               // With optimistic transaction the TimeoutException is nested as the following:
+               // CompletionException
+               // -> caused by RollbackException
+               //    -> suppressing XAException
+               //       -> caused by RemoteException
+               //         -> caused by TimeoutException
+
+               // In Pessimistic or Non tx it is just a CompletionException wrapping a TimeoutException
+               Throwable cause = getMostNestedSuppressedThrowable(t);
                // Note this exception is from a prior registered stage, not our own. If the prior one got a TimeoutException
                // we try to reregister our write to do a remove expired call. This can happen if a read
                // spawned remove expired times out as it has a 0 lock acquisition timeout. We don't want to propagate
@@ -316,6 +320,23 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
       // This means there was another thread that found it had expired via max idle or we have optimistic tx
       return previousFuture;
+   }
+
+   Throwable getMostNestedSuppressedThrowable(Throwable t) {
+      Throwable nested = getNestedThrowable(t);
+      Throwable[] suppressedNested = nested.getSuppressed();
+      if (suppressedNested.length > 0) {
+         nested = getNestedThrowable(suppressedNested[0]);
+      }
+      return nested;
+   }
+
+   Throwable getNestedThrowable(Throwable t) {
+      Throwable cause;
+      while ((cause = t.getCause()) != null) {
+         t = cause;
+      }
+      return t;
    }
 
    AdvancedCache<K, V> cacheToUse(boolean isWrite) {
