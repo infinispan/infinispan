@@ -132,7 +132,6 @@
       <module>tasks/api</module>
       <module>tasks/manager</module>
       <module>tasks/scripting</module>
-      <module>demos/gui</module>
       <module>cdi</module>
       <module>cdi/common</module>
       <module>cdi/embedded</module>
@@ -5608,10 +5607,6 @@
                               <source>${dir.ispn}/commons/src/main/java</source>
                               <source>${dir.ispn}/commons-test/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>
-                              <source>${dir.ispn}/demos/distexec/src/main/java</source>
-                              <source>${dir.ispn}/demos/gridfs-webdav//src/main/java</source>
-                              <source>${dir.ispn}/demos/gui/src/main/java</source>
-                              <source>${dir.ispn}/demos/lucene-directory-demo/src/main/java</source>
                               <source>${dir.ispn}/extended-statistics/src/main/java</source>
                               <source>${dir.ispn}/jcache/commons/src/main/java</source>
                               <source>${dir.ispn}/jcache/embedded/src/main/java</source>
