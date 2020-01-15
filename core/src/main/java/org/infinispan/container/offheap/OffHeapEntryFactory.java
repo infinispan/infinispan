@@ -113,4 +113,14 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
     * @return The size approximately in memory the key, value and metadata use.
     */
    long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata);
+
+   /**
+    * Update max idle time for an entry. This method will try to do an in place update of the access time, however if
+    * the new resulting value cannot fit it will allocate a new block of memory. The caller should free the old
+    * address in this case.
+    * @param address the address of the entry's to update
+    * @param accessTime the timestamp to set for max idle access time (must be in milliseconds)
+    * @return address of the new entry to use or 0 if the same one can be reused
+    */
+   long updateMaxIdle(long address, long accessTime);
 }

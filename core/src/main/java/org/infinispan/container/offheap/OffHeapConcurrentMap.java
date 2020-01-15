@@ -28,6 +28,7 @@ import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.TouchableMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -81,7 +82,7 @@ import net.jcip.annotations.GuardedBy;
  * @since 9.4
  */
 public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>,
-      PeekableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>, AutoCloseable {
+      PeekableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>, TouchableMap, AutoCloseable {
    /** Some implementation details
     * <p>
     * All methods that must hold a lock when invoked are annotated with a {@link GuardedBy} annotation. They can have a
@@ -158,6 +159,52 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       } finally {
          locks.unlockAll();
       }
+   }
+
+   @Override
+   public boolean touchKey(Object k, long currentTimeMillis) {
+      if (!(k instanceof WrappedBytes)) {
+         return false;
+      }
+      int hashCode = k.hashCode();
+      int lockOffset = getLockOffset(hashCode);
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      // We need the write lock as we may have to replace the value entirely
+      long writeStamp = stampedLock.writeLock();
+      try {
+         checkDeallocation();
+         MemoryAddressHash memoryLookup;
+         if (pendingBlocks != null && pendingBlocks.contains(lockOffset)) {
+            memoryLookup = this.oldMemoryLookup;
+         } else {
+            memoryLookup = this.memoryLookup;
+         }
+         return lockedTouch(memoryLookup, (WrappedBytes) k, hashCode, currentTimeMillis);
+      } finally {
+         stampedLock.unlockWrite(writeStamp);
+      }
+   }
+
+   @GuardedBy("locks#writeLock")
+   private boolean lockedTouch(MemoryAddressHash memoryLookup, WrappedBytes k, int hashCode, long currentTimeMillis) {
+      int memoryOffset = getMemoryOffset(memoryLookup, hashCode);
+      long bucketAddress = memoryLookup.getMemoryAddressOffset(memoryOffset);
+      if (bucketAddress == 0) {
+         return false;
+      }
+
+      long actualAddress = performGet(bucketAddress, k, hashCode);
+      if (actualAddress != 0) {
+         long newAddress = offHeapEntryFactory.updateMaxIdle(actualAddress, currentTimeMillis);
+         if (newAddress != 0) {
+            // Replaces the old value with the newly created one
+            performPut(bucketAddress, actualAddress, newAddress, k, memoryOffset, false, false);
+         } else {
+            entryRetrieved(actualAddress);
+         }
+         return true;
+      }
+      return false;
    }
 
    /**
@@ -599,6 +646,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       }
       return null;
    }
+
    /**
     * Gets the actual address for the given key in the given bucket or 0 if it isn't present or expired
     * @param bucketHeadAddress the starting address of the bucket

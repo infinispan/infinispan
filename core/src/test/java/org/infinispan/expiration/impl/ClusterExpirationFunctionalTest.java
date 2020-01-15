@@ -8,8 +8,10 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -17,8 +19,10 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -50,17 +54,34 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    protected ConfigurationBuilder configurationBuilder;
 
+   protected StorageType storageType;
+
+   protected ClusterExpirationFunctionalTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "storageType");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), storageType);
+   }
+
    @Override
    public Object[] factory() {
-      return new Object[] {
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
-            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
-      };
+      return Arrays.stream(StorageType.values())
+            .flatMap(type ->
+               Stream.builder()
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
+                     .add(new ClusterExpirationFunctionalTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+                     .build()
+            ).toArray();
    }
 
    @Override
@@ -69,6 +90,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       configurationBuilder.clustering().cacheMode(cacheMode);
       configurationBuilder.transaction().transactionMode(transactionMode()).lockingMode(lockingMode);
       configurationBuilder.expiration().disableReaper();
+      configurationBuilder.memory().storageType(storageType);
       createCluster(TestDataSCI.INSTANCE, configurationBuilder, 3);
       waitForClusterToForm();
       injectTimeServices();
@@ -97,7 +119,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    private void testLifespanExpiredEntryRetrieval(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner,
            ControlledTimeService timeService, boolean expireOnPrimary) throws Exception {
-      MagicKey key = createKey(primaryOwner, backupOwner);
+      Object key = createKey(primaryOwner, backupOwner);
       primaryOwner.put(key, key.toString(), 10, TimeUnit.MILLISECONDS);
 
       assertEquals(key.toString(), primaryOwner.get(key));
@@ -139,16 +161,40 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   private MagicKey createKey(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner) {
-      if (cacheMode.isScattered()) {
-         return new MagicKey(primaryOwner);
+   private Object createKey(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner) {
+      if (storageType == StorageType.OBJECT) {
+         if (cacheMode.isScattered()) {
+            return new MagicKey(primaryOwner);
+         } else {
+            return new MagicKey(primaryOwner, backupOwner);
+         }
       } else {
-         return new MagicKey(primaryOwner, backupOwner);
+         // BINARY and OFF heap can't use MagicKey as they are serialized
+         LocalizedCacheTopology primaryLct = primaryOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
+         LocalizedCacheTopology backupLct = backupOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
+         ThreadLocalRandom tlr = ThreadLocalRandom.current();
+
+         int attempt = 0;
+         while (true) {
+            int key = tlr.nextInt();
+            // We test ownership based on the stored key instance
+            Object wrappedKey = primaryOwner.getAdvancedCache().getKeyDataConversion().toStorage(key);
+            if (primaryLct.getDistribution(wrappedKey).isPrimary() &&
+                  (cacheMode.isScattered() || backupLct.getDistribution(wrappedKey).isWriteBackup())) {
+               log.tracef("Found key %s for primary owner %s and backup owner %s", wrappedKey, primaryOwner, backupOwner);
+               // Return the actual key not the stored one, else it will be wrapped again :(
+               return key;
+            }
+            if (++attempt == 1_000) {
+               throw new AssertionError("Unable to find key that maps to primary " + primaryOwner +
+                     " and backup " + backupOwner);
+            }
+         }
       }
    }
 
    public void testLifespanExpiredOnBoth() {
-      MagicKey key = createKey(cache0, cache1);
+      Object key = createKey(cache0, cache1);
       cache0.put(key, key.toString(), 10, TimeUnit.MINUTES);
 
       assertEquals(key.toString(), cache0.get(key));
@@ -164,13 +210,13 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testMaxIdleExpiredOnBoth() {
-      MagicKey key = createKey(cache0, cache1);
+      Object key = createKey(cache0, cache1);
       cache0.put(key, key.toString(), -1, null, 10, TimeUnit.MINUTES);
 
       assertEquals(key.toString(), cache0.get(key));
       assertEquals(key.toString(), cache1.get(key));
 
-      // Now we expire on cache0, it should still exist on cache1
+      // It should be expired on all
       incrementAllTimeServices(11, TimeUnit.MINUTES);
 
       // Both should be null
@@ -195,7 +241,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    private void testMaxIdleExpiredEntryRetrieval(boolean expireOnPrimary) throws Exception {
       AdvancedCache<Object, String> primaryOwner = cache0.getAdvancedCache();
       AdvancedCache<Object, String> backupOwner = cache1.getAdvancedCache();
-      MagicKey key = createKey(primaryOwner, backupOwner);
+      Object key = createKey(primaryOwner, backupOwner);
       primaryOwner.put(key, key.toString(), -1, null, 10, TimeUnit.MINUTES);
 
       assertEquals(key.toString(), primaryOwner.get(key));
@@ -248,7 +294,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    private void testMaxIdleExpireExpireIteration(boolean expireOnPrimary, boolean iterateOnPrimary) {
       // Cache0 is always the primary and cache1 is backup
-      MagicKey key = createKey(cache0, cache1);
+      Object key = createKey(cache0, cache1);
       cache1.put(key, key.toString(), -1, null, 10, TimeUnit.SECONDS);
 
       ControlledTimeService expiredTimeService;
@@ -296,7 +342,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
     * but another node accessed recently, but not same timestamp
     */
    public void testMaxIdleAccessSuspectedExpiredEntryRefreshesProperly() {
-      MagicKey key = createKey(cache0, cache1);
+      Object key = createKey(cache0, cache1);
       String value = key.toString();
       cache0.put(key, value, -1, null, 10, TimeUnit.SECONDS);
 
@@ -343,14 +389,18 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testMaxIdleReadNodeDiesPrimary() {
-      testMaxIdleNodeDies(c -> getKeyForCache(c, cache0));
+      // Scattered cache does not support replicating expiration metadata
+      // This is to be fixed in https://issues.redhat.com/browse/ISPN-11208
+      if (!cacheMode.isScattered()) {
+         testMaxIdleNodeDies(c -> createKey(c, cache0));
+      }
    }
 
    public void testMaxIdleReadNodeDiesBackup() {
-      testMaxIdleNodeDies(c -> getKeyForCache(cache0, c));
+      testMaxIdleNodeDies(c -> createKey(cache0, c));
    }
 
-   private void testMaxIdleNodeDies(Function<Cache<?, ?>, MagicKey> keyToUseFunction) {
+   private void testMaxIdleNodeDies(Function<Cache<Object, String>, Object> keyToUseFunction) {
       addClusterEnabledCacheManager(TestDataSCI.INSTANCE, configurationBuilder);
       waitForClusterToForm();
 
@@ -359,7 +409,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       ControlledTimeService ts4 = new ControlledTimeService();
       TestingUtil.replaceComponent(manager(3), TimeService.class, ts4, true);
 
-      MagicKey key = keyToUseFunction.apply(cache3);
+      Object key = keyToUseFunction.apply(cache3);
 
       // We always write to cache3 so that scattered uses it as a backup if the key isn't owned by it
       cache3.put(key, "max-idle", -1, TimeUnit.MILLISECONDS, 100, TimeUnit.MILLISECONDS);

@@ -124,6 +124,12 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    public boolean touch(int segment, Object k, long currentTimeMillis) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {
+         if (trace) {
+            log.tracef("Touching key %s in container with time of %d", k, currentTimeMillis);
+         }
+         if (entries instanceof TouchableMap) {
+            return ((TouchableMap) entries).touchKey(k, currentTimeMillis);
+         }
          // We use get to also update eviction recency access
          InternalCacheEntry<K, V> entry = entries.get(k);
          if (entry != null) {
