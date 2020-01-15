@@ -90,9 +90,8 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
       this.topologyId = topologyId;
    }
 
-   @Override
-   public CompletableFuture<Object> invokeAsync() {
-      boolean touched = internalDataContainer.touch(segment, key, timeService.wallClockTime());
+   public CompletableFuture<Object> invokeAsync(long currentTimeMilli) {
+      boolean touched = internalDataContainer.touch(segment, key, currentTimeMilli);
       // Hibernate currently disables clustered expiration manager, which means we can have a topology id of -1
       // when using a clustered cache mode
       if (distributionManager != null && topologyId != -1) {
@@ -110,5 +109,10 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
          }
       }
       return CompletableFuture.completedFuture(touched);
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeAsync() {
+      return invokeAsync(timeService.wallClockTime());
    }
 }

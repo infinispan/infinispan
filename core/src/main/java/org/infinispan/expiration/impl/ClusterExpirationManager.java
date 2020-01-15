@@ -281,44 +281,6 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             throw t;
          }
       }
-      if (isWrite) {
-         if (trace) {
-            log.tracef("Waiting on prior expiration removal for key %s as this command is a write", key);
-         }
-         return previousFuture.handle((expired, t) -> {
-            if (t != null) {
-               // With optimistic transaction the TimeoutException is nested as the following:
-               // CompletionException
-               // -> caused by RollbackException
-               //    -> suppressing XAException
-               //       -> caused by RemoteException
-               //         -> caused by TimeoutException
-
-               // In Pessimistic or Non tx it is just a CompletionException wrapping a TimeoutException
-               Throwable cause = getMostNestedSuppressedThrowable(t);
-               // Note this exception is from a prior registered stage, not our own. If the prior one got a TimeoutException
-               // we try to reregister our write to do a remove expired call. This can happen if a read
-               // spawned remove expired times out as it has a 0 lock acquisition timeout. We don't want to propagate
-               // the TimeoutException to the caller of the write command as it is unrelated.
-               // Note that the remove expired command is never "retried" itself.
-               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-                  if (trace) {
-                     log.tracef("Encountered timeout exception in previous when doing a write - need to retry!");
-                  }
-                  // Have to try the command ourselves as the prior one timed out (this could be valid if a read based
-                  // remove expired couldn't acquire the try lock
-                  return handleEitherExpiration(key, value, maxIdle, time, true);
-               } else {
-                  if (trace) {
-                     log.tracef(t, "Encountered exception in previous when doing a write - propagating!");
-                  }
-                  return CompletableFutures.<Boolean>completedExceptionFuture(cause);
-               }
-            } else {
-               return expired == Boolean.TRUE ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
-            }
-         }).thenCompose(Function.identity());
-      }
       if (trace) {
          log.tracef("There is a pending expiration removal for key %s, waiting until it completes.", key);
       }
@@ -360,17 +322,51 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          lifespan = entry.getLifespan();
          expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, entry.getCreated(), currentTime);
       }
+      CompletableFuture<Boolean> future;
       if (expiredMortal) {
-         CompletableFuture<Boolean> future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, isWrite);
+         future = handleLifespanExpireEntry(entry.getKey(), value, lifespan, isWrite);
          // We don't want to block the user while the remove expired is happening for lifespan on a read
-         if (waitOnLifespanExpiration(isWrite)) {
-            return future;
+         if (!waitOnLifespanExpiration(isWrite)) {
+            return CompletableFutures.completedTrue();
          }
-         return CompletableFutures.completedTrue();
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
-         return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), isWrite);
+         future = handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle(), isWrite);
       }
+
+      return future.handle((expired, t) -> {
+         if (t != null) {
+            // With optimistic transaction the TimeoutException is nested as the following:
+            // CompletionException
+            // -> caused by RollbackException
+            //    -> suppressing XAException
+            //       -> caused by RemoteException
+            //         -> caused by TimeoutException
+
+            // In Pessimistic or Non tx it is just a CompletionException wrapping a TimeoutException
+            Throwable cause = getMostNestedSuppressedThrowable(t);
+            // Note this exception is from a prior registered stage, not our own. If the prior one got a TimeoutException
+            // we try to reregister our write to do a remove expired call. This can happen if a read
+            // spawned remove expired times out as it has a 0 lock acquisition timeout. We don't want to propagate
+            // the TimeoutException to the caller of the write command as it is unrelated.
+            // Note that the remove expired command is never "retried" itself.
+            if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+               if (trace) {
+                  log.tracef("Encountered timeout exception in remove expired invocation - need to retry!");
+               }
+               // Have to try the command ourselves as the prior one timed out (this could be valid if a read based
+               // remove expired couldn't acquire the try lock
+               return entryExpiredInMemory(entry, currentTime, isWrite);
+            } else {
+               if (trace) {
+                  log.tracef(t, "Encountered exception in remove expired invocation - propagating!");
+               }
+               return CompletableFutures.<Boolean>completedExceptionFuture(cause);
+            }
+         } else {
+            return expired == Boolean.TRUE ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
+         }
+      }).thenCompose(Function.identity());
    }
 
    // Designed to be overridden as needed
@@ -433,8 +429,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    @Override
    protected CompletionStage<Boolean> checkExpiredMaxIdle(InternalCacheEntry ice, int segment) {
-      Object key = ice.getKey();
-      return checkExpiredMaxIdle(key, segment)
+      return attemptTouchAndReturnIfExpired(ice, segment)
             .handle((expired, t) -> {
                if (t != null) {
                   Throwable innerT = CompletableFutures.extractException(t);
@@ -442,7 +437,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                      if (trace) {
                         log.tracef("Touch received OutdatedTopologyException, retrying");
                      }
-                     return checkExpiredMaxIdle(key, segment);
+                     return attemptTouchAndReturnIfExpired(ice, segment);
                   }
                   return CompletableFutures.<Boolean>completedExceptionFuture(t);
                } else {
@@ -452,18 +447,21 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             .thenCompose(Function.identity());
    }
 
-   private CompletionStage<Boolean> checkExpiredMaxIdle(Object key, int segment) {
+   private CompletionStage<Boolean> attemptTouchAndReturnIfExpired(InternalCacheEntry ice, int segment) {
       LocalizedCacheTopology lct = distributionManager.getCacheTopology();
 
-      TouchCommand touchCommand = cf.running().buildTouchCommand(key, segment);
+      TouchCommand touchCommand = cf.running().buildTouchCommand(ice.getKey(), segment);
       touchCommand.setTopologyId(lct.getTopologyId());
 
       CompletionStage<Boolean> remoteStage = invokeTouchCommandRemotely(touchCommand, lct, segment);
       touchCommand.init(componentRegistry, false);
-      CompletableFuture<Object> localStage = touchCommand.invokeAsync();
+      long accessTime = timeService.wallClockTime();
+      CompletableFuture<Object> localStage = touchCommand.invokeAsync(accessTime);
 
       return remoteStage.thenCombine(localStage, (remoteTouch, localTouch) -> {
          if (remoteTouch == Boolean.TRUE && localTouch == Boolean.TRUE) {
+            // The ICE can be a copy in cases such as off heap - we need to update its time that is reported to the user
+            ice.touch(accessTime);
             return Boolean.FALSE;
          }
          return Boolean.TRUE;
@@ -477,7 +475,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       // Scattered any node could be a backup, so we have to touch all members
       List<Address> owners = isScattered ? lct.getActualMembers() : di.writeOwners();
       return rpcManager.invokeCommand(owners, touchCommand,
-            isScattered ? new ScatteredTouchResponseCollector() : new TouchResponseCollector(),
+            isScattered ? ScatteredTouchResponseCollector.INSTANCE : TouchResponseCollector.INSTANCE,
             rpcManager.getSyncRpcOptions());
    }
 
@@ -498,6 +496,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    private static class ScatteredTouchResponseCollector extends AbstractTouchResponseCollector {
 
+      private static final ScatteredTouchResponseCollector INSTANCE = new ScatteredTouchResponseCollector();
+
       @Override
       public Boolean finish() {
          // No other node was touched
@@ -517,6 +517,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    private static class TouchResponseCollector extends AbstractTouchResponseCollector {
+
+      private static final TouchResponseCollector INSTANCE = new TouchResponseCollector();
+
       @Override
       public Boolean finish() {
          // If all were touched, then the value isn't expired
