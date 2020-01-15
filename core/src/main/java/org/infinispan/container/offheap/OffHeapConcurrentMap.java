@@ -161,11 +161,50 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    }
 
    @Override
-   public boolean touchKey(Object key, long currentTimeMillis) {
-      // OFF HEAP does not support max idle in this version - just say it was touched
-      return true;
+   public boolean touchKey(Object k, long currentTimeMillis) {
+      if (!(k instanceof WrappedBytes)) {
+         return false;
+      }
+      int hashCode = k.hashCode();
+      int lockOffset = getLockOffset(hashCode);
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      // We need the write lock as we may have to replace the value entirely
+      long writeStamp = stampedLock.writeLock();
+      try {
+         checkDeallocation();
+         MemoryAddressHash memoryLookup;
+         if (pendingBlocks != null && pendingBlocks.contains(lockOffset)) {
+            memoryLookup = this.oldMemoryLookup;
+         } else {
+            memoryLookup = this.memoryLookup;
+         }
+         return lockedTouch(memoryLookup, (WrappedBytes) k, hashCode, currentTimeMillis);
+      } finally {
+         stampedLock.unlockWrite(writeStamp);
+      }
    }
 
+   @GuardedBy("locks#writeLock")
+   private boolean lockedTouch(MemoryAddressHash memoryLookup, WrappedBytes k, int hashCode, long currentTimeMillis) {
+      int memoryOffset = getMemoryOffset(memoryLookup, hashCode);
+      long bucketAddress = memoryLookup.getMemoryAddressOffset(memoryOffset);
+      if (bucketAddress == 0) {
+         return false;
+      }
+
+      long actualAddress = performGet(bucketAddress, k, hashCode);
+      if (actualAddress != 0) {
+         long newAddress = offHeapEntryFactory.updateMaxIdle(actualAddress, currentTimeMillis);
+         if (newAddress != 0) {
+            // Replaces the old value with the newly created one
+            performPut(bucketAddress, actualAddress, newAddress, k, memoryOffset, false, false);
+         } else {
+            entryRetrieved(actualAddress);
+         }
+         return true;
+      }
+      return false;
+   }
 
    /**
     * Listener interface that is notified when certain operations occur for various memory addresses. Note that when
@@ -606,6 +645,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
       }
       return null;
    }
+
    /**
     * Gets the actual address for the given key in the given bucket or 0 if it isn't present or expired
     * @param bucketHeadAddress the starting address of the bucket

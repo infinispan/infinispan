@@ -125,6 +125,16 @@ class OffHeapMemory {
       UNSAFE.copyMemory(srcArray, BYTE_ARRAY_BASE_OFFSET + srcOffset, null, destAddress + destOffset, length);
    }
 
+   void copy(long srcAddress, long srcOffset, long destAddress, long destOffset, long length) {
+      checkAddress(srcAddress, srcOffset + length);
+      checkAddress(destAddress, destOffset + length);
+
+      if (trace) {
+         log.tracef("Copying %d bytes from address 0x%016x+%d to address 0x%016x+%d", length, srcAddress, srcOffset, destAddress, destOffset);
+      }
+      UNSAFE.copyMemory(srcAddress + srcOffset, destAddress + destOffset, length);
+   }
+
    /**
     * @deprecated Only use for debugging
     */
