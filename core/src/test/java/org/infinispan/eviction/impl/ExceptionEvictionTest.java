@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
@@ -122,20 +121,14 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       };
    }
 
-   static protected <T> T[] append(T[] original, T... newObjects) {
-      T[] newArray = Arrays.copyOf(original, original.length + newObjects.length);
-      System.arraycopy(newObjects, 0, newArray, original.length, newObjects.length);
-      return newArray;
-   }
-
    @Override
    protected String[] parameterNames() {
-      return append(super.parameterNames(), "nodeCount", "storageType", "optimisticTransaction");
+      return concat(super.parameterNames(), "nodeCount", "storageType", "optimisticTransaction");
    }
 
    @Override
    protected Object[] parameterValues() {
-      return append(super.parameterValues(), nodeCount, storageType, optimisticTransaction);
+      return concat(super.parameterValues(), nodeCount, storageType, optimisticTransaction);
    }
 
    @Override

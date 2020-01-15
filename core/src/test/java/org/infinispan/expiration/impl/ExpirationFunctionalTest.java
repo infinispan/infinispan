@@ -115,6 +115,25 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       assertEquals(0, cache.size());
    }
 
+   public void testSimpleExprationMaxIdleWithGet() {
+      Object key = "max-idle-get-key";
+      Object value = "max-idle-value";
+      assertNull(cache.put(key, value,-1, null, 20, TimeUnit.MILLISECONDS));
+
+      // Just before it expires
+      timeService.advance(19);
+
+      assertEquals(value, cache.get(key));
+
+      timeService.advance(5);
+
+      assertEquals(value, cache.get(key));
+
+      timeService.advance(25);
+
+      assertNull(cache.get(key));
+   }
+
    public void testExpirationLifespanInOps() throws Exception {
       for (int i = 0; i < SIZE; i++) {
          cache.put("key-" + i, "value-" + i, 1, TimeUnit.MILLISECONDS);
