@@ -51,10 +51,10 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.query.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -71,7 +71,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public final class QueryInterceptor extends DDAsyncInterceptor {
-   private static final Log log = LogFactory.getLog(QueryInterceptor.class);
+   private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    static final Object UNKNOWN = new Object() {
