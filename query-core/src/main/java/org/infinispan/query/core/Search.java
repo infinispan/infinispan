@@ -71,9 +71,9 @@ public final class Search {
          throw new IllegalArgumentException("The given cache must expose an AdvancedCache");
       }
       checkBulkReadPermission(advancedCache);
-      QueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
+      QueryEngine<?> queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
       if (queryEngine == null) {
-         throw log.queryModuleNotInitialised();    //todo [anistor] old code!!!!
+         throw new IllegalStateException(QueryEngine.class.getName() + " not found in component registry");
       }
       return new EmbeddedQueryFactory(queryEngine);
    }

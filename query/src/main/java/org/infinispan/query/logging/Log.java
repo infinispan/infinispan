@@ -15,15 +15,14 @@ import org.hibernate.search.backend.LuceneWork;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.remoting.transport.Address;
-import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
+//TODO [anistor] query-core and query modules share the id range!
 /**
  * Log abstraction for the query module. For this module, message ids
  * ranging from 14001 to 14800 inclusively have been reserved.
@@ -33,8 +32,8 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends BasicLogger {
-   String LOG_ROOT = "org.infinispan.";
+public interface Log extends org.infinispan.query.core.impl.Log {
+
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
 
    @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
@@ -113,27 +112,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot run Lucene queries on a cache '%s' that does not have indexing enabled", id = 14019)
    IllegalStateException cannotRunLuceneQueriesIfNotIndexed(String cacheName);
 
-   @Message(value = "Queries containing grouping and aggregation functions must use projections.", id = 14021)
-   ParsingException groupingAndAggregationQueriesMustUseProjections();
-
-   @Message(value = "Cannot have aggregate functions in GROUP BY clause", id = 14022)
-   IllegalStateException cannotHaveAggregationsInGroupByClause();
-
-   @Message(value = "Using the multi-valued property path '%s' in the GROUP BY clause is not currently supported", id = 14023)
-   ParsingException multivaluedPropertyCannotBeUsedInGroupBy(String propertyPath);
-
-   @Message(value = "The property path '%s' cannot be used in the ORDER BY clause because it is multi-valued", id = 14024)
-   ParsingException multivaluedPropertyCannotBeUsedInOrderBy(String propertyPath);
-
-   @Message(value = "The query must not use grouping or aggregation", id = 14025)
-   IllegalStateException queryMustNotUseGroupingOrAggregation();
-
-   @Message(value = "The expression '%s' must be part of an aggregate function or it should be included in the GROUP BY clause", id = 14026)
-   ParsingException expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(String propertyPath);
-
-   @Message(value = "The property path '%s' cannot be projected because it is multi-valued", id = 14027)
-   ParsingException multivaluedPropertyCannotBeProjected(String propertyPath);
-
    @LogMessage(level = WARN)
    @Message(value = "Autodetected a new indexed entity type in cache %s: %s. Autodetection support will be removed in Infinispan 10.0.", id = 14028)
    void detectedUnknownIndexedEntity(String cacheName, String className);
@@ -158,8 +136,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid boolean literal '%s'", id = 14037)
    ParsingException getInvalidBooleanLiteralException(String value);
 
-   @Message(value = "infinispan-query.jar module is in the classpath but has not been properly initialised!", id = 14038)
-   CacheException queryModuleNotInitialised();
+//   @Message(value = "infinispan-query.jar module is in the classpath but has not been properly initialised!", id = 14038)
+//   CacheException queryModuleNotInitialised();
 
    @Message(value = "Queries containing groups or aggregations cannot be converted to an indexed query", id = 14039)
    CacheException groupAggregationsNotSupported();
@@ -169,9 +147,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to define sort, please use sorting in the query string instead.", id = 14041)
    CacheException sortNotSupportedWithQueryString();
-
-   @Message(value = "Cannot execute query: cluster is operating in degraded mode and partition handling configuration doesn't allow reads and writes.", id = 14042)
-   AvailabilityException partitionDegraded();
 
    @Message(value = "Cannot find an appropriate Transformer for key type %s. Indexing only works with entries keyed " +
          "on Strings, primitives, byte[], UUID, classes that have the @Transformable annotation or classes for which " +
