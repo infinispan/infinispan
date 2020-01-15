@@ -1,7 +1,5 @@
 package org.infinispan.query;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
-
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -9,15 +7,16 @@ import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
@@ -70,10 +69,7 @@ public final class Search {
          throw new IllegalArgumentException("The given cache must expose an AdvancedCache");
       }
       checkBulkReadPermission(advancedCache);
-      QueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
-      if (queryEngine == null) {
-         throw CONTAINER.queryModuleNotInitialised();
-      }
+      QueryEngine<?> queryEngine = ComponentRegistryUtils.getEmbeddedQueryEngine(advancedCache);
       return new EmbeddedQueryFactory(queryEngine);
    }
 
