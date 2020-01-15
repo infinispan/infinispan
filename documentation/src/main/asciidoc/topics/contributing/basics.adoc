@@ -107,12 +107,6 @@ image::ann_proc_eclipse.png[]
 
 . Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml[codetemplates.xml]
 
-Some modules use Scala, if you plan contributing to one of these modules it's worth installing the link:http://scala-ide.org/[Scala IDE]. After installing it you need to add "Scala Nature" to a few project of the projects (from the project context menu Configuration -> Add Scala Nature), at the moment these projects are:
-. infinispan-server-core
-. infinispan-server-hotrod
-. infinispan-server-memcached
-. infinispan-server-rest
-
 ==== IntelliJ IDEA
 ===== Importing
 
@@ -143,16 +137,6 @@ TIP: There can sometimes be issues with the generated logging classes on rebuild
 If these issues do crop up then simply run `mvn clean install -DskipTests` on the command line to clear them out.
 
 TIP: If you are running a multi-core environment (e.g. quad-core or above) then you can follow the instructions on making use of parallelized compilation in IntelliJ 12. Information on how to do this can be found link:http://blogs.jetbrains.com/idea/2012/12/intellij-idea-12-compiler-twice-as-fast/[here] .
-
-===== Scala Plugin
-You will need to download the Scala plugin for IntelliJ as well. This can be done in _Project Settings -> Plugins -> Browse Repositories_.
-Then run a search for 'Scala'. JetBrains themselves are the vendor for this plugin and more information on it can be found link:http://confluence.jetbrains.net/display/SCA/Scala+Plugin+for+IntelliJ+IDEA[here] .
-
-image::idea-12-scala.png[]
-
-You will then have to configure the Scala plugin to use the Scala compiler for Scala files and the Java compiler for Java files. You can do this by going into _Settings -> Compiler -> Scala Compiler_ . Be sure to add the Scala compiler bundle as shown in the screenshot below.
-
-image::idea-12-scala2.png[]
 
 ===== Code Style
 Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/master/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
