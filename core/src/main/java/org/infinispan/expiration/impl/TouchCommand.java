@@ -20,8 +20,7 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
- * This command can be invoked to update a cache entry's recent access. This can involve updating its last access
- * with max idle as well as recent eviction access times.
+ * This command updates a cache entry's last access timestamp. If eviction is enabled, it will also update the recency information
  * <p>
  * This command returns a Boolean that is whether this command was able to touch the value or not.
  */
@@ -105,7 +104,7 @@ public class TouchCommand extends BaseRpcCommand implements InitializableCommand
          DistributionInfo di = lct.getSegmentDistribution(segment);
          // If our node is a write owner but not read owner, that means we may not have the value yet - so we just
          // say we were touched anyways
-         // TODO: is this is an issue with concurrent state response and not touching the new value?
+         // TODO: There is a small window where the access time may not be updated which is described in https://issues.redhat.com/browse/ISPN-11144
          if (di.isWriteOwner() && !di.isReadOwner()) {
             return CompletableFuture.completedFuture(Boolean.TRUE);
          }
