@@ -44,7 +44,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             ctx.getCacheTransaction().cleanupBackupLocks();
             keysToLock.removeAll(ctx.getLockedKeys()); //already locked!
          }
-         lockPromise = lockAllOrRegisterBackupLock(ctx, keysToLock, cacheConfiguration.locking().lockAcquisitionTimeout());
+         lockPromise = lockAllOrRegisterBackupLock(ctx, keysToLock, command.hasZeroLockAcquisition() ? 0 :
+               cacheConfiguration.locking().lockAcquisitionTimeout());
       }
 
       if (command.isOnePhaseCommit()) {
