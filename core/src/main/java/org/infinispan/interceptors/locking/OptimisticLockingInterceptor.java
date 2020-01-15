@@ -45,7 +45,8 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             // However, keep the backup locks if the prepare command is being replayed because of state transfer
             ctx.getCacheTransaction().cleanupBackupLocks();
          }
-         lockStage = lockAllOrRegisterBackupLock(ctx, command, keysToLock, cacheConfiguration.locking().lockAcquisitionTimeout());
+         lockStage = lockAllOrRegisterBackupLock(ctx, command, keysToLock, command.hasZeroLockAcquisition() ? 0 :
+               cacheConfiguration.locking().lockAcquisitionTimeout());
       }
 
       if (command.isOnePhaseCommit()) {

@@ -189,7 +189,16 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    @Override
    public boolean hasZeroLockAcquisition() {
-      return false;
+      if (modifications == null || modifications.length == 0) {
+         return false;
+      }
+      for (WriteCommand wc : modifications) {
+         // If even a single command doesn't have the zero lock acquisition timeout flag, we can't use a zero timeout
+         if (!wc.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
+            return false;
+         }
+      }
+      return true;
    }
 
    @Override
