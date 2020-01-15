@@ -251,12 +251,6 @@
             <!-- TODO should be here? -->
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-gui-demo</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <!-- TODO should be here? -->
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-hibernate-cache-spi</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
