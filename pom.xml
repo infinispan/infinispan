@@ -235,7 +235,7 @@
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
-      <jboss.modules.settings.xml.url>file://${user.home}/.m2/settings.xml</jboss.modules.settings.xml.url>
+      <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
@@ -5360,13 +5360,12 @@
          </properties>
       </profile>
 
-      <!-- Only one of the root-dirX profiles will be active, and it will set infinispan.root
-           to $REACTOR_ROOT/etc/log4j2.xml -->
+      <!-- Only one of the root-dirX profiles will be active, and it will set infinispan.root to $REACTOR_ROOT -->
       <profile>
          <id>root-dir1</id>
          <activation>
             <file>
-               <exists>${basedir}/../etc/log4j2.xml</exists>
+               <exists>${basedir}/../maven-settings.xml</exists>
             </file>
          </activation>
          <properties>
@@ -5377,7 +5376,7 @@
          <id>root-dir2</id>
          <activation>
             <file>
-               <exists>${basedir}/../../etc/log4j2.xml</exists>
+               <exists>${basedir}/../../maven-settings.xml</exists>
             </file>
          </activation>
          <properties>
@@ -5388,7 +5387,7 @@
          <id>root-dir3</id>
          <activation>
             <file>
-               <exists>${basedir}/../../../etc/log4j2.xml</exists>
+               <exists>${basedir}/../../../maven-settings.xml</exists>
             </file>
          </activation>
          <properties>
@@ -5399,7 +5398,7 @@
          <id>root-dir4</id>
          <activation>
             <file>
-               <exists>${basedir}/../../../../etc/log4j2.xml</exists>
+               <exists>${basedir}/../../../../maven-settings.xml</exists>
             </file>
          </activation>
          <properties>
