@@ -535,7 +535,6 @@
       <versionx.org.jboss.jboss-dmr>1.5.0.Final</versionx.org.jboss.jboss-dmr>
       <versionx.org.jboss.jboss-transaction-spi>7.6.0.Final</versionx.org.jboss.jboss-transaction-spi>
       <versionx.org.jboss.jboss-vfs>3.2.12.Final</versionx.org.jboss.jboss-vfs>
-      <versionx.org.jboss.jbossts.jbossjta>4.16.4.Final</versionx.org.jboss.jbossts.jbossjta>
       <versionx.org.jboss.jdeparser.jdeparser>2.0.2.Final</versionx.org.jboss.jdeparser.jdeparser>
       <versionx.org.jboss.logging.commons-logging-jboss-logging>1.0.0.Final</versionx.org.jboss.logging.commons-logging-jboss-logging>
       <versionx.org.jboss.logging.jboss-logging>${version.jboss.logging}</versionx.org.jboss.logging.jboss-logging>
@@ -2757,11 +2756,6 @@
             <version>${versionx.org.jboss.invocation.jboss-invocation}</version>
          </dependency>
          <dependency>
-            <groupId>org.jboss.jbossts</groupId>
-            <artifactId>jbossjta</artifactId>
-            <version>${versionx.org.jboss.jbossts.jbossjta}</version>
-         </dependency>
-         <dependency>
             <groupId>org.jboss.jdeparser</groupId>
             <artifactId>jdeparser</artifactId>
             <version>${versionx.org.jboss.jdeparser.jdeparser}</version>
@@ -4312,6 +4306,7 @@
                      <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                      <ansi.strip>${ansi.strip}</ansi.strip>
+                     <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
                   </systemPropertyVariables>
                   <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                </configuration>
@@ -4668,9 +4663,6 @@
                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                      </archive>
-                     <excludes>
-                        <excludes>**/jbossts-properties.xml</excludes>
-                     </excludes>
                   </configuration>
                </execution>
             </executions>
