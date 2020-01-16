@@ -72,15 +72,13 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
          this.properties.put(Environment.ERROR_HANDLER, new AffinityErrorHandler(configuredErrorHandler));
       }
 
-      Cache cache = cr.getComponent(Cache.class);
+      Cache<?, ?> cache = cr.getComponent(Cache.class);
 
-      boolean isInfinispanDirectoryInternalCache = false;
-      if (hasInfinispanDirectory(properties) && (cache.getName().equals(getDataCacheName(properties))
+      // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised (see LifecycleManager.cacheStarted)
+      final boolean isInfinispanDirectoryInternalCache = hasInfinispanDirectory(properties)
+            && (cache.getName().equals(getDataCacheName(properties))
             || cache.getName().equals(getMetadataCacheName(properties))
-            || cache.getName().equals(getLockingCacheName(properties)))) {
-         // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised
-         isInfinispanDirectoryInternalCache = true;
-      }
+            || cache.getName().equals(getLockingCacheName(properties)));
 
       LuceneAnalysisDefinitionProvider analyzerDefProvider = analyzerDefProviders != null && !analyzerDefProviders.isEmpty() ?
             builder -> {

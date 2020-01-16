@@ -80,7 +80,6 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
       assertEquals(cacheManager.getStatus(), ComponentStatus.TERMINATED);
    }
 
-
    @Test
    public void testIndexingWithCustomLock() throws CyclicDependencyException {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
@@ -98,7 +97,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIndexingOnCacheItself() throws CyclicDependencyException {
+   public void testIndexingOnCacheItself() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("single", getIndexedConfigWithCustomCaches("single", "single", "single").build());
       startAndIndexData("single", cacheManager);
@@ -108,7 +107,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIndexingMultipleDirectoriesOnSameCache() throws CyclicDependencyException {
+   public void testIndexingMultipleDirectoriesOnSameCache() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("cacheA", getIndexedConfigWithCustomCaches("single", "single", "single").build());
       cacheManager.defineConfiguration("cacheB", getIndexedConfigWithCustomCaches("single", "single", "single").build());
@@ -120,7 +119,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIndexingHierarchically() throws CyclicDependencyException {
+   public void testIndexingHierarchically() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("cacheC", getIndexedConfigWithCustomCaches("cacheB", "cacheB", "cacheB").build());
       cacheManager.defineConfiguration("cacheB", getIndexedConfigWithCustomCaches("cacheA", "cacheA", "cacheA").build());
@@ -134,7 +133,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testStartAndStopWithEmptyCache() throws CyclicDependencyException {
+   public void testStartAndStopWithEmptyCache() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager(getIndexedConfig());
       cacheManager.getCache();
       cacheManager.stop();
@@ -214,5 +213,4 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
               .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
-
 }

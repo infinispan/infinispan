@@ -1,9 +1,12 @@
 package org.infinispan.query.backend;
 
-import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -15,9 +18,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.indexmanager.IndexUpdateCommand;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.Person;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -37,18 +42,18 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
    @Test
    public void testWithEnablingAsync() {
       test(getBaseConfigPlus("default.worker.execution", "async"),
-           rpcManager -> calledIndexAsynchronously(rpcManager, "person"));
+           transport -> calledIndexAsynchronously(transport, "person"));
    }
 
    @Test
    public void testWithEnablingAsyncForDifferentIndex() {
       test(getBaseConfigPlus("cat.worker.execution", "async"),
-           rpcManager -> calledIndexSynchronously(rpcManager, "person"));
+           transport -> calledIndexSynchronously(transport, "person"));
    }
 
    @Test
    public void testWithDefaultSettings() {
-      test(getBaseConfig(), rpcManager -> calledIndexSynchronously(rpcManager, "person"));
+      test(getBaseConfig(), transport -> calledIndexSynchronously(transport, "person"));
    }
 
    @Test
@@ -57,9 +62,9 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
             "default.sharding_strategy.nbr_of_shards", "2",
             "person.0.worker.execution", "async"
       );
-      test(cfg, rpcManager -> {
-         calledIndexAsynchronously(rpcManager, "person.0");
-         calledIndexSynchronously(rpcManager, "person.1");
+      test(cfg, transport -> {
+         calledIndexAsynchronously(transport, "person.0");
+         calledIndexSynchronously(transport, "person.1");
       });
    }
 
@@ -69,7 +74,7 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
             "default.worker.execution", "async",
             "person.worker.execution", "sync"
       );
-      test(cfg, rpcManager -> calledIndexSynchronously(rpcManager, "person"));
+      test(cfg, transport -> calledIndexSynchronously(transport, "person"));
    }
 
    @Test
@@ -80,18 +85,20 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
             "person.worker.execution", "async",
             "person.1.worker.execution", "sync"
       );
-      test(cfg, rpcManager -> {
-         calledIndexAsynchronously(rpcManager, "person.0");
-         calledIndexSynchronously(rpcManager, "person.1");
-         calledIndexAsynchronously(rpcManager, "person.2");
+      test(cfg, transport -> {
+         calledIndexAsynchronously(transport, "person.0");
+         calledIndexSynchronously(transport, "person.1");
+         calledIndexAsynchronously(transport, "person.2");
       });
    }
 
    private ConfigurationBuilder getBaseConfig() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.clustering().cacheMode(CacheMode.REPL_SYNC).indexing().index(Index.ALL)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.clustering().cacheMode(CacheMode.REPL_SYNC)
+         .indexing().index(Index.ALL)
+         .addIndexedEntity(Person.class)
+         .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
+         .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 
@@ -104,21 +111,19 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
       return cfg;
    }
 
-   @SuppressWarnings("unchecked")
-   private void calledIndexSynchronously(RpcManager rpcManager, String indexName) {
-      assertIndexCall(rpcManager, indexName, true);
+   private void calledIndexSynchronously(Transport transport, String indexName) throws Exception {
+      assertIndexCall(transport, indexName, true);
    }
 
-   @SuppressWarnings("unchecked")
-   private void calledIndexAsynchronously(RpcManager rpcManager, String indexName) {
-      assertIndexCall(rpcManager, indexName, false);
+   private void calledIndexAsynchronously(Transport transport, String indexName) throws Exception {
+      assertIndexCall(transport, indexName, false);
    }
 
-   @SuppressWarnings("unchecked")
-   private void assertIndexCall(RpcManager rpcManager, String indexName, boolean sync) {
+   private void assertIndexCall(Transport transport, String indexName, boolean sync) throws Exception {
       ArgumentCaptor<IndexUpdateCommand> argument = ArgumentCaptor.forClass(IndexUpdateCommand.class);
-      RpcOptions rpcOptions = rpcManager.getDefaultRpcOptions(sync);
-      verify(rpcManager, atLeastOnce()).invokeRemotely(anyCollection(), argument.capture(), eq(rpcOptions));
+      verify(transport, atLeastOnce()).invokeRemotelyAsync(anyCollection(), argument.capture(),
+                                                           eq(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS),
+                                                           anyLong(), any(), any(), anyBoolean());
       boolean indexCalled = false;
       for (IndexUpdateCommand updateCommand : argument.getAllValues()) {
          indexCalled |= updateCommand.getIndexName().equals(indexName);
@@ -127,21 +132,21 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
    }
 
    private interface Assertion {
-      void doAssertion(RpcManager rpcManager);
+      void doAssertion(Transport transport) throws Exception;
    }
 
-   private void test(ConfigurationBuilder cfg, final Assertion assertion) {
+   private void test(ConfigurationBuilder cfg, Assertion assertion) {
       withCacheManagers(new MultiCacheManagerCallable(
             TestCacheManagerFactory.createClusteredCacheManager(cfg),
             TestCacheManagerFactory.createClusteredCacheManager(cfg)) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             EmbeddedCacheManager slave = isMaster(cms[0].getCache()) ? cms[1] : cms[0];
-            RpcManager wireTappedRpcManager = spyOnTransport(slave.getCache());
+            Transport wireTappedTransport = spyOnTransport(slave.getCache());
             slave.getCache().put(1, new Person("person1", "blurb1", 20));
             slave.getCache().put(2, new Person("person2", "blurb2", 27));
             slave.getCache().put(3, new Person("person3", "blurb3", 56));
-            assertion.doAssertion(wireTappedRpcManager);
+            assertion.doAssertion(wireTappedTransport);
          }
       });
    }
@@ -151,10 +156,10 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
       return transport.getCoordinator().equals(transport.getAddress());
    }
 
-   private RpcManager spyOnTransport(Cache<?, ?> cache) {
-      RpcManager rpcManager = spy(cache.getAdvancedCache().getRpcManager());
-      replaceComponent(cache, RpcManager.class, rpcManager, false);
-      return rpcManager;
+   private Transport spyOnTransport(Cache<?, ?> cache) {
+      RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
+      Transport transport = spy(rpcManager.getTransport());
+      replaceField(transport, "t", rpcManager, RpcManagerImpl.class);
+      return transport;
    }
-
 }

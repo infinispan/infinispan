@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -239,19 +240,17 @@ public class LifecycleManager implements ModuleLifecycle {
       SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
       if (!indexingConfiguration.indexedEntities().isEmpty()) {
          Properties indexingProperties = indexingConfiguration.properties();
-         if (hasInfinispanDirectory(indexingProperties)) {
-            String metadataCacheName = getMetadataCacheName(indexingProperties);
-            String lockingCacheName = getLockingCacheName(indexingProperties);
-            String dataCacheName = getDataCacheName(indexingProperties);
-            if (cacheName.equals(dataCacheName) && (cacheName.equals(metadataCacheName) || cacheName.equals(lockingCacheName))) {
-               // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised
-               Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[indexingConfiguration.indexedEntities().size()]);
-               searchFactory.addClasses(indexedEntities);
-               checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
-            }
-         } else {
+         boolean isInfinispanDirectoryInternalCache = hasInfinispanDirectory(indexingProperties)
+               && (cacheName.equals(getDataCacheName(indexingProperties))
+               || cacheName.equals(getMetadataCacheName(indexingProperties))
+               || cacheName.equals(getLockingCacheName(indexingProperties)));
+         if (isInfinispanDirectoryInternalCache) {
+            // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised (see SearchableCacheConfiguration)
+            Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
+            searchFactory.addClasses(indexedEntities);
             checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
          }
+         checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
       }
 
       registerQueryMBeans(cr, configuration, searchFactory);
