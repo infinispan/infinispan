@@ -1,18 +1,19 @@
 package org.infinispan.test.integration.as.cdi;
 
-import java.io.File;
-
 import javax.inject.Inject;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Version;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.Asset;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -29,13 +30,15 @@ public class DuplicatedDomainsCdiIT {
    public static Archive<?> deployment() {
       WebArchive webArchive = ShrinkWrap
             .create(WebArchive.class, "cdi.war")
-            .addClass(DuplicatedDomainsCdiIT.class);
-
-      PomEquippedResolveStage mavenResolver = Maven.resolver().loadPomFromFile(new File("pom.xml"));
-
-      webArchive.addAsLibraries(mavenResolver.resolve("org.infinispan:infinispan-cdi-embedded").withTransitivity().asFile());
-
+            .addClass(DuplicatedDomainsCdiIT.class)
+            .add(manifest(), "META-INF/MANIFEST.MF");
       return webArchive;
+   }
+
+   private static Asset manifest() {
+      String manifest = Descriptors.create(ManifestDescriptor.class)
+            .attribute("Dependencies", "org.infinispan.cdi.embedded:" + Version.getModuleSlot() + " services").exportAsString();
+      return new StringAsset(manifest);
    }
 
    @Inject
