@@ -29,7 +29,7 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
    @Override
    protected ConfigurationBuilder getCacheConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
-            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
+            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       return builder;
    }
 
