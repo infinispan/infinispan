@@ -12,7 +12,7 @@
          <transaction mode="BATCH" locking="PESSIMISTIC"/>
          <eviction size="-1" strategy="NONE" />
          <expiration max-idle="-1" />
-         <indexing index="LOCAL">
+         <indexing index="PRIMARY_OWNER">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
             </indexed-entities>

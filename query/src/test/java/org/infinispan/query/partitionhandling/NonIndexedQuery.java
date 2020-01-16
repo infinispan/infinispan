@@ -1,6 +1,4 @@
-package org.infinispan.query.partition;
-
-import java.util.List;
+package org.infinispan.query.partitionhandling;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,10 +18,10 @@ public class NonIndexedQuery extends SharedIndexTest {
 
    @Override
    protected String getQuery() {
-      return "From " + Person.class.getName() + " p where p.nonIndexedField = 'Pe'";
+      return "from " + Person.class.getName() + " p where p.nonIndexedField = 'Pe'";
    }
 
    @Override
-   protected void postConfigure(List<EmbeddedCacheManager> cacheManagers) {
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
    }
 }

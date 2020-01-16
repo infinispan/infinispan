@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
@@ -32,30 +31,29 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <indexing index=\"LOCAL\">\n" +
-            "            <property name=\"default.directory_provider\">local-heap</property>\n" +
-            "            <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
+            "      <indexing index=\"PRIMARY_OWNER\">\n" +
+            "         <indexed-entities>\n" +
+            "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
+            "         </indexed-entities>\n" +
+            "         <property name=\"default.directory_provider\">local-heap</property>\n" +
+            "         <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
             "      </indexing>\n" +
             "   </local-cache>\n" +
             "</cache-container>"
       );
       log.tracef("Using test configuration:\n%s", config);
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      try {
+      try (InputStream is = new ByteArrayInputStream(config.getBytes())) {
          cacheManager = TestCacheManagerFactory.fromStream(is);
-      }
-      finally {
-         is.close();
       }
       cache = cacheManager.getCache();
       return cacheManager;
    }
 
-   public void simpleIndexTest() throws ParseException {
+   public void simpleIndexTest() throws Exception {
       cache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
       CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Person> l =  cq.list();
+      List<Person> l = cq.list();
       assertEquals(1, l.size());
       Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());
@@ -63,7 +61,6 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       assertEquals(75, p.getAge());
    }
 
-   @Test(dependsOnMethods="simpleIndexTest") //depends as otherwise the Person index is not initialized yet
    public void testPropertiesWhereRead() {
       SearchIntegrator searchFactory = TestQueryHelperFactory.extractSearchFactory(cache);
       EntityIndexBinding indexBindingForEntity = searchFactory.getIndexBindings().get(Person.class);
@@ -75,5 +72,4 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       DirectoryBasedIndexManager dbim = (DirectoryBasedIndexManager) manager;
       assertTrue(dbim.getDirectoryProvider() instanceof RAMDirectoryProvider);
    }
-
 }

@@ -36,7 +36,7 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
             assertIndexingEnabled(cm.getCache("simple"), true, IndexModificationStrategy.ALL);
             assertIndexingEnabled(cm.getCache("not-searchable"), false, null);
             assertIndexingEnabled(cm.getCache("memory-searchable"), true, IndexModificationStrategy.ALL);
-            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.LOCAL_ONLY);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.PRIMARY_OWNER);
          }
       });
    }
@@ -50,7 +50,7 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
             assertIndexingEnabled(cm.getCache(), false, null);
             assertIndexingEnabled(cm.getCache("simple"), false, null);
             assertIndexingEnabled(cm.getCache("memory-searchable"), true, IndexModificationStrategy.ALL);
-            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.LOCAL_ONLY);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.PRIMARY_OWNER);
          }
       });
    }

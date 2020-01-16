@@ -8,8 +8,11 @@
       <jmx duplicate-domains="true" />
       <local-cache-configuration name="base">
          <indexing index="ALL">
-            <property name="hibernate.search.default.directory_provider">someDefault</property>
-            <property name="lucene_version">LUCENE_48</property>
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+            </indexed-entities>
+            <property name="hibernate.search.default.directory_provider">local-heap</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </local-cache-configuration>
       <local-cache name="default" configuration="base"/>
@@ -19,15 +22,21 @@
       </local-cache>
       <local-cache name="memory-searchable" configuration="base">
          <indexing index="ALL">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+            </indexed-entities>
             <property name="hibernate.search.default.directory_provider">local-heap</property>
-            <property name="lucene_version">LUCENE_48</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable" configuration="base">
-         <indexing index="LOCAL">
+         <indexing index="PRIMARY_OWNER">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+            </indexed-entities>
             <property name="hibernate.search.default.directory_provider">filesystem</property>
             <property name="hibernate.search.cats.exclusive_index_use">true</property>
-            <property name="lucene_version">LUCENE_48</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </local-cache>
    </cache-container>

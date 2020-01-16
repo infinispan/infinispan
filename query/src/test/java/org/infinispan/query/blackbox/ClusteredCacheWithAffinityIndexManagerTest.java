@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.affinity.AffinityIndexManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -26,12 +27,11 @@ public class ClusteredCacheWithAffinityIndexManagerTest extends ClusteredCacheTe
               .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Person.class)
               .addProperty("default.indexmanager", AffinityIndexManager.class.getName())
-              .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+              .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
               .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
       List<Cache<Object, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
-
 }

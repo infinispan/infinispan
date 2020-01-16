@@ -14,7 +14,10 @@
          <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false" />
          <eviction size="-1" strategy="NONE" />
          <expiration max-idle="-1" />
-         <indexing index="LOCAL">
+         <indexing index="PRIMARY_OWNER">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+            </indexed-entities>
             <!-- Use our custom IndexManager; TODO autoinject by default? -->
             <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <!-- Enable error safety net -->

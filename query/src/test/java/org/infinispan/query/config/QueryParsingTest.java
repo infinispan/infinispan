@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.query.affinity.AffinityIndexManager;
@@ -48,7 +49,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration affinity = namedConfigurations.get("dist-with-affinity").build();
       assertTrue(affinity.indexing().index().isEnabled());
-      assertTrue(affinity.indexing().index().isPrimaryOwner());
+      assertEquals(affinity.indexing().index(), Index.PRIMARY_OWNER);
       assertEquals(affinity.indexing().properties().getProperty("default.indexmanager"), AffinityIndexManager.class.getName());
    }
 
@@ -60,7 +61,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       assertEquals(defaultConfiguration.indexing().properties().size(), 2);
       assertTrue(defaultConfiguration.indexing().index().isEnabled());
-      assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "someDefault");
+      assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "local-heap");
 
       Configuration nonSearchableCfg = namedConfigurations.get("not-searchable").build();
       assertFalse(nonSearchableCfg.indexing().index().isEnabled());
@@ -71,13 +72,13 @@ public class QueryParsingTest extends AbstractInfinispanTest {
 
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().index().isEnabled());
-      assertFalse(memoryCfg.indexing().index().isLocalOnly());
+      assertEquals(memoryCfg.indexing().index(), Index.ALL);
       assertEquals(memoryCfg.indexing().properties().size(), 2);
       assertEquals(memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "local-heap");
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().index().isEnabled());
-      assertTrue(diskCfg.indexing().index().isLocalOnly());
+      assertEquals(diskCfg.indexing().index(), Index.PRIMARY_OWNER);
       assertEquals(diskCfg.indexing().properties().size(), 3);
       assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "filesystem");
       assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"), "true");

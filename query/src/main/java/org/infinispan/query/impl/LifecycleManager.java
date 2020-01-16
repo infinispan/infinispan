@@ -4,6 +4,7 @@ import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
+import static org.infinispan.query.impl.IndexPropertyInspector.isInfinispanDirectoryInternalCache;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -12,6 +13,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -164,11 +166,17 @@ public class LifecycleManager implements ModuleLifecycle {
       }
       if (hasInfinispanDirectory(indexingConfiguration.properties())) {
          String metadataCacheName = getMetadataCacheName(indexingConfiguration.properties());
-         String lockingCacheName = getLockingCacheName(indexingConfiguration.properties());
-         String dataCacheName = getDataCacheName(indexingConfiguration.properties());
-         if (!cacheStarting.equals(metadataCacheName) && !cacheStarting.equals(lockingCacheName) && !cacheStarting.equals(dataCacheName)) {
+         if (!metadataCacheName.equals(cacheStarting)) {
             SecurityActions.addCacheDependency(cacheManager, cacheStarting, metadataCacheName);
+         }
+
+         String lockingCacheName = getLockingCacheName(indexingConfiguration.properties());
+         if (!lockingCacheName.equals(cacheStarting)) {
             SecurityActions.addCacheDependency(cacheManager, cacheStarting, lockingCacheName);
+         }
+
+         String dataCacheName = getDataCacheName(indexingConfiguration.properties());
+         if (!dataCacheName.equals(cacheStarting)) {
             SecurityActions.addCacheDependency(cacheManager, cacheStarting, dataCacheName);
          }
       }
@@ -237,28 +245,22 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
-      if (!indexingConfiguration.indexedEntities().isEmpty()) {
-         Properties indexingProperties = indexingConfiguration.properties();
-         if (hasInfinispanDirectory(indexingProperties)) {
-            String metadataCacheName = getMetadataCacheName(indexingProperties);
-            String lockingCacheName = getLockingCacheName(indexingProperties);
-            String dataCacheName = getDataCacheName(indexingProperties);
-            if (cacheName.equals(dataCacheName) && (cacheName.equals(metadataCacheName) || cacheName.equals(lockingCacheName))) {
-               // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised
-               Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[indexingConfiguration.indexedEntities().size()]);
-               searchFactory.addClasses(indexedEntities);
-               checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
-            }
-         } else {
-            checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
-         }
+      Properties indexingProperties = indexingConfiguration.properties();
+      if (isInfinispanDirectoryInternalCache(cacheName, indexingProperties)) {
+         // Infinispan Directory causes runtime circular dependencies so we have postponed creation of indexes until
+         // all components and involved caches are initialised (see SearchableCacheConfiguration). Now is the right time!
+         Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
+         searchFactory.addClasses(indexedEntities);
       }
+
+      checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
 
       registerQueryMBeans(cr, configuration, searchFactory);
    }
 
    /**
-    * Check that the indexable classes declared by the user are really indexable.
+    * Check that the indexable classes declared by the user are really indexable by looking at the presence of Hibernate
+    * Search index bindings.
     */
    private void checkIndexableClasses(SearchIntegrator searchFactory, Set<Class<?>> indexedEntities) {
       for (Class<?> c : indexedEntities) {
@@ -340,10 +342,10 @@ public class LifecycleManager implements ModuleLifecycle {
       Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisDefinitionProvider.class, aggregatedClassLoader);
 
       // Set up the search factory for Hibernate Search first.
-      SearchConfiguration config = new SearchableCacheConfiguration(indexingConfiguration.indexedEntities(),
+      SearchConfiguration searchConfiguration = new SearchableCacheConfiguration(indexingConfiguration.indexedEntities(),
             indexingConfiguration.properties(), programmaticSearchMappingProviders, analyzerDefProviders, cr, aggregatedClassLoader);
 
-      searchIntegrator = new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
+      searchIntegrator = new SearchIntegratorBuilder().configuration(searchConfiguration).buildSearchIntegrator();
       cr.registerComponent(searchIntegrator, SearchIntegrator.class);
       return searchIntegrator;
    }

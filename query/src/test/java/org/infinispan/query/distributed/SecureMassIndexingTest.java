@@ -28,17 +28,17 @@ public class SecureMassIndexingTest extends DistributedMassIndexingTest {
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
-      runAs(ADMIN, () -> super.clearContent());
+   protected void clearContent() {
+      runAs(ADMIN, super::clearContent);
    }
 
    @Override
-   public void testPartiallyReindex() throws Exception {
+   public void testPartiallyReindex() {
       runAs(ADMIN, super::testPartiallyReindex);
    }
 
    @Override
-   public void testReindexing() throws Exception {
+   public void testReindexing() {
       runAs(ADMIN, super::testReindexing);
    }
 
@@ -47,18 +47,14 @@ public class SecureMassIndexingTest extends DistributedMassIndexingTest {
    }
 
    private void runAs(Subject subject, TestExecution execution) {
-      Security.doAs(subject, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            try {
-               execution.apply();
-            } catch (Throwable e) {
-               e.printStackTrace();
-               Assert.fail();
-            }
-            return null;
+      Security.doAs(subject, (PrivilegedAction<Void>) () -> {
+         try {
+            execution.apply();
+         } catch (Throwable e) {
+            e.printStackTrace();
+            Assert.fail();
          }
+         return null;
       });
    }
-
 }

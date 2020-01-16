@@ -4,7 +4,7 @@
         <distributed-cache name="default"/>
 
         <distributed-cache name="indexed">
-            <indexing index="LOCAL">
+            <indexing index="PRIMARY_OWNER">
                 <property name="default.directory_provider">local-heap</property>
             </indexing>
         </distributed-cache>

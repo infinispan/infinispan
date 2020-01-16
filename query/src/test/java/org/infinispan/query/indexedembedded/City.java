@@ -9,6 +9,6 @@ import org.hibernate.search.annotations.Field;
  */
 public class City implements Serializable {
 
-   public @Field String name;
-
+   @Field
+   public String name;
 }

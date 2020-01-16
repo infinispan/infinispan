@@ -24,6 +24,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -52,9 +53,11 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "local-heap")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+             .addIndexedEntity(Person.class)
+             .addIndexedEntity(AnotherGrassEater.class)
+             .addProperty("default.directory_provider", "local-heap")
+             .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
+             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       cm.defineConfiguration(CACHE_NAME, builder.build());
       return cm;
@@ -100,7 +103,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
             person.setBlurb("value " + i);
             person.setNonIndexedField("i: " + i);
 
-            cache.put("key" + i, person);
+            cache.put(person.getName(), person);
          }
 
          // after adding more classes and reconfiguring the SearchFactory it might happen isStatisticsEnabled is reset, so we check again
@@ -120,7 +123,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
                                        new Object[]{Person.class.getName()},
                                        new String[]{String.class.getName()}));
 
-         assertEquals(1, searchManager.getStatistics().indexedEntitiesCount().size());
+         assertEquals(2, searchManager.getStatistics().indexedEntitiesCount().size());
 
          // add more test data
          AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
