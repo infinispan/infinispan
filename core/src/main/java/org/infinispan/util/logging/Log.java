@@ -1152,8 +1152,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Remote transaction %s timed out. Rolling back after %d ms", id = 326)
    void remoteTransactionTimeout(GlobalTransaction gtx, long ageMilliSeconds);
 
-   @Message(value = "Cannot find a parser for element '%s' in namespace '%s'. Check that your configuration is up-to date for this version of Infinispan.", id = 327)
-   CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri);
+   @Message(value = "Cannot find a parser for element '%s' in namespace '%s'. Check that your configuration is up-to date for Infinispan '%s' and if you have the proper dependency in the classpath", id = 327)
+   CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri, String version);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Rebalance phase %s confirmed for cache %s on node %s, topology id = %d", id = 328)
