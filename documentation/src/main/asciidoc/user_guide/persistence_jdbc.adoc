@@ -58,7 +58,7 @@ For detailed description of all the parameters used refer to the link:{javadocro
 [source,xml]
 ----
 <persistence>
-   <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" shared="true" fetch-state="false" read-only="false" purge="false">
+   <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.4" dialect="H2">
       <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
       <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
          <id-column name="ID_COLUMN" type="VARCHAR(255)" />
@@ -67,7 +67,6 @@ For detailed description of all the parameters used refer to the link:{javadocro
       </string-keyed-table>
    </string-keyed-jdbc-store>
 </persistence>
-
 ----
 
 [source,java]
@@ -75,9 +74,6 @@ For detailed description of all the parameters used refer to the link:{javadocro
 
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-      .fetchPersistentState(false)
-      .ignoreModifications(false)
-      .purgeOnStartup(false)
       .shared(true)
       .table()
          .dropOnExit(true)
@@ -97,16 +93,16 @@ Finally, below is an example of a JDBC cache store with a managed connection fac
 
 [source,xml]
 ----
-
-<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" shared="true" fetch-state="false" read-only="false" purge="false">
-   <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
-   <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
-      <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-      <data-column name="DATA_COLUMN" type="BINARY" />
-      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-   </string-keyed-table>
-</string-keyed-jdbc-store>
-
+<persistence>
+   <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.4" shared="true" dialect="H2">
+      <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
+      <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+         <data-column name="DATA_COLUMN" type="BINARY" />
+         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+      </string-keyed-table>
+   </string-keyed-jdbc-store>
+</persistence>
 ----
 
 [source,java]
@@ -114,9 +110,6 @@ Finally, below is an example of a JDBC cache store with a managed connection fac
 
 ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-      .fetchPersistentState(false)
-      .ignoreModifications(false)
-      .purgeOnStartup(false)
       .shared(true)
       .table()
          .dropOnExit(true)
@@ -129,6 +122,3 @@ builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
          .jndiUrl("java:/StringStoreWithManagedConnectionTest/DS");
 
 ----
-
-.Apache Derby users
-NOTE: If you're connecting to an Apache Derby database, make sure you set dataColumnType to BLOB: `<data-column name="DATA_COLUMN" type="BLOB"/>`
