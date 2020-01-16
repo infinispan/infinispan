@@ -171,7 +171,7 @@ public class ParserRegistry implements NamespaceMappingParser {
          String baseUri = uri.substring(0,  lastColon + 1) + "*";
          parser = parserMappings.get(new QName(baseUri, name.getLocalPart()));
          if (parser == null || !isSupportedNamespaceVersion(parser.namespace, uri.substring(lastColon + 1)))
-            throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
+            throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI(), Version.getVersion());
       }
       Schema oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(name.getNamespaceURI()));
