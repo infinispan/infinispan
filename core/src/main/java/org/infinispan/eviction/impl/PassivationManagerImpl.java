@@ -115,7 +115,9 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
          return CompletableFutures.completedNull();
 
       long start = timeService.time();
-      CONTAINER.passivatingAllEntries();
+      if (CONTAINER.isDebugEnabled()) {
+         CONTAINER.debug("Passivating all entries to disk");
+      }
 
       int count = container.sizeIncludingExpired();
       Iterable<MarshallableEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e -> {
@@ -125,7 +127,9 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       return persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0)
                                .thenRun(() -> {
                                   long durationMillis = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-                                  CONTAINER.passivatedEntries(count, Util.prettyPrintTime(durationMillis));
+                                  if (CONTAINER.isDebugEnabled()) {
+                                     CONTAINER.debugf("Passivated %d entries in %s", count, Util.prettyPrintTime(durationMillis));
+                                  }
                                });
    }
 
