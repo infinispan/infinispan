@@ -18,11 +18,11 @@ public class SiteMasterPickerImpl implements SiteMasterPicker {
 
    @Override
    public Address pickSiteMaster(List<Address> site_masters, Address original_sender) {
-      return site_masters.get(0);
+      return (site_masters == null || site_masters.isEmpty()) ? null : site_masters.get(0);
    }
 
    @Override
    public Route pickRoute(String site, List<Route> routes, Address original_sender) {
-      return routes.get(0);
+      return (routes == null || routes.isEmpty()) ? null : routes.get(0);
    }
 }
