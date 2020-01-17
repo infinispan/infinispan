@@ -6,6 +6,7 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.cfg.SearchMapping;
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.query.impl.SegmentFieldBridge;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperAnalyzerDiscriminator;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperFieldBridge;
@@ -46,6 +47,7 @@ public final class ProgrammaticSearchMappingProviderImpl implements Programmatic
             .interceptor(ProtobufValueWrapperIndexingInterceptor.class)
             .analyzerDiscriminator(ProtobufValueWrapperAnalyzerDiscriminator.class)
             .classBridgeInstance(new ProtobufValueWrapperFieldBridge(cache))
+            .classBridge(SegmentFieldBridge.class)
             .norms(Norms.NO)
             .analyze(Analyze.NO)
             .store(Store.NO);

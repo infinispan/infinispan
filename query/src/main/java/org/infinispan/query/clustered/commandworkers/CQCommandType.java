@@ -1,5 +1,6 @@
 package org.infinispan.query.clustered.commandworkers;
 
+import java.util.BitSet;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -35,9 +36,10 @@ public enum CQCommandType {
       this.workerSupplier = workerSupplier;
    }
 
-   public QueryResponse perform(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
+   public QueryResponse perform(AdvancedCache<?, ?> cache, QueryDefinition queryDefinition,
+                                UUID queryId, int docIndex, BitSet segments) {
       CQWorker worker = workerSupplier.get();
       worker.initialize(cache, queryDefinition, queryId, docIndex);
-      return worker.perform();
+      return worker.perform(segments);
    }
 }

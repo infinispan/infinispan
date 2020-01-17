@@ -29,12 +29,6 @@ import org.testng.annotations.Test;
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 3;
-   protected static final String[] neededCacheNames = new String[]{
-         "default",
-         "LuceneIndexesMetadata",
-         "LuceneIndexesData",
-         "LuceneIndexesLocking",
-   };
 
    protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
@@ -50,7 +44,8 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
          Cache cache = cacheManager.getCache();
          caches.add(cache);
       }
-      waitForClusterToForm(neededCacheNames);
+
+      waitForClusterToForm();
    }
 
    @AfterClass(alwaysRun = true)

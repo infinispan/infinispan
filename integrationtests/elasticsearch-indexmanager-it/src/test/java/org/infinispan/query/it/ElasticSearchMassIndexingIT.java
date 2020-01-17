@@ -32,7 +32,7 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
         defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, indexCache);
         defineConfigurationOnAllManagers(InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME, indexCache);
 
-        waitForClusterToForm(neededCacheNames);
+        waitForClusterToForm();
 
         caches.addAll(cacheList.stream().collect(Collectors.toList()));
     }

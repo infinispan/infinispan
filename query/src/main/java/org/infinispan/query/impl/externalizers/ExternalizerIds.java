@@ -56,4 +56,8 @@ public interface ExternalizerIds {
    Integer QUERY_DEFINITION = 1621;
 
    Integer CLUSTERED_QUERY_COMMAND_RESPONSE = 1622;
+
+   Integer FULL_TEXT_FILTER = 1623;
+
+   Integer CLUSTERED_QUERY_OPERATION = 1624;
 }

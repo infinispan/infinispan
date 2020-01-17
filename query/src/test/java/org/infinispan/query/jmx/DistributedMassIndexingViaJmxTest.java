@@ -51,7 +51,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
          Cache cache = cm.getCache();
          caches.add(cache);
       }
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm();
    }
 
    @Override

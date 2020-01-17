@@ -4,6 +4,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -40,6 +41,10 @@ public final class ComponentRegistryUtils {
    public static SearchIntegrator getSearchIntegrator(Cache<?, ?> cache) {
       ensureIndexed(cache);
       return getRequiredComponent(cache, SearchIntegrator.class);
+   }
+
+   public static KeyPartitioner getKeyPartitioner(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, KeyPartitioner.class);
    }
 
    public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {

@@ -30,6 +30,6 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
          cacheManagers.add(cacheObj.getCacheManager());
       }
 
-      waitForClusterToForm(neededCacheNames);
+      waitForClusterToForm();
    }
 }

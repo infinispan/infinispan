@@ -44,7 +44,7 @@ public class EagerIteratorTest {
       for (int i = 1; i <= 10; i++) {
          String key = "key" + i;
          keys.add(key);
-         entityInfos.add(new MockEntityInfo(keyTransformationHandler.keyToString(key)));
+         entityInfos.add(new MockEntityInfo(keyTransformationHandler.keyToString(key, 0)));
          dummyResults.put(key, "Result number " + i);
       }
 

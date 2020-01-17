@@ -20,6 +20,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -43,6 +44,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -87,6 +89,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService asyncExecutor;
    @Inject private InternalCacheRegistry internalCacheRegistry;
+   @Inject protected KeyPartitioner keyPartitioner;
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
@@ -331,12 +334,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Remove entries from all indexes by key.
     */
-   void removeFromIndexes(TransactionContext transactionContext, Object key) {
+   void removeFromIndexes(TransactionContext transactionContext, Object key, int segment) {
       Stream<IndexedTypeIdentifier> typeIdentifiers = getKnownClasses().stream()
             .filter(searchFactoryHandler::hasIndex)
             .map(PojoIndexedTypeIdentifier::new);
       Set<Work> deleteWorks = typeIdentifiers
-            .map(e -> searchWorkCreator.createEntityWork(keyToString(key), e, WorkType.DELETE))
+            .map(e -> searchWorkCreator.createEntityWork(keyToString(key, segment), e, WorkType.DELETE))
             .collect(Collectors.toSet());
       performSearchWorks(deleteWorks, transactionContext);
    }
@@ -362,14 +365,14 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    // Method that will be called when data needs to be removed from Lucene.
-   private void removeFromIndexes(Object value, Object key, TransactionContext transactionContext) {
-      performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
+   private void removeFromIndexes(Object value, Object key, TransactionContext transactionContext, int segment) {
+      performSearchWork(value, keyToString(key, segment), WorkType.DELETE, transactionContext);
    }
 
-   private void updateIndexes(boolean usingSkipIndexCleanupFlag, Object value, Object key, TransactionContext transactionContext) {
+   private void updateIndexes(boolean usingSkipIndexCleanupFlag, Object value, Object key, TransactionContext transactionContext, int segment) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
-      performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
+      performSearchWork(value, keyToString(key, segment), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
    }
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
@@ -406,8 +409,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       searchFactoryHandler.enableClasses(classes);
    }
 
-   private String keyToString(Object key) {
-      return keyTransformationHandler.keyToString(extractKey(key));
+   private String keyToString(Object key, int segment) {
+      return keyTransformationHandler.keyToString(extractKey(key), segment);
    }
 
    public KeyTransformationHandler getKeyTransformationHandler() {
@@ -431,6 +434,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    void processChange(InvocationContext ctx, FlagAffectedCommand command, Object storedKey, Object storedOldValue, Object storedNewValue, TransactionContext transactionContext) {
+      int segment = SegmentSpecificCommand.extractSegment(command, storedKey, keyPartitioner);
       Object key = extractKey(storedKey);
       Object oldValue = storedOldValue == UNKNOWN ? UNKNOWN : extractValue(storedOldValue);
       Object newValue = extractValue(storedNewValue);
@@ -438,11 +442,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (!skipIndexCleanup) {
          if (oldValue == UNKNOWN) {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
-               removeFromIndexes(transactionContext, key);
+               removeFromIndexes(transactionContext, key, segment);
             }
          } else if (searchFactoryHandler.updateKnownTypesIfNeeded(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
-            removeFromIndexes(oldValue, key, transactionContext);
+            removeFromIndexes(oldValue, key, transactionContext, segment);
          } else if (trace) {
             log.tracef("Index cleanup not needed for %s -> %s", oldValue, newValue);
          }
@@ -452,7 +456,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (searchFactoryHandler.updateKnownTypesIfNeeded(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
-            updateIndexes(skipIndexCleanup, newValue, key, transactionContext);
+            updateIndexes(skipIndexCleanup, newValue, key, transactionContext, segment);
          } else {
             if (trace) {
                log.tracef("Not modifying index for %s (%s)", storedKey, command);

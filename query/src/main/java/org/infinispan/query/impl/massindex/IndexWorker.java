@@ -22,6 +22,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
@@ -51,6 +52,7 @@ public final class IndexWorker implements DistributedCallable<Object, Object, Vo
    private ClusteringDependentLogic clusteringDependentLogic;
    private DataConversion valueDataConversion;
    private DataConversion keyDataConversion;
+   private KeyPartitioner keyPartitioner;
 
    IndexWorker(IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
       this.indexedType = indexedType;
@@ -73,6 +75,7 @@ public final class IndexWorker implements DistributedCallable<Object, Object, Vo
       KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(unwrapped);
       TimeService timeService = ComponentRegistryUtils.getTimeService(unwrapped);
 
+      this.keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
       this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       this.clusteringDependentLogic = SecurityActions.getClusteringDependentLogic(unwrapped);
 
@@ -114,9 +117,11 @@ public final class IndexWorker implements DistributedCallable<Object, Object, Vo
             while (iterator.hasNext()) {
                CacheEntry<Object, Object> next = iterator.next();
                Object value = extractValue(next.getValue());
+               Object storedKey = keyDataConversion.toStorage(next.getKey());
+               int segment = keyPartitioner.getSegment(storedKey);
                //TODO do not use Class equality but refactor to type equality:
                if (value != null && value.getClass().equals(indexedType.getPojoType()))
-                  indexUpdater.updateIndex(next.getKey(), value);
+                  indexUpdater.updateIndex(next.getKey(), value, segment);
             }
          }
          postIndex();
@@ -125,7 +130,7 @@ public final class IndexWorker implements DistributedCallable<Object, Object, Vo
          for (Object key : keys) {
             Object value = extractValue(cache.get(key));
             if (value != null) {
-               indexUpdater.updateIndex(key, value);
+               indexUpdater.updateIndex(key, value, keyPartitioner.getSegment(keyDataConversion.toStorage(key)));
                classSet.add(value.getClass());
             }
          }

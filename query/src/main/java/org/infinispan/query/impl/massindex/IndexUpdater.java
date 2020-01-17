@@ -48,7 +48,7 @@ public class IndexUpdater {
       defaultBatchBackend.awaitAsyncProcessingCompletion();
    }
 
-   public void updateIndex(Object key, Object value) {
+   public void updateIndex(Object key, Object value, int segment) {
       if (value != null) {
          if (!Thread.currentThread().isInterrupted()) {
             EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBindings().get(new PojoIndexedTypeIdentifier(value.getClass()));
@@ -58,7 +58,7 @@ public class IndexUpdater {
             }
             ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
             DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
-            final String idInString = keyTransformationHandler.keyToString(key);
+            final String idInString = keyTransformationHandler.keyToString(key, segment);
             UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
                   null,
                   docBuilder.getTypeIdentifier(),

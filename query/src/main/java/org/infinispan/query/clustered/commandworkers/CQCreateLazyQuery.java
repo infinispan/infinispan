@@ -1,5 +1,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
+import java.util.BitSet;
+
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -15,9 +17,10 @@ import org.infinispan.query.clustered.QueryResponse;
 final class CQCreateLazyQuery extends CQWorker {
 
    @Override
-   QueryResponse perform() {
+   QueryResponse perform(BitSet segments) {
       HSQuery query = queryDefinition.getHsQuery();
       query.afterDeserialise(getSearchFactory());
+      setFilter(segments);
       DocumentExtractor extractor = query.queryDocumentExtractor();
 
       // registering...

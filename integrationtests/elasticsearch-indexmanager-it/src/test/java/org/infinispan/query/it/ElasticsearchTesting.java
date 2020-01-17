@@ -17,6 +17,7 @@ public class ElasticsearchTesting {
       indexConfig.put("default.elasticsearch.required_index_status", "yellow");
       indexConfig.put("default.elasticsearch.index_schema_management_strategy", "drop-and-create-and-drop");
       indexConfig.put("default.elasticsearch.refresh_after_write", "true");
+      indexConfig.put("default.elasticsearch.dynamic_mapping", "true");
       indexConfig.put("lucene_version", "LUCENE_CURRENT");
       indexConfig.put("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
       return indexConfig;

@@ -21,6 +21,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -31,6 +32,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -171,6 +173,7 @@ public class QueryInterceptorTest {
             // Configure Query interceptor to ignore deletes of previous values
             SearchWorkCreator searchWorkCreator = new IgnoreDeletesSearchWorkCreator();
             QueryInterceptor queryInterceptor = cache.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class);
+            KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
             queryInterceptor.setSearchWorkCreator(searchWorkCreator);
 
             // Override entity
@@ -183,7 +186,7 @@ public class QueryInterceptorTest {
             assertEquals(1, countIndex(Car.class, cache));
 
             // Remove by id from all indexes
-            queryInterceptor.removeFromIndexes(NoTransactionContext.INSTANCE, "key");
+            queryInterceptor.removeFromIndexes(NoTransactionContext.INSTANCE, "key", keyPartitioner.getSegment("key"));
 
             // Assert indexes are empty
             assertEquals(1, cache.size());
@@ -206,18 +209,18 @@ public class QueryInterceptorTest {
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       return new DefaultCacheManager(
-              new GlobalConfigurationBuilder().build(),
-              new ConfigurationBuilder()
-                      .memory().evictionType(EvictionType.COUNT).size(maxEntries)
-                      .persistence().passivation(true)
-                      .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
-                      .indexing().index(Index.ALL)
-                      .addIndexedEntity(Person.class)
-                      .addIndexedEntity(Car.class)
-                      .addProperty("default.directory_provider", "filesystem")
-                      .addProperty("default.indexBase", indexDir.getAbsolutePath())
-                      .addProperty("lucene_version", "LUCENE_CURRENT")
-                      .build()
+            new GlobalConfigurationBuilder().build(),
+            new ConfigurationBuilder()
+                  .memory().evictionType(EvictionType.COUNT).size(maxEntries)
+                  .persistence().passivation(true)
+                  .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
+                  .indexing().index(Index.ALL)
+                  .addIndexedEntity(Person.class)
+                  .addIndexedEntity(Car.class)
+                  .addProperty("default.directory_provider", "filesystem")
+                  .addProperty("default.indexBase", indexDir.getAbsolutePath())
+                  .addProperty("lucene_version", "LUCENE_CURRENT")
+                  .build()
       );
    }
 

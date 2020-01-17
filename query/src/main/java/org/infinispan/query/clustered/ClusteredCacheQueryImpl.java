@@ -72,7 +72,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    public int getResultSize() {
       partitionHandlingSupport.checkCacheAvailable();
       if (resultSize == null) {
-         List<QueryResponse> responses = invoker.broadcast(ClusteredQueryCommand.getResultSize(queryDefinition, cache));
+         List<QueryResponse> responses = invoker.broadcast(ClusteredQueryOperation.getResultSize(queryDefinition));
          int accumulator = 0;
          for (QueryResponse response : responses) {
             accumulator += response.getResultSize();
@@ -88,7 +88,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
       queryDefinition.setMaxResults(getNodeMaxResults());
       switch (fetchOptions.getFetchMode()) {
          case EAGER: {
-            ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(queryDefinition, cache);
+            ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
             Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
             return new DistributedIterator<>(queryDefinition.getSort(),
@@ -97,7 +97,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
          }
          case LAZY: {
             UUID queryId = UUID.randomUUID();
-            ClusteredQueryCommand command = ClusteredQueryCommand.createLazyIterator(queryDefinition, cache, queryId);
+            ClusteredQueryOperation command = ClusteredQueryOperation.createLazyIterator(queryDefinition, queryId);
             Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
             // Make a sort copy to avoid reversed results
@@ -115,7 +115,7 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
       return maxResults + firstResult;
    }
 
-   private Map<Address, NodeTopDocs> broadcastQuery(ClusteredQueryCommand command) {
+   private Map<Address, NodeTopDocs> broadcastQuery(ClusteredQueryOperation command) {
       Map<Address, NodeTopDocs> topDocsResponses = new HashMap<>();
       int resultSize = 0;
       List<QueryResponse> responses = invoker.broadcast(command);
