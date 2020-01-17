@@ -18,7 +18,7 @@ Infinispan Embedded Library::
 
 link:titles/embedding/embedding.html[Embedding Infinispan]
 
-Infinispan Servers::
+Infinispan Server::
 
 link:titles/server/server.html[Infinispan Server Guide] +
 link:titles/cli/cli.html[Using the Command Line Interface]
