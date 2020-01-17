@@ -180,13 +180,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to passivate entry under %s", id = 28)
    void unableToPassivateEntry(Object key, @Cause Throwable e);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Passivating all entries to disk", id = 29)
-   void passivatingAllEntries();
-
-   @LogMessage(level = INFO)
-   @Message(value = "Passivated %d entries in %s", id = 30)
-   void passivatedEntries(long numEntries, String duration);
+//   @LogMessage(level = INFO)
+//   @Message(value = "Passivating all entries to disk", id = 29)
+//   void passivatingAllEntries();
+//
+//   @LogMessage(level = INFO)
+//   @Message(value = "Passivated %d entries in %s", id = 30)
+//   void passivatedEntries(long numEntries, String duration);
 
 //   @LogMessage(level = TRACE)
 //   @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
