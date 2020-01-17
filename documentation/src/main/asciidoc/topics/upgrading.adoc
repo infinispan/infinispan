@@ -1,3 +1,23 @@
+= Upgrading from 10.0 to 10.1 and 10.0 to 11.0
+
+== Maximum Idle Timeouts with Clustered Cache Modes
+Maximum idle expiration has been changed to improve data consistency with clustered cache modes when Infinispan nodes fail.
+
+[NOTE]
+====
+* `Cache.get()` calls do not return until the touch commands complete. This
+synchronous behavior increases latency of client requests and reduces
+performance.
+
+* Maximum idle expiration, `max-idle`, does not currently work with entries
+stored in off-heap memory.
+
+* Likewise, `max-idle` does not work if caches use cache stores as a persistence
+layer.
+====
+
+See link:{../configuring/configuring.html#expiration_maxidle}[Maximum Idle Expiration] for complete details.
+
 = Upgrading from 10.0 to 10.1
 
 == REST Store

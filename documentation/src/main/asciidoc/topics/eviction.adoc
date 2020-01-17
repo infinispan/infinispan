@@ -234,10 +234,10 @@ When nodes detect that an entry reaches the maximum idle time, {brandname}
 removes it from the cache and does not return the entry to the client that
 requested it.
 
-Before using clustered `max-idle`, you should review the following points:
+Before using `max-idle` with clustered cache modes, you should review the following points:
 
 * `Cache.get()` does not return until the touch commands complete. This synchronous behavior increases latency of client requests.
-* Clustered `max-idle` also updates the recent access count for eviction on all owners.
+* Clustered `max-idle` also updates the "recently accessed" metadata for cache entries on all owners, which {brandname} uses for eviction.
 //Scattered cache is community only
 ifndef::productized[]
 * With scattered cache mode, {brandname} sends touch commands to all nodes, not
