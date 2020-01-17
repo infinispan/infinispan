@@ -2,3 +2,4 @@
 //Please review authoring guidelines in the Contributors Guide.
 
 include::{stories}/assembly_upgrading.adoc[leveloffset=+1]
+include::{stories}/assembly_rolling_up_k8s.adoc[leveloffset=+1]

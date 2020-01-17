@@ -5,38 +5,52 @@ Written and maintained by the {brandname} community
 Get answers and find help in the {brandname} {infinispanversion} titles.
 
 Getting Started::
-+
-* link:titles/overview/overview.html[Technical Overview]
-* link:titles/getting_started/getting_started.html[Getting Started Guide]
 
-Configuring and Running::
-+
-* link:titles/configuring/configuring.html[Configuring Infinispan]
-* link:titles/embedding/embedding.html[Embedding Infinispan]
-* link:titles/server/server.html[Infinispan Server Guide]
-* link:https://infinispan.org/infinispan-operator/master/operator.html[Infinispan Operator Guide]
-* link:titles/cli/cli.html[Using the Command Line Interface]
-* link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
+link:titles/overview/overview.html[Technical Overview] +
+link:titles/getting_started/getting_started.html[Getting Started Guide]
 
-Developing and Integrating::
-+
-* link:titles/developing/developing.html[Infinispan Developer's Guide]
-* link:titles/integrating/integrating.html[Integrating Infinispan]
-* link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Infinispan Spring Boot Starter]
+Configuring Infinispan::
 
-Remotely Accessing Infinispan Endpoints::
-+
-* link:titles/hotrod_java/hotrod_java.html[Using the Hot Rod Server]
-* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
-* link:titles/rest/rest.html[Using the REST Server]
-* link:titles/memcached/memcached.html[Using the Memcached Server]
+link:titles/configuring/configuring.html[Configuration Guide] +
+link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
 
-Administering Infinispan::
-+
-* link:titles/admin/admin.html[Administration Guide]
-* link:titles/security/security.html[Security Guide]
-* link:titles/tuning/tuning.html[Tuning Infinispan Performance]
-* link:titles/upgrading/upgrading.html[Upgrading Infinispan]
+Infinispan Embedded Library::
+
+link:titles/embedding/embedding.html[Embedding Infinispan]
+
+Infinispan Servers::
+
+link:titles/server/server.html[Infinispan Server Guide] +
+link:titles/cli/cli.html[Using the Command Line Interface]
+
+Operator for Kubernetes and OpenShift::
+
+link:https://infinispan.org/infinispan-operator/master/operator.html[Infinispan Operator Guide]
+
+Hot Rod, REST, and Memcached::
+
+link:titles/hotrod_java/hotrod_java.html[Setting Up and Running Hot Rod Servers] +
+link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference] +
+link:titles/rest/rest.html[Setting Up REST Servers and REST API Reference] +
+link:titles/memcached/memcached.html[Using Memcached Servers]
+
+APIs, Marshalling, Locks, Counters, Indexing, Querying, and more::
+
+link:titles/developing/developing.html[Developer Guide]
+
+Hibernate and Spring Framework Integration::
+
+link:titles/integrating/integrating.html[Integration Guide] +
+link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
+
+Security and Performance Tuning::
+
+link:titles/security/security.html[Security Guide] +
+link:titles/tuning/tuning.html[Tuning Infinispan Performance]
+
+Upgrading Between Versions and Rolling Upgrades on Kubernetes::
+
+link:titles/upgrading/upgrading.html[Upgrading Infinispan]
 
 See link:http://www.infinispan.org/documentation[Infinispan Documentation] home for other versions.
 
