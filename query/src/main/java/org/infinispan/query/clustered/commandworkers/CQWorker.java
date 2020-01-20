@@ -1,12 +1,18 @@
 package org.infinispan.query.clustered.commandworkers;
 
+import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_FILTER_NAME;
+import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_PARAMETERS_NAME;
+
 import java.io.IOException;
+import java.util.BitSet;
 import java.util.UUID;
 
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -44,7 +50,16 @@ abstract class CQWorker {
       this.docIndex = docIndex;
    }
 
-   abstract QueryResponse perform();
+   abstract QueryResponse perform(BitSet segments);
+
+   void setFilter(BitSet segments) {
+      HSQuery query = queryDefinition.getHsQuery();
+      if (segments.cardinality() != HashConfiguration.NUM_SEGMENTS.getDefaultValue()) {
+         query.enableFullTextFilter(SEGMENT_FILTER_NAME).setParameter(SEGMENT_PARAMETERS_NAME, segments);
+      } else {
+         query.disableFullTextFilter(SEGMENT_FILTER_NAME);
+      }
+   }
 
    QueryBox getQueryBox() {
       if (queryBox == null) {

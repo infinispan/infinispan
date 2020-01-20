@@ -1,5 +1,7 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_FILTER_NAME;
+
 import java.util.Map;
 
 import org.apache.lucene.analysis.Tokenizer;
@@ -51,7 +53,8 @@ public class DefaultSearchMappingProvider implements ProgrammaticSearchMappingPr
             .analyzerDef("filename", ConfigurableBufferSizeKeywordTokenizerFactory.class)
                .tokenizerParam("bufferSize", "2048")
                .filter(StandardFilterFactory.class)
-               .filter(LowerCaseFilterFactory.class);
+               .filter(LowerCaseFilterFactory.class)
+            .fullTextFilterDef(SEGMENT_FILTER_NAME, SegmentFilterFactory.class);
    }
 
    /**
