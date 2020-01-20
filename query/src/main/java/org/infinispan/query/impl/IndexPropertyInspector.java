@@ -14,7 +14,7 @@ import org.hibernate.search.cfg.Environment;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
 /**
- * Extract useful information from indexing configuration
+ * Extract useful information from indexing configuration, mostly related to Infinispan Index Manager.
  *
  * @author gustavonalle
  * @since 7.0
@@ -34,6 +34,13 @@ public final class IndexPropertyInspector {
 
    public static String getMetadataCacheName(Properties properties) {
       return getPropertyFor(METADATA_CACHENAME, properties, DEFAULT_INDEXESMETADATA_CACHENAME);
+   }
+
+   public static boolean isInfinispanDirectoryInternalCache(String cacheName, Properties properties) {
+      return hasInfinispanDirectory(properties)
+            && (cacheName.equals(getDataCacheName(properties))
+            || cacheName.equals(getMetadataCacheName(properties))
+            || cacheName.equals(getLockingCacheName(properties)));
    }
 
    public static boolean hasInfinispanDirectory(Properties properties) {
