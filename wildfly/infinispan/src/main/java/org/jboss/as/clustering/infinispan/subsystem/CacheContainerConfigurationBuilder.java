@@ -98,7 +98,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final InjectedValue<ThreadPoolConfiguration> listenerThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> persistenceThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> remoteCommandThreadPool = new InjectedValue<>();
-    private final InjectedValue<ThreadPoolConfiguration> stateTransferThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> transportThreadPool = new InjectedValue<>();
     private final InjectedValue<PathManager> pathManager = new InjectedValue<>();
     private final InjectedValue<ModelController> modelController = new InjectedValue<>();
@@ -261,7 +260,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
         builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
         builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
-        builder.stateTransferThreadPool().read(this.stateTransferThreadPool.getValue());
         builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
 
         builder.cacheManagerName(this.name)
