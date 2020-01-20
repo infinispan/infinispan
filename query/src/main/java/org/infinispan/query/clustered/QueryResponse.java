@@ -10,7 +10,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
- * The response for a {@link ClusteredQueryCommand}.
+ * The response for a {@link ClusteredQueryOperation}.
  *
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1

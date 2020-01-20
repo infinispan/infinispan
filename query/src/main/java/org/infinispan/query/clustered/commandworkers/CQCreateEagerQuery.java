@@ -1,6 +1,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import java.io.IOException;
+import java.util.BitSet;
 
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.exception.SearchException;
@@ -18,9 +19,10 @@ import org.infinispan.query.clustered.QueryResponse;
 final class CQCreateEagerQuery extends CQWorker {
 
    @Override
-   QueryResponse perform() {
+   QueryResponse perform(BitSet segments) {
       HSQuery query = queryDefinition.getHsQuery();
       query.afterDeserialise(getSearchFactory());
+      setFilter(segments);
       try (DocumentExtractor extractor = query.queryDocumentExtractor()) {
          int resultSize = query.queryResultSize();
          return resultSize == 0 ? new QueryResponse(0) : new QueryResponse(collectKeys(extractor, query));

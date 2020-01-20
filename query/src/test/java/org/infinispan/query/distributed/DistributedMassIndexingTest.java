@@ -3,8 +3,6 @@ package org.infinispan.query.distributed;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
@@ -29,20 +27,11 @@ import org.testng.annotations.Test;
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 3;
-   private final Collection<String> neededCacheNames = Arrays.asList(
-         "LuceneIndexesMetadata",
-         "LuceneIndexesData",
-         "LuceneIndexesLocking",
-         getClass().getSimpleName());
 
    protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
    protected String getConfigurationFile() {
       return "dynamic-indexing-distribution.xml";
-   }
-
-   protected void waitForClusterToForm() {
-      waitForClusterToForm(neededCacheNames.toArray(new String[]{}));
    }
 
    @Override

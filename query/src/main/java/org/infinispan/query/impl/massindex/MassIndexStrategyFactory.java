@@ -6,6 +6,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
@@ -20,6 +21,7 @@ final class MassIndexStrategyFactory {
 
    static MassIndexStrategy calculateStrategy(EntityIndexBinding indexBinding, Configuration cacheConfiguration) {
       Set<IndexManager> indexManagers = indexBinding.getIndexManagerSelector().all();
+      Index index = cacheConfiguration.indexing().index();
       IndexManager indexManager = indexManagers.iterator().next();
 
       boolean sharded = indexManagers.size() > 1;
@@ -36,7 +38,7 @@ final class MassIndexStrategyFactory {
          return MassIndexStrategy.PER_NODE_PRIMARY;
       }
 
-      if (sharded || replicated) {
+      if (sharded || replicated || !index.isPrimaryOwner()) {
          return MassIndexStrategy.PER_NODE_ALL_DATA;
       }
 
