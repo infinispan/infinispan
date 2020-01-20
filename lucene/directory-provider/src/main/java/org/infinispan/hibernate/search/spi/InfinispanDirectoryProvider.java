@@ -57,11 +57,6 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    private final int affinityId;
    private boolean isAsync;
 
-
-   public InfinispanDirectoryProvider(int affinityId) {
-      this.affinityId = affinityId;
-   }
-
    public InfinispanDirectoryProvider() {
       this.affinityId = -1;
    }

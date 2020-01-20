@@ -11,7 +11,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.hibernate.search.cfg.Environment;
-import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
 /**
@@ -40,7 +39,7 @@ public final class IndexPropertyInspector {
    public static boolean hasInfinispanDirectory(Properties properties) {
       String indexManager = getPropertyFor(Environment.INDEX_MANAGER_IMPL_NAME, properties, null);
       String directoryProvider = getPropertyFor("directory_provider", properties, null);
-      return "infinispan".equals(directoryProvider) || InfinispanIndexManager.class.getName().equals(indexManager) || AffinityIndexManager.class.getName().equals(indexManager);
+      return "infinispan".equals(directoryProvider) || InfinispanIndexManager.class.getName().equals(indexManager);
    }
 
    private static String getPropertyFor(String suffix, Properties properties, String defaultValue) {

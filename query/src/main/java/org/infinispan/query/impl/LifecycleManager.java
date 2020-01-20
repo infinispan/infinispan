@@ -49,8 +49,6 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
-import org.infinispan.query.affinity.ShardAllocationManagerImpl;
-import org.infinispan.query.affinity.ShardAllocatorManager;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -114,7 +112,6 @@ public class LifecycleManager implements ModuleLifecycle {
          if (isIndexed) {
             setBooleanQueryMaxClauseCount(cfg.indexing().properties());
 
-            cr.registerComponent(new ShardAllocationManagerImpl(), ShardAllocatorManager.class);
             searchFactory = createSearchIntegrator(cfg.indexing(), cr, aggregatedClassLoader);
 
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);

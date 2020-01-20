@@ -35,11 +35,6 @@
       <distributed-cache name="dist-with-default">
           <indexing index="ALL" auto-config="true"/>
       </distributed-cache>
-      <distributed-cache name="dist-with-affinity">
-         <indexing index="PRIMARY_OWNER">
-            <property name="default.indexmanager">org.infinispan.query.affinity.AffinityIndexManager</property>
-         </indexing>
-      </distributed-cache>
    </cache-container>
 
 </infinispan>
