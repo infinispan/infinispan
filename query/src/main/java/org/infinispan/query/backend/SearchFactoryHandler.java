@@ -1,5 +1,7 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_FILTER_NAME;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -9,12 +11,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.transaction.Transaction;
 
+import org.hibernate.search.engine.impl.MutableSearchFactory;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.query.impl.SegmentFieldBridge;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -106,7 +110,7 @@ final class SearchFactoryHandler {
 
          Transaction tx = transactionHelper.suspendTxIfExists();
          try {
-            searchFactory.addClasses(newtypes);
+            rebootSearchFactory(searchFactory, newtypes);
          } finally {
             transactionHelper.resume(tx);
          }
@@ -120,6 +124,16 @@ final class SearchFactoryHandler {
       }
    }
 
+   static void rebootSearchFactory(SearchIntegrator searchFactory, Class<?>[] newtypes) {
+      // Workaround to add a field bridge to dynamic detected entities.
+      MutableSearchFactory mutableSearchFactory = searchFactory.unwrap(MutableSearchFactory.class);
+      for (Class<?> clazz : newtypes) {
+         mutableSearchFactory.getProgrammaticMapping().entity(clazz).classBridge(SegmentFieldBridge.class);
+      }
+      // Workaround to avoid SearchException due to filter already registered.
+      mutableSearchFactory.getFilterDefinitions().remove(SEGMENT_FILTER_NAME);
+      searchFactory.addClasses(newtypes);
+   }
    /**
     * Checks if an index exists for the given class. This is not intended to test whether the entity class is indexable
     * (via annotations or programmatically).

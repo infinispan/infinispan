@@ -1,5 +1,6 @@
 package org.infinispan.query.clustered;
 
+import java.util.BitSet;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ final class DistributedLazyIterator<E> extends DistributedIterator<E> {
    @Override
    public void close() {
       try {
-         invoker.broadcast(ClusteredQueryCommand.destroyLazyQuery(cache, queryId));
+         invoker.broadcast(ClusteredQueryOperation.destroyLazyQuery(queryId));
       } catch (Exception e) {
          log.error("Could not close the distributed iterator", e);
       }
@@ -41,7 +42,8 @@ final class DistributedLazyIterator<E> extends DistributedIterator<E> {
 
    @Override
    protected E fetchValue(int scoreIndex, NodeTopDocs nodeTopDocs) {
-      ClusteredQueryCommand cmd = ClusteredQueryCommand.retrieveKeyFromLazyQuery(cache, queryId, scoreIndex);
+      ClusteredQueryOperation operation = ClusteredQueryOperation.retrieveKeyFromLazyQuery(queryId, scoreIndex);
+      SegmentsClusteredQueryCommand cmd = new SegmentsClusteredQueryCommand(cache.getName(), operation, new BitSet());
       return (E) invoker.unicast(nodeTopDocs.address, cmd).getFetchedValue();
    }
 }
