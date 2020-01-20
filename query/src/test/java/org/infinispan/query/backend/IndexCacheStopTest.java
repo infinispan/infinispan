@@ -108,6 +108,16 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
+   public void testIndexingWithUserCacheAsDataCache() {
+      EmbeddedCacheManager cacheManager = createClusteredCacheManager();
+      cacheManager.defineConfiguration("single", getIndexedConfigWithCustomCaches("locking", "metadata", "single").build());
+      startAndIndexData("single", cacheManager);
+      cacheManager.stop();
+
+      assertEquals(cacheManager.getStatus(), ComponentStatus.TERMINATED);
+   }
+
+   @Test
    public void testIndexingMultipleDirectoriesOnSameCache() throws CyclicDependencyException {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("cacheA", getIndexedConfigWithCustomCaches("single", "single", "single").build());
