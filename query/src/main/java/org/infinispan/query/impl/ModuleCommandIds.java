@@ -14,6 +14,4 @@ public interface ModuleCommandIds {
    byte UPDATE_INDEX = 102;
 
    byte UPDATE_INDEX_STREAM = 103;
-
-   byte UPDATE_INDEX_AFFINITY = 104;
 }

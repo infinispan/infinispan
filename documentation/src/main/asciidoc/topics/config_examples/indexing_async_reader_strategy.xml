@@ -1,9 +1,6 @@
-<distributed-cache name="default"
-                   key-partitioner="org.infinispan.distribution.ch.impl.AffinityPartitioner">
+<distributed-cache name="default">
     <indexing index="PRIMARY_OWNER">
-        <property name="default.indexmanager">
-              org.infinispan.query.affinity.AffinityIndexManager
-        </property>
+        <property name="default.indexmanager">org.infinispan.query.affinity.InfinispanIndexManager</property>
         <property name="default.reader.strategy">async</property>
         <!-- refresh reader every 1s, default is 5s -->
         <property name="default.reader.async_refresh_period_ms">1000</property>
