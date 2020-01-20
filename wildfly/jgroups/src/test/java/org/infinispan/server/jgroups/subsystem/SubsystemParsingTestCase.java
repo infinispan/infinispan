@@ -71,14 +71,14 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     private final String xsdPath;
     private final String[] templates;
 
-    public SubsystemParsingTestCase(Path xmlPath, Properties properties) {
+    public SubsystemParsingTestCase(Path xmlPath, Properties properties, String name) {
         super(JGroupsExtension.SUBSYSTEM_NAME, new JGroupsExtension(), xmlPath.getFileName().toString());
         this.expectedOperationCount = Integer.parseInt(properties.getProperty("expected.operations.count"));
         this.xsdPath = properties.getProperty("xsd.path");
         this.templates = null;
     }
 
-    @Parameters
+    @Parameters(name = "{2}")
     public static Collection<Object[]> data() throws Exception {
         URL configDir = Thread.currentThread().getContextClassLoader().getResource("org/infinispan/server/jgroups/subsystem");
         List<Path> paths = Files.list(Paths.get(configDir.toURI()))
@@ -97,7 +97,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
             try (Reader r = new FileReader(propsPath)) {
                 properties.load(r);
             }
-            data.add(new Object[]{xmlPath, properties});
+            data.add(new Object[]{xmlPath, properties, xmlPath.getFileName().toString() });
         }
         // Ensure that we contain the current schema version at the very least
         assertTrue("Could not find a '" + currentSchema + "' configuration file", hasCurrentSchema);
