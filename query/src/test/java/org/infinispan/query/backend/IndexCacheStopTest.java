@@ -18,6 +18,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -80,7 +81,6 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
       assertEquals(cacheManager.getStatus(), ComponentStatus.TERMINATED);
    }
 
-
    @Test
    public void testIndexingWithCustomLock() throws CyclicDependencyException {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
@@ -98,7 +98,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIndexingOnCacheItself() throws CyclicDependencyException {
+   public void testIndexingOnCacheItself() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("single", getIndexedConfigWithCustomCaches("single", "single", "single").build());
       startAndIndexData("single", cacheManager);
@@ -118,7 +118,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIndexingMultipleDirectoriesOnSameCache() throws CyclicDependencyException {
+   public void testIndexingMultipleDirectoriesOnSameCache() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("cacheA", getIndexedConfigWithCustomCaches("single", "single", "single").build());
       cacheManager.defineConfiguration("cacheB", getIndexedConfigWithCustomCaches("single", "single", "single").build());
@@ -130,7 +130,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testIndexingHierarchically() throws CyclicDependencyException {
+   public void testIndexingHierarchically() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager();
       cacheManager.defineConfiguration("cacheC", getIndexedConfigWithCustomCaches("cacheB", "cacheB", "cacheB").build());
       cacheManager.defineConfiguration("cacheB", getIndexedConfigWithCustomCaches("cacheA", "cacheA", "cacheA").build());
@@ -144,7 +144,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testStartAndStopWithEmptyCache() throws CyclicDependencyException {
+   public void testStartAndStopWithEmptyCache() {
       EmbeddedCacheManager cacheManager = createClusteredCacheManager(getIndexedConfig());
       cacheManager.getCache();
       cacheManager.stop();
@@ -191,38 +191,35 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
 
    private ConfigurationBuilder getIndexedConfig() {
       ConfigurationBuilder cfg = getBaseConfig();
-      cfg.indexing().index(Index.ALL)
-              .addIndexedEntity(Person.class)
-              .addIndexedEntity(AnotherGrassEater.class)
-              .addProperty("default.directory_provider", "infinispan")
-              .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.indexing()
+         .index(Index.ALL)
+         .addIndexedEntity(Person.class)
+         .addIndexedEntity(AnotherGrassEater.class)
+         .addProperty("default.directory_provider", "infinispan")
+         .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 
    private ConfigurationBuilder getIndexedConfigWithCustomCaches(String lockCache, String metadataCache, String dataCache) {
       ConfigurationBuilder cfg = getIndexedConfig();
-      cfg.indexing().index(Index.ALL)
-            .addProperty("default.locking_cachename", lockCache)
-            .addProperty("default.data_cachename", dataCache)
-            .addProperty("default.metadata_cachename", metadataCache)
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.indexing()
+         .addProperty("default.locking_cachename", lockCache)
+         .addProperty("default.data_cachename", dataCache)
+         .addProperty("default.metadata_cachename", metadataCache);
       return cfg;
    }
 
    private ConfigurationBuilder getIndexedConfigWithInfinispanIndexManager() {
       ConfigurationBuilder cfg = getIndexedConfig();
-      cfg.indexing().index(Index.ALL)
-              .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-              .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.indexing()
+         .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
       return cfg;
    }
 
    private ConfigurationBuilder getIndexedConfigWithCustomLock() {
       ConfigurationBuilder cfg = getIndexedConfig();
-      cfg.indexing().index(Index.ALL)
-              .addProperty("default.locking_strategy", "none")
-              .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.indexing()
+         .addProperty("default.locking_strategy", "none");
       return cfg;
    }
-
 }
