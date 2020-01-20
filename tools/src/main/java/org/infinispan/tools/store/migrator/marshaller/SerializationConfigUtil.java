@@ -59,6 +59,7 @@ public class SerializationConfigUtil {
             Map<Integer, AdvancedExternalizer> userExts = getExternalizersFromProps(props);
             return majorVersion == 8 ? new Infinispan8Marshaller(userExts) : new Infinispan9Marshaller(userExts);
          case 10:
+         case 11:
             if (props.isTargetStore())
                return null;
 
