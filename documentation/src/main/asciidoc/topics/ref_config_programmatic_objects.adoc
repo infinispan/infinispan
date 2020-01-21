@@ -1,0 +1,53 @@
+[id='programmatic_objects-{context}']
+= Configuration Objects
+{brandname} provides two abstractions for programmatic cache configuration:
+
+`GlobalConfigurationBuilder`::
+Constructs global configuration objects that apply to all cache definitions.
+`ConfigurationBuilder`::
+Constructs configuration objects specific to cache definitions.
+
+.Global configuration
+An example of global configuration is to enable JMX statistics at the Cache
+Manager level, as follows:
+
+[source,java]
+----
+include::code_examples/EnableJmxStats.java[]
+----
+
+.Cache configuration
+The following examples show how you can programmatically configure different settings for {brandname} caches.
+
+* Configure a distributed, synchronous clustered cache mode:
++
+[source,java]
+----
+include::code_examples/ConfigClustering.java[]
+----
+
+* Configure eviction and expiration settings:
++
+[source,java]
+----
+include::code_examples/ConfigExpiration.java[]
+----
+
+* Configure persistent cache stores:
++
+[source,java]
+----
+include::code_examples/ConfigCacheStores.java[]
+----
+
+* Configure transaction and locking:
++
+[source,java]
+----
+include::code_examples/ConfigTransactionsLocking.java[]
+----
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[org.infinispan.configuration.global.GlobalConfiguration]
+* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

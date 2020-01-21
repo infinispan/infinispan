@@ -120,3 +120,6 @@ include::transaction-attributes.adoc[]
 
 //REST
 :rest_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/
+
+//HotRod Server
+:hotrod_docs: https://access.redhat.com/documentation/en-us/red_hat_data_grid/

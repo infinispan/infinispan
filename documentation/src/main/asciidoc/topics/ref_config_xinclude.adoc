@@ -1,0 +1,32 @@
+[id='cache_xinclude-{context}']
+= Multiple Configuration Files
+{brandname} supports XML inclusions (XInclude) that allow you to split configuration across multiple files.
+
+For example, the following configuration uses an XInclude:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan xmlns:xi="http://www.w3.org/2001/XInclude">
+    <cache-container default-cache="cache-1">
+        <xi:include href="local.xml" /> <1>
+    </cache-container>
+</infinispan>
+----
+
+<1> includes an `local.xml` file that contains the following cache definition:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<local-cache name="mycache"/>
+----
+
+[NOTE]
+====
+{brandname} configurations provides only minimal support for the XInclude
+specification. For example, you cannot use the `xpointer` attribute, the
+`xi:fallback` element, text processing, or content negotiation.
+====
+
+.Reference
+
+link:https://www.w3.org/TR/xinclude/[XInclude specification]
