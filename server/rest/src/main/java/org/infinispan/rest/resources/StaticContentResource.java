@@ -34,19 +34,37 @@ public class StaticContentResource implements ResourceHandler {
    private final String urlPath;
 
    private static final int CACHE_MAX_AGE_SECONDS = 60 * 60 * 24 * 31;  // 1 Month
-   private static final String CONSOLE_RESOURCE = "index.html";
+   public static final String DEFAULT_RESOURCE = "index.html";
    private final String noFileUri;
+   private final ResourceResolver customResourceResolver;
    private final String rootUri;
+
+   public interface ResourceResolver {
+      /**
+       * Resolves a path to a resource name
+       *
+       * @param path The requested URL path
+       * @param resource the {@link StaticContentResource} instance
+       * @return The resource name
+       */
+      String rewrite(String path, StaticContentResource resource);
+   }
 
    /**
     * @param dir The path to serve files from
-    * @param urlPath The url path to serve the files
+    * @param urlPath The url path to serve the file.
+    * @param resourceResolver a {@link ResourceResolver} to resolve requests into resources
     */
-   public StaticContentResource(Path dir, String urlPath) {
+   public StaticContentResource(Path dir, String urlPath, ResourceResolver resourceResolver) {
       this.dir = dir.toAbsolutePath();
       this.urlPath = urlPath;
       this.noFileUri = "/" + urlPath;
+      this.customResourceResolver = resourceResolver;
       this.rootUri = noFileUri + "/";
+   }
+
+   public StaticContentResource(Path dir, String urlPath) {
+      this(dir, urlPath, null);
    }
 
    @Override
@@ -81,9 +99,14 @@ public class StaticContentResource implements ResourceHandler {
          return completedFuture(responseBuilder.location(rootUri).status(MOVED_PERMANENTLY).build());
       }
 
-      // if the path is a '/console' url path, we need to serve the console application, served from the index.html
-      // if the path contains a '.', in this case we are asking for a file (css, js...) so we serve the file
-      String resource = isInfinispanConsolePath(uri) ? CONSOLE_RESOURCE : uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
+      String resource = uri.substring(uri.indexOf(urlPath) + urlPath.length() + 1);
+
+      if (customResourceResolver != null) {
+         resource = customResourceResolver.rewrite(resource, this);
+      } else {
+         if (uri.equals(rootUri)) resource = DEFAULT_RESOURCE;
+      }
+
       File file = resolve(resource);
       if (file == null) {
          return completedFuture(responseBuilder.status(HttpResponseStatus.NOT_FOUND).build());
@@ -115,9 +138,5 @@ public class StaticContentResource implements ResourceHandler {
             .contentType(mediaType)
             .entity(file);
       return completedFuture(responseBuilder.build());
-   }
-
-   private boolean isInfinispanConsolePath(String uri) {
-      return uri.startsWith(rootUri) && !uri.contains(".");
    }
 }
