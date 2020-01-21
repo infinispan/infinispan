@@ -4,12 +4,6 @@
 //
 
 //
-// Conditional statements
-//
-:server:
-:library:
-
-//
 // Include topic-specific attributes
 //
 include::transaction-attributes.adoc[]
@@ -19,9 +13,6 @@ include::transaction-attributes.adoc[]
 //
 :plusplus: ++
 :underscores: ___
-
-//Doc Home
-:doc_home: https://infinispan.org/documentation/
 
 //
 // Server artifacts
@@ -48,25 +39,20 @@ include::transaction-attributes.adoc[]
 :osweb: OpenShift Web Console
 
 //
-// Community attributes
-// In the main Infinispan repo, these attributes are defined in
-// documentation/pom.xml
-// In other Infinispan repos, uncomment these attributes to include them
-// in the source content.
+// Titles
 //
-//:brandname: Infinispan
-//:fullbrandname: Infinispan
-//:wildflybrandname: WildFly
 
-//:infinispanversion: 10.0
-//:infinispancomponentversion: 10.0.0-SNAPSHOT
+//Doc Home
+:doc_home: https://infinispan.org/documentation/
 
-//:moduleprefix: ispn
-//:infinispanslot: ispn-10.0
+//Dev
+:dev_docs: ../developing/developing.html
 
-//:download_url: https://infinispan.org/download/
-//:javadocroot: https://docs.jboss.org/infinispan/10.0/apidocs
-//:configdocroot: https://docs.jboss.org/infinispan/10.0/configdocs/
-//:wildflydocroot: https://docs.jboss.org/author/display/WFLY11
-//:jdkdocroot: https://docs.oracle.com/javase/8/docs/api
-//:javaeedocroot: https://docs.oracle.com/javaee/7/api
+//Server
+:server_docs: ../server/server.html
+
+//REST
+:rest_docs: ../rest/rest.html
+
+//HotRod Server
+:hotrod_docs: ../hotrod_java/hotrod_java.html

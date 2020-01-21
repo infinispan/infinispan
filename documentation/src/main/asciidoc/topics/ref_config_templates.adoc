@@ -1,0 +1,74 @@
+[id='templates-{context}']
+= Cache Configuration Templates
+{brandname} lets you define configuration templates that you can apply to
+multiple cache definitions or use as the basis for complex configurations.
+
+For example, the following configuration contains a configuration template for
+local caches:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+   <cache-container default-cache="local"> <1>
+      <local-cache-configuration name="local-template"> <2>
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+      </local-cache-configuration>
+      <local-cache name="local" configuration="local-template" /> <3>
+   </cache-container>
+</infinispan>
+----
+
+<1> specifies the "local" cache as the default.
+<2> defines a configuration template named "local-template" that defines an expiration policy for local caches.
+<3> names a local cache instance that uses the configuration template.
+
+.Inheritance with configuration templates
+Configuration templates can also inherit from other templates to extend and
+override settings.
+
+[NOTE]
+====
+Configuration template inheritance is hierarchical. For a child configuration
+template to inherit from a parent, you must include it after the parent 
+template.
+====
+
+The following is an example of configuration template inheritance:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<infinispan>
+   <cache-container default-cache="local">
+      <local-cache-configuration name="base-template"> <1>
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+      </local-cache-configuration>
+
+      <local-cache-configuration name="extended-template"
+                                 configuration="base-template"> <2>
+         <expiration lifespan="20"/>
+         <memory>
+            <object size="2000"/>
+         </memory>
+      </local-cache-configuration>
+
+      <local-cache name="local" configuration="base-template" /> <3>
+      <local-cache name="local-bounded" configuration="extended-template" /> <4>
+   </cache-container>
+</infinispan>
+----
+
+<1> defines a configuration template named "base-template" that defines an expiration policy for local caches. In this example, "base-template" is the parent configuration template.
+<2> defines a configuration template named "extended-template" that inherits settings from "base-template", modifies the `lifespan` attribute for expiration, and adds a `memory` element to the configuration. In this example, "extended-template" is a child of "base-template".
+<3> names a local cache that uses the configuration settings in "base-template".
+<4> names a local cache that uses the configuration settings in "extended-template".
+
+[IMPORTANT]
+====
+Configuration template inheritance is additive for elements that have multiple
+values, such as `property`. Resulting child configurations merge values from
+parent configurations.
+
+For example, `<property value_x="foo" />` in a parent configuration merges with
+`<property value_y="bar" />` in a child configuration to result in `<property
+value_x="foo" value_y="bar" />`.
+====
