@@ -24,6 +24,7 @@ import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.server.logging.events.ServerEventImpl;
 import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.server.test.TestThreadTrackerRule;
+import org.infinispan.server.test.Util;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -31,6 +32,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -47,6 +50,8 @@ import org.junit.Test;
  */
 
 public class ServerEventLoggerTest {
+   private static final Log log = LogFactory.getLog(ServerEventLoggerTest.class);
+
    @Rule
    public TestThreadTrackerRule tracker = new TestThreadTrackerRule();
 
@@ -62,13 +67,13 @@ public class ServerEventLoggerTest {
             eventLogger.info(EventLogCategory.TASKS, "message #2");
             eventLogger.warn(EventLogCategory.CLUSTER, "message #3");
             eventLogger.warn(EventLogCategory.TASKS, "message #4");
-            List<EventLog> events = eventLogger.getEvents(Instant.now(), 10, Optional.of(EventLogCategory.CLUSTER), Optional.empty());
+            List<EventLog> events = waitForEvents(2, eventLogger, EventLogCategory.CLUSTER, null);
             assertEquals(2, events.size());
             assertEquals("message #3", events.get(0).getMessage());
             assertEquals(EventLogLevel.WARN, events.get(0).getLevel());
             assertEquals("message #1", events.get(1).getMessage());
             assertEquals(EventLogLevel.INFO, events.get(1).getLevel());
-            events = eventLogger.getEvents(Instant.now(), 10, Optional.empty(), Optional.of(EventLogLevel.INFO));
+            events = waitForEvents(2, eventLogger, null, EventLogLevel.INFO);
             assertEquals(2, events.size());
             assertEquals("message #2", events.get(0).getMessage());
             assertEquals(EventLogCategory.TASKS, events.get(0).getCategory());
@@ -76,6 +81,17 @@ public class ServerEventLoggerTest {
             assertEquals(EventLogCategory.CLUSTER, events.get(1).getCategory());
          }
       });
+   }
+
+   private static List<EventLog> waitForEvents(int expectedCount, EventLogger eventLogger, EventLogCategory category,
+                                               EventLogLevel level) {
+      Util.eventuallyEquals(expectedCount, () -> getLatestEvents(eventLogger, category, level).size());
+      return getLatestEvents(eventLogger, category, level);
+   }
+
+   private static List<EventLog> getLatestEvents(EventLogger eventLogger, EventLogCategory category,
+                                                 EventLogLevel level) {
+      return eventLogger.getEvents(Instant.now(), 10, Optional.ofNullable(category), Optional.ofNullable(level));
    }
 
    @Test
@@ -101,13 +117,13 @@ public class ServerEventLoggerTest {
             }
             // query all nodes
             for (int i = 0; i < cms.length; i++) {
+               log.debugf("Checking logs on %s", cms[i].getAddress());
                EventLogger eventLogger = EventLogManager.getEventLogger(cms[i]);
-               List<EventLog> events = eventLogger.getEvents(Instant.now(), 10, Optional.of(EventLogCategory.TASKS), Optional.empty());
-               assertEquals("Result count discrepancy on node " + i, 2 * cms.length, events.size());
+               List<EventLog> events = waitForEvents(2 * cms.length, eventLogger, EventLogCategory.TASKS, null);
                for (EventLog event : events) {
                   assertEquals(EventLogCategory.TASKS, event.getCategory());
                }
-               events = eventLogger.getEvents(Instant.now(), 10, Optional.empty(), Optional.of(EventLogLevel.INFO));
+               events = getLatestEvents(eventLogger, null, EventLogLevel.INFO);
                for (EventLog event : events) {
                   assertEquals(EventLogLevel.INFO, event.getLevel());
                }
