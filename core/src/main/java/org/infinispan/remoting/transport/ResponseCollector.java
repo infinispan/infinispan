@@ -21,7 +21,7 @@ public interface ResponseCollector<T> {
     * <p>When a target node leaves the cluster, this method is called with a
     * {@link org.infinispan.remoting.responses.CacheNotFoundResponse}.</p>
     *
-    * <p>Should return a non-{@code null} result if the request should complete, or {@code null}
+    * <p>Should return a non-{@code null} result if the request should complete with that value, or {@code null}
     * if it should wait for more responses.
     * If the method throws an exception, the request will be completed with that exception.
     *

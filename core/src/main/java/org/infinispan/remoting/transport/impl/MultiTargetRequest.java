@@ -93,6 +93,8 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
             result = responseCollector.addResponse(sender, response);
             if (result != null) {
                isDone = true;
+               // Make sure to ignore any other responses
+               missingResponses = 0;
             } else if (missingResponses <= 0) {
                isDone = true;
                result = responseCollector.finish();
