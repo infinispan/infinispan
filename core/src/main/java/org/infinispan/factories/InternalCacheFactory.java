@@ -3,15 +3,10 @@ package org.infinispan.factories;
 import static java.util.Objects.requireNonNull;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
@@ -21,40 +16,22 @@ import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.context.Flag;
-import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.context.impl.ImmutableContext;
-import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.BasicComponentRegistry;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
-import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
-import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 /**
@@ -101,21 +78,21 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       final BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> actualBuilder = (kc, kv) -> new CacheImpl<>(cacheName);
       BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> usedBuilder;
       // We can optimize REPL reads that meet some criteria. This allows us to bypass interceptor chain
-      if (configuration.clustering().cacheMode().isReplicated() && !configuration.persistence().usingStores()
-            && !configuration.transaction().transactionMode().isTransactional() && configuration.clustering().stateTransfer().awaitInitialTransfer()) {
-         usedBuilder = (kc, kv) -> {
-            AbstractGetAdvancedCache<K, V, ?> cache = new GetReplCache<>(actualBuilder.apply(kc, kv));
-            if (configuration.jmxStatistics().available()) {
-               cache = new StatsCache<>(cache);
-            }
-            if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
-               cache = new PartitionHandlingCache<>(cache);
-            }
-            return cache;
-         };
-      } else {
+//      if (configuration.clustering().cacheMode().isReplicated() && !configuration.persistence().usingStores()
+//            && !configuration.transaction().transactionMode().isTransactional() && configuration.clustering().stateTransfer().awaitInitialTransfer()) {
+//         usedBuilder = (kc, kv) -> {
+//            AbstractGetAdvancedCache<K, V, ?> cache = new GetReplCache<>(actualBuilder.apply(kc, kv));
+//            if (configuration.jmxStatistics().available()) {
+//               cache = new StatsCache<>(cache);
+//            }
+//            if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
+//               cache = new PartitionHandlingCache<>(cache);
+//            }
+//            return cache;
+//         };
+//      } else {
          usedBuilder = actualBuilder;
-      }
+//      }
 
       AdvancedCache<K, V> cache = buildEncodingCache(usedBuilder, configuration);
 
@@ -218,344 +195,344 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
    }
 
-   @Scope(Scopes.NAMED_CACHE)
-   static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
-
-      @Inject
-      protected ComponentRegistry componentRegistry;
-      @Inject
-      InternalExpirationManager<K, V> expirationManager;
-      @Inject
-      KeyPartitioner keyPartitioner;
-
-      public AbstractGetAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
-         super(cache, wrapper);
-      }
-
-      /**
-       * This method is for additional components that need to be wired after the field wiring is complete
-       */
-      @Inject
-      public void wireRealCache() {
-         // Wire the cache to ensure all components are ready
-         componentRegistry.wireDependencies(cache);
-      }
-
-      /**
-       * This is to be extended when an entry is injected via component registry and you have to do it manually when a
-       * new delegating cache is created due to methods like {@link AdvancedCache#withFlags(Flag...)}. This method will
-       * call {@link #wireRealCache()} at the very end - so all methods should be initialized before.
-       *
-       * @param cache
-       */
-      protected void internalWire(T cache) {
-         componentRegistry = cache.componentRegistry;
-         expirationManager = cache.expirationManager;
-         keyPartitioner = cache.keyPartitioner;
-         wireRealCache();
-      }
-
-      @Override
-      public InternalDataContainer<K, V> getDataContainer() {
-         return (InternalDataContainer<K, V>) super.getDataContainer();
-      }
-
-      @Override
-      public V get(Object key) {
-         InternalCacheEntry<K, V> ice = getCacheEntry(key);
-         if (ice != null) {
-            return ice.getValue();
-         }
-         return null;
-      }
-
-      @Override
-      public V getOrDefault(Object key, V defaultValue) {
-         V value = get(key);
-         return value != null ? value : defaultValue;
-      }
-
-      @Override
-      public boolean containsKey(Object key) {
-         return get(key) != null;
-      }
-
-      @Override
-      public CompletableFuture<V> getAsync(K key) {
-         return getCacheEntryAsync(key)
-               .thenApply(ice -> ice != null ? ice.getValue() : null);
-      }
-
-      private InternalCacheEntry<K, V> internalPeekCacheEntry(Object key, int segment) {
-         assertKeyNotNull(key);
-         checkCanRun(cache, cache.getName());
-         return getDataContainer().peek(segment, key);
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> getCacheEntry(Object key) {
-         int segment = keyPartitioner.getSegment(key);
-         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
-         if (ice != null) {
-            if (ice.canExpire()) {
-               CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
-               if (CompletionStages.join(stage)) {
-                  ice = null;
-               }
-            }
-         }
-         return ice;
-      }
-
-      @Override
-      public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
-         int segment = keyPartitioner.getSegment(key);
-         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
-         if (ice == null) {
-            return CompletableFutures.completedNull();
-         }
-         if (ice.canExpire()) {
-            CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
-            if (CompletionStages.isCompletedSuccessfully(stage)) {
-               if (CompletionStages.join(stage)) {
-                  return CompletableFutures.completedNull();
-               }
-               return CompletableFuture.completedFuture(ice);
-            } else {
-               return stage.thenApply(expired -> {
-                  if (expired == Boolean.TRUE) {
-                     return null;
-                  }
-                  return (CacheEntry<K, V>) ice;
-               }).toCompletableFuture();
-            }
-         }
-         return CompletableFuture.completedFuture(ice);
-      }
-   }
-
-   static class PartitionHandlingCache<K, V> extends AbstractGetAdvancedCache<K, V, PartitionHandlingCache<K, V>> {
-      @Inject PartitionHandlingManager manager;
-
-      // We store the flags as bits passed from AdvancedCache.withFlags etc.
-      private final long bitFlags;
-
-      public PartitionHandlingCache(AbstractGetAdvancedCache<K, V, ?> cache) {
-         this(cache, 0L);
-      }
-
-      private PartitionHandlingCache(AdvancedCache<K, V> cache, long bitFlags) {
-         super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-               PartitionHandlingCache<K, V> prev = (PartitionHandlingCache<K, V>) self;
-               PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(newDelegate, prev.bitFlags);
-               newCache.internalWire(prev);
-               return newCache;
-            }
-         });
-         this.bitFlags = bitFlags;
-      }
-
-      @Override
-      protected void internalWire(PartitionHandlingCache<K, V> cache) {
-         manager = cache.manager;
-         super.internalWire(cache);
-      }
-
-      @Override
-      public V get(Object key) {
-         V value = cache.get(key);
-         if (!EnumUtil.containsAny(bitFlags, FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
-            manager.checkRead(key, bitFlags);
-         }
-         return value;
-      }
-
-      @Override
-      public AdvancedCache<K, V> withFlags(Flag... flags) {
-         long newFlags = EnumUtil.bitSetOf(flags);
-         long updatedFlags = EnumUtil.mergeBitSets(bitFlags, newFlags);
-         if (bitFlags != updatedFlags) {
-            PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(super.withFlags(flags), updatedFlags);
-            newCache.internalWire(this);
-            return newCache;
-         }
-         return this;
-      }
-
-      @Override
-      public AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
-         long newFlags = EnumUtil.bitSetOf(flags);
-         long updatedFlags = EnumUtil.mergeBitSets(bitFlags, newFlags);
-         if (bitFlags != updatedFlags) {
-            PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(super.withFlags(flags), updatedFlags);
-            newCache.internalWire(this);
-            return newCache;
-         }
-         return this;
-      }
-
-      @Override
-      public AdvancedCache<K, V> noFlags() {
-         if (bitFlags != 0) {
-            PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(super.noFlags(), 0L);
-            newCache.internalWire(this);
-            return newCache;
-         }
-         return this;
-      }
-   }
-
-   static class StatsCache<K, V> extends AbstractGetAdvancedCache<K, V, StatsCache<K, V>> {
-
-      @Inject TimeService timeService;
-      private CacheMgmtInterceptor interceptor;
-
-      public StatsCache(AbstractGetAdvancedCache<K, V, ?> cache) {
-         this((AdvancedCache<K, V>) cache);
-      }
-
-      private StatsCache(AdvancedCache<K, V> cache) {
-         super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-               StatsCache<K, V> newCache = new StatsCache<>(newDelegate);
-               newCache.internalWire((StatsCache<K, V>) self);
-               newCache.interceptorStart();
-               return newCache;
-            }
-         });
-      }
-
-      @Override
-      protected void internalWire(StatsCache<K, V> cache) {
-         this.timeService = cache.timeService;
-         super.internalWire(cache);
-      }
-
-      private void interceptorStart() {
-         // This has to be done after the cache is wired - otherwise we can get a circular dependency
-         interceptor = cache.getAsyncInterceptorChain().findInterceptorWithClass(CacheMgmtInterceptor.class);
-      }
-
-      @Override
-      public V get(Object key) {
-         V value;
-         if (interceptor == null) {
-            interceptorStart();
-         }
-         if (interceptor.getStatisticsEnabled()) {
-            long beginTime = timeService.time();
-            value = cache.get(key);
-            interceptor.addDataRead(value != null, timeService.timeDuration(beginTime, TimeUnit.NANOSECONDS));
-         } else {
-            value = cache.get(key);
-         }
-         return value;
-      }
-   }
-
-   static class GetReplCache<K, V> extends AbstractGetAdvancedCache<K, V, GetReplCache<K, V>> {
-
-      @Inject CacheNotifier<K, V> cacheNotifier;
-
-      // The hasListeners is commented out until EncoderCache can properly pass down the addListener invocation
-      // to the next delegate in the chain. Otherwise we miss listener additions and don't fire events properly.
-      // This is detailed in https://issues.jboss.org/browse/ISPN-9240
-//      private final AtomicBoolean hasListeners;
+//   @Scope(Scopes.NAMED_CACHE)
+//   static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
 //
-//      GetReplCache(AdvancedCache<K, V> cache) {
-//         this(cache, new AtomicBoolean());
+//      @Inject
+//      protected ComponentRegistry componentRegistry;
+//      @Inject
+//      InternalExpirationManager<K, V> expirationManager;
+//      @Inject
+//      KeyPartitioner keyPartitioner;
+//
+//      public AbstractGetAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
+//         super(cache, wrapper);
 //      }
-
-      private GetReplCache(AdvancedCache<K, V> cache/*, AtomicBoolean hasListeners*/) {
-         super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
-               GetReplCache<K, V> oldCache = (GetReplCache<K, V>) self;
-               GetReplCache<K, V> newCache = new GetReplCache<K, V>(newDelegate/*, oldCache.hasListeners*/);
-               newCache.internalWire(oldCache);
-               return newCache;
-            }
-         });
-//         this.hasListeners = hasListeners;
-      }
-
-      @Override
-      protected void internalWire(GetReplCache<K, V> cache) {
-         cacheNotifier = cache.cacheNotifier;
-         super.internalWire(cache);
-      }
-
-//      private boolean canFire(Object listener) {
-//         for (Method m : listener.getClass().getMethods()) {
-//            // Visitor listeners are very rare, so optimize to not call when we don't have any registered
-//            if (m.isAnnotationPresent(CacheEntryVisited.class)) {
-//               return true;
+//
+//      /**
+//       * This method is for additional components that need to be wired after the field wiring is complete
+//       */
+//      @Inject
+//      public void wireRealCache() {
+//         // Wire the cache to ensure all components are ready
+//         componentRegistry.wireDependencies(cache);
+//      }
+//
+//      /**
+//       * This is to be extended when an entry is injected via component registry and you have to do it manually when a
+//       * new delegating cache is created due to methods like {@link AdvancedCache#withFlags(Flag...)}. This method will
+//       * call {@link #wireRealCache()} at the very end - so all methods should be initialized before.
+//       *
+//       * @param cache
+//       */
+//      protected void internalWire(T cache) {
+//         componentRegistry = cache.componentRegistry;
+//         expirationManager = cache.expirationManager;
+//         keyPartitioner = cache.keyPartitioner;
+//         wireRealCache();
+//      }
+//
+//      @Override
+//      public InternalDataContainer<K, V> getDataContainer() {
+//         return (InternalDataContainer<K, V>) super.getDataContainer();
+//      }
+//
+//      @Override
+//      public V get(Object key) {
+//         InternalCacheEntry<K, V> ice = getCacheEntry(key);
+//         if (ice != null) {
+//            return ice.getValue();
+//         }
+//         return null;
+//      }
+//
+//      @Override
+//      public V getOrDefault(Object key, V defaultValue) {
+//         V value = get(key);
+//         return value != null ? value : defaultValue;
+//      }
+//
+//      @Override
+//      public boolean containsKey(Object key) {
+//         return get(key) != null;
+//      }
+//
+//      @Override
+//      public CompletableFuture<V> getAsync(K key) {
+//         return getCacheEntryAsync(key)
+//               .thenApply(ice -> ice != null ? ice.getValue() : null);
+//      }
+//
+//      private InternalCacheEntry<K, V> internalPeekCacheEntry(Object key, int segment) {
+//         assertKeyNotNull(key);
+//         checkCanRun(cache, cache.getName());
+//         return getDataContainer().peek(segment, key);
+//      }
+//
+//      @Override
+//      public InternalCacheEntry<K, V> getCacheEntry(Object key) {
+//         int segment = keyPartitioner.getSegment(key);
+//         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
+//         if (ice != null) {
+//            if (ice.canExpire()) {
+//               CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
+//               if (CompletionStages.join(stage)) {
+//                  ice = null;
+//               }
 //            }
 //         }
-//         return false;
+//         return ice;
 //      }
 //
 //      @Override
-//      public void addListener(Object listener, KeyFilter<? super K> filter) {
-//         super.addListener(listener, filter);
-//         if (!hasListeners.get() && canFire(listener)) {
-//            hasListeners.set(true);
+//      public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+//         int segment = keyPartitioner.getSegment(key);
+//         InternalCacheEntry<K, V> ice = internalPeekCacheEntry(key, segment);
+//         if (ice == null) {
+//            return CompletableFutures.completedNull();
 //         }
+//         if (ice.canExpire()) {
+//            CompletionStage<Boolean> stage = expirationManager.handlePossibleExpiration(ice, segment, false);
+//            if (CompletionStages.isCompletedSuccessfully(stage)) {
+//               if (CompletionStages.join(stage)) {
+//                  return CompletableFutures.completedNull();
+//               }
+//               return CompletableFuture.completedFuture(ice);
+//            } else {
+//               return stage.thenApply(expired -> {
+//                  if (expired == Boolean.TRUE) {
+//                     return null;
+//                  }
+//                  return (CacheEntry<K, V>) ice;
+//               }).toCompletableFuture();
+//            }
+//         }
+//         return CompletableFuture.completedFuture(ice);
+//      }
+//   }
+//
+//   static class PartitionHandlingCache<K, V> extends AbstractGetAdvancedCache<K, V, PartitionHandlingCache<K, V>> {
+//      @Inject PartitionHandlingManager manager;
+//
+//      // We store the flags as bits passed from AdvancedCache.withFlags etc.
+//      private final long bitFlags;
+//
+//      public PartitionHandlingCache(AbstractGetAdvancedCache<K, V, ?> cache) {
+//         this(cache, 0L);
+//      }
+//
+//      private PartitionHandlingCache(AdvancedCache<K, V> cache, long bitFlags) {
+//         super(cache, new AdvancedCacheWrapper<K, V>() {
+//            @Override
+//            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+//               throw new UnsupportedOperationException();
+//            }
+//
+//            @Override
+//            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
+//               PartitionHandlingCache<K, V> prev = (PartitionHandlingCache<K, V>) self;
+//               PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(newDelegate, prev.bitFlags);
+//               newCache.internalWire(prev);
+//               return newCache;
+//            }
+//         });
+//         this.bitFlags = bitFlags;
 //      }
 //
 //      @Override
-//      public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
-//         super.addListener(listener, filter, converter);
-//         if (!hasListeners.get() && canFire(listener)) {
-//            hasListeners.set(true);
-//         }
+//      protected void internalWire(PartitionHandlingCache<K, V> cache) {
+//         manager = cache.manager;
+//         super.internalWire(cache);
 //      }
 //
 //      @Override
-//      public void addListener(Object listener) {
-//         super.addListener(listener);
-//         if (!hasListeners.get() && canFire(listener)) {
-//            hasListeners.set(true);
+//      public V get(Object key) {
+//         V value = cache.get(key);
+//         if (!EnumUtil.containsAny(bitFlags, FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
+//            manager.checkRead(key, bitFlags);
 //         }
+//         return value;
 //      }
 //
 //      @Override
-//      public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
-//            CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
-//         super.addFilteredListener(listener, filter, converter, filterAnnotations);
-//         if (!hasListeners.get() && canFire(listener)) {
-//            hasListeners.set(true);
+//      public AdvancedCache<K, V> withFlags(Flag... flags) {
+//         long newFlags = EnumUtil.bitSetOf(flags);
+//         long updatedFlags = EnumUtil.mergeBitSets(bitFlags, newFlags);
+//         if (bitFlags != updatedFlags) {
+//            PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(super.withFlags(flags), updatedFlags);
+//            newCache.internalWire(this);
+//            return newCache;
 //         }
+//         return this;
 //      }
-
-      @Override
-      public V get(Object key) {
-         V value = super.get(key);
-         if (value != null/* && hasListeners.get()*/) {
-            CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null));
-            CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null));
-         }
-         return value;
-      }
-   }
+//
+//      @Override
+//      public AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
+//         long newFlags = EnumUtil.bitSetOf(flags);
+//         long updatedFlags = EnumUtil.mergeBitSets(bitFlags, newFlags);
+//         if (bitFlags != updatedFlags) {
+//            PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(super.withFlags(flags), updatedFlags);
+//            newCache.internalWire(this);
+//            return newCache;
+//         }
+//         return this;
+//      }
+//
+//      @Override
+//      public AdvancedCache<K, V> noFlags() {
+//         if (bitFlags != 0) {
+//            PartitionHandlingCache<K, V> newCache = new PartitionHandlingCache<>(super.noFlags(), 0L);
+//            newCache.internalWire(this);
+//            return newCache;
+//         }
+//         return this;
+//      }
+//   }
+//
+//   static class StatsCache<K, V> extends AbstractGetAdvancedCache<K, V, StatsCache<K, V>> {
+//
+//      @Inject TimeService timeService;
+//      private CacheMgmtInterceptor interceptor;
+//
+//      public StatsCache(AbstractGetAdvancedCache<K, V, ?> cache) {
+//         this((AdvancedCache<K, V>) cache);
+//      }
+//
+//      private StatsCache(AdvancedCache<K, V> cache) {
+//         super(cache, new AdvancedCacheWrapper<K, V>() {
+//            @Override
+//            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+//               throw new UnsupportedOperationException();
+//            }
+//
+//            @Override
+//            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
+//               StatsCache<K, V> newCache = new StatsCache<>(newDelegate);
+//               newCache.internalWire((StatsCache<K, V>) self);
+//               newCache.interceptorStart();
+//               return newCache;
+//            }
+//         });
+//      }
+//
+//      @Override
+//      protected void internalWire(StatsCache<K, V> cache) {
+//         this.timeService = cache.timeService;
+//         super.internalWire(cache);
+//      }
+//
+//      private void interceptorStart() {
+//         // This has to be done after the cache is wired - otherwise we can get a circular dependency
+//         interceptor = cache.getAsyncInterceptorChain().findInterceptorWithClass(CacheMgmtInterceptor.class);
+//      }
+//
+//      @Override
+//      public V get(Object key) {
+//         V value;
+//         if (interceptor == null) {
+//            interceptorStart();
+//         }
+//         if (interceptor.getStatisticsEnabled()) {
+//            long beginTime = timeService.time();
+//            value = cache.get(key);
+//            interceptor.addDataRead(value != null, timeService.timeDuration(beginTime, TimeUnit.NANOSECONDS));
+//         } else {
+//            value = cache.get(key);
+//         }
+//         return value;
+//      }
+//   }
+//
+//   static class GetReplCache<K, V> extends AbstractGetAdvancedCache<K, V, GetReplCache<K, V>> {
+//
+//      @Inject CacheNotifier<K, V> cacheNotifier;
+//
+//      // The hasListeners is commented out until EncoderCache can properly pass down the addListener invocation
+//      // to the next delegate in the chain. Otherwise we miss listener additions and don't fire events properly.
+//      // This is detailed in https://issues.jboss.org/browse/ISPN-9240
+////      private final AtomicBoolean hasListeners;
+////
+////      GetReplCache(AdvancedCache<K, V> cache) {
+////         this(cache, new AtomicBoolean());
+////      }
+//
+//      private GetReplCache(AdvancedCache<K, V> cache/*, AtomicBoolean hasListeners*/) {
+//         super(cache, new AdvancedCacheWrapper<K, V>() {
+//            @Override
+//            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+//               throw new UnsupportedOperationException();
+//            }
+//
+//            @Override
+//            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
+//               GetReplCache<K, V> oldCache = (GetReplCache<K, V>) self;
+//               GetReplCache<K, V> newCache = new GetReplCache<K, V>(newDelegate/*, oldCache.hasListeners*/);
+//               newCache.internalWire(oldCache);
+//               return newCache;
+//            }
+//         });
+////         this.hasListeners = hasListeners;
+//      }
+//
+//      @Override
+//      protected void internalWire(GetReplCache<K, V> cache) {
+//         cacheNotifier = cache.cacheNotifier;
+//         super.internalWire(cache);
+//      }
+//
+////      private boolean canFire(Object listener) {
+////         for (Method m : listener.getClass().getMethods()) {
+////            // Visitor listeners are very rare, so optimize to not call when we don't have any registered
+////            if (m.isAnnotationPresent(CacheEntryVisited.class)) {
+////               return true;
+////            }
+////         }
+////         return false;
+////      }
+////
+////      @Override
+////      public void addListener(Object listener, KeyFilter<? super K> filter) {
+////         super.addListener(listener, filter);
+////         if (!hasListeners.get() && canFire(listener)) {
+////            hasListeners.set(true);
+////         }
+////      }
+////
+////      @Override
+////      public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+////         super.addListener(listener, filter, converter);
+////         if (!hasListeners.get() && canFire(listener)) {
+////            hasListeners.set(true);
+////         }
+////      }
+////
+////      @Override
+////      public void addListener(Object listener) {
+////         super.addListener(listener);
+////         if (!hasListeners.get() && canFire(listener)) {
+////            hasListeners.set(true);
+////         }
+////      }
+////
+////      @Override
+////      public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+////            CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+////         super.addFilteredListener(listener, filter, converter, filterAnnotations);
+////         if (!hasListeners.get() && canFire(listener)) {
+////            hasListeners.set(true);
+////         }
+////      }
+//
+//      @Override
+//      public V get(Object key) {
+//         V value = super.get(key);
+//         if (value != null/* && hasListeners.get()*/) {
+//            CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null));
+//            CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null));
+//         }
+//         return value;
+//      }
+//   }
 
    @SurvivesRestarts
    class SimpleComponentRegistry<K, V> extends ComponentRegistry {
