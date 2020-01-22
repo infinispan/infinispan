@@ -108,16 +108,21 @@
                   <javax.cache.Cache>${embedded.CacheImpl}</javax.cache.Cache>
                   <javax.cache.Cache.Entry>${embedded.CacheEntryImpl}</javax.cache.Cache.Entry>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
-                  <infinispan.module-suffix>-${project.artifactId}-embedded</infinispan.module-suffix>
                   <!-- Apply our beans.xml to the TCK beans -->
                   <org.jboss.weld.se.archive.isolation>false</org.jboss.weld.se.archive.isolation>
 
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
+
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                  <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                  <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
+                  <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                  <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                <properties>

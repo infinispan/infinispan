@@ -1724,13 +1724,13 @@
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>${versionx.org.apache.logging.log4j.log4j-jul}</version>
+            <version>${versionx.org.apache.logging.log4j.log4j-slf4j-impl}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jul</artifactId>
-            <version>${versionx.org.apache.logging.log4j.log4j-core}</version>
+            <version>${versionx.org.apache.logging.log4j.log4j-jul}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
@@ -4126,6 +4126,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-jul</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>net.jcip</groupId>
          <artifactId>jcip-annotations</artifactId>
          <optional>true</optional>
@@ -4303,6 +4308,9 @@
                <version>${version.maven.surefire}</version>
                <configuration>
                   <systemPropertyVariables>
+                     <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                     <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                     <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                      <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                      <ansi.strip>${ansi.strip}</ansi.strip>
@@ -4707,16 +4715,16 @@
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+
                   <build.directory>${project.build.directory}</build.directory>
                   <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
 
-                  <!-- this is picked up in the log4j2.xml, which adds it to each module's log file name-->
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                  <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                  <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
-                  <!-- Log the correct thread name after we call Thread.setName(),
-                       see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
-                  <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
