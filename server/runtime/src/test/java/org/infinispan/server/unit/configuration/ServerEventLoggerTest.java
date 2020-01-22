@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.util.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -24,7 +25,6 @@ import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.server.logging.events.ServerEventImpl;
 import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.server.test.TestThreadTrackerRule;
-import org.infinispan.server.test.Util;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -85,7 +85,7 @@ public class ServerEventLoggerTest {
 
    private static List<EventLog> waitForEvents(int expectedCount, EventLogger eventLogger, EventLogCategory category,
                                                EventLogLevel level) {
-      Util.eventuallyEquals(expectedCount, () -> getLatestEvents(eventLogger, category, level).size());
+      Eventually.eventuallyEquals(expectedCount, () -> getLatestEvents(eventLogger, category, level).size());
       return getLatestEvents(eventLogger, category, level);
    }
 
