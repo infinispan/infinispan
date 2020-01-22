@@ -118,7 +118,8 @@ public class IspnKarafOptions {
    public static Option bundleLog4J() {
       return composite(
             mavenBundle().groupId("org.apache.logging.log4j").artifactId("log4j-api").versionAsInProject(),
-            mavenBundle().groupId("org.apache.logging.log4j").artifactId("log4j-core").versionAsInProject()
+            mavenBundle().groupId("org.apache.logging.log4j").artifactId("log4j-core").versionAsInProject(),
+            mavenBundle().groupId("org.apache.logging.log4j").artifactId("log4j-jul").versionAsInProject()
       );
    }
 
