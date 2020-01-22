@@ -21,6 +21,7 @@ import javax.management.remote.JMXServiceURL;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
@@ -212,6 +213,9 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          log.infof("Stopped container %s-%d", name, i);
       }
       containers.clear();
+
+      // See https://github.com/testcontainers/testcontainers-java/issues/2276
+      ThreadLeakChecker.ignoreThreadsContaining("tc-okhttp-stream-");
    }
 
    @Override
