@@ -167,7 +167,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       return handleAndCompose(helper.executeOnCoordinator(transport, command, timeout), (response, throwable) -> {
          int currentViewId = transport.getViewId();
          if (viewId != currentViewId) {
-            log.tracef("Received new view %d before join response for cache %s, retrying", currentViewId);
+            log.tracef("Received new view %d before join response for cache %s, retrying", currentViewId, cacheName);
             return sendJoinRequest(cacheName, joinInfo, timeout, endTime);
          }
 
