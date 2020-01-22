@@ -122,6 +122,10 @@
                        <usedefaultlisteners>false</usedefaultlisteners>
                        <listener>${junitListener}</listener>
                     </properties>
+                    <systemPropertyVariables>
+                        <!-- Don't use the log4j2-jul bridge, spring-boot starters default to Logback-->
+                        <java.util.logging.manager>java.util.logging.LogManager</java.util.logging.manager>
+                    </systemPropertyVariables>
                 </configuration>
                 <dependencies>
                     <dependency>
