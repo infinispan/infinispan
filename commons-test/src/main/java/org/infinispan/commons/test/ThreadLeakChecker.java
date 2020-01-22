@@ -129,6 +129,9 @@ public class ThreadLeakChecker {
       } finally {
          lock.unlock();
       }
+
+      // Initialize the thread-local, in case some tests don't call testStarted()
+      threadInfo.set(UNKNOWN);
    }
 
    /**
