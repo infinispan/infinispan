@@ -39,7 +39,7 @@ public class ShutdownRestIT {
 
    static boolean isServerShutdown(RestClient client) {
       try {
-         sync(client.server().configuration());
+         sync(client.server().configuration()).close();
       } catch (RuntimeException r) {
          return (Util.getRootCause(r) instanceof ConnectException);
       }

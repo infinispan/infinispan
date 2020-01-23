@@ -231,6 +231,7 @@ public class InfinispanServerTestMethodRule implements TestRule {
          }
          RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
          if (response.getStatus() != 200) {
+            response.close();
             throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
          } else {
             return restClient;
