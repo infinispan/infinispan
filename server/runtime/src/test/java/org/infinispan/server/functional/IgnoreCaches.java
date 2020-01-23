@@ -2,7 +2,7 @@ package org.infinispan.server.functional;
 
 import static java.util.Collections.singleton;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-import static org.infinispan.server.security.Common.sync;
+import static org.infinispan.rest.helper.RestResponses.assertStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -12,15 +12,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.rest.helper.RestResponses;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * @since 10.0
@@ -32,8 +32,6 @@ public class IgnoreCaches {
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   private final ObjectMapper mapper = new ObjectMapper();
 
    private static final String CACHE_MANAGER = "default";
 
@@ -73,25 +71,21 @@ public class IgnoreCaches {
    }
 
    private void assertCacheResponse(RestClient client, String cacheName, int code) {
-      RestResponse restResponse = sync(client.cache(cacheName).get("whatever"));
-      assertEquals(code, restResponse.getStatus());
+      assertStatus(code, client.cache(cacheName).get("whatever"));
    }
 
    private void unIgnoreCache(RestClient client, String cacheName) {
-      RestResponse response = sync(client.server().unIgnoreCache(CACHE_MANAGER, cacheName));
-      assertEquals(204, response.getStatus());
+      assertStatus(204, client.server().unIgnoreCache(CACHE_MANAGER, cacheName));
    }
 
    private void ignoreCache(RestClient client, String cacheName) {
-      RestResponse response = sync(client.server().ignoreCache(CACHE_MANAGER, cacheName));
-      assertEquals(204, response.getStatus());
+      assertStatus(204, client.server().ignoreCache(CACHE_MANAGER, cacheName));
    }
 
    private Set<String> getIgnoredCaches(RestClient client, String cacheManagerName) throws Exception {
-      RestResponse response = sync(client.server().listIgnoredCaches(cacheManagerName));
-      assertEquals(200, response.getStatus());
+      JsonNode body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches(cacheManagerName));
       Set<String> res = new HashSet<>();
-      mapper.readTree(response.getBody()).elements().forEachRemaining(n -> res.add(n.asText()));
+      body.elements().forEachRemaining(n -> res.add(n.asText()));
       return res;
    }
 }

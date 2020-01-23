@@ -1,5 +1,7 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.rest.helper.RestResponses.assertStatus;
+import static org.infinispan.rest.helper.RestResponses.responseBody;
 import static org.infinispan.server.security.Common.sync;
 import static org.junit.Assert.assertEquals;
 
@@ -131,10 +133,10 @@ public class AuthorizationLDAPIT {
       restCreateAuthzCache();
       RestCacheClient writerCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get("writer")).get().cache(SERVER_TEST.getMethodName());
       sync(writerCache.put("k1", "v1"));
-      assertEquals(403, sync(writerCache.get("k1")).getStatus());
+      assertStatus(403, writerCache.get("k1"));
       for (String user : Arrays.asList("reader", "supervisor")) {
          RestCacheClient userCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get(user)).get().cache(SERVER_TEST.getMethodName());
-         assertEquals("v1", sync(userCache.get("k1")).getBody());
+         assertEquals("v1", responseBody(userCache.get("k1")));
       }
    }
 
@@ -155,7 +157,7 @@ public class AuthorizationLDAPIT {
    public void testRestReaderCannotWrite() {
       restCreateAuthzCache();
       RestCacheClient readerCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get("reader")).get().cache(SERVER_TEST.getMethodName());
-      assertEquals(403, sync(readerCache.put("k1", "v1")).getStatus());
+      assertStatus(403, readerCache.put("k1", "v1"));
       for (String user : Arrays.asList("writer", "supervisor")) {
          RestCacheClient userCache = SERVER_TEST.rest().withClientConfiguration(restBuilders.get(user)).get().cache(SERVER_TEST.getMethodName());
          userCache.put(user, user);
