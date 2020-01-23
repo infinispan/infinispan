@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commons.logging.Log;
@@ -46,12 +45,12 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private final ConcurrentMap<K, InternalCacheEntry<K, V>> entries;
+   private final PeekableTouchableMap<K, InternalCacheEntry<K, V>> entries;
    private final Cache<K, InternalCacheEntry<K, V>> evictionCache;
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
-      entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel);
+      entries = new PeekableTouchableContainerMap<>(CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel));
       evictionCache = null;
    }
 
@@ -72,7 +71,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
             throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
       }
       evictionCache = applyListener(caffeine, evictionListener, null).build();
-      entries = evictionCache.asMap();
+      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
    }
 
    /**
@@ -100,7 +99,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
             .maximumWeight(thresholdSize), evictionListener, null)
             .build();
 
-      entries = evictionCache.asMap();
+      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
@@ -118,7 +117,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
    }
 
    @Override
-   protected ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   protected PeekableTouchableMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       return entries;
    }
 

@@ -2,7 +2,6 @@ package org.infinispan.container.offheap;
 
 import java.util.Iterator;
 import java.util.Spliterator;
-import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.FilterIterator;
@@ -13,6 +12,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
+import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -51,7 +51,7 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    }
 
    @Override
-   protected ConcurrentMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> getMapForSegment(int segment) {
+   protected PeekableTouchableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> getMapForSegment(int segment) {
       return map;
    }
 

@@ -29,9 +29,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
  * @since 9.3
  */
 public class L1SegmentedDataContainer<K, V> extends DefaultSegmentedDataContainer<K, V> {
-   private final ConcurrentMap<K, InternalCacheEntry<K, V>> nonOwnedEntries;
+   private final PeekableTouchableMap<K, InternalCacheEntry<K, V>> nonOwnedEntries;
 
-   public L1SegmentedDataContainer(Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
+   public L1SegmentedDataContainer(Supplier<PeekableTouchableMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
       super(mapSupplier, numSegments);
       this.nonOwnedEntries = mapSupplier.get();
    }
@@ -49,8 +49,8 @@ public class L1SegmentedDataContainer<K, V> extends DefaultSegmentedDataContaine
    }
 
    @Override
-   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> map = super.getMapForSegment(segment);
+   public PeekableTouchableMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+      PeekableTouchableMap<K, InternalCacheEntry<K, V>> map = super.getMapForSegment(segment);
       if (map == null) {
          map = nonOwnedEntries;
       }
