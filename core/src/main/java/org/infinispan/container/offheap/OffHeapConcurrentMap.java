@@ -24,10 +24,10 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -81,7 +81,7 @@ import net.jcip.annotations.GuardedBy;
  * @since 9.4
  */
 public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>,
-      PeekableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>, AutoCloseable {
+      PeekableTouchableMap<WrappedBytes, WrappedBytes>, AutoCloseable {
    /** Some implementation details
     * <p>
     * All methods that must hold a lock when invoked are annotated with a {@link GuardedBy} annotation. They can have a
@@ -159,6 +159,13 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          locks.unlockAll();
       }
    }
+
+   @Override
+   public boolean touchKey(Object key, long currentTimeMillis) {
+      // OFF HEAP does not support max idle in this version - just say it was touched
+      return true;
+   }
+
 
    /**
     * Listener interface that is notified when certain operations occur for various memory addresses. Note that when
