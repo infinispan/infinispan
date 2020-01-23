@@ -1,8 +1,8 @@
 package org.infinispan.factories;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.MemoryStorageConfiguration;
@@ -13,6 +13,8 @@ import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.L1SegmentedDataContainer;
+import org.infinispan.container.impl.PeekableTouchableContainerMap;
+import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.OffHeapDataContainer;
@@ -49,7 +51,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
             if (shouldSegment) {
                int segments = clusteringConfiguration.hash().numSegments();
-               Supplier mapSupplier = this::createAndStartOffHeapConcurrentMap;
+               Supplier<PeekableTouchableMap<WrappedBytes, WrappedBytes>> mapSupplier =
+                     this::createAndStartOffHeapConcurrentMap;
                if (clusteringConfiguration.l1().enabled()) {
                   return new L1SegmentedDataContainer<>(mapSupplier, segments);
                }
@@ -58,7 +61,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                return new OffHeapDataContainer();
             }
          } else if (shouldSegment) {
-            Supplier mapSupplier = ConcurrentHashMap::new;
+            Supplier<PeekableTouchableMap<Object, Object>> mapSupplier =
+                  PeekableTouchableContainerMap::new;
             int segments = clusteringConfiguration.hash().numSegments();
             if (clusteringConfiguration.l1().enabled()) {
                return new L1SegmentedDataContainer<>(mapSupplier, segments);

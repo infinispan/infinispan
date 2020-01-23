@@ -11,7 +11,6 @@ import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -23,7 +22,6 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -74,7 +72,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
-   protected abstract ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment);
+   protected abstract PeekableTouchableMap<K, V> getMapForSegment(int segment);
    protected abstract int getSegmentForKey(Object key);
 
    @Start
@@ -84,7 +82,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public InternalCacheEntry<K, V> get(int segment, Object k) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> map = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> map = getMapForSegment(segment);
       InternalCacheEntry<K, V> e = map != null ? map.get(k) : null;
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
@@ -105,12 +103,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public InternalCacheEntry<K, V> peek(int segment, Object k) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
-         if (entries instanceof PeekableMap) {
-            return ((PeekableMap<K, InternalCacheEntry<K, V>>) entries).peek(k);
-         }
-         return entries.get(k);
+         return entries.peek(k);
       }
       return null;
    }
@@ -122,21 +117,16 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public boolean touch(int segment, Object k, long currentTimeMillis) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
-         // We use get to also update eviction recency access
-         InternalCacheEntry<K, V> entry = entries.get(k);
-         if (entry != null) {
-            entry.touch(currentTimeMillis);
-            return true;
-         }
+         return entries.touchKey(k, currentTimeMillis);
       }
       return false;
    }
 
    @Override
    public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
          boolean l1Entry = false;
          if (metadata instanceof L1Metadata) {
@@ -199,7 +189,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public InternalCacheEntry<K, V> remove(int segment, Object k) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
          InternalCacheEntry<K, V> e = entries.remove(k);
          if (trace) {
@@ -218,7 +208,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public CompletionStage<Void> evict(int segment, K key) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries == null) {
          return CompletableFutures.completedNull();
       }
@@ -242,7 +232,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public InternalCacheEntry<K, V> compute(int segment, K key, DataContainer.ComputeAction<K, V> action) {
-      ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       return entries != null ? entries.compute(key, (k, oldEntry) -> {
          InternalCacheEntry<K, V> newEntry = action.compute(k, oldEntry, entryFactory);
          if (newEntry == oldEntry) {
