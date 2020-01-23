@@ -43,14 +43,14 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
-   protected final AtomicReferenceArray<ConcurrentMap<K, InternalCacheEntry<K, V>>> maps;
-   protected final Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier;
+   protected final AtomicReferenceArray<PeekableTouchableMap<K, V>> maps;
+   protected final Supplier<PeekableTouchableMap<K, V>> mapSupplier;
    protected boolean shouldStopSegments;
 
    protected io.reactivex.functions.Predicate<InternalCacheEntry<K, V>> notExpiredPredicate;
 
 
-   public DefaultSegmentedDataContainer(Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
+   public DefaultSegmentedDataContainer(Supplier<PeekableTouchableMap<K, V>> mapSupplier, int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
       this.mapSupplier = Objects.requireNonNull(mapSupplier);
    }
@@ -91,7 +91,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    }
 
    @Override
-   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   public PeekableTouchableMap<K, V> getMapForSegment(int segment) {
       return maps.get(segment);
    }
 
@@ -256,7 +256,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    private void startNewMap(int segment) {
       if (maps.get(segment) == null) {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> newMap = mapSupplier.get();
+         PeekableTouchableMap<K, V> newMap = mapSupplier.get();
          // Just in case of concurrent starts - this shouldn't be possible
          if (!maps.compareAndSet(segment, null, newMap) && newMap instanceof AutoCloseable) {
             try {

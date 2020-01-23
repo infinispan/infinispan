@@ -1,7 +1,6 @@
 package org.infinispan.container.offheap;
 
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
@@ -13,6 +12,7 @@ import org.infinispan.container.impl.AbstractDelegatingInternalDataContainer;
 import org.infinispan.container.impl.AbstractInternalDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.impl.PassivationManager;
@@ -245,10 +245,10 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
       }
    }
 
-   private class OffHeapMapSupplier implements Supplier<ConcurrentMap<WrappedBytes,
-         InternalCacheEntry<WrappedBytes, WrappedBytes>>> {
+   private class OffHeapMapSupplier implements Supplier<PeekableTouchableMap<WrappedBytes,
+            WrappedBytes>> {
       @Override
-      public ConcurrentMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> get() {
+      public PeekableTouchableMap<WrappedBytes, WrappedBytes> get() {
          return new OffHeapConcurrentMap(allocator, offHeapEntryFactory, offHeapListener);
       }
    }
