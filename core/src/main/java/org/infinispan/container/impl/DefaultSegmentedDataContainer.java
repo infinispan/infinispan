@@ -41,12 +41,12 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
-   protected final AtomicReferenceArray<ConcurrentMap<K, InternalCacheEntry<K, V>>> maps;
-   protected final Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier;
+   protected final AtomicReferenceArray<PeekableTouchableMap<K, InternalCacheEntry<K, V>>> maps;
+   protected final Supplier<PeekableTouchableMap<K, InternalCacheEntry<K, V>>> mapSupplier;
    protected boolean shouldStopSegments;
 
 
-   public DefaultSegmentedDataContainer(Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
+   public DefaultSegmentedDataContainer(Supplier<PeekableTouchableMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
       this.mapSupplier = Objects.requireNonNull(mapSupplier);
    }
@@ -78,7 +78,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    }
 
    @Override
-   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   public PeekableTouchableMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       return maps.get(segment);
    }
 
@@ -234,11 +234,11 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    private void startNewMap(int segment) {
       if (maps.get(segment) == null) {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> newMap = mapSupplier.get();
+         PeekableTouchableContainerMap<K, V> newMap = new PeekableTouchableContainerMap<>(mapSupplier.get());
          // Just in case of concurrent starts - this shouldn't be possible
-         if (!maps.compareAndSet(segment, null, newMap) && newMap instanceof AutoCloseable) {
+         if (!maps.compareAndSet(segment, null, newMap) && newMap.delegate() instanceof AutoCloseable) {
             try {
-               ((AutoCloseable) newMap).close();
+               ((AutoCloseable) newMap.delegate()).close();
             } catch (Exception e) {
                throw new CacheException(e);
             }

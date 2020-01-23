@@ -19,10 +19,10 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.4
  */
 public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>,
-      PeekableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>, Lifecycle {
+      PeekableTouchableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>, Lifecycle {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
@@ -54,6 +54,12 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    // Variable to make sure memory locations aren't read after being deallocated
    // This variable should always be read first after acquiring either the read or write lock
    private boolean dellocated = false;
+
+   @Override
+   public boolean touchKey(Object key, long currentTimeMillis) {
+      // OFF HEAP does not support max idle in this version - just say it wasn't touched
+      return false;
+   }
 
    /**
     * Listener interface that is notified when certain operations occur for various memory addresses. Note that when

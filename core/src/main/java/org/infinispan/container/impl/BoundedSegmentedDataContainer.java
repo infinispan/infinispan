@@ -8,14 +8,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.EntrySizeCalculator;
+import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -40,10 +39,10 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
  */
 public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataContainer<K, V> {
    protected final Cache<K, InternalCacheEntry<K, V>> evictionCache;
-   protected final ConcurrentMap<K, InternalCacheEntry<K, V>> entries;
+   protected final PeekableTouchableMap<K, InternalCacheEntry<K, V>> entries;
 
    public BoundedSegmentedDataContainer(int numSegments, long thresholdSize, EvictionType thresholdPolicy) {
-      super(ConcurrentHashMap::new, numSegments);
+      super(PeekableTouchableContainerMap::new, numSegments);
 
       Caffeine<K, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
@@ -61,12 +60,12 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
       }
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
       evictionCache = applyListener(caffeine, evictionListener, new SegmentMapUpdater()).build();
-      entries = evictionCache.asMap();
+      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
    }
 
    public BoundedSegmentedDataContainer(int numSegments, long thresholdSize,
          EntrySizeCalculator<? super K, ? super InternalCacheEntry<K, V>> sizeCalculator) {
-      super(ConcurrentHashMap::new, numSegments);
+      super(PeekableTouchableContainerMap::new, numSegments);
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
 
       evictionCache = applyListener(Caffeine.newBuilder()
@@ -74,7 +73,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
             .maximumWeight(thresholdSize), evictionListener, new SegmentMapUpdater())
             .build();
 
-      entries = evictionCache.asMap();
+      entries = new PeekableTouchableContainerMap<>(evictionCache.asMap());
    }
 
    /**
@@ -112,7 +111,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    }
 
    @Override
-   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   public PeekableTouchableMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       // All writes and other ops go directly to the caffeine cache
       return entries;
    }
