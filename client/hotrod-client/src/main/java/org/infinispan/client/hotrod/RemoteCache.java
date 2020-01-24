@@ -477,16 +477,16 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    Set<Object> getListeners();
 
    /**
-    * Executes a remote script passing a set of named parameters
+    * Executes a remote task passing a set of named parameters
     */
-   <T> T execute(String scriptName, Map<String, ?> params);
+   <T> T execute(String taskName, Map<String, ?> params);
 
    /**
-    * Executes a remote script passing a set of named parameters, hinting that the script should be executed
+    * Executes a remote task passing a set of named parameters, hinting that the task should be executed
     * on the server that is expected to store given key. The key itself is not transferred to the server.
     */
-   default <T> T execute(String scriptName, Map<String, ?> params, Object key) {
-      return execute(scriptName, params);
+   default <T> T execute(String taskName, Map<String, ?> params, Object key) {
+      return execute(taskName, params);
    }
 
    /**
