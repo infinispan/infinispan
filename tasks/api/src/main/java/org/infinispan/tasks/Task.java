@@ -7,9 +7,9 @@ import java.util.Set;
 public interface Task {
    /**
     * Provides a name for the task. This is the name by which the task will be executed.
-    * Make sure the name is unique for task.
+    * Make sure the name is unique for each task.
     *
-    * @return name of the server task
+    * @return name of the task
     */
    String getName();
 

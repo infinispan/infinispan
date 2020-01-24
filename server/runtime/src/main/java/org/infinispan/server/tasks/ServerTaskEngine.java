@@ -13,6 +13,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -35,12 +36,14 @@ public class ServerTaskEngine implements TaskEngine {
    public ServerTaskEngine(EmbeddedCacheManager cacheManager, Map<String, ServerTaskWrapper> tasks) {
       GlobalComponentRegistry registry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       registry.registerComponent(this, ServerTaskEngine.class);
+      SerializationContextRegistry serializationContextRegistry = registry.getComponent(SerializationContextRegistry.class);
+      serializationContextRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
       EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
       this.scriptConversions = new ScriptConversions(encoderRegistry);
       this.globalAuthzHelper = registry.getComponent(AuthorizationHelper.class);
       this.tasks = tasks;
       this.localRunner = new LocalServerTaskRunner(this);
-      this.distributedRunner = new DistributedServerTaskRunner(this);
+      this.distributedRunner = new DistributedServerTaskRunner();
    }
 
    @Override
