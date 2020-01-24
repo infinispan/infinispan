@@ -137,7 +137,7 @@ include::config_examples/server_properties_realm.xml[]
 
 They use two property files:
 
-* a users property file which maps user names to passwords. The latter can be either in plain text or hashed (recommended).
+* a users property file which maps user names to passwords. The latter can be either in plain text or pre-digested.
 +
 [source,options="nowrap",subs=attributes+]
 ----
@@ -151,6 +151,9 @@ include::config_examples/server_users.properties[]
 include::config_examples/server_groups.properties[]
 ----
 +
+
+NOTE: pre-digested passwords only work with `DIGEST-MD5` (SASL) and `Digest` (HTTP) mechanisms
+
 
 {brandname} Server comes with a `user-tool.sh` script (`user-tool.bat` for Windows) to ease the process of adding new user/role mappings to the above property files.
 An example invocation for adding a user with an initial set of groups:
