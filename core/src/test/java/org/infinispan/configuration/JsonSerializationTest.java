@@ -80,7 +80,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@Test(testName = "config.JsonSerializationTest", groups = "functional")
+@Test(testName = "configuration.JsonSerializationTest", groups = "functional")
 public class JsonSerializationTest extends AbstractInfinispanTest {
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
@@ -121,7 +121,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false).timeout(13).chunkSize(12)
 
             .partitionHandling().mergePolicy(MergePolicy.PREFERRED_ALWAYS).whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .jmxStatistics().enable()
+            .statistics().enable()
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false).transactionProtocol(TransactionProtocol.DEFAULT)
             .autoCommit(true).cacheStopTimeout(1, TimeUnit.HOURS)
@@ -436,7 +436,6 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(newSet("WRITE"), asSet(role2));
    }
 
-
    @Test
    public void testGlobalState() throws IOException {
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().globalState().enable()
@@ -511,8 +510,9 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
    @Test
    public void testJmx() throws IOException {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.globalJmxStatistics().enable()
-             .jmxDomain("x")
+      builder.cacheContainer().statistics(true)
+             .jmx().enabled(true)
+             .domain("x")
              .mBeanServerLookup(mBeanServerLookup)
              .allowDuplicateDomains(true)
              .addProperty("prop1", "val1")
@@ -527,6 +527,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       JsonNode jmx = cacheContainer.get("jmx");
 
       assertTrue(cacheContainer.get("statistics").asBoolean());
+      assertTrue(jmx.get("enabled").asBoolean());
       assertTrue(jmx.get("duplicate-domains").asBoolean());
       assertEquals("x", jmx.get("domain").asText());
       assertEquals(TestMBeanServerLookup.class.getName(), jmx.get("mbean-server-lookup").asText());
@@ -569,7 +570,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       return new File(url.getPath()).listFiles();
    }
 
-   private URL loadLatestVersionTest() throws IOException {
+   private URL loadLatestVersionTest() {
       String majorMinor = Version.getMajorMinor();
       ClassLoader loader = this.getClass().getClassLoader();
       String testFile = "configs/unified/" + majorMinor + ".xml";
@@ -644,5 +645,4 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
          return null;
       }
    }
-
 }

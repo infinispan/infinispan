@@ -1,4 +1,4 @@
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .globalJmxStatistics()
+  .jmx()
   .enable()
   .build();

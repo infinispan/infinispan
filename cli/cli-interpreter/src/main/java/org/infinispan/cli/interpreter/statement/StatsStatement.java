@@ -81,7 +81,7 @@ public class StatsStatement implements Statement {
    }
 
    private void printCacheStats(PrintWriter pw, AdvancedCache<?, ?> cache) throws StatementException {
-      if (!cache.getCacheConfiguration().jmxStatistics().enabled()) {
+      if (!cache.getCacheConfiguration().statistics().enabled()) {
          throw log.statisticsNotEnabled(cache.getName());
       }
 

@@ -81,8 +81,13 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
-   public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
-      return cacheContainerConfiguration.globalJmxStatistics();
+   public GlobalMetricsConfigurationBuilder metrics() {
+      return cacheContainerConfiguration.metrics();
+   }
+
+   @Override
+   public GlobalJmxConfigurationBuilder jmx() {
+      return cacheContainerConfiguration.jmx();
    }
 
    @Override
@@ -214,7 +219,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return Optional.ofNullable(cacheContainerConfiguration.defaultCacheName());
    }
 
-   @SuppressWarnings("unchecked")
    public void validate() {
       features = new Features(cl);
       List<RuntimeException> validationExceptions = new ArrayList<>();

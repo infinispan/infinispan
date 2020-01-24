@@ -1,2 +1,2 @@
 ConfigurationBuilder configurationBuilder = ...
-configurationBuilder.jmxStatistics().enable();
+configurationBuilder.statistics().enable();

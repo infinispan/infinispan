@@ -16,16 +16,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -186,7 +185,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000436:.*")
    public void testMissingDefaultConfiguration() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
+      gcb.jmx().enabled(false);
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
       try {
          cm.getCache("someCache");

@@ -35,7 +35,7 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
+      cb.clustering().cacheMode(CacheMode.REPL_SYNC).statistics().enable();
       CacheContainer c1 = createManager(cb, jmxDomain1);
       CacheContainer c2 = createManager(cb, jmxDomain2);
       CacheContainer c3 = createManager(cb, jmxDomain3);
@@ -46,8 +46,9 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
 
    private CacheContainer createManager(ConfigurationBuilder builder, String jmxDomain) {
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb1.globalJmxStatistics().enable().jmxDomain(jmxDomain)
-            .mBeanServerLookup(mBeanServerLookup);
+      gcb1.cacheContainer().statistics(true)
+          .jmx().enabled(true).domain(jmxDomain)
+          .mBeanServerLookup(mBeanServerLookup);
       gcb1.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       CacheContainer cacheManager = TestCacheManagerFactory.createClusteredCacheManager(gcb1, builder,
             new TransportFlags());

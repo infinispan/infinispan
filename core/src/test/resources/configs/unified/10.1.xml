@@ -119,7 +119,8 @@
             <regex>org.infinispan.test.data.*</regex>
          </white-list>
       </serialization>
-      <jmx domain="my-domain" mbean-server-lookup="org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup" duplicate-domains="true">
+      <metrics gauges="true" histograms="true"/>
+      <jmx enabled="true" domain="my-domain" mbean-server-lookup="org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup" duplicate-domains="true">
          <property name="key">value</property>
       </jmx>
       <global-state>

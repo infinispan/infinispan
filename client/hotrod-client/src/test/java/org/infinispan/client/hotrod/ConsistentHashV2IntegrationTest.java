@@ -79,7 +79,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
       builder.clustering().hash().numOwners(2).stateTransfer().fetchInMemoryState(false);
       return hotRodCacheConfiguration(builder);
    }

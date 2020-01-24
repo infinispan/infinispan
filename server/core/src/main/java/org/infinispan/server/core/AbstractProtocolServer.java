@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
+import org.infinispan.configuration.global.GlobalJmxConfiguration;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -152,7 +152,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    protected void registerServerMBeans() {
       GlobalConfiguration globalCfg = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      GlobalJmxStatisticsConfiguration jmxConfig = globalCfg.globalJmxStatistics();
+      GlobalJmxConfiguration jmxConfig = globalCfg.jmx();
       if (jmxConfig.enabled()) {
          jmxRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerJmxRegistration.class);
          String groupName = String.format("type=Server,name=%s-%d", getQualifiedName(), configuration.port());

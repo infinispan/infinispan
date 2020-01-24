@@ -2,7 +2,7 @@ package org.infinispan.cli.interpreter;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -46,9 +46,9 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = hotRodCacheConfiguration(
             getDefaultStandaloneCacheConfig(false));
-      c.jmxStatistics().enable();
+      c.statistics().enable();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
+      configureJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
       ConfigurationBuilder objectStorageBuilder = new ConfigurationBuilder();
       objectStorageBuilder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)

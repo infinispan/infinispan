@@ -1,6 +1,6 @@
 package org.infinispan.query.jmx;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 
 import java.net.URL;
 
@@ -40,7 +40,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
                Thread.currentThread().getContextClassLoader());
          ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
          ConfigurationBuilderHolder holder = parserRegistry.parse(url);
-         configureGlobalJmx(holder.getGlobalConfigurationBuilder(), BASE_JMX_DOMAIN + i, mBeanServerLookup);
+         configureJmx(holder.getGlobalConfigurationBuilder(), BASE_JMX_DOMAIN + i, mBeanServerLookup);
 
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(holder);
          registerCacheManager(cm);

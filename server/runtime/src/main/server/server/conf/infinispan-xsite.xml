@@ -16,9 +16,9 @@
       </stack>
    </jgroups>
 
-
    <cache-container name="default" statistics="true">
       <transport cluster="${infinispan.cluster.name}" stack="xsite"/>
+      <metrics gauges="true" histograms="true"/>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:10.1">

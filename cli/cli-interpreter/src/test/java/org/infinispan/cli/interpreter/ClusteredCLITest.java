@@ -1,6 +1,6 @@
 package org.infinispan.cli.interpreter;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
@@ -28,7 +28,7 @@ public class ClusteredCLITest extends MultipleCacheManagersTest {
       for (int i = 0; i < 2; i++) {
          GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
          global.cacheContainer().defaultCache(CACHE_NAME);
-         configureGlobalJmx(global, getClass().getSimpleName() + i, mBeanServerLookup);
+         configureJmx(global, getClass().getSimpleName() + i, mBeanServerLookup);
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
          addClusterEnabledCacheManager(global, builder);
       }

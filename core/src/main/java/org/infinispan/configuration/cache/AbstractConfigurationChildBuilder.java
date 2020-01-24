@@ -57,8 +57,8 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
-   public JMXStatisticsConfigurationBuilder jmxStatistics() {
-      return builder.jmxStatistics();
+   public StatisticsConfigurationBuilder statistics() {
+      return builder.statistics();
    }
 
    @Override

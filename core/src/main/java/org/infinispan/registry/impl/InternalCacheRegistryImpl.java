@@ -54,7 +54,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
          return;
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
-      builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
+      builder.statistics().disable(); // Internal caches must not be included in stats counts
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
          // TODO: choose a merge policy
          builder.clustering()

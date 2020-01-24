@@ -1,6 +1,6 @@
 package org.infinispan.jmx;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -41,7 +41,7 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
 
     private GlobalConfigurationBuilder getGlobalConfigurationBuilder(String rackId) {
         GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-        configureGlobalJmx(gcb, getClass().getSimpleName(), mBeanServerLookup);
+        configureJmx(gcb, getClass().getSimpleName(), mBeanServerLookup);
         gcb.transport().rackId(rackId);
         return gcb;
     }
@@ -54,7 +54,7 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
         MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
 
         //when
-        String domain0 = manager(0).getCacheManagerConfiguration().globalJmxStatistics().domain();
+        String domain0 = manager(0).getCacheManagerConfiguration().jmx().domain();
         ObjectName healthAPI0 = TestingUtil.getCacheManagerObjectName(domain0, "DefaultCacheManager", HealthJMXExposer.OBJECT_NAME);
 
         Object numberOfCpus = mBeanServer.getAttribute(healthAPI0, "NumberOfCpus");

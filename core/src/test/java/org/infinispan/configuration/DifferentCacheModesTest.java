@@ -14,10 +14,10 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(testName = "config.DifferentCacheModesTest", groups = "unit")
+@Test(testName = "configuration.DifferentCacheModesTest", groups = "unit")
 public class DifferentCacheModesTest extends AbstractInfinispanTest {
 
-   public void testCacheModes() throws IOException {
+   public void testCacheModes() {
       EmbeddedCacheManager cm = null;
       try {
          String xml = "<infinispan>" +

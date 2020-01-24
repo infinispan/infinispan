@@ -5,7 +5,9 @@
         xmlns="urn:infinispan:config:10.1"
         xmlns:server="urn:infinispan:server:10.1">
 
-   <cache-container name="default" statistics="true"/>
+   <cache-container name="default" statistics="true">
+      <metrics gauges="true" histograms="true"/>
+   </cache-container>
 
    <server xmlns="urn:infinispan:server:10.1">
       <interfaces>

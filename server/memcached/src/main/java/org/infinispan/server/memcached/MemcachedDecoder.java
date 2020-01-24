@@ -98,7 +98,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       this.scheduler = scheduler;
       this.transport = transport;
       this.ignoreCache = ignoreCache;
-      isStatsEnabled = cache.getCacheConfiguration().jmxStatistics().enabled();
+      isStatsEnabled = cache.getCacheConfiguration().statistics().enabled();
    }
 
    private final AdvancedCache<byte[], byte[]> cache;

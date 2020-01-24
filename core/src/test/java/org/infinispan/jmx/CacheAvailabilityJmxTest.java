@@ -47,10 +47,9 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
    private GlobalConfigurationBuilder getGlobalConfigurationBuilder(String rackId) {
       int nodeIndex = cacheManagers.size();
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb.globalJmxStatistics()
-            .enable()
-            .jmxDomain(getClass().getSimpleName() + nodeIndex)
-            .mBeanServerLookup(mBeanServerLookup)
+      gcb.jmx().enabled(true)
+         .domain(getClass().getSimpleName() + nodeIndex)
+         .mBeanServerLookup(mBeanServerLookup)
          .transport().rackId(rackId);
       return gcb;
    }
@@ -58,9 +57,9 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
    public void testAvailabilityChange() throws Exception {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       final String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
-      String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain0 = manager(1).getCacheManagerConfiguration().jmx().domain();
       final ObjectName cacheName0 = TestingUtil.getCacheObjectName(domain0, cacheName + "(dist_sync)");
-      String domain1 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain1 = manager(1).getCacheManagerConfiguration().jmx().domain();
       final ObjectName cacheName1 = TestingUtil.getCacheObjectName(domain1, cacheName + "(dist_sync)");
 
       // Check initial state

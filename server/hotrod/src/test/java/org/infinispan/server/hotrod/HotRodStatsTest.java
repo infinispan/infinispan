@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -34,9 +34,9 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
    @Override
    public EmbeddedCacheManager createTestCacheManager() {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
-      cfg.jmxStatistics().enable();
+      cfg.statistics().enable();
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureGlobalJmx(globalCfg, jmxDomain(), mBeanServerLookup);
+      configureJmx(globalCfg, jmxDomain(), mBeanServerLookup);
       return TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
    }
 

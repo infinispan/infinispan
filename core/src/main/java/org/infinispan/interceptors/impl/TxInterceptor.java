@@ -116,7 +116,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
    @Start
    public void start() {
-      statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
+      statisticsEnabled = cacheConfiguration.statistics().enabled();
       isTotalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
       useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
       useVersioning = Configurations.isTxVersioned(cacheConfiguration);

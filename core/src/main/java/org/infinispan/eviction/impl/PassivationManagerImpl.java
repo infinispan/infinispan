@@ -59,7 +59,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       enabled = !persistenceManager.isReadOnly() && cfg.persistence().passivation() && cfg.persistence().usingStores();
       if (enabled) {
          passivationPersistenceManager = (PassivationPersistenceManager) persistenceManager;
-         statsEnabled = cfg.jmxStatistics().enabled();
+         statsEnabled = cfg.statistics().enabled();
       }
    }
 

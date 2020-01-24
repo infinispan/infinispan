@@ -52,7 +52,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
 
    private static ConfigurationBuilder createConfiguration(String storeName, boolean shared, boolean transactional, boolean passivation) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
       builder.persistence()
             .passivation(passivation)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)

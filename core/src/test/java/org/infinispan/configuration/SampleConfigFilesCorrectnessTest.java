@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "config.SampleConfigFilesCorrectnessTest")
+@Test(groups = "functional", testName = "configuration.SampleConfigFilesCorrectnessTest")
 public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
@@ -57,9 +57,7 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    @AfterMethod
    public void tearDownTest() {
       appender.disable();
-
    }
-
 
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
@@ -68,9 +66,8 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
          try {
             String absolutePath = getRootFolder() + File.separator + aConfFile;
             ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseFile(absolutePath, false);
-            if (holder.getGlobalConfigurationBuilder().cacheContainer().statistics()) {
-               holder.getGlobalConfigurationBuilder().globalJmxStatistics()
-                     .mBeanServerLookup(mBeanServerLookup);
+            if (holder.getGlobalConfigurationBuilder().jmx().enabled()) {
+               holder.getGlobalConfigurationBuilder().jmx().mBeanServerLookup(mBeanServerLookup);
             }
             dcm = TestCacheManagerFactory.createClusteredCacheManager(true, holder, new TransportFlags());
             if (dcm.getDefaultCacheConfiguration() != null)

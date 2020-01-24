@@ -3,7 +3,7 @@ package org.infinispan.cli.interpreter;
 import static java.lang.String.format;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
@@ -45,7 +45,7 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
 
    protected GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {
       GlobalConfigurationBuilder builder = super.globalConfigurationBuilderForSite(siteName);
-      configureGlobalJmx(builder, getClass().getSimpleName() + "-" + siteName, mBeanServerLookup);
+      configureJmx(builder, getClass().getSimpleName() + "-" + siteName, mBeanServerLookup);
       return builder;
    }
 
@@ -104,7 +104,7 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
    public void testSiteWithoutBackups() {
       final String cacheName = "no-backups";
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
+      configureJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       withCacheManager(new CacheManagerCallable(createCacheManager(global, new ConfigurationBuilder())) {
          @Override
          public void call() {

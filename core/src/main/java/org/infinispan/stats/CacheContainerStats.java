@@ -8,8 +8,11 @@ import org.infinispan.factories.scopes.Scopes;
  *
  * @author Vladimir Blagojevic
  * @since 7.1
+ * @deprecated Since 10.1.3. This mixes statistics across unrelated caches so the reported numbers don't have too much
+ * relevance. Please use {@link org.infinispan.stats.Stats} or {@link org.infinispan.stats.ClusterCacheStats} instead.
  */
 @Scope(Scopes.GLOBAL)
+@Deprecated
 public interface CacheContainerStats extends Stats {
 
    String OBJECT_NAME = "CacheContainerStats";

@@ -1,4 +1,4 @@
 GlobalConfigurationBuilder globalConfigurationBuilder = ...
-globalConfigurationBuilder.globalJmxStatistics()
+globalConfigurationBuilder.jmx()
     .enable()
     .cacheManagerName("Hibernate2LC");
