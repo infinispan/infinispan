@@ -90,4 +90,7 @@ public interface Messages {
 
    @Message("Specifies the name of the user to add.")
    String userToolHelpUser();
+
+   @Message("Store passwords in digest format (WARN: works only with DIGEST-MD5/Digest authentication).")
+   String userToolHelpDigestPassword();
 }
