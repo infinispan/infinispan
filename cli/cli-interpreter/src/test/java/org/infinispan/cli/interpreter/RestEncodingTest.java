@@ -3,7 +3,7 @@ package org.infinispan.cli.interpreter;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -50,7 +50,7 @@ public class RestEncodingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false));
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
+      configureJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
 
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();

@@ -80,7 +80,7 @@ public class ClusterClientEventStressTest extends MultiHotRodServersTest {
       builder.clustering().hash().numOwners(NUM_OWNERS)
 //            .expiration().lifespan(1000).maxIdle(1000).wakeUpInterval(5000)
             .expiration().maxIdle(1000).wakeUpInterval(5000)
-            .jmxStatistics().enable();
+            .statistics().enable();
       return hotRodCacheConfiguration(builder);
    }
 

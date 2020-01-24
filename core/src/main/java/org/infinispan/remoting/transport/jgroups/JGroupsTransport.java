@@ -180,7 +180,6 @@ public class JGroupsTransport implements Transport {
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
-   private boolean globalStatsEnabled;
    private boolean running;
 
    /**
@@ -541,8 +540,7 @@ public class JGroupsTransport implements Transport {
          // Normally this would be done by CacheManagerJmxRegistration but
          // the channel is not started when the cache manager starts but
          // when first cache starts, so it's safer to do it here.
-         globalStatsEnabled = configuration.statistics();
-         if (globalStatsEnabled) {
+         if (configuration.jmx().enabled()) {
             ObjectName namePrefix = new ObjectName(jmxRegistration.getDomain() + ":" + ObjectNameKeys.MANAGER + "=" + ObjectName.quote(configuration.cacheManagerName()));
             JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), namePrefix, clusterName, true);
          }
@@ -814,7 +812,7 @@ public class JGroupsTransport implements Transport {
 
    // This needs to stay as a separate method to allow for substitution for Substrate
    private void unregisterMBeansIfNeeded(String clusterName) throws Exception {
-      if (globalStatsEnabled && channel != null) {
+      if (configuration.jmx().enabled() && channel != null) {
          ObjectName namePrefix = new ObjectName(jmxRegistration.getDomain() + ":" + ObjectNameKeys.MANAGER + "=" + ObjectName.quote(configuration.cacheManagerName()));
          JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), namePrefix, clusterName);
       }

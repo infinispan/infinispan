@@ -46,7 +46,8 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
    protected GlobalConfigurationBuilder getGlobalConfigForNode(int id) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      TestCacheManagerFactory.configureGlobalJmx(globalBuilder, getClass().getSimpleName() + id, mBeanServerLookup);
+      TestCacheManagerFactory.configureJmx(globalBuilder, getClass().getSimpleName() + id, mBeanServerLookup);
+      globalBuilder.cacheContainer().statistics(true);
       globalBuilder.serialization().addContextInitializer(RestTestSCI.INSTANCE);
       return globalBuilder.clusteredDefault().cacheManagerName("default");
    }

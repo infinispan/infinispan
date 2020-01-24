@@ -28,6 +28,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
+import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -118,6 +119,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(cacheManager, EmbeddedCacheManager.class);
          basicComponentRegistry.registerComponent(ConfigurationManager.class.getName(), configurationManager, true);
          basicComponentRegistry.registerComponent(CacheManagerJmxRegistration.class.getName(), new CacheManagerJmxRegistration(), true);
+         basicComponentRegistry.registerComponent(CacheManagerMetricsRegistration.class.getName(), new CacheManagerMetricsRegistration(), true);
          basicComponentRegistry.registerComponent(CacheManagerNotifier.class.getName(), new CacheManagerNotifierImpl(), true);
          basicComponentRegistry.registerComponent(InternalCacheRegistry.class.getName(), new InternalCacheRegistryImpl(), true);
          basicComponentRegistry.registerComponent(CacheStoreFactoryRegistry.class.getName(), new CacheStoreFactoryRegistry(), true);
@@ -147,6 +149,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(EncoderRegistry.class);
          basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
          basicComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
+         basicComponentRegistry.getComponent(CacheManagerMetricsRegistration.class);
 
          basicComponentRegistry.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class);
       } catch (Exception e) {

@@ -60,7 +60,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing().index(Index.PRIMARY_OWNER).autoConfig(true)
-            .jmxStatistics().enable()
+            .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;
    }

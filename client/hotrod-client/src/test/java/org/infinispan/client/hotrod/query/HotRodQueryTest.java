@@ -55,10 +55,9 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
-      gcb.globalJmxStatistics()
-            .enable()
-            .jmxDomain(getClass().getSimpleName())
-            .mBeanServerLookup(mBeanServerLookup);
+      gcb.jmx().enabled(true)
+         .domain(getClass().getSimpleName())
+         .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       gcb.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
 

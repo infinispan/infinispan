@@ -46,6 +46,7 @@ public enum Attribute {
     DATA_CONTAINER,
     DEFAULT_CACHE,
     DEFAULT_STACK,
+    DOMAIN,
     ENABLED,
     ENCODER,
     EXECUTOR,
@@ -60,7 +61,9 @@ public enum Attribute {
     @Deprecated
     FLUSH_LOCK_TIMEOUT,
     FRAGMENTATION_FACTOR,
+    GAUGES,
     GROUP_NAME,
+    HISTOGRAMS,
     ID,
     INDEX,
     INITIAL_CLUSTER_SIZE,
@@ -70,7 +73,6 @@ public enum Attribute {
     INVALIDATION_CLEANUP_TASK_FREQUENCY("l1-cleanup-interval"),
     ISOLATION,
     JNDI_NAME,
-    JMX_DOMAIN("domain"),
     KEEP_ALIVE_TIME("keepalive-time"),
     KEY,
     KEY_EQUIVALENCE,
@@ -108,6 +110,7 @@ public enum Attribute {
     @Deprecated
     PERSISTENCE_EXECUTOR,
     POSITION,
+    PREFIX,
     PRELOAD,
     PRIORITY,
     PURGE,

@@ -46,7 +46,8 @@ class CacheContainerConfiguration implements ConfigurationInfo {
    private final boolean zeroCapacityAvailable;
 
    private final ThreadsConfiguration threads;
-   private final GlobalJmxStatisticsConfiguration globalJmxStatistics;
+   private final GlobalMetricsConfiguration metrics;
+   private final GlobalJmxConfiguration jmx;
    private final TransportConfiguration transport;
    private final GlobalSecurityConfiguration security;
    private final SerializationConfiguration serialization;
@@ -57,7 +58,8 @@ class CacheContainerConfiguration implements ConfigurationInfo {
 
    CacheContainerConfiguration(AttributeSet attributes,
                                ThreadsConfiguration threadsConfiguration,
-                               GlobalJmxStatisticsConfiguration globalJmxStatistics,
+                               GlobalMetricsConfiguration metrics,
+                               GlobalJmxConfiguration jmx,
                                TransportConfiguration transport,
                                GlobalSecurityConfiguration security,
                                SerializationConfiguration serialization,
@@ -70,14 +72,15 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       this.statistics = attributes.attribute(STATISTICS);
       this.zeroCapacityNode = attributes.attribute(ZERO_CAPACITY_NODE);
       this.threads = threadsConfiguration;
-      this.globalJmxStatistics = globalJmxStatistics;
+      this.metrics = metrics;
+      this.jmx = jmx;
       this.globalState = globalState;
       this.shutdown = shutdown;
       this.security = security;
       this.serialization = serialization;
       this.transport = transport;
       this.zeroCapacityAvailable = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE);
-      this.children = Arrays.asList(shutdown, transport, security, serialization, globalJmxStatistics, globalState);
+      this.children = Arrays.asList(shutdown, transport, security, serialization, metrics, jmx, globalState);
    }
 
    @Override
@@ -110,8 +113,20 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return zeroCapacityAvailable & zeroCapacityNode.get();
    }
 
-   public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
-      return globalJmxStatistics;
+   public GlobalMetricsConfiguration metrics() {
+      return metrics;
+   }
+
+   public GlobalJmxConfiguration jmx() {
+      return jmx;
+   }
+
+   /**
+    * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
+    */
+   @Deprecated
+   public GlobalJmxConfiguration globalJmxStatistics() {
+      return jmx();
    }
 
    public TransportConfiguration transport() {
@@ -214,7 +229,8 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return "CacheContainerConfiguration{" +
             "zeroCapacityAvailable=" + zeroCapacityAvailable +
             ", threads=" + threads +
-            ", globalJmxStatistics=" + globalJmxStatistics +
+            ", metrics=" + metrics +
+            ", jmx=" + jmx +
             ", transport=" + transport +
             ", security=" + security +
             ", serialization=" + serialization +

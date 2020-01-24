@@ -151,7 +151,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = restRequest.variables().get("cacheName");
 
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
-         responseBuilder.status(NOT_FOUND).build();
+         responseBuilder.status(NOT_FOUND);
       }
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
@@ -237,7 +237,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private RestResponse getDetailResponse(NettyRestResponse.Builder responseBuilder, Cache<?, ?> cache) {
       Stats stats = cache.getAdvancedCache().getStats();
       Configuration configuration = cache.getCacheConfiguration();
-      boolean statistics = configuration.jmxStatistics().enabled();
+      boolean statistics = configuration.statistics().enabled();
       int size = cache.getAdvancedCache().size();
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       InfinispanQueryStatisticsInfo.IndexStatistics indexStatistics = getIndexStatistics(cache);

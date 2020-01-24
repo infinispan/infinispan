@@ -43,7 +43,7 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
 	@Start
    void start() {
 		this.cacheName = ByteString.fromString(cache.getName());
-		this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+		this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
 		syncRpcOptions = rpcManager.getSyncRpcOptions();
 	}
 

@@ -1431,7 +1431,7 @@ public class TestingUtil {
       GlobalConfiguration cfg = cacheManager.getCacheManagerConfiguration();
       try {
          return new ObjectName(String.format("%s:type=channel,cluster=%s,manager=%s",
-                                             cfg.globalJmxStatistics().domain(),
+                                             cfg.jmx().domain(),
                                              ObjectName.quote(cacheManager.getClusterName()),
                                              ObjectName.quote(cfg.cacheManagerName())));
       } catch (MalformedObjectNameException e) {

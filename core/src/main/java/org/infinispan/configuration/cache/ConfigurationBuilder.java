@@ -28,7 +28,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
    private final ExpirationConfigurationBuilder expiration;
    private final IndexingConfigurationBuilder indexing;
    private final InvocationBatchingConfigurationBuilder invocationBatching;
-   private final JMXStatisticsConfigurationBuilder jmxStatistics;
+   private final StatisticsConfigurationBuilder statistics;
    private final PersistenceConfigurationBuilder persistence;
    private final LockingConfigurationBuilder locking;
    private final SecurityConfigurationBuilder security;
@@ -56,7 +56,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.expiration = new ExpirationConfigurationBuilder(this);
       this.indexing = new IndexingConfigurationBuilder(this);
       this.invocationBatching = new InvocationBatchingConfigurationBuilder(this);
-      this.jmxStatistics = new JMXStatisticsConfigurationBuilder(this);
+      this.statistics = new StatisticsConfigurationBuilder(this);
       this.persistence = new PersistenceConfigurationBuilder(this);
       this.locking = new LockingConfigurationBuilder(this);
       this.security = new SecurityConfigurationBuilder(this);
@@ -65,7 +65,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.sites = new SitesConfigurationBuilder(this);
       this.memory = new MemoryConfigurationBuilder(this);
 
-      subElements.addAll(Arrays.asList(clustering, persistence, unsafe, jmxStatistics, locking, indexing, expiration,
+      subElements.addAll(Arrays.asList(clustering, persistence, unsafe, statistics, locking, indexing, expiration,
                                        encoding, memory, transaction, sites, customInterceptors, security, sites.backupFor()));
    }
 
@@ -126,8 +126,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
    }
 
    @Override
-   public JMXStatisticsConfigurationBuilder jmxStatistics() {
-      return jmxStatistics;
+   public StatisticsConfigurationBuilder statistics() {
+      return statistics;
    }
 
    @Override
@@ -200,7 +200,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, expiration, indexing,
-                   invocationBatching, jmxStatistics, persistence, locking, transaction,
+                   invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, memory)) {
          try {
             validatable.validate();
@@ -235,7 +235,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (ConfigurationChildBuilder validatable:
             asList(clustering, customInterceptors, expiration, indexing,
-                   invocationBatching, jmxStatistics, persistence, locking, transaction,
+                   invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, security, memory)) {
          try {
             validatable.validate(globalConfig);
@@ -265,9 +265,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),
-               expiration.create(), encoding.create(), indexing.create(), invocationBatching.create(),
-               jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
-               transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
+                               expiration.create(), encoding.create(), indexing.create(), invocationBatching.create(),
+                               statistics.create(), persistence.create(), locking.create(), security.create(),
+                               transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
    }
 
    public ConfigurationBuilder read(Configuration template) {
@@ -277,7 +277,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
       this.expiration.read(template.expiration());
       this.indexing.read(template.indexing());
       this.invocationBatching.read(template.invocationBatching());
-      this.jmxStatistics.read(template.jmxStatistics());
+      this.statistics.read(template.statistics());
       this.persistence.read(template.persistence());
       this.locking.read(template.locking());
       this.security.read(template.security());
@@ -304,7 +304,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Configur
             ", expiration=" + expiration +
             ", indexing=" + indexing +
             ", invocationBatching=" + invocationBatching +
-            ", jmxStatistics=" + jmxStatistics +
+            ", statistics=" + statistics +
             ", persistence=" + persistence +
             ", locking=" + locking +
             ", modules=" + modules +

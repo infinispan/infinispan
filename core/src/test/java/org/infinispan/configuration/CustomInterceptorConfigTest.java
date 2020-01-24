@@ -17,10 +17,10 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(testName = "config.CustomInterceptorConfigTest", groups = "functional")
+@Test(testName = "configuration.CustomInterceptorConfigTest", groups = "functional")
 public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
 
-   public void testCustomInterceptors() throws Exception {
+   public void testCustomInterceptors() {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<infinispan>" +
             "<cache-container name=\"custom\" default-cache=\"default-cache\">" +

@@ -69,10 +69,9 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
-      gcb.globalJmxStatistics()
-            .enable()
-            .jmxDomain(JMX_DOMAIN)
-            .mBeanServerLookup(mBeanServerLookup);
+      gcb.jmx().enabled(true)
+         .domain(JMX_DOMAIN)
+         .mBeanServerLookup(mBeanServerLookup);
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();

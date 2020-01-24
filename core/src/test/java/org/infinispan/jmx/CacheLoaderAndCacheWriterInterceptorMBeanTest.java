@@ -40,7 +40,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
       configuration
-            .jmxStatistics().enable()
+            .statistics().enable()
             .persistence()
             .passivation(false)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
@@ -48,8 +48,7 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       globalConfiguration
             .cacheContainer().statistics(true)
-            .globalJmxStatistics()
-            .jmxDomain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
+            .jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
 
       cacheManager.defineConfiguration("test", configuration.build());

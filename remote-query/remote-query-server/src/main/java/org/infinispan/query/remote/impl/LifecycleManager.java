@@ -96,7 +96,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       protobufMetadataManager.getCache();
 
       GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
-      if (globalCfg.statistics()) {
+      if (globalCfg.jmx().enabled()) {
          registerProtobufMetadataManagerMBean(protobufMetadataManager, globalCfg, bcr);
       }
    }

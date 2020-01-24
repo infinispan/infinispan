@@ -52,7 +52,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    protected List<Long> getInternalIds(String inDoubt) {
       Pattern p = Pattern.compile("internalId = [0-9]*");
       Matcher matcher = p.matcher(inDoubt);
-      List<Long> result = new ArrayList<Long>();
+      List<Long> result = new ArrayList<>();
       while (matcher.find()) {
          String group = matcher.group();
          Long id = Long.parseLong(group.substring("internalId = ".length()));
@@ -72,14 +72,14 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    protected void checkProperlyCleanup(final int managerIndex) {
       eventually(new Condition() {
          @Override
-         public boolean isSatisfied() throws Exception {
+         public boolean isSatisfied() {
             return TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld() == 0;
          }
       });
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex), TransactionTable.class);
       eventually(new Condition() {
          @Override
-         public boolean isSatisfied() throws Exception {
+         public boolean isSatisfied() {
             log.tracef("For cache %s have remoteTx=%s and localTx=%s", managerIndex, tt.getRemoteTxCount(), tt.getLocalTxCount());
             return (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0);
          }
@@ -87,7 +87,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
       final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex), RecoveryManager.class);
       eventually(new Condition() {
          @Override
-         public boolean isSatisfied() throws Exception {
+         public boolean isSatisfied() {
             return rm.getInDoubtTransactions().isEmpty() && rm.getPreparedTransactionsFromCluster().all().length == 0;
          }
       });

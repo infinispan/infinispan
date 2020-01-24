@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -64,7 +64,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       int index = cacheManagers.size();
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.transport().rackId(rackId);
-      configureGlobalJmx(gcb, getClass().getSimpleName() + index, mBeanServerLookup);
+      configureJmx(gcb, getClass().getSimpleName() + index, mBeanServerLookup);
       return gcb;
    }
 
@@ -74,9 +74,9 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain0 = manager(1).getCacheManagerConfiguration().jmx().domain();
       ObjectName ltmName0 = TestingUtil.getCacheManagerObjectName(domain0, "DefaultCacheManager", "LocalTopologyManager");
-      String domain1 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain1 = manager(1).getCacheManagerConfiguration().jmx().domain();
       ObjectName ltmName1 = TestingUtil.getCacheManagerObjectName(domain1, "DefaultCacheManager", "LocalTopologyManager");
 
       // Check initial state
@@ -159,9 +159,9 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Enable rebalancing again
       log.debugf("Rebalancing with nodes %s %s", address(2), address(3));
-      String domain2 = manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain2 = manager(2).getCacheManagerConfiguration().jmx().domain();
       ObjectName ltmName2 = TestingUtil.getCacheManagerObjectName(domain2, "DefaultCacheManager", "LocalTopologyManager");
-      String domain3 = manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain3 = manager(2).getCacheManagerConfiguration().jmx().domain();
       ObjectName ltmName3 = TestingUtil.getCacheManagerObjectName(domain3, "DefaultCacheManager", "LocalTopologyManager");
       mBeanServer.setAttribute(ltmName2, new Attribute(REBALANCING_ENABLED, true));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName2, REBALANCING_ENABLED));

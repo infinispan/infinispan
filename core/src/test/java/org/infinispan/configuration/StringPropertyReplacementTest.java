@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test (groups = "functional", testName = "config.StringPropertyReplacementTest")
+@Test (groups = "functional", testName = "configuration.StringPropertyReplacementTest")
 public class StringPropertyReplacementTest extends AbstractInfinispanTest {
 
    protected ConfigurationBuilderHolder parse() throws Exception {

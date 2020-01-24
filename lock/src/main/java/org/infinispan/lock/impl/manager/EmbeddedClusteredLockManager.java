@@ -129,7 +129,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
          return new ClusteredLockConfiguration();
       }
 
-      throw new ClusteredLockException(String.format("Lock does %s not exist", name));
+      throw new ClusteredLockException(String.format("Lock %s does not exist", name));
    }
 
    @ManagedOperation(
@@ -183,7 +183,6 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       }
       return clusteredLockCache.remove(new ClusteredLockKey(ByteString.fromString(name))) != null;
    }
-
 
    public CompletableFuture<Boolean> forceRelease(String name) {
       if (trace) {
@@ -241,10 +240,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("EmbeddedClusteredLockManager{");
-      sb.append(", address=").append(cache.getCacheManager().getAddress());
-      sb.append(", locks=").append(locks);
-      sb.append('}');
-      return sb.toString();
+      return "EmbeddedClusteredLockManager{" +
+            ", address=" + cache.getCacheManager().getAddress() +
+            ", locks=" + locks +
+            '}';
    }
 }

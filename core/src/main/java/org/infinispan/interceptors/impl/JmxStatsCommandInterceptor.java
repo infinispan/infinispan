@@ -20,7 +20,7 @@ public abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor impl
 
    @Start
    public final void onStart() {
-      setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+      setStatisticsEnabled(cacheConfiguration.statistics().enabled());
    }
 
    /**

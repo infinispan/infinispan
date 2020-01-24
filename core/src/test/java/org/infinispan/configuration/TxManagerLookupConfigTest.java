@@ -6,19 +6,19 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import javax.transaction.TransactionManager;
 
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
 import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "config.TxManagerLookupConfigTest")
+@Test(groups = "functional", testName = "configuration.TxManagerLookupConfigTest")
 public class TxManagerLookupConfigTest extends AbstractInfinispanTest {
 
    static TmA tma = new TmA();

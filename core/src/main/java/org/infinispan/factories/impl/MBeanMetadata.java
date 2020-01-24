@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -128,12 +130,18 @@ public final class MBeanMetadata {
          return is;
       }
 
-      public Function<?, ?> getterFunction() {
-         return getterFunction;
+      public Supplier<?> getter(Object instance) {
+         if (getterFunction == null) {
+            return null;
+         }
+         return () -> ((Function<Object, Object>) getterFunction).apply(instance);
       }
 
-      public BiConsumer<?, ?> setterFunction() {
-         return setterFunction;
+      public Consumer<?> setter(Object instance) {
+         if (setterFunction == null) {
+            return null;
+         }
+         return (v) -> ((BiConsumer<Object, Object>) setterFunction).accept(instance, v);
       }
 
       @Override

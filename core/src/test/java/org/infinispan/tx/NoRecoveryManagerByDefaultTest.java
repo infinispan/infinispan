@@ -29,7 +29,7 @@ public class NoRecoveryManagerByDefaultTest extends SingleCacheManagerTest {
 
    public void testNoRecoveryManager() {
       assertTrue(cache.getCacheConfiguration().transaction().transactionMode().isTransactional());
-      String jmxDomain = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String jmxDomain = cacheManager.getCacheManagerConfiguration().jmx().domain();
       ObjectName recoveryManager = getCacheObjectName(jmxDomain, cache.getName() + "(local)", "RecoveryManager");
       assertFalse(mBeanServerLookup.getMBeanServer().isRegistered(recoveryManager));
    }
@@ -37,7 +37,7 @@ public class NoRecoveryManagerByDefaultTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
-      gcb.cacheContainer().statistics(true).globalJmxStatistics().mBeanServerLookup(mBeanServerLookup);
+      gcb.jmx().enabled(true).mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       return TestCacheManagerFactory.createCacheManager(gcb, cb);

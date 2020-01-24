@@ -1,7 +1,5 @@
 package org.infinispan.integrationtests.spring.boot.session.remote;
 
-import java.util.UUID;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.integrationtests.spring.boot.session.AbstractSpringSessionTCK;
@@ -29,7 +27,6 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
    @BeforeClass
    public static void beforeClass() {
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfigurationBuilder.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
 
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
 
@@ -49,5 +46,4 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
       server.stop();
       serverCache.stop();
    }
-
 }

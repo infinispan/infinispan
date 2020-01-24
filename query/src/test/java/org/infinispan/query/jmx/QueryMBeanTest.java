@@ -1,7 +1,7 @@
 package org.infinispan.query.jmx;
 
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -55,13 +55,10 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfiguration.globalJmxStatistics().enable()
-            .jmxDomain(TEST_JMX_DOMAIN)
-            .mBeanServerLookup(mBeanServerLookup);
+      globalConfiguration.jmx().enabled(true).domain(TEST_JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
-      builder.jmxStatistics().enabled(true)
-             .indexing()
+      builder.indexing()
              .index(Index.ALL)
              .addIndexedEntities(Person.class, AnotherGrassEater.class)
              .addProperty("default.directory_provider", "local-heap")
@@ -69,13 +66,12 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
              .addProperty("lucene_version", "LUCENE_CURRENT");
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, builder);
-
       cm.defineConfiguration(CACHE_NAME, builder.build());
       return cm;
    }
 
    public void testQueryStatsMBean() throws Exception {
-      cacheManager.getCache(CACHE_NAME); // Start cache
+      cacheManager.getCache(CACHE_NAME);
       ObjectName name = getQueryStatsObjectName(TEST_JMX_DOMAIN, CACHE_NAME);
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       assertTrue(mBeanServer.isRegistered(name));
@@ -85,16 +81,13 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testQueryStats() throws Exception {
-      cacheManager.getCache(CACHE_NAME); // Start cache
+      cacheManager.getCache(CACHE_NAME);
       ObjectName name = getQueryStatsObjectName(TEST_JMX_DOMAIN, CACHE_NAME);
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       try {
          assertTrue(mBeanServer.isRegistered(name));
-
-         if (!(Boolean) mBeanServer.getAttribute(name, "StatisticsEnabled")) {
-            mBeanServer.setAttribute(name, new Attribute("StatisticsEnabled", true));
-         }
+         mBeanServer.setAttribute(name, new Attribute("StatisticsEnabled", true));
 
          Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
 
@@ -191,13 +184,12 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       try {
          GlobalConfigurationBuilder globalConfig2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
          globalConfig2.cacheManagerName("cm2");
-         configureGlobalJmx(globalConfig2, TEST_JMX_DOMAIN, mBeanServerLookup);
+         configureJmx(globalConfig2, TEST_JMX_DOMAIN, mBeanServerLookup);
          ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
          defaultCacheConfig2
                .indexing().index(Index.ALL)
                .addProperty("default.directory_provider", "local-heap")
-               .addProperty("lucene_version", "LUCENE_CURRENT")
-               .jmxStatistics().enable();
+               .addProperty("lucene_version", "LUCENE_CURRENT");
 
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfig2, defaultCacheConfig2);
          cm2.defineConfiguration(CACHE_NAME, defaultCacheConfig2.build());

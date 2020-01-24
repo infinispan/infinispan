@@ -61,7 +61,7 @@ public class TestConfigurationHook {
          }
       }
       if (stats) {
-         configurationBuilder.jmxStatistics().available(true).enable();
+         configurationBuilder.statistics().available(true).enable();
       }
    }
 }

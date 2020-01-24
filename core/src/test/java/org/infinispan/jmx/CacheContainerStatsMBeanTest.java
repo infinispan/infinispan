@@ -34,15 +34,15 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb1.globalJmxStatistics().enable().jmxDomain(JMX_DOMAIN)
-            .mBeanServerLookup(mBeanServerLookup);
+      gcb1.cacheContainer().statistics(true)
+          .jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
             new TransportFlags());
       cacheManager1.start();
 
       GlobalConfigurationBuilder gcb2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb2.globalJmxStatistics().enable().jmxDomain(JMX_DOMAIN + 2)
-            .mBeanServerLookup(mBeanServerLookup);
+      gcb2.cacheContainer().statistics(true)
+          .jmx().enabled(true).domain(JMX_DOMAIN + 2).mBeanServerLookup(mBeanServerLookup);
       CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(gcb2, defaultConfig,
             new TransportFlags());
       cacheManager2.start();
@@ -50,7 +50,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       registerCacheManager(cacheManager1, cacheManager2);
 
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
+      cb.clustering().cacheMode(CacheMode.REPL_SYNC).statistics().enable();
       defineConfigurationOnAllManagers(cachename, cb);
       defineConfigurationOnAllManagers(cachename2, cb);
       waitForClusterToForm(cachename);
@@ -88,7 +88,6 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       assertAttributeValue(mBeanServer, nodeStats, "Evictions", 0);
       assertAttributeValueGreaterThanOrEqual(mBeanServer, nodeStats, "AverageWriteTime", 0);
    }
-
 
    public void testClusterStatsDisabled() throws Exception {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
