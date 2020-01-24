@@ -1,5 +1,5 @@
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .globalJmxStatistics()
+  .jmx()
     .cacheManagerName("SalesCacheManager")
     .mBeanServerLookup(new JBossMBeanServerLookup())
   .build();

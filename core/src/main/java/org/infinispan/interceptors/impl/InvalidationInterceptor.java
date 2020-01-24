@@ -87,7 +87,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
    @Start
    void start() {
-      this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+      this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
    }
 
    @Override

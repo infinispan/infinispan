@@ -25,10 +25,10 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
    public void testDeclarativeCustomMBeanServerLookupProperties() {
       String cfg = "<infinispan>" +
             "<cache-container default-cache=\"default\">" +
-            "<jmx mbean-server-lookup=\"" + TestLookup.class.getName() + "\">" +
+            "<jmx enabled=\"true\" mbean-server-lookup=\"" + TestLookup.class.getName() + "\">" +
             "<property name=\"key\">value</property>" +
             "</jmx>" +
-            "<local-cache name=\"default\" statistics=\"true\"/>" +
+            "<local-cache name=\"default\"/>" +
             "</cache-container>" +
             "</infinispan>";
       InputStream stream = new ByteArrayInputStream(cfg.getBytes());
@@ -37,7 +37,7 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
       try {
          cm = TestCacheManagerFactory.fromStream(stream);
          cm.getCache();
-         MBeanServerLookup mbsl = cm.getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup();
+         MBeanServerLookup mbsl = cm.getCacheManagerConfiguration().jmx().mbeanServerLookup();
          assertTrue(mbsl instanceof TestLookup);
          assertEquals("value", ((TestLookup) mbsl).props.get("key"));
       } finally {
@@ -50,11 +50,8 @@ public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
       try {
          GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
          TestLookup mbsl = new TestLookup();
-         gc.globalJmxStatistics().enable()
-               .mBeanServerLookup(mbsl)
-               .addProperty("key", "value");
+         gc.jmx().enabled(true).mBeanServerLookup(mbsl).addProperty("key", "value");
          ConfigurationBuilder cfg = new ConfigurationBuilder();
-         cfg.jmxStatistics().enable();
          cm = TestCacheManagerFactory.createCacheManager(gc, cfg);
          cm.getCache();
          assertEquals("value", mbsl.props.get("key"));

@@ -342,11 +342,11 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          public void check(ConfigurationBuilderHolder holder) {
             GlobalConfiguration g = getGlobalConfiguration(holder);
             assertEquals("maximal", g.cacheManagerName());
-            assertTrue(g.globalJmxStatistics().enabled());
-            assertEquals("my-domain", g.globalJmxStatistics().domain());
-            assertTrue(g.globalJmxStatistics().mbeanServerLookup() instanceof CustomMBeanServerPropertiesTest.TestLookup);
-            assertEquals(1, g.globalJmxStatistics().properties().size());
-            assertEquals("value", g.globalJmxStatistics().properties().getProperty("key"));
+            assertFalse(g.jmx().enabled());
+            assertEquals("my-domain", g.jmx().domain());
+            assertTrue(g.jmx().mbeanServerLookup() instanceof CustomMBeanServerPropertiesTest.TestLookup);
+            assertEquals(1, g.jmx().properties().size());
+            assertEquals("value", g.jmx().properties().getProperty("key"));
 
             // Transport
             assertEquals("maximal-cluster", g.transport().clusterName());
@@ -403,7 +403,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             // Default cache is "local" named cache
             Configuration c = holder.getDefaultConfigurationBuilder().build();
             assertFalse(c.invocationBatching().enabled());
-            assertTrue(c.jmxStatistics().enabled());
+            assertTrue(c.statistics().enabled());
             assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
             assertEquals(30000, c.locking().lockAcquisitionTimeout());
             assertEquals(2000, c.locking().concurrencyLevel());
@@ -433,7 +433,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             c = getConfiguration(holder, "invalid");
             assertEquals(CacheMode.INVALIDATION_SYNC, c.clustering().cacheMode());
             assertTrue(c.invocationBatching().enabled());
-            assertTrue(c.jmxStatistics().enabled());
+            assertTrue(c.statistics().enabled());
             assertEquals(30500, c.locking().lockAcquisitionTimeout());
             assertEquals(2500, c.locking().concurrencyLevel());
             assertEquals(IsolationLevel.READ_COMMITTED, c.locking().isolationLevel()); // Converted to READ_COMMITTED by builder
@@ -452,7 +452,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             c = getConfiguration(holder, "repl");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertTrue(c.invocationBatching().enabled());
-            assertTrue(c.jmxStatistics().enabled());
+            assertTrue(c.statistics().enabled());
             assertEquals(31000, c.locking().lockAcquisitionTimeout());
             assertEquals(3000, c.locking().concurrencyLevel());
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel()); // Converted to REPEATABLE_READ by builder
@@ -483,7 +483,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(2, c.clustering().hash().numSegments());
             assertTrue(c.clustering().hash().consistentHashFactory() instanceof SyncConsistentHashFactory);
             assertTrue(c.clustering().partitionHandling().enabled());
-            assertTrue(c.jmxStatistics().enabled());
+            assertTrue(c.statistics().enabled());
             assertEquals(31500, c.locking().lockAcquisitionTimeout());
             assertEquals(3500, c.locking().concurrencyLevel());
             assertEquals(IsolationLevel.READ_COMMITTED, c.locking().isolationLevel());

@@ -1,7 +1,7 @@
 package org.infinispan.cli.interpreter;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
@@ -47,7 +47,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
       ConfigurationBuilder serverBuilder = hotRodCacheConfiguration(
             TestCacheManagerFactory.getDefaultCacheConfiguration(false));
       GlobalConfigurationBuilder sourceGlobal = new GlobalConfigurationBuilder().nonClusteredDefault();
-      configureGlobalJmx(sourceGlobal, getClass().getSimpleName() + "-source", mBeanServerLookup);
+      configureJmx(sourceGlobal, getClass().getSimpleName() + "-source", mBeanServerLookup);
       sourceContainer = TestCacheManagerFactory.createCacheManager(sourceGlobal, serverBuilder);
       sourceServerCache = sourceContainer.getCache();
       sourceServer = HotRodClientTestingUtil.startHotRodServer(sourceContainer);
@@ -57,7 +57,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
       targetConfigurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
 
       GlobalConfigurationBuilder targetGlobal = new GlobalConfigurationBuilder().nonClusteredDefault();
-      configureGlobalJmx(targetGlobal, getClass().getSimpleName() + "-target", mBeanServerLookup);
+      configureJmx(targetGlobal, getClass().getSimpleName() + "-target", mBeanServerLookup);
       targetContainer = TestCacheManagerFactory.createCacheManager(targetGlobal, targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
       targetServer = HotRodClientTestingUtil.startHotRodServer(targetContainer);

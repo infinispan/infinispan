@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -67,7 +67,7 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       int index = cacheManagers.size();
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.transport().rackId(rackId);
-      configureGlobalJmx(gcb, getClass().getSimpleName() + index, mBeanServerLookup);
+      configureJmx(gcb, getClass().getSimpleName() + index, mBeanServerLookup);
       return gcb;
    }
 
@@ -84,9 +84,9 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       waitForClusterToForm("a", "b");
 
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain0 = manager(1).getCacheManagerConfiguration().jmx().domain();
       ObjectName ltmName0 = TestingUtil.getCacheManagerObjectName(domain0, "DefaultCacheManager", "LocalTopologyManager");
-      String domain1 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      String domain1 = manager(1).getCacheManagerConfiguration().jmx().domain();
       ObjectName ltmName1 = TestingUtil.getCacheManagerObjectName(domain1, "DefaultCacheManager", "LocalTopologyManager");
 
       ObjectName jmxCacheA = TestingUtil.getCacheObjectName(domain0, "a(" + cacheMode.name().toLowerCase() + ")");

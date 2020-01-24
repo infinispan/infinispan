@@ -51,7 +51,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
    private final ExpirationConfiguration expirationConfiguration;
    private final IndexingConfiguration indexingConfiguration;
    private final InvocationBatchingConfiguration invocationBatchingConfiguration;
-   private final JMXStatisticsConfiguration jmxStatisticsConfiguration;
+   private final StatisticsConfiguration statisticsConfiguration;
    private final PersistenceConfiguration persistenceConfiguration;
    private final LockingConfiguration lockingConfiguration;
    private final TransactionConfiguration transactionConfiguration;
@@ -68,7 +68,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
                  ExpirationConfiguration expirationConfiguration,
                  EncodingConfiguration encodingConfiguration,
                  IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
-                 JMXStatisticsConfiguration jmxStatisticsConfiguration,
+                 StatisticsConfiguration statisticsConfiguration,
                  PersistenceConfiguration persistenceConfiguration,
                  LockingConfiguration lockingConfiguration,
                  SecurityConfiguration securityConfiguration,
@@ -85,7 +85,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       this.expirationConfiguration = expirationConfiguration;
       this.indexingConfiguration = indexingConfiguration;
       this.invocationBatchingConfiguration = invocationBatchingConfiguration;
-      this.jmxStatisticsConfiguration = jmxStatisticsConfiguration;
+      this.statisticsConfiguration = statisticsConfiguration;
       this.persistenceConfiguration = persistenceConfiguration;
       this.lockingConfiguration = lockingConfiguration;
       this.transactionConfiguration = transactionConfiguration;
@@ -98,7 +98,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
-      this.subElements.addAll(Arrays.asList(clusteringConfiguration, sitesConfiguration, encodingConfiguration, sitesConfiguration.backupFor(), transactionConfiguration, expirationConfiguration, memoryConfiguration, persistenceConfiguration, lockingConfiguration, indexingConfiguration, securityConfiguration, customInterceptorsConfiguration, jmxStatisticsConfiguration, unsafeConfiguration, invocationBatchingConfiguration));
+      this.subElements.addAll(Arrays.asList(clusteringConfiguration, sitesConfiguration, encodingConfiguration, sitesConfiguration.backupFor(), transactionConfiguration, expirationConfiguration, memoryConfiguration, persistenceConfiguration, lockingConfiguration, indexingConfiguration, securityConfiguration, customInterceptorsConfiguration, statisticsConfiguration, unsafeConfiguration, invocationBatchingConfiguration));
    }
 
    public AttributeSet attributes() {
@@ -147,8 +147,16 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       return invocationBatchingConfiguration;
    }
 
+   public StatisticsConfiguration statistics() {
+      return statisticsConfiguration;
+   }
+
+   /**
+    * @deprecated since 10.1.3 use {@link #statistics} instead. This will be removed in next major version.
+    */
+   @Deprecated
    public JMXStatisticsConfiguration jmxStatistics() {
-      return jmxStatisticsConfiguration;
+      return statistics();
    }
 
    public PersistenceConfiguration persistence() {
@@ -186,7 +194,6 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       return sitesConfiguration;
    }
 
-
    public boolean isTemplate() {
       return template;
    }
@@ -201,7 +208,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
             ", expiration=" + expirationConfiguration +
             ", indexing=" + indexingConfiguration +
             ", invocationBatching=" + invocationBatchingConfiguration +
-            ", jmxStatistics=" + jmxStatisticsConfiguration +
+            ", statistics=" + statisticsConfiguration +
             ", persistence=" + persistenceConfiguration +
             ", locking=" + lockingConfiguration +
             ", modules=" + moduleConfiguration +
@@ -227,7 +234,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       result = prime * result + ((indexingConfiguration == null) ? 0 : indexingConfiguration.hashCode());
       result = prime * result
             + ((invocationBatchingConfiguration == null) ? 0 : invocationBatchingConfiguration.hashCode());
-      result = prime * result + ((jmxStatisticsConfiguration == null) ? 0 : jmxStatisticsConfiguration.hashCode());
+      result = prime * result + ((statisticsConfiguration == null) ? 0 : statisticsConfiguration.hashCode());
       result = prime * result + ((lockingConfiguration == null) ? 0 : lockingConfiguration.hashCode());
       result = prime * result + ((moduleConfiguration == null) ? 0 : moduleConfiguration.hashCode());
       result = prime * result + ((persistenceConfiguration == null) ? 0 : persistenceConfiguration.hashCode());
@@ -278,10 +285,10 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
             return false;
       } else if (!invocationBatchingConfiguration.equals(other.invocationBatchingConfiguration))
          return false;
-      if (jmxStatisticsConfiguration == null) {
-         if (other.jmxStatisticsConfiguration != null)
+      if (statisticsConfiguration == null) {
+         if (other.statisticsConfiguration != null)
             return false;
-      } else if (!jmxStatisticsConfiguration.equals(other.jmxStatisticsConfiguration))
+      } else if (!statisticsConfiguration.equals(other.statisticsConfiguration))
          return false;
       if (lockingConfiguration == null) {
          if (other.lockingConfiguration != null)
@@ -340,7 +347,7 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
          return false;
       if (!invocationBatchingConfiguration.matches(other.invocationBatchingConfiguration))
          return false;
-      if (!jmxStatisticsConfiguration.matches(other.jmxStatisticsConfiguration))
+      if (!statisticsConfiguration.matches(other.statisticsConfiguration))
          return false;
       if (!lockingConfiguration.matches(other.lockingConfiguration))
          return false;

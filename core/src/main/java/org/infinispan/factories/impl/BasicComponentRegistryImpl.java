@@ -81,15 +81,15 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          for (MBeanMetadata.AttributeMetadata attribute : currentMetadata.getAttributes()) {
             MBeanMetadata.AttributeMetadata existingAttr = attributes.put(attribute.getName(), attribute);
             if (existingAttr != null) {
-               throw new IllegalStateException("Overriding of JMX attributes is not allowed. Attribute "
-                     + attribute.getName() + " is overridden in a subclass of " + className);
+               throw new IllegalStateException("Overriding/duplicate JMX attributes are not allowed. Attribute "
+                     + attribute.getName() + " already exists in a subclass of " + className);
             }
          }
          for (MBeanMetadata.OperationMetadata operation : currentMetadata.getOperations()) {
             MBeanMetadata.OperationMetadata existingOp = operations.put(operation.getSignature(), operation);
             if (existingOp != null) {
-               throw new IllegalStateException("Overriding of JMX operations is not allowed. Operation "
-                     + operation.getSignature() + " is overridden in a subclass of " + className);
+               throw new IllegalStateException("Overriding/duplicate JMX operations are not allowed. Operation "
+                     + operation.getSignature() + " already exists in a subclass of " + className);
             }
          }
          className = currentMetadata.getSuperMBeanClassName();

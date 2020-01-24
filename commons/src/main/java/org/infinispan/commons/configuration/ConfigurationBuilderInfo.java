@@ -26,7 +26,7 @@ public interface ConfigurationBuilderInfo extends BaseConfigurationInfo {
       if (getElementDefinition().supports(name)) return this;
 
       for (ConfigurationBuilderInfo childElement : this.getChildrenInfo()) {
-         ElementDefinition element = childElement.getElementDefinition();
+         ElementDefinition<?> element = childElement.getElementDefinition();
          if (element != null && element.supports(name)) {
             return childElement;
          }

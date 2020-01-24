@@ -27,7 +27,7 @@ public class ObjectStorageRoutingTest extends MultiHotRodServersTest {
       builder.clustering().hash().numOwners(1)
       .encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
       .encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
       return builder;
    }
 

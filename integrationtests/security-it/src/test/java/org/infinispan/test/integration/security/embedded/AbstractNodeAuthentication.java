@@ -83,11 +83,11 @@ public abstract class AbstractNodeAuthentication {
       this.krbProvided = krbProvided;
    }
 
-   protected Cache<String, String> getReplicatedCache(EmbeddedCacheManager manager) throws Exception {
+   protected Cache<String, String> getReplicatedCache(EmbeddedCacheManager manager) {
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
       cacheConfig.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheConfig.invocationBatching().enable();
-      cacheConfig.jmxStatistics().disable();
+      cacheConfig.statistics().disable();
       cacheConfig.clustering().cacheMode(CacheMode.REPL_SYNC);
 
       manager.defineConfiguration(CACHE_NAME, cacheConfig.build());
@@ -96,13 +96,11 @@ public abstract class AbstractNodeAuthentication {
       return replicatedCache;
    }
 
-   protected EmbeddedCacheManager getCacheManager(String jgrousConfigFile) {
+   protected EmbeddedCacheManager getCacheManager(String jgroupsConfigFile) {
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
-      globalConfig.globalJmxStatistics().disable();
-      globalConfig.globalJmxStatistics().mBeanServerLookup(null); //TODO remove once WFLY-3124 is fixed, for now fail JMX registration
-      globalConfig.transport().defaultTransport().addProperty("configurationFile", jgrousConfigFile);
-      EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
-      return manager;
+      globalConfig.jmx().enabled(false);
+      globalConfig.transport().defaultTransport().addProperty("configurationFile", jgroupsConfigFile);
+      return new DefaultCacheManager(globalConfig.build());
    }
 
    @Test

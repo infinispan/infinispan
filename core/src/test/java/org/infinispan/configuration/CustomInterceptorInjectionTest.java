@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test(groups = "functional", testName = "config.CustomInterceptorInjectionTest")
+@Test(groups = "functional", testName = "configuration.CustomInterceptorInjectionTest")
 public class CustomInterceptorInjectionTest extends SingleCacheManagerTest {
 
    @Override

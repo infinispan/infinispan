@@ -16,7 +16,7 @@ public class NotAvailableSingleStatsTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
-      cfg.jmxStatistics().available(false);
+      cfg.statistics().available(false);
       addClusterEnabledCacheManager(cfg);
       cache = cache(0);
    }

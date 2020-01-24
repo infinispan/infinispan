@@ -24,7 +24,15 @@ public interface ConfigurationChildBuilder {
 
    InvocationBatchingConfigurationBuilder invocationBatching();
 
-   JMXStatisticsConfigurationBuilder jmxStatistics();
+   StatisticsConfigurationBuilder statistics();
+
+   /**
+    * @deprecated since 10.1.3 use {@link #statistics} instead. This will be removed in next major version.
+    */
+   @Deprecated
+   default JMXStatisticsConfigurationBuilder jmxStatistics() {
+      return statistics();
+   }
 
    PersistenceConfigurationBuilder persistence();
 

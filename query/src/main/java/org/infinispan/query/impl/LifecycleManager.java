@@ -244,31 +244,26 @@ public class LifecycleManager implements ModuleLifecycle {
     * Register query statistics and mass-indexer MBeans for a cache.
     */
    private void registerQueryMBeans(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchIntegrator) {
-      GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
-      if (!globalConfig.statistics())
-         return;
-
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-      String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cache.getName());
-      CacheJmxRegistration jmxRegistration = cr.getComponent(CacheJmxRegistration.class);
-
       MassIndexer massIndexer = ComponentRegistryUtils.getMassIndexer(cache);
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator, massIndexer);
+      stats.setStatisticsEnabled(cfg.statistics().enabled());
+      cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
-      // Register query statistics MBean, but only enable it if Infinispan config says so
-      try {
-         InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(searchIntegrator, massIndexer);
-         stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
-         cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
-         jmxRegistration.registerMBean(stats, queryGroupName);
-      } catch (Exception e) {
-         throw new CacheException("Unable to register query statistics MBean", e);
-      }
-
-      // Register mass indexer MBean
-      try {
-         jmxRegistration.registerMBean(massIndexer, queryGroupName);
-      } catch (Exception e) {
-         throw new CacheException("Unable to create MassIndexer MBean", e);
+      GlobalConfiguration globalConfig = cr.getGlobalComponentRegistry().getGlobalConfiguration();
+      if (globalConfig.jmx().enabled()) {
+         String queryGroupName = getQueryGroupName(globalConfig.cacheManagerName(), cache.getName());
+         CacheJmxRegistration jmxRegistration = cr.getComponent(CacheJmxRegistration.class);
+         try {
+            jmxRegistration.registerMBean(stats, queryGroupName);
+         } catch (Exception e) {
+            throw new CacheException("Unable to register query statistics MBean", e);
+         }
+         try {
+            jmxRegistration.registerMBean(massIndexer, queryGroupName);
+         } catch (Exception e) {
+            throw new CacheException("Unable to register MassIndexer MBean", e);
+         }
       }
    }
 

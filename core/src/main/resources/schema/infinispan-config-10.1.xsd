@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema elementFormDefault="qualified"
-           version="1.1" targetNamespace="urn:infinispan:config:10.1"
-           xmlns:tns="urn:infinispan:config:10.1"
+           version="1.1" targetNamespace="urn:infinispan:config:10.3"
+           xmlns:tns="urn:infinispan:config:10.3"
            xmlns:jgroups="urn:org:jgroups"
            xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
@@ -152,10 +152,44 @@
           <xs:annotation>
             <xs:documentation>
               <![CDATA[
-                A thread pool executor with a bounded queue.  Such a thread pool has a core size and a queue with an
-                upper bound.  When a task is submitted, if the number of running threads is less than the core size,
-                a new thread is created.  Otherwise, the task is placed in queue.  If too many tasks are allowed to be
-                submitted to this type of executor, an out of memory condition may occur.
+                A thread pool executor with a bounded queue which can run blocking operations.
+                Such a thread pool has a core size and a queue with an upper bound.
+                When a task is submitted, if the number of running threads is less than the core size, a new thread is created.
+                Otherwise, the task is placed in queue.
+                If too many tasks are allowed to be submitted to this type of executor, an out of memory condition may occur.
+                If the queue is too small it may cause a CacheBackpressureFullException to be thrown if a non-blocking thread cannot submit a task.
+
+                The "name" attribute is the bean name of the created executor.
+
+                The "max-threads" attribute must be used to specify the maximum thread pool size.
+                The "core-threads" attribute defines the number of threads to keep in the pool.
+
+                The "keepalive-time" attribute may used to specify the amount of time that pool threads should
+                be kept running when idle; if not specified, threads will run until the executor is shut down.
+                The "thread-factory" element specifies the bean name of a specific thread factory to use to create worker
+                threads.
+                    ]]>
+            </xs:documentation>
+          </xs:annotation>
+          <xs:attribute name="name" use="required" type="xs:string"/>
+          <xs:attribute name="thread-factory" type="xs:string" use="optional"/>
+          <xs:attribute name="max-threads" type="xs:int"/>
+          <xs:attribute name="core-threads" type="xs:int"/>
+          <xs:attribute name="keepalive-time" type="xs:string" use="optional"/>
+          <xs:attribute name="queue-length" type="xs:string"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="non-blocking-bounded-queue-thread-pool" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:annotation>
+            <xs:documentation>
+              <![CDATA[
+                A thread pool executor with a bounded queue which should only run non blocking operations.
+                Such a thread pool has a core size and a queue with an upper bound.
+                When a task is submitted, if the number of running threads is less than the core size, a new thread is created.
+                Otherwise, the task is placed in queue.
+                If too many tasks are allowed to be submitted to this type of executor, an out of memory condition may occur.
+                If the queue is too small it may cause blocking thread pool tasks to build up waiting to submit.
 
                 The "name" attribute is the bean name of the created executor.
 
@@ -232,6 +266,11 @@
       <xs:element name="serialization" type="tns:serialization" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Specifies how data serialization will be performed by the cache container.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="metrics" type="tns:metrics" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Defines microprofile metrics configuration.</xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="jmx" type="tns:jmx" minOccurs="0">
@@ -618,6 +657,30 @@
     </xs:attribute>
   </xs:complexType>
 
+  <xs:complexType name="metrics">
+    <xs:attribute name="gauges" type="xs:boolean" default="${GlobalMetrics.gauges}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables exporting of gauge metrics. These are exported by default if statistics are enabled.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="histograms" type="xs:boolean" default="${GlobalMetrics.histograms}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables exporting of histograms. These are costly to compute so are not enabled by default.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="prefix" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Global name prefix for metrics.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
   <xs:complexType name="jmx">
     <xs:sequence>
       <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
@@ -626,7 +689,7 @@
         </xs:annotation>
       </xs:element>
     </xs:sequence>
-    <xs:attribute name="domain" type="xs:string" default="${GlobalJmxStatistics.domain}">
+    <xs:attribute name="domain" type="xs:string" default="${GlobalJmx.domain}">
       <xs:annotation>
         <xs:documentation>
           If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if not specified an object name will be created for you by default.
@@ -640,10 +703,18 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="duplicate-domains" type="xs:boolean" default="${GlobalJmxStatistics.duplicateDomains}">
+    <xs:attribute name="duplicate-domains" type="xs:boolean" default="${GlobalJmx.duplicateDomains}">
       <xs:annotation>
         <xs:documentation>
+          Deprecated since 10.1; please set a unique domain or cache manager name instead.
           If true, multiple cache manager instances could be configured under the same configured JMX domain. Each cache manager will in practice use a different JMX domain that has been calculated based on the configured one by adding an incrementing index to it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="enabled" type="xs:boolean" default="${GlobalJmx.enabled}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables exporting of MBeans.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -896,21 +967,12 @@
         <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="start">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="jndi-name" type="xs:string">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="module" type="xs:string">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="statistics" type="xs:boolean" default="${JMXStatistics.enabled}">
+    <xs:attribute name="statistics" type="xs:boolean" default="${Statistics.enabled}">
       <xs:annotation>
         <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="statistics-available" type="xs:boolean" default="${JMXStatistics.available}">
+    <xs:attribute name="statistics-available" type="xs:boolean" default="${Statistics.available}">
       <xs:annotation>
         <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>

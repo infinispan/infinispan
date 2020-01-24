@@ -124,7 +124,7 @@ public class CounterJmxTest extends BaseCounterTest {
    protected GlobalConfigurationBuilder configure(int nodeId) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       String jmxDomain = getClass().getSimpleName() + nodeId;
-      TestCacheManagerFactory.configureGlobalJmx(builder, jmxDomain, mBeanServerLookup);
+      TestCacheManagerFactory.configureJmx(builder, jmxDomain, mBeanServerLookup);
       return builder;
    }
 
@@ -259,7 +259,7 @@ public class CounterJmxTest extends BaseCounterTest {
    }
 
    private ObjectName counterObjectName(int managerIndex) {
-      final String domain = manager(managerIndex).getCacheManagerConfiguration().globalJmxStatistics().domain();
+      final String domain = manager(managerIndex).getCacheManagerConfiguration().jmx().domain();
       return TestingUtil.getCacheManagerObjectName(domain, "DefaultCacheManager", EmbeddedCounterManager.OBJECT_NAME);
    }
 }

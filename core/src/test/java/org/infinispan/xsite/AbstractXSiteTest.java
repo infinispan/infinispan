@@ -163,7 +163,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    }
 
    protected <K,V> List<Cache<K,V>> caches(String site, String cacheName) {
-      return Collections.unmodifiableList(site(site).<K,V>getCaches(cacheName));
+      return Collections.unmodifiableList(site(site).getCaches(cacheName));
    }
 
    protected void startCache(String siteName, String cacheName, ConfigurationBuilder configurationBuilder) {
@@ -269,10 +269,9 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          GlobalConfiguration original = gcb.build();
          clone.read(original);
          clone.transport().transport(transport);
-
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
-         if (original.globalJmxStatistics().enabled()) {
-            clone.globalJmxStatistics().jmxDomain(original.globalJmxStatistics().domain() + cacheManagers.size());
+         if (original.jmx().enabled()) {
+            clone.jmx().enabled(true).domain(original.jmx().domain() + cacheManagers.size());
          }
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(clone, builder, flags);
          cacheManagers.add(cm);
@@ -297,7 +296,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          }
       }
 
-      public  <K,V> List<Cache<K,V>> getCaches(String cacheName) {
+      public <K, V> List<Cache<K, V>> getCaches(String cacheName) {
          List<Cache<K,V>> caches = new ArrayList<>(cacheManagers.size());
          for (EmbeddedCacheManager cm : cacheManagers) {
             caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));

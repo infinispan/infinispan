@@ -40,7 +40,7 @@ public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManag
 
    protected ConfigurationBuilder getConfiguration() {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      c.jmxStatistics().enable();
+      c.statistics().enable();
       return c;
    }
 
