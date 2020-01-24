@@ -49,6 +49,4 @@ public class ServerTaskWrapper<T> implements Task {
    public Set<String> getParameters() {
       return task.getParameters();
    }
-
-
 }

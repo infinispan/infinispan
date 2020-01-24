@@ -1,8 +1,10 @@
 package org.infinispan.server.extensions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.server.test.InfinispanServerRule;
@@ -18,7 +20,7 @@ import org.junit.Test;
 public class ServerTasks {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = ExtensionsIT.SERVERS;
+   public static final InfinispanServerRule SERVERS = ExtensionsIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -35,5 +37,15 @@ public class ServerTasks {
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
       String hello = cache.execute("hello", Collections.singletonMap("greetee", "my friend"));
       assertEquals("Hello my friend", hello);
+   }
+
+   @Test
+   public void testDistributedServerTaskWithParameters() {
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
+      List<String> greetings = cache.execute("dist-hello", Collections.singletonMap("greetee", "my friend"));
+      assertEquals(2, greetings.size());
+      for(String greeting : greetings) {
+         assertTrue(greeting.matches("Hello my friend .*"));
+      }
    }
 }

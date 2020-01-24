@@ -1,28 +1,40 @@
 package org.infinispan.server.tasks;
 
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.tasks.TaskContext;
 
 /**
  * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
-public class DistributedServerTask<T> implements Serializable, Function<EmbeddedCacheManager, T> {
-   private final String cacheName;
-   private final Optional<Map<String, ?>> parameters;
-   private final String taskName;
+@ProtoTypeId(ProtoStreamTypeIds.DISTRIBUTED_SERVER_TASK)
+public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, T> {
+   @ProtoField(number = 1)
+   final String taskName;
 
-   public DistributedServerTask(String cacheName, String taskName, Optional<Map<String, ?>> parameters) {
+   @ProtoField(number = 2)
+   final String cacheName;
+
+   @ProtoField(number = 3, collectionImplementation = ArrayList.class)
+   final List<TaskParameter> parameters;
+
+   @ProtoFactory
+   public DistributedServerTask(String taskName, String cacheName, List<TaskParameter> parameters) {
       this.cacheName = cacheName;
       this.taskName = taskName;
       this.parameters = parameters;
@@ -36,7 +48,7 @@ public class DistributedServerTask<T> implements Serializable, Function<Embedded
       ServerTaskEngine serverTaskEngine = componentRegistry.getComponent(ServerTaskEngine.class);
       Marshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
       ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
-      task.inject(prepareContext(cache, marshaller));
+      task.inject(prepareContext(embeddedCacheManager, cache, marshaller));
       try {
          return task.run();
       } catch (Exception e) {
@@ -44,9 +56,11 @@ public class DistributedServerTask<T> implements Serializable, Function<Embedded
       }
    }
 
-   private TaskContext prepareContext(Cache<Object, Object> cache, Marshaller marshaller) {
+   private TaskContext prepareContext(EmbeddedCacheManager embeddedCacheManager, Cache<Object, Object> cache, Marshaller marshaller) {
       TaskContext context = new TaskContext();
-      if (parameters.isPresent()) context.parameters(parameters.get());
+      context.cacheManager(embeddedCacheManager);
+      Map<String, String> params = parameters.stream().collect(Collectors.toMap(p -> p.key, p -> p.value));
+      context.parameters(params);
       String type = MediaType.APPLICATION_OBJECT_TYPE;
       if (cache != null) context.cache(cache.getAdvancedCache().withMediaType(type, type));
       if (marshaller != null) context.marshaller(marshaller);

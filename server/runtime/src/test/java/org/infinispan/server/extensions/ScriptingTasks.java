@@ -24,7 +24,7 @@ import org.junit.Test;
 public class ScriptingTasks {
 
    @ClassRule
-   public static InfinispanServerRule SERVERS = ExtensionsIT.SERVERS;
+   public static final InfinispanServerRule SERVERS = ExtensionsIT.SERVERS;
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -67,5 +67,4 @@ public class ScriptingTasks {
       Map<String, Long> result = cache.execute(scriptName, Collections.emptyMap());
       assertEquals(19, result.size());
    }
-
 }
