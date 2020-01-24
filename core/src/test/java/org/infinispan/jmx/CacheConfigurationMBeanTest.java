@@ -31,11 +31,10 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().jmxDomain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup).enable();
+      gcb.jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder dcc = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       dcc.transaction().autoCommit(false);
       dcc.memory().size(1000);
-      dcc.jmxStatistics().enable();
       return TestCacheManagerFactory.createCacheManager(gcb, dcc);
    }
 

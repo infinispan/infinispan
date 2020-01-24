@@ -1,7 +1,7 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashMap;
@@ -35,14 +35,14 @@ public class ClusteredCacheMgmtInterceptorMBeanTest extends MultipleCacheManager
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureGlobalJmx(globalBuilder, JMX_DOMAIN_1, mBeanServerLookup);
+      configureJmx(globalBuilder, JMX_DOMAIN_1, mBeanServerLookup);
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
 
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);
 
       GlobalConfigurationBuilder globalBuilder2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureGlobalJmx(globalBuilder2, JMX_DOMAIN_2, mBeanServerLookup);
+      configureJmx(globalBuilder2, JMX_DOMAIN_2, mBeanServerLookup);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder2, builder);
 
       registerCacheManager(cm1, cm2);

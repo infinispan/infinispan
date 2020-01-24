@@ -50,7 +50,7 @@ public class GlobalConfiguration implements ConfigurationInfo {
    private final CacheContainerConfiguration cacheContainerConfiguration;
    private final Features features;
 
-   private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition("infinispan");
+   private static ElementDefinition<GlobalConfiguration> ELEMENT_DEFINITION = new DefaultElementDefinition<>("infinispan");
 
    private List<ConfigurationInfo> subElements;
 
@@ -114,8 +114,20 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.asyncThreadPool();
    }
 
-   public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
-      return cacheContainerConfiguration.globalJmxStatistics();
+   public GlobalMetricsConfiguration metrics() {
+      return cacheContainerConfiguration.metrics();
+   }
+
+   public GlobalJmxConfiguration jmx() {
+      return cacheContainerConfiguration.jmx();
+   }
+
+   /**
+    * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
+    */
+   @Deprecated
+   public GlobalJmxConfiguration globalJmxStatistics() {
+      return jmx();
    }
 
    public String cacheManagerName() {

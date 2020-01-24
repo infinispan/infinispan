@@ -419,7 +419,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 				builder.read(override.build(false));
 			}
 			if (globalStats != null) {
-				builder.jmxStatistics().enabled(globalStats).available(globalStats);
+				builder.statistics().enabled(globalStats).available(globalStats);
 			}
 			configuration = builder.template(false).build();
 			type.validate(configuration);

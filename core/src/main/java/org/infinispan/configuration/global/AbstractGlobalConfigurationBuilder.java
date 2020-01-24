@@ -22,9 +22,14 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
-   public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
-      globalConfig.globalJmxStatistics().enable();
-      return globalConfig.globalJmxStatistics();
+   public GlobalMetricsConfigurationBuilder metrics() {
+      return globalConfig.metrics();
+   }
+
+   @Override
+   public GlobalJmxConfigurationBuilder jmx() {
+      //TODO [anistor] globalConfig.jmx().enabled(true);  ????
+      return globalConfig.jmx();
    }
 
    @Override
@@ -92,5 +97,4 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    public GlobalConfiguration build() {
       return globalConfig.build();
    }
-
 }

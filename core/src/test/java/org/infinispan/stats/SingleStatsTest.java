@@ -72,7 +72,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       }
 
       cfg
-         .jmxStatistics()
+         .statistics()
             .enable()
          .memory()
             .storageType(storageType)

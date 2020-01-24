@@ -47,11 +47,10 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    void setup() {
-
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
-      cfg.jmxStatistics().enable();
+      cfg.statistics().enable();
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      TestCacheManagerFactory.configureGlobalJmx(globalCfg, JMX_DOMAIN, mBeanServerLookup);
+      TestCacheManagerFactory.configureJmx(globalCfg, JMX_DOMAIN, mBeanServerLookup);
       cacheContainer = TestCacheManagerFactory.createClusteredCacheManager(globalCfg, cfg);
 
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);

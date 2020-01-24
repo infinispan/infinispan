@@ -50,7 +50,7 @@ public class ActivationManagerImpl implements ActivationManager {
 
    @Start(priority = 11) // After the cache loader manager, before the passivation manager
    public void start() {
-      statisticsEnabled = cfg.jmxStatistics().enabled();
+      statisticsEnabled = cfg.statistics().enabled();
       passivation = cfg.persistence().usingStores() && cfg.persistence().passivation();
    }
 

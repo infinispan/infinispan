@@ -8,10 +8,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -57,7 +53,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
    private final MBeanOperationInfo[] opInfos;
    private final String[] opNames;
    private final MBeanAttributeInfo[] attInfos;
-   private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<>(2);
+   private final Map<String, InvokableMBeanAttributeInfo> atts = new HashMap<>(2);
    private final String mbeanName;
    private final String description;
 
@@ -163,8 +159,8 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          Field field = findField(objectClass, attributeMetadata.getName());
          if (field != null) {
             return new InvokableFieldBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
-                  attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-                  attributeMetadata.isIs(), field, attributeMetadata.getterFunction(), attributeMetadata.setterFunction());
+                                                             attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
+                                                             attributeMetadata.isIs(), field);
          }
       }
 
@@ -177,8 +173,8 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          // missing dependency ?
       }
       return new InvokableSetterBasedMBeanAttributeInfo(attributeMetadata.getName(), attributeMetadata.getType(),
-            attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
-            attributeMetadata.isIs(), getter, setter, attributeMetadata.getterFunction(), attributeMetadata.setterFunction());
+                                                        attributeMetadata.getDescription(), true, attributeMetadata.isWritable(),
+                                                        attributeMetadata.isIs(), getter, setter);
    }
 
    private MBeanOperationInfo toJmxInfo(MBeanMetadata.OperationMetadata operationMetadata) {
@@ -230,28 +226,6 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
          }
       }
       return al;
-   }
-
-   public Supplier<?> getAttributeGetter(String attributeName) throws AttributeNotFoundException {
-      InvokableMBeanAttributeInfo i = atts.get(attributeName);
-      if (i == null) {
-         throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
-      }
-      if (i.getterFunction == null) {
-         return null;
-      }
-      return () -> i.getterFunction.apply(obj);
-   }
-
-   public Consumer<?> getAttributeSetter(String attributeName) throws AttributeNotFoundException {
-      InvokableMBeanAttributeInfo i = atts.get(attributeName);
-      if (i == null) {
-         throw new AttributeNotFoundException("Unknown attribute '" + attributeName + "'");
-      }
-      if (i.setterFunction == null) {
-         return null;
-      }
-      return (v) -> i.setterFunction.accept(obj, v);
    }
 
    @Override
@@ -407,27 +381,22 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
 
    private static abstract class InvokableMBeanAttributeInfo {
 
-      final MBeanAttributeInfo attributeInfo;
-      final Function<Object, Object> getterFunction;
-      final BiConsumer<Object, Object> setterFunction;
+      private final MBeanAttributeInfo attributeInfo;
 
-      InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable,
-                                  boolean isIs, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+      InvokableMBeanAttributeInfo(String name, String type, String description, boolean isReadable, boolean isWritable, boolean isIs) {
          attributeInfo = new MBeanAttributeInfo(name, type, description, isReadable, isWritable, isIs);
-         this.getterFunction = (Function<Object, Object>) getterFunction;
-         this.setterFunction = (BiConsumer<Object, Object>) setterFunction;
       }
 
       abstract Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException;
    }
 
    private final class InvokableFieldBasedMBeanAttributeInfo extends InvokableMBeanAttributeInfo {
+
       private final Field field;
 
       InvokableFieldBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable,
-                                            boolean isWritable, boolean isIs, Field field,
-                                            Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
-         super(name, type, description, isReadable, isWritable, isIs, getterFunction, setterFunction);
+                                            boolean isWritable, boolean isIs, Field field) {
+         super(name, type, description, isReadable, isWritable, isIs);
          this.field = field;
       }
 
@@ -448,9 +417,8 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       private final Method getter;
 
       InvokableSetterBasedMBeanAttributeInfo(String name, String type, String description, boolean isReadable,
-                                             boolean isWritable, boolean isIs, Method getter, Method setter,
-                                             Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
-         super(name, type, description, isReadable, isWritable, isIs, getterFunction, setterFunction);
+                                             boolean isWritable, boolean isIs, Method getter, Method setter) {
+         super(name, type, description, isReadable, isWritable, isIs);
          this.setter = setter;
          this.getter = getter;
       }

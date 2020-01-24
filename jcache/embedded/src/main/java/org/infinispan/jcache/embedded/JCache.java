@@ -100,7 +100,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       this.rwMapSkipCacheLoad = rwMap.withParams(Param.PersistenceMode.SKIP_LOAD);
       this.stats = new RICacheStatistics(this.cache);
 
-      jmxRegistration = cache.getCacheManager().getCacheManagerConfiguration().statistics() ?
+      jmxRegistration = cache.getCacheManager().getCacheManagerConfiguration().jmx().enabled() ?
             cache.getComponentRegistry().getComponent(CacheJmxRegistration.class) : null;
 
       addConfigurationListeners();

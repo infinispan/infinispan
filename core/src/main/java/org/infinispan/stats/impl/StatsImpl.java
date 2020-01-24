@@ -59,7 +59,7 @@ public class StatsImpl implements Stats {
     * @return Stats object
     */
    public static Stats create(Configuration configuration, AsyncInterceptorChain chain) {
-      if (!configuration.jmxStatistics().available()) {
+      if (!configuration.statistics().available()) {
          return new StatsImpl();
       }
       return new StatsImpl(chain.findInterceptorExtending(CacheMgmtInterceptor.class));

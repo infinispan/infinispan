@@ -633,7 +633,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case STATISTICS: {
-               builder.cacheContainer().statistics(Boolean.parseBoolean(value));
+               boolean statistics = Boolean.parseBoolean(value);
+               builder.cacheContainer().statistics(statistics);
+               if (!reader.getSchema().since(10, 1)) {
+                  builder.jmx().enabled(statistics);
+               }
                break;
             }
             case SHUTDOWN_HOOK: {
@@ -715,6 +719,10 @@ public class Parser implements ConfigurationParser {
                } else {
                   parseModules(reader, holder);
                }
+               break;
+            }
+            case METRICS: {
+               parseMetrics(reader, holder);
                break;
             }
             case JMX: {
@@ -857,6 +865,34 @@ public class Parser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
+   private void parseMetrics(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case GAUGES: {
+               builder.metrics().gauges(Boolean.parseBoolean(value));
+               break;
+            }
+            case HISTOGRAMS: {
+               builder.metrics().histograms(Boolean.parseBoolean(value));
+               break;
+            }
+            case PREFIX: {
+               builder.metrics().prefix(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      ParseUtils.requireNoContent(reader);
+   }
+
    private void parseJmx(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -864,16 +900,20 @@ public class Parser implements ConfigurationParser {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case JMX_DOMAIN: {
-               builder.globalJmxStatistics().jmxDomain(value);
+            case ENABLED: {
+               builder.jmx().enabled(Boolean.parseBoolean(value));
+               break;
+            }
+            case DOMAIN: {
+               builder.jmx().domain(value);
                break;
             }
             case MBEAN_SERVER_LOOKUP: {
-               builder.globalJmxStatistics().mBeanServerLookup(Util.getInstance(value, holder.getClassLoader()));
+               builder.jmx().mBeanServerLookup(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
             case ALLOW_DUPLICATE_DOMAINS: {
-               builder.globalJmxStatistics().allowDuplicateDomains(Boolean.valueOf(value));
+               builder.jmx().allowDuplicateDomains(Boolean.parseBoolean(value));
                break;
             }
             default: {
@@ -883,7 +923,7 @@ public class Parser implements ConfigurationParser {
       }
 
       Properties properties = parseProperties(reader);
-      builder.globalJmxStatistics().withProperties(properties);
+      builder.jmx().withProperties(properties);
    }
 
    private void parseModules(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder)
@@ -1131,14 +1171,14 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case SIMPLE_CACHE:
-            builder.simpleCache(Boolean.valueOf(value));
+            builder.simpleCache(Boolean.parseBoolean(value));
             break;
          case STATISTICS: {
-            builder.jmxStatistics().enabled(Boolean.valueOf(value));
+            builder.statistics().enabled(Boolean.parseBoolean(value));
             break;
          }
          case STATISTICS_AVAILABLE: {
-            builder.jmxStatistics().available(Boolean.valueOf(value));
+            builder.statistics().available(Boolean.parseBoolean(value));
             break;
          }
          case SPIN_DURATION: {
@@ -1150,7 +1190,7 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case UNRELIABLE_RETURN_VALUES: {
-            builder.unsafe().unreliableReturnValues(Boolean.valueOf(value));
+            builder.unsafe().unreliableReturnValues(Boolean.parseBoolean(value));
             break;
          }
          default: {

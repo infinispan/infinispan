@@ -1,2 +1,2 @@
 GlobalConfigurationBuilder globalConfigurationBuilder = ...
-globalConfigurationBuilder.globalJmxStatistics().enable();
+globalConfigurationBuilder.jmx().enable();

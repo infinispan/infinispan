@@ -37,18 +37,17 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(CacheMBeanTest.class);
 
    public static final String JMX_DOMAIN = CacheMBeanTest.class.getSimpleName();
+
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
    @Override
    protected void createCacheManagers() throws Exception {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       globalConfiguration
-            .cacheContainer().statistics(true)
-            .globalJmxStatistics()
-            .jmxDomain(JMX_DOMAIN)
+            .jmx().enabled(true)
+            .domain(JMX_DOMAIN)
             .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder configuration = new ConfigurationBuilder();
-      configuration.jmxStatistics().enabled(false);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
 
       registerCacheManager(cacheManager);
@@ -97,12 +96,11 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
       ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-      gc.cacheContainer().statistics(true)
-            .globalJmxStatistics()
-            .jmxDomain(otherJmxDomain)
-            .mBeanServerLookup(mBeanServerLookup);
+      gc.jmx().enabled(true)
+        .domain(otherJmxDomain)
+        .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.jmxStatistics().enabled(true);
+      c.statistics().enabled(true);
       EmbeddedCacheManager otherContainer = TestCacheManagerFactory.createCacheManager(gc, c);
       otherContainer.defineConfiguration("galder", new ConfigurationBuilder().build());
       registerCacheManager(otherContainer);
@@ -131,13 +129,12 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
 
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-      gc.cacheContainer().statistics(false)
-            .globalJmxStatistics()
-            .allowDuplicateDomains(false)
-            .jmxDomain(JMX_DOMAIN)
-            .mBeanServerLookup(mBeanServerLookup);
+      gc.jmx().enabled(true)
+        .allowDuplicateDomains(false)
+        .domain(JMX_DOMAIN)
+        .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.jmxStatistics().enabled(true);
+      c.statistics().enabled(true);
 
       Exceptions.expectException(EmbeddedCacheManagerStartupException.class, JmxDomainConflictException.class,
             () -> TestCacheManagerFactory.createCacheManager(gc, c));
@@ -146,12 +143,11 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    public void testAvoidLeakOfCacheMBeanWhenCacheStatisticsDisabled(Method m) {
       String otherJmxDomain = "jmx_" + m.getName();
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-      gc.cacheContainer().statistics(false)
-            .globalJmxStatistics()
-            .jmxDomain(otherJmxDomain)
-            .mBeanServerLookup(mBeanServerLookup);
+      gc.jmx().enabled(true)
+        .domain(otherJmxDomain)
+        .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.jmxStatistics().available(false);
+      c.statistics().available(false);
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(gc, c)) {
          @Override

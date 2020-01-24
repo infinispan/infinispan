@@ -48,7 +48,6 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       configuration.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .useSynchronization(false)
             .recovery().enable()
-            .jmxStatistics().enable()
             .locking().useLockStriping(false)
             .clustering().hash().numOwners(3)
             .l1().disable();
@@ -78,9 +77,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    private GlobalConfigurationBuilder createGlobalConfigurationBuilder(int index) {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable()
-            .mBeanServerLookup(mBeanServerLookup)
-            .jmxDomain(JMX_DOMAIN + index);
+      globalConfiguration.jmx().enabled(true).mBeanServerLookup(mBeanServerLookup).domain(JMX_DOMAIN + index);
       return globalConfiguration;
    }
 
