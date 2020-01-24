@@ -1,8 +1,10 @@
 package org.infinispan.server.tasks;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -15,10 +17,8 @@ import org.infinispan.util.function.TriConsumer;
  * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class DistributedServerTaskRunner implements ServerTaskRunner {
-   private final ServerTaskEngine serverTaskEngine;
 
-   public DistributedServerTaskRunner(ServerTaskEngine serverTaskEngine) {
-      this.serverTaskEngine = serverTaskEngine;
+   public DistributedServerTaskRunner() {
    }
 
    @Override
@@ -27,17 +27,19 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
 
       ClusterExecutor clusterExecutor = SecurityActions.getClusterExecutor(context.getCacheManager());
 
-      List<T> results = new ArrayList<>();
+      List<T> results = Collections.synchronizedList(new ArrayList<>());
       TriConsumer<Address, T, Throwable> triConsumer = (a, v, t) -> {
          if (t != null) {
             throw new CacheException(t);
          }
-         synchronized (this) {
-            results.add(v);
-         }
+         results.add(v);
       };
-      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedServerTask<>(
-            masterCacheNode.getName(), taskName, context.getParameters()), triConsumer);
+      List<TaskParameter> taskParams = context.getParameters().orElse(Collections.emptyMap())
+            .entrySet().stream().map(e -> new TaskParameter(e.getKey(), e.getValue().toString())).collect(Collectors.toList());
+      CompletableFuture<Void> future = clusterExecutor.submitConsumer(
+            new DistributedServerTask<>(taskName, masterCacheNode.getName(), taskParams),
+            triConsumer
+      );
 
       return (CompletableFuture<T>) future.thenApply(ignore -> results);
    }

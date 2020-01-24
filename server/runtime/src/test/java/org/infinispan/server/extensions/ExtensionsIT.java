@@ -3,6 +3,9 @@ package org.infinispan.server.extensions;
 import org.infinispan.server.test.InfinispanServerRule;
 import org.infinispan.server.test.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.ServerRunMode;
+import org.infinispan.tasks.ServerTask;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -17,12 +20,23 @@ import org.junit.runners.Suite;
       ServerTasks.class,
 })
 public class ExtensionsIT {
-
    @ClassRule
    public static final InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
                                     .runMode(ServerRunMode.CONTAINER)
                                     .numServers(2)
-                                    .artifacts(HelloServerTask.artifact())
+                                    .artifacts(artifacts())
                                     .build();
+
+   public static JavaArchive[] artifacts() {
+      JavaArchive hello = ShrinkWrap.create(JavaArchive.class, "hello-server-task.jar");
+      hello.addClass(HelloServerTask.class);
+      hello.addAsServiceProvider(ServerTask.class, HelloServerTask.class);
+
+      JavaArchive distHello = ShrinkWrap.create(JavaArchive.class, "distributed-hello-server-task.jar");
+      distHello.addPackage(DistributedHelloServerTask.class.getPackage());
+      distHello.addAsServiceProvider(ServerTask.class, DistributedHelloServerTask.class);
+
+      return new JavaArchive[] {hello, distHello};
+   }
 }

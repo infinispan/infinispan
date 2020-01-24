@@ -4,8 +4,7 @@ package org.infinispan.tasks;
 import java.util.concurrent.Callable;
 
 /**
- * An interface for deployed server tasks.
- * In order to deploy a custom ServerTask, deploy a module containing a service that implements this interface.
+ * An interface representing a deployed server task.
  *
  * The task will be accessible by the name returned by {@link #getName()}
  * Before the execution, {@link TaskContext} is injected into the task to provide
@@ -18,6 +17,10 @@ public interface ServerTask<V> extends Callable<V>, Task {
    /**
     * Sets the task context
     * Store the value in your task implementation to be able to access caches and other resources in the task
+    * Note that there will be a single instance of each ServerTask on each server so, if you
+    * expect concurrent invocations of a task, the {@link TaskContext} should be stored in a {@link ThreadLocal} static
+    * field in your task. The TaskContext should then be obtained during the task's {@link #call()} method and removed
+    * from the ThreadLocal.
     *
     * @param taskContext task execution context
     */
