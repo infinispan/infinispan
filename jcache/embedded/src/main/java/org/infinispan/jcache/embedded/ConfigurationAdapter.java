@@ -60,7 +60,7 @@ public class ConfigurationAdapter<K, V> {
       }
 
       if (c.isStatisticsEnabled())
-         cb.jmxStatistics().enable();
+         cb.statistics().enable();
 
       return cb.build();
    }

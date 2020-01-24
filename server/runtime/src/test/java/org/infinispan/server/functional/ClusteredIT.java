@@ -77,7 +77,7 @@ public class ClusteredIT {
    static <K, V> RemoteCache<K, V> createStatsEnabledCache(InfinispanServerTestMethodRule testMethodRule) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true).hash().numOwners(2);
-      builder.jmxStatistics().enable();
+      builder.statistics().enable();
       return testMethodRule.hotrod().withClientConfiguration(new ConfigurationBuilder()).withServerConfiguration(builder).create();
    }
 }

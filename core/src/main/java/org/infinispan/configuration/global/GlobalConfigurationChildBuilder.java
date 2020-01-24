@@ -6,15 +6,29 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 public interface GlobalConfigurationChildBuilder {
+
    /**
     * Transport-related (i.e. clustering) configuration
     */
    TransportConfigurationBuilder transport();
 
    /**
-    * Global JMX configuration
+    * Global microprofile metrics configuration.
     */
-   GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics();
+   GlobalMetricsConfigurationBuilder metrics();
+
+   /**
+    * Global JMX configuration.
+    */
+   GlobalJmxConfigurationBuilder jmx();
+
+   /**
+    * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
+    */
+   @Deprecated
+   default GlobalJmxConfigurationBuilder globalJmxStatistics() {
+      return jmx();
+   }
 
    /**
     * Global serialization (i.e. marshalling) configuration

@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "config.TransactionalCacheConfigTest")
+@Test (groups = "functional", testName = "configuration.TransactionalCacheConfigTest")
 public class TransactionalCacheConfigTest extends SingleCacheManagerTest {
 
    @Override

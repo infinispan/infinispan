@@ -51,7 +51,7 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
       // Override statistics if enabled via properties
       String globalStatsProperty = ConfigurationHelper.extractPropertyValue(INFINISPAN_GLOBAL_STATISTICS_PROP, properties);
       if (globalStatsProperty != null) {
-         holder.getGlobalConfigurationBuilder().globalJmxStatistics().enabled(Boolean.parseBoolean(globalStatsProperty));
+         holder.getGlobalConfigurationBuilder().jmx().enabled(Boolean.parseBoolean(globalStatsProperty));
       }
       holder.getGlobalConfigurationBuilder().serialization().marshaller(new JBossUserMarshaller());
       return holder;

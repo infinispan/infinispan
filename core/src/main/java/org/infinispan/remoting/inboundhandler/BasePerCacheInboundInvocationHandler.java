@@ -93,7 +93,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Start
    public void start() {
       this.stopped = false;
-      setStatisticsEnabled(configuration.jmxStatistics().enabled());
+      setStatisticsEnabled(configuration.statistics().enabled());
    }
 
    @Stop

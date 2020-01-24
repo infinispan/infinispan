@@ -1,6 +1,6 @@
 package org.infinispan.cli.interpreter;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -43,9 +43,9 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
-      c.jmxStatistics().enable();
+      c.statistics().enable();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      configureGlobalJmx(global, getClass().getSimpleName(), mBeanServerLookup);
+      configureJmx(global, getClass().getSimpleName(), mBeanServerLookup);
       cacheManager = TestCacheManagerFactory.createCacheManager(global, c);
       memcachedServer = MemcachedTestingUtil.startMemcachedTextServer(cacheManager);
       port = memcachedServer.getPort();

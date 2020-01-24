@@ -18,7 +18,7 @@ public class StatisticsConfiguration {
    public static final AttributeDefinition<String> JMX_DOMAIN = AttributeDefinition.builder("jmx_domain", "org.infinispan").immutable().build();
    public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mbeanserverlookup", (MBeanServerLookup) Util.getInstance(PlatformMBeanServerLookup.class)).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<String> JMX_NAME = AttributeDefinition.builder("jmx_name", "Default").immutable().build();
-   public static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StatisticsConfiguration.class, ENABLED, JMX_ENABLED, JMX_DOMAIN, MBEAN_SERVER_LOOKUP, JMX_NAME);
    }
 

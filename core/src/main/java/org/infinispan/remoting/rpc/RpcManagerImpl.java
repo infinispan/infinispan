@@ -102,7 +102,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Start(priority = 9)
    void start() {
-      statisticsEnabled = configuration.jmxStatistics().enabled();
+      statisticsEnabled = configuration.statistics().enabled();
 
       if (configuration.transaction().transactionProtocol().isTotalOrder())
          t.checkTotalOrderSupported();

@@ -51,7 +51,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
 
       assertEquals(globalConfigurationBefore.security().securityCacheTimeout(), globalConfigurationAfter.security().securityCacheTimeout());
       compareAttributeSets("Global", globalConfigurationBefore.globalState().attributes(), globalConfigurationAfter.globalState().attributes(), "localConfigurationStorage");
-      compareAttributeSets("Global", globalConfigurationBefore.globalJmxStatistics().attributes(), globalConfigurationAfter.globalJmxStatistics().attributes(), "mbeanServerLookup");
+      compareAttributeSets("Global", globalConfigurationBefore.jmx().attributes(), globalConfigurationAfter.jmx().attributes(), "mbeanServerLookup");
       compareAttributeSets("Global", globalConfigurationBefore.security().authorization().attributes(), globalConfigurationAfter.security().authorization().attributes());
       compareAttributeSets("Global", globalConfigurationBefore.serialization().attributes(), globalConfigurationAfter.serialization().attributes(), "marshaller", "classResolver", "advancedExternalizer", "contextInitializers");
       compareAttributeSets("Global", globalConfigurationBefore.transport().attributes(), globalConfigurationAfter.transport().attributes(), "transport", "properties");
@@ -71,7 +71,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
       compareAttributeSets(name, configurationBefore.indexing().attributes(), configurationAfter.indexing().attributes());
       compareAttributeSets(name, configurationBefore.locking().attributes(), configurationAfter.locking().attributes());
-      compareAttributeSets(name, configurationBefore.jmxStatistics().attributes(), configurationAfter.jmxStatistics().attributes());
+      compareAttributeSets(name, configurationBefore.statistics().attributes(), configurationAfter.statistics().attributes());
       compareAttributeSets(name, configurationBefore.sites().attributes(), configurationAfter.sites().attributes());
       compareAttributeSets(name, configurationBefore.invocationBatching().attributes(), configurationAfter.invocationBatching().attributes());
       compareAttributeSets(name, configurationBefore.customInterceptors().attributes(), configurationAfter.customInterceptors().attributes());

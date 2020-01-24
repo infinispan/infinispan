@@ -64,7 +64,7 @@ public class TestCacheManagerFactory {
          amendDefaultCache(gcb);
       }
       setNodeName(gcb);
-      TestApplicationMetricsRegistry.replace(gcb);
+      TestInfinispanMetricsRegistry.replace(gcb);
       GlobalConfiguration globalConfiguration = gcb.build();
       checkJmx(globalConfiguration);
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
@@ -76,7 +76,7 @@ public class TestCacheManagerFactory {
       GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
       amendDefaultCache(gcb);
       setNodeName(gcb);
-      TestApplicationMetricsRegistry.replace(gcb);
+      TestInfinispanMetricsRegistry.replace(gcb);
       checkJmx(gcb.build());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
@@ -283,7 +283,6 @@ public class TestCacheManagerFactory {
       return createServerModeCacheManager(globalBuilder, builder);
    }
 
-
    public static EmbeddedCacheManager createServerModeCacheManager(GlobalConfigurationBuilder gcb) {
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       return createCacheManager(gcb, new ConfigurationBuilder());
@@ -342,14 +341,12 @@ public class TestCacheManagerFactory {
       }
    }
 
-   public static void configureGlobalJmx(GlobalConfigurationBuilder builder, String jmxDomain,
-                                         MBeanServerLookup mBeanServerLookup) {
-      builder.cacheContainer().statistics(true);
-      builder.globalJmxStatistics()
-             .jmxDomain(jmxDomain)
-             .mBeanServerLookup(mBeanServerLookup);
-      // In case we change the default back
-      builder.globalJmxStatistics().allowDuplicateDomains(false);
+   public static void configureJmx(GlobalConfigurationBuilder builder, String jmxDomain,
+                                   MBeanServerLookup mBeanServerLookup) {
+      builder.jmx().enabled(true)
+             .domain(jmxDomain)
+             .mBeanServerLookup(mBeanServerLookup)
+             .allowDuplicateDomains(false);
    }
 
    public static ConfigurationBuilder getDefaultCacheConfiguration(boolean transactional) {
@@ -440,9 +437,7 @@ public class TestCacheManagerFactory {
    }
 
    private static void checkJmx(GlobalConfiguration gc) {
-      // Statistics are now disabled by default (since ISPN-10723)
-      // But in case they get enabled by default again, make sure they don't get enabled
-      // with the PlatformMBeanServerLookup
-      assert !(gc.globalJmxStatistics().mbeanServerLookup() instanceof PlatformMBeanServerLookup);
+      assert !(gc.jmx().enabled() && gc.jmx().mbeanServerLookup() instanceof PlatformMBeanServerLookup)
+            : "Tests must configure a MBeanServerLookup other than the default PlatformMBeanServerLookup or not enable JMX";
    }
 }

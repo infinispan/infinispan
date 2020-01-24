@@ -23,7 +23,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
-import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
@@ -42,6 +41,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
@@ -100,7 +100,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             && !configuration.transaction().transactionMode().isTransactional() && configuration.clustering().stateTransfer().awaitInitialTransfer()) {
          usedBuilder = (kc, kv) -> {
             AbstractGetAdvancedCache<K, V, ?> cache = new GetReplCache<>(actualBuilder.apply(kc, kv));
-            if (configuration.jmxStatistics().available()) {
+            if (configuration.statistics().available()) {
                cache = new StatsCache<>(cache);
             }
             if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
@@ -137,10 +137,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    private AdvancedCache<K, V> createSimpleCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                                  String cacheName) {
       AdvancedCache<K, V> cache;
-
-      JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
-      boolean statisticsAvailable = jmxStatistics != null && jmxStatistics.available();
-      if (statisticsAvailable) {
+      if (configuration.statistics().available()) {
          cache = buildEncodingCache((kc, vc) -> new StatsCollectingCache<>(cacheName, kc, vc), configuration);
       } else {
          cache = buildEncodingCache((kc, vc) -> new SimpleCacheImpl<>(cacheName, kc, vc), configuration);
@@ -154,11 +151,11 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       basicComponentRegistry.registerComponent(AdvancedCache.class, cache, false);
 
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
+      componentRegistry.registerComponent(new CacheMetricsRegistration(), CacheMetricsRegistration.class);
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class);
 
       return cache;
    }
-
 
    /**
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
@@ -182,6 +179,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       basicComponentRegistry.registerComponent(AdvancedCache.class.getName(), cache, false);
 
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
+      componentRegistry.registerComponent(new CacheMetricsRegistration(), CacheMetricsRegistration.class.getName(), true);
       if (configuration.transaction().recovery().enabled()) {
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
       }

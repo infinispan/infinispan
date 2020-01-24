@@ -65,7 +65,7 @@ public class StatsMinNodeTest extends MultipleCacheManagersTest {
 
    protected void configure(ConfigurationBuilder cfg) {
       cfg
-         .jmxStatistics()
+         .statistics()
             .enable()
          .clustering()
             .hash()

@@ -81,7 +81,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testDummyTMGetCache() throws Exception {
+   public void testDummyTMGetCache() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().use1PcForAutoCommitTransactions(true)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
@@ -114,7 +114,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testGetAndPut() throws Exception {
+   public void testGetAndPut() {
       withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {
@@ -129,7 +129,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = "ISPN(\\d)*: Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL")
-   public void testInvocationBatchingAndNonTransactional() throws Exception {
+   public void testInvocationBatchingAndNonTransactional() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction()
             .transactionMode(NON_TRANSACTIONAL)
@@ -258,13 +258,13 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testWrongCacheModeConfiguration() throws Exception {
+   public void testWrongCacheModeConfiguration() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.clustering().cacheMode(CacheMode.REPL_ASYNC);
       TestCacheManagerFactory.createCacheManager(config);
    }
 
-   public void testCacheModeConfiguration() throws Exception {
+   public void testCacheModeConfiguration() {
       withCacheManager(new CacheManagerCallable(createTestCacheManager()) {
          @Override
          public void call() {

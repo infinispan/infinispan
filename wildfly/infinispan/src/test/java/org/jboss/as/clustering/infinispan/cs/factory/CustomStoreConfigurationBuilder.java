@@ -14,12 +14,12 @@ import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InvocationBatchingConfigurationBuilder;
-import org.infinispan.configuration.cache.JMXStatisticsConfigurationBuilder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfigurationBuilder;
+import org.infinispan.configuration.cache.StatisticsConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfigurationBuilder;
 import org.infinispan.configuration.cache.UnsafeConfigurationBuilder;
@@ -137,7 +137,7 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
    }
 
    @Override
-   public JMXStatisticsConfigurationBuilder jmxStatistics() {
+   public StatisticsConfigurationBuilder statistics() {
       return null;
    }
 

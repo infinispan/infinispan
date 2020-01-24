@@ -1,6 +1,6 @@
 package org.infinispan.server.memcached;
 
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 
 import javax.management.JMException;
 import javax.management.ObjectName;
@@ -30,7 +30,7 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
    @Override
    public EmbeddedCacheManager createCacheManager(int index) {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureGlobalJmx(globalBuilder, JMX_DOMAIN + "-" + index, mBeanServerLookup);
+      configureJmx(globalBuilder, JMX_DOMAIN + "-" + index, mBeanServerLookup);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC);
       return TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder);

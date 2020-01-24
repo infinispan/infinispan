@@ -5,7 +5,7 @@ import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXEC
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getJGroupsChannelObjectName;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.configureGlobalJmx;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.assertEquals;
@@ -46,15 +46,15 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder globalConfig1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureGlobalJmx(globalConfig1, JMX_DOMAIN, mBeanServerLookup);
+      configureJmx(globalConfig1, JMX_DOMAIN, mBeanServerLookup);
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
-      config.jmxStatistics().enable();
+      config.statistics().enable();
 
       EmbeddedCacheManager cacheManager1 = createClusteredCacheManager(globalConfig1, config, new TransportFlags());
       cacheManager1.start();
 
       GlobalConfigurationBuilder globalConfig2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      configureGlobalJmx(globalConfig2, JMX_DOMAIN2, mBeanServerLookup);
+      configureJmx(globalConfig2, JMX_DOMAIN2, mBeanServerLookup);
       EmbeddedCacheManager cacheManager2 = createClusteredCacheManager(globalConfig2, config, new TransportFlags());
       cacheManager2.start();
 

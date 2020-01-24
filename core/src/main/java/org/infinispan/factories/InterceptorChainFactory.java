@@ -140,7 +140,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 
       // load the cache management interceptor next
-      if (configuration.jmxStatistics().available()) {
+      if (configuration.statistics().available()) {
          interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
       }
 

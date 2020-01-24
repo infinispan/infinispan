@@ -93,4 +93,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error executing MassIndexer", id = 12022)
    void errorExecutingMassIndexer(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to initialize base and vendor metrics from JMX MBeans", id = 12023)
+   void failedToInitBaseAndVendorMetrics(@Cause Exception e);
 }

@@ -6,5 +6,5 @@ Configuration config = new ConfigurationBuilder()
   .transaction()
     .transactionManagerLookup(new GenericTransactionManagerLookup())
     .recovery()
-  .jmxStatistics()
+  .statistics()
   .build();

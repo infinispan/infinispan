@@ -23,7 +23,7 @@ public class SimpleCacheNotifierTest extends CacheNotifierTest {
    protected Cache<Object, Object> getCache() {
       cm.defineConfiguration("simple", new ConfigurationBuilder().read(cm.getDefaultCacheConfiguration())
             .clustering().simpleCache(true)
-            .jmxStatistics().available(false)
+            .statistics().available(false)
             .build());
       Cache cache = cm.getCache("simple");
       // without any listeners the notifications are ignored

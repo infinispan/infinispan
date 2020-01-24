@@ -24,7 +24,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<CacheContainerConfiguration> {
 
    private final AttributeSet attributes;
-   private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
+   private final GlobalMetricsConfigurationBuilder metrics;
+   private final GlobalJmxConfigurationBuilder jmx;
    private final GlobalStateConfigurationBuilder globalState;
    private final TransportConfigurationBuilder transport;
    private final GlobalSecurityConfigurationBuilder security;
@@ -35,7 +36,8 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    CacheContainerConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
       this.attributes = CacheContainerConfiguration.attributeDefinitionSet();
-      this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(globalConfig);
+      this.metrics = new GlobalMetricsConfigurationBuilder(globalConfig);
+      this.jmx = new GlobalJmxConfigurationBuilder(globalConfig);
       this.globalState = new GlobalStateConfigurationBuilder(globalConfig);
       this.threads = new ThreadsConfigurationBuilder(globalConfig);
       this.transport = new TransportConfigurationBuilder(globalConfig, threads);
@@ -69,8 +71,13 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
-   public GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics() {
-      return globalJmxStatistics;
+   public GlobalMetricsConfigurationBuilder metrics() {
+      return metrics;
+   }
+
+   @Override
+   public GlobalJmxConfigurationBuilder jmx() {
+      return jmx;
    }
 
    @Override
@@ -155,7 +162,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return attributes.attribute(NAME).get();
    }
 
-   public CacheContainerConfigurationBuilder statistics(Boolean statistics) {
+   public CacheContainerConfigurationBuilder statistics(boolean statistics) {
       attributes.attribute(STATISTICS).set(statistics);
       return this;
    }
@@ -211,7 +218,8 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    public void validate() {
       List<RuntimeException> validationExceptions = new ArrayList<>();
       Arrays.asList(
-            globalJmxStatistics,
+            metrics,
+            jmx,
             globalState,
             transport,
             security,
@@ -239,7 +247,8 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return new CacheContainerConfiguration(
             attributes.protect(),
             threads.create(),
-            globalJmxStatistics.create(),
+            metrics.create(),
+            jmx.create(),
             transport.create(),
             security.create(),
             serialization.create(),
@@ -253,7 +262,8 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    public Builder<?> read(CacheContainerConfiguration template) {
       attributes.read(template.attributes());
       this.globalState.read(template.globalState());
-      this.globalJmxStatistics.read(template.globalJmxStatistics());
+      this.metrics.read(template.metrics());
+      this.jmx.read(template.jmx());
       this.transport.read(template.transport());
       this.security.read(template.security());
       this.serialization.read(template.serialization());
