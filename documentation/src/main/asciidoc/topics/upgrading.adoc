@@ -73,6 +73,11 @@ which means no security (authentication / encryption), no support for some new M
 with Infinispan features like single-port. If someone in the community wishes to implement the binary protocol, we
 would revert the decision.
 
+== Hot Rod client default mechanism changed to SCRAM-SHA-512
+
+The default Hot Rod client authentication mechanism has been changed from `DIGEST-MD5` to `SCRAM-SHA-512`.
+If you are using `property` user realms, you must make sure you are using `plain-text` storage.
+
 = Upgrading from 9.4 to 10.0
 
 == Marshalling
