@@ -270,8 +270,8 @@ public class Server implements ServerManagement, AutoCloseable {
       if (status == ComponentStatus.RUNNING) {
          return r;
       }
-      cacheManagers = new LinkedHashMap<>(1);
-      protocolServers = new LinkedHashMap<>(3);
+      cacheManagers = new LinkedHashMap<>(2);
+      protocolServers = new ConcurrentHashMap<>(4);
       try {
          // Load any server extensions
          extensions = new Extensions();
