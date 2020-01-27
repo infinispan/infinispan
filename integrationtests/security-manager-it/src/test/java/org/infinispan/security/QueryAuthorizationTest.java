@@ -8,14 +8,13 @@ import java.security.PrivilegedExceptionAction;
 
 import javax.security.auth.Subject;
 
-import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.TestEntity;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -92,10 +91,8 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
    private void queryTest() {
       cache.put("jekyll", new TestEntity("Henry", "Jekyll", 1, "dissociate identity disorder"));
       cache.put("hyde", new TestEntity("Edward", "Hyde", 2, "dissociate identity disorder"));
-      SearchManager sm = Search.getSearchManager(cache);
-      Query query = sm.buildQueryBuilderForClass(TestEntity.class)
-            .get().keyword().onField("name").matching("Henry").createQuery();
-      CacheQuery<TestEntity> q = sm.getQuery(query);
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      Query q = queryFactory.create(String.format("FROM %s where name = 'Henry'", TestEntity.class.getName()));
       assertEquals(1, q.getResultSize());
       assertEquals(TestEntity.class, q.list().get(0).getClass());
    }

@@ -53,9 +53,9 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    public CacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory, AdvancedCache<?, ?> cache,
                          KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory,
-                         Class<?>... classes) {
-      this(timeoutExceptionFactory == null ? searchFactory.createHSQuery(luceneQuery, classes) :
-                  searchFactory.createHSQuery(luceneQuery, classes).timeoutExceptionFactory(timeoutExceptionFactory),
+                         Class<?> entity) {
+      this(timeoutExceptionFactory == null ? searchFactory.createHSQuery(luceneQuery, entity) :
+                  searchFactory.createHSQuery(luceneQuery, entity).timeoutExceptionFactory(timeoutExceptionFactory),
             cache, keyTransformationHandler);
    }
 

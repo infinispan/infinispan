@@ -1,5 +1,6 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.infinispan.query.helper.StaticTestingErrorHandler.assertAllGood;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
@@ -10,7 +11,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -103,7 +103,7 @@ public class MergeTest extends MultipleCacheManagersTest {
       assertAllGood(cache1, cache2);
       System.out.println("Load took: " + (System.currentTimeMillis() - start) / 1000 + " s");
       SearchManager searchManager = Search.getSearchManager(cache1);
-      final CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      final CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
       final int total = NUMBER_OF_THREADS * OBJECT_COUNT;
       eventuallyEquals(total, () -> query.list().size());
       System.out.println("Indexing finished: " + query.list().size());

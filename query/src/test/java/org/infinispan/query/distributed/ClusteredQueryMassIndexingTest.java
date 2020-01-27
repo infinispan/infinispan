@@ -2,12 +2,11 @@ package org.infinispan.query.distributed;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
 /**
@@ -22,8 +21,9 @@ public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest 
    }
 
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
+      String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
       CacheQuery<?> cacheQuery = Search.getSearchManager(cache)
-            .getQuery(new TermQuery(new Term("make", carMake)), IndexedQueryMode.BROADCAST);
+            .getQuery(q, IndexedQueryMode.BROADCAST);
 
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }

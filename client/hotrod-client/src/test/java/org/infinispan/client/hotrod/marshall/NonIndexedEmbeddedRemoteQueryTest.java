@@ -26,13 +26,6 @@ public class NonIndexedEmbeddedRemoteQueryTest extends EmbeddedRemoteInteropQuer
       return builder;
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
-   @Override
-   public void testEmbeddedLuceneQuery() throws Exception {
-      // this would only make sense for Lucene based query
-      super.testEmbeddedLuceneQuery();
-   }
-
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type sample_bank_account.Transaction unless the property is indexed and analyzed.")
    @Override
    public void testRemoteFullTextQuery() {

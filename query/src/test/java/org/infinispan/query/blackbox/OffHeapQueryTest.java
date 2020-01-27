@@ -32,12 +32,12 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testQuery() throws Exception {
+   public void testQuery() {
       cache.put("1", new Person("Donald", "MAGA", 78));
 
       assertEquals(getIndexDocs(), 1);
 
-      CacheQuery<Object> queryFromLucene = createCacheQuery(cache, "name", "Donald");
+      CacheQuery<Object> queryFromLucene = createCacheQuery(Person.class, cache, "name", "Donald");
       assertEquals(1, queryFromLucene.list().size());
 
       Query queryFromIckle = Search.getQueryFactory(cache)

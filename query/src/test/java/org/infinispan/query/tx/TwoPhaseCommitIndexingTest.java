@@ -2,9 +2,6 @@ package org.infinispan.query.tx;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -16,6 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -54,13 +52,13 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
    public void testQueryAfterAddingNewNode() throws Exception {
       //We'll fail the first operation by having an exception thrown after prepare
       //but before the commit:
-      store("Astronaut", new Person("Astronaut","is asking his timezone", 32), true);
+      store("Astronaut", new Person("Astronaut", "is asking his timezone", 32), true);
       //Nothing should be applied to the indexes:
       assertFind("timezone", 0);
       assertFind("asking", 0);
       assertFind("cat", 0);
 
-      store("Astronaut", new Person("Astronaut","is asking his timezone", 32), false);
+      store("Astronaut", new Person("Astronaut", "is asking his timezone", 32), false);
       assertFind("timezone", 1);
       assertFind("asking", 1);
       assertFind("cat", 0);
@@ -72,8 +70,8 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
 
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
       SearchManager queryFactory = Search.getSearchManager(cache);
-      Query luceneQuery = new TermQuery(new Term("blurb", keyword));
-      CacheQuery<?> cacheQuery = queryFactory.getQuery(luceneQuery, Person.class);
+      String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
+      CacheQuery<?> cacheQuery = queryFactory.getQuery(q, IndexedQueryMode.FETCH);
       int resultSize = cacheQuery.getResultSize();
       Assert.assertEquals(resultSize, expectedCount);
    }
@@ -84,15 +82,12 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
          try {
             cache.put(key, value);
             Assert.fail("Should have failed the implicit transaction");
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             //Expected
-         }
-         finally {
+         } finally {
             injectFailures.set(false);
          }
-      }
-      else {
+      } else {
          cache.put(key, value);
       }
    }
@@ -109,8 +104,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          if (injectFailures.get()) {
             throw new SearchException("Test");
-         }
-         else {
+         } else {
             return super.visitPrepareCommand(ctx, command);
          }
       }

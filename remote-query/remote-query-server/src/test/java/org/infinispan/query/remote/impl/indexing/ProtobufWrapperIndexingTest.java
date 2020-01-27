@@ -59,23 +59,6 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       SearchIntegrator searchFactory = sm.unwrap(SearchIntegrator.class);
       assertNotNull(searchFactory.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName())));
 
-      Query luceneQuery = sm.buildQueryBuilderForClass(ProtobufValueWrapper.class)
-            .get()
-            .keyword()
-            .onField("name")
-            .ignoreFieldBridge()
-            .ignoreAnalyzer()
-            .matching("Adrian")
-            .createQuery();
-
-      List<byte[]> list = sm.<byte[]>getQuery(luceneQuery).list();
-      assertEquals(1, list.size());
-      byte[] pvw = list.get(0);
-      User unwrapped = ProtobufUtil.fromWrappedByteArray(serCtx, pvw);
-      assertEquals("Adrian", unwrapped.getName());
-
-      // an alternative approach ...
-
       Query luceneQuery2 = searchFactory.buildQueryBuilder().forEntity(ProtobufValueWrapper.class).get()
             .keyword()
             .onField("name")

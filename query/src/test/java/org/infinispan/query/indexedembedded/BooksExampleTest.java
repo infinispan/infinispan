@@ -1,8 +1,9 @@
 package org.infinispan.query.indexedembedded;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
+
 import java.util.List;
 
-import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
@@ -22,7 +23,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-         .transaction()
+            .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
             .enable()
@@ -36,27 +37,21 @@ public class BooksExampleTest extends SingleCacheManagerTest {
    public void searchOnEmptyIndex() {
       cache.put("1",
             new Book("Seam in Action",
-                     "Dan Allen",
-                     "Manning"));
+                  "Dan Allen",
+                  "Manning"));
       cache.put("2",
             new Book("Hibernate Search in Action",
-                     "Emmanuel Bernard and John Griffin",
-                     "Manning"));
+                  "Emmanuel Bernard and John Griffin",
+                  "Manning"));
       cache.put("3",
             new Book("Megaprogramming Ruby",
-                     "Paolo Perrotta",
-                     "The Pragmatic Programmers"));
+                  "Paolo Perrotta",
+                  "The Pragmatic Programmers"));
 
       SearchManager qf = Search.getSearchManager(cache);
 
-      Query luceneQuery = qf.buildQueryBuilderForClass(Book.class)
-         .get()
-            .phrase()
-               .onField("title")
-               .sentence("in action")
-            .createQuery();
-
-      List<?> list = qf.getQuery(luceneQuery).list();
+      String query = String.format("FROM %s WHERE title:'in action'", Book.class.getName());
+      List<?> list = qf.getQuery(query, FETCH).list();
       assert list.size() == 2;
    }
 

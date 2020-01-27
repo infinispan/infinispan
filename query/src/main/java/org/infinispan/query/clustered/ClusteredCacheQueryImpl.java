@@ -8,11 +8,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.search.Query;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.CustomTypeMetadata;
 import org.hibernate.search.spi.IndexedTypeMap;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -39,12 +37,6 @@ public final class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
    private int maxResults = 100;
 
    private int firstResult = 0;
-
-   public ClusteredCacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory,
-                                  ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
-      super(luceneQuery, searchFactory, cache, keyTransformationHandler, null, classes);
-      this.invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
-   }
 
    public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache,
                                   KeyTransformationHandler keyTransformationHandler, IndexedTypeMap<CustomTypeMetadata> metadata) {

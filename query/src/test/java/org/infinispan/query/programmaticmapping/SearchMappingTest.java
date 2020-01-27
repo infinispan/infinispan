@@ -5,17 +5,16 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import java.lang.annotation.ElementType;
 import java.util.Properties;
 
-import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,9 +40,9 @@ public class SearchMappingTest extends AbstractInfinispanTest {
    public void testSearchMapping() {
       SearchMapping mapping = new SearchMapping();
       mapping.entity(BondPVO.class).indexed()
-             .property("id", ElementType.METHOD).field()
-             .property("name", ElementType.METHOD).field()
-             .property("isin", ElementType.METHOD).field();
+            .property("id", ElementType.METHOD).field()
+            .property("name", ElementType.METHOD).field()
+            .property("isin", ElementType.METHOD).field();
 
       Properties properties = new Properties();
       properties.put("default.directory_provider", "local-heap");
@@ -65,10 +64,8 @@ public class SearchMappingTest extends AbstractInfinispanTest {
             BondPVO bond = new BondPVO(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
 
-            QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO.class).get();
-            Query q = qb.keyword().onField("name").matching("Test")
-                        .createQuery();
-            CacheQuery<?> cq = sm.getQuery(q, BondPVO.class);
+            String q = String.format("FROM %s WHERE name:'Test'", BondPVO.class.getName());
+            CacheQuery<?> cq = sm.getQuery(q, IndexedQueryMode.FETCH);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });
@@ -134,9 +131,8 @@ public class SearchMappingTest extends AbstractInfinispanTest {
 
             BondPVO2 bond = new BondPVO2(1, "Test", "DE000123");
             cache.put(bond.getId(), bond);
-            QueryBuilder qb = sm.buildQueryBuilderForClass(BondPVO2.class).get();
-            Query q = qb.keyword().onField("name").matching("Test").createQuery();
-            CacheQuery<?> cq = sm.getQuery(q, BondPVO2.class);
+            String q = String.format("FROM %s WHERE name:'Test'", BondPVO2.class.getName());
+            CacheQuery<?> cq = sm.getQuery(q, IndexedQueryMode.FETCH);
             Assert.assertEquals(cq.getResultSize(), 1);
          }
       });

@@ -1,18 +1,16 @@
 package org.infinispan.query.indexedembedded;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertSame;
 
 import java.util.List;
 
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -50,44 +48,45 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void searchOnEmptyIndex() throws Exception {
-      QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
-      Query query = queryParser.parse("Italy");
-      List<?> list = searchManager.getQuery(query, Country.class, City.class).list();
+   public void searchOnEmptyIndex() {
+      List<?> list = getCountryQuery().list();
       assertEquals(0, list.size());
    }
 
+   private CacheQuery<?> getCountryQuery() {
+      String q = String.format("FROM %s where countryName:'Italy'", Country.class.getName());
+      return searchManager.getQuery(q, FETCH);
+   }
+
+   private CacheQuery<?> getMatchAllQuery() {
+      String q = String.format("FROM %s", Country.class.getName());
+      return searchManager.getQuery(q, FETCH);
+   }
+
    @Test
-   public void searchOnAllTypes() throws Exception {
-      QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
-      Query query = queryParser.parse("Italy");
+   public void searchOnAllTypes() {
       Country italy = new Country();
       italy.countryName = "Italy";
       cache.put("IT", italy);
-      List<?> list = searchManager.getQuery(query, Country.class, City.class).list();
+      List<?> list = getCountryQuery().list();
       assertEquals(1, list.size());
-      list = searchManager.getQuery(query).list();
+      list = getCountryQuery().list();
       assertEquals(1, list.size());
-      list = searchManager.getQuery(new MatchAllDocsQuery()).list();
+      list = getMatchAllQuery().list();
       assertEquals(1, list.size());
    }
 
    @Test
    public void searchOnSimpleField() throws Exception {
-      QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
-      Query query = queryParser.parse("Italy");
       Country italy = new Country();
       italy.countryName = "Italy";
       cache.put("IT", italy);
-      List<?> list = searchManager.getQuery(query, Country.class, City.class).list();
+      List<?> list = getCountryQuery().list();
       assertEquals(1, list.size());
    }
 
    @Test
-   public void searchOnEmbeddedField() throws Exception {
-      QueryParser queryParser = TestQueryHelperFactory.createQueryParser("cities.name");
-      Query query = queryParser.parse("Newcastle");
-
+   public void searchOnEmbeddedField() {
       Country uk = new Country();
       City london = new City();
       london.name = "London";
@@ -101,7 +100,8 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       cache.put("UK", uk);
       cache.put("UK", uk);
       cache.put("UK", uk);
-      List<?> list = searchManager.getQuery(query, Country.class, City.class).list();
+      String q = String.format("FROM %s c where c.cities.name:'Newcastle'", Country.class.getName());
+      List<?> list = searchManager.getQuery(q, FETCH).list();
       assertEquals(1, list.size());
       assertSame(uk, list.get(0));
    }

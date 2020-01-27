@@ -14,11 +14,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 
-import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -34,6 +32,7 @@ import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -56,10 +55,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          // Query a cache where key "2" is not present in the index
          Cache queryCache = getNonOwner("2");
 
-         searchManager = Search.getSearchManager(queryCache);
-
-         Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
-         List list = searchManager.getQuery(query).list();
+         List list = createCacheQuery(queryCache, "2").list();
          assertEquals("Wrong list size.", 0, list.size());
          return null;
       });
@@ -70,10 +66,8 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
 
       withTx(tm(0), (Callable<Void>) () -> {
          cache1.remove("1");   // cache will now be out of sync with the index
-         searchManager = Search.getSearchManager(cache1);
 
-         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-         ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(EAGER));
+         ResultIterator<?> iterator = createCacheQuery(cache1, "1").iterator(new FetchOptions().fetchMode(EAGER));
          assertFalse("Iterator should not have elements.", iterator.hasNext());
          try {
             iterator.next();
@@ -92,10 +86,8 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), (Callable<Void>) () -> {
          Cache<String, Foo> cache = getKeyLocation("1");
          cache.remove("1");   // cache will now be out of sync with the index
-         searchManager = Search.getSearchManager(cache);
 
-         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-         ResultIterator<?> iterator = searchManager.getQuery(query).iterator();
+         ResultIterator<?> iterator = createCacheQuery(cache, "1").iterator();
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -114,10 +106,8 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), (Callable<Void>) () -> {
          Cache<String, Foo> cache = getKeyLocation("1");
          cache.remove("1");   // cache will now be out of sync with the index
-         searchManager = Search.getSearchManager(cache);
 
-         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-         CacheQuery<?> cacheQuery = searchManager.getQuery(query);
+         CacheQuery<?> cacheQuery = createCacheQuery(cache, "1");
          //pruivo: the result size includes the null elements...
          assertEquals("Wrong result size.", 1, cacheQuery.getResultSize());
 
@@ -138,8 +128,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
          searchManager = Search.getSearchManager(queryCache);
 
-         Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
-         ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
+         ResultIterator<?> iterator = createCacheQuery(queryCache, "2").iterator(new FetchOptions().fetchMode(LAZY));
          assertFalse(iterator.hasNext());
          try {
             iterator.next();
@@ -159,8 +148,8 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          cache.remove("1");   // cache will now be out of sync with the index
          searchManager = Search.getSearchManager(cache);
 
-         Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
-         ResultIterator<Object[]> iterator = searchManager.getQuery(query).projection(ProjectionConstants.VALUE, "bar")
+         CacheQuery<Foo> cacheQuery = createCacheQuery(cache, "1");
+         ResultIterator<Object[]> iterator = cacheQuery.projection(ProjectionConstants.VALUE, "bar")
                .iterator(new FetchOptions().fetchMode(LAZY));
          assertTrue("Expected an element in iterator.", iterator.hasNext());
          Object[] projection = iterator.next();
@@ -186,10 +175,6 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       cache2 = cache(1);
    }
 
-   private QueryBuilder createQueryBuilder() {
-      return searchManager.buildQueryBuilderForClass(Foo.class).get();
-   }
-
    private void prepareData() throws Exception {
       withTx(tm(0), (Callable<Void>) () -> {
          cache1.put("1", new Foo("1"));
@@ -200,6 +185,12 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          cache2.put("2", new Foo("2"));
          return null;
       });
+   }
+
+   private CacheQuery<Foo> createCacheQuery(Cache<?, ?> cache, String value) {
+      SearchManager searchManager = Search.getSearchManager(cache);
+      String q = String.format("FROM %s where bar:'%s'", Foo.class.getName(), value);
+      return searchManager.getQuery(q, IndexedQueryMode.FETCH);
    }
 
    private Cache<String, Foo> getKeyLocation(String key) {

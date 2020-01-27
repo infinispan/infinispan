@@ -6,12 +6,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.Author;
 import org.infinispan.query.test.Book;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -25,6 +24,11 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   private <T> CacheQuery<T> createCacheQuery(Class<T> clazz, String alias, String predicate) {
+      String queryStr = String.format("FROM %s %s WHERE %s", clazz.getName(), alias, predicate);
+      return Search.getSearchManager(cache).getQuery(queryStr, IndexedQueryMode.FETCH);
+   }
+
    public void testSimpleQuery() {
       assertEquals(0, cache.size());
       cache.put("author#1", new Author("author1", "surname1"));
@@ -32,13 +36,7 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       cache.put("author#3", new Author("author3", "surname3"));
       assertEquals(3, cache.size());
 
-      SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Author.class).get();
-      org.apache.lucene.search.Query luceneQuery = queryBuilder.phrase()
-            .onField("name")
-            .sentence("author1")
-            .createQuery();
-      CacheQuery<Author> query = searchManager.getQuery(luceneQuery, Author.class);
+      CacheQuery<Author> query = createCacheQuery(Author.class, "a", "a.name:'author1'");
       List<Author> result = query.list();
       assertEquals(1, result.size());
       assertEquals("surname1", result.get(0).getSurname());
@@ -66,21 +64,11 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       cache.put("book#3", book3);
       assertEquals(3, cache.size());
 
-      SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).get();
-      org.apache.lucene.search.Query luceneQuery = queryBuilder.phrase()
-            .onField("authors.name")
-            .sentence("author1")
-            .createQuery();
-      CacheQuery<Book> query = searchManager.getQuery(luceneQuery, Book.class);
+      CacheQuery<Book> query = createCacheQuery(Book.class, "b", "b.authors.name:'author1'");
       List<Book> result = query.list();
       assertEquals(2, result.size());
 
-      luceneQuery = queryBuilder.phrase()
-            .onField("description")
-            .sentence("interesting")
-            .createQuery();
-      query = searchManager.getQuery(luceneQuery, Book.class);
+      query = createCacheQuery(Book.class, "b", "b.description:'interesting'");
       result = query.list();
       assertEquals(2, result.size());
    }

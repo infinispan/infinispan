@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -51,8 +50,8 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
             builder, new TransportFlags().withMerge(true));
    }
 
-   protected void executeSimpleQuery(Cache<String, Person> cache) throws ParseException {
-      CacheQuery<?> cacheQuery = createCacheQuery(cache, "blurb", "playing");
+   protected void executeSimpleQuery(Cache<String, Person> cache) {
+      CacheQuery<?> cacheQuery = createCacheQuery(Person.class, cache, "blurb", "playing");
       List<?> found = cacheQuery.list();
       int elems = found.size();
       assertEquals(1, elems);

@@ -2,12 +2,12 @@ package org.infinispan.query.distributed;
 
 import static org.testng.Assert.assertEquals;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -67,11 +67,12 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
    protected void checkIndex(int expectedNumber, Class<?> entity) {
       for (Cache<?, ?> c : caches()) {
          SearchManager searchManager = Search.getSearchManager(c);
-         assertEquals(searchManager.getQuery(new MatchAllDocsQuery(), entity).getResultSize(), expectedNumber);
+         int size = TestQueryHelperFactory.queryAll(searchManager, entity).size();
+         assertEquals(size, expectedNumber);
       }
    }
 
-   protected void runMassIndexer() throws Exception {
+   protected void runMassIndexer() {
       SearchManager searchManager = Search.getSearchManager(cache(0));
       searchManager.getMassIndexer().start();
    }

@@ -1,10 +1,10 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.transaction.TransactionManager;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest")
 public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
-   protected final TestableCluster<String,Person> cluster = new TestableCluster<>(getConfigurationResourceName());
+   protected final TestableCluster<String, Person> cluster = new TestableCluster<>(getConfigurationResourceName());
 
    protected String getConfigurationResourceName() {
       return "dynamic-indexing-distribution.xml";
@@ -68,14 +68,13 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
          storeOn(cluster.getCache(2), "k6", new Person("K. Seix", "Fills the buffer", 1));
          storeOn(cluster.getCache(2), "k7", new Person("K. Vife", "Failover!", 1));
          assertIndexSize(7);
-      }
-      finally {
+      } finally {
          cluster.killAll();
       }
    }
 
    protected void killMasterNode() {
-      for (Cache<String,Person> cache : cluster.iterateAllCaches()) {
+      for (Cache<String, Person> cache : cluster.iterateAllCaches()) {
          if (isMasterNode(cache)) {
             cluster.killNode(cache);
             break;
@@ -83,7 +82,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       }
    }
 
-   private boolean isMasterNode(Cache<?,?> cache) {
+   private boolean isMasterNode(Cache<?, ?> cache) {
       //Implicitly verifies the components are setup as configured by casting:
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
@@ -95,7 +94,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       for (Cache cache : cluster.iterateAllCaches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+         CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
          assertEquals(expectedIndexSize, query.list().size());
       }
    }

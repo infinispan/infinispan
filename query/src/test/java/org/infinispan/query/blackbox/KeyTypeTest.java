@@ -4,12 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.TermQuery;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -37,7 +36,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-         .transaction()
+            .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
             .enable()
@@ -75,14 +74,17 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key9, person1);
 
       // Going to search the 'blurb' field for 'owns'
-      Term term = new Term("blurb", "owns");
-      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache).getQuery(getQuery(), IndexedQueryMode.FETCH);
       assertEquals(9, cacheQuery.getResultSize());
 
       List<Person> found = cacheQuery.list();
       for (int i = 0; i < 9; i++) {
          assertEquals(person1, found.get(i));
       }
+   }
+
+   private String getQuery() {
+      return String.format("FROM %s WHERE blurb:'owns'", Person.class.getName());
    }
 
    public void testCustomKeys() {
@@ -94,8 +96,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key2, person1);
       cache.put(key3, person1);
 
-      Term term = new Term("blurb", "owns");
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(getQuery(), IndexedQueryMode.FETCH);
       assertEquals(3, cacheQuery.getResultSize());
    }
 }

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,6 +16,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -171,7 +171,8 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    private <T> void assertIndexPopulated(Cache<Integer, T> cache, Class<T> clazz) {
-      CacheQuery<T> query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
+      String q = "FROM " + clazz.getName();
+      CacheQuery<T> query = Search.getSearchManager(cache).getQuery(q, IndexedQueryMode.FETCH);
       assertEquals(query.list().size(), CACHE_SIZE);
    }
 

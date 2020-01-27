@@ -6,13 +6,11 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
-import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 
 @Named
 @ApplicationScoped
@@ -35,19 +33,13 @@ public class GridService {
    }
 
    public List<Book> findFullText(String phrase) {
-      SearchManager sm = Search.getSearchManager(bookshelf);
-      QueryBuilder queryBuilder = sm.buildQueryBuilderForClass(Book.class).get();
-      Query query = queryBuilder
-               .phrase()
-               .onField("title")
-               .sentence(phrase)
-               .createQuery();
-      CacheQuery<Book> cacheQuery = sm.getQuery(query);
-      return cacheQuery.list();
+      QueryFactory queryFactory = Search.getQueryFactory(bookshelf);
+      Query query = queryFactory.create(String.format("FROM %s where title:'%s'", Book.class.getName(), phrase));
+      return query.list();
    }
 
    public List<Book> findByPublisher(String publisher) {
-      org.infinispan.query.dsl.Query query = Search.getQueryFactory(bookshelf)
+      Query query = Search.getQueryFactory(bookshelf)
             .from(Book.class)
             .having("publisher")
             .eq(publisher)

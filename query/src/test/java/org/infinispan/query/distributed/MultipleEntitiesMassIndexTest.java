@@ -1,15 +1,11 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -96,20 +92,20 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       checkIndex(4, Person.class);
    }
 
-   private void checkIndex(int expectedCount, String fieldName, String fieldValue, Class<?> entity) throws ParseException {
-      Query q = new QueryParser(fieldName, new StandardAnalyzer()).parse(fieldName + ":" + fieldValue);
+   private void checkIndex(int expectedCount, String fieldName, String fieldValue, Class<?> entity) {
+      String q = String.format("FROM %s where %s:'%s'", entity.getName(), fieldName, fieldValue);
       checkIndex(expectedCount, q, entity);
    }
 
    private void checkIndex(int expectedCount, Class<?> entity) {
-      checkIndex(expectedCount, new MatchAllDocsQuery(), entity);
+      checkIndex(expectedCount, "FROM " + entity.getName(), entity);
    }
 
-   private void checkIndex(int expectedCount, Query luceneQuery, Class<?> entity) {
-      for (Cache cache : caches) {
+   private void checkIndex(int expectedCount, String q, Class<?> entity) {
+      for (Cache<?, ?> cache : caches) {
          StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
-         CacheQuery<?> cacheQuery = searchManager.getQuery(luceneQuery, entity);
+         CacheQuery<?> cacheQuery = searchManager.getQuery(q, FETCH);
          assertEquals(expectedCount, cacheQuery.getResultSize());
       }
    }

@@ -1,11 +1,11 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Date;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.backend.IndexWorkVisitor;
@@ -60,13 +60,14 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
       cache.put(223456, new Bond(new Date(System.currentTimeMillis()), 550L));
       assertEfficientIndexingUsed(searchManager.unwrap(SearchIntegrator.class), Bond.class);
 
-      CacheQuery<?> query = searchManager.getQuery(new MatchAllDocsQuery(), Bond.class, Debenture.class);
-      assertEquals(query.list().size(), 3);
+      CacheQuery<?> query = searchManager.getQuery("FROM " + Bond.class.getName(), FETCH);
+      CacheQuery<?> query2 = searchManager.getQuery("FROM " + Debenture.class.getName(), FETCH);
+      assertEquals(query.list().size() + query2.list().size(), 3);
 
-      CacheQuery<?> queryBond = searchManager.getQuery(new MatchAllDocsQuery(), Bond.class);
+      CacheQuery<?> queryBond = searchManager.getQuery("FROM " + Bond.class.getName(), FETCH);
       assertEquals(queryBond.getResultSize(), 2);
 
-      CacheQuery<?> queryDeb = searchManager.getQuery(new MatchAllDocsQuery(), Debenture.class);
+      CacheQuery<?> queryDeb = searchManager.getQuery("FROM " + Debenture.class.getName(), FETCH);
       assertEquals(queryDeb.getResultSize(), 1);
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -84,7 +85,8 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    }
 
    public void testRemove() {
-      test(c -> c.remove(KEY), sm -> {});
+      test(c -> c.remove(KEY), sm -> {
+      });
    }
 
    public void testCompute() {
@@ -96,7 +98,8 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    // and therefore CommitManager does not know that it must not let the entry be state-transferred in.
    @Test(enabled = false, description = "ISPN-7590")
    public void testComputeRemove() {
-      test(c -> c.compute(KEY, (k, old) -> null), sm -> {});
+      test(c -> c.compute(KEY, (k, old) -> null), sm -> {
+      });
    }
 
    public void testMerge() {
@@ -106,7 +109,8 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    // Same as above, though this started failing only after functional commands were triangelized
    @Test(enabled = false, description = "ISPN-7590")
    public void testMergeRemove() {
-      test(c -> c.merge(KEY, FLUFFY, (o, n) -> null), sm -> {});
+      test(c -> c.merge(KEY, FLUFFY, (o, n) -> null), sm -> {
+      });
    }
 
    /**
@@ -193,10 +197,6 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    private List<Person> sortByAge(List<Person> people) {
       Collections.sort(people, Comparator.comparingInt(Person::getAge));
       return people;
-   }
-
-   private <T> List<T> queryAll(SearchManager sm, Class<T> entityType) {
-      return sm.<T>getQuery(sm.buildQueryBuilderForClass(entityType).get().all().createQuery(), entityType).list();
    }
 
    private void assertFluffyIndexed(SearchManager sm) {

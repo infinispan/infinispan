@@ -1,12 +1,12 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 
 import javax.transaction.TransactionManager;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,7 +41,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
 
-      if(transactionsEnabled()) {
+      if (transactionsEnabled()) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
       return TestCacheManagerFactory.createCacheManager(builder);
@@ -68,7 +68,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
 
    protected void assertIndexSize(int expectedIndexSize) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
       assertEquals(expectedIndexSize, query.list().size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }

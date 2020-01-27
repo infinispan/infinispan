@@ -36,8 +36,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AbstractSerializationContextInitializer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
@@ -288,12 +286,9 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       remoteCache.put(1, account);
 
       // get account back from local cache via query and check its attributes
-      SearchManager searchManager = org.infinispan.query.Search.getSearchManager(embeddedCache);
-      org.apache.lucene.search.Query query = searchManager
-            .buildQueryBuilderForClass(AccountHS.class).get()
-            .keyword().wildcard().onField("description").matching("*test*").createQuery();
-      CacheQuery<Account> cacheQuery = searchManager.getQuery(query);
-      List<Account> list = cacheQuery.list();
+      QueryFactory queryFactory = org.infinispan.query.Search.getQueryFactory(embeddedCache);
+      Query query = queryFactory.create(String.format("FROM %s WHERE description LIKE '%%test%%'", AccountHS.class.getName()));
+      List<Account> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());

@@ -1,11 +1,8 @@
 package org.infinispan.query.searchmanager;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.Cache;
@@ -42,13 +39,11 @@ public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "Clustered queries do not support timeouts yet.")
-   public void testClusteredQueryCacheTimeout() throws Exception {
+   public void testClusteredQueryCacheTimeout() {
       SearchManager searchManager = Search.getSearchManager(cache1);
 
-      QueryParser queryParser = createQueryParser("bar");
-
-      org.apache.lucene.search.Query luceneQuery = queryParser.parse("fakebar");
-      CacheQuery<?> query = searchManager.getQuery(luceneQuery, IndexedQueryMode.BROADCAST, Foo.class);
+      String q = String.format("FROM %s WHERE bar:'fakebar'", Foo.class.getName());
+      CacheQuery<?> query = searchManager.getQuery(q, IndexedQueryMode.BROADCAST);
       query.timeout(1, TimeUnit.NANOSECONDS);
    }
 

@@ -4,9 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,7 +14,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.test.QueryTestSCI;
@@ -38,7 +35,6 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    AdvancedLoadWriteStore store;
    CacheContainer cm;
    SearchManager search;
-   QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
 
    @BeforeClass
    public void setUp() {
@@ -50,7 +46,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cm);
    }
 
-   public void testPersistence() throws PersistenceException, ParseException {
+   public void testPersistence() throws PersistenceException {
       verifyFullTextHasMatches(0);
 
       Country italy = new Country();
@@ -106,13 +102,13 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
          ;
       cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();
-      store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
+      store = TestingUtil.getFirstLoader(cache);
       search = Search.getSearchManager(cache);
    }
 
-   private void verifyFullTextHasMatches(int i) throws ParseException {
-      Query query = queryParser.parse("Italy");
-      List<Object> list = search.getQuery(query, Country.class, City.class).list();
+   private void verifyFullTextHasMatches(int i) {
+      String query = String.format("FROM %s WHERE countryName:'Italy'", Country.class.getName());
+      List<Object> list = search.getQuery(query, IndexedQueryMode.FETCH).list();
       assertEquals(i, list.size());
    }
 

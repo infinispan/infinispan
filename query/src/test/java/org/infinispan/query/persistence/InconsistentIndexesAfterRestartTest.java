@@ -7,11 +7,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
@@ -26,6 +21,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
@@ -67,7 +63,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
        testPutOperation(batching, inTran);
     }
 
-    private void testPutOperation(boolean batching, final boolean inTran) throws Exception {
+    private void testPutOperation(boolean batching, final boolean inTran) {
        withCacheManager(new CacheManagerCallable(getCacheManager(batching)) {
           @Override
           public void call() throws Exception {
@@ -80,7 +76,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
        });
     }
 
-    private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) throws Exception {
+    private EmbeddedCacheManager getCacheManager(boolean batchingEnabled) {
        ConfigurationBuilder builder = new ConfigurationBuilder();
        builder
           .persistence()
@@ -109,7 +105,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     private List searchByName(String name, Cache c) {
         SearchManager sm = Search.getSearchManager(c);
-        CacheQuery<?> q = sm.getQuery(SEntity.searchByName(name), SEntity.class);
+        CacheQuery<?> q = sm.getQuery(SEntity.searchByName(name), IndexedQueryMode.FETCH);
         int resultSize = q.getResultSize();
         List<?> l = q.list();
         assert l.size() == resultSize;
@@ -162,10 +158,8 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
                     '}';
         }
 
-       public static Query searchByName(String name) {
-          return new BooleanQuery.Builder()
-                  .add(new TermQuery(
-                          new Term(SEntity.IDX_NAME, name.toLowerCase())), BooleanClause.Occur.MUST).build();
+       public static String searchByName(String name) {
+           return String.format("FROM %s WHERE %s:'%s'", SEntity.class.getName(), IDX_NAME, name.toLowerCase());
        }
     }
 

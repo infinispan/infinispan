@@ -9,8 +9,6 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.List;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -21,6 +19,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.indexedembedded.Book;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -101,9 +100,8 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
 
    private static void assertFindBook(Cache<?, ?> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).get();
-      Query luceneQuery = queryBuilder.keyword().onField("title").matching("infinispan").createQuery();
-      CacheQuery<Book> cacheQuery = searchManager.getQuery(luceneQuery);
+      String q = String.format("FROM %s WHERE title:'infinispan'", Book.class.getName());
+      CacheQuery<Book> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
       List<Book> list = cacheQuery.list();
       assertEquals(1, list.size());
    }

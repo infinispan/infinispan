@@ -13,6 +13,12 @@ Total Order transaction protocol was deprecated in 10.0 and now it is removed.
     ** `.indexing().index(Index.ALL)` => `index.enabled(true)`
     ** `.indexing().index(Index.NONE)` => `index.enabled(false)`
 
+* Many `SearchManager` changes:
+** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query string should be used instead.
+** `.buildQueryBuilderForClass()`, that allows to build Hibernate Search queries directly has been removed. Ickle queries should be used instead.
+** It is not possible anymore to specify multiple target entity(ies) class(es) when calling `.getQuery()`. The entity will come from the Ickle query string, so multi-entity queries are not supported anymore.
+
+
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
 == Maximum Idle Timeouts with Clustered Cache Modes

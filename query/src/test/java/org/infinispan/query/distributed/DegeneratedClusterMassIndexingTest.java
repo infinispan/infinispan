@@ -1,12 +1,13 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.queries.faceting.Car;
@@ -33,28 +34,24 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
       waitForClusterToForm();
    }
 
-   public void testReindexing() throws Exception {
+   public void testReindexing() {
       Cache cache = cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
 
       SearchManager searchManager = Search.getSearchManager(cache);
-      Query query = searchManager.buildQueryBuilderForClass(Car.class)
-            .get()
-            .keyword()
-            .onField("make")
-            .matching("ford")
-            .createQuery();
 
       cache.put("car1", new Car("ford", "white", 300));
       cache.put("car2", new Car("ford", "blue", 300));
       cache.put("car3", new Car("ford", "red", 300));
 
       // ensure these were not indexed
-      assertEquals(0, searchManager.getQuery(query, Car.class).getResultSize());
+      String q = String.format("FROM %s where make:'ford'", Car.class.getName());
+      CacheQuery<Object> query = searchManager.getQuery(q, FETCH);
+      assertEquals(0, query.getResultSize());
 
       //reindex
       searchManager.getMassIndexer().start();
 
       // check that the indexing is complete immediately
-      assertEquals(3, searchManager.getQuery(query, Car.class).getResultSize());
+      assertEquals(3, searchManager.getQuery(q, FETCH).getResultSize());
    }
 }

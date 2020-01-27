@@ -8,6 +8,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 
 /**
  * A cache-query is what will be returned when the getQuery() method is run on {@link org.infinispan.query.impl.SearchManagerImpl}. This object can
@@ -18,7 +19,7 @@ import org.hibernate.search.query.engine.spi.FacetManager;
  * @author Navin Surtani
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
- * @see org.infinispan.query.impl.SearchManagerImpl#getQuery(org.apache.lucene.search.Query, Class...)
+ * @see org.infinispan.query.impl.SearchManagerImpl#getQuery(String, IndexedQueryMode)
  */
 public interface CacheQuery<E> extends Iterable<E> {
 

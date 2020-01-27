@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
@@ -54,8 +53,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       final EmbeddedCacheManager cm;
       try {
          cm = TestCacheManagerFactory.fromStream(is);
-      }
-      finally {
+      } finally {
          is.close();
       }
       cache = cm.getCache();
@@ -63,13 +61,13 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void queryNotIndexedCache() throws ParseException {
+   public void queryNotIndexedCache() {
       cacheManager.defineConfiguration("notIndexedA", cacheManager.getDefaultCacheConfiguration());
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedA");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(Person.class, cache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Person> l =  cq.list();
+      List<Person> l = cq.list();
       assertEquals(1, l.size());
       Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());
@@ -86,16 +84,16 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void indexedCache() throws ParseException {
+   public void indexedCache() {
       Cache<Object, Object> indexedCache = cacheManager.getCache("indexingenabled");
       useQuery(indexedCache);
    }
 
-   private void useQuery(Cache<Object, Object> indexedCache) throws ParseException {
+   private void useQuery(Cache<Object, Object> indexedCache) {
       indexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(indexedCache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(Person.class, indexedCache, "name", "Name");
       assertEquals(1, cq.getResultSize());
-      List<Person> l =  cq.list();
+      List<Person> l = cq.list();
       assertEquals(1, l.size());
       Person p = l.get(0);
       assertEquals("A Person's Name", p.getName());
@@ -106,7 +104,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       SearchIntegrator searchImpl = queryFactory.unwrap(SearchIntegrator.class);
       Set<IndexManager> indexManagers = searchImpl.getIndexBindings().get(Person.class).getIndexManagerSelector().all();
       assert indexManagers != null && indexManagers.size() == 1;
-      DirectoryBasedIndexManager directory = (DirectoryBasedIndexManager)indexManagers.iterator().next();
+      DirectoryBasedIndexManager directory = (DirectoryBasedIndexManager) indexManagers.iterator().next();
       DirectoryProvider directoryProvider = directory.getDirectoryProvider();
       assert directoryProvider instanceof RAMDirectoryProvider : "configuration properties where ignored";
    }

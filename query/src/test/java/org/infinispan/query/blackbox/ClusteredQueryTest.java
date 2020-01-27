@@ -1,6 +1,5 @@
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashSet;
@@ -11,14 +10,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
-import org.apache.lucene.search.SortField.Type;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.Cache;
@@ -49,13 +40,13 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredQueryTest")
 public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
-   private final QueryParser queryParser = createQueryParser("blurb");
-
    static final int NUM_ENTRIES = 50;
 
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
    private CacheQuery<Person> cacheQuery;
    protected StorageType storageType;
+   protected String queryString = String.format("FROM %s where blurb:'blurb1?'", Person.class.getName());
+   private String allPersonsQuery = "FROM " + Person.class.getName();
 
    public Object[] factory() {
       return new Object[]{
@@ -119,10 +110,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testLazyOrdered() {
-      // applying sort
-      SortField sortField = new SortField("age", Type.INT);
-      Sort sort = new Sort(sortField);
-      cacheQuery.sort(sort);
+      CacheQuery<Person> cacheQuery = createSortedQuery("age");
 
       for (int i = 0; i < 2; i++) {
          try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
@@ -146,13 +134,13 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   public void testLocalQuery() throws ParseException {
+   public void testLocalQuery() {
       final SearchManager searchManager1 = Search.getSearchManager(cacheAMachine1);
-      final CacheQuery<Person> localQuery1 = searchManager1.getQuery(createLuceneQuery());
+      final CacheQuery<Person> localQuery1 = searchManager1.getQuery(queryString, IndexedQueryMode.FETCH);
       List<Person> results1 = localQuery1.list();
 
       final SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
-      final CacheQuery<Person> localQuery2 = searchManager2.getQuery(createLuceneQuery());
+      final CacheQuery<Person> localQuery2 = searchManager2.getQuery(queryString, IndexedQueryMode.FETCH);
       List<Person> results2 = localQuery2.list();
 
       assertEquals(10, results1.size());
@@ -162,10 +150,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testEagerOrdered() {
-      // applying sort
-      SortField sortField = new SortField("age", Type.INT);
-      Sort sort = new Sort(sortField);
-      cacheQuery.sort(sort);
+      CacheQuery<Person> cacheQuery = createSortedQuery("age");
 
       try (ResultIterator<Person> iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))) {
          assertEquals(10, cacheQuery.getResultSize());
@@ -204,10 +189,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testList() {
-      // applying sort
-      SortField sortField = new SortField("age", Type.INT);
-      Sort sort = new Sort(sortField);
-      cacheQuery.sort(sort);
+      CacheQuery<Person> cacheQuery = createSortedQuery("age");
 
       List<Person> results = cacheQuery.list();
       assertEquals(10, cacheQuery.getResultSize());
@@ -225,13 +207,9 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testPagination() {
+      CacheQuery<Person> cacheQuery = createSortedQuery("age");
       cacheQuery.firstResult(2);
       cacheQuery.maxResults(1);
-
-      // applying sort
-      SortField sortField = new SortField("age", Type.INT);
-      Sort sort = new Sort(sortField);
-      cacheQuery.sort(sort);
 
       List<Person> results = cacheQuery.list();
       assertEquals(1, results.size());
@@ -247,7 +225,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       for (int pageSize : pageSizes) {
          testPaginationWithoutSort(pageSize);
-         testPaginationWithSort(pageSize, "age", Type.INT);
+         testPaginationWithSort(pageSize, "age");
       }
    }
 
@@ -255,12 +233,12 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       testPaginationInternal(pageSize, null);
    }
 
-   private void testPaginationWithSort(int pageSize, String field, Type type) {
-      testPaginationInternal(pageSize, new Sort(new SortField(field, type)));
+   private void testPaginationWithSort(int pageSize, String sortField) {
+      testPaginationInternal(pageSize, sortField);
    }
 
-   private void testPaginationInternal(int pageSize, Sort sort) {
-      CacheQuery<Person> paginationQuery = buildPaginationQuery(0, pageSize, sort);
+   private void testPaginationInternal(int pageSize, String sortField) {
+      CacheQuery<Person> paginationQuery = buildPaginationQuery(0, pageSize, sortField);
 
       int idx = 0;
       Set<String> keys = new HashSet<>();
@@ -268,39 +246,37 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
          List<Person> results = paginationQuery.list();
          results.stream().map(Person::getName).forEach(keys::add);
          idx += pageSize;
-         paginationQuery = buildPaginationQuery(idx, pageSize, sort);
+         paginationQuery = buildPaginationQuery(idx, pageSize, sortField);
       }
 
       assertEquals(NUM_ENTRIES, keys.size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   private CacheQuery<Person> buildPaginationQuery(int offset, int pageSize, Sort sort) {
+   private CacheQuery<Person> buildPaginationQuery(int offset, int pageSize, String sortField) {
+      String sortedQuery = sortField != null ? allPersonsQuery + " ORDER BY " + sortField : allPersonsQuery;
       CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
-            .getQuery(new MatchAllDocsQuery(), IndexedQueryMode.BROADCAST);
+            .getQuery(sortedQuery, IndexedQueryMode.BROADCAST);
       clusteredQuery.firstResult(offset);
       clusteredQuery.maxResults(pageSize);
-      if (sort != null) {
-         clusteredQuery.sort(sort);
-      }
       return clusteredQuery;
    }
 
    public void testQueryAll() {
       CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
-            .getQuery(new MatchAllDocsQuery(), IndexedQueryMode.BROADCAST, Person.class);
+            .getQuery(allPersonsQuery, IndexedQueryMode.BROADCAST);
 
       assertEquals(NUM_ENTRIES, clusteredQuery.list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   public void testFuzzyQuery() throws ParseException {
+   public void testFuzzyQuery() {
       populateCache();
 
-      org.apache.lucene.search.Query query = queryParser.parse("name:name1~2");
+      String q = String.format("FROM %s WHERE name:'name1'~2", Person.class.getName());
 
       CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
-            .getQuery(query, IndexedQueryMode.BROADCAST, Person.class);
+            .getQuery(q, IndexedQueryMode.BROADCAST);
 
       assertEquals(NUM_ENTRIES, clusteredQuery.list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
@@ -308,7 +284,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    public void testBroadcastIckleMatchAllQuery() {
       CacheQuery<Person> everybody = Search.getSearchManager(cacheAMachine1)
-            .getQuery(String.format("FROM %s", Person.class.getName()), IndexedQueryMode.BROADCAST, Person.class);
+            .getQuery(String.format("FROM %s", Person.class.getName()), IndexedQueryMode.BROADCAST);
 
       assertEquals(NUM_ENTRIES, everybody.list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
@@ -318,7 +294,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       String targetName = "name2";
       CacheQuery<Person> singlePerson = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.name:'%s'", Person.class.getName(), targetName),
-                  IndexedQueryMode.BROADCAST, Person.class);
+                  IndexedQueryMode.BROADCAST);
 
       assertEquals(1, singlePerson.list().size());
       assertEquals(targetName, singlePerson.list().iterator().next().getName());
@@ -328,7 +304,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testBroadcastFuzzyIckle() {
       CacheQuery<Person> persons0to10 = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.name:'nome'~2", Person.class.getName()),
-                  IndexedQueryMode.BROADCAST, Person.class);
+                  IndexedQueryMode.BROADCAST);
 
       assertEquals(10, persons0to10.list().size());
 
@@ -338,7 +314,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testBroadcastNumericRangeQuery() {
       CacheQuery<Person> infants = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.age between 0 and 5", Person.class.getName()),
-                  IndexedQueryMode.BROADCAST, Person.class);
+                  IndexedQueryMode.BROADCAST);
 
       assertEquals(6, infants.list().size());
 
@@ -348,7 +324,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testBroadcastProjectionIckleQuery() {
       SearchManager sm = Search.getSearchManager(cacheAMachine2);
       CacheQuery<Object[]> onlyNames = sm.getQuery(
-            String.format("Select p.name FROM %s p", Person.class.getName()), IndexedQueryMode.BROADCAST, Person.class
+            String.format("Select p.name FROM %s p", Person.class.getName()), IndexedQueryMode.BROADCAST
       );
 
       List<Object[]> results = onlyNames.list();
@@ -365,8 +341,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testBroadcastSortedIckleQuery() {
       SearchManager sm = Search.getSearchManager(cacheAMachine2);
       CacheQuery<Person> theLastWillBeFirst = sm.getQuery(
-            String.format("FROM %s p order by p.age desc", Person.class.getName()), IndexedQueryMode.BROADCAST, Person.class
-      );
+            String.format("FROM %s p order by p.age desc", Person.class.getName()), IndexedQueryMode.BROADCAST);
 
       List<Person> results = theLastWillBeFirst.list();
       assertEquals(NUM_ENTRIES, results.size());
@@ -377,7 +352,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testPaginatedIckleQuery() {
       SearchManager sm = Search.getSearchManager(cacheAMachine1);
       CacheQuery<Person> q = sm.getQuery(String.format("FROM %s p order by p.age", Person.class.getName()),
-            IndexedQueryMode.BROADCAST, Person.class);
+            IndexedQueryMode.BROADCAST);
 
       q.firstResult(5);
       q.maxResults(10);
@@ -394,8 +369,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
       String query = String.format("FROM %s p", Person.class.getName());
 
-      CacheQuery<Person> machine1Results = searchManager1.getQuery(query, IndexedQueryMode.FETCH, Person.class);
-      CacheQuery<Person> machine2Results = searchManager2.getQuery(query, IndexedQueryMode.FETCH, Person.class);
+      CacheQuery<Person> machine1Results = searchManager1.getQuery(query, IndexedQueryMode.FETCH);
+      CacheQuery<Person> machine2Results = searchManager2.getQuery(query, IndexedQueryMode.FETCH);
 
       int numDocsMachine1 = countLocalIndex(cacheAMachine1);
       int numDocsMachine2 = countLocalIndex(cacheAMachine2);
@@ -418,7 +393,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testPreventHybridQuery() {
       CacheQuery<Person> hybridQuery = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.nonIndexedField = 'nothing'", Person.class.getName()),
-                  IndexedQueryMode.BROADCAST, Person.class);
+                  IndexedQueryMode.BROADCAST);
 
       hybridQuery.list();
    }
@@ -427,7 +402,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testPreventAggregationQueries() {
       CacheQuery<Person> aggregationQuery = Search.getSearchManager(cacheAMachine1)
             .getQuery(String.format("FROM %s p where p.name:'name3' group by p.name", Person.class.getName()),
-                  IndexedQueryMode.BROADCAST, Person.class);
+                  IndexedQueryMode.BROADCAST);
 
       aggregationQuery.list();
    }
@@ -491,16 +466,15 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assertEquals(NUM_ENTRIES, slowQuery.list().size());
    }
 
-   protected void populateCache() throws ParseException {
+   protected void populateCache() {
       prepareTestData();
 
-      cacheQuery = Search.getSearchManager(cacheAMachine1).getQuery(createLuceneQuery(), IndexedQueryMode.BROADCAST);
+      cacheQuery = Search.getSearchManager(cacheAMachine1).getQuery(queryString, IndexedQueryMode.BROADCAST);
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   protected BooleanQuery createLuceneQuery() throws ParseException {
-      return new BooleanQuery.Builder()
-            .add(queryParser.parse("blurb1?"), Occur.SHOULD)
-            .build();
+   protected CacheQuery<Person> createSortedQuery(String sortField) {
+      String q = String.format("FROM %s p where p.blurb:'blurb1?' order by p.%s'", Person.class.getName(), sortField);
+      return Search.getSearchManager(cacheAMachine1).getQuery(q, IndexedQueryMode.BROADCAST);
    }
 }

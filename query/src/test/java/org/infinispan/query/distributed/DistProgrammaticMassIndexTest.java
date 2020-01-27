@@ -1,10 +1,8 @@
 package org.infinispan.query.distributed;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -51,11 +49,9 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       caches.addAll(caches());
    }
 
-   protected void verifyFindsCar(Cache cache, int count, String carMake) throws Exception {
-      QueryParser queryParser = createQueryParser("make");
-
-      Query luceneQuery = queryParser.parse(carMake);
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
+   protected void verifyFindsCar(Cache cache, int count, String carMake) {
+      String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
+      CacheQuery<?> cacheQuery = Search.getSearchManager(cache).getQuery(q, FETCH);
 
       assertEquals(count, cacheQuery.getResultSize());
 

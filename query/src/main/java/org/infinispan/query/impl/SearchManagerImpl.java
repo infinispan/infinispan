@@ -5,8 +5,6 @@ import java.util.concurrent.ExecutorService;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.exception.SearchException;
-import org.hibernate.search.query.dsl.EntityContext;
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.CustomTypeMetadata;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
@@ -20,7 +18,6 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.spi.SearchManagerImplementor;
@@ -57,16 +54,15 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    }
 
    @Override
-   public <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
-      ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-      return queryEngine.buildCacheQuery(luceneQuery, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
+   public <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?> entity) {
+      return queryEngine.buildCacheQuery(luceneQuery, keyTransformationHandler, timeoutExceptionFactory, entity);
    }
 
    @Override
-   public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode, Class<?>... classes) {
+   public <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
       try {
-         return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, classes);
+         return queryEngine.buildCacheQuery(queryString, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor);
       } catch (SearchException se) {
          throw new SearchException("'" + queryString + "' cannot be converted to an indexed query", se);
       }
@@ -75,30 +71,7 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    @Override
    public <E> CacheQuery<E> getQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
       ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-      return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, timeoutExceptionFactory, asyncExecutor, indexedTypeMap);
-   }
-
-   @Override
-   public <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes) {
-      return getQuery(luceneQuery, IndexedQueryMode.FETCH, classes);
-   }
-
-   /**
-    * Internal and experimental! Creates a {@link CacheQuery}, filtered according to the given {@link HSQuery}.
-    *
-    * @param hSearchQuery {@link HSQuery}
-    * @return the CacheQuery object which can be used to iterate through results
-    */
-   public <E> CacheQuery<E> getQuery(HSQuery hSearchQuery, IndexedQueryMode queryMode) {
-      if (timeoutExceptionFactory != null) {
-         hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
-      }
-      if (queryMode == IndexedQueryMode.BROADCAST) {
-         ExecutorService asyncExecutor = queryInterceptor.getAsyncExecutor();
-         return new ClusteredCacheQueryImpl<>(new QueryDefinition(hSearchQuery), asyncExecutor, cache, keyTransformationHandler, null);
-      } else {
-         return new CacheQueryImpl<>(hSearchQuery, cache, keyTransformationHandler);
-      }
+      return queryEngine.buildCacheQuery(queryDefinition, indexedQueryMode, keyTransformationHandler, asyncExecutor, indexedTypeMap);
    }
 
    @Override
@@ -109,11 +82,6 @@ public final class SearchManagerImpl implements SearchManagerImplementor {
    @Override
    public void setTimeoutExceptionFactory(TimeoutExceptionFactory timeoutExceptionFactory) {
       this.timeoutExceptionFactory = timeoutExceptionFactory;
-   }
-
-   @Override
-   public EntityContext buildQueryBuilderForClass(Class<?> entityType) {
-      return searchFactory.buildQueryBuilder().forEntity(entityType);
    }
 
    @Override

@@ -1,11 +1,11 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.List;
 
-import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
@@ -72,18 +72,15 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       }
 
       SearchManager sm2 = Search.getSearchManager(cache2);
-      Query q = sm2.buildQueryBuilderForClass(ClassWithLongIndexName.class).get()
-            .keyword().wildcard().onField("name").matching("value*").createQuery();
-      CacheQuery<?> cq = sm2.getQuery(q, ClassWithLongIndexName.class);
+      String q = String.format("FROM %s WHERE name:'value*'",ClassWithLongIndexName.class.getName());
+      CacheQuery<?> cq = sm2.getQuery(q, FETCH);
       assertEquals(100, cq.getResultSize());
 
       addClusterEnabledCacheManager(SCI.INSTANCE, getDefaultConfiguration());
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
       SearchManager sm3 = Search.getSearchManager(cache(3));
-      q = sm3.buildQueryBuilderForClass(ClassWithLongIndexName.class).get()
-            .keyword().wildcard().onField("name").matching("value*").createQuery();
-      cq = sm3.getQuery(q, ClassWithLongIndexName.class);
+      cq = sm3.getQuery(q, FETCH);
       assertEquals(100, cq.getResultSize());
    }
 

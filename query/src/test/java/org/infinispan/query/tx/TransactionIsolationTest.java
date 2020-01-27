@@ -12,8 +12,6 @@ import java.util.stream.IntStream;
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.CacheException;
@@ -24,6 +22,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -41,7 +40,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
+      return new Object[]{
             new TransactionIsolationTest().lockingMode(LockingMode.PESSIMISTIC),
             new TransactionIsolationTest().lockingMode(LockingMode.OPTIMISTIC),
       };
@@ -134,9 +133,8 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
    }
 
    private List<Object> getYoungerThan(SearchManager sm, int age) {
-      QueryBuilder queryBuilder = sm.buildQueryBuilderForClass(Person.class).get();
-      Query query = queryBuilder.range().onField("age").below(age).createQuery();
-      return sm.getQuery(query, Person.class).list();
+      String q = String.format("FROM %s where age:[* to %s]", Person.class.getName(), age);
+      return sm.getQuery(q, IndexedQueryMode.FETCH).list();
    }
 
    private String getStringKeyForCache(Cache cache) {

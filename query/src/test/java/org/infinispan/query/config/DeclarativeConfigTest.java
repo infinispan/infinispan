@@ -49,9 +49,9 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   public void simpleIndexTest() throws Exception {
+   public void simpleIndexTest() {
       cache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
-      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(cache, "name", "Name");
+      CacheQuery<Person> cq = TestQueryHelperFactory.createCacheQuery(Person.class, cache, "name", "Name");
       assertEquals(1, cq.getResultSize());
       List<Person> l = cq.list();
       assertEquals(1, l.size());

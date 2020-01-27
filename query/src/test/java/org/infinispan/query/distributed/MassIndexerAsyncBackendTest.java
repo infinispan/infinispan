@@ -1,6 +1,7 @@
 package org.infinispan.query.distributed;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.context.Flag;
@@ -49,9 +50,9 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
 
    @Test
    @BMRule(name = "Delay the purge of the index",
-           targetClass = "org.hibernate.search.backend.impl.lucene.works.PurgeAllWorkExecutor",
-           targetMethod = "performWork",
-           action = "delay(500)"
+         targetClass = "org.hibernate.search.backend.impl.lucene.works.PurgeAllWorkExecutor",
+         targetMethod = "performWork",
+         action = "delay(500)"
    )
    public void testMassIndexOnAsync() throws Exception {
       final Cache<Object, Object> cache = caches().get(0);
@@ -69,7 +70,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
 
    private void assertAllIndexed(final Cache cache) {
       eventually(() -> {
-         int size = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Transaction.class).list().size();
+         int size = Search.getSearchManager(cache).getQuery("FROM " + Transaction.class.getName(), FETCH).list().size();
          return size == NUM_ENTRIES;
       });
    }

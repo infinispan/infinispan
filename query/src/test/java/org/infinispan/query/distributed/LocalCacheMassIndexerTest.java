@@ -1,10 +1,8 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -42,7 +40,8 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
 
    private int indexSize(Cache<?, ?> cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.getQuery(new MatchAllDocsQuery(), Person.class).getResultSize();
+      CacheQuery<Person> query = searchManager.getQuery("FROM " + Person.class.getName(), FETCH);
+      return query.getResultSize();
    }
 
    @Test
@@ -72,11 +71,10 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       verifyFindsPerson(0, "name" + 0);
    }
 
-   protected void verifyFindsPerson(int expectedCount, String name) throws Exception {
+   protected void verifyFindsPerson(int expectedCount, String name) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Person.class).get();
-      Query fullTextQuery = carQueryBuilder.keyword().onField("name").matching(name).createQuery();
-      CacheQuery<Car> cacheQuery = searchManager.getQuery(fullTextQuery, Person.class);
+      String q = String.format("FROM %s where name:'%s'", Person.class.getName(), name);
+      CacheQuery<Car> cacheQuery = searchManager.getQuery(q, FETCH);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

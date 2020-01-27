@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.queryAll;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -135,10 +136,6 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    private List<Person> sortByAge(List<Person> people) {
       Collections.sort(people, Comparator.comparingInt(Person::getAge));
       return people;
-   }
-
-   private <T> List<T> queryAll(SearchManager sm, Class<T> entityType) {
-      return sm.<T>getQuery(sm.buildQueryBuilderForClass(entityType).get().all().createQuery(), entityType).list();
    }
 
    private void assertFluffyIndexed(SearchManager sm) {

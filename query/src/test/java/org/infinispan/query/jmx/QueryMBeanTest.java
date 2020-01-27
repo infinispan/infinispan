@@ -1,6 +1,5 @@
 package org.infinispan.query.jmx;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -14,8 +13,6 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
@@ -26,6 +23,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -110,9 +108,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
          assertEquals(0L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
 
-         QueryParser queryParser = createQueryParser("blurb");
-         Query luceneQuery = queryParser.parse("value");
-         CacheQuery<?> cacheQuery = searchManager.getQuery(luceneQuery);
+         String q = String.format("FROM %s WHERE blurb:'value'", Person.class.getName());
+         CacheQuery<?> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
          List<?> found = cacheQuery.list(); //Executing first query
 
          assertEquals(1L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
@@ -128,7 +125,6 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
          cache.put("key101", anotherGrassEater);
 
-         cacheQuery = searchManager.getQuery(luceneQuery);
          found = cacheQuery.list(); //Executing second query
          assertEquals(numberOfEntries, found.size());
 

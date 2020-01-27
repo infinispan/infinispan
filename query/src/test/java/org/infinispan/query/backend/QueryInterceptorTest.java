@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.SegmentInfos;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
@@ -28,6 +27,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -241,7 +241,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
    }
 
    private int countIndex(Class<?> entityType, Cache<?, ?> cache) {
-      return Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), entityType).getResultSize();
+      return Search.getSearchManager(cache).getQuery("FROM " + entityType.getName(), IndexedQueryMode.FETCH).getResultSize();
    }
 
    private static final class LuceneIndexTracker {

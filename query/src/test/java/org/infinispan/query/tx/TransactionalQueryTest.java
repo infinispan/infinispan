@@ -37,38 +37,29 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
    @BeforeMethod
    public void initialize() throws Exception {
       // Initialize the cache
-      withTx(tm(), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            for (int i = 0; i < 100; i++) {
-               cache.put(String.valueOf(i), new Session(String.valueOf(i)));
-            }
-            return null;
+      withTx(tm(), (Callable<Void>) () -> {
+         for (int i = 0; i < 100; i++) {
+            cache.put(String.valueOf(i), new Session(String.valueOf(i)));
          }
+         return null;
       });
    }
 
    public void run() throws Exception {
       // Verify querying works
-      createCacheQuery(cache, "", "Id:2?");
+      createCacheQuery(Session.class, cache, "Id", "2");
 
       // Remove something that exists
-      withTx(tm(), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache.remove("50");
-            return null;
-         }
+      withTx(tm(), (Callable<Void>) () -> {
+         cache.remove("50");
+         return null;
       });
 
       // Remove something that doesn't exist with a transaction
       // This also fails without using a transaction
-      withTx(tm(), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache.remove("200");
-            return null;
-         }
+      withTx(tm(), (Callable<Void>) () -> {
+         cache.remove("200");
+         return null;
       });
    }
 

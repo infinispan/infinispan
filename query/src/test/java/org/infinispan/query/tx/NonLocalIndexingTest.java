@@ -4,15 +4,13 @@ import static org.infinispan.test.TestingUtil.withTx;
 
 import java.util.concurrent.Callable;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -61,7 +59,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
       store("Astronaut", new AnotherGrassEater("Astronaut", "is having a hard time to find grass"), cache(1));
       //replacing same key with a new type:
       assertFind("cat", 0);
-      assertFind("grass", 1);
+      assertFind("grass", 0);
    }
 
    private void assertFind(String keyword, int expectedCount) {
@@ -71,8 +69,8 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
 
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
       SearchManager queryFactory = Search.getSearchManager(cache);
-      Query luceneQuery = new TermQuery(new Term("blurb", keyword));
-      CacheQuery<?> cacheQuery = queryFactory.getQuery(luceneQuery);
+      String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
+      CacheQuery<Object> cacheQuery = queryFactory.getQuery(q, IndexedQueryMode.FETCH);
       int resultSize = cacheQuery.getResultSize();
       Assert.assertEquals(resultSize, expectedCount);
    }

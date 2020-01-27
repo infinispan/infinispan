@@ -4,7 +4,6 @@ import static org.testng.Assert.fail;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
@@ -12,6 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -39,17 +39,15 @@ public class TimeoutTest extends SingleCacheManagerTest {
    public void timeoutExceptionIsThrownAndIsProducedByMyFactory() {
       SearchManagerImplementor searchManager = Search.getSearchManager(cache).unwrap(SearchManagerImplementor.class);
       searchManager.setTimeoutExceptionFactory(new MyTimeoutExceptionFactory());
-      Query query = searchManager.buildQueryBuilderForClass(Foo.class).get()
-            .keyword().onField("bar").matching("1")
-            .createQuery();
 
-      CacheQuery<?> cacheQuery = searchManager.getQuery(query);
+      String q = String.format("FROM %s WHERE bar:'1'", Foo.class.getName());
+      CacheQuery<?> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
       cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
 
       try {
          cacheQuery.list();
          fail("Expected MyTimeoutException");
-      } catch (MyTimeoutException e) {
+      } catch (MyTimeoutException ignored) {
       }
    }
 
@@ -64,7 +62,7 @@ public class TimeoutTest extends SingleCacheManagerTest {
    }
 
    @Indexed(index = "FooIndex")
-   public class Foo {
+   public static class Foo {
       private String bar;
 
       public Foo(String bar) {

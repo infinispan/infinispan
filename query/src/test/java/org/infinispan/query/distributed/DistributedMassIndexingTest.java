@@ -1,12 +1,11 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -90,11 +89,10 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) throws Exception {
+   protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Car.class).get();
-      Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
-      CacheQuery<Car> cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
+      String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
+      CacheQuery<Car> cacheQuery = searchManager.getQuery(q, FETCH);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 

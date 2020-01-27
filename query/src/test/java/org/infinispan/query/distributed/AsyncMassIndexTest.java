@@ -1,11 +1,11 @@
 package org.infinispan.query.distributed;
 
+import static org.infinispan.query.dsl.IndexedQueryMode.FETCH;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -71,13 +71,13 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
       });
       endLatch.await();
 
-      checkIndex(elements, Transaction.class);
+      checkIndex(elements);
    }
 
-   protected void checkIndex(int expectedNumber, Class<?> entity) {
+   protected void checkIndex(int expectedNumber) {
       Cache<Integer, Transaction> c = cache(0);
       SearchManager searchManager = Search.getSearchManager(c);
-      CacheQuery<?> q = searchManager.getQuery(new MatchAllDocsQuery(), entity);
+      CacheQuery<?> q = searchManager.getQuery("FROM " + Transaction.class.getName(), FETCH);
       int resultSize = q.getResultSize();
       assertEquals(expectedNumber, resultSize);
    }

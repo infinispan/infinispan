@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -37,7 +36,6 @@ public final class QueryDefinition {
    private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final String queryString;
    private HSQuery hsQuery;
-   private Query luceneQuery;
    private int maxResults = 100;
    private int firstResult;
    private Set<String> sortableFields;
@@ -55,17 +53,6 @@ public final class QueryDefinition {
       }
       this.queryString = queryString;
       this.queryEngineProvider = queryEngineProvider;
-      this.luceneQuery = null;
-   }
-
-   private QueryDefinition(Query query, Sort sort) {
-      if (query == null) {
-         throw new IllegalArgumentException("query cannot be null");
-      }
-      this.luceneQuery = query;
-      this.sort = sort;
-      this.queryString = null;
-      this.queryEngineProvider = null;
    }
 
    public QueryDefinition(HSQuery hsQuery) {
@@ -98,23 +85,17 @@ public final class QueryDefinition {
 
    public void initialize(AdvancedCache<?, ?> cache) {
       if (hsQuery == null) {
-         if (luceneQuery != null) {
-            hsQuery = ComponentRegistryUtils.getSearchIntegrator(cache).createHSQuery(luceneQuery);
-            if (sort != null)
-               hsQuery.sort(sort);
+         QueryEngine<?> queryEngine = getQueryEngine(cache);
+         HsQueryRequest hsQueryRequest;
+         if (indexedType != null && sortableFields != null) {
+            IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
+            hsQueryRequest = queryEngine.createHsQuery(queryString, metadata, namedParameters);
          } else {
-            QueryEngine queryEngine = getQueryEngine(cache);
-            HsQueryRequest hsQueryRequest;
-            if (indexedType != null && sortableFields != null) {
-               IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
-               hsQueryRequest = queryEngine.createHsQuery(queryString, metadata, namedParameters);
-            } else {
-               hsQueryRequest = queryEngine.createHsQuery(queryString, null, namedParameters);
-            }
-            hsQuery = hsQueryRequest.getHsQuery();
-            sort = hsQueryRequest.getSort();
-            hsQuery.projection(hsQueryRequest.getProjections());
+            hsQueryRequest = queryEngine.createHsQuery(queryString, null, namedParameters);
          }
+         hsQuery = hsQueryRequest.getHsQuery();
+         sort = hsQueryRequest.getSort();
+         hsQuery.projection(hsQueryRequest.getProjections());
          hsQuery.firstResult(firstResult);
          hsQuery.maxResults(maxResults);
       }
@@ -218,15 +199,8 @@ public final class QueryDefinition {
 
       @Override
       public void writeObject(ObjectOutput output, QueryDefinition queryDefinition) throws IOException {
-         if (queryDefinition.queryString != null) {
-            output.writeBoolean(true);
-            output.writeUTF(queryDefinition.queryString);
-            output.writeObject(queryDefinition.queryEngineProvider);
-         } else {
-            output.writeBoolean(false);
-            output.writeObject(queryDefinition.hsQuery.getLuceneQuery());
-            output.writeObject(queryDefinition.sort);
-         }
+         output.writeUTF(queryDefinition.queryString);
+         output.writeObject(queryDefinition.queryEngineProvider);
          output.writeInt(queryDefinition.firstResult);
          output.writeInt(queryDefinition.maxResults);
          output.writeObject(queryDefinition.sortableFields);
@@ -245,15 +219,9 @@ public final class QueryDefinition {
       @Override
       public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          QueryDefinition queryDefinition;
-         if (input.readBoolean()) {
-            String queryString = input.readUTF();
-            SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
-            queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
-         } else {
-            Query query = (Query) input.readObject();
-            Sort sort = (Sort) input.readObject();
-            queryDefinition = new QueryDefinition(query, sort);
-         }
+         String queryString = input.readUTF();
+         SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
+         queryDefinition = new QueryDefinition(queryString, queryEngineProvider);
          queryDefinition.setFirstResult(input.readInt());
          queryDefinition.setMaxResults(input.readInt());
          Set<String> sortableField = (Set<String>) input.readObject();

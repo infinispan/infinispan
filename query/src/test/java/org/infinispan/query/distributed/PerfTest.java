@@ -4,8 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.search.Query;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
@@ -14,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -44,7 +43,7 @@ public class PerfTest extends MultipleCacheManagersTest {
          EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("indexing-perf.xml");
          registerCacheManager(cacheManager);
       }
-      waitForClusterToForm(new String[] {
+      waitForClusterToForm(new String[]{
             getDefaultCacheName(),
             "LuceneIndexesMetadata",
             "LuceneIndexesData",
@@ -58,7 +57,7 @@ public class PerfTest extends MultipleCacheManagersTest {
       final long start = System.nanoTime();
       for (int outherLoop = 0; outherLoop < NUMBER_OF_ITERATIONS; outherLoop++) {
          final Cache<String, Car> cache = getWriteOnlyCache(cacheId++ % NUM_NODES);
-         System.out.print("Using " + cacheId + ": " + cache +"\t");
+         System.out.print("Using " + cacheId + ": " + cache + "\t");
          final long blockStart = System.nanoTime();
          cache.startBatch();
          for (int innerLoop = 0; innerLoop < LOG_ON_EACH; innerLoop++) {
@@ -77,7 +76,7 @@ public class PerfTest extends MultipleCacheManagersTest {
 
    private Cache<String, Car> getWriteOnlyCache(int cacheId) {
       Cache<String, Car> cache = cache(cacheId);
-      AdvancedCache<String,Car> advancedCache = cache.getAdvancedCache();
+      AdvancedCache<String, Car> advancedCache = cache.getAdvancedCache();
       AdvancedCache<String, Car> withFlags = advancedCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEX_CLEANUP);
       return withFlags;
    }
@@ -90,9 +89,8 @@ public class PerfTest extends MultipleCacheManagersTest {
 
    private void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Car.class).get();
-      Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
-      CacheQuery<?> cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
+      String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
+      CacheQuery<?> cacheQuery = searchManager.getQuery(q, IndexedQueryMode.FETCH);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 
@@ -108,8 +106,7 @@ public class PerfTest extends MultipleCacheManagersTest {
       test.createBeforeClass();
       try {
          test.testIndexing();
-      }
-      finally {
+      } finally {
          test.destroy();
       }
    }
