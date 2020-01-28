@@ -28,14 +28,12 @@ import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.core.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
@@ -79,8 +77,6 @@ class ProtocolServerService implements Service<ProtocolServer>, EncryptableServi
    // The server which handles the protocol
    private ProtocolServer protocolServer;
 
-   // The transport used by the protocol server
-   private Transport transport;
    // The name of the server
    private final String serverName;
    // The login context used to obtain the server subject
@@ -193,12 +189,6 @@ class ProtocolServerService implements Service<ProtocolServer>, EncryptableServi
       configuration.ignoredCaches().forEach(server::ignoreCache);
       SecurityActions.startProtocolServer(server, configuration, getCacheManager().getValue());
       protocolServer = server;
-
-      try {
-         transport = (Transport) ReflectionUtil.getValue(protocolServer, "transport");
-      } catch (Exception e) {
-         throw ROOT_LOGGER.failedTransportInstantiation(e.getCause(), serverName);
-      }
    }
 
    @Override
@@ -264,10 +254,6 @@ class ProtocolServerService implements Service<ProtocolServer>, EncryptableServi
 
    public InjectedValue<ExtensionManagerService> getExtensionManager() {
       return extensionManager;
-   }
-
-    public Transport getTransport() {
-      return transport;
    }
 
    @Override

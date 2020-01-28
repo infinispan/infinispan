@@ -17,6 +17,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.ResourceDMBean;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
@@ -47,6 +48,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    private MBeanServer mbeanServer;
    private ThreadPoolExecutor executor;
    private ObjectName executorObjName;
+   private ComponentStatus transportStatus = ComponentStatus.INSTANTIATED;
 
 
    protected AbstractProtocolServer(String protocolName) {
@@ -92,7 +94,10 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       }
    }
 
-   protected void startTransport() {
+   public void startTransport() {
+      if (transportStatus == ComponentStatus.RUNNING) {
+         return;
+      }
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
@@ -102,6 +107,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
       try {
          transport.start();
+         transportStatus = ComponentStatus.RUNNING;
       } catch (Throwable re) {
          try {
             unregisterServerMBeans();
@@ -110,6 +116,22 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
          }
          throw re;
       }
+   }
+
+   public void stopTransport() {
+      if (transport != null && transportStatus == ComponentStatus.RUNNING) {
+         transport.stop();
+         transportStatus = ComponentStatus.TERMINATED;
+         try {
+            unregisterServerMBeans();
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+   }
+
+   public ComponentStatus getTransportStatus() {
+      return transportStatus;
    }
 
    protected ThreadPoolExecutor getExecutor() {

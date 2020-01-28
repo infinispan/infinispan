@@ -223,4 +223,12 @@ public interface EndpointLogger extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(id = 10042, value = "The WebSocket connector has been removed. Ignoring it.")
    void webSocketConnectorRemoved();
+
+   @LogMessage(level = INFO)
+   @Message(id = 10043, value = "Transport stopped for connector '%s'")
+   void transportStopped(String name);
+
+   @LogMessage(level = INFO)
+   @Message(id = 10044, value = "Transport started for connector '%s'")
+   void transportStarted(String name);
 }

@@ -21,4 +21,5 @@ package org.infinispan.server.endpoint.subsystem;
 public class MetricKeys {
    public static final String BYTES_READ = "bytesRead";
    public static final String BYTES_WRITTEN = "bytesWritten";
+   public static final String TRANSPORT_RUNNING = "transport-running";
 }

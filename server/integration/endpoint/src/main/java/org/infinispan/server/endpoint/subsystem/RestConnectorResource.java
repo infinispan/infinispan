@@ -21,11 +21,14 @@ package org.infinispan.server.endpoint.subsystem;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
+import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
@@ -102,7 +105,23 @@ public class RestConnectorResource extends CommonConnectorResource {
       for (AttributeDefinition attr : REST_ATTRIBUTES) {
          resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
       }
+
+      if (isRuntimeRegistration()) {
+         RestMetricsHandler.registerMetrics(resourceRegistration, "rest");
+      }
    }
 
+   @Override
+   public void registerOperations(ManagementResourceRegistration resourceRegistration) {
+      super.registerOperations(resourceRegistration);
+      resourceRegistration.registerOperationHandler(GenericSubsystemDescribeHandler.DEFINITION, GenericSubsystemDescribeHandler.INSTANCE);
 
+      OperationDefinition startConnector =
+            new SimpleOperationDefinitionBuilder("start-connector", getResourceDescriptionResolver()).setRuntimeOnly().build();
+      OperationDefinition stopConnector =
+            new SimpleOperationDefinitionBuilder("stop-connector", getResourceDescriptionResolver()).setRuntimeOnly().build();
+
+      resourceRegistration.registerOperationHandler(startConnector, new ProtocolServerConnectorTransportOpHandler("rest", false));
+      resourceRegistration.registerOperationHandler(stopConnector, new ProtocolServerConnectorTransportOpHandler("rest", true));
+   }
 }
