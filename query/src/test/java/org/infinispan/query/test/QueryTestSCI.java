@@ -2,7 +2,6 @@ package org.infinispan.query.test;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.query.affinity.Entity;
 import org.infinispan.query.api.AnotherTestEntity;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.api.TestEntity;
@@ -23,7 +22,6 @@ import org.infinispan.query.queries.faceting.Car;
             CustomKey.class,
             CustomKey2.class,
             CustomKey3.class,
-            Entity.class,
             NonSerializableKeyType.class,
             NotIndexedType.class,
             Person.class,

@@ -38,14 +38,6 @@
       <distributed-cache name="dist-with-default">
           <indexing index="ALL" auto-config="true"/>
       </distributed-cache>
-      <distributed-cache name="dist-with-affinity">
-         <indexing index="PRIMARY_OWNER">
-            <indexed-entities>
-               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
-            </indexed-entities>
-            <property name="default.indexmanager">org.infinispan.query.affinity.AffinityIndexManager</property>
-         </indexing>
-      </distributed-cache>
    </cache-container>
 
 </infinispan>

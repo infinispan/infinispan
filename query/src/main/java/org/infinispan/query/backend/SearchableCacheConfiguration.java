@@ -1,6 +1,5 @@
 package org.infinispan.query.backend;
 
-import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
 import static org.infinispan.query.impl.IndexPropertyInspector.isInfinispanDirectoryInternalCache;
 
 import java.util.Collection;
@@ -22,14 +21,9 @@ import org.hibernate.search.cfg.spi.SearchConfigurationBase;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.Service;
 import org.hibernate.search.engine.spi.SearchMappingHelper;
-import org.hibernate.search.exception.ErrorHandler;
-import org.hibernate.search.spi.ErrorHandlerFactory;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
-import org.infinispan.query.affinity.AffinityErrorHandler;
-import org.infinispan.query.affinity.AffinityIndexManager;
-import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 public final class SearchableCacheConfiguration extends SearchConfigurationBase implements SearchConfiguration {
 
    private static final String HSEARCH_PREFIX = "hibernate.search.";
-   private static final String SHARDING_STRATEGY = "sharding_strategy";
 
    private static final Log log = LogFactory.getLog(SearchableCacheConfiguration.class, Log.class);
 
@@ -54,7 +47,6 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
    private final SearchMapping searchMapping;
    private final Map<Class<? extends Service>, Object> providedServices;
    private final ClassLoaderServiceImpl classLoaderService;
-   private boolean hasAffinity;
 
    public SearchableCacheConfiguration(Set<Class<?>> indexedEntities,
                                        Properties properties,
@@ -64,10 +56,6 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
       classLoaderService = new ClassLoaderServiceImpl(aggregatedClassLoader);
 
       this.properties = augmentProperties(properties);
-      if (hasAffinity) {
-         ErrorHandler configuredErrorHandler = ErrorHandlerFactory.createErrorHandler(this);
-         this.properties.put(Environment.ERROR_HANDLER, new AffinityErrorHandler(configuredErrorHandler));
-      }
 
       Cache<?, ?> cache = cr.getComponent(Cache.class);
 
@@ -187,10 +175,6 @@ public final class SearchableCacheConfiguration extends SearchConfigurationBase 
                key = HSEARCH_PREFIX + key.toString();
             }
             target.put(key, entry.getValue());
-            if (key instanceof String && key.toString().endsWith(INDEX_MANAGER_IMPL_NAME) && entry.getValue().equals(AffinityIndexManager.class.getName())) {
-               target.put(key.toString().replace(INDEX_MANAGER_IMPL_NAME, SHARDING_STRATEGY), AffinityShardIdentifierProvider.class.getName());
-               hasAffinity = true;
-            }
          }
       }
 
