@@ -9,9 +9,9 @@ package org.infinispan.query.impl;
  */
 public interface ModuleCommandIds {
 
-   byte CLUSTERED_QUERY = 101;
-
    byte UPDATE_INDEX = 102;
 
    byte UPDATE_INDEX_STREAM = 103;
+
+   byte SEGMENT_CLUSTERED_QUERY = 105;
 }

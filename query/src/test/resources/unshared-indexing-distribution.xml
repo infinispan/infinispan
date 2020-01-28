@@ -10,13 +10,10 @@
             <indexed-entities>
                <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
             </indexed-entities>
-            <property name="default.directory_provider">infinispan</property>
+            <property name="default.directory_provider">local-heap</property>
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </distributed-cache>
-      <local-cache name="LuceneIndexesMetadata" />
-      <local-cache name="LuceneIndexesData" />
-      <local-cache name="LuceneIndexesLocking" />
    </cache-container>
 </infinispan>

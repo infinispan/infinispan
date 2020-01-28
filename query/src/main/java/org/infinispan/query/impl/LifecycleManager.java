@@ -5,6 +5,7 @@ import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheNa
 import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 import static org.infinispan.query.impl.IndexPropertyInspector.isInfinispanDirectoryInternalCache;
+import static org.infinispan.query.impl.SegmentFilterFactory.SEGMENT_FILTER_NAME;
 import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.util.Collection;
@@ -20,6 +21,7 @@ import javax.management.ObjectName;
 import org.apache.lucene.search.BooleanQuery;
 import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.engine.impl.MutableSearchFactory;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
@@ -55,12 +57,14 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.backend.TxQueryInterceptor;
+import org.infinispan.query.clustered.ClusteredQueryOperation;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.clustered.commandworkers.QueryBox;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
+import org.infinispan.query.impl.externalizers.FullTextFilterExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneBytesRefExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneFieldDocExternalizer;
@@ -209,7 +213,13 @@ public class LifecycleManager implements ModuleLifecycle {
          // Infinispan Directory causes runtime circular dependencies so we have postponed creation of indexes until
          // all components and involved caches are initialised (see SearchableCacheConfiguration). Now is the right time!
          // TODO classes defined programmatically via SearchMapping are lost!
+         // Workaround: Remove pre-registered filter to avoid SearchException when dynamically adding entities
+         MutableSearchFactory mutableSearchFactory = searchFactory.unwrap(MutableSearchFactory.class);
+         mutableSearchFactory.getFilterDefinitions().remove(SEGMENT_FILTER_NAME);
          Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
+         for(Class<?> clazz : indexedEntities) {
+            mutableSearchFactory.getProgrammaticMapping().entity(clazz).classBridge(SegmentFieldBridge.class);
+         }
          searchFactory.addClasses(indexedEntities);
       }
 
@@ -282,6 +292,12 @@ public class LifecycleManager implements ModuleLifecycle {
       Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = new LinkedHashSet<>();
       programmaticSearchMappingProviders.add(new DefaultSearchMappingProvider());  // make sure our DefaultSearchMappingProvider is first
       programmaticSearchMappingProviders.addAll(ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader));
+
+      programmaticSearchMappingProviders.add((cache, mapping) -> {
+         for (Class<?> indexedEntity : indexingConfiguration.indexedEntities()) {
+            mapping.entity(indexedEntity).classBridge(SegmentFieldBridge.class);
+         }
+      });
 
       // load LuceneAnalysisDefinitionProvider from classpath
       Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisDefinitionProvider.class, aggregatedClassLoader);
@@ -380,6 +396,8 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
       externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinition.Externalizer());
       externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE, new QueryResponse.Externalizer());
+      externalizerMap.put(ExternalizerIds.FULL_TEXT_FILTER, new FullTextFilterExternalizer());
+      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_OPERATION, new ClusteredQueryOperation.Externalizer());
    }
 
    /**

@@ -1,5 +1,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
+import java.util.BitSet;
+
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
@@ -11,7 +13,7 @@ import org.infinispan.query.clustered.QueryResponse;
 final class CQKillLazyIterator extends CQWorker {
 
    @Override
-   QueryResponse perform() {
+   QueryResponse perform(BitSet segments) {
       getQueryBox().kill(queryId);
 
       // Not ideal, but more sane

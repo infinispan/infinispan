@@ -25,6 +25,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
@@ -80,6 +81,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
       IndexUpdater indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       ClusteringDependentLogic clusteringDependentLogic = SecurityActions.getClusteringDependentLogic(unwrapped);
+      KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
       DataConversion keyDataConversion = unwrapped.getKeyDataConversion();
       DataConversion valueDataConversion = unwrapped.getValueDataConversion();
@@ -95,12 +97,14 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                while (iterator.hasNext()) {
                   CacheEntry<Object, Object> next = iterator.next();
                   Object value = extractValue(next.getValue(), valueDataConversion);
+                  Object storedKey = keyDataConversion.toStorage(next.getKey());
+                  int segment = keyPartitioner.getSegment(storedKey);
                   if (value instanceof byte[] && storageType != OBJECT) {
                      value = wrapper.wrap(value);
                   }
                   //TODO do not use Class equality but refactor to type equality:
                   if (value != null && value.getClass().equals(indexedType.getPojoType()))
-                     indexUpdater.updateIndex(next.getKey(), value);
+                     indexUpdater.updateIndex(next.getKey(), value, segment);
                }
             }
          }
@@ -110,7 +114,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
          for (Object key : keys) {
             Object value = extractValue(cache.get(key), valueDataConversion);
             if (value != null) {
-               indexUpdater.updateIndex(key, value);
+               indexUpdater.updateIndex(key, value, keyPartitioner.getSegment(keyDataConversion.toStorage(key)));
                classSet.add(value.getClass());
             }
          }
