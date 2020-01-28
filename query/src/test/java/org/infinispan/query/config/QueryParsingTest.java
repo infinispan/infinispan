@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -46,11 +45,6 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
       assertTrue(replDefaults.indexing().index().isEnabled());
       assertFalse(replDefaults.indexing().properties().isEmpty());
-
-      Configuration affinity = namedConfigurations.get("dist-with-affinity").build();
-      assertTrue(affinity.indexing().index().isEnabled());
-      assertEquals(affinity.indexing().index(), Index.PRIMARY_OWNER);
-      assertEquals(affinity.indexing().properties().getProperty("default.indexmanager"), AffinityIndexManager.class.getName());
    }
 
    public void testConfigurationFileParsingWithDefaultEnabled() throws IOException {

@@ -1,5 +1,9 @@
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
+== Query
+
+* The AffinityIndexManager is removed. Indexes should be configured with the ```near-real-time``` index manager instead.
+
 == Maximum Idle Timeouts with Clustered Cache Modes
 Maximum idle expiration has been changed to improve data consistency with clustered cache modes when Infinispan nodes fail.
 
