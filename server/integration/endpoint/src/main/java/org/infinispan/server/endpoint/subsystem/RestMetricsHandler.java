@@ -19,7 +19,7 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.rest.RestServer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -28,10 +28,10 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
-public class ProtocolServerMetricsHandler extends AbstractRuntimeOnlyHandler {
+public class RestMetricsHandler extends AbstractRuntimeOnlyHandler {
    final String name;
 
-   protected ProtocolServerMetricsHandler(final String name) {
+   protected RestMetricsHandler(final String name) {
       this.name = name;
    }
 
@@ -44,19 +44,19 @@ public class ProtocolServerMetricsHandler extends AbstractRuntimeOnlyHandler {
       } else {
          final ServiceController<?> controller = context.getServiceRegistry(false)
                .getService(EndpointUtils.getServiceName(operation, name));
-         ProtocolServerService service = (ProtocolServerService) controller.getService();
-         AbstractProtocolServer server = (AbstractProtocolServer) service.getValue();
+         RestService service = (RestService) controller.getService();
+         RestServer server = service.getValue();
          ModelNode result = new ModelNode();
          switch (metric) {
-         case BYTES_READ:
-            result.set(server.getTransport().getTotalBytesRead());
-            break;
-         case BYTES_WRITTEN:
-            result.set(server.getTransport().getTotalBytesWritten());
-            break;
-         case TRANSPORT_RUNNING:
-            result.set(server.getTransportStatus() == ComponentStatus.RUNNING);
-            break;
+            case BYTES_READ:
+               result.set(server.getTransport().getTotalBytesRead());
+               break;
+            case BYTES_WRITTEN:
+               result.set(server.getTransport().getTotalBytesWritten());
+               break;
+            case TRANSPORT_RUNNING:
+               result.set(server.getTransportStatus() == ComponentStatus.RUNNING);
+               break;
          }
          context.getResult().set(result);
       }
@@ -64,7 +64,7 @@ public class ProtocolServerMetricsHandler extends AbstractRuntimeOnlyHandler {
    }
 
    protected static void registerMetrics(final ManagementResourceRegistration resourceRegistration, final String name) {
-      ProtocolServerMetricsHandler handler = new ProtocolServerMetricsHandler(name);
+      RestMetricsHandler handler = new RestMetricsHandler(name);
       for (ProtocolServerMetrics metric : ProtocolServerMetrics.values()) {
          resourceRegistration.registerMetric(metric.definition, handler);
       }

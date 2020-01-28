@@ -76,8 +76,12 @@ public class MemcachedConnectorResource extends ProtocolServerConnectorResource 
       }
 
       if (isRuntimeRegistration()) {
-         ProtocolServerMetricsHandler.registerMetrics(resourceRegistration, "memcached");
+         ProtocolServerMetricsHandler.registerMetrics(resourceRegistration, getOperationPrefix());
       }
    }
 
+   @Override
+   protected String getOperationPrefix() {
+      return "memcached";
+   }
 }

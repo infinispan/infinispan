@@ -292,7 +292,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    @Override
-   protected void startTransport() {
+   public void startTransport() {
       // Start predefined caches
       preStartCaches();
 

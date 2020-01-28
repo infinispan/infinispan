@@ -48,10 +48,12 @@ public class HotRodConnectorResource extends ProtocolServerConnectorResource imp
       super.registerAttributes(resourceRegistration);
 
       if (isRuntimeRegistration()) {
-         ProtocolServerMetricsHandler.registerMetrics(resourceRegistration, "hotrod");
+         ProtocolServerMetricsHandler.registerMetrics(resourceRegistration, getOperationPrefix());
       }
    }
 
-
-
+   @Override
+   protected String getOperationPrefix() {
+      return "hotrod";
+   }
 }

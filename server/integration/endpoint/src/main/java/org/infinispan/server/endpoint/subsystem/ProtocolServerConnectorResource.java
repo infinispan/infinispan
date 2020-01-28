@@ -21,18 +21,21 @@ package org.infinispan.server.endpoint.subsystem;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.endpoint.Constants;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.capability.RuntimeCapability;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
+import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
-public class ProtocolServerConnectorResource extends CommonConnectorResource {
+public abstract class ProtocolServerConnectorResource extends CommonConnectorResource {
 
    static final String SOCKET_CAPABILITY_NAME = "org.wildfly.network.socket-binding";
    private static final RuntimeCapability<Void> CONNECTOR_CAPABILITY =
@@ -40,11 +43,11 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
 
    static final SimpleAttributeDefinition SOCKET_BINDING =
          new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_BINDING, ModelType.STRING, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.SOCKET_BINDING)
-                 .setCapabilityReference(SOCKET_CAPABILITY_NAME, CONNECTOR_CAPABILITY)
-                 .setRestartAllServices()
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.SOCKET_BINDING)
+               .setCapabilityReference(SOCKET_CAPABILITY_NAME, CONNECTOR_CAPABILITY)
+               .setRestartAllServices()
+               .build();
 
    static final SimpleAttributeDefinition IO_THREADS =
          new SimpleAttributeDefinitionBuilder(ModelKeys.IO_THREADS, ModelType.INT, true)
@@ -56,27 +59,27 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
 
    static final SimpleAttributeDefinition WORKER_THREADS =
          new SimpleAttributeDefinitionBuilder(ModelKeys.WORKER_THREADS, ModelType.INT, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.WORKER_THREADS)
-                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.WORKER_THREADS.getDefaultValue()))
-                 .setRestartAllServices()
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.WORKER_THREADS)
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.WORKER_THREADS.getDefaultValue()))
+               .setRestartAllServices()
+               .build();
 
    static final SimpleAttributeDefinition IDLE_TIMEOUT =
          new SimpleAttributeDefinitionBuilder(ModelKeys.IDLE_TIMEOUT, ModelType.INT, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.IDLE_TIMEOUT)
-                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.IDLE_TIMEOUT.getDefaultValue()))
-                 .setRestartAllServices()
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.IDLE_TIMEOUT)
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.IDLE_TIMEOUT.getDefaultValue()))
+               .setRestartAllServices()
+               .build();
 
    static final SimpleAttributeDefinition TCP_NODELAY =
          new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_NODELAY, ModelType.BOOLEAN, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.TCP_NODELAY)
-                 .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.TCP_NODELAY.getDefaultValue()))
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.TCP_NODELAY)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.TCP_NODELAY.getDefaultValue()))
+               .build();
 
    static final SimpleAttributeDefinition TCP_KEEPALIVE =
          new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_KEEPALIVE, ModelType.BOOLEAN, true)
@@ -88,24 +91,23 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
 
    static final SimpleAttributeDefinition RECEIVE_BUFFER_SIZE =
          new SimpleAttributeDefinitionBuilder(ModelKeys.RECEIVE_BUFFER_SIZE, ModelType.LONG, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.RECEIVE_BUFFER_SIZE)
-                 .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.RECV_BUF_SIZE.getDefaultValue()))
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.RECEIVE_BUFFER_SIZE)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.RECV_BUF_SIZE.getDefaultValue()))
+               .build();
 
    static final SimpleAttributeDefinition SEND_BUFFER_SIZE =
          new SimpleAttributeDefinitionBuilder(ModelKeys.SEND_BUFFER_SIZE, ModelType.LONG, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.SEND_BUFFER_SIZE)
-                 .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.SEND_BUF_SIZE.getDefaultValue()))
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.SEND_BUFFER_SIZE)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.SEND_BUF_SIZE.getDefaultValue()))
+               .build();
 
    static final SimpleAttributeDefinition[] PROTOCOL_SERVICE_ATTRIBUTES = {
          SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, TCP_KEEPALIVE, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, IO_THREADS, WORKER_THREADS
    };
-
 
 
    public ProtocolServerConnectorResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, OperationStepHandler addHandler, OperationStepHandler removeHandler, boolean runtimeRegistration) {
@@ -126,5 +128,23 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
    public void registerCapabilities(ManagementResourceRegistration resourceRegistration) {
       super.registerCapabilities(resourceRegistration);
       resourceRegistration.registerCapability(CONNECTOR_CAPABILITY);
+   }
+
+   protected abstract String getOperationPrefix();
+
+   @Override
+   public void registerOperations(ManagementResourceRegistration resourceRegistration) {
+      super.registerOperations(resourceRegistration);
+      resourceRegistration.registerOperationHandler(GenericSubsystemDescribeHandler.DEFINITION, GenericSubsystemDescribeHandler.INSTANCE);
+
+      if (isRuntimeRegistration()) {
+         OperationDefinition startConnector =
+               new SimpleOperationDefinitionBuilder("start-connector", getResourceDescriptionResolver()).setRuntimeOnly().build();
+         OperationDefinition stopConnector =
+               new SimpleOperationDefinitionBuilder("stop-connector", getResourceDescriptionResolver()).setRuntimeOnly().build();
+
+         resourceRegistration.registerOperationHandler(startConnector, new ProtocolServerConnectorTransportOpHandler(getOperationPrefix(), false));
+         resourceRegistration.registerOperationHandler(stopConnector, new ProtocolServerConnectorTransportOpHandler(getOperationPrefix(), true));
+      }
    }
 }
