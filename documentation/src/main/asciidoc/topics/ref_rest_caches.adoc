@@ -35,7 +35,7 @@ Check if caches are available in {brandname} clusters with `HEAD` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /v2/caches/{cacheName}
+HEAD /rest/v2/caches/{cacheName}
 ----
 
 [id='rest_v2_create_cache_template']
