@@ -9,7 +9,7 @@
 | Authentication     | [green]*Y* | [green]*Y*      | [red]*N*
 | Conditional ops    | [green]*Y* | [green]*Y*      | [green]*Y*
 | Bulk ops           | [green]*Y* | [red]*N*        | [red]*N*
-| Transactions       | [red]*N*   | [red]*N*        | [red]*N*
+| Transactions       | [green]*Y* | [red]*N*        | [red]*N*
 | Listeners          | [green]*Y* | [red]*N*        | [red]*N*
 | Query              | [green]*Y* | [green]*Y*      | [red]*N*
 | Execution          | [green]*Y* | [red]*N*        | [red]*N*
