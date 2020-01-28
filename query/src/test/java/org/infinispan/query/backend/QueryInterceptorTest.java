@@ -19,6 +19,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -28,6 +29,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -171,6 +173,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             // Configure Query interceptor to ignore deletes of previous values
             SearchWorkCreator searchWorkCreator = new IgnoreDeletesSearchWorkCreator();
             QueryInterceptor queryInterceptor = cache.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class);
+            KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
             queryInterceptor.setSearchWorkCreator(searchWorkCreator);
 
             // Override entity
@@ -183,7 +186,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             assertEquals(1, countIndex(Car.class, cache));
 
             // Remove by id from all indexes
-            queryInterceptor.removeFromIndexes(NoTransactionContext.INSTANCE, "key");
+            queryInterceptor.removeFromIndexes(NoTransactionContext.INSTANCE, "key", keyPartitioner.getSegment("key"));
 
             // Assert indexes are empty
             assertEquals(1, cache.size());

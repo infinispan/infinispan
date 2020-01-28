@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}" xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+    <cache-container default-cache="default">
+        <serialization>
+            <context-initializer class="org.infinispan.query.test.QueryTestSCIImpl"/>
+        </serialization>
+        <transport cluster="Infinispan-Query-Cluster" />
+        <distributed-cache name="default" mode="SYNC">
+            <indexing index="ALL">
+                <indexed-entities>
+                    <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
+                </indexed-entities>
+                <property name="default.directory_provider">local-heap</property>
+                <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+            </indexing>
+        </distributed-cache>
+    </cache-container>
+</infinispan>
