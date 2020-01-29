@@ -1,11 +1,8 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.SerializationConfiguration.ADVANCED_EXTERNALIZERS;
-import static org.infinispan.configuration.global.SerializationConfiguration.CLASS_RESOLVER;
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
 import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZERS;
-import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
-import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +15,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Version;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 /**
@@ -47,37 +43,6 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
 
    public Marshaller getMarshaller() {
       return attributes.attribute(MARSHALLER).get();
-   }
-
-
-   /**
-    * Largest allowable version to use when marshalling internal state. Set this to the lowest version cache instance in
-    * your cluster to ensure compatibility of communications. However, setting this too low will mean you lose out on
-    * the benefit of improvements in newer versions of the marshaller.
-    *
-    * @param marshallVersion
-    * @deprecated since 10.1 configured value is never used.
-    */
-   @Deprecated
-   public SerializationConfigurationBuilder version(short marshallVersion) {
-      CONFIG.serializationVersionDeprecated();
-      attributes.attribute(VERSION).set(marshallVersion);
-      return this;
-   }
-
-   /**
-    * Largest allowable version to use when marshalling internal state. Set this to the lowest version cache instance in
-    * your cluster to ensure compatibility of communications. However, setting this too low will mean you lose out on
-    * the benefit of improvements in newer versions of the marshaller.
-    *
-    * @param marshallVersion
-    * @deprecated since 10.1 configured value is never used.
-    */
-   @Deprecated
-   public SerializationConfigurationBuilder version(String marshallVersion) {
-      CONFIG.serializationVersionDeprecated();
-      this.version(Version.getVersionShort(marshallVersion));
-      return this;
    }
 
    /**
@@ -141,18 +106,6 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       for (AdvancedExternalizer<T> advancedExternalizer : advancedExternalizers) {
          this.addAdvancedExternalizer(advancedExternalizer);
       }
-      return this;
-   }
-
-   /**
-    * Class resolver to use when unmarshalling objects.
-    *
-    * @param classResolver
-    * @deprecated since 10.0 {@link org.jboss.marshalling.ClassResolver} is specific to jboss-marshalling and will be removed in a future version.
-    */
-   @Deprecated
-   public SerializationConfigurationBuilder classResolver(Object classResolver) {
-      attributes.attribute(CLASS_RESOLVER).set(classResolver);
       return this;
    }
 

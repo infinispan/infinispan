@@ -25,7 +25,6 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -427,9 +426,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       if (attributes.isModified()) {
          writer.writeStartElement(Element.SERIALIZATION);
          attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER_CLASS);
-         if (attributes.attribute(SerializationConfiguration.VERSION).isModified()) {
-            writer.writeAttribute(Attribute.VERSION, Version.decodeVersion(serialization.version()));
-         }
          SerializationConfiguration config = globalConfiguration.serialization();
          writeAdvancedSerializers(writer, config);
          writeSerializationContextInitializers(writer,config);

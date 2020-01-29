@@ -9,6 +9,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.impl.ClassToExternalizerMap;
 import org.infinispan.marshall.core.impl.ExternalExternalizers;
+import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
 
@@ -25,6 +26,14 @@ public class JBossUserMarshaller extends JBossMarshaller {
    public static final int USER_EXT_ID_MIN = AdvancedExternalizer.USER_EXT_ID_MIN;
 
    private ClassToExternalizerMap externalExts;
+
+   public JBossUserMarshaller() {
+      this(null);
+   }
+
+   public JBossUserMarshaller(ClassResolver classResolver) {
+      super(classResolver);
+   }
 
    public void initialize(GlobalComponentRegistry gcr) {
       this.globalCfg = gcr.getGlobalConfiguration();

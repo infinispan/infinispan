@@ -17,7 +17,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
@@ -409,7 +408,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(ShutdownHookBehavior.REGISTER, gc.shutdown().hookBehavior());
 
       assertTrue(gc.serialization().marshaller() instanceof TestObjectStreamMarshaller);
-      assertEquals(Version.getVersionShort("1.0"), gc.serialization().version());
       final Map<Integer, AdvancedExternalizer<?>> externalizers = gc.serialization().advancedExternalizers();
       assertEquals(3, externalizers.size());
       assertTrue(externalizers.get(1234) instanceof AdvancedExternalizerTest.IdViaConfigObj.Externalizer);
