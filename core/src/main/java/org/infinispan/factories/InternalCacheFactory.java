@@ -19,7 +19,6 @@ import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
@@ -45,7 +44,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
@@ -174,11 +172,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       // injection bootstrap stuff
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
-
-      EncoderRegistry encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
-
-      // Wraps the GlobalMarshaller so that it can be used as a transcoder
-      encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller));
 
       /*
          --------------------------------------------------------------------------------------------------------------
