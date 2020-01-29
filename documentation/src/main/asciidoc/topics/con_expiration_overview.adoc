@@ -1,0 +1,31 @@
+[id='how_expiration_works-{context}']
+= How Expiration Works
+When you configure expiration, {brandname} stores keys with metadata that
+determines when entries expire.
+
+* Lifespan uses a `creation` timestamp and the value for the `lifespan` configuration property.
+* Maximum idle uses a `last used` timestamp and the value for the `max-idle` configuration property.
+
+{brandname} checks if lifespan or maximum idle metadata is set and then
+compares the values with the current time.
+
+If `(creation + lifespan > currentTime)` or `(lastUsed + maxIdle > currentTime)` then {brandname} detects that the entry is expired.
+
+Expiration occurs whenever entries are accessed or found by the expiration
+reaper.
+
+For example, `k1` reaches the maximum idle time and a client makes a
+`Cache.get(k1)` request. In this case, {brandname} detects that the entry is
+expired and removes it from the data container. The `Cache.get()` returns
+`null`.
+
+{brandname} also expires entries from cache stores, but only with lifespan
+expiration. Maximum idle expiration does not work with cache stores. In the
+case of cache loaders, {brandname} cannot expire entries because loaders can
+only read from external storage.
+
+[NOTE]
+====
+{brandname} adds expiration metadata as `long` primitive data types to cache
+entries. This can increase the size of keys by as much as 32 bytes.
+====

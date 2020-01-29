@@ -1064,17 +1064,28 @@
   <xs:complexType name="expiration">
     <xs:attribute name="max-idle" type="xs:long" default="${Expiration.maxIdle}">
       <xs:annotation>
-        <xs:documentation>Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.</xs:documentation>
+        <xs:documentation>
+          Specifies the maximum amount of time, in milliseconds, that cache
+          entries can remain idle. If no operations are performed on entries
+          within the maximum idle time, the entries expire across the cluster.
+          A value of 0 or -1 disables expiration.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="lifespan" type="xs:long" default="${Expiration.lifespan}">
       <xs:annotation>
-        <xs:documentation>Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire.</xs:documentation>
+        <xs:documentation>
+          Specifies the maximum amount of time, in milliseconds, that cache
+          entries can exist. After reaching their lifespan, cache entries
+          expire across the cluster. A value of 0 or -1 disables expiration.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="interval" type="xs:long" default="${Expiration.wakeUpInterval}">
       <xs:annotation>
-        <xs:documentation>Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.</xs:documentation>
+        <xs:documentation>
+          Specifies the interval, in milliseconds, between expiration runs. A
+          value of 0 or -1 disables the expiration reaper.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -1232,23 +1243,32 @@
         <xs:element name="object" type="tns:memory-object">
           <xs:annotation>
             <xs:documentation>
-              Store keys and values as instance variables.  Instances of byte[] will be wrapped to ensure equality.
+              Store keys and values as instance variables in the Java heap.
+              Instances of byte[] are wrapped to ensure equality. This is the
+              default storage format.
             </xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element name="binary" type="tns:memory-binary">
           <xs:annotation>
             <xs:documentation>
-              Store keys and values as byte[] instances.  Key and value will be serialized to binary representations.
+              Store keys and values as bytes in the Java heap. Cache
+              entries are serialized to binary representations. Note that
+              binary storage violates object equality. This occurs because
+              equality is determined by the equivalence of the resulting
+              byte[] instead of the object instances.
             </xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element name="off-heap" type="tns:memory-off-heap">
           <xs:annotation>
             <xs:documentation>
-              Store keys and values as byte[] off of the Java heap.  Key and value will be serialized to binary
-              representations and stored in native memory as to not take up Java heap.  Temporary objects will be
-              put onto Java heap temporarily until processing is completed.
+              Store keys and values as bytes in native memory. Cache
+              entries are serialized to binary representations. Temporary
+              objects are stored in the Java heap space until processing
+              completes. Note that off-heap storage violates object equality.
+              This occurs because equality is determined by the equivalence of
+              the resulting byte[] instead of the object instances.
             </xs:documentation>
           </xs:annotation>
         </xs:element>
@@ -1259,14 +1279,19 @@
   <xs:complexType name="memory-object">
     <xs:attribute name="size" type="xs:long" default="-1">
       <xs:annotation>
-        <xs:documentation>The size of the eviction cache as a long.  Limits the cache to this normal by the amount of
-        entries in the cache.</xs:documentation>
+        <xs:documentation>
+          Defines the size of the data container as a long. Eviction occurs
+          when the number of entries exceeds the size.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="strategy" type="tns:eviction-strategy">
       <xs:annotation>
-        <xs:documentation>The eviction strategy to use. This determines if eviction is even enabled or if it
-          has a different variant.</xs:documentation>
+        <xs:documentation>
+          Specifies a strategy for evicting cache entries. Eviction always
+          takes place when you define the size of the data container. If you
+          specify a value for size, then you should configure a strategy.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -1274,21 +1299,28 @@
   <xs:complexType name="memory-binary">
     <xs:attribute name="size" type="xs:long" default="-1">
       <xs:annotation>
-        <xs:documentation>The size of the eviction cache as a long.  If the configured type is COUNT, this will be
-          how many entries can be stored.  If the configured type is MEMORY, this will be how much memory
-          in bytes can be stored.</xs:documentation>
+        <xs:documentation>
+          Defines the size of the data container as a long. Eviction occurs
+          either when the number of entries or amount of memory exceeds the
+          size.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="eviction" type="tns:eviction-type">
       <xs:annotation>
-        <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
-        the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
+        <xs:documentation>
+          Specifies whether eviction is based on the number of entries or the
+          amount of memory used.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="strategy" type="tns:eviction-strategy">
       <xs:annotation>
-        <xs:documentation>The eviction strategy to use. This determines if eviction is even enabled or if it
-        has a different variant.</xs:documentation>
+        <xs:documentation>
+          Specifies a strategy for evicting cache entries. Eviction always
+          takes place when you define the size of the data container. If you
+          specify a value for size, then you should configure a strategy.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
@@ -1296,29 +1328,27 @@
   <xs:complexType name="memory-off-heap">
     <xs:attribute name="size" type="xs:long" default="-1">
       <xs:annotation>
-        <xs:documentation>The size of the eviction cache as a long.  If the configured type is COUNT, this will be
-          how many entries can be stored.  If the configured type is MEMORY, this will be how much memory
-          in bytes can be stored.</xs:documentation>
+        <xs:documentation>
+          Defines the size of the data container as a long. Eviction occurs
+          either when the number of entries or amount of memory exceeds the
+          size.
+      </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="eviction" type="tns:eviction-type">
       <xs:annotation>
-        <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
-          the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
+        <xs:documentation>
+          Specifies whether eviction is based on the number of entries or the
+          amount of memory used.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="strategy" type="tns:eviction-strategy">
       <xs:annotation>
-        <xs:documentation>The eviction strategy to use. This determines if eviction is even enabled or if it
-          has a different variant.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="address-count" type="xs:int" default="1048576">
-      <xs:annotation>
-        <xs:documentation>How many address pointers to use. This number will be rounded up to a power of two.
-          For optimal performance you will want more address pointers than you expect to have entries.  This is similar
-          to the size of an array backing a hash map.  Without collisions lookups and writes will be constant time.
-          Each pointer will take up 8 bytes of memory thus the default will use 8 MB of off-heap memory.
+        <xs:documentation>
+          Specifies a strategy for evicting cache entries. Eviction always
+          takes place when you define the size of the data container. If you
+          specify a value for size, then you should configure a strategy.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -2070,25 +2100,37 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="NONE">
         <xs:annotation>
-          <xs:documentation>Never evict entries. This is the default.</xs:documentation>
+          <xs:documentation>
+            Do not evict entries. If you define a size for the data container,
+            you should specify either the REMOVE or EXCEPTION exiction strategy.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="MANUAL">
         <xs:annotation>
-          <xs:documentation>Eviction will be performed manually. Equivalent internally to NONE.</xs:documentation>
+          <xs:documentation>
+            Manually evict entries. This strategy is the same as NONE but does
+            not log errors if you enable passivation without eviction.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="REMOVE">
         <xs:annotation>
-          <xs:documentation>Eviction will be performed automatically to ensure that "older" entries are removed to make room
-            for new entries.</xs:documentation>
+          <xs:documentation>
+            Automatically evict older entries to make space for new entries. By
+            default REMOVE is always used when you define a size for the data
+            container unless you configure the EXCEPTION strategy.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="EXCEPTION">
         <xs:annotation>
-          <xs:documentation>Eviction is not performed and instead when the container is full exceptions will prevent
-            new entries from being written to the container. This cache must be transactional and now allow for
-            commit optimizations that would prevent it from performing a two phase commit.</xs:documentation>
+          <xs:documentation>
+            Do not evict entries. If the data container reaches the maximum
+            size, exceptions occur for requests to create new entries. You can
+            use this eviction strategy only with transactional caches that use
+            two phase commit.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="UNORDERED">
@@ -2208,31 +2250,22 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <xs:simpleType name="eviction-thread-policy">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="PIGGYBACK">
-        <xs:annotation>
-          <xs:documentation>Fires the eviction events from the same thread which is performing the eviction </xs:documentation>
-        </xs:annotation>
-      </xs:enumeration>
-      <xs:enumeration value="DEFAULT">
-        <xs:annotation>
-          <xs:documentation>Use the default eviction listener thread policy (PIGGYBACK)</xs:documentation>
-        </xs:annotation>
-      </xs:enumeration>
-    </xs:restriction>
-  </xs:simpleType>
-
   <xs:simpleType name="eviction-type">
     <xs:restriction base="xs:string">
       <xs:enumeration value="COUNT">
         <xs:annotation>
-          <xs:documentation>Evicts entries from the cache when a specified count has been set</xs:documentation>
+          <xs:documentation>
+            Evict entries from the cache when the number of entries reaches the
+            configured size.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="MEMORY">
         <xs:annotation>
-          <xs:documentation>Evicts entries from the cache when a specified memory usage has been reached. Memory usage is computed using an approximation which is tailored for the HotSpot VM. This can only be used when both key and values are stored as byte arrays. To guarantee only byte arrays are stored it is recommended to run with store as binary for both keys and values</xs:documentation>
+          <xs:documentation>
+            Evict entries from the cache when the amount of memory in use
+            reaches the configured size.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>

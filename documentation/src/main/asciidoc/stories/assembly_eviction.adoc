@@ -1,9 +1,0 @@
-[id='eviction_expiration']
-:context: admin
-= Configuring Eviction and Expiration
-
-include::{topics}/eviction.adoc[leveloffset=+1]
-
-// Restore the parent context.
-ifdef::parent-context[:context: {parent-context}]
-ifndef::parent-context[:!context:]
