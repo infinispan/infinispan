@@ -3,7 +3,6 @@ package org.infinispan.persistence.spi;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.reactive.RxJavaInterop;
 import org.reactivestreams.Publisher;
 
@@ -33,37 +32,13 @@ public interface CacheWriter<K, V> extends Lifecycle {
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     * @see MarshallableEntry
     */
-   default void write(MarshallableEntry<? extends K, ? extends V> entry) {
-      write(entry.asMarshalledEntry());
-   }
-
-   /**
-    * @deprecated since 10.0, use {@link #write(MarshallableEntry)} instead.
-    */
-   @Deprecated
-   default void write(MarshalledEntry<? extends K, ? extends V> entry) {
-      // no-op
-   }
+   void write(MarshallableEntry<? extends K, ? extends V> entry);
 
    /**
     * @return true if the entry existed in the persistent store and it was deleted.
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    boolean delete(Object key);
-
-   /**
-    * Persist all provided entries to the store in chunks, with the size of each chunk determined by the store
-    * implementation. If chunking is not supported by the underlying store, then entries are written to the store
-    * individually via {@link #write(MarshallableEntry)}.
-    *
-    * @param entries an Iterable of MarshalledEntry to be written to the store.
-    * @throws NullPointerException if entries is null.
-    * @deprecated since 10.0, use {@link #bulkUpdate(Publisher)} instead.
-    */
-   @Deprecated
-   default void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> entries) {
-      entries.forEach(e -> write((MarshallableEntry<? extends K, ? extends V>) e));
-   }
 
    /**
     * Persist all provided entries to the store in chunks, with the size of each chunk determined by the store

@@ -1,9 +1,12 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
+import java.util.function.Predicate;
+
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.reactivestreams.Publisher;
 
 @ConfiguredBy(CustomStoreConfigurationWithBuilder.class)
 public class CustomStoreWithConfigurationAndBuilder implements AdvancedCacheLoader<Object,Object> {
@@ -18,6 +21,11 @@ public class CustomStoreWithConfigurationAndBuilder implements AdvancedCacheLoad
 
    @Override
    public MarshallableEntry<Object, Object> loadEntry(Object key) {
+      return null;
+   }
+
+   @Override
+   public Publisher<MarshallableEntry<Object, Object>> entryPublisher(Predicate<? super Object> filter, boolean fetchValue, boolean fetchMetadata) {
       return null;
    }
 

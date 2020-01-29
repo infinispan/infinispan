@@ -264,13 +264,13 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
                cache.remove(key + i);
             }
             for (int i = 0; i < number; i++) {
-               MarshallableEntry entry = dummyStore.load(key + i);
+               MarshallableEntry entry = dummyStore.loadEntry(key + i);
                while (entry != null) {
 
                   try {
                      log.trace("Wait for async store to lock keys");
                      lockedWaitLatch.await(60, TimeUnit.SECONDS);
-                     entry = dummyStore.load(key + i);
+                     entry = dummyStore.loadEntry(key + i);
                   } catch (InterruptedException e) {
                      Thread.currentThread().interrupt();
                   }

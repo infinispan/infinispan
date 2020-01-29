@@ -1,10 +1,12 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.MarshallableEntry;
+import org.reactivestreams.Publisher;
 
 public class MyCustomStore implements AdvancedLoadWriteStore {
    @Override
@@ -35,6 +37,11 @@ public class MyCustomStore implements AdvancedLoadWriteStore {
 
    @Override
    public MarshallableEntry loadEntry(Object key) {
+      return null;
+   }
+
+   @Override
+   public Publisher<MarshallableEntry> entryPublisher(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
       return null;
    }
 

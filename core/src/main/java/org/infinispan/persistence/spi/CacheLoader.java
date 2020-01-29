@@ -1,7 +1,6 @@
 package org.infinispan.persistence.spi;
 
 import org.infinispan.commons.api.Lifecycle;
-import org.infinispan.marshall.core.MarshalledEntry;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -24,20 +23,6 @@ public interface CacheLoader<K, V> extends Lifecycle {
    void init(InitializationContext ctx);
 
    /**
-    * Fetches an entry from the storage. If a {@link MarshalledEntry} needs to be created here, {@link
-    * org.infinispan.persistence.spi.InitializationContext#getMarshalledEntryFactory()} and {@link
-    * InitializationContext#getByteBufferFactory()} should be used.
-    *
-    * @return the entry, or null if the entry does not exist
-    * @throws PersistenceException in case of an error, e.g. communicating with the external storage
-    * @deprecated since 10.0 please implement {{@link #loadEntry(Object)}} instead
-    */
-   @Deprecated
-   default MarshalledEntry<K, V> load(Object key) {
-      return null;
-   }
-
-   /**
     * Fetches an entry from the storage. If a {@link MarshallableEntry} needs to be created here, {@link
     * InitializationContext#getMarshallableEntryFactory()} ()} and {@link
     * InitializationContext#getByteBufferFactory()} should be used.
@@ -45,9 +30,7 @@ public interface CacheLoader<K, V> extends Lifecycle {
     * @return the entry, or null if the entry does not exist
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
-   default MarshallableEntry<K, V> loadEntry(Object key) {
-      return load(key);
-   }
+   MarshallableEntry<K, V> loadEntry(Object key);
 
    /**
     * Returns true if the storage contains an entry associated with the given key.

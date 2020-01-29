@@ -200,6 +200,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
+   public void write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
+      write(entry);
+   }
+
+   @Override
    public void write(MarshallableEntry<? extends K, ? extends V> entry) {
       Connection connection = null;
       String keyStr = key2Str(entry.getKey());
@@ -351,6 +356,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
+   public MarshallableEntry<K, V> get(int segment, Object key) {
+      return loadEntry(key);
+   }
+
+   @Override
    public MarshallableEntry<K, V> loadEntry(Object key) {
       String lockingKey = key2Str(key);
       Connection conn = null;
@@ -431,6 +441,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    }
 
    @Override
+   public boolean delete(int segment, Object key) {
+      return delete(key);
+   }
+
+   @Override
    public boolean delete(Object key) {
       Connection connection = null;
       PreparedStatement ps = null;
@@ -505,6 +520,11 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
       }
+   }
+
+   @Override
+   public boolean contains(int segment, Object key) {
+      return contains(key);
    }
 
    @Override

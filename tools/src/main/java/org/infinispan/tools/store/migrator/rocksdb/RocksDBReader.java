@@ -9,11 +9,15 @@ import java.util.Iterator;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
+import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
+import org.infinispan.tools.store.migrator.marshaller.common.MarshalledEntryImpl;
 import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
@@ -25,6 +29,7 @@ public class RocksDBReader implements StoreIterator {
 
    private final RocksDB db;
    private final Marshaller marshaller;
+   private final MarshallableEntryFactory entryFactory;
 
    public RocksDBReader(StoreProperties props) {
       props.required(LOCATION);
@@ -45,6 +50,7 @@ public class RocksDBReader implements StoreIterator {
          throw new CacheException(e);
       }
       this.marshaller = SerializationConfigUtil.getMarshaller(props);
+      this.entryFactory = new MarshalledEntryFactoryImpl(marshaller);
    }
 
    @Override
@@ -78,9 +84,16 @@ public class RocksDBReader implements StoreIterator {
 
       @Override
       public MarshallableEntry next() {
-         MarshallableEntry entry = unmarshall(it.value());
+         Object entry = unmarshall(it.value());
+         if (entry instanceof MarshalledEntryImpl) {
+            MarshalledEntryImpl me = (MarshalledEntryImpl) entry;
+            InternalMetadata meta = me.getMetadata();
+            long created = meta != null ? meta.created() : -1;
+            long lifespan = meta != null ? meta.lifespan() : -1;
+            entry = entryFactory.create(me.getKeyBytes(), me.getValueBytes(), me.getMetadataBytes(), created, lifespan);
+         }
          it.next();
-         return entry;
+         return (MarshallableEntry) entry;
       }
 
       @SuppressWarnings(value = "unchecked")

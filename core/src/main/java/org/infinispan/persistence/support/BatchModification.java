@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
@@ -43,16 +41,6 @@ public class BatchModification {
 
    public Set<Object> getKeysToRemove() {
       return keysToRemove;
-   }
-
-   /**
-    * @deprecated since 10.0, use {@link #getMarshallableEntries()} instead
-    */
-   @Deprecated
-   public Collection<MarshalledEntry> getMarshalledEntries() {
-      return marshalledEntries.values().stream()
-            .map(MarshallableEntry::asMarshalledEntry)
-            .collect(Collectors.toList());
    }
 
    public Collection<MarshallableEntry> getMarshallableEntries() {

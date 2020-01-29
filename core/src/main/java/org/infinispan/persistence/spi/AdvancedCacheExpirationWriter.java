@@ -3,7 +3,6 @@ package org.infinispan.persistence.spi;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.util.Experimental;
-import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * Defines functionality for advanced expiration techniques.  Note this interface allows for providing not just the key
@@ -32,22 +31,12 @@ public interface AdvancedCacheExpirationWriter<K, V> extends AdvancedCacheWriter
    interface ExpirationPurgeListener<K, V> extends PurgeListener<K> {
 
       /**
-       * Optional. If possible, {@link AdvancedCacheExpirationWriter} implementors should invoke this method for every
+       * If possible, {@link AdvancedCacheExpirationWriter} implementors should invoke this method for every
        * entry that is purged from the store. One of the side effects of not implementing this method is that listeners
        * do not receive {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired} for the
        * entries that are removed from the persistent store directly.
        */
-      default void marshalledEntryPurged(MarshallableEntry<K, V> entry) {
-         marshalledEntryPurged(entry.asMarshalledEntry());
-      }
-
-      /**
-       * @deprecated since 10.0, use {{@link #marshalledEntryPurged(MarshallableEntry)}} instead.
-       */
-      @Deprecated
-      default void marshalledEntryPurged(MarshalledEntry<K, V> entry) {
-         // no-op
-      }
+      void marshalledEntryPurged(MarshallableEntry<K, V> entry);
    }
 
    /**

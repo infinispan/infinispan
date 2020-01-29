@@ -31,9 +31,9 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.marshall.exts.CollectionExternalizer;
 import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
-import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.tools.store.migrator.marshaller.common.InternalMetadataImplExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.MarshalledEntryImpl;
 import org.infinispan.util.KeyValuePair;
 
 /**

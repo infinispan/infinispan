@@ -4,9 +4,7 @@ import static java.lang.Math.min;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -139,13 +137,6 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
       if (lset == -1) return muet;
       if (muet == -1) return lset;
       return min(lset, muet);
-   }
-
-   @Override
-   public MarshalledEntry<K, V> asMarshalledEntry() {
-      Metadata meta = getMetadata();
-      InternalMetadataImpl internalMeta = meta == null ? null : new InternalMetadataImpl(meta, created(), lastUsed());
-      return new MarshalledEntryImpl<>(getKey(), getValue(), internalMeta, marshaller);
    }
 
    @Override
