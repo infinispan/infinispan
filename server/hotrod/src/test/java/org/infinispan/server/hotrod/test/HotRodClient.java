@@ -530,7 +530,7 @@ class ClientChannelInitializer implements NettyInitializer {
    }
 
    @Override
-   public void initializeChannel(Channel ch) throws Exception {
+   public void initializeChannel(Channel ch) {
       ChannelPipeline pipeline = ch.pipeline();
       if (sslEngine != null)
          pipeline.addLast("ssl", new SslHandler(sslEngine));
@@ -550,7 +550,7 @@ class Encoder extends MessageToByteEncoder<Object> {
    }
 
    @Override
-   protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
+   protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) {
       log.tracef("Encode %s so that it's sent to the server", msg);
       if (msg instanceof PartialOp) {
          PartialOp partial = (PartialOp) msg;
@@ -593,7 +593,7 @@ class Encoder extends MessageToByteEncoder<Object> {
                && op.code != 0x1D && op.code != 0x1F
                && op.code != 0x21 && op.code != 0x23
                && op.code != 0x29 && op.code != 0x31
-               && op.code != 0x31 && op.code != 0x35) { // if it's a key based op...
+               && op.code != 0x33 && op.code != 0x35) { // if it's a key based op...
             writeRangedBytes(op.key, buffer); // key length + key
             if (op.code == 0x37) {
                // GetStream has an offset
@@ -655,7 +655,7 @@ class Encoder extends MessageToByteEncoder<Object> {
                writeRangedBytes(startop.filterConverterFactory.getBytes(), buffer);
                if (startop.filterConverterParams != null && startop.filterConverterParams.size() > 0) {
                   buffer.writeByte(startop.filterConverterParams.size());
-                  startop.filterConverterParams.forEach(param -> buffer.writeBytes(param));
+                  startop.filterConverterParams.forEach(buffer::writeBytes);
                } else {
                   buffer.writeByte(0);
                }
@@ -663,7 +663,9 @@ class Encoder extends MessageToByteEncoder<Object> {
                writeUnsignedInt(SignedNumeric.encode(-1), buffer);
             }
             writeUnsignedInt(startop.batch, buffer);
-            buffer.writeByte(startop.includeMetadata ? 1 : 0);
+            if (protocolVersion >= 24) {
+               buffer.writeByte(startop.includeMetadata ? 1 : 0);
+            }
          } else if (op.code == 0x33) {
             IterationNextOp nextop = (IterationNextOp) op;
             writeRangedBytes(nextop.iterationId.getBytes(), buffer);
@@ -728,7 +730,7 @@ class Decoder extends ReplayingDecoder<Void> {
    }
 
    @Override
-   protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> out) throws Exception {
+   protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> out) {
       log.trace("Decode response from server");
       buf.readUnsignedByte(); // magic byte
       long id = ExtendedByteBuf.readUnsignedLong(buf);
@@ -1012,7 +1014,7 @@ class Decoder extends ReplayingDecoder<Void> {
    }
 
    @Override
-   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       log.exceptionReported(cause);
    }
 
@@ -1137,7 +1139,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
    }
 
    @Override
-   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+   public void channelRead(ChannelHandlerContext ctx, Object msg) {
       if (msg instanceof TestKeyWithVersionEvent) {
          TestKeyWithVersionEvent e = (TestKeyWithVersionEvent) msg;
          switch (e.getOperation()) {
@@ -1379,15 +1381,5 @@ class RecoveryOp extends AbstractOp {
 
    RecoveryOp(byte version) {
       super(0xA0, version, HotRodConstants.FETCH_TX_RECOVERY, "", (byte) 0, 0);
-   }
-}
-
-class ServerNode {
-   final String host;
-   final int port;
-
-   ServerNode(String host, int port) {
-      this.host = host;
-      this.port = port;
    }
 }
