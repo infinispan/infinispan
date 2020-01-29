@@ -4,6 +4,7 @@ package org.infinispan.commons.dataconversion;
  * @since 9.2
  */
 public interface WrapperIds {
+   byte NO_WRAPPER = 0;
 
    byte BYTE_ARRAY_WRAPPER = 1;
 
