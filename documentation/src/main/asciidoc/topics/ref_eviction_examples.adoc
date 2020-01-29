@@ -1,0 +1,99 @@
+[id='eviction_example-{context}']
+= Eviction Examples
+
+You configure eviction in `infinispan.xml` as part of your cache definition.
+
+.Default memory configuration
+
+Eviction is not enabled, which is the default configuration. {brandname} stores
+cache entries as objects in the data container.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory />
+----
+
+.Passivation without eviction
+
+Invalid configuration, {brandname} writes an error to log files:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<persistence passivation="true">
+  ...
+</persistence>
+
+<memory />
+----
+
+[TIP]
+====
+Passivation configures {brandname} to write entries to cache stores when it
+evicts those entries. You should always enable eviction if you enable
+passivation.
+====
+
+.Manual eviction
+
+{brandname} stores cache entries as objects. Eviction is not enabled but
+performed manually using the `evict()` method. {brandname} does not log errors
+if you enable passivation with this configuration:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory>
+  <object strategy="MANUAL" />
+</memory>
+----
+
+.Object storage with eviction
+
+{brandname} stores cache entries as objects. Eviction happens when there are
+100 entries in the data container and {brandname} gets a request to create a
+new entry:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory>
+  <object size="100" />
+</memory>
+----
+
+.Binary storage with memory-based eviction
+
+{brandname} stores cache entries as bytes. Eviction happens when the size of
+the data container reaches 100 bytes and {brandname} gets a request to create a
+new entry:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory>
+  <binary size="100" eviction="MEMORY"/>
+</memory>
+----
+
+.Off-heap storage with count-based eviction
+
+{brandname} stores cache entries as bytes in native memory. Eviction happens
+when there are 100 entries in the data container and {brandname} gets a request
+to create a new entry:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory>
+  <off-heap size="100" />
+</memory>
+----
+
+.Off-heap storage with the exception strategy
+
+{brandname} stores cache entries as bytes in native memory. When there are 100
+entries in the data container, and {brandname} gets a request to create a new
+entry, it throws an exception and does not allow the new entry:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<memory>
+  <off-heap size="100" strategy="EXCEPTION" />
+</memory>
+----

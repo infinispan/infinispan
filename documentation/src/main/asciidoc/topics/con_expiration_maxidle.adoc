@@ -1,0 +1,31 @@
+[id='maxidle_expiration-{context}']
+= Maximum Idle and Clustered Caches
+Because maximum idle expiration relies on the last access time for cache
+entries, it has some limitations with clustered cache modes.
+
+With lifespan expiration, the creation time for cache entries provides a value
+that is consistent across clustered caches. For example, the creation time for
+`k1` is always the same on all nodes.
+
+For maximum idle expiration with clustered caches, last access time for entries
+is not always the same on all nodes. To ensure that entries have the same
+relative access times across clusters, {brandname} sends touch commands to all
+owners when keys are accessed.
+
+The touch commands that {brandname} send have the following considerations:
+
+* `Cache.get()` requests do not return until all touch commands complete. This synchronous behavior increases latency of client requests.
+* The touch command also updates the "recently accessed" metadata for cache entries on all owners, which {brandname} uses for eviction.
+//Scattered cache is community only
+ifndef::productized[]
+* With scattered cache mode, {brandname} sends touch commands to all nodes, not
+just primary and backup owners.
+endif::productized[]
+
+.Additional information
+
+* Maximum idle expiration does not work with invalidation mode.
+* Iteration across a clustered cache can return expired entries that have
+exceeded the maximum idle time limit. This behavior ensures performance because
+no remote invocations are performed during the iteration. Also note that
+iteration does not refresh any expired entries.
