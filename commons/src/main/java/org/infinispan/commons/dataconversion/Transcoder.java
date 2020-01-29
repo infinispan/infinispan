@@ -3,6 +3,11 @@ package org.infinispan.commons.dataconversion;
 import java.util.Set;
 
 /**
+ * Converts content between two or more {@link MediaType}s.
+ *
+ * <p>Note: A transcoder must be symmetric: if it can convert from media type X to media type Y,
+ * it must also be able to convert from Y to X.</p>
+ *
  * @since 9.2
  */
 public interface Transcoder {
@@ -23,12 +28,15 @@ public interface Transcoder {
    Set<MediaType> getSupportedMediaTypes();
 
    /**
-    * @return true if the transcoder supports the conversion between supplied {@link MediaType}.
+    * @return {@code true} if the transcoder supports the conversion between the supplied {@link MediaType}s.
     */
    default boolean supportsConversion(MediaType mediaType, MediaType other) {
       return !mediaType.match(other) && supports(mediaType) && supports(other);
    }
 
+   /**
+    * @return {@code true} iff the transcoder supports the conversion to and from the given {@link MediaType}.
+    */
    default boolean supports(MediaType mediaType) {
       return getSupportedMediaTypes().stream().anyMatch(m -> m.match(mediaType));
    }
