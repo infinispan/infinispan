@@ -31,7 +31,8 @@ public class HotRodIteratorReapTest extends HotRodSingleNodeTest {
       }
       assertEquals(10, iterationManager.activeIterations());
       hotRodClient.stop().await();
-      assertEquals(0, iterationManager.activeIterations());
+      // The server reaps the iterations asynchronously after the connection is closed
+      eventuallyEquals(0, iterationManager::activeIterations);
    }
 
    public void testIterationStateReaperOnTimeout() {
