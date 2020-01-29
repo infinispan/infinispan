@@ -392,7 +392,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(10000, threadPool.keepAlive());
 
             assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
-            assertEquals(Version.getVersionShort("1.0"), g.serialization().version());
             Map<Integer, AdvancedExternalizer<?>> externalizers = g.serialization().advancedExternalizers();
             AdvancedExternalizer<?> externalizer = externalizers.get(9001);
             assertTrue(externalizer instanceof AdvancedExternalizerTest.IdViaConfigObj.Externalizer);

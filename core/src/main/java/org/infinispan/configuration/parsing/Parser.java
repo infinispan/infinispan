@@ -153,9 +153,10 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case VERSION: {
-               CONFIG.serializationVersionDeprecated();
-               builder.serialization().version(value);
-               break;
+               if (!reader.getSchema().since(11, 0)) {
+                  ignoreAttribute(reader, Attribute.VERSION);
+                  break;
+               }
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);

@@ -44,8 +44,8 @@ import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.audit.NullAuditLogger;
+import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.server.commons.service.Builder;
 import org.infinispan.server.commons.service.InjectedValueDependency;
 import org.infinispan.server.commons.service.ValueDependency;
@@ -151,7 +151,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
 
         GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
         ModuleLoader moduleLoader = this.loader.getValue();
-        builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader)).marshaller(new JBossUserMarshaller());
+        builder.serialization().marshaller(new JBossUserMarshaller(ModularClassResolver.getInstance(moduleLoader)));
         ClassLoader loader;
         try {
             loader = makeGlobalClassLoader(moduleLoader, module, modules);
