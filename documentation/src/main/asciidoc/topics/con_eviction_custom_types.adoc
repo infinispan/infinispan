@@ -1,0 +1,19 @@
+[id='eviction_custom_types-{context}']
+= User Class Instances with Memory-Based Eviction
+User class instances with memory-based eviction requires specific configuration
+because {brandname} cannot calculate how much memory your classes use.
+
+You must use binary or off-heap storage with memory-based eviction, as in the
+following examples:
+
+.Declarative configuration
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/config_eviction_memory.xml[]
+----
+
+.Programmatic configuration
+[source,java]
+----
+include::code_examples/ConfigEvictionMemory.java[]
+----
