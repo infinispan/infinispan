@@ -570,13 +570,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testWriteAndDeleteBatchIterable() {
       // Number of entries is randomized to even numbers between 80 and 120
       int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
-      testBatch(numberOfEntries, () ->
-            cl.writeBatch(
-                  IntStream.range(0, numberOfEntries).boxed()
-                        .map(i -> marshalledEntry(i.toString(), "Val" + i).asMarshalledEntry())
-                        .collect(Collectors.toList())
-            )
-      );
+      testBatch(numberOfEntries, () -> cl.bulkUpdate(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i))));
    }
 
    public void testEmptyWriteAndDeleteBatchIterable() {

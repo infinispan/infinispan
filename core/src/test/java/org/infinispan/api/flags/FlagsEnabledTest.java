@@ -198,8 +198,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    private void assertLoadsAndReset(Cache<?, ?> cache1, int expected1, Cache<?, ?> cache2, int expected2) {
       DummyInMemoryStore store1 = getCacheStore(cache1);
       DummyInMemoryStore store2 = getCacheStore(cache2);
-      assertEquals(expected1, (int) store1.stats().get("load"));
-      assertEquals(expected2, (int) store2.stats().get("load"));
+      assertEquals(expected1, (int) store1.stats().get("loadEntry"));
+      assertEquals(expected2, (int) store2.stats().get("loadEntry"));
       store1.clearStats();
       store2.clearStats();
    }

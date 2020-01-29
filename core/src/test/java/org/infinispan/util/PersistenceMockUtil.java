@@ -55,8 +55,7 @@ public class PersistenceMockUtil {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(TestingUtil.tmpDirectory(testClass));
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
-            SingleSegmentKeyPartitioner.getInstance(), marshaller,
-            timeService, new ByteBufferFactoryImpl(), mef, mef,
+            SingleSegmentKeyPartitioner.getInstance(), marshaller, timeService, new ByteBufferFactoryImpl(), mef,
             new WithinThreadExecutor(), global.build());
    }
 

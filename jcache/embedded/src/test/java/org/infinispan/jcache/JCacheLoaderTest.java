@@ -98,7 +98,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             cache.loadAll(keys, false, future);
             futureGet(future); // wait for key to be loaded
             assertTrue(future.isDone());
-            assertEquals(numEntries, dummyStore.stats().get("load").intValue());
+            assertEquals(numEntries, dummyStore.stats().get("loadEntry").intValue());
 
             // Load from memory
             assertEquals("v1", cache.get(1));
@@ -108,7 +108,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             cache.loadAll(keys, true, future);
             futureGet(future); // wait for key to be loaded
             assertTrue(future.isDone());
-            assertEquals(numEntries * 2, dummyStore.stats().get("load").intValue());
+            assertEquals(numEntries * 2, dummyStore.stats().get("loadEntry").intValue());
          }
       });
    }

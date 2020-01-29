@@ -63,7 +63,7 @@ public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
    }
 
    private void assertStoreStats(DummyInMemoryStore store, int loads, int writes, int deletes) {
-      assertEquals(loads, store.stats().get("load").intValue());
+      assertEquals(loads, store.stats().get("loadEntry").intValue());
       assertEquals(writes, store.stats().get("write").intValue());
       assertEquals(deletes, store.stats().get("delete").intValue());
    }

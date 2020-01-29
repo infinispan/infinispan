@@ -4,12 +4,10 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -25,7 +23,6 @@ public class InitializationContextImpl implements InitializationContext {
    private final PersistenceMarshaller marshaller;
    private final TimeService timeService;
    private final ByteBufferFactory byteBufferFactory;
-   private final MarshalledEntryFactory marshalledEntryFactory;
    private final MarshallableEntryFactory marshallableEntryFactory;
    private final ExecutorService executorService;
    private final GlobalConfiguration globalConfiguration;
@@ -33,16 +30,14 @@ public class InitializationContextImpl implements InitializationContext {
 
    public InitializationContextImpl(StoreConfiguration configuration, Cache cache, KeyPartitioner keyPartitioner,
                                     PersistenceMarshaller marshaller, TimeService timeService,
-                                    ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
-                                    MarshallableEntryFactory marshallableEntryFactory, ExecutorService executorService,
-                                    GlobalConfiguration globalConfiguration) {
+                                    ByteBufferFactory byteBufferFactory, MarshallableEntryFactory marshallableEntryFactory,
+                                    ExecutorService executorService, GlobalConfiguration globalConfiguration) {
       this.configuration = configuration;
       this.cache = cache;
       this.keyPartitioner = keyPartitioner;
       this.marshaller = marshaller;
       this.timeService = timeService;
       this.byteBufferFactory = byteBufferFactory;
-      this.marshalledEntryFactory = marshalledEntryFactory;
       this.marshallableEntryFactory = marshallableEntryFactory;
       this.executorService = executorService;
       this.globalConfiguration = globalConfiguration;
@@ -64,11 +59,6 @@ public class InitializationContextImpl implements InitializationContext {
    }
 
    @Override
-   public StreamingMarshaller getMarshaller() {
-      return new StreamingMarshallerBridge(marshaller);
-   }
-
-   @Override
    public TimeService getTimeService() {
       return timeService;
    }
@@ -87,11 +77,6 @@ public class InitializationContextImpl implements InitializationContext {
    @Override
    public ExecutorService getExecutor() {
       return executorService;
-   }
-
-   @Override
-   public MarshalledEntryFactory getMarshalledEntryFactory() {
-      return marshalledEntryFactory;
    }
 
    @Override

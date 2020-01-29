@@ -7,9 +7,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -20,9 +17,9 @@ import org.infinispan.persistence.spi.MarshalledValue;
  * @since 10.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory, MarshallableEntryFactory {
+public class MarshalledEntryFactoryImpl implements MarshallableEntryFactory {
 
-   private static final MarshallableEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
+   private static final MarshallableEntry EMPTY = new MarshallableEntryImpl(null, null, (ByteBuffer) null, -1, -1, null);
 
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
    Marshaller marshaller;
@@ -72,20 +69,5 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory, Marsh
    @Override
    public MarshallableEntry getEmpty() {
       return EMPTY;
-   }
-
-   @Override
-   public MarshalledEntry newMarshalledEntry(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes) {
-      return new MarshalledEntryImpl<>(key, valueBytes, metadataBytes, marshaller);
-   }
-
-   @Override
-   public MarshalledEntry newMarshalledEntry(Object key, ByteBuffer valueBytes, ByteBuffer metadataBytes) {
-      return new MarshalledEntryImpl<>(key, valueBytes, metadataBytes, marshaller);
-   }
-
-   @Override
-   public MarshalledEntry newMarshalledEntry(Object key, Object value, InternalMetadata im) {
-      return new MarshalledEntryImpl<>(key, value, im, marshaller);
    }
 }

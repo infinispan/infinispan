@@ -223,6 +223,35 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       }
 
       @Override
+      public Publisher<MarshallableEntry> entryPublisher(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+         return null;
+      }
+
+      @Override
+      public MarshallableEntry get(int segment, Object key) {
+         return loadEntry(key);
+      }
+
+      @Override
+      public boolean contains(int segment, Object key) {
+         return contains(key);
+      }
+
+      @Override
+      public void write(int segment, MarshallableEntry entry) {
+      }
+
+      @Override
+      public boolean delete(int segment, Object key) {
+         return false;
+      }
+
+      @Override
+      public Publisher<MarshallableEntry> entryPublisher(IntSet segments, Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+         return null;
+      }
+
+      @Override
       public void start() {
       }
 

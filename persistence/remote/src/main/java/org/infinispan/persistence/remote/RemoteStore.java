@@ -137,6 +137,11 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
+   public MarshallableEntry<K, V> get(int segment, Object key) {
+      return loadEntry(key);
+   }
+
+   @Override
    public MarshallableEntry<K, V> loadEntry(Object key) throws PersistenceException {
       if (configuration.rawValues()) {
          Object unwrappedKey;
@@ -171,6 +176,11 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
          MarshalledValue value = (MarshalledValue) remoteCache.get(unwrappedKey);
          return value == null ? null : entryFactory.create(key, value);
       }
+   }
+
+   @Override
+   public boolean contains(int segment, Object key) {
+      return contains(key);
    }
 
    @Override
@@ -276,6 +286,11 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    }
 
    @Override
+   public void write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
+      write(entry);
+   }
+
+   @Override
    public void write(MarshallableEntry entry) throws PersistenceException {
       if (trace) {
          log.tracef("Adding entry: %s", entry);
@@ -327,6 +342,11 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
             .doOnNext(k -> remoteCache.remove(k))
             .to(RxJavaInterop.flowableToCompletionStage());
       CompletionStages.join(stage);
+   }
+
+   @Override
+   public boolean delete(int segment, Object key) {
+      return delete(key);
    }
 
    @Override

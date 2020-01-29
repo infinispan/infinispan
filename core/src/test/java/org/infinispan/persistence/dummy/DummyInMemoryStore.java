@@ -189,7 +189,7 @@ public class DummyInMemoryStore extends AbstractSegmentedAdvancedLoadWriteStore 
    @Override
    public MarshallableEntry get(int segment, Object key) {
       assertRunning();
-      record("load");
+      record("loadEntry");
       if (key == null) return null;
       Map<Object, byte[]> map = mapForSegment(segment);
       MarshallableEntry me = deserialize(key, map.get(key));
@@ -214,7 +214,7 @@ public class DummyInMemoryStore extends AbstractSegmentedAdvancedLoadWriteStore 
    @Override
    public Flowable<MarshallableEntry> entryPublisher(IntSet segments, Predicate filter, boolean fetchValue, boolean fetchMetadata) {
       assertRunning();
-      record("publishEntries");
+      record("entryPublisher");
       log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
       Flowable<Map.Entry<Object, byte[]>> flowable;
       if (configuration.segmented()) {
@@ -471,7 +471,7 @@ public class DummyInMemoryStore extends AbstractSegmentedAdvancedLoadWriteStore 
    @Override
    public boolean contains(int segment, Object key) {
       assertRunning();
-      record("load");
+      record("loadEntry");
       if (key == null) return false;
       Map<Object, byte[]> map = mapForSegment(segment);
       MarshallableEntry me = deserialize(key, map.get(key));

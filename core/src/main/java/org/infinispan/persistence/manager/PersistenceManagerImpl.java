@@ -73,7 +73,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -134,7 +133,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject @ComponentName(EXPIRATION_SCHEDULED_EXECUTOR)
    ScheduledExecutorService scheduledExecutor;
    @Inject ByteBufferFactory byteBufferFactory;
-   @Inject MarshalledEntryFactory marshalledEntryFactory;
    @Inject MarshallableEntryFactory marshallableEntryFactory;
    @Inject CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    @Inject ComponentRef<InternalExpirationManager<Object, Object>> expirationManager;
@@ -1188,7 +1186,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          InitializationContextImpl ctx =
                new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
-                     byteBufferFactory, marshalledEntryFactory, marshallableEntryFactory, persistenceExecutor, globalConfiguration);
+                     byteBufferFactory, marshallableEntryFactory, persistenceExecutor, globalConfiguration);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);
