@@ -200,6 +200,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       EncoderRegistry encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
 
       // Wraps the compatibility marshaller so that it can be used as a transcoder
+      // Note: The encoder registry is global, so all caches with compatibility enabled
+      // will use the same compatibility marshaller for transcoding
+      // Note: The global marshaller is registered in EncoderRegistryFactory
       if (configuration.compatibility().enabled() && configuration.compatibility().marshaller() != null) {
          Marshaller marshaller = configuration.compatibility().marshaller();
          componentRegistry.wireDependencies(marshaller);
@@ -207,9 +210,6 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(marshaller));
          }
       }
-
-      // Wraps the GlobalMarshaller so that it can be used as a transcoder
-      encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller));
 
       /*
          --------------------------------------------------------------------------------------------------------------

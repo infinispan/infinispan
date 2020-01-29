@@ -1,15 +1,17 @@
 package org.infinispan.marshall.core;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.EncoderIds;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.dataconversion.WrapperIds;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
@@ -21,14 +23,12 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class EncoderRegistryImpl implements EncoderRegistry {
-
    private static final Log log = LogFactory.getLog(EncoderRegistryImpl.class);
 
-   private final Map<Class<? extends Encoder>, Encoder> encoderMap = CollectionFactory.makeConcurrentMap(10);
-   private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = CollectionFactory.makeConcurrentMap(2);
-   private final Map<Short, Class<? extends Encoder>> encoderById = CollectionFactory.makeConcurrentMap(10);
-   private final Map<Byte, Class<? extends Wrapper>> wrapperById = CollectionFactory.makeConcurrentMap(2);
-   private final Set<Transcoder> transcoders = new ConcurrentHashSet<>();
+   private final Map<Short, Encoder> encoderMap = new ConcurrentHashMap<>();
+   private final Map<Byte, Wrapper> wrapperMap = new ConcurrentHashMap<>();
+   private final List<Transcoder> transcoders = Collections.synchronizedList(new ArrayList<>());
+   private final Map<MediaType, Map<MediaType, Transcoder>> transcoderCache = new ConcurrentHashMap<>();
 
    @Override
    public void registerEncoder(Encoder encoder) {
@@ -36,11 +36,10 @@ public class EncoderRegistryImpl implements EncoderRegistry {
          throw new NullPointerException("Encoder cannot be null");
       }
       short id = encoder.id();
-      if (encoderById.containsKey(id)) {
+      if (encoderMap.containsKey(id)) {
          throw log.duplicateIdEncoder(id);
       }
-      encoderById.put(id, encoder.getClass());
-      encoderMap.put(encoder.getClass(), encoder);
+      encoderMap.put(id, encoder);
    }
 
    @Override
@@ -49,11 +48,10 @@ public class EncoderRegistryImpl implements EncoderRegistry {
          throw new NullPointerException("Wrapper cannot be null");
       }
       byte id = wrapper.id();
-      if (wrapperById.containsKey(id)) {
+      if (wrapperMap.containsKey(id)) {
          throw log.duplicateIdWrapper(id);
       }
-      wrapperById.put(id, wrapper.getClass());
-      wrapperMap.put(wrapper.getClass(), wrapper);
+      wrapperMap.put(id, wrapper);
    }
 
    @Override
@@ -63,14 +61,21 @@ public class EncoderRegistryImpl implements EncoderRegistry {
 
    @Override
    public Transcoder getTranscoder(MediaType mediaType, MediaType another) {
-      Optional<Transcoder> transcoder = transcoders
-            .stream()
-            .filter(t -> t.supportsConversion(mediaType, another))
-            .findAny();
-      if (!transcoder.isPresent()) {
+      Transcoder transcoder = getTranscoderOrNull(mediaType, another);
+      if (transcoder == null) {
          throw log.cannotFindTranscoder(mediaType, another);
       }
-      return transcoder.get();
+      return transcoder;
+   }
+
+   private Transcoder getTranscoderOrNull(MediaType mediaType, MediaType another) {
+      return transcoderCache.computeIfAbsent(mediaType, mt -> new ConcurrentHashMap<>(4))
+                            .computeIfAbsent(another, mt -> {
+                               return transcoders.stream()
+                                                 .filter(t -> t.supportsConversion(mediaType, another))
+                                                 .findFirst()
+                                                 .orElse(null);
+                            });
    }
 
    @Override
@@ -78,42 +83,58 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       if (from == null || to == null) {
          throw new NullPointerException("MediaType must not be null!");
       }
-      return from.match(to) || transcoders.stream().anyMatch(t -> t.supportsConversion(from, to));
+      return from.match(to) || getTranscoderOrNull(from, to) != null;
    }
 
    @Override
-   public Encoder getEncoder(Class<? extends Encoder> clazz, Short encoderId) {
-      if (clazz == null && encoderId == null) {
+   public Encoder getEncoder(Class<? extends Encoder> clazz, short encoderId) {
+      if (clazz == null && encoderId == EncoderIds.NO_ENCODER) {
          throw new NullPointerException("Encoder class or identifier must be provided!");
       }
-      Class<? extends Encoder> encoderClass = clazz == null ? encoderById.get(encoderId) : clazz;
-      if (encoderClass == null) {
-         throw log.encoderIdNotFound(encoderId);
-      }
-      Encoder encoder = encoderMap.get(encoderClass);
-      if (encoder == null) {
-         throw log.encoderClassNotFound(clazz);
+
+      Encoder encoder;
+      if (encoderId != EncoderIds.NO_ENCODER) {
+         encoder = encoderMap.get(encoderId);
+         if (encoder == null) {
+            throw log.encoderIdNotFound(encoderId);
+         }
+      } else {
+         encoder = encoderMap.values().stream()
+                             .filter(e -> e.getClass().equals(clazz))
+                             .findFirst()
+                             .orElse(null);
+         if (encoder == null) {
+            throw log.encoderClassNotFound(clazz);
+         }
       }
       return encoder;
    }
 
    @Override
    public boolean isRegistered(Class<? extends Encoder> encoderClass) {
-      return encoderMap.containsKey(encoderClass);
+      return encoderMap.values().stream().anyMatch(e -> e.getClass().equals(encoderClass));
    }
 
    @Override
-   public Wrapper getWrapper(Class<? extends Wrapper> clazz, Byte wrapperId) {
-      if (clazz == null && wrapperId == null) {
+   public Wrapper getWrapper(Class<? extends Wrapper> clazz, byte wrapperId) {
+      if (clazz == null && wrapperId == WrapperIds.NO_WRAPPER) {
          throw new NullPointerException("Wrapper class or identifier must be provided!");
       }
-      Class<? extends Wrapper> wrapperClass = clazz == null ? wrapperById.get(wrapperId) : clazz;
-      if (wrapperClass == null) {
-         throw log.wrapperIdNotFound(wrapperId);
-      }
-      Wrapper wrapper = wrapperMap.get(wrapperClass);
-      if (wrapper == null) {
-         throw log.wrapperClassNotFound(clazz);
+
+      Wrapper wrapper;
+      if (wrapperId != WrapperIds.NO_WRAPPER) {
+         wrapper = wrapperMap.get(wrapperId);
+         if (wrapper == null) {
+            throw log.wrapperIdNotFound(wrapperId);
+         }
+      } else {
+         wrapper = wrapperMap.values().stream()
+                             .filter(e -> e.getClass().equals(clazz))
+                             .findAny()
+                             .orElse(null);
+         if (wrapper == null) {
+            throw log.wrapperClassNotFound(clazz);
+         }
       }
       return wrapper;
    }
