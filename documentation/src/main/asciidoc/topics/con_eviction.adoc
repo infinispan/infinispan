@@ -1,0 +1,12 @@
+[id='eviction-{context}']
+= Eviction
+Eviction provides a way to manage how much memory {brandname} uses.
+
+{brandname} lets you configure the maximum size of the data container. Eviction
+removes entries from the cache to ensure that {brandname} does not exceed that
+maximum size.
+
+[NOTE]
+====
+Eviction removes entries from memory but not from persistent cache stores.
+====

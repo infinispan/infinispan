@@ -1,0 +1,27 @@
+[id='expiration_reaper-{context}']
+= Expiration Reaper
+{brandname} uses a reaper thread that runs periodically to detect and remove
+expired entries. The expiration reaper ensures that expired entries that are no
+longer accessed are removed.
+
+The {brandname} `ExpirationManager` interface handles the expiration reaper and
+exposes the `processExpiration()` method.
+
+In some cases, you can disable the expiration reaper and manually expire
+entries by calling `processExpiration()`; for instance, if you are using local
+cache mode with a custom application where a maintenance thread runs
+periodically.
+
+[IMPORTANT]
+====
+If you use clustered cache modes, you should never disable the expiration
+reaper.
+
+{brandname} always uses the expiration reaper when using cache stores. In this
+case you cannot disable it.
+====
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/configuration/cache/ExpirationConfigurationBuilder.html[org.infinispan.configuration.cache.ExpirationConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/expiration/ExpirationManager.html[org.infinispan.expiration.ExpirationManager]
