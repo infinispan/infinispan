@@ -9,6 +9,7 @@ import java.util.Set;
 import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.EncoderIds;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -44,22 +45,18 @@ public final class DataConversion {
    public static final DataConversion IDENTITY_KEY = new DataConversion(IdentityEncoder.INSTANCE, IdentityWrapper.INSTANCE, true);
    public static final DataConversion IDENTITY_VALUE = new DataConversion(IdentityEncoder.INSTANCE, IdentityWrapper.INSTANCE, false);
 
+   // On the origin node the conversion is initialized with the encoder/wrapper classes, on remote nodes with the ids
    private Class<? extends Encoder> encoderClass;
    private Class<? extends Wrapper> wrapperClass;
+   private short encoderId;
+   private byte wrapperId;
    private MediaType requestMediaType;
    private MediaType storageMediaType;
-
-   public MediaType getRequestMediaType() {
-      return requestMediaType;
-   }
-
-   private Short encoderId;
-   private Byte wrapperId;
-   private Encoder encoder;
-   private Wrapper wrapper;
-
    private boolean isKey;
-   private Transcoder transcoder;
+
+   private transient Encoder encoder;
+   private transient Wrapper wrapper;
+   private transient Transcoder transcoder;
    private transient EncoderRegistry encoderRegistry;
 
    private DataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass,
@@ -153,14 +150,25 @@ public final class DataConversion {
 
    @Inject
    public void injectDependencies(GlobalConfiguration gcr, EncoderRegistry encoderRegistry, Configuration configuration) {
+      if (this.encoder != null && this.wrapper != null) {
+         // This must be one of the static encoders, we can't inject any component in it
+         return;
+      }
+
       this.encoderRegistry = encoderRegistry;
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
       this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
 
+      lookupEncoder(encoderRegistry, configuration, embeddedMode);
+      this.lookupWrapper();
+      this.lookupTranscoder();
+   }
+
+   private void lookupEncoder(EncoderRegistry encoderRegistry, Configuration configuration, boolean embeddedMode) {
       StorageType storageType = configuration.memory().storageType();
       boolean offheap = storageType == StorageType.OFF_HEAP;
       boolean binary = storageType == StorageType.BINARY;
-      boolean isEncodingEmpty = encoderClass == null && encoderId == null && encoder == null;
+      boolean isEncodingEmpty = encoderClass == null && encoderId == EncoderIds.NO_ENCODER;
       if (isEncodingEmpty) {
          encoderClass = IdentityEncoder.class;
          if (offheap) {
@@ -172,13 +180,7 @@ public final class DataConversion {
             encoderClass = BinaryEncoder.class;
          }
       }
-      this.lookupWrapper();
       this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
-      this.lookupTranscoder();
-   }
-
-   public MediaType getStorageMediaType() {
-      return storageMediaType;
    }
 
    private void lookupTranscoder() {
@@ -224,6 +226,14 @@ public final class DataConversion {
          return wrapper.isFilterable() ? stored : wrapper.unwrap(stored);
       }
       return encoder.fromStorage(wrapper.isFilterable() ? stored : wrapper.unwrap(stored));
+   }
+
+   public MediaType getRequestMediaType() {
+      return requestMediaType;
+   }
+
+   public MediaType getStorageMediaType() {
+      return storageMediaType;
    }
 
    public Encoder getEncoder() {
