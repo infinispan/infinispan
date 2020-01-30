@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -16,6 +17,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +37,8 @@ import java.util.stream.Stream;
 
 import javax.transaction.TransactionManager;
 
+import org.apache.logging.log4j.core.Logger;
+import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCache;
@@ -43,28 +47,39 @@ import org.infinispan.commons.executors.NonBlockingThread;
 import org.infinispan.commons.test.TestNGLongTestsHook;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
-import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
 import org.infinispan.executors.LimitedExecutor;
+import org.infinispan.expiration.impl.ClusterExpirationManager;
+import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.FakeTestClass;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
+import org.infinispan.topology.ClusterTopologyManagerImpl;
+import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
+import org.infinispan.util.BlockingLocalTopologyManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.util.NotifierLatch;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.logging.Logger;
 import org.jgroups.protocols.FlowControl;
 import org.jgroups.protocols.UDP;
 import org.jgroups.stack.Protocol;
+import org.jgroups.util.NonBlockingCreditMap;
 import org.jgroups.util.Table;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
@@ -100,56 +115,151 @@ public abstract class AbstractInfinispanTest {
          builder.markAsBlocking(CacheImpl.class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
          builder.markAsBlocking(CacheImpl.class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
+         // Prevent people from calling into distributed streams
+         builder.markAsBlocking("org.infinispan.interceptors.distribution.DistributionBulkInterceptor$BackingEntrySet", "stream", "()Lorg/infinispan/CacheStream;");
+         builder.markAsBlocking("org.infinispan.interceptors.distribution.DistributionBulkInterceptor$BackingEntrySet", "parallelStream", "()Lorg/infinispan/CacheStream;");
+
          builder.nonBlockingThreadPredicate(current -> current.or(thread -> thread instanceof NonBlockingThread));
+
+
          // SecureRandom reads from a socket
          builder.allowBlockingCallsInside(SecureRandom.class.getName(), "nextBytes");
-         // UDP calls PlainDatagramSocketImpl#send which can block if OS buffer is full - but we just ignore
-         builder.allowBlockingCallsInside(UDP.class.getName(), "_send");
-         builder.allowBlockingCallsInside(FlowControl.class.getName(), "adjustCredit");
-         // Random JGroups stuff
-         builder.allowBlockingCallsInside(Table.class.getName(), "add");
+
          // Just assume all the thread pools don't block - not we check the rejected handler below though
          builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "getTask");
          builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "processWorkerExit");
          builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "execute");
          builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName(), "schedule");
 
-         // TODO: This can actually block us for a bit, we should really remove this!!!
+         // Topology lock is very short lived - we assume these are okay
          builder.allowBlockingCallsInside(StateTransferLockImpl.class.getName(), "acquireSharedTopologyLock");
          builder.allowBlockingCallsInside(StateTransferLockImpl.class.getName(), "releaseSharedTopologyLock");
+         builder.allowBlockingCallsInside(StateTransferLockImpl.class.getName(), "acquireExclusiveTopologyLock");
+         builder.allowBlockingCallsInside(StateTransferLockImpl.class.getName(), "releaseExclusiveTopologyLock");
 
          // LimitedExecutor just submits a task to another thread pool
          builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "execute");
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "removePermit");
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "runTasks");
+         // This invokes the actual runnable - we have to make sure it doesn't block as normal
+         builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
+         // This is invoked when cancelling a task - it locks a lock to update a queue, which shouldn't block
+         builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "remove");
 
-         // Some test utilities may block the cpu thread - which is fine
-         builder.allowBlockingCallsInside(EvictionWithConcurrentOperationsTest.class.getName() + "$Latch", "blockIfNeeded");
-         builder.allowBlockingCallsInside(CheckPoint.class.getName(), "await");
-         builder.allowBlockingCallsInside(CheckPoint.class.getName(), "trigger");
-         builder.allowBlockingCallsInside(BlockingInterceptor.class.getName(), "blockIfNeeded");
-         builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepRandom");
-         builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepThread");
+         // If shutting down a cache manager - don't worry if blocking
+         builder.allowBlockingCallsInside(DefaultCacheManager.class.getName(), "stop");
+
+         // This method by design will never block; It may block very shortly if another thread is removing or adding
+         // to the queue, but it will never block for an extended period by design as there will always be room
+         builder.allowBlockingCallsInside(ClusterExpirationManager.class.getName(), "addStageToPermits");
 
          // The blocking iterator locks to signal at the end - ignore
          builder.allowBlockingCallsInside(BlockingFlowableIterable.class.getName() + "$BlockingFlowableIterator", "signalConsumer");
 
+         // This shouldn't block long when held - but it is a write lock which can be delayed
+         builder.allowBlockingCallsInside(KeyAffinityServiceImpl.class.getName(), "handleViewChange");
+
+         // The cache has to always be LOCAL and cannot be used with persistence
+         builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
+
          // Allow logging to block
-         builder.allowBlockingCallsInside(Logger.class.getName(), "logf");
+         builder.allowBlockingCallsInside(Logger.class.getName(), "logMessage");
          builder.allowBlockingCallsInside(java.util.logging.Logger.class.getName(), "log");
 
          // Make sure our rejection handlers never block in a non blocking thread
          builder.disallowBlockingCallsInside(BlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");
-         builder.disallowBlockingCallsInside(NonBlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");
+
+         jgroupsMethodsAllowedToBlock(builder);
+
+         questionableMethodsAllowedToBlock(builder);
+
+         allowTestsToBlock(builder);
 
          builder.blockingMethodCallback(bm -> {
             throw new CacheException(String.format("Blocking call! %s on thread %s", bm, Thread.currentThread()));
          });
       }).install();
 
-      Thread.setDefaultUncaughtExceptionHandler((thread, t) -> {
-         t.printStackTrace();
-         LogFactory.getLogger("Infinispan-TEST").fatal("Throwable was not caught in thread " + thread +
-               " - exception is: " + t);
-      });
+      Thread.setDefaultUncaughtExceptionHandler((thread, t) ->
+         LogFactory.getLogger("Infinispan-TEST").fatal("Throwable was not caught in thread " + thread, t)
+      );
+   }
+
+   private static void methodsToBeRemoved(BlockHound.Builder builder) {
+      // Total Order is to be removed!
+      builder.allowBlockingCallsInside(StateConsumerImpl.class.getName(), "awaitTotalOrderTransactions");
+
+      // The internal map only supports local mode - we need to replace with Caffeine
+      builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
+   }
+
+   private static void jgroupsMethodsAllowedToBlock(BlockHound.Builder builder) {
+      // UDP calls PlainDatagramSocketImpl#send which can block if OS buffer is full - but we just ignore
+      builder.allowBlockingCallsInside(UDP.class.getName(), "_send");
+      builder.allowBlockingCallsInside(FlowControl.class.getName(), "adjustCredit");
+      builder.allowBlockingCallsInside(Table.class.getName(), "add");
+      builder.allowBlockingCallsInside(Table.class.getName(), "get");
+
+      // THIS IS A VERY BAD HACK - because you can't instrument a static block of the class in jgroups Version class
+      // which loads a properties file
+      builder.allowBlockingCallsInside(Properties.class.getName(), "load");
+
+      // The NonBlockingCreditMap being non blocking is a bit questionable as they hold the lock while doing a lot of
+      // work - including acquiring other locks and possibly calling await
+      builder.allowBlockingCallsInside(NonBlockingCreditMap.class.getName(), "decrement");
+      builder.allowBlockingCallsInside(NonBlockingCreditMap.class.getName(), "replenish");
+   }
+
+   private static void questionableMethodsAllowedToBlock(BlockHound.Builder builder) {
+      // Component registry has a lock to protect its state - is short lived lock
+      builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "prepareWrapperChange");
+
+      // This one should probably not be allowed - it is waiting for another component to start
+      // TODO: This might actually be a bug in the rewiring logic. (shows in StateTransferOverwritingValueTest)
+      builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "awaitWrapperState");
+
+      // Believe this can technically block for TCP when flushing to socket
+      builder.allowBlockingCallsInside(JGroupsTransport.class.getName(), "sendCommand");
+
+      // Same about blocking when flushing TCP socket
+      builder.allowBlockingCallsInside(JGroupsTransport.class.getName(), "sendResponse");
+
+      // This method calls initCacheStatusIfAbsent which can invoke readScopedState which reads scope from a file that
+      // can block the current thread while doing I/O
+      builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "prepareJoin");
+      builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "updateClusterState");
+   }
+
+   private static void allowTestsToBlock(BlockHound.Builder builder) {
+      builder.allowBlockingCallsInside(EvictionWithConcurrentOperationsTest.class.getName() + "$Latch", "blockIfNeeded");
+      builder.allowBlockingCallsInside(CheckPoint.class.getName(), "await");
+      builder.allowBlockingCallsInside(CheckPoint.class.getName(), "trigger");
+      builder.allowBlockingCallsInside(BlockingInterceptor.class.getName(), "blockIfNeeded");
+      builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepRandom");
+      builder.allowBlockingCallsInside(TestingUtil.class.getName(), "sleepThread");
+      builder.allowBlockingCallsInside(ReclosableLatch.class.getName(), "await");
+      builder.allowBlockingCallsInside(BlockingLocalTopologyManager.class.getName() + "$Event", "awaitUnblock");
+      builder.allowBlockingCallsInside(BlockingLocalTopologyManager.class.getName() + "$Event", "unblock");
+      builder.allowBlockingCallsInside(ControlledRpcManager.class.getName(), "performRequest");
+      builder.allowBlockingCallsInside(ControlledRpcManager.class.getName(), "expectCommandAsync");
+      builder.allowBlockingCallsInside(StateSequencer.class.getName(), "action");
+      builder.allowBlockingCallsInside(StateSequencer.class.getName(), "waitForState");
+      builder.allowBlockingCallsInside(NotifierLatch.class.getName(), "blockIfNeeded");
+      builder.allowBlockingCallsInside(NotifierLatch.class.getName(), "startBlocking");
+      builder.allowBlockingCallsInside(NotifierLatch.class.getName(), "stopBlocking");
+      builder.allowBlockingCallsInside(NotifierLatch.class.getName(), "waitToBlock");
+      builder.allowBlockingCallsInside(NotifierLatch.class.getName(), "unblockOnce");
+
+      registerAllPublicMethodsOnClass(builder, JREBlocking.class);
+   }
+
+   private static void registerAllPublicMethodsOnClass(BlockHound.Builder builder, Class<?> clazz) {
+      Method[] methods = clazz.getMethods();
+      for (Method method : methods) {
+         if (Modifier.isPublic(method.getModifiers())) {
+            builder.allowBlockingCallsInside(clazz.getName(), method.getName());
+         }
+      }
    }
 
    protected interface Condition {

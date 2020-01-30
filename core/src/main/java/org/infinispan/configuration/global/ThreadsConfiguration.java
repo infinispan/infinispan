@@ -92,6 +92,10 @@ public class ThreadsConfiguration implements ConfigurationInfo {
       return stateTransferThreadPool;
    }
 
+   /**
+    * @return An empty {@code ThreadPoolConfiguration}.
+    * @deprecated Since 11.0, no longer used.
+    */
    public ThreadPoolConfiguration transportThreadPool() {
       return transportThreadPool;
    }

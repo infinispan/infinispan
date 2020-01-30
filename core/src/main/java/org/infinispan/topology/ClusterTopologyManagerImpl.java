@@ -3,7 +3,7 @@ package org.infinispan.topology;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.infinispan.util.logging.Log.CLUSTER;
@@ -109,7 +109,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Inject CacheManagerNotifier cacheManagerNotifier;
    @Inject EmbeddedCacheManager cacheManager;
    @Inject
-   @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
+   @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
    ExecutorService transportExecutor;
    @Inject
    @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)

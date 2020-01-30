@@ -79,7 +79,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    @Inject DistributionManager distributionManager;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
    ExecutorService asyncExecutor;
 
    private final IndexModificationStrategy indexingMode;

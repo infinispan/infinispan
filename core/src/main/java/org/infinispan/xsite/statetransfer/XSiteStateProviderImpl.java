@@ -1,6 +1,6 @@
 package org.infinispan.xsite.statetransfer;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
@@ -34,8 +34,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
@@ -69,7 +69,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject CommandsFactory commandsFactory;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
+   @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
    ExecutorService executorService;
    @Inject Configuration configuration;
    @Inject ComponentRef<XSiteStateTransferManager> stateTransferManager;

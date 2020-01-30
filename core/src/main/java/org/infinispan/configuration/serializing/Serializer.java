@@ -144,8 +144,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeStartElement(Element.THREADS);
       ConcurrentMap<String, DefaultThreadFactory> threadFactories = new ConcurrentHashMap<>();
       for (ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.expirationThreadPool(), globalConfiguration.listenerThreadPool(),
-            globalConfiguration.persistenceThreadPool(), globalConfiguration.stateTransferThreadPool(),
-            globalConfiguration.transport().remoteCommandThreadPool(), globalConfiguration.transport().transportThreadPool())) {
+            globalConfiguration.persistenceThreadPool(), globalConfiguration.transport().remoteCommandThreadPool())) {
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
          if (threadFactory instanceof DefaultThreadFactory) {
             DefaultThreadFactory tf = (DefaultThreadFactory) threadFactory;
@@ -159,9 +158,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writeThreadPool(writer, globalConfiguration.expirationThreadPoolName(), globalConfiguration.expirationThreadPool());
       writeThreadPool(writer, globalConfiguration.listenerThreadPoolName(), globalConfiguration.listenerThreadPool());
       writeThreadPool(writer, globalConfiguration.persistenceThreadPoolName(), globalConfiguration.persistenceThreadPool());
-      writeThreadPool(writer, globalConfiguration.stateTransferThreadPoolName(), globalConfiguration.stateTransferThreadPool());
       writeThreadPool(writer, globalConfiguration.transport().remoteThreadPoolName(), globalConfiguration.transport().remoteCommandThreadPool());
-      writeThreadPool(writer, globalConfiguration.transport().transportThreadPoolName(), globalConfiguration.transport().transportThreadPool());
       writer.writeEndElement();
    }
 
@@ -410,9 +407,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          }
          if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, transport.remoteThreadPoolName());
-         }
-         if (transport.transportThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.EXECUTOR, transport.transportThreadPoolName());
          }
          attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);

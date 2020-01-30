@@ -1,6 +1,6 @@
 package org.infinispan.conflict.impl;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_NAME;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Inject CommandsFactory commandsFactory;
    @Inject InternalDataContainer<K, V> dataContainer;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
+   @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
    ExecutorService transportExecutor;
 
    private LimitedExecutor stateReceiverExecutor;

@@ -80,7 +80,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
-      gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, executor, false);
+      gbcr.replaceComponent(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR, executor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);
@@ -158,7 +158,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       gbcr.replaceComponent(PersistentUUIDManager.class.getName(), persistentUUIDManager, false);
 
-      gbcr.replaceComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR, executor, false);
+      gbcr.replaceComponent(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR, executor, false);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
       gbcr.replaceComponent(LocalTopologyManager.class.getName(), ltm, false);

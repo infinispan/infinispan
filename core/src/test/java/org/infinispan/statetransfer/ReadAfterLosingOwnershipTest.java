@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
@@ -17,6 +18,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.JREBlocking;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -188,7 +190,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
          }
          notifier.countDown();
          try {
-            wait.await();
+            JREBlocking.await(wait, 10, TimeUnit.SECONDS);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }

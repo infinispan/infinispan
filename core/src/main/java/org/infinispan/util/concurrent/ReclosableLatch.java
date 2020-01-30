@@ -28,13 +28,13 @@ public class ReclosableLatch extends AbstractQueuedSynchronizer {
    }
 
    @Override
-   public final int tryAcquireShared(int ignored) {
+   protected final int tryAcquireShared(int ignored) {
       // return 1 if we allow the requestor to proceed, -1 if we want the requestor to block.
       return getState() == OPEN_STATE ? 1 : -1;
    }
 
    @Override
-   public final boolean tryReleaseShared(int state) {
+   protected final boolean tryReleaseShared(int state) {
       // used as a mechanism to set the state of the Sync.
       setState(state);
       return true;
@@ -52,10 +52,6 @@ public class ReclosableLatch extends AbstractQueuedSynchronizer {
 
    public boolean isOpened() {
       return getState() == OPEN_STATE;
-   }
-
-   public final void await() throws InterruptedException {
-      acquireSharedInterruptibly(1); // the 1 is a dummy value that is not used.
    }
 
    public final boolean await(long time, TimeUnit unit) throws InterruptedException {

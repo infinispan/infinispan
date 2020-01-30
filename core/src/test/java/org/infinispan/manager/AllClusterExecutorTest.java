@@ -24,6 +24,7 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
+import org.infinispan.test.JREBlocking;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
@@ -459,7 +460,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
             Exchanger<Throwable> exchanger = new Exchanger<>();
             future.whenCompleteAsync((v, t) -> {
                try {
-                  exchanger.exchange(t, 10, TimeUnit.SECONDS);
+                  JREBlocking.exchange(exchanger, t, 10, TimeUnit.SECONDS);
                } catch (InterruptedException | TimeoutException e) {
                   throw new RuntimeException(e);
                }

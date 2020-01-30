@@ -8,7 +8,7 @@ import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 import static org.infinispan.reactive.RxJavaInterop.completionStageToCompletable;
 import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
@@ -147,7 +147,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
    @Inject protected CommitManager commitManager;
-   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
+   @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
    protected ExecutorService transportExecutor;
    @Inject protected CommandAckCollector commandAckCollector;
    @Inject protected TriangleOrderManager triangleOrderManager;

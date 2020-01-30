@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.test.JREBlocking;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.ControlledRpcManager;
@@ -44,7 +45,7 @@ public class GetAllCommandNodeCrashTest extends MultipleCacheManagersTest {
       CountDownLatch blockTopologyUpdate = new CountDownLatch(1);
       StateConsumer stateConsumerMock = spy(extractComponent(cache(2), StateConsumer.class));
       doAnswer(invocation -> {
-         assertTrue(blockTopologyUpdate.await(10, TimeUnit.SECONDS));
+         assertTrue(JREBlocking.await(blockTopologyUpdate,10, TimeUnit.SECONDS));
          return invocation.callRealMethod();
       }).when(stateConsumerMock).onTopologyUpdate(any(), anyBoolean());
       replaceComponent(cache(2), StateConsumer.class, stateConsumerMock, true);

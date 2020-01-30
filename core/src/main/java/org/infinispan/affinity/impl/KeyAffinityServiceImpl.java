@@ -230,7 +230,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       public void run() {
          try {
             while (!isStopped) {
-               keyProducerStartLatch.await();
+               keyProducerStartLatch.await(10, TimeUnit.SECONDS);
                if (!isStopped) {
                   isActive = true;
                   log.trace("KeyGeneratorWorker marked as ACTIVE");
