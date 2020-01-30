@@ -1,6 +1,6 @@
 package org.infinispan.scattered.impl;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 
 import java.util.Map;
 import java.util.PrimitiveIterator;
@@ -69,8 +69,8 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
 
    @Inject Configuration configuration;
    @Inject ComponentRegistry componentRegistry;
-   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService executorService;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
    @Inject CommandsFactory commandsFactory;
    @Inject RpcManager rpcManager;
    @Inject InternalDataContainer<K, ?> dataContainer;

@@ -101,6 +101,10 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       return stateTransferThreadPool;
    }
 
+   /**
+    * @deprecated Since 11.0, no longer used.
+    */
+   @Deprecated
    public ThreadPoolConfigurationBuilder transportThreadPool() {
       return transportThreadPool;
    }

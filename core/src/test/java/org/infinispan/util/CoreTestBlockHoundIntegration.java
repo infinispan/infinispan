@@ -10,6 +10,7 @@ import org.infinispan.commons.test.PolarionJUnitXMLWriter;
 import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
+import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CheckPoint;
@@ -64,6 +65,8 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
 
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, StateSequencer.class);
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, NotifierLatch.class);
+
+      CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, TestBlocking.class);
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {

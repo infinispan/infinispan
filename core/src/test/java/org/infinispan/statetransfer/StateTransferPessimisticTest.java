@@ -18,6 +18,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -117,9 +118,9 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
       InternalDataContainer mockContainer = mock(InternalDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
-         barrier.await(10, TimeUnit.SECONDS);
+         TestBlocking.await(barrier, 10, TimeUnit.SECONDS);
          // Now wait until main thread lets us through
-         barrier.await(10, TimeUnit.SECONDS);
+         TestBlocking.await(barrier, 10, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
       }).when(mockContainer).removeSegments(any());

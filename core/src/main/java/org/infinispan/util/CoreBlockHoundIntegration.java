@@ -12,6 +12,7 @@ import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.jgroups.JChannel;
+import org.jgroups.fork.ForkChannel;
 import org.kohsuke.MetaInfServices;
 
 import io.reactivex.internal.operators.flowable.BlockingFlowableIterable;
@@ -29,7 +30,16 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       {
          CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, OffHeapConcurrentMap.class);
          CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, StateTransferLockImpl.class);
-         CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, LimitedExecutor.class);
+
+         // LimitedExecutor just submits a task to another thread pool
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "execute");
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "removePermit");
+         builder.allowBlockingCallsInside(LimitedExecutor.class.getName(), "runTasks");
+         // This invokes the actual runnable - we have to make sure it doesn't block as normal
+         builder.disallowBlockingCallsInside(LimitedExecutor.class.getName(), "actualRun");
+
+         builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "prepareWrapperChange");
+         builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "commitWrapperChange");
 
          // This method by design will never block; It may block very shortly if another thread is removing or adding
          // to the queue, but it will never block for an extended period by design as there will always be room
@@ -53,6 +63,7 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // Just ignore jgroups for now and assume it is non blocking
       builder.allowBlockingCallsInside(JChannel.class.getName(), "send");
+      builder.allowBlockingCallsInside(ForkChannel.class.getName(), "send");
    }
 
    private static void methodsToBeRemoved(BlockHound.Builder builder) {
@@ -74,11 +85,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
    }
 
    private static void questionableMethodsAllowedToBlock(BlockHound.Builder builder) {
-      // Component registry has a lock to protect its state - is short lived lock
-      builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "prepareWrapperChange");
-
-      // This one should probably not be allowed - it is waiting for another component to start
-      // TODO: This might actually be a bug in the rewiring logic. (shows in StateTransferOverwritingValueTest)
+      // This happens when a cache is requested while it is still starting
+      // Due to this happening at startup or extremely rarely at runtime, we can ignore it
+      // This should be fixed in https://issues.redhat.com/browse/ISPN-11396
       builder.allowBlockingCallsInside(BasicComponentRegistryImpl.class.getName(), "awaitWrapperState");
 
       // This method calls initCacheStatusIfAbsent which can invoke readScopedState which reads scope from a file that

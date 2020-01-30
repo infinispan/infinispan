@@ -1,7 +1,7 @@
 package org.infinispan.topology;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
@@ -78,8 +78,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    @Inject Transport transport;
    @Inject
-   @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService asyncTransportExecutor;
+   @ComponentName(NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
    @Inject
    @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
@@ -106,7 +106,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Start(priority = 0)
    public void preStart() {
       helper = new TopologyManagementHelper(gcr);
-      actionSequencer = new ActionSequencer(asyncTransportExecutor, true);
+      actionSequencer = new ActionSequencer(nonBlockingExecutor, true);
 
       if (globalStateManager != null) {
          globalStateManager.registerStateProvider(this);

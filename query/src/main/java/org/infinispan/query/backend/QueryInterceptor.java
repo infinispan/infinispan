@@ -82,8 +82,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    @Inject DistributionManager distributionManager;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService asyncExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject IndexInspector indexInspector;
 
@@ -145,7 +145,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Use this executor for Async operations
     */
    public ExecutorService getAsyncExecutor() {
-      return asyncExecutor;
+      return nonBlockingExecutor;
    }
 
    private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {

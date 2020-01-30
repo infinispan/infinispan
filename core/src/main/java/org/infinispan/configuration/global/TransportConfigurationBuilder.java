@@ -213,6 +213,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   @Deprecated
    public TransportConfigurationBuilder transportExecutor(String threadPoolName) {
       attributes.attribute(TRANSPORT_EXECUTOR).set(threadPoolName);
       return this;

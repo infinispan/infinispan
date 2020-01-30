@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -196,7 +196,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      TestingUtil.inject(stateConsumer, cache, TestingUtil.named(ASYNC_TRANSPORT_EXECUTOR, pooledExecutorService),
+      TestingUtil.inject(stateConsumer, cache, TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
                          localTopologyManager, interceptorChain, icf, configuration, rpcManager,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
                          TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),

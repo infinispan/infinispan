@@ -25,7 +25,7 @@
                     listener-executor="listener" blocking-executor="blocking"
                     expiration-executor="expiration" non-blocking-executor="non-blocking">
       <transport stack="udp" cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"
-                 executor="transport" remote-command-executor="remote" />
+                 remote-command-executor="remote" />
       <security>
          <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper/>
