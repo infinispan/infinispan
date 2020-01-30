@@ -1,2 +1,2 @@
 GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.marshaller(JBossUserMarshaller.class);
+      builder.serialization().marshaller(JBossUserMarshaller.class);
