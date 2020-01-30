@@ -123,6 +123,7 @@ public class TransportConfiguration implements ConfigurationInfo {
       return siteId() != null || rackId() != null || machineId() != null;
    }
 
+   @Deprecated
    public ThreadPoolConfiguration transportThreadPool() {
       return transportThreadPool;
    }

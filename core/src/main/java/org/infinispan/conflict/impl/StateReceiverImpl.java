@@ -1,7 +1,7 @@
 package org.infinispan.conflict.impl;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_NAME;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,8 +56,8 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Inject CommandsFactory commandsFactory;
    @Inject InternalDataContainer<K, V> dataContainer;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService transportExecutor;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
 
    private LimitedExecutor stateReceiverExecutor;
 
@@ -66,7 +66,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Start
    public void start() {
       cacheNotifier.addListener(this);
-      stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, transportExecutor, 1);
+      stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, nonBlockingExecutor, 1);
    }
 
    @Stop

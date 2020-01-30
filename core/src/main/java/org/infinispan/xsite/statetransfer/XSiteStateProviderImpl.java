@@ -1,6 +1,6 @@
 package org.infinispan.xsite.statetransfer;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
@@ -69,8 +69,8 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject CommandsFactory commandsFactory;
    @Inject RpcManager rpcManager;
-   @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
-   ExecutorService executorService;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
    @Inject Configuration configuration;
    @Inject ComponentRef<XSiteStateTransferManager> stateTransferManager;
    @Inject StateTransferLock stateTransferLock;
@@ -98,7 +98,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
          if (debug) {
             log.debugf("Starting state transfer to site '%s'", siteName);
          }
-         executorService.execute(task);
+         nonBlockingExecutor.execute(task);
       } else if (debug) {
          log.debugf("Do not start state transfer to site '%s'. It has already started!", siteName);
       }
@@ -141,7 +141,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private void notifyStateTransferEnd(final String siteName, final Address origin, final boolean error) {
       if (rpcManager.getAddress().equals(origin)) {
-         executorService.submit((Callable<Void>) () -> {
+         nonBlockingExecutor.submit((Callable<Void>) () -> {
             try {
                stateTransferManager.running().notifyStatePushFinished(siteName, origin, !error);
             } catch (Throwable throwable) {

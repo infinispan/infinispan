@@ -408,14 +408,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadPoolFactory() instanceof CachedThreadPoolExecutorFactory);
 
             threadFactory = getGlobalConfiguration(holder).transport().transportThreadPool().threadFactory();
-            assertEquals("infinispan", threadFactory.threadGroup().getName());
-            assertEquals("%G %i", threadFactory.threadNamePattern());
-            assertEquals(5, threadFactory.initialPriority());
+            assertNull(threadFactory);
             threadPool = getGlobalConfiguration(holder).transport().transportThreadPool().threadPoolFactory();
-            assertEquals(5, threadPool.coreThreads());
-            assertEquals(10, threadPool.maxThreads());
-            assertEquals(100, threadPool.queueLength());
-            assertEquals(10000, threadPool.keepAlive());
+            assertNull(threadPool);
 
             assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
             Map<Integer, AdvancedExternalizer<?>> externalizers = g.serialization().advancedExternalizers();

@@ -13,13 +13,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.logging.NDC;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Executes tasks in the given executor, but never has more than {@code maxConcurrentTasks} tasks running at the same
@@ -172,7 +173,7 @@ public class LimitedExecutor implements Executor {
 
          try {
             NDC.push(name);
-            runnable.run();
+            actualRun(runnable);
          } catch (Throwable t) {
             log.error("Exception in task", t);
          } finally {
@@ -180,6 +181,15 @@ public class LimitedExecutor implements Executor {
          }
       }
       runnerFinished();
+   }
+
+   /**
+    * This method is here solely for byte code augmentation via BlockHound, since the runnable should not
+    * block in a non blocking thread, but other parts of LimitedExecutor are okay doing so.
+    * @param runnable the runnable to run
+    */
+   private void actualRun(Runnable runnable) {
+      runnable.run();
    }
 
    private void runnerStarting() {

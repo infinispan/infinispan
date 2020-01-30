@@ -383,8 +383,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case TRANSPORT_THREAD_POOL: {
-                    if (namespace.since(8, 0)) {
-                        this.parseThreadPool(ThreadPoolResource.TRANSPORT, reader, containerAddress, operations);
+                    if (namespace.since(8, 0) && !namespace.since(11, 0)) {
+                        ParseUtils.requireNoContent(reader);
                         break;
                     } else {
                         throw ParseUtils.unexpectedElement(reader);

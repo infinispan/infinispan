@@ -121,7 +121,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(ThreadPoolResource.BLOCKING.getServiceName(this.name), ThreadPoolConfiguration.class, this.blockingThreadPool)
                 .addDependency(ThreadPoolResource.LISTENER.getServiceName(this.name), ThreadPoolConfiguration.class, this.listenerThreadPool)
                 .addDependency(ThreadPoolResource.REMOTE_COMMAND.getServiceName(this.name), ThreadPoolConfiguration.class, this.remoteCommandThreadPool)
-                .addDependency(ThreadPoolResource.TRANSPORT.getServiceName(this.name), ThreadPoolConfiguration.class, this.transportThreadPool)
                 .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
         ;
         if (module != null) {

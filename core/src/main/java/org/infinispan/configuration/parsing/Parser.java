@@ -1,7 +1,6 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
@@ -985,8 +984,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case EXECUTOR: {
-               transport.transportExecutor(value);
-               transport.transportThreadPool().read(createThreadPoolConfiguration(value, ASYNC_TRANSPORT_EXECUTOR, holder));
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  CONFIG.ignoredAttribute("transport executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               }
                break;
             }
             case TOTAL_ORDER_EXECUTOR: {

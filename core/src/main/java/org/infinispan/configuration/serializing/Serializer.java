@@ -160,7 +160,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writeThreadPool(writer, globalConfiguration.listenerThreadPoolName(), globalConfiguration.listenerThreadPool());
       writeThreadPool(writer, globalConfiguration.blockingThreadPoolName(), globalConfiguration.blockingThreadPool());
       writeThreadPool(writer, globalConfiguration.transport().remoteThreadPoolName(), globalConfiguration.transport().remoteCommandThreadPool());
-      writeThreadPool(writer, globalConfiguration.transport().transportThreadPoolName(), globalConfiguration.transport().transportThreadPool());
       writer.writeEndElement();
    }
 
@@ -409,9 +408,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          }
          if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, transport.remoteThreadPoolName());
-         }
-         if (transport.transportThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.EXECUTOR, transport.transportThreadPoolName());
          }
          attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);
