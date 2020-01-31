@@ -68,9 +68,21 @@ include::config_examples/serialization_marshaller.xml[]
 link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
 
 === JBoss Marshalling
-JBoss Marshalling is a Serialization based marshalling library which was the default marshaller in past versions of {brandname}.
-It's possible to still utilise this library, however it's necessary to first add the `infinipsan-jboss-marshalling` dependency
-to the classpath. Then to configure the marshaller to be the `JBossUserMarshaller` as follows:
+JBoss Marshalling is a Serialization-based marshalling library and was the
+default marshaller in older {brandname} versions.
+
+[IMPORTANT]
+====
+* JBoss Marshalling is deprecated and planned for removal in a future version of {brandname}.
+* {brandname} ignores implementations of the `AdvancedExternalizer` interface when persisting data unless you use JBoss Marshalling. However, `AdvancedExternalizer` is deprecated alongside JBoss Marshalling.
+====
+
+You should not plan to use serialization-based marshalling with {brandname}
+because it is deprecated functionality; however, the steps to do so are as
+follows:
+
+. Add the `infinipsan-jboss-marshalling` dependency to your classpath.
+. Configure `JBossUserMarshaller` as follows:
 
 .Programmatic procedure
 
@@ -88,18 +100,13 @@ include::config_examples/jboss_user_marshaller.xml[]
 
 [IMPORTANT]
 ====
-JBoss Marshalling is deprecated and planned for removal in a future version of {brandname}.
-====
 
-[WARNING]
-====
-{brandname} ignores implementations of the link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
-interface when persisting data unless you configure JBoss marshalling. However, this interface is also deprecated and planned for removal.
 ====
 
 .Reference
 
-link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
+* link:#deserialization_whitelist[Adding Java Classes to Deserialization White Lists]
+* link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
 
 === Kryo Marshalling
 {brandname} provides a marshalling implementation that uses Kryo libraries.
@@ -177,9 +184,11 @@ include::code_examples/CustomMarshaller.java[]
 include::config_examples/custom_marshaller.xml[]
 ----
 
-TIP: It's possible custom marshaller implementations to access a configured white list via the
-link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(org.infinispan.commons.configuration.ClassWhiteList)
-method, which is called during startup.
+[TIP]
+====
+Custom marshaller implementations can access a configured white list via the
+link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize[initialize()] method, which is called during startup.
+====
 
 [id='deserialization_whitelist']
 == Adding Java Classes to Deserialization White Lists
@@ -206,6 +215,13 @@ properties or specifying them in the {brandname} configuration.
 ----
 include::config_examples/deserialization_whitelist.xml[]
 ----
+
+[NOTE]
+====
+Java classes that you add to the deserialization whitelist apply to the
+{brandname} `CacheContainer` and can be deserialized by all caches that the
+`CacheContainer` controls.
+====
 
 == Storing Deserialized Objects in {brandname} Servers
 If you configure {brandname} caches to use the `application/x-java-object`
