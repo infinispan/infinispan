@@ -26,7 +26,6 @@ public class KnownComponentNames {
     */
    @Deprecated
    public static final String ASYNC_REPLICATION_QUEUE_EXECUTOR = "org.infinispan.executors.replicationQueue";
-   public static final String MODULE_COMMAND_INITIALIZERS ="org.infinispan.modules.command.initializers";
    public static final String MODULE_COMMAND_FACTORIES ="org.infinispan.modules.command.factories";
    public static final String CLASS_LOADER = "java.lang.ClassLoader";
    /**

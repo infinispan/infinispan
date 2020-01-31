@@ -10,7 +10,6 @@ import java.util.Objects;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.util.logging.Log;
@@ -31,7 +30,6 @@ public final class ModuleProperties {
    private static final Log log = LogFactory.getLog(ModuleProperties.class);
 
    private Map<Byte, ModuleCommandFactory> commandFactories;
-   private Map<Byte, ModuleCommandInitializer> commandInitializers;
    private Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
    public void loadModuleCommandHandlers(ClassLoader cl) {
@@ -39,13 +37,11 @@ public final class ModuleProperties {
 
       if (moduleCmdExtLoader.iterator().hasNext()) {
          commandFactories = new HashMap<>(1);
-         commandInitializers = new HashMap<>(1);
          moduleCommands = new HashSet<>(1);
          for (ModuleCommandExtensions extension : moduleCmdExtLoader) {
             log.debugf("Loading module command extension SPI class: %s", extension);
             ModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
             Objects.requireNonNull(cmdFactory);
-            ModuleCommandInitializer cmdInitializer = extension.getModuleCommandInitializer();
             for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command : cmdFactory.getModuleCommands().entrySet()) {
                byte id = command.getKey();
                if (commandFactories.containsKey(id))
@@ -55,15 +51,10 @@ public final class ModuleProperties {
 
                commandFactories.put(id, cmdFactory);
                moduleCommands.add(command.getValue());
-               if (cmdInitializer != null) {
-                  log.warnModuleCommandInitializerDeprecated(extension.getClass().getName());
-                  commandInitializers.put(id, cmdInitializer);
-               }
             }
          }
       } else {
          log.debug("No module command extensions to load");
-         commandInitializers = Collections.emptyMap();
          commandFactories = Collections.emptyMap();
       }
    }
@@ -74,10 +65,6 @@ public final class ModuleProperties {
 
    public Map<Byte, ModuleCommandFactory> moduleCommandFactories() {
       return commandFactories;
-   }
-
-   public Map<Byte, ModuleCommandInitializer> moduleCommandInitializers() {
-      return commandInitializers;
    }
 
    @SuppressWarnings("unchecked")

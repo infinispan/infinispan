@@ -31,7 +31,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -154,8 +153,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject EmbeddedCacheManager cacheManager;
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
    StreamingMarshaller marshaller;
-   @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)
-   Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
    private ByteString cacheName;
    private boolean transactional;
@@ -313,13 +310,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
       if (c == null) return;
 
-      if (c instanceof InitializableCommand) {
+      if (c instanceof InitializableCommand)
          ((InitializableCommand) c).init(componentRegistry, isRemote);
-      } else {
-         ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
-         if (mci != null)
-            mci.initializeReplicableCommand(c, isRemote);
-      }
    }
 
    @SuppressWarnings("unchecked")

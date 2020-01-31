@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
@@ -14,11 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MBeanServerFactory;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -132,21 +130,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          } else {
             registerNonVolatileComponent(Collections.emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
-         }
-
-         // register any module-specific command initializers
-         // Modules are on the same classloader as Infinispan
-         Map<Byte, ModuleCommandInitializer> initializers = moduleProperties.moduleCommandInitializers();
-         if (initializers != null && !initializers.isEmpty()) {
-            registerNonVolatileComponent(initializers, MODULE_COMMAND_INITIALIZERS);
-            for (ModuleCommandInitializer mci : initializers.values()) {
-               if (basicComponentRegistry.getComponent(mci.getClass()) == null) {
-                  basicComponentRegistry.registerComponent(mci.getClass(), mci, false);
-               }
-            }
-         } else {
-            registerNonVolatileComponent(
-               Collections.emptyMap(), MODULE_COMMAND_INITIALIZERS);
          }
 
          // Allow caches to depend only on module initialization instead of the entire GCR

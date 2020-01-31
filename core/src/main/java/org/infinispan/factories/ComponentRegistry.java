@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -346,7 +345,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
-    * Invoked before any {@link ModuleCommandInitializer}.
     * This is a good place to register components that don't have any dependency.
     */
    protected void bootstrapComponents() {
