@@ -32,9 +32,7 @@ public class OffHeapBoundedSingleNodeStressTest extends OffHeapMultiNodeStressTe
    @Override protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       dcc.memory().storageType(StorageType.OFF_HEAP).evictionType(EvictionType.COUNT)
-            .size(500)
-            // Set the address count to minimum to cause as many issues as possible!
-            .addressCount(1);
+            .size(500);
       // Only start up the 1 cache
       addClusterEnabledCacheManager(dcc);
    }

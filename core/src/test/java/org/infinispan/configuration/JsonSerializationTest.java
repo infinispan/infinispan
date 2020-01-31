@@ -161,7 +161,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .interceptorClass(AsyncInterceptor2.class)
             .position(InterceptorConfiguration.Position.LAST)
             .invocationBatching().disable()
-            .memory().size(123).storageType(StorageType.OBJECT).addressCount(12).evictionStrategy(EvictionStrategy.FIFO);
+            .memory().size(123).storageType(StorageType.OBJECT).evictionStrategy(EvictionStrategy.REMOVE);
 
       Configuration configuration = configurationBuilder.build();
 

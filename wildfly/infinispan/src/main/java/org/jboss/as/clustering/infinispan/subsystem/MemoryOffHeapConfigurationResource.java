@@ -73,15 +73,7 @@ public class MemoryOffHeapConfigurationResource extends CacheConfigurationChildR
                 .setDefaultValue(new ModelNode().set(EvictionStrategy.NONE.name()))
                 .build();
 
-    static final SimpleAttributeDefinition ADDRESS_COUNT =
-          new SimpleAttributeDefinitionBuilder(ModelKeys.ADDRESS_COUNT, ModelType.LONG, true)
-                .setXmlName(Attribute.ADDRESS_COUNT.getLocalName())
-                .setAllowExpression(true)
-                .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                .setDefaultValue(new ModelNode().set(MemoryStorageConfiguration.ADDRESS_COUNT.getDefaultValue()))
-                .build();
-
-    static final AttributeDefinition[] ATTRIBUTES = {ADDRESS_COUNT, SIZE, EVICTION, STRATEGY};
+    static final AttributeDefinition[] ATTRIBUTES = {SIZE, EVICTION, STRATEGY};
 
     public MemoryOffHeapConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.MEMORY, parent, ATTRIBUTES);
@@ -93,7 +85,6 @@ public class MemoryOffHeapConfigurationResource extends CacheConfigurationChildR
               resource.getPathElement().getKey(), resource.getServiceInstaller(), CacheServiceName.CONFIGURATION, attributes);
 
         resourceRegistration.registerReadWriteAttribute(EVICTION, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
-        resourceRegistration.registerReadWriteAttribute(ADDRESS_COUNT, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(STRATEGY, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE,
               new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> configuration.memory().size(newSize.asLong())));

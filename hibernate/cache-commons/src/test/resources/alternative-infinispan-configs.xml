@@ -25,7 +25,7 @@
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
          <memory>
-            <object size="10000" strategy="LRU" />
+            <object size="10000" />
          </memory>
       </invalidation-cache>
 
@@ -35,7 +35,7 @@
          <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory>
-            <object size="10000" strategy="LRU" />
+            <object size="10000" />
          </memory>
       </invalidation-cache>
 
@@ -45,7 +45,7 @@
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
          <memory>
-            <object size="10000" strategy="LRU" />
+            <object size="10000" />
          </memory>
       </local-cache>
 
@@ -55,7 +55,7 @@
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
          <memory>
-            <object size="10000" strategy="LRU" />
+            <object size="10000" />
          </memory>
       </replicated-cache>
 
@@ -85,7 +85,7 @@
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
          <memory>
-            <object size="10000" strategy="LRU" />
+            <object size="10000" />
          </memory>
       </invalidation-cache-configuration>
       <invalidation-cache-configuration name="otherregion" remote-timeout="20000" statistics="false" statistics-available="false">
@@ -93,7 +93,7 @@
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
          <memory>
-            <object size="10000" strategy="LRU" />
+            <object size="10000" />
          </memory>
       </invalidation-cache-configuration>
    </cache-container>

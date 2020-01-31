@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.MemoryStorageConfiguration.ADDRESS_COUNT;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.EVICTION_STRATEGY;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.EVICTION_TYPE;
 import static org.infinispan.configuration.cache.MemoryStorageConfiguration.SIZE;
@@ -70,17 +69,6 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
 
    public EvictionStrategy evictionStrategy() {
       return attributes.attribute(EVICTION_STRATEGY).get();
-   }
-
-   @Deprecated
-   public MemoryStorageConfigurationBuilder addressCount(int addressCount) {
-      attributes.attribute(ADDRESS_COUNT).set(addressCount);
-      return this;
-   }
-
-   @Deprecated
-   public int addressCount() {
-      return attributes.attribute(ADDRESS_COUNT).get();
    }
 
    @Override

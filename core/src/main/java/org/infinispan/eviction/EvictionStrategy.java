@@ -7,16 +7,6 @@ package org.infinispan.eviction;
  * @since 4.0
  */
 public enum EvictionStrategy {
-   // These will be removed later - they are changed to REMOVE
-   @Deprecated
-   UNORDERED(false, true),
-   @Deprecated
-   FIFO(false, true),
-   @Deprecated
-   LRU(false, true),
-   @Deprecated
-   LIRS(false, true),
-
    /**
     * Eviction Strategy where nothing is done by the cache and the user is probably not going to use eviction manually
     */

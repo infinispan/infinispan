@@ -933,14 +933,6 @@
                     has a different variant.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="address-count" type="xs:int" default="1048576">
-            <xs:annotation>
-                <xs:documentation>How many address pointers to use.  For optimal performance you will want more
-                    address pointers than you expect to have entries.  This is similar to the size of an array backing
-                    a hash map.  Without collisions lookups and writes will be constant time.  Each pointer will take
-                    up 8 bytes of memory thus the default will use 8 MB of off heap memory.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="expiration">

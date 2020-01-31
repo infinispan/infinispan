@@ -13,14 +13,13 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
    public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder("size", -1L).build();
    public static final AttributeDefinition<EvictionType> EVICTION_TYPE = AttributeDefinition.builder("type", EvictionType.COUNT).xmlName(org.infinispan.configuration.parsing.Attribute.EVICTION.getLocalName()).build();
    public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).build();
-   public static final AttributeDefinition<Integer> ADDRESS_COUNT = AttributeDefinition.builder("address-count", 1_048_576).build();
 
    private final AttributeSet attributes;
    private final StorageType storageType;
    private final ElementDefinition elementDefinition;
 
    static public AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, ADDRESS_COUNT);
+      return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY);
    }
 
    public MemoryStorageConfiguration(AttributeSet attributes, StorageType storageType) {
@@ -54,11 +53,6 @@ public class MemoryStorageConfiguration implements ConfigurationInfo {
 
    public EvictionStrategy evictionStrategy() {
       return attributes.attribute(EVICTION_STRATEGY).get();
-   }
-
-   @Deprecated
-   public int addressCount() {
-      return attributes.attribute(ADDRESS_COUNT).get();
    }
 
    public void size(long newSize) {

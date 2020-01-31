@@ -1592,7 +1592,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case ADDRESS_COUNT: {
-                    MemoryOffHeapConfigurationResource.ADDRESS_COUNT.parseAndSetParameter(value, offHeap, reader);
+                    if (namespace.since(11, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    ROOT_LOGGER.deprecatedAttribute(attribute.getLocalName());
                     break;
                 }
                 default: {
@@ -1619,7 +1622,15 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case STRATEGY: {
-                    enabled = EvictionStrategy.valueOf(value).isEnabled();
+                    try {
+                        enabled = EvictionStrategy.valueOf(value).isEnabled();
+                    } catch (IllegalArgumentException e) {
+                        if (namespace.since(11, 0)) {
+                            throw e;
+                        }
+                        // Unable to parse eviction strategy - assuming it is enabled
+                        enabled = true;
+                    }
                     break;
                 }
                 case MAX_ENTRIES: {
