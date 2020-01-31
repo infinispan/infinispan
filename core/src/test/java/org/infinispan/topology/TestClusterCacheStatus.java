@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
@@ -47,7 +48,7 @@ public class TestClusterCacheStatus {
 
    public static TestClusterCacheStatus start(CacheJoinInfo joinInfo, List<Address> members) {
       ConsistentHash currentCH = joinInfo.getConsistentHashFactory()
-                                         .create(joinInfo.getHashFunction(), joinInfo.getNumOwners(),
+                                         .create(MurmurHash3.getInstance(), joinInfo.getNumOwners(),
                                                  joinInfo.getNumSegments(), members, null);
       CacheTopology topology = new CacheTopology(1, 1, currentCH, null, null, CacheTopology.Phase.NO_REBALANCE, members,
                                                  persistentUUIDs(members));
@@ -150,7 +151,7 @@ public class TestClusterCacheStatus {
 
    public ConsistentHash ch(Address... addresses) {
       return joinInfo.getConsistentHashFactory()
-                     .create(joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
+                     .create(MurmurHash3.getInstance(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
                              asList(addresses), null);
    }
 
@@ -166,10 +167,9 @@ public class TestClusterCacheStatus {
 
    public CacheJoinInfo joinInfo(Address a) {
       // Copy the generic CacheJoinInfo and replace the persistent UUID
-      return new CacheJoinInfo(joinInfo.getConsistentHashFactory(), joinInfo.getHashFunction(),
-                               joinInfo.getNumSegments(), joinInfo.getNumOwners(), joinInfo.getTimeout(),
-                               joinInfo.isTotalOrder(), joinInfo.getCacheMode(), joinInfo.getCapacityFactor(),
-                               persistentUUID(a), joinInfo.getPersistentStateChecksum());
+      return new CacheJoinInfo(joinInfo.getConsistentHashFactory(), joinInfo.getNumSegments(), joinInfo.getNumOwners(),
+            joinInfo.getTimeout(), joinInfo.isTotalOrder(), joinInfo.getCacheMode(), joinInfo.getCapacityFactor(),
+            persistentUUID(a), joinInfo.getPersistentStateChecksum());
    }
 
    public CacheTopology topology() {

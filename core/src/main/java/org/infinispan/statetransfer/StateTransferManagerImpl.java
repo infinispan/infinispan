@@ -16,7 +16,6 @@ import java.util.function.Function;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -109,7 +108,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
       float capacityFactor = globalConfiguration.isZeroCapacityNode() ? 0.0f : configuration.clustering().hash().capacityFactor();
 
       CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(globalConfiguration, configuration),
-            MurmurHash3.getInstance(),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
             configuration.clustering().stateTransfer().timeout(),

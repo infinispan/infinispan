@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -62,7 +61,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    }
 
    private static final CacheJoinInfo JOIN_INFO =
-      new CacheJoinInfo(new DefaultConsistentHashFactory(), MurmurHash3.getInstance(), 8, 2, 1000, false,
+      new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, false,
                         CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
    private static final Address A = new TestAddress(1, "A");
    private static final Address B = new TestAddress(2, "B");

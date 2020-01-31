@@ -18,8 +18,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -54,6 +56,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    // The HotRod client starts with topology 0, so we start with 1 to force an update
    public static final int INITIAL_TOPOLOGY_ID = 1;
    public static final int INITIAL_REBALANCE_ID = 1;
+   private static final Hash HASH_FUNCTION = MurmurHash3.getInstance();
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
    private static boolean trace = log.isTraceEnabled();
@@ -531,9 +534,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          newCurrentMembers = getExpectedMembers();
          actualMembers = newCurrentMembers;
-         newCurrentCH = joinInfo.getConsistentHashFactory().create(
-               joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
-               newCurrentMembers, getCapacityFactors());
+         newCurrentCH = joinInfo.getConsistentHashFactory().create(HASH_FUNCTION, joinInfo.getNumOwners(),
+               joinInfo.getNumSegments(), newCurrentMembers, getCapacityFactors());
       } else {
          // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
          newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
@@ -758,9 +760,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    protected CacheTopology createInitialCacheTopology() {
       log.tracef("Initializing status for cache %s", cacheName);
       List<Address> initialMembers = getExpectedMembers();
-      ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
-            joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
-            initialMembers, getCapacityFactors());
+      ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(HASH_FUNCTION, joinInfo.getNumOwners(),
+            joinInfo.getNumSegments(), initialMembers, getCapacityFactors());
       CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, initialCH, null,
             CacheTopology.Phase.NO_REBALANCE, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));
       setCurrentTopology(initialTopology);

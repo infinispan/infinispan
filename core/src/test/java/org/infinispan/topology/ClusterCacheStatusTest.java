@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.List;
 import java.util.Optional;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -34,7 +33,7 @@ import org.testng.annotations.Test;
 public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "test";
    private static final CacheJoinInfo JOIN_INFO =
-      new CacheJoinInfo(new DefaultConsistentHashFactory(), MurmurHash3.getInstance(), 8, 2, 1000, false,
+      new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, false,
                         CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
    private static final Address A = new TestAddress(1, "A");
    private static final Address B = new TestAddress(2, "B");
@@ -139,9 +138,8 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
 
    private CacheJoinInfo makeJoinInfo(Address a) {
       PersistentUUID persistentUUID = new PersistentUUID(a.hashCode(), a.hashCode());
-      return new CacheJoinInfo(JOIN_INFO.getConsistentHashFactory(), JOIN_INFO.getHashFunction(),
-                               JOIN_INFO.getNumSegments(), JOIN_INFO.getNumOwners(), JOIN_INFO.getTimeout(),
-                               JOIN_INFO.isTotalOrder(), JOIN_INFO.getCacheMode(), JOIN_INFO.getCapacityFactor(),
-                               persistentUUID, Optional.empty());
+      return new CacheJoinInfo(JOIN_INFO.getConsistentHashFactory(), JOIN_INFO.getNumSegments(), JOIN_INFO.getNumOwners(),
+            JOIN_INFO.getTimeout(), JOIN_INFO.isTotalOrder(), JOIN_INFO.getCacheMode(), JOIN_INFO.getCapacityFactor(),
+            persistentUUID, Optional.empty());
    }
 }
