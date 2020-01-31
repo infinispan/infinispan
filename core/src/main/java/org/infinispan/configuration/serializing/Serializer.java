@@ -604,13 +604,11 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(memory.storageType().getElement());
          switch (memory.storageType()) {
             case OFF_HEAP:
-               attributes.write(writer, MemoryStorageConfiguration.ADDRESS_COUNT, Attribute.ADDRESS_COUNT);
-               attributes.write(writer, MemoryStorageConfiguration.EVICTION_STRATEGY, Attribute.STRATEGY);
-               // fall through
             case BINARY:
                attributes.write(writer, MemoryStorageConfiguration.EVICTION_TYPE, Attribute.EVICTION);
                // fall through
             case OBJECT:
+               attributes.write(writer, MemoryStorageConfiguration.EVICTION_STRATEGY, Attribute.STRATEGY);
                attributes.write(writer, MemoryStorageConfiguration.SIZE, Attribute.SIZE);
          }
          writer.writeEndElement();

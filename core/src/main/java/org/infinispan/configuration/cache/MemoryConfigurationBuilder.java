@@ -130,33 +130,6 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       return memoryStorageConfigurationBuilder.evictionStrategy();
    }
 
-   /**
-    * Configuration setting when using off-heap that defines how many address pointers there are.
-    * This number will be rounded up to the next power of two.  This helps performance in that the
-    * more address pointers there are the less collisions there will be which improve performance of
-    * both read and write operations. This is only used when OFF_HEAP storage type is configured
-    * {@link MemoryConfigurationBuilder#storageType(StorageType)}.
-    * @param addressCount
-    * @return this
-    * @deprecated since 10.0
-    */
-   @Deprecated
-   public MemoryConfigurationBuilder addressCount(int addressCount) {
-      memoryStorageConfigurationBuilder.addressCount(addressCount);
-      return this;
-   }
-
-   /**
-    * How many address pointers are configured for the off heap storage. See
-    * {@link MemoryConfigurationBuilder#addressCount(int)} for more information.
-    * @return the configured amount of address pointers
-    * @deprecated since 10.0
-    */
-   @Deprecated
-   public int addressCount() {
-      return memoryStorageConfigurationBuilder.addressCount();
-   }
-
    @Override
    public void validate() {
       StorageType type = memoryStorageConfigurationBuilder.storageType();

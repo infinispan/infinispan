@@ -474,8 +474,6 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.memory().evictionStrategy(strategy);
                 final EvictionType type = EvictionType.valueOf(MemoryOffHeapConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
                 builder.memory().evictionType(type);
-                final int addressCount = MemoryOffHeapConfigurationResource.ADDRESS_COUNT.resolveModelAttribute(context, node).asInt();
-                builder.memory().addressCount(addressCount);
             }
         }
 

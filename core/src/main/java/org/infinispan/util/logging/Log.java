@@ -1724,10 +1724,10 @@ public interface Log extends BasicLogger {
    @Message(value = "MEMORY based eviction is not supported with OBJECT storage", id = 504)
    CacheConfigurationException offHeapMemoryEvictionNotSupportedWithObject();
 
-   @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
-         "address count of %d", id = 505)
-   CacheConfigurationException offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(long configuredSize,
-                                                                                   long addressMemorySize, int addressCount);
+//   @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
+//         "address count of %d", id = 505)
+//   CacheConfigurationException offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(long configuredSize,
+//                                                                                   long addressMemorySize, int addressCount);
 
    @Message(value = "Biased reads are supported only in scattered cache. Maybe you were looking for L1?", id = 506)
    CacheConfigurationException biasedReadsAppliesOnlyToScattered();

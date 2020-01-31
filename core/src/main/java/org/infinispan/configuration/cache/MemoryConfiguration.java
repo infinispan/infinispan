@@ -83,16 +83,6 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration>, Conf
       return memoryStorageConfiguration.size() > 0 && memoryStorageConfiguration.evictionStrategy().isRemovalBased();
    }
 
-   /**
-    * The address pointer count
-    * @return
-    * @deprecated since 10.0
-    */
-   @Deprecated
-   public int addressCount() {
-      return memoryStorageConfiguration.addressCount();
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
