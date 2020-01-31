@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -23,7 +22,6 @@ import org.infinispan.marshall.core.Ids;
 public class CacheJoinInfo {
    // Global configuration
    private final ConsistentHashFactory consistentHashFactory;
-   private final Hash hashFunction;
    private final int numSegments;
    private final int numOwners;
    private final long timeout;
@@ -37,12 +35,9 @@ public class CacheJoinInfo {
    private final PersistentUUID persistentUUID;
    private final Optional<Integer> persistentStateChecksum;
 
-   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments,
-                        int numOwners, long timeout, boolean totalOrder, CacheMode cacheMode, float capacityFactor,
-                        PersistentUUID persistentUUID,
-                        Optional<Integer> persistentStateChecksum) {
+   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, int numSegments, int numOwners, long timeout, boolean totalOrder, CacheMode cacheMode, float capacityFactor,
+                        PersistentUUID persistentUUID, Optional<Integer> persistentStateChecksum) {
       this.consistentHashFactory = consistentHashFactory;
-      this.hashFunction = hashFunction;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.timeout = timeout;
@@ -55,10 +50,6 @@ public class CacheJoinInfo {
 
    public ConsistentHashFactory getConsistentHashFactory() {
       return consistentHashFactory;
-   }
-
-   public Hash getHashFunction() {
-      return hashFunction;
    }
 
    public int getNumSegments() {
@@ -100,7 +91,6 @@ public class CacheJoinInfo {
       result = prime * result + Float.floatToIntBits(capacityFactor);
       result = prime * result + ((consistentHashFactory == null) ? 0 : consistentHashFactory.hashCode());
       result = prime * result + cacheMode.hashCode();
-      result = prime * result + ((hashFunction == null) ? 0 : hashFunction.hashCode());
       result = prime * result + numOwners;
       result = prime * result + numSegments;
       result = prime * result + (int) (timeout ^ (timeout >>> 32));
@@ -128,11 +118,6 @@ public class CacheJoinInfo {
          return false;
       if (cacheMode != other.cacheMode)
          return false;
-      if (hashFunction == null) {
-         if (other.hashFunction != null)
-            return false;
-      } else if (!hashFunction.equals(other.hashFunction))
-         return false;
       if (numOwners != other.numOwners)
          return false;
       if (numSegments != other.numSegments)
@@ -158,7 +143,6 @@ public class CacheJoinInfo {
    public String toString() {
       return "CacheJoinInfo{" +
             "consistentHashFactory=" + consistentHashFactory +
-            ", hashFunction=" + hashFunction +
             ", numSegments=" + numSegments +
             ", numOwners=" + numOwners +
             ", timeout=" + timeout +
@@ -173,7 +157,6 @@ public class CacheJoinInfo {
       @Override
       public void writeObject(ObjectOutput output, CacheJoinInfo cacheJoinInfo) throws IOException {
          output.writeObject(cacheJoinInfo.consistentHashFactory);
-         output.writeObject(cacheJoinInfo.hashFunction);
          output.writeInt(cacheJoinInfo.numSegments);
          output.writeInt(cacheJoinInfo.numOwners);
          output.writeLong(cacheJoinInfo.timeout);
@@ -187,7 +170,6 @@ public class CacheJoinInfo {
       @Override
       public CacheJoinInfo readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          ConsistentHashFactory consistentHashFactory = (ConsistentHashFactory) unmarshaller.readObject();
-         Hash hashFunction = (Hash) unmarshaller.readObject();
          int numSegments = unmarshaller.readInt();
          int numOwners = unmarshaller.readInt();
          long timeout = unmarshaller.readLong();
@@ -196,8 +178,8 @@ public class CacheJoinInfo {
          float capacityFactor = unmarshaller.readFloat();
          PersistentUUID persistentUUID = (PersistentUUID) unmarshaller.readObject();
          Optional<Integer> persistentStateChecksum = (Optional<Integer>) unmarshaller.readObject();
-         return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout,
-               totalOrder, cacheMode, capacityFactor, persistentUUID, persistentStateChecksum);
+         return new CacheJoinInfo(consistentHashFactory, numSegments, numOwners, timeout, totalOrder, cacheMode,
+               capacityFactor, persistentUUID, persistentStateChecksum);
       }
 
       @Override
