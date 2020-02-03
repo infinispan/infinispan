@@ -110,6 +110,10 @@ public class MetricKeys {
     //Inbound Handler metrics
     public static final String SYNC_XSITE_COUNT_RECEIVED = "sync-xsite-replication-received-count";
     public static final String ASYNC_XSITE_COUNT_RECEIVED = "async-xsite-replication-received-count";
+    public static final String ASYNC_XSITE_PENDING_REQUESTS = "async-xsite-pending-requests";
+    public static final String ASYNC_XSITE_RUNNING_REQUESTS = "async-xsite-running-requests";
+    public static final String ASYNC_XSITE_QUEUE_TIME = "async-xsite-queue-time";
+    public static final String ASYNC_XSITE_RUNNING_TIME = "async-xsite-running-time";
 
     public static final String NUMBER_OF_CPUS = "number-of-cpus";
     public static final String TOTAL_MEMORY_KB = "total-memory";
