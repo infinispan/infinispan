@@ -106,7 +106,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Start(priority = 0)
    public void preStart() {
       helper = new TopologyManagementHelper(gcr);
-      actionSequencer = new ActionSequencer(nonBlockingExecutor, true);
+      actionSequencer = new ActionSequencer(nonBlockingExecutor, true, timeService);
 
       if (globalStateManager != null) {
          globalStateManager.registerStateProvider(this);
