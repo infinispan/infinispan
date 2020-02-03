@@ -140,7 +140,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public void start() {
       helper = new TopologyManagementHelper(gcr.getComponent(BasicComponentRegistry.class));
       joinViewFuture = new ConditionFuture<>(timeoutScheduledExecutor);
-      actionSequencer = new ActionSequencer(transportExecutor, true);
+      actionSequencer = new ActionSequencer(transportExecutor, true, timeService);
 
       cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
