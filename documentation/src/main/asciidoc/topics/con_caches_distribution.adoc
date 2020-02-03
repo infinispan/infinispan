@@ -135,20 +135,19 @@ Used internally to implement replicated caches. You should never explicitly
 select this algorithm in a distributed cache.
 
 === Capacity Factors
-Capacity factors are another way to customize the mapping of segments to nodes.
-The nodes in a cluster are not always identical.
-If a node has 2x the memory of a "regular" node, configuring it with a `capacityFactor`
-of `2` tells {brandname} to allocate 2x segments to that node.
-The capacity factor can be any non-negative number, and the hashing algorithm will try to
-assign to each node a load weighted by its capacity factor (both as a primary owner and as
-a backup owner).
+Capacity factors allocate segment-to-node mappings based on resources available
+to nodes.
 
-One interesting use case is nodes with a capacity factor of `0`.
-This could be useful when some nodes are too short-lived to be useful as data owners, but
-they can't use HotRod (or other remote protocols) because they need transactions.
-With cross-site replication as well, the "site master" should only deal with forwarding
-commands between sites and shouldn't handle user requests, so it makes sense to configure
-it with a capacity factor of `0`.
+To configure capacity factors, you specify any non-negative number and the
+{brandname} hashing algorithm assigns each node a load weighted by its
+capacity factor (both as a primary owner and as a backup owner).
+
+For example, nodeA has 2x the memory available than nodeB in the same
+{brandname} cluster. In this case, setting `capacityFactor` to a value of `2`
+configures {brandname} to allocate 2x the number of segments to nodeA.
+
+Setting a capacity factor of `0` is possible but is recommended only in cases
+where nodes are not joined to the cluster long enough to be useful data owners.
 
 == Zero Capacity Node
 You might need to configure a whole node where the capacity factor is `0` for every cache,
