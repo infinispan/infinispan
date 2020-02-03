@@ -238,6 +238,10 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(MetricKeys.MIN_ASYNC_XSITE_REPLICATION_TIME, "clustered-cache");
         sharedAttributeResolver.put(MetricKeys.MAX_ASYNC_XSITE_REPLICATION_TIME, "clustered-cache");
         sharedAttributeResolver.put(MetricKeys.ASYNC_XSITE_ACKS_COUNT, "clustered-cache");
+        sharedAttributeResolver.put(MetricKeys.ASYNC_XSITE_PENDING_REQUESTS, "clustered-cache");
+        sharedAttributeResolver.put(MetricKeys.ASYNC_XSITE_RUNNING_REQUESTS, "clustered-cache");
+        sharedAttributeResolver.put(MetricKeys.ASYNC_XSITE_QUEUE_TIME, "clustered-cache");
+        sharedAttributeResolver.put(MetricKeys.ASYNC_XSITE_RUNNING_TIME, "clustered-cache");
 
         // shared loader attributes
         sharedAttributeResolver.put(MetricKeys.ACTIVATIONS, "loader");

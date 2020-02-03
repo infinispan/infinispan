@@ -132,7 +132,12 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false),
         //Inbound Handler
         SYNC_XSITE_COUNT_RECEIVED(MetricKeys.SYNC_XSITE_COUNT_RECEIVED, ModelType.LONG, true, true),
-        ASYNC_XSITE_COUNT_RECEIVED(MetricKeys.ASYNC_XSITE_COUNT_RECEIVED, ModelType.LONG, true, true);
+        ASYNC_XSITE_COUNT_RECEIVED(MetricKeys.ASYNC_XSITE_COUNT_RECEIVED, ModelType.LONG, true, true),
+        ASYNC_XSITE_PENDING_REQUESTS(MetricKeys.ASYNC_XSITE_PENDING_REQUESTS, ModelType.LONG, true, true),
+        ASYNC_XSITE_RUNNING_REQUESTS(MetricKeys.ASYNC_XSITE_RUNNING_REQUESTS, ModelType.LONG, true, true),
+        ASYNC_XSITE_QUEUE_TIME(MetricKeys.ASYNC_XSITE_QUEUE_TIME, ModelType.LONG, true, true),
+        ASYNC_XSITE_RUNNING_TIME(MetricKeys.ASYNC_XSITE_RUNNING_TIME, ModelType.LONG, true, true)
+        ;
 
         private static final Map<String, CacheMetrics> MAP = new HashMap<>();
 
@@ -359,6 +364,18 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 case ASYNC_XSITE_COUNT_RECEIVED:
                     result.set(handler.getAsyncXSiteRequestsReceived());
+                    break;
+                case ASYNC_XSITE_QUEUE_TIME:
+                    result.set(handler.getAsyncXSiteRequestQueueTime());
+                    break;
+                case ASYNC_XSITE_RUNNING_TIME:
+                    result.set(handler.getAsyncXSiteRequestRunningTime());
+                    break;
+                case ASYNC_XSITE_PENDING_REQUESTS:
+                    result.set(handler.getAsyncXSitePendingRequests());
+                    break;
+                case ASYNC_XSITE_RUNNING_REQUESTS:
+                    result.set(handler.getAsyncXSiteRunningRequests());
                     break;
                 case COMMITS: {
                     TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(interceptors, TxInterceptor.class);
