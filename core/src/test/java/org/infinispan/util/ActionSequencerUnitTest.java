@@ -105,7 +105,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
 
    @Test(dataProvider = "default-with-keys")
    public void testExecution(KeysSupplier keysSupplier) {
-      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService());
+      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService(), false, TIME_SERVICE);
+      sequencer.setStatisticEnabled(true);
       int retVal = nextInt();
       Collection<Object> keys = keysSupplier.get();
       NonBlockingAction action = new NonBlockingAction(retVal);
@@ -125,7 +126,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
    }
 
    public void testNullParameters() {
-      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService());
+      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService(), false, TIME_SERVICE);
+      sequencer.setStatisticEnabled(true);
       NonBlockingAction action = new NonBlockingAction(0);
 
       expectException(NullPointerException.class, () -> sequencer.orderOnKeys(asList("k1", "k2"), null));
@@ -139,7 +141,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
 
    @Test(dataProvider = "default-with-keys")
    public void testExceptionExecution(KeysSupplier keysSupplier) {
-      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService());
+      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService(), false, TIME_SERVICE);
+      sequencer.setStatisticEnabled(true);
       Collection<Object> keys = keysSupplier.get();
       String msg = nextStringInt();
       NonBlockingAction action = new NonBlockingAction(new TestException(msg));
@@ -159,7 +162,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
    }
 
    public void testSingleKeyOrder() {
-      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService());
+      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService(), false, TIME_SERVICE);
+      sequencer.setStatisticEnabled(true);
       Collection<Object> keys = singleton("k");
 
       int[] results = new int[3];
@@ -207,7 +211,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
       // * T1
       // * (T2 and T3) depends on T1 but they can run in parallel
       // * T4 depends on T2 and T3
-      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService());
+      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService(), false, TIME_SERVICE);
+      sequencer.setStatisticEnabled(true);
 
       int[] results = new int[4];
       List<NonBlockingAction> actionList = new ArrayList<>(results.length);
@@ -266,7 +271,8 @@ public class ActionSequencerUnitTest extends AbstractInfinispanTest {
    }
 
    private void doDistinctKeysTest(Collection<Object> keys, int distinctKeys) {
-      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService());
+      ActionSequencer sequencer = new ActionSequencer(getDefaultExecutorService(), false, TIME_SERVICE);
+      sequencer.setStatisticEnabled(true);
       int retVal = ThreadLocalRandom.current().nextInt();
       NonBlockingAction action = new NonBlockingAction(retVal);
       CompletionStage<Integer> cf = sequencer.orderOnKeys(keys, action);
