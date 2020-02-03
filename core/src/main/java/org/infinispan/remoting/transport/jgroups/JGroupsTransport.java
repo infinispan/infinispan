@@ -399,7 +399,7 @@ public class JGroupsTransport implements Transport {
       probeHandler.updateThreadPool(remoteExecutor);
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
-      backupSequencer = new ActionSequencer(remoteExecutor);
+      backupSequencer = new ActionSequencer(remoteExecutor, true, timeService);
 
       if (log.isInfoEnabled())
          log.startingJGroupsChannel(configuration.transport().clusterName());
