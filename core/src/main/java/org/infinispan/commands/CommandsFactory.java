@@ -479,14 +479,6 @@ public interface CommandsFactory {
    CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, int size);
 
    /**
-    * Builds CancelCommandCommand used to cancel other commands executing on Infinispan cluster
-    *
-    * @param commandUUID UUID for command to cancel
-    * @return created CancelCommandCommand
-    */
-   CancelCommand buildCancelCommandCommand(UUID commandUUID);
-
-   /**
     * Builds XSiteStateTransferControlCommand used to control the-cross site state transfer.
     *
     * @param control  the control operation

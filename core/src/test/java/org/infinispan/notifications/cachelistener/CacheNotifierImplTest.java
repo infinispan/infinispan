@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.infinispan.cache.impl.EncoderCache;
-import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
@@ -71,7 +70,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
-      mockRegistry.registerMocks(RpcManager.class, CancellationService.class, CommandsFactory.class);
+      mockRegistry.registerMocks(RpcManager.class, CommandsFactory.class);
       mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       Configuration config = new ConfigurationBuilder().build();
