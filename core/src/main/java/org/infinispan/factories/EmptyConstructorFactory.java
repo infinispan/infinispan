@@ -2,8 +2,6 @@ package org.infinispan.factories;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import org.infinispan.commands.CancellationService;
-import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -35,7 +33,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {
-      BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
+      BackupReceiverRepository.class, EventLogManager.class,
       InboundInvocationHandler.class, PersistentUUIDManager.class,
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       IteratorHandler.class, GlobalStateManager.class, GlobalConfigurationManager.class,
@@ -49,8 +47,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
    public Object construct(String componentName) {
       if (componentName.equals(BackupReceiverRepository.class.getName()))
          return new BackupReceiverRepositoryImpl();
-      else if (componentName.equals(CancellationService.class.getName()))
-         return new CancellationServiceImpl();
       else if (componentName.equals(InboundInvocationHandler.class.getName()))
          return new GlobalInboundInvocationHandler();
       else if (componentName.equals(RemoteCommandsFactory.class.getName()))

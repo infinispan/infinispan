@@ -7,8 +7,6 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.infinispan.commands.CancellableCommand;
-import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -57,7 +55,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
    @Inject StateTransferLock stateTransferLock;
    @Inject ResponseGenerator responseGenerator;
-   @Inject CancellationService cancellationService;
    @Inject ComponentRegistry componentRegistry;
    @Inject protected Configuration configuration;
 
@@ -109,36 +106,23 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final CompletableFuture<Response> invokeCommand(CacheRpcCommand cmd) throws Throwable {
-      try {
-         if (isTraceEnabled()) {
-            getLog().tracef("Calling perform() on %s", cmd);
-         }
-         CompletableFuture<?> future = cmd.invokeAsync(componentRegistry).toCompletableFuture();
-         if (CompletionStages.isCompletedSuccessfully(future)) {
-            Object obj = future.join();
-            if (cmd instanceof CancellableCommand) {
-               cancellationService.unregister(((CancellableCommand) cmd).getUUID());
-            }
-            Response response = responseGenerator.getResponse(cmd, obj);
-            if (response == null) {
-               return CompletableFutures.completedNull();
-            }
-            return CompletableFuture.completedFuture(response);
-         }
-         return future.handle((rv, throwable) -> {
-            if (cmd instanceof CancellableCommand) {
-               cancellationService.unregister(((CancellableCommand) cmd).getUUID());
-            }
-            CompletableFutures.rethrowException(throwable);
-
-            return responseGenerator.getResponse(cmd, rv);
-         });
-      } catch (Throwable throwable) {
-         if (cmd instanceof CancellableCommand) {
-            cancellationService.unregister(((CancellableCommand) cmd).getUUID());
-         }
-         throw throwable;
+      if (isTraceEnabled()) {
+         getLog().tracef("Calling perform() on %s", cmd);
       }
+      CompletableFuture<?> future = cmd.invokeAsync(componentRegistry).toCompletableFuture();
+      if (CompletionStages.isCompletedSuccessfully(future)) {
+         Object obj = future.join();
+         Response response = responseGenerator.getResponse(cmd, obj);
+         if (response == null) {
+            return CompletableFutures.completedNull();
+         }
+         return CompletableFuture.completedFuture(response);
+      }
+      return future.handle((rv, throwable) -> {
+         CompletableFutures.rethrowException(throwable);
+
+         return responseGenerator.getResponse(cmd, rv);
+      });
    }
 
    final StateTransferLock getStateTransferLock() {

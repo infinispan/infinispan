@@ -2,7 +2,6 @@ package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
-import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -84,7 +83,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<BackupSender> backupSender;
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
-   private ComponentRef<CancellationService> cancellationService;
    private ComponentRef<ClusterCacheNotifier> clusterCacheNotifier;
    private ComponentRef<ClusterStreamManager> clusterStreamManager;
    private ComponentRef<CommandAckCollector> commandAckCollector;
@@ -359,7 +357,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
       cache = basicComponentRegistry.getComponent(AdvancedCache.class);
       cacheNotifier = basicComponentRegistry.getComponent(CacheNotifier.class);
-      cancellationService = basicComponentRegistry.getComponent(CancellationService.class);
       conflictManager = basicComponentRegistry.getComponent(InternalConflictManager.class);
       commandsFactory = basicComponentRegistry.getComponent(CommandsFactory.class);
       clusterCacheNotifier = basicComponentRegistry.getComponent(ClusterCacheNotifier.class);
@@ -430,10 +427,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<CacheNotifier> getCacheNotifier() {
       return cacheNotifier;
-   }
-
-   public ComponentRef<CancellationService> getCancellationService() {
-      return cancellationService;
    }
 
    public Configuration getConfiguration() {

@@ -290,9 +290,6 @@ public class RemoteCommandsFactory {
             case XSiteAdminCommand.COMMAND_ID:
                command = new XSiteAdminCommand(cacheName);
                break;
-            case CancelCommand.COMMAND_ID:
-               command = new CancelCommand(cacheName);
-               break;
             case XSiteStateTransferControlCommand.COMMAND_ID:
                command = new XSiteStateTransferControlCommand(cacheName);
                break;

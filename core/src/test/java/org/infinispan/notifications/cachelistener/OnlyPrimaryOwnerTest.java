@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.cache.impl.EncoderCache;
-import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
@@ -73,7 +72,7 @@ public class OnlyPrimaryOwnerTest {
       when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
-      mockRegistry.registerMocks(RpcManager.class, CancellationService.class, CommandsFactory.class, Encoder.class);
+      mockRegistry.registerMocks(RpcManager.class, CommandsFactory.class, Encoder.class);
       mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       Configuration config = new ConfigurationBuilder().memory().storageType(StorageType.OBJECT).build();
       ClusterEventManager cem = mock(ClusterEventManager.class);

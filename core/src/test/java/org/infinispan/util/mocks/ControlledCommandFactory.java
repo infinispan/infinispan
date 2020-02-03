@@ -20,7 +20,6 @@ import java.util.function.Function;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -370,11 +369,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName) {
       return actual.buildCreateCacheCommand(cacheName, cacheConfigurationName);
-   }
-
-   @Override
-   public CancelCommand buildCancelCommandCommand(UUID commandUUID) {
-      return actual.buildCancelCommandCommand(commandUUID);
    }
 
    @Override

@@ -386,11 +386,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public CancelCommand buildCancelCommandCommand(UUID commandUUID) {
-      return new CancelCommand(cacheName, commandUUID);
-   }
-
-   @Override
    public XSiteStateTransferControlCommand buildXSiteStateTransferControlCommand(StateTransferControl control,
                                                                                  String siteName) {
       return new XSiteStateTransferControlCommand(cacheName, control, siteName);
