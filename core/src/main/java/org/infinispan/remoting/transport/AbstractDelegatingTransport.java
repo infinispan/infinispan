@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -123,6 +124,16 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public boolean isMulticastCapable() {
       return actual.isMulticastCapable();
+   }
+
+   @Override
+   public void checkCrossSiteAvailable() throws CacheConfigurationException {
+      actual.checkCrossSiteAvailable();
+   }
+
+   @Override
+   public String localSiteName() {
+      return actual.localSiteName();
    }
 
    @Start

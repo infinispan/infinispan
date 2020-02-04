@@ -10,6 +10,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +25,6 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      lonGc.site().localSite("LON");
       TestCacheManagerFactory.amendDefaultCache(lonGc);
       ConfigurationBuilder lon = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       lon.sites().addBackup()
@@ -33,9 +33,8 @@ public class BackupForConfigTest extends SingleCacheManagerTest {
       nycBackup = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       nycBackup.sites().backupFor().remoteSite("NYC").remoteCache(lonGc.defaultCacheName().get());
 
-      // Remember to not do nothing else other than
       // creating the cache manager in order to avoid leaks
-      return TestCacheManagerFactory.createClusteredCacheManager(lonGc, lon);
+      return TestCacheManagerFactory.createClusteredCacheManager(lonGc, lon, TransportFlags.minimalXsiteFlags());
    }
 
    public void testBackupForIsCorrect() {

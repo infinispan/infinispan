@@ -52,9 +52,7 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
     * @param siteIndex the site index.
     */
    protected GlobalConfigurationBuilder defaultGlobalConfigurationForSite(int siteIndex) {
-      GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.site().localSite(siteName(siteIndex));
-      return builder;
+      return GlobalConfigurationBuilder.defaultClusteredBuilder();
    }
 
    /**

@@ -108,7 +108,6 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       backup.site(backupSiteName).strategy(BackupStrategy.SYNC);
 
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.site().localSite(siteName);
       TestSite site = createSite(siteName, NODES_PER_SITE, globalBuilder, builder);
       Collection<EmbeddedCacheManager> cacheManagers = site.cacheManagers();
       List<HotRodServer> servers = cacheManagers.stream().map(cm -> serverPort

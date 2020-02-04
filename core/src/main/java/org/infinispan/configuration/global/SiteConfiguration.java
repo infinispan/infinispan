@@ -1,9 +1,13 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.remoting.transport.Transport;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
+ * @deprecated since 11.0. Use {@link Transport#localSiteName()}
  */
+@Deprecated
 public class SiteConfiguration {
    private final String localSite;
 
@@ -14,6 +18,7 @@ public class SiteConfiguration {
    /**
     * Returns the name of the local site. Must be a valid name defined in {@link #siteConfigurations()}
     */
+   @Deprecated
    public final String localSite() {
       return localSite;
    }
