@@ -23,7 +23,6 @@ public class BackupForNotSpecifiedTest extends AbstractXSiteTest {
    protected void createSites() {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      lonGc.site().localSite(LON);
       ConfigurationBuilder lonDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       lonDefault.sites().addBackup()
             .site(NYC)
@@ -33,7 +32,6 @@ public class BackupForNotSpecifiedTest extends AbstractXSiteTest {
       ConfigurationBuilder someCache = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      nycGc.site().localSite(NYC);
       ConfigurationBuilder nycDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       nycDefault.sites().addBackup()
             .site(LON)

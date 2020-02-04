@@ -1938,4 +1938,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unexpected response from %s: %s", id = 570)
    IllegalArgumentException unexpectedResponse(Address target, Response response);
+
+   @Message(value = "RELAY2 not found in ProtocolStack. Unable to do cross-site requests.", id = 571)
+   CacheConfigurationException crossSiteUnavailable();
 }
