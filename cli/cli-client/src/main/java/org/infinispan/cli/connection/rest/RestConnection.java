@@ -73,7 +73,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
-import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -293,7 +293,7 @@ public class RestConnection implements Connection, Closeable {
                   case Create.Cache.CMD: {
                      RestCacheClient cache = client.cache(command.arg(Create.NAME));
                      boolean vltl = command.boolOption(Create.Cache.VOLATILE);
-                     CacheContainerAdmin.AdminFlag flags = vltl ? CacheContainerAdmin.AdminFlag.VOLATILE : null;
+                     AdminFlag flags[] = vltl ? new AdminFlag[]{AdminFlag.VOLATILE} : new AdminFlag[]{};
                      if (command.hasArg(Create.Cache.TEMPLATE)) {
                         response = cache.createWithTemplate(command.arg(Create.Cache.TEMPLATE), flags);
                      } else {
