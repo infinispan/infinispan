@@ -1,0 +1,28 @@
+[id='register_mbeans-{context}']
+= Registering MBeans In Custom MBean Servers
+{brandname} includes an `MBeanServerLookup` interface that you can use to
+register MBeans in custom MBeanServer instances.
+
+.Procedure
+
+. Create an implementation of `MBeanServerLookup` so that the `getMBeanServer()` method returns the custom MBeanServer instance.
+. Configure {brandname} with the fully qualified name of your class, as in the following example:
+
+.Declaratively
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jmx_mbean_server_lookup.xml[]
+----
+
+.Programmatically
+
+[source,java]
+----
+include::code_examples/JmxMbeanServerLookup.java[]
+----
+
+.Reference
+
+* link:{configdocroot}[{brandname} Configuration Schema]
+* link:{javadocroot}/org/infinispan/commons/jmx/MBeanServerLookup.html[MBeanServerLookup]

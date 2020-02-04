@@ -4,9 +4,8 @@
 
 include::assembly_server_logging.adoc[leveloffset=+1]
 include::assembly_server_health.adoc[leveloffset=+1]
+include::assembly_server_jmx.adoc[leveloffset=+1]
 include::{topics}/proc_collecting_metrics.adoc[leveloffset=+1]
-include::{topics}/jmx_server.adoc[leveloffset=+1]
-include::{topics}/jmx.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
