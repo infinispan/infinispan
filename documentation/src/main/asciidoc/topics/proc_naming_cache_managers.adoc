@@ -1,0 +1,31 @@
+[id='name_cache_managers-{context}']
+= Naming Multiple Cache Managers
+In cases where multiple {brandname} cache managers run on the same JVM, you
+should uniquely identify each cache manager to prevent conflicts.
+
+.Procedure
+
+* Uniquely identify each cache manager in your environment.
+
+For example, the following examples specify "Hibernate2LC" as the cache manager
+name, which results in a JMX MBean named `org.infinispan:type=CacheManager,name="Hibernate2LC"`.
+
+.Declaratively
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::config_examples/jmx_statistics_cache_manager.xml[]
+----
+
+
+.Programmatically
+
+[source,java]
+----
+include::code_examples/JmxStatisticsCacheManager.java[]
+----
+
+.Reference
+
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfigurationBuilder.html[GlobalConfigurationBuilder]
+* link:{configdocroot}[{brandname} Configuration Schema]
