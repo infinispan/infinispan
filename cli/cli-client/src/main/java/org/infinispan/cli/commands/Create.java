@@ -53,7 +53,7 @@ public class Create extends CliCommand {
       @Option(completer = FileOptionCompleter.class, shortName = 'f')
       Resource file;
 
-      @Option(defaultValue = "true", name = "volatile", shortName = 'v')
+      @Option(defaultValue = "false", name = "volatile", shortName = 'v')
       boolean volatileCache;
 
       @Override
