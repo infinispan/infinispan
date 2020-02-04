@@ -418,6 +418,19 @@ public class JGroupsTransport implements Transport {
       return channel.getProtocolStack().getTransport().supportsMulticasting();
    }
 
+   @Override
+   public void checkCrossSiteAvailable() throws CacheConfigurationException {
+      if (findRelay2() == null) {
+         throw CLUSTER.crossSiteUnavailable();
+      }
+   }
+
+   @Override
+   public String localSiteName() {
+      RELAY2 relay2 = findRelay2();
+      return relay2 == null ? null : relay2.site();
+   }
+
    @Start
    @Override
    public void start() {
@@ -485,14 +498,14 @@ public class JGroupsTransport implements Transport {
    }
 
    private void setXSiteViewListener(RouteStatusListener listener) {
-      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
+      RELAY2 relay2 = findRelay2();
       if (relay2 != null) {
          relay2.setRouteStatusListener(listener);
       }
    }
 
    private void setSiteMasterPicker(SiteMasterPickerImpl siteMasterPicker) {
-      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
+      RELAY2 relay2 = findRelay2();
       if (relay2 != null) {
          relay2.siteMasterPicker(siteMasterPicker);
       }
@@ -1426,6 +1439,10 @@ public class JGroupsTransport implements Transport {
          return DeliverOrder.PER_SENDER;
       }
       throw new IllegalArgumentException("Unable to decode order from flags " + flags);
+   }
+
+   private RELAY2 findRelay2() {
+      return channel.getProtocolStack().findProtocol(RELAY2.class);
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {

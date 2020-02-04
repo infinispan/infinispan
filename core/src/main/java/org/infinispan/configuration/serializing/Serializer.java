@@ -400,8 +400,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          attributes.write(writer, TransportConfiguration.RACK_ID, Attribute.RACK_ID);
          if (transport.siteId() != null) {
             attributes.write(writer, TransportConfiguration.SITE_ID, Attribute.SITE);
-         } else if (globalConfiguration.sites().localSite() != null) {
-            writer.writeAttribute(Attribute.SITE, globalConfiguration.sites().localSite());
          }
          attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
          TypedProperties properties = globalConfiguration.transport().properties();

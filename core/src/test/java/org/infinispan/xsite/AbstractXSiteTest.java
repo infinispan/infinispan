@@ -310,7 +310,6 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       public void addCache(String cacheName, GlobalConfigurationBuilder gBuilder, ConfigurationBuilder builder) {
-         gBuilder.site().localSite(siteName);
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(transportFlags(), gBuilder, builder);
          if (cacheName != null)
             cm.defineConfiguration(cacheName, builder.build());

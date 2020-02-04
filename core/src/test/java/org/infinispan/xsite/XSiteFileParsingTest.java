@@ -8,10 +8,11 @@ import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.BackupForConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -25,12 +26,12 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.fromXml(FILE_NAME);
+      return TestCacheManagerFactory.fromXml(FILE_NAME, false, true, TransportFlags.minimalXsiteFlags());
    }
 
-   public void testGlobalConfiguration() {
-      GlobalConfiguration cmc = cacheManager.getCacheManagerConfiguration();
-      assertEquals("LON", cmc.sites().localSite());
+   public void testLocalSiteName() {
+      cacheManager.getTransport().checkCrossSiteAvailable();
+      AssertJUnit.assertEquals("LON-1", cacheManager.getTransport().localSiteName());
    }
 
    public void testDefaultCache() {

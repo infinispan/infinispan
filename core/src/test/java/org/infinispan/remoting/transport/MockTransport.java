@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -247,6 +248,16 @@ public class MockTransport implements Transport {
    @Override
    public boolean isMulticastCapable() {
       return true;
+   }
+
+   @Override
+   public void checkCrossSiteAvailable() throws CacheConfigurationException {
+
+   }
+
+   @Override
+   public String localSiteName() {
+      return null;
    }
 
    @Start

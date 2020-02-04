@@ -92,11 +92,15 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean defaultParserOnly, boolean start) throws IOException {
+      return fromXml(xmlFile, defaultParserOnly, start, new TransportFlags());
+   }
+
+   public static EmbeddedCacheManager fromXml(String xmlFile, boolean defaultParserOnly, boolean start, TransportFlags transportFlags) throws IOException {
       // Use parseURL because it sets an XMLResourceResolver and allows includes
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       URL url = FileLookupFactory.newInstance().lookupFileLocation(xmlFile, classLoader);
       ConfigurationBuilderHolder holder = parseURL(url, defaultParserOnly);
-      return createClusteredCacheManager(start, holder, new TransportFlags());
+      return createClusteredCacheManager(start, holder, transportFlags);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is) {

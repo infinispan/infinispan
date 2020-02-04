@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
@@ -246,6 +247,18 @@ public interface Transport extends Lifecycle {
     * @return true if the transport supports true multicast
     */
    boolean isMulticastCapable();
+
+   /**
+    * Checks if this {@link Transport} is able to perform cross-site requests.
+    *
+    * @throws CacheConfigurationException if cross-site isn't available.
+    */
+   void checkCrossSiteAvailable() throws CacheConfigurationException;
+
+   /**
+    * @return The local site name or {@code null} if this {@link Transport} cannot make cross-site requests.
+    */
+   String localSiteName();
 
    @Override
    void start();

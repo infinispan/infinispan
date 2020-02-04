@@ -33,7 +33,6 @@ public class XSiteInlineConfigFileParsingTest extends SingleCacheManagerTest {
 
    public void testInlineConfiguration() {
       GlobalConfiguration cmc = cacheManager.getCacheManagerConfiguration();
-      assertEquals("LON", cmc.sites().localSite());
       JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(cacheManager, Transport.class);
       RELAY2 relay2 = transport.getChannel().getProtocolStack().findProtocol(RELAY2.class);
       assertEquals(3, relay2.getSites().size());

@@ -78,4 +78,9 @@ public class TransportFlags {
    public boolean isPreserveConfig() {
       return preserveConfig;
    }
+
+   public static TransportFlags minimalXsiteFlags() {
+      //minimal xsite flags
+      return new TransportFlags().withPortRange(0).withSiteName("LON-1").withFD(true);
+   }
 }

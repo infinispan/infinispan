@@ -168,7 +168,6 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
 
    private void createTestSite(String siteName) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb.site().localSite(siteName);
       createSite(siteName, NUM_NODES, gcb, new ConfigurationBuilder());
    }
 

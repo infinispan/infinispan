@@ -106,7 +106,7 @@ public class BackupSenderImpl implements BackupSender {
 
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
    private final ConcurrentMap<String, OfflineStatus> offlineStatus = new ConcurrentHashMap<>();
-   private final String localSiteName;
+   private String localSiteName;
    private String cacheName;
 
    private static boolean isCommunicationError(Throwable throwable) {
@@ -123,13 +123,14 @@ public class BackupSenderImpl implements BackupSender {
 
    private enum BackupFilter {KEEP_1PC_ONLY, KEEP_2PC_ONLY, KEEP_ALL}
 
-   public BackupSenderImpl(String localSiteName) {
-      this.localSiteName = localSiteName;
+   public BackupSenderImpl() {
    }
 
    @Start
    public void start() {
+      transport.checkCrossSiteAvailable();
       this.cacheName = cache.wired().getName();
+      this.localSiteName = transport.localSiteName();
       for (BackupConfiguration bc : config.sites().enabledBackups()) {
          final String siteName = bc.site();
          if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
