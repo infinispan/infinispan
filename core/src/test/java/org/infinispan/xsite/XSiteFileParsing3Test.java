@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +25,7 @@ public class XSiteFileParsing3Test extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.fromXml(FILE_NAME);
+      return TestCacheManagerFactory.fromXml(FILE_NAME, false, true, TransportFlags.minimalXsiteFlags());
    }
 
    public void testDefaultCache() {

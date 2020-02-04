@@ -52,7 +52,6 @@ import org.infinispan.server.commons.service.ValueDependency;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceNameFactory;
 import org.infinispan.server.jgroups.spi.ProtocolStackConfiguration;
-import org.infinispan.server.jgroups.spi.RelayConfiguration;
 import org.jboss.as.clustering.infinispan.ChannelTransport;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
@@ -216,11 +215,6 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
 
             transportBuilder.transportThreadPool().read(this.transportThreadPool.getValue());
             transportBuilder.remoteCommandThreadPool().read(this.remoteCommandThreadPool.getValue());
-
-            RelayConfiguration relay = stack.getRelay();
-            if (relay != null) {
-                builder.site().localSite(relay.getSiteName());
-            }
         }
 
         GlobalStateLocationConfiguration statePersistence = (this.globalStateLocation != null) ? this.globalStateLocation.getValue() : null;

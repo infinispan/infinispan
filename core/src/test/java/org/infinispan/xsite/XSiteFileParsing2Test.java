@@ -1,6 +1,7 @@
 package org.infinispan.xsite;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -12,6 +13,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 /**
@@ -25,7 +27,7 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.fromXml(FILE_NAME);
+      return TestCacheManagerFactory.fromXml(FILE_NAME, false, true, TransportFlags.minimalXsiteFlags());
    }
 
    public void testDefaultCache() {
@@ -71,7 +73,7 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
       assertTrue(dcc.sites().allBackups().contains(lon));
       assertTrue(dcc.sites().enabledBackups().contains(nyc));
       assertTrue(dcc.sites().enabledBackups().contains(sfo));
-      assertTrue(!dcc.sites().enabledBackups().contains(lon));
+      assertFalse(dcc.sites().enabledBackups().contains(lon));
       assertEquals("someCache", dcc.sites().backupFor().remoteCache());
       assertEquals("SFO", dcc.sites().backupFor().remoteSite());
    }

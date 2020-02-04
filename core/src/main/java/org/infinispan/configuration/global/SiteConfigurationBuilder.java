@@ -1,11 +1,14 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.remoting.transport.Transport;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
+ * @deprecated since 11.0. The local site name is fetched via {@link Transport#localSiteName()}
  */
+@Deprecated
 public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SiteConfiguration> {
 
    private String localSite;
@@ -17,6 +20,7 @@ public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder
    /**
     * Sets the name of the local site. Must be a valid name from the list of sites defined.
     */
+   @Deprecated
    public SiteConfigurationBuilder localSite(String localSite) {
       this.localSite = localSite;
       return this;

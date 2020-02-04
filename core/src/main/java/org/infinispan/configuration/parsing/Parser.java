@@ -958,7 +958,6 @@ public class Parser implements ConfigurationParser {
             }
             case SITE: {
                transport.siteId(value);
-               globalBuilder.site().localSite(value);
                break;
             }
             case INITIAL_CLUSTER_SIZE: {

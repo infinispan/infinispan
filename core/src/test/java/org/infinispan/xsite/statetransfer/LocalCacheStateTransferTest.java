@@ -77,15 +77,9 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
 
    @Override
    protected void createSites() {
-      createSite(LON, 1, globalConfigurationBuilderForSite(LON), configurationBuilderForSite(NYC));
-      createSite(NYC, 1, globalConfigurationBuilderForSite(NYC), getDefaultCacheConfiguration(false));
+      createSite(LON, 1, GlobalConfigurationBuilder.defaultClusteredBuilder(), configurationBuilderForSite(NYC));
+      createSite(NYC, 1, GlobalConfigurationBuilder.defaultClusteredBuilder(), getDefaultCacheConfiguration(false));
       waitForSites(LON, NYC);
-   }
-
-   private GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {
-      GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.site().localSite(siteName);
-      return builder;
    }
 
    private ConfigurationBuilder configurationBuilderForSite(String backupSiteName) {

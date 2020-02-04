@@ -21,9 +21,7 @@ public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
    protected void createSites() {
 
       GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      lonGc
-            .site().localSite(LON)
-            .serialization().addContextInitializer(TestDataSCI.INSTANCE);
+      lonGc.serialization().addContextInitializer(TestDataSCI.INSTANCE);
       ConfigurationBuilder lon = getLonActiveConfig();
       lon.sites().addBackup()
                .site(NYC)

@@ -134,7 +134,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return new TransactionFactory();
       } else if (componentName.equals(BackupSender.class.getName())) {
          return configuration.sites().hasEnabledBackups() ?
-                new BackupSenderImpl(globalConfiguration.sites().localSite()) :
+                new BackupSenderImpl() :
                 NoOpBackupSender.getInstance();
       } else if (componentName.equals(TotalOrderManager.class.getName())) {
          return isTransactional && configuration.transaction().transactionProtocol().isTotalOrder() ?
