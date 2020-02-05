@@ -42,9 +42,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    // Default value of MAX_VALUE basically means it hasn't yet received what topology id this is for the entries
    private volatile int lookedUpEntriesTopology = Integer.MAX_VALUE;
 
-   private volatile TotalOrderRemoteTransactionState transactionState;
-   private final Object transactionStateLock = new Object();
-
    private final AtomicReference<CompletableFuture<Void>> synchronization =
          new AtomicReference<>(INITIAL_FUTURE);
 
@@ -122,7 +119,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             ", lookedUpEntriesTopology=" + lookedUpEntriesTopology +
             ", isMarkedForRollback=" + isMarkedForRollback() +
             ", tx=" + tx +
-            ", state=" + transactionState +
             '}';
    }
 
@@ -137,23 +133,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private void checkIfRolledBack() {
       if (isMarkedForRollback()) {
          throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is already rolled back");
-      }
-   }
-
-   /**
-    * @return  get (or create if needed) the {@code TotalOrderRemoteTransactionState} associated to this remote transaction
-    * @deprecated since 10.0. Total Order will be removed.
-    */
-   @Deprecated
-   public final TotalOrderRemoteTransactionState getTransactionState() {
-      if (transactionState != null) {
-         return transactionState;
-      }
-      synchronized (transactionStateLock) {
-         if (transactionState == null) {
-            transactionState = new TotalOrderRemoteTransactionState(getGlobalTransaction());
-         }
-         return transactionState;
       }
    }
 

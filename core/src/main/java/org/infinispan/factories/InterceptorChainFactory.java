@@ -55,11 +55,6 @@ import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedDistributionInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
@@ -117,7 +112,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       AsyncInterceptorChain interceptorChain = new AsyncInterceptorChainImpl(componentRegistry);
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
-      boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       CacheMode cacheMode = configuration.clustering().cacheMode();
 
       if (cacheMode.needsStateTransfer()) {
@@ -148,13 +142,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       // so it's necessary even if there is no state transfer
       // the only exception is non-tx invalidation mode, which ignores lock owners
       if (cacheMode.needsStateTransfer() || cacheMode.isInvalidation() && transactionMode.isTransactional()) {
-         if (isTotalOrder) {
-            interceptorChain.appendInterceptor(createInterceptor(new TotalOrderStateTransferInterceptor(),
-                                                                 TotalOrderStateTransferInterceptor.class), false);
-         } else {
-            interceptorChain.appendInterceptor(
-               createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
-         }
+         interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
       }
 
       if (cacheMode.needsStateTransfer()) {
@@ -166,17 +154,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
 
-      //load total order interceptor
-      if (isTotalOrder) {
-         interceptorChain.appendInterceptor(createInterceptor(new TotalOrderInterceptor(), TotalOrderInterceptor.class), false);
-      }
-
       // load the tx interceptor
       if (transactionMode.isTransactional())
          interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
       //the total order protocol doesn't need locks
-      if (!isTotalOrder && !cacheMode.isScattered()) {
+      if (!cacheMode.isScattered()) {
          if (transactionMode.isTransactional()) {
             if (configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC) {
                interceptorChain.appendInterceptor(createInterceptor(new PessimisticLockingInterceptor(), PessimisticLockingInterceptor.class), false);
@@ -220,12 +203,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       if (needsVersionAwareComponents) {
-         if (isTotalOrder) {
-            interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedEntryWrappingInterceptor(),
-                                                                 TotalOrderVersionedEntryWrappingInterceptor.class), false);
-         } else {
-            interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(), VersionedEntryWrappingInterceptor.class), false);
-         }
+         interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(), VersionedEntryWrappingInterceptor.class), false);
       } else if (cacheMode.isScattered()) {
          if (configuration.clustering().biasAcquisition() == BiasAcquisition.NEVER) {
             interceptorChain.appendInterceptor(createInterceptor(new RetryingEntryWrappingInterceptor(), RetryingEntryWrappingInterceptor.class), false);
@@ -296,22 +274,13 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          case DIST_SYNC:
          case REPL_SYNC:
             if (needsVersionAwareComponents) {
-               if (isTotalOrder) {
-                  interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedDistributionInterceptor(),
-                                                                       TotalOrderVersionedDistributionInterceptor.class), false);
-               } else {
-                  interceptorChain.appendInterceptor(createInterceptor(new VersionedDistributionInterceptor(), VersionedDistributionInterceptor.class), false);
-               }
+               interceptorChain.appendInterceptor(createInterceptor(new VersionedDistributionInterceptor(), VersionedDistributionInterceptor.class), false);
                break;
             }
          case DIST_ASYNC:
          case REPL_ASYNC:
             if (transactionMode.isTransactional()) {
-               if (isTotalOrder) {
-                  interceptorChain.appendInterceptor(createInterceptor(new TotalOrderDistributionInterceptor(), TotalOrderDistributionInterceptor.class), false);
-               } else {
-                  interceptorChain.appendInterceptor(createInterceptor(new TxDistributionInterceptor(), TxDistributionInterceptor.class), false);
-               }
+               interceptorChain.appendInterceptor(createInterceptor(new TxDistributionInterceptor(), TxDistributionInterceptor.class), false);
             } else {
                if (cacheMode.isDistributed() && Configurations.isEmbeddedMode(globalConfiguration)) {
                   interceptorChain.appendInterceptor(createInterceptor(new TriangleDistributionInterceptor(), TriangleDistributionInterceptor.class), false);

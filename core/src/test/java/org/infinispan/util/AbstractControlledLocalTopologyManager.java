@@ -141,11 +141,6 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       }
    }
 
-   @Override
-   public boolean isTotalOrderCache(String cacheName) {
-      return delegate.isTotalOrderCache(cacheName);
-   }
-
    protected CompletionStage<Void> beforeHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
       return CompletableFutures.completedNull();
    }

@@ -168,7 +168,7 @@ public class TestClusterCacheStatus {
    public CacheJoinInfo joinInfo(Address a) {
       // Copy the generic CacheJoinInfo and replace the persistent UUID
       return new CacheJoinInfo(joinInfo.getConsistentHashFactory(), joinInfo.getNumSegments(), joinInfo.getNumOwners(),
-            joinInfo.getTimeout(), joinInfo.isTotalOrder(), joinInfo.getCacheMode(), joinInfo.getCapacityFactor(),
+            joinInfo.getTimeout(), joinInfo.getCacheMode(), joinInfo.getCapacityFactor(),
             persistentUUID(a), joinInfo.getPersistentStateChecksum());
    }
 

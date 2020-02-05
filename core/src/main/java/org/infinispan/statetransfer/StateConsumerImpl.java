@@ -44,7 +44,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.XidImpl;
@@ -97,8 +96,6 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.totalorder.TotalOrderLatch;
-import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
@@ -143,7 +140,6 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected InvocationContextFactory icf;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected CacheNotifier<?, ?> cacheNotifier;
-   @Inject protected TotalOrderManager totalOrderManager;
    @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
    @Inject protected CommitManager commitManager;
@@ -161,7 +157,6 @@ public class StateConsumerImpl implements StateConsumer {
    protected boolean isFetchEnabled;
    protected boolean isTransactional;
    protected boolean isInvalidationMode;
-   protected boolean isTotalOrder;
    protected volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
 
    protected volatile CacheTopology cacheTopology;
@@ -309,9 +304,6 @@ public class StateConsumerImpl implements StateConsumer {
             stateTransferTopologyId.set(NO_STATE_TRANSFER_IN_PROGRESS);
          }
 
-         // TODO Total order will be removed soon, we can skip making it non-blocking
-         awaitTotalOrderTransactions(cacheTopology, startRebalance);
-
          // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
          // even if some of the tasks are removed and re-added
          waitingForState.set(false);
@@ -447,9 +439,6 @@ public class StateConsumerImpl implements StateConsumer {
          if (trace) {
             log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
          }
-         if (isTotalOrder) {
-            totalOrderManager.notifyStateTransferEnd();
-         }
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
          remoteCommandsExecutor.checkForReadyTasks();
 
@@ -543,29 +532,6 @@ public class StateConsumerImpl implements StateConsumer {
 
       // add transfers for new or restarted segments
       return addTransfers(addedSegments);
-   }
-
-   private void awaitTotalOrderTransactions(CacheTopology cacheTopology, boolean isRebalance) {
-      //in total order, we should wait for remote transactions before proceeding
-      if (isTotalOrder) {
-         if (trace) {
-            log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
-         }
-         try {
-            for (TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId(),
-                                                                                    isRebalance)) {
-               block.awaitUntilUnBlock();
-            }
-         } catch (InterruptedException e) {
-            //interrupted...
-            Thread.currentThread().interrupt();
-            throw new CacheException(e);
-         }
-         if (trace) {
-            log.trace(
-                  "State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
-         }
-      }
    }
 
    protected boolean notifyEndOfStateTransferIfNeeded() {
@@ -818,7 +784,6 @@ public class StateConsumerImpl implements StateConsumer {
       cacheName = cache.wired().getName();
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
       isTransactional = configuration.transaction().transactionMode().isTransactional();
-      isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       timeout = configuration.clustering().stateTransfer().timeout();
 
       CacheMode mode = configuration.clustering().cacheMode();
@@ -872,7 +837,7 @@ public class StateConsumerImpl implements StateConsumer {
       Map<Address, IntSet> sources = new HashMap<>();
 
       CompletionStage<Void> stage = CompletableFutures.completedNull();
-      if (isTransactional && !isTotalOrder) {
+      if (isTransactional) {
          stage = requestTransactions(segments, sources, excludedSources);
       }
 
@@ -935,10 +900,8 @@ public class StateConsumerImpl implements StateConsumer {
          Address source = sourceEntry.getKey();
          IntSet segmentsFromSource = sourceEntry.getValue();
          CompletionStage<Response> sourceStage = getTransactions(source, segmentsFromSource, topologyId)
-               .whenComplete((response, throwable) -> {
-                  processTransactionsResponse(segments, sources, failedSegments, sourcesToExclude, topologyId,
-                                              source, segmentsFromSource, response, throwable);
-               });
+               .whenComplete((response, throwable) -> processTransactionsResponse(segments, sources, failedSegments, sourcesToExclude, topologyId,
+                                           source, segmentsFromSource, response, throwable));
          aggregateStage.dependsOn(sourceStage);
       }
 

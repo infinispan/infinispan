@@ -24,8 +24,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -45,7 +43,6 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableFunction;
@@ -67,11 +64,9 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    private static final String VALUE_4 = "value_4";
    private final List<ControlledPerCacheInboundInvocationHandler> inboundHandlerList = new ArrayList<>(NUM_NODES);
    private final CacheMode mode;
-   private final boolean totalOrder;
 
-   protected BaseClusteredExtendedStatisticTest(CacheMode mode, boolean totalOrder) {
+   protected BaseClusteredExtendedStatisticTest(CacheMode mode) {
       this.mode = mode;
-      this.totalOrder = totalOrder;
    }
 
    protected static Collection<Address> getOwners(Cache<?, ?> cache, Object key) {
@@ -360,9 +355,6 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < 2; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
-         if (totalOrder) {
-            builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
-         }
          builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
          builder.clustering().hash().numOwners(1);
          builder.transaction().recovery().disable();
@@ -393,28 +385,53 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
    }
 
-   protected abstract void awaitPut(int cacheIndex, Object key) throws InterruptedException;
+   private void awaitPut(int cacheIndex, Object key) throws InterruptedException {
+      awaitSingleKeyOperation(Operation.PUT, cacheIndex, key);
+   }
 
-   protected abstract void awaitReplace(int cacheIndex, Object key) throws InterruptedException;
+   private void awaitReplace(int cacheIndex, Object key) throws InterruptedException {
+      awaitSingleKeyOperation(Operation.REPLACE, cacheIndex, key);
+   }
 
-   protected abstract void awaitRemove(int cacheIndex, Object key) throws InterruptedException;
+   private void awaitRemove(int cacheIndex, Object key) throws InterruptedException {
+      awaitSingleKeyOperation(Operation.REMOVE, cacheIndex, key);
+   }
 
-   protected abstract void awaitCompute(int cacheIndex, Object key, BiFunction<? super Object, ? super Object, ?> remappingFunction)
-         throws InterruptedException;
+   private void awaitCompute(int cacheIndex, Object key,
+         BiFunction<? super Object, ? super Object, ?> remappingFunction)
+         throws InterruptedException {
+      awaitSingleKeyOperation(Operation.COMPUTE, cacheIndex, key);
+   }
 
-   protected abstract void awaitComputeIfPresent(int cacheIndex, Object key, BiFunction<? super Object, ? super Object, ?> remappingFunction)
-         throws InterruptedException;
+   private void awaitComputeIfAbsent(int cacheIndex, Object key, Function<? super Object, ?> computeFunction)
+         throws InterruptedException {
+      awaitSingleKeyOperation(Operation.COMPUTE_IF_ABSENT, cacheIndex, key);
+   }
 
-   protected abstract void awaitComputeIfAbsent(int cacheIndex, Object key, Function<? super Object, ?> computeFunction)
-         throws InterruptedException;
+   private void awaitComputeIfPresent(int cacheIndex, Object key,
+         BiFunction<? super Object, ? super Object, ?> remappingFunction) throws InterruptedException {
+      awaitSingleKeyOperation(Operation.COMPUTE, cacheIndex, key);
+   }
+
+   private void awaitPutMap(int cacheIndex, Collection<Object> keys) throws InterruptedException {
+      Cache<?, ?> executedOn = cache(cacheIndex);
+      Collection<Address> owners = getOwners(executedOn, keys);
+      owners.remove(address(executedOn));
+      awaitOperation(Operation.PUT_MAP, owners);
+   }
+
+   private void awaitSingleKeyOperation(Operation operation, int cacheIndex, Object key) throws InterruptedException {
+      Cache<?, ?> executedOn = cache(cacheIndex);
+      Collection<Address> owners = getOwners(executedOn, key);
+      owners.remove(address(executedOn));
+      awaitOperation(operation, owners);
+   }
 
    private void awaitClear(int cacheIndex) throws InterruptedException {
       Set<Address> all = new HashSet<>(cache(cacheIndex).getAdvancedCache().getRpcManager().getMembers());
       all.remove(address(cacheIndex));
       awaitOperation(Operation.CLEAR, all);
    }
-
-   protected abstract void awaitPutMap(int cacheIndex, Collection<Object> keys) throws InterruptedException;
 
    protected final void awaitOperation(Operation operation, Collection<Address> owners) throws InterruptedException {
       for (int i = 0; i < NUM_NODES; ++i) {
@@ -565,8 +582,6 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
                   break;
                case PrepareCommand.COMMAND_ID:
                case VersionedPrepareCommand.COMMAND_ID:
-               case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
-               case TotalOrderVersionedPrepareCommand.COMMAND_ID:
                   for (WriteCommand command : ((PrepareCommand) cacheRpcCommand).getModifications()) {
                      checkCommand(command);
                   }

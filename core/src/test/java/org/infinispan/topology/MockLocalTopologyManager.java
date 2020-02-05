@@ -125,11 +125,6 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    }
 
    @Override
-   public boolean isTotalOrderCache(String cacheName) {
-      return false;
-   }
-
-   @Override
    public boolean isRebalancingEnabled() {
       return true;
    }

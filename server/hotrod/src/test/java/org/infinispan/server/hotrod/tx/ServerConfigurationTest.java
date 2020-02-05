@@ -11,7 +11,6 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
@@ -22,7 +21,6 @@ import org.infinispan.server.hotrod.test.TxResponse;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -90,20 +88,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
       doWrongConfigurationTest(cacheName, builder,
-            "java.lang.IllegalStateException: Cache 'opt-cache' cannot use Optimistic neither Total Order transactions.");
-   }
-
-   /*
-    * TODO change when ISPN-7672 is finished!
-    */
-   public void testTotalOrderConfiguration() {
-      final String cacheName = "total-order-cache";
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      doWrongConfigurationTest(cacheName, builder,
-            "java.lang.IllegalStateException: Cache 'total-order-cache' cannot use Optimistic neither Total Order transactions.");
+            "java.lang.IllegalStateException: Cache 'opt-cache' cannot use Optimistic transactions.");
    }
 
    @Override

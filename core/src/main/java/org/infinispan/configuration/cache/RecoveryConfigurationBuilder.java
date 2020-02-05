@@ -10,7 +10,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
 
 /**
  * Defines recovery configuration for the cache.
@@ -83,9 +82,6 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
       }
       if (transaction().useSynchronization()) {
          throw CONFIG.recoveryNotSupportedWithSynchronization();
-      }
-      if (transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
-         throw CONFIG.unavailableTotalOrderWithTxRecovery();
       }
    }
 

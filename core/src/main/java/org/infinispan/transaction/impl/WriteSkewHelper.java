@@ -85,40 +85,6 @@ public class WriteSkewHelper {
       return aggregateCompletionStage.freeze();
    }
 
-   public static CompletionStage<EntryVersionsMap> performTotalOrderWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
-                                                                                      EntryLoader entryLoader,
-                                                                                      VersionGenerator versionGenerator,
-                                                                                      TxInvocationContext context,
-                                                                                      KeySpecificLogic ksl,
-                                                                                      KeyPartitioner keyPartitioner) {
-      EntryVersionsMap uv = new EntryVersionsMap();
-      AggregateCompletionStage<EntryVersionsMap> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(uv);
-      for (WriteCommand c : prepareCommand.getModifications()) {
-         for (Object k : c.getAffectedKeys()) {
-            int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
-            if (ksl.performCheckOnSegment(segment)) {
-               VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) context.lookupEntry(k);
-
-               CompletionStage<Boolean> skewStage = entry.performWriteSkewCheck(entryLoader, segment, context,
-                     prepareCommand.getVersionsSeen().get(k), versionGenerator);
-               aggregateCompletionStage.dependsOn(skewStage.thenAccept(passSkew -> {
-                  if (passSkew) {
-                     //in total order, it does not care about the version returned. It just need the keys validated
-                     synchronized (uv) {
-                        uv.put(k, null);
-                     }
-                  } else {
-                     // Write skew check detected!
-                     throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
-                           context.getCacheTransaction(), k);
-                  }
-               }));
-            }
-         }
-      }
-      return aggregateCompletionStage.freeze();
-   }
-
    public interface KeySpecificLogic {
       boolean performCheckOnSegment(int segment);
    }

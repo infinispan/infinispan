@@ -14,7 +14,6 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
@@ -53,44 +52,34 @@ public class RpcManagerTimeoutTest extends MultipleCacheManagersTest {
          }
       };
 
-      doTest(new FilterMapResponseCollector(filter, true, 2), false, false);
+      doTest(new FilterMapResponseCollector(filter, true, 2), false);
    }
 
    @Test(expectedExceptions = TimeoutException.class)
    public void testTimeoutWithoutFilter() {
-      doTest(null, false, false);
+      doTest(null, false);
    }
 
    @Test(expectedExceptions = TimeoutException.class)
    public void testTimeoutWithBroadcast() {
-      doTest(null, false, true);
+      doTest(null, true);
    }
 
-   @Test(expectedExceptions = TimeoutException.class)
-   public void testTimeoutWithTotalOrderBroadcast() {
-      doTest(null, true, true);
-   }
-
-   @Test(expectedExceptions = TimeoutException.class)
-   public void testTimeoutWithTotalOrderAnycast() {
-      doTest(null, true, false);
-   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
       createClusteredCaches(4, CACHE_NAME, builder);
       waitForClusterToForm(CACHE_NAME);
    }
 
 
-   private void doTest(ResponseCollector<?> collector, boolean totalOrder, boolean broadcast) {
+   private void doTest(ResponseCollector<?> collector,boolean broadcast) {
       if (collector == null)
          collector = VoidResponseCollector.ignoreLeavers();
 
       RpcManager rpcManager = advancedCache(0, CACHE_NAME).getRpcManager();
-      RpcOptions rpcOptions = new RpcOptions(totalOrder ? DeliverOrder.TOTAL : DeliverOrder.NONE, 1000, TimeUnit.MILLISECONDS);
+      RpcOptions rpcOptions = new RpcOptions(DeliverOrder.NONE, 1000, TimeUnit.MILLISECONDS);
       CacheRpcCommand command = new SleepingCacheRpcCommand(ByteString.fromString(CACHE_NAME), 5000);
       if (broadcast) {
          rpcManager.blocking(rpcManager.invokeCommandOnAll(command, collector, rpcOptions));

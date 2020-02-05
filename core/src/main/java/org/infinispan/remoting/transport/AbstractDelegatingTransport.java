@@ -165,11 +165,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public void checkTotalOrderSupported() {
-      actual.checkTotalOrderSupported();
-   }
-
-   @Override
    public Log getLog() {
       return actual.getLog();
    }

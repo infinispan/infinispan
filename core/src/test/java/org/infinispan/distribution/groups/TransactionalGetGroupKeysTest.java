@@ -11,7 +11,6 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -27,12 +26,9 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
       };
    }
 
@@ -158,7 +154,6 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    protected ConfigurationBuilder amendConfiguration(ConfigurationBuilder builder) {
       super.amendConfiguration(builder);
       builder.locking().isolationLevel(isolationLevel);
-      builder.transaction().transactionProtocol(totalOrder ? TransactionProtocol.TOTAL_ORDER : TransactionProtocol.DEFAULT);
       builder.transaction().recovery().disable();
       return builder;
    }

@@ -109,7 +109,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @Inject RecoveryManager recoveryManager;
    @Inject TransactionTable txTable;
 
-   private boolean isTotalOrder;
    private boolean useOnePhaseForAutoCommitTx;
    private boolean useVersioning;
    private boolean statisticsEnabled;
@@ -117,7 +116,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @Start
    public void start() {
       statisticsEnabled = cacheConfiguration.statistics().enabled();
-      isTotalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
       useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
       useVersioning = Configurations.isTxVersioned(cacheConfiguration);
    }
@@ -167,15 +165,13 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             return null;
          }
 
-         if (!isTotalOrder) {
-            InvocationStage replayStage = replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx,
-                  command.getTopologyId());
-            if (replayStage != null) {
-               return replayStage.andHandle(ctx, command, (rCtx, rCommand, rv, t) ->
-                     finishCommit((TxInvocationContext<?>) rCtx, rCommand));
-            } else {
-               return finishCommit(ctx, command);
-            }
+         InvocationStage replayStage = replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx,
+               command.getTopologyId());
+         if (replayStage != null) {
+            return replayStage.andHandle(ctx, command, (rCtx, rCommand, rv, t) ->
+                  finishCommit((TxInvocationContext<?>) rCtx, rCommand));
+         } else {
+            return finishCommit(ctx, command);
          }
       }
 
@@ -186,7 +182,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       GlobalTransaction gtx = ctx.getGlobalTransaction();
       if (this.statisticsEnabled) commits.incrementAndGet();
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         if (!rCtx.isOriginLocal() || isTotalOrder) {
+         if (!rCtx.isOriginLocal()) {
             txTable.remoteTransactionCommitted(gtx, false);
          }
       });
@@ -196,7 +192,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
       // The transaction was marked as completed in RollbackCommand.prepare()
-      if (!ctx.isOriginLocal() || isTotalOrder) {
+      if (!ctx.isOriginLocal()) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {

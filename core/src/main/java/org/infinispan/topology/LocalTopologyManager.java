@@ -79,15 +79,6 @@ public interface LocalTopologyManager {
    CacheTopology getStableCacheTopology(String cacheName);
 
    /**
-    * Checks if the cache defined by {@code cacheName} is using total order.
-    * <p/>
-    * If this component is not running or the {@code cacheName} is not defined, it returns {@code false}.
-    *
-    * @return {@code true} if the cache is using the total order protocol, {@code false} otherwise.
-    */
-   boolean isTotalOrderCache(String cacheName);
-
-   /**
     * Checks whether rebalancing is enabled for the entire cluster.
     */
    boolean isRebalancingEnabled() throws Exception;

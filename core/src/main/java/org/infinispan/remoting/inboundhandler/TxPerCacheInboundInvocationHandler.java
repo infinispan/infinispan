@@ -23,9 +23,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 7.1
  */
-public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
+public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
 
-   private static final Log log = LogFactory.getLog(NonTotalOrderTxPerCacheInboundInvocationHandler.class);
+   private static final Log log = LogFactory.getLog(TxPerCacheInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private final CheckTopologyAction checkTopologyAction;
@@ -33,7 +33,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    private boolean pessimisticLocking;
    private long lockAcquisitionTimeout;
 
-   public NonTotalOrderTxPerCacheInboundInvocationHandler() {
+   public TxPerCacheInboundInvocationHandler() {
       checkTopologyAction = new CheckTopologyAction(this);
    }
 
@@ -46,9 +46,6 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
 
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-      if (order == DeliverOrder.TOTAL) {
-         unexpectedDeliverMode(command, order);
-      }
       try {
          final int commandTopologyId = extractCommandTopologyId(command);
          final boolean onExecutorService = executeOnExecutorService(order, command);

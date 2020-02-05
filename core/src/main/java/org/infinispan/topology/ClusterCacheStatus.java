@@ -146,10 +146,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   public boolean isTotalOrder() {
-      return joinInfo.isTotalOrder();
-   }
-
    public Map<Address, Float> getCapacityFactors() {
       return capacityFactors;
    }
@@ -190,7 +186,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.updatingAvailabilityMode(cacheName, oldAvailabilityMode, newAvailabilityMode, newTopology);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheAvailabilityModeChange(
             newAvailabilityMode, newTopology.getTopologyId()));
-         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode, isTotalOrder());
+         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode);
       }
    }
 
@@ -203,11 +199,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
 
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, currentTopology, availabilityMode);
 
       if (stableTopology != null) {
          log.updatingStableTopology(cacheName, stableTopology);
-         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder());
+         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology);
       }
    }
 
@@ -239,7 +235,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          this.joinInfo = joinInfo;
       }
 
-      HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
+      HashMap<Address, Float> newCapacityFactors = new HashMap<>(capacityFactors);
       newCapacityFactors.put(joiner, joinInfo.getCapacityFactor());
       capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
       expectedMembers = immutableAdd(expectedMembers, joiner);
@@ -263,7 +259,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
 
       expectedMembers = immutableRemove(expectedMembers, leaver);
-      HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
+      HashMap<Address, Float> newCapacityFactors = new HashMap<>(capacityFactors);
       newCapacityFactors.remove(leaver);
       capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
       joiners = immutableRemove(joiners, leaver);
@@ -364,9 +360,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    /**
     * Should be called after the members list was updated in any other way ({@link #removeMember(Address)},
     * {@link #retainMembers} etc.)
-    *
-    * @return {@code true} if the rebalance was confirmed with this update, {@code false} if more confirmations are
-    * needed or if the rebalance was already confirmed in another way (e.g. the last member confirmed)
     */
    @GuardedBy("this")
    private void updateMembers() {
@@ -442,7 +435,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalancePhaseChange(
          newTopology.getPhase(), newTopology.getTopologyId()));
       // TODO: to members only?
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode);
 
       if (newTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
          startQueuedRebalance();
@@ -469,7 +462,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalancePhaseChange(
          newTopology.getPhase(), newTopology.getTopologyId()));
       // TODO: to members only?
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode);
    }
 
    @GuardedBy("this") // called from doHandleClusterView/doLeave/confirmRebalancePhase
@@ -490,7 +483,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       CLUSTER.finishedRebalance(cacheName, newTopology);
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.rebalanceFinished(
          newTopology.getMembers(), newTopology.getTopologyId()));
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode);
       startQueuedRebalance();
    }
 
@@ -563,7 +556,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       CLUSTER.updatingTopology(cacheName, newTopology, availabilityMode);
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
          actualMembers, newTopology.getTopologyId()));
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode);
    }
 
    private boolean setAvailabilityMode(AvailabilityMode newAvailabilityMode) {
@@ -577,25 +570,25 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    // Helpers for working with immutable lists
    private <T> List<T> immutableAdd(List<T> list, T element) {
-      List<T> result = new ArrayList<T>(list);
+      List<T> result = new ArrayList<>(list);
       result.add(element);
       return Collections.unmodifiableList(result);
    }
 
    private <T> List<T> immutableRemove(List<T> list, T element) {
-      List<T> result = new ArrayList<T>(list);
+      List<T> result = new ArrayList<>(list);
       result.remove(element);
       return Collections.unmodifiableList(result);
    }
 
    private <T> List<T> immutableRemoveAll(List<T> list, List<T> otherList) {
-      List<T> result = new ArrayList<T>(list);
+      List<T> result = new ArrayList<>(list);
       result.removeAll(otherList);
       return Collections.unmodifiableList(result);
    }
 
    private <T> List<T> immutableRetainAll(List<T> list, List<T> otherList) {
-      List<T> result = new ArrayList<T>(list);
+      List<T> result = new ArrayList<>(list);
       result.retainAll(otherList);
       return Collections.unmodifiableList(result);
    }
@@ -705,8 +698,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                CLUSTER.updatingTopology(cacheName, topology, availabilityMode);
                eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
                   topology.getMembers(), topology.getTopologyId()));
-               clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode, isTotalOrder());
-               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology, isTotalOrder());
+               clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode);
+               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology);
                return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
             }
          } else {
@@ -719,7 +712,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
                // Don't need to broadcast the initial CH update, just return the cache topology to the joiner
                // But we do need to broadcast the initial topology as the stable topology
-               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology, isTotalOrder());
+               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology);
             }
          }
       }
@@ -799,7 +792,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (stableTopology == null || stableTopology.getTopologyId() < currentTopology.getTopologyId()) {
             stableTopology = currentTopology;
             log.updatingStableTopology(cacheName, stableTopology);
-            clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder());
+            clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology);
          }
          return;
       }
@@ -875,7 +868,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.updatingTopology(cacheName, newTopology, availabilityMode);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
             newTopology.getMembers(), newTopology.getTopologyId()));
-         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, getAvailabilityMode(), isTotalOrder());
+         clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, getAvailabilityMode());
       } else if (rebalance) {
          CacheTopology.Phase newPhase;
          switch (rebalanceType) {
@@ -901,10 +894,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.startingRebalancePhase(cacheName, newTopology);
          eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalanceStart(
             newTopology.getMembers(), newTopology.getPhase(), newTopology.getTopologyId()));
-         clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology, isTotalOrder());
+         clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology);
       } else if (updateStableTopology) {
          stableTopology = currentTopology;
-         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder());
+         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology);
       }
    }
 
@@ -949,7 +942,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (status == ComponentStatus.RUNNING) {
          status = ComponentStatus.STOPPING;
          clusterTopologyManager.setRebalancingEnabled(cacheName, false);
-         return clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology(), this.isTotalOrder())
+         return clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology())
                .thenRun(() -> status = ComponentStatus.TERMINATED);
       }
       return CompletableFutures.completedNull();
@@ -1002,7 +995,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       conflictResolution = null;
       setCurrentTopology(newTopology);
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode);
 
       List<Address> actualMembers = conflictTopology.getActualMembers();
       List<Address> newMembers = getExpectedMembers();
@@ -1043,7 +1036,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       currentTopology = conflictTopology;
 
       log.debugf("Cache %s restarting conflict resolution with topology %s", cacheName, currentTopology);
-      clusterTopologyManager.broadcastTopologyUpdate(cacheName, conflictTopology, availabilityMode, isTotalOrder());
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, conflictTopology, availabilityMode);
 
       queueConflictResolution(conflictTopology, conflictResolution.preferredNodes);
       return true;

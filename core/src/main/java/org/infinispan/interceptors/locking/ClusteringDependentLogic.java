@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.locking;
 
-import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
 import java.util.Collection;
@@ -12,9 +11,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -192,22 +189,20 @@ public interface ClusteringDependentLogic {
       @Inject protected FunctionalNotifier<Object, Object> functionalNotifier;
       @Inject protected Configuration configuration;
       @Inject protected KeyPartitioner keyPartitioner;
-      @Inject protected EvictionManager evictionManager;
+      @Inject protected EvictionManager<?,?> evictionManager;
 
-      protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
-      private EntryLoader entryLoader;
+      private EntryLoader<?,?> entryLoader;
 
       @Start
       public void start() {
-         this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-         this.keySpecificLogic = initKeySpecificLogic(totalOrder);
-         CacheLoaderInterceptor cli = componentRegistry.getComponent(CacheLoaderInterceptor.class);
+         this.keySpecificLogic = initKeySpecificLogic();
+         CacheLoaderInterceptor<?,?> cli = componentRegistry.getComponent(CacheLoaderInterceptor.class);
          if (cli != null) {
             entryLoader = cli;
          } else {
             entryLoader = (ctx, key, segment, cmd) -> {
-               InternalCacheEntry ice = dataContainer.peek(segment, key);
+               InternalCacheEntry<Object,Object> ice = dataContainer.peek(segment, key);
                if (ice != null && ice.canExpire() && ice.isExpired(timeService.wallClockTime())) {
                   ice = null;
                }
@@ -222,15 +217,12 @@ public interface ClusteringDependentLogic {
       }
 
       private CompletionStage<EntryVersionsMap> createNewVersionsMap(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
-         return totalOrder ?
-               totalOrderCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand) :
-               clusteredCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
+         return clusteredCreateNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
       }
 
       @Override
       public final CompletionStage<Void> commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          if (entry instanceof ClearCacheEntry) {
-            //noinspection unchecked
             return commitClearCommand(dataContainer, ctx, command);
          } else {
             return commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
@@ -292,40 +284,7 @@ public interface ClusteringDependentLogic {
          return clusterCommitType(command, ctx, segment, removed);
       }
 
-      protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
-
-      private CompletionStage<EntryVersionsMap> totalOrderCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
-                                                                                VersionedPrepareCommand prepareCommand) {
-         if (context.isOriginLocal()) {
-            throw new IllegalStateException("This must not be reached");
-         }
-
-         CompletionStage<EntryVersionsMap> updatedVersionMap;
-
-         if (!((TotalOrderPrepareCommand) prepareCommand).skipWriteSkewCheck()) {
-            updatedVersionMap = performTotalOrderWriteSkewCheckAndReturnNewVersions(prepareCommand, entryLoader, versionGenerator,
-                                                                                    context, keySpecificLogic,
-                                                                                    keyPartitioner);
-         } else {
-            updatedVersionMap = CompletableFuture.completedFuture(new EntryVersionsMap());
-         }
-
-         return updatedVersionMap.thenApply(uv -> {
-            for (WriteCommand c : prepareCommand.getModifications()) {
-               for (Object k : c.getAffectedKeys()) {
-                  int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
-                  if (keySpecificLogic.performCheckOnSegment(segment)) {
-                     if (!uv.containsKey(k)) {
-                        uv.put(k, null);
-                     }
-                  }
-               }
-            }
-
-            context.getCacheTransaction().setUpdatedEntryVersions(uv);
-            return uv;
-         });
-      }
+      protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic();
 
       private CompletionStage<EntryVersionsMap> clusteredCreateNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context,
                                                                                VersionedPrepareCommand prepareCommand) {
@@ -365,7 +324,7 @@ public interface ClusteringDependentLogic {
       @Inject
       public void init(Transport transport, Configuration configuration, KeyPartitioner keyPartitioner) {
          Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
-         boolean segmented = configuration.persistence().stores().stream().filter(StoreConfiguration::segmented).findAny().isPresent();
+         boolean segmented = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::segmented);
          if (segmented) {
             this.localTopology = LocalizedCacheTopology.makeSegmentedSingletonTopology(keyPartitioner,
                   configuration.clustering().hash().numSegments(), address);
@@ -419,7 +378,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
+      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic() {
          return WriteSkewHelper.ALWAYS_TRUE_LOGIC;
       }
    }
@@ -469,7 +428,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
+      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic() {
          return null; //not used because write skew check is not allowed with invalidation
       }
    }
@@ -553,12 +512,9 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
-         return totalOrder
-               //in total order, all nodes perform the write skew check
-               ? WriteSkewHelper.ALWAYS_TRUE_LOGIC
-               //in two phase commit, only the primary owner should perform the write skew check
-               : localNodeIsPrimaryOwner;
+      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic() {
+         //in two phase commit, only the primary owner should perform the write skew check
+         return localNodeIsPrimaryOwner;
       }
    }
 
@@ -568,18 +524,7 @@ public interface ClusteringDependentLogic {
    class DistributionLogic extends AbstractClusteringDependentLogic {
       @Inject StateTransferLock stateTransferLock;
 
-      private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = new WriteSkewHelper.KeySpecificLogic() {
-         @Override
-         public boolean performCheckOnSegment(int segment) {
-            return getCacheTopology().getSegmentDistribution(segment).isWriteOwner();
-         }
-      };
-      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = new WriteSkewHelper.KeySpecificLogic() {
-         @Override
-         public boolean performCheckOnSegment(int segment) {
-            return getCacheTopology().getSegmentDistribution(segment).isPrimary();
-         }
-      };
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = segment -> getCacheTopology().getSegmentDistribution(segment).isPrimary();
 
       @Override
       protected CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
@@ -659,12 +604,9 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
-         return totalOrder
-               //in total order, all the owners can perform the write skew check.
-               ? localNodeIsOwner
-               //in two phase commit, only the primary owner should perform the write skew check
-               : localNodeIsPrimaryOwner;
+      protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic() {
+         //in two phase commit, only the primary owner should perform the write skew check
+         return localNodeIsPrimaryOwner;
       }
    }
 

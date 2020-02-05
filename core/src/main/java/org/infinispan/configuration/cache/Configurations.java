@@ -40,13 +40,7 @@ public class Configurations {
    }
 
    public static boolean isOnePhaseTotalOrderCommit(Configuration cfg) {
-      // Even total order needs 2 phase commit with this
-      if (isExceptionBasedEviction(cfg)) {
-         return false;
-      }
-      return cfg.transaction().transactionMode().isTransactional() &&
-            cfg.transaction().transactionProtocol().isTotalOrder() &&
-            !isTxVersioned(cfg);
+      return false;
    }
 
    public static boolean isTxVersioned(Configuration cfg) {

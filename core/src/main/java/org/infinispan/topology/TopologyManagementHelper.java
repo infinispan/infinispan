@@ -36,13 +36,7 @@ public class TopologyManagementHelper {
    }
 
    public <T> CompletionStage<T> executeOnClusterSync(Transport transport, ReplicableCommand command,
-                                                      int timeout, boolean totalOrder,
-                                                      ResponseCollector<T> responseCollector) {
-      // Total order invokes the command on the local node automatically
-      if (totalOrder) {
-         return transport.invokeCommandOnAll(command, responseCollector, DeliverOrder.TOTAL, timeout, MILLISECONDS);
-      }
-
+         int timeout, ResponseCollector<T> responseCollector) {
       // First invoke the command remotely, but make sure we don't call finish() on the collector
       ResponseCollector<Void> delegatingCollector = new DelegatingResponseCollector<>(responseCollector);
       CompletionStage<Void> remoteFuture =
@@ -62,25 +56,23 @@ public class TopologyManagementHelper {
       return addLocalResult(responseCollector, remoteFuture, localFuture, transport.getAddress());
    }
 
-   public void executeOnClusterAsync(Transport transport, ReplicableCommand command, boolean totalOrder) {
+   public void executeOnClusterAsync(Transport transport, ReplicableCommand command) {
       // invoke remotely
       try {
-         DeliverOrder deliverOrder = totalOrder ? DeliverOrder.TOTAL : DeliverOrder.NONE;
+         DeliverOrder deliverOrder = DeliverOrder.NONE;
          transport.sendToAll(command, deliverOrder);
       } catch (Exception e) {
          throw Util.rewrapAsCacheException(e);
       }
 
-      if (!totalOrder) {
-         // invoke the command on the local node
-         try {
-            if (trace)
-               log.tracef("Attempting to execute command on self: %s", command);
-            bcr.wireDependencies(command, true);
-            invokeAsync(command);
-         } catch (Throwable throwable) {
-            // The command already logs any exception in invoke()
-         }
+      // invoke the command on the local node
+      try {
+         if (trace)
+            log.tracef("Attempting to execute command on self: %s", command);
+         bcr.wireDependencies(command, true);
+         invokeAsync(command);
+      } catch (Throwable throwable) {
+         // The command already logs any exception in invoke()
       }
    }
 

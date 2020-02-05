@@ -97,15 +97,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
 
    private volatile RpcOptions syncRpcOptions;
-   private volatile RpcOptions totalSyncRpcOptions;
 
 
    @Start(priority = 9)
    void start() {
       statisticsEnabled = configuration.statistics().enabled();
-
-      if (configuration.transaction().transactionProtocol().isTotalOrder())
-         t.checkTotalOrderSupported();
 
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
@@ -122,7 +118,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private void updateRpcOptions(Attribute<Long> attribute, Long oldValue) {
       syncRpcOptions = new RpcOptions(DeliverOrder.NONE, attribute.get(), TimeUnit.MILLISECONDS);
-      totalSyncRpcOptions = new RpcOptions(DeliverOrder.TOTAL, attribute.get(), TimeUnit.MILLISECONDS);
    }
 
 
@@ -594,11 +589,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @Override
    public RpcOptions getSyncRpcOptions() {
       return syncRpcOptions;
-   }
-
-   @Override
-   public RpcOptions getTotalSyncRpcOptions() {
-      return totalSyncRpcOptions;
    }
 
    @Override

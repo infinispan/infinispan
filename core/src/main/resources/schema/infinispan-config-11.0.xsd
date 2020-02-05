@@ -1052,13 +1052,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="protocol" type="tns:transaction-protocol">
-      <xs:annotation>
-        <xs:documentation>
-          (Deprecated, Total Order will be removed) Configures the commit protocol to use.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="recovery-cache" type="xs:string" default="${Recovery.recoveryInfoCacheName}">
       <xs:annotation>
         <xs:documentation>
@@ -2275,18 +2268,6 @@
           <xs:documentation>Don't register a shutdown hook</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:simpleType name="transaction-protocol">
-    <xs:annotation>
-      <xs:documentation>
-        (Deprecated since 10.0. It is going to be removed) Enumeration containing the available commit protocols
-      </xs:documentation>
-    </xs:annotation>
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="DEFAULT" />
-      <xs:enumeration value="TOTAL_ORDER" />
     </xs:restriction>
   </xs:simpleType>
 

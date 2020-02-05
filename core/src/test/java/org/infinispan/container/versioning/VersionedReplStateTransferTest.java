@@ -14,7 +14,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -24,14 +23,6 @@ public class VersionedReplStateTransferTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder builder;
 
    @Override
-   public Object[] factory() {
-      return new Object[] {
-            new VersionedReplStateTransferTest().totalOrder(false),
-            new VersionedReplStateTransferTest().totalOrder(true)
-      };
-   }
-
-   @Override
    protected void createCacheManagers() throws Throwable {
       builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
@@ -39,10 +30,6 @@ public class VersionedReplStateTransferTest extends MultipleCacheManagersTest {
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .transaction().lockingMode(LockingMode.OPTIMISTIC)
             .recovery().disable();
-
-      if (totalOrder) {
-         builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
-      }
 
       createCluster(TestDataSCI.INSTANCE, builder, 2);
       waitForClusterToForm();

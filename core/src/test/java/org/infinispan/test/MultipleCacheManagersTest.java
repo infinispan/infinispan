@@ -91,7 +91,6 @@ import org.testng.annotations.Factory;
 @TestSelector(filters = {
       MultipleCacheManagersTest.CacheModeFilter.class,
       MultipleCacheManagersTest.TransactionalModeFilter.class,
-      MultipleCacheManagersTest.TotalOrderFilter.class,
       MultipleCacheManagersTest.LockingModeFilter.class,
       MultipleCacheManagersTest.IsolationLevelFilter.class,
 })
@@ -104,7 +103,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected CacheMode cacheMode;
    protected Boolean transactional;
    protected LockingMode lockingMode;
-   protected Boolean totalOrder;
    protected BiasAcquisition biasAcquisition;
    protected IsolationLevel isolationLevel;
    // Disables the triangle algorithm if set to Boolean.FALSE
@@ -681,11 +679,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return this;
    }
 
-   public MultipleCacheManagersTest totalOrder(boolean totalOrder) {
-      this.totalOrder = totalOrder;
-      return this;
-   }
-
    public MultipleCacheManagersTest isolationLevel(IsolationLevel isolationLevel) {
       this.isolationLevel = isolationLevel;
       return this;
@@ -730,11 +723,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{null, "tx", "locking", "TO", "isolation", "bias", "triangle"};
+      return new String[]{null, "tx", "locking", "isolation", "bias", "triangle"};
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle};
+      return new Object[]{cacheMode, transactional, lockingMode, isolationLevel, biasAcquisition, useTriangle};
    }
 
    @SafeVarargs
@@ -1042,12 +1035,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          if (property == null) return true;
          T mode = getMode.apply((MultipleCacheManagersTest) method.getInstance());
          return mode == null || mode.toString().equalsIgnoreCase(property);
-      }
-   }
-
-   public static class TotalOrderFilter extends FilterByProperty<Boolean> {
-      public TotalOrderFilter() {
-         super("test.infinispan.totalOrder", test -> test.totalOrder);
       }
    }
 

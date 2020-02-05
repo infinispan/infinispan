@@ -34,14 +34,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -56,6 +54,8 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -198,8 +198,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       if (command instanceof SingleRpcCommand) {
          command = ((SingleRpcCommand) command).getCommand();
       }
-      Address excluded =
-         (rpcOptions != null && rpcOptions.deliverOrder() != DeliverOrder.TOTAL) ? realOne.getAddress() : null;
+      Address excluded = realOne.getAddress();
       ControlledRequest<T> controlledRequest =
          new ControlledRequest<>(command, targets, collector, invoker, executor, excluded);
       allRequests.add(controlledRequest);

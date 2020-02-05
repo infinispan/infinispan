@@ -88,8 +88,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    // Make sure we can handle incoming requests before joining
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
 
-   private Optional<Integer> persistentStateChecksum;
-
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
 
    @Start(priority = 60)
@@ -99,6 +97,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Starting StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
 
+      Optional<Integer> persistentStateChecksum;
       if (globalStateManager != null) {
          persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
       } else {
@@ -111,7 +110,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
             configuration.clustering().stateTransfer().timeout(),
-            configuration.transaction().transactionProtocol().isTotalOrder(),
             configuration.clustering().cacheMode(),
             capacityFactor,
             localTopologyManager.getPersistentUUID(),
@@ -210,14 +208,10 @@ public class StateTransferManagerImpl implements StateTransferManager {
       CacheTopology.Phase phase = newCacheTopology.getPhase();
 
       return cacheNotifier.notifyTopologyChanged(oldCacheTopology, partitionerCacheTopology, newTopologyId, true)
-                          .thenCompose(ignored -> {
-                             return updateProviderAndConsumer(isRebalance, newTopologyId, partitionerCacheTopology,
-                                                       newRebalanceId, phase);
-                          })
-                          .thenCompose(ignored -> {
-                             return cacheNotifier.notifyTopologyChanged(oldCacheTopology, partitionerCacheTopology,
-                                                                        newTopologyId, false);
-                          })
+                          .thenCompose(ignored -> updateProviderAndConsumer(isRebalance, newTopologyId, partitionerCacheTopology,
+                                                    newRebalanceId, phase))
+                          .thenCompose(ignored -> cacheNotifier.notifyTopologyChanged(oldCacheTopology, partitionerCacheTopology,
+                                                                     newTopologyId, false))
                           .thenRun(() -> {
                              completeInitialTransferIfNeeded(partitionerCacheTopology, phase);
                              partitionHandlingManager.onTopologyUpdate(partitionerCacheTopology);

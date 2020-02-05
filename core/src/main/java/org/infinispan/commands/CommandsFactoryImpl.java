@@ -55,11 +55,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -164,14 +159,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    private ByteString cacheName;
    private boolean transactional;
-   private boolean totalOrderProtocol;
 
    @Start(priority = 1)
    // needs to happen early on
    public void start() {
       cacheName = ByteString.fromString(cache.wired().getName());
       this.transactional = configuration.transaction().transactionMode().isTransactional();
-      this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
    }
 
    @Override
@@ -274,31 +267,27 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
-      return totalOrderProtocol ? new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, modifications) :
-            new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
+      return new PrepareCommand(cacheName, gtx, modifications, onePhaseCommit);
    }
 
    @Override
    public VersionedPrepareCommand buildVersionedPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
-      return totalOrderProtocol ? new TotalOrderVersionedPrepareCommand(cacheName, gtx, modifications, onePhase) :
-            new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
+      return new VersionedPrepareCommand(cacheName, gtx, modifications, onePhase);
    }
 
    @Override
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
-      return totalOrderProtocol ? new TotalOrderCommitCommand(cacheName, gtx) :
-            new CommitCommand(cacheName, gtx);
+      return new CommitCommand(cacheName, gtx);
    }
 
    @Override
    public VersionedCommitCommand buildVersionedCommitCommand(GlobalTransaction gtx) {
-      return totalOrderProtocol ? new TotalOrderVersionedCommitCommand(cacheName, gtx) :
-            new VersionedCommitCommand(cacheName, gtx);
+      return new VersionedCommitCommand(cacheName, gtx);
    }
 
    @Override
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
-      return totalOrderProtocol ? new TotalOrderRollbackCommand(cacheName, gtx) : new RollbackCommand(cacheName, gtx);
+      return new RollbackCommand(cacheName, gtx);
    }
 
    @Override

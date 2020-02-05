@@ -7,7 +7,6 @@
    complete-timeout="60000"
    mode="NONE"
    notifications="true"
-   protocol="DEFAULT"
    reaper-interval="30000"
    recovery-cache="__recoveryInfoCacheName__"
    stop-timeout="30000"

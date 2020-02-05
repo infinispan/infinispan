@@ -51,9 +51,6 @@
       <local-cache name="transactional2">
          <transaction transaction-manager-lookup="org.infinispan.test.tx.TestLookup" stop-timeout="10000" locking="PESSIMISTIC" auto-commit="false" />
       </local-cache>
-      <replicated-cache name="transactional3">
-         <transaction mode="NON_XA" auto-commit="true" protocol="TOTAL_ORDER" />
-      </replicated-cache>
       <invalidation-cache name="syncInval">
          <locking acquire-timeout="20000"/>
       </invalidation-cache>

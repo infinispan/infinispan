@@ -90,7 +90,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.jgroups.AnycastAddress;
 import org.jgroups.Event;
 import org.jgroups.Header;
 import org.jgroups.JChannel;
@@ -106,7 +105,6 @@ import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
-import org.jgroups.protocols.tom.TOA;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.MessageBatch;
 
@@ -225,7 +223,6 @@ public class JGroupsTransport implements Transport {
       int membersSize = localMembers.size();
       boolean ignoreLeavers =
             mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
-      boolean totalOrder = deliverOrder == DeliverOrder.TOTAL;
       boolean sendStaggeredRequest = mode == ResponseMode.WAIT_FOR_VALID_RESPONSE &&
             deliverOrder == DeliverOrder.NONE && recipients != null && recipients.size() > 1 && timeout > 0;
       // ISPN-6997: Never allow a switch from anycast -> broadcast and broadcast -> unicast
@@ -233,15 +230,15 @@ public class JGroupsTransport implements Transport {
       // impacts performance significantly. If that is the case, we may need to use UNICAST3.closeConnection() instead.
       boolean broadcast = recipients == null;
 
-      if (!totalOrder && recipients == null && membersSize == 1) {
+      if (recipients == null && membersSize == 1) {
          // don't send if recipients list is empty
          log.tracef("The cluster has a single node: no need to broadcast command %s", command);
          return EMPTY_RESPONSES_FUTURE;
       }
 
-      Address singleTarget = computeSingleTarget(recipients, localMembers, membersSize, broadcast, totalOrder);
+      Address singleTarget = computeSingleTarget(recipients, localMembers, membersSize, broadcast);
 
-      if (!totalOrder && address.equals(singleTarget)) {
+      if (address.equals(singleTarget)) {
          log.tracef("Skipping request to self for command %s", command);
          return EMPTY_RESPONSES_FUTURE;
       }
@@ -871,15 +868,6 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public final void checkTotalOrderSupported() {
-      //For replicated and distributed tx caches, we use TOA as total order protocol.
-      if (channel.getProtocolStack().findProtocol(TOA.class) == null) {
-         throw new CacheConfigurationException("In order to support total order based transaction, the TOA protocol " +
-                                                     "must be present in the JGroups's config.");
-      }
-   }
-
-   @Override
    public Set<String> getSitesView() {
       return sitesView;
    }
@@ -888,7 +876,7 @@ public class JGroupsTransport implements Transport {
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
-      if (target.equals(address) && deliverOrder != DeliverOrder.TOTAL) {
+      if (target.equals(address)) {
          return CompletableFuture.completedFuture(collector.finish());
       }
       long requestId = requests.newRequestId();
@@ -914,7 +902,7 @@ public class JGroupsTransport implements Transport {
       if (targets.isEmpty()) {
          return CompletableFuture.completedFuture(collector.finish());
       }
-      Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
+      Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
@@ -940,7 +928,7 @@ public class JGroupsTransport implements Transport {
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, null, "broadcast");
-      Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
+      Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
@@ -967,7 +955,7 @@ public class JGroupsTransport implements Transport {
                                                     long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, requiredTargets, "broadcast");
-      Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
+      Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
          new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
@@ -1088,10 +1076,7 @@ public class JGroupsTransport implements Transport {
       }
       short flags = encodeDeliverMode(deliverOrder);
       message.setFlag(flags);
-      // Only the commands in total order must be received by the originator.
-      if (deliverOrder != DeliverOrder.TOTAL) {
-         message.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK.value());
-      }
+      message.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK.value());
    }
 
    private void send(Message message) {
@@ -1119,8 +1104,6 @@ public class JGroupsTransport implements Transport {
 
    private static short encodeDeliverMode(DeliverOrder deliverOrder) {
       switch (deliverOrder) {
-         case TOTAL:
-            return Message.Flag.OOB.value();
          case PER_SENDER:
             return Message.Flag.NO_TOTAL_ORDER.value();
          case NONE:
@@ -1134,9 +1117,9 @@ public class JGroupsTransport implements Transport {
     * @return The single target's address, or {@code null} if there are multiple targets.
     */
    private Address computeSingleTarget(Collection<Address> targets, List<Address> localMembers, int membersSize,
-                                       boolean broadcast, boolean totalOrder) {
+         boolean broadcast) {
       Address singleTarget;
-      if (broadcast || totalOrder) {
+      if (broadcast) {
          singleTarget = null;
       } else {
          if (targets == null) {
@@ -1209,18 +1192,11 @@ public class JGroupsTransport implements Transport {
 
    /**
     * Send a command to the entire cluster.
-    *
-    * Doesn't send the command to itself unless {@code deliverOrder == TOTAL}.
     */
    private void sendCommandToAll(ReplicableCommand command, long requestId, DeliverOrder deliverOrder) {
       Message message = new Message();
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, true);
-
-      if (deliverOrder == DeliverOrder.TOTAL) {
-         message.dest(new AnycastAddress());
-      }
-
       send(message);
    }
 
@@ -1262,8 +1238,6 @@ public class JGroupsTransport implements Transport {
 
    /**
     * Send a command to multiple targets.
-    *
-    * Doesn't send the command to itself unless {@code deliverOrder == TOTAL}.
     */
    private void sendCommand(Collection<Address> targets, ReplicableCommand command, long requestId,
                             DeliverOrder deliverOrder, boolean checkView) {
@@ -1272,27 +1246,22 @@ public class JGroupsTransport implements Transport {
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, true);
 
-      if (deliverOrder == DeliverOrder.TOTAL) {
-         message.dest(new AnycastAddress(toJGroupsAddressList(targets)));
-         send(message);
-      } else {
-         Message copy = message;
-         for (Iterator<Address> it = targets.iterator(); it.hasNext(); ) {
-            Address address = it.next();
+      Message copy = message;
+      for (Iterator<Address> it = targets.iterator(); it.hasNext(); ) {
+         Address address = it.next();
 
-            if (checkView && !clusterView.contains(address))
-               continue;
+         if (checkView && !clusterView.contains(address))
+            continue;
 
-            if (address.equals(getAddress()))
-               continue;
+         if (address.equals(getAddress()))
+            continue;
 
-            copy.dest(toJGroupsAddress(address));
-            send(copy);
+         copy.dest(toJGroupsAddress(address));
+         send(copy);
 
-            // Send a different Message instance to each target
-            if (it.hasNext()) {
-               copy = copy.copy(true);
-            }
+         // Send a different Message instance to each target
+         if (it.hasNext()) {
+            copy = copy.copy(true);
          }
       }
    }
@@ -1385,7 +1354,7 @@ public class JGroupsTransport implements Transport {
                                long requestId) {
       try {
          DeliverOrder deliverOrder = decodeDeliverMode(flags);
-         if (deliverOrder != DeliverOrder.TOTAL && src.equals(((JGroupsAddress) getAddress()).getJGroupsAddress())) {
+         if (src.equals(((JGroupsAddress) getAddress()).getJGroupsAddress())) {
             // DISCARD ignores the DONT_LOOPBACK flag, see https://issues.jboss.org/browse/JGRP-2205
             if (trace)
                log.tracef("Ignoring request %d from self without total order", requestId);
@@ -1439,17 +1408,8 @@ public class JGroupsTransport implements Transport {
    }
 
    private DeliverOrder decodeDeliverMode(short flags) {
-      boolean noTotalOrder = Message.isFlagSet(flags, Message.Flag.NO_TOTAL_ORDER);
       boolean oob = Message.isFlagSet(flags, Message.Flag.OOB);
-      if (!noTotalOrder && oob) {
-         return DeliverOrder.TOTAL;
-      } else if (noTotalOrder && oob) {
-         return DeliverOrder.NONE;
-      } else if (noTotalOrder) {
-         //oob is not set at this point, but the no total order flag should.
-         return DeliverOrder.PER_SENDER;
-      }
-      throw new IllegalArgumentException("Unable to decode order from flags " + flags);
+      return oob ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
    }
 
    private RELAY2 findRelay2() {

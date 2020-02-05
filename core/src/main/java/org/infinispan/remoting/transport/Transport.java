@@ -126,12 +126,10 @@ public interface Transport extends Lifecycle {
                                                  boolean usePriorityQueue, ResponseFilter responseFilter,
                                                  boolean totalOrder,
                                                  boolean anycast) throws Exception {
-      DeliverOrder deliverOrder = DeliverOrder.PER_SENDER;
       if (totalOrder) {
-         deliverOrder = DeliverOrder.TOTAL;
-      } else if (usePriorityQueue) {
-         deliverOrder = DeliverOrder.NONE;
+         throw new UnsupportedOperationException();
       }
+      DeliverOrder deliverOrder = usePriorityQueue ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
       return invokeRemotely(rpcCommands, mode, timeout, responseFilter, deliverOrder, anycast);
    }
 
@@ -287,8 +285,13 @@ public interface Transport extends Lifecycle {
    /**
     * check if the transport has configured with total order deliver properties (has the sequencer in JGroups
     * protocol stack.
+    *
+    * @deprecated Total order support dropped
     */
-   void checkTotalOrderSupported();
+   @Deprecated
+   default void checkTotalOrderSupported() {
+      //no-op
+   }
 
    /**
     * Get the view of interconnected sites.
@@ -306,8 +309,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invoke a command on a single node and pass the response to a {@link ResponseCollector}.
     * <p>
-    * If the target is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is never executed, and {@link ResponseCollector#finish()} is called directly.
+    * If the target is the local node, the command is never executed and {@link ResponseCollector#finish()} is called directly.
     *
     * @since 9.1
     */
@@ -322,8 +324,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invoke a command on a collection of node and pass the responses to a {@link ResponseCollector}.
     * <p>
-    * If one of the targets is the local nodes and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * If one of the targets is the local node, it is ignored. The command is only executed on the remote nodes.
     *
     * @since 9.1
     */
@@ -351,8 +352,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
     * <p>
-    * The command is only executed on the local node if the delivery order is {@link DeliverOrder#TOTAL}.
-    * The command is not sent across RELAY2 bridges to remote sites.
+    * The command is not executed locally and it is not sent across RELAY2 bridges to remote sites.
     *
     * @since 9.1
     */
@@ -365,8 +365,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
     * <p>
-    * The command is only executed on the local node if the delivery order is {@link DeliverOrder#TOTAL}.
-    * The command is not sent across RELAY2 bridges to remote sites.
+    * he command is not executed locally and it is not sent across RELAY2 bridges to remote sites.
     *
     * @since 9.3
     */
@@ -385,8 +384,7 @@ public interface Transport extends Lifecycle {
     * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Address, Response)}
     * returns a non-{@code null} value.
     * <p>
-    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * The command is only executed on the remote nodes.
     *
     * @since 9.1
     */
@@ -437,8 +435,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invoke different commands on a collection of nodes and pass the responses to a {@link ResponseCollector}.
     * <p>
-    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * The command is only executed on the remote nodes.
     *
     * @deprecated Introduced in 9.1, but replaced in 9.2 with
     * {@link #invokeCommands(Collection, Function, ResponseCollector, DeliverOrder, long, TimeUnit)}.
@@ -454,8 +451,7 @@ public interface Transport extends Lifecycle {
    /**
     * Invoke different commands on a collection of nodes and pass the responses to a {@link ResponseCollector}.
     * <p>
-    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * The command is only executed on the remote nodes.
     *
     * @since 9.2
     */

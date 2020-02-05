@@ -30,8 +30,7 @@ public interface RpcManager {
    /**
     * Invoke a command on a single node and pass the response to a {@link ResponseCollector}.
     *
-    * If the target is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is never executed, and {@link ResponseCollector#finish()} is called directly.
+    * If the target is the local node, the command is never executed and {@link ResponseCollector#finish()} is called directly.
     *
     * @since 9.2
     */
@@ -41,8 +40,7 @@ public interface RpcManager {
    /**
     * Invoke a command on a collection of node and pass the responses to a {@link ResponseCollector}.
     *
-    * If one of the targets is the local nodes and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * If one of the targets is the local node, it is ignored. The command is only executed on the remote nodes.
     *
     * @since 9.2
     */
@@ -52,8 +50,7 @@ public interface RpcManager {
    /**
     * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
     *
-    * The command is only executed on the local node if the delivery order is {@link DeliverOrder#TOTAL}.
-    * The command is not sent across RELAY2 bridges to remote sites.
+    * The command is not executed locally and it is not sent across RELAY2 bridges to remote sites.
     *
     * @since 9.2
     */
@@ -68,8 +65,7 @@ public interface RpcManager {
     * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Address, Response)}
     * returns a non-{@code null} value.
     *
-    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * The command is only executed on the remote nodes.
     *
     * @since 9.2
     */
@@ -79,8 +75,7 @@ public interface RpcManager {
    /**
     * Invoke different commands on a collection of nodes and pass the responses to a {@link ResponseCollector}.
     *
-    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
-    * the command is only executed on the remote nodes.
+    * The command is only executed on the remote nodes and it is not executed in the local node even if it is in the {@code targets}.
     *
     * @since 9.2
     */
@@ -187,5 +182,7 @@ public interface RpcManager {
    /**
     * @return The default options for total order remote invocations.
     */
-   RpcOptions getTotalSyncRpcOptions();
+   default RpcOptions getTotalSyncRpcOptions() {
+      throw new UnsupportedOperationException();
+   }
 }

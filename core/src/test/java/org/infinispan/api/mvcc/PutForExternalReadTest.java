@@ -38,7 +38,6 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
 
@@ -56,11 +55,9 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).totalOrder(true),
          new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
          new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).totalOrder(true),
          new PutForExternalReadTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER).transactional(false),
          new PutForExternalReadTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE).transactional(false),
       };
@@ -80,9 +77,6 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       c.clustering().hash().numSegments(4);
       if (lockingMode != null) {
          c.transaction().lockingMode(lockingMode);
-      }
-      if (totalOrder != null && totalOrder) {
-         c.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
       }
       if (biasAcquisition != null) {
          c.clustering().biasAcquisition(biasAcquisition);
