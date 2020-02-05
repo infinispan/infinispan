@@ -30,6 +30,17 @@ public class SkipTestNG {
    }
 
    /**
+    * Use within a {@code @Test} method to run this test only on certain OSes.
+    * Use in a {@code @BeforeClass} method to run all methods in a class only on some OSes.
+    */
+   public static void onlyOnOS(OS... oses) {
+      OS currentOs = OS.getCurrentOs();
+      if (!Arrays.asList(oses).contains(currentOs)) {
+         throw new SkipException("Skipping test on " + currentOs);
+      }
+   }
+
+   /**
     * Use within a {@code @Test} method to skip that method on all versions of Java equal or greater
     * to the one specified.
     * Use in a {@code @BeforeClass} method to skip all methods in a class on some JDKs.

@@ -28,11 +28,22 @@ public class SkipJunit implements TestRule {
    }
 
    /**
-    * Use inside a method to skip that particular method on some OSes.
+    * Use within a {@code @Test} method to skip that method on some OSes.
+    * Use in a {@code @BeforeClass} method to skip all methods in a class on some OSes.
     */
    public static void skipOnOS(OS... oses) {
       OS os = OS.getCurrentOs();
       if (Arrays.asList(oses).contains(os))
+         throw new AssumptionViolatedException("Skipping test on " + os);
+   }
+
+   /**
+    * Use within a {@code @Test} method to run this test only on certain OSes.
+    * Use in a {@code @BeforeClass} method to run all methods in a class only on some OSes.
+    */
+   public static void onlyOnOS(OS... oses) {
+      OS os = OS.getCurrentOs();
+      if (!Arrays.asList(oses).contains(os))
          throw new AssumptionViolatedException("Skipping test on " + os);
    }
 
