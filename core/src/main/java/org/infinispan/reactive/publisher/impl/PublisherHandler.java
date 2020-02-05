@@ -361,25 +361,28 @@ public class PublisherHandler {
       PublisherResponse mergeResponses(PublisherResponse response1, PublisherResponse response2) {
          IntSet completedSegments = mergeSegments(response1.getCompletedSegments(), response2.getCompletedSegments());
          IntSet lostSegments = mergeSegments(response1.getLostSegments(), response2.getLostSegments());
+
          int newSize = response1.getSize() + response2.getSize();
          Object[] newArray = new Object[newSize];
          int offset = 0;
-         for (Object obj : response1.getResults()) {
-            if (obj == null) {
-               break;
-            }
-            newArray[offset++] = obj;
-         }
-         for (Object obj : response2.getResults()) {
-            if (obj == null) {
-               break;
-            }
-            newArray[offset++] = obj;
-         }
+         offset = addToArray(response1.getResults(), newArray, offset);
+         addToArray(response2.getResults(), newArray, offset);
          // This should always be true
          boolean complete = response2.isComplete();
          assert complete;
          return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
+      }
+
+      int addToArray(Object[] src, Object[] dst, int offset) {
+         if (src != null) {
+            for (Object obj : src) {
+               if (obj == null) {
+                  break;
+               }
+               dst[offset++] = obj;
+            }
+         }
+         return offset;
       }
 
       IntSet mergeSegments(IntSet segments1, IntSet segments2) {
@@ -558,6 +561,29 @@ public class PublisherHandler {
       PublisherResponse generateResponse(boolean complete) {
          return new KeyPublisherResponse(results, completedSegments, lostSegments, pos, complete, extraValues, extraPos,
                keys, keyPos);
+      }
+
+      @Override
+      PublisherResponse mergeResponses(PublisherResponse publisherResponse1, PublisherResponse publisherResponse2) {
+
+         KeyPublisherResponse response1 = (KeyPublisherResponse) publisherResponse1;
+         KeyPublisherResponse response2 = (KeyPublisherResponse) publisherResponse2;
+         IntSet completedSegments = mergeSegments(response1.getCompletedSegments(), response2.getCompletedSegments());
+         IntSet lostSegments = mergeSegments(response1.getLostSegments(), response2.getLostSegments());
+
+         int newSize = response1.getSize() + response1.getExtraSize() + response2.getSize() + response2.getExtraSize();
+         Object[] newArray = new Object[newSize];
+         int offset = 0;
+
+         offset = addToArray(response1.getResults(), newArray, offset);
+         offset = addToArray(response1.getExtraObjects(), newArray, offset);
+         offset = addToArray(response2.getResults(), newArray, offset);
+         addToArray(response2.getExtraObjects(), newArray, offset);
+
+         // This should always be true
+         boolean complete = response2.isComplete();
+         assert complete;
+         return new PublisherResponse(newArray, completedSegments, lostSegments, newSize, complete, newArray.length);
       }
 
       @Override
