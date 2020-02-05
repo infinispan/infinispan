@@ -629,7 +629,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
             IntSet keys = keysBySegment.computeIfAbsent(segment, IntSets::mutableEmptySet);
             keys.set(i);
          }
-         cache.put(i, i + "-value");
+         cache.put(i, i + "-value" + i);
       });
 
       if (keysBySegment != null) {
@@ -664,6 +664,9 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
             .iterator();
       List<String> list = new ArrayList<>(range * 2);
       iterator.forEachRemaining(list::add);
+      if (keysBySegment != null) {
+         log.tracef("Returned values are: %s", list);
+      }
       assertEquals((range - 2) * 2 + explosionCount, list.size());
    }
 
