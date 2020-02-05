@@ -168,9 +168,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * Gets the domain name. This should not be called unless JMX is enabled.
     */
    public final String getDomain() {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
+      checkMBeanServer();
       return jmxDomain;
    }
 
@@ -178,9 +176,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * Gets the group name. This should not be called unless JMX is enabled.
     */
    public final String getGroupName() {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
+      checkMBeanServer();
       return groupName;
    }
 
@@ -188,9 +184,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * Gets the MBean server. This should not be called unless JMX is enabled.
     */
    public final MBeanServer getMBeanServer() {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
+      checkMBeanServer();
       return mBeanServer;
    }
 
@@ -255,9 +249,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * perform unregistration using the returned ObjectName.
     */
    public ObjectName registerExternalMBean(Object managedComponent, String groupName) throws Exception {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
+      checkMBeanServer();
       ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
       if (resourceDMBean == null) {
          throw new IllegalArgumentException("No MBean metadata found for " + managedComponent.getClass().getName());
@@ -282,9 +274,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * automatically.
     */
    public void registerMBean(Object managedComponent, String groupName) throws Exception {
-      if (mBeanServer == null) {
-         throw new IllegalStateException("MBean server not initialized");
-      }
+      checkMBeanServer();
       ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, null);
       if (resourceDMBean == null) {
          throw new IllegalArgumentException("No MBean metadata found for " + managedComponent.getClass().getName());
@@ -318,6 +308,8 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * @throws Exception If unregistration could not be completed.
     */
    public void unregisterMBean(ObjectName objectName) throws Exception {
+      checkMBeanServer();
+
       if (mBeanServer.isRegistered(objectName)) {
          SecurityActions.unregisterMBean(objectName, mBeanServer);
          if (log.isTraceEnabled()) {
@@ -328,6 +320,12 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
          }
       } else {
          log.debugf("MBean not registered: %s", objectName);
+      }
+   }
+
+   private void checkMBeanServer() {
+      if (mBeanServer == null) {
+         throw new IllegalStateException("MBean server not initialized");
       }
    }
 }
