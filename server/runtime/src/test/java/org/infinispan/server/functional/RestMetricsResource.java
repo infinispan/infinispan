@@ -50,13 +50,13 @@ public class RestMetricsResource {
       assertEquals(MediaType.TEXT_PLAIN, response.contentType());
 
       String metricsText = response.getBody();
-      assertTrue(metricsText.contains("# TYPE application_Cache_Statistics_stores gauge\n"));
+      assertTrue(metricsText.contains("# TYPE vendor_Cache_Statistics_stores gauge\n"));
 
-      response = sync(metricsClient.metrics("application/Cache_Statistics_stores", true));
+      response = sync(metricsClient.metrics("vendor/Cache_Statistics_stores", true));
       assertEquals(200, response.getStatus());
 
       metricsText = response.getBody();
-      assertTrue(metricsText.contains("# TYPE application_Cache_Statistics_stores gauge\n"));
+      assertTrue(metricsText.contains("# TYPE vendor_Cache_Statistics_stores gauge\n"));
    }
 
    @Test
@@ -99,7 +99,7 @@ public class RestMetricsResource {
       assertNotNull(node.get("application"));
       assertTrue(metricsJson.contains("Cache_Statistics_stores"));
 
-      response = sync(metricsClient.metrics("application/Cache_Statistics_stores"));
+      response = sync(metricsClient.metrics("vendor/Cache_Statistics_stores"));
       assertEquals(200, response.getStatus());
 
       long totalStoresBefore = streamNodeFields(mapper.readTree(response.getBody()))
@@ -117,7 +117,7 @@ public class RestMetricsResource {
          assertEquals(204, putResp.getStatus());
       }
 
-      response = sync(metricsClient.metrics("application/Cache_Statistics_stores"));
+      response = sync(metricsClient.metrics("vendor/Cache_Statistics_stores"));
       assertEquals(200, response.getStatus());
 
       String metricJson = response.getBody();
@@ -136,7 +136,7 @@ public class RestMetricsResource {
 
       String cacheNameTag = SERVER_TEST.getMethodName() + "(" + CacheMode.DIST_SYNC.toString().toLowerCase() + ")";
 
-      RestResponse response = sync(metricsClient.metrics("application/Cache_Statistics_storeTimes"));
+      RestResponse response = sync(metricsClient.metrics("vendor/Cache_Statistics_storeTimes"));
       assertEquals(200, response.getStatus());
       assertEquals(MediaType.APPLICATION_JSON, response.contentType());
 
@@ -155,7 +155,7 @@ public class RestMetricsResource {
          assertEquals(204, putResp.getStatus());
       }
 
-      response = sync(metricsClient.metrics("application/Cache_Statistics_storeTimes"));
+      response = sync(metricsClient.metrics("vendor/Cache_Statistics_storeTimes"));
       assertEquals(200, response.getStatus());
 
       long meanStoreTimesAfter = streamNodeFields(mapper.readTree(response.getBody()).get("Cache_Statistics_storeTimes"))
@@ -177,7 +177,7 @@ public class RestMetricsResource {
       String metricsMetadataJson = response.getBody();
       assertTrue(metricsMetadataJson.contains("Cache_Statistics_stores"));
 
-      response = sync(metricsClient.metricsMetadata("application/Cache_Statistics_stores"));
+      response = sync(metricsClient.metricsMetadata("vendor/Cache_Statistics_stores"));
       assertEquals(200, response.getStatus());
 
       JsonNode node = mapper.readTree(response.getBody());
