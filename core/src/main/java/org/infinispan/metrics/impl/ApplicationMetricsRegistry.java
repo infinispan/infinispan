@@ -56,7 +56,7 @@ public class ApplicationMetricsRegistry {
    }
 
    protected MetricRegistry makeRegistry() {
-      return MetricRegistries.get(MetricRegistry.Type.APPLICATION);
+      return MetricRegistries.get(MetricRegistry.Type.VENDOR);
    }
 
    @Start
