@@ -8,7 +8,7 @@ package org.infinispan.commons.test.skip;
  * @since 9.2
  */
 public enum OS {
-   UNIX, WINDOWS, SOLARIS;
+   UNIX, WINDOWS, SOLARIS, LINUX;
 
    public static OS getCurrentOs() {
       String os = System.getProperty("os.name").toLowerCase();
@@ -16,6 +16,8 @@ public enum OS {
          return WINDOWS;
       } else if (os.contains("sunos")) {
          return SOLARIS;
+      } else if (os.contains("linux")) {
+         return LINUX;
       } else {
          return UNIX;
       }
