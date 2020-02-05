@@ -15,17 +15,18 @@ import org.infinispan.marshall.core.Ids;
  * @author Manik Surtani
  * @since 4.0
  */
-public class SuccessfulResponse extends ValidResponse {
-   public static final SuccessfulResponse SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulResponse(null);
+public class SuccessfulResponse<T> extends ValidResponse {
+   public static final SuccessfulResponse SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulResponse<>(null);
 
-   private final Object responseValue;
+   private final T responseValue;
 
-   protected SuccessfulResponse(Object responseValue) {
+   protected SuccessfulResponse(T responseValue) {
       this.responseValue = responseValue;
    }
 
-   public static SuccessfulResponse create(Object responseValue) {
-      return responseValue == null ? SUCCESSFUL_EMPTY_RESPONSE : new SuccessfulResponse(responseValue);
+   @SuppressWarnings("unchecked")
+   public static <T> SuccessfulResponse<T> create(T responseValue) {
+      return responseValue == null ? SUCCESSFUL_EMPTY_RESPONSE : new SuccessfulResponse<>(responseValue);
    }
 
    @Override
@@ -33,7 +34,7 @@ public class SuccessfulResponse extends ValidResponse {
       return true;
    }
 
-   public Object getResponseValue() {
+   public T getResponseValue() {
       return responseValue;
    }
 

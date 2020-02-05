@@ -2,7 +2,6 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.test.TestingUtil.crashCacheManagers;
 import static org.infinispan.test.TestingUtil.installNewView;
-import static org.infinispan.topology.CacheTopologyControlCommand.Type.CH_UPDATE;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -35,7 +35,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -150,7 +149,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
          clusterTopologyManager.setRebalancingEnabled(false);
          if (blockUpdates) {
             ControlledTransport blockedTopologyUpdates = ControlledTransport.replace(c);
-            blockedTopologyUpdates.blockBefore(CacheTopologyControlCommand.class, cc -> cc.getType() == CH_UPDATE);
+            blockedTopologyUpdates.blockBefore(TopologyUpdateCommand.class);
             int currentTopology = c.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
             cleanup.add(blockedTopologyUpdates::stopBlocking);
             // Because all responses are CacheNotFoundResponses, retries will block to wait for a new topology

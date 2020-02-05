@@ -1,9 +1,6 @@
 package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.Exceptions.expectException;
-import static org.infinispan.topology.CacheTopologyControlCommand.Type.CH_UPDATE;
-import static org.infinispan.topology.CacheTopologyControlCommand.Type.REBALANCE_PHASE_CONFIRM;
-import static org.infinispan.topology.CacheTopologyControlCommand.Type.REBALANCE_START;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -15,6 +12,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
+import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -26,7 +26,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
@@ -110,19 +109,17 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
             TestingUtil.wrapGlobalComponent(coordinator.getCacheManager(), InboundInvocationHandler.class,
                                             iih -> new BlockingInboundInvocationHandler(iih, address(coordinator)),
                                             true);
-      blockedRebalanceConfirmations.blockBefore(CacheTopologyControlCommand.class,
-                                                c -> matchTopologyCommand(c, REBALANCE_PHASE_CONFIRM));
+      blockedRebalanceConfirmations.blockBefore(RebalancePhaseConfirmCommand.class, c -> c.getCacheName().equals(getDefaultCacheName()));
 
       // Block rebalance start commands from the coordinator
       ControlledTransport blockedRebalanceStart = ControlledTransport.replace(coordinator);
-      blockedRebalanceStart.blockAfter(CacheTopologyControlCommand.class,
-                                       c -> matchTopologyCommand(c, REBALANCE_START));
+      blockedRebalanceStart.blockAfter(RebalanceStartCommand.class, c -> c.getCacheName().equals(getDefaultCacheName()));
 
       // Block topology updates from a1, but when the flag is set
       ControlledTransport blockedTopologyUpdatesA1 = ControlledTransport.replace(cache(a1));
       AtomicBoolean shouldBlockTopologyUpdatesOnA1 = new AtomicBoolean(false);
-      blockedTopologyUpdatesA1.blockBefore(CacheTopologyControlCommand.class,
-                                           c -> matchTopologyCommand(c, CH_UPDATE) &&
+      blockedTopologyUpdatesA1.blockBefore(TopologyUpdateCommand.class,
+                                           c -> c.getCacheName().equals(getDefaultCacheName()) &&
                                                 shouldBlockTopologyUpdatesOnA1.get());
 
       try {
@@ -197,11 +194,6 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       assertKeysAvailableForRead(cache(m1), keys);
       assertKeysAvailableForRead(cache(a1), keys);
       assertKeysAvailableForRead(cache(a2), keys);
-   }
-
-   private boolean matchTopologyCommand(CacheTopologyControlCommand command,
-                                        CacheTopologyControlCommand.Type type) {
-      return command.getType() == type && command.getCacheName().equals(getDefaultCacheName());
    }
 
    private void eventuallyDegraded(Cache<?, ?> c) {

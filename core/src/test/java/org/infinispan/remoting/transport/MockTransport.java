@@ -1,6 +1,5 @@
 package org.infinispan.remoting.transport;
 
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -36,7 +35,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -104,28 +102,8 @@ public class MockTransport implements Transport {
       return request;
    }
 
-   /**
-    * Expect a topology command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
-    */
-   public BlockedRequest expectTopologyCommand(CacheTopologyControlCommand.Type type)
-      throws InterruptedException {
-      return expectTopologyCommand(type, c -> {});
-   }
-
    public BlockedRequest expectHeartBeatCommand() throws InterruptedException {
       return expectCommand(HeartBeatCommand.class);
-   }
-
-   /**
-    * Expect a topology command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
-    */
-   public BlockedRequest expectTopologyCommand(CacheTopologyControlCommand.Type type,
-                                               Consumer<CacheTopologyControlCommand> checker)
-      throws InterruptedException {
-      return expectCommand(CacheTopologyControlCommand.class, c -> {
-         assertEquals(type, c.getType());
-         checker.accept(c);
-      });
    }
 
    /**

@@ -30,6 +30,18 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
+import org.infinispan.commands.topology.CacheJoinCommand;
+import org.infinispan.commands.topology.CacheLeaveCommand;
+import org.infinispan.commands.topology.CacheShutdownCommand;
+import org.infinispan.commands.topology.CacheShutdownRequestCommand;
+import org.infinispan.commands.topology.CacheStatusRequestCommand;
+import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
+import org.infinispan.commands.topology.RebalancePolicyUpdateCommand;
+import org.infinispan.commands.topology.RebalanceStartCommand;
+import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
+import org.infinispan.commands.topology.TopologyUpdateStableCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
@@ -74,7 +86,6 @@ import org.infinispan.stream.impl.StreamIteratorNextCommand;
 import org.infinispan.stream.impl.StreamIteratorRequestCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -151,9 +162,6 @@ public class RemoteCommandsFactory {
             case InvalidateL1Command.COMMAND_ID:
                command = new InvalidateL1Command();
                break;
-            case CacheTopologyControlCommand.COMMAND_ID:
-               command = new CacheTopologyControlCommand();
-               break;
             case GetKeysInGroupCommand.COMMAND_ID:
                command = new GetKeysInGroupCommand();
                break;
@@ -207,6 +215,42 @@ public class RemoteCommandsFactory {
                break;
             case HeartBeatCommand.COMMAND_ID:
                command = HeartBeatCommand.INSTANCE;
+               break;
+            case CacheJoinCommand.COMMAND_ID:
+               command = new CacheJoinCommand();
+               break;
+            case CacheLeaveCommand.COMMAND_ID:
+               command = new CacheLeaveCommand();
+               break;
+            case RebalancePhaseConfirmCommand.COMMAND_ID:
+               command = new RebalancePhaseConfirmCommand();
+               break;
+            case RebalancePolicyUpdateCommand.COMMAND_ID:
+               command = new RebalancePolicyUpdateCommand();
+               break;
+            case RebalanceStartCommand.COMMAND_ID:
+               command = new RebalanceStartCommand();
+               break;
+            case RebalanceStatusRequestCommand.COMMAND_ID:
+               command = new RebalanceStatusRequestCommand();
+               break;
+            case CacheShutdownRequestCommand.COMMAND_ID:
+               command = new CacheShutdownRequestCommand();
+               break;
+            case CacheShutdownCommand.COMMAND_ID:
+               command = new CacheShutdownCommand();
+               break;
+            case TopologyUpdateCommand.COMMAND_ID:
+               command = new TopologyUpdateCommand();
+               break;
+            case CacheStatusRequestCommand.COMMAND_ID:
+               command = new CacheStatusRequestCommand();
+               break;
+            case TopologyUpdateStableCommand.COMMAND_ID:
+               command = new TopologyUpdateStableCommand();
+               break;
+            case CacheAvailabilityUpdateCommand.COMMAND_ID:
+               command = new CacheAvailabilityUpdateCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

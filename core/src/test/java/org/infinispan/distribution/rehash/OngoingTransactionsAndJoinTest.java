@@ -13,10 +13,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
+import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -33,7 +36,6 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -265,25 +267,17 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public void handle(CacheRpcCommand cmd, Reply reply, DeliverOrder order) {
          boolean notifyRehashStarted = false;
-         if (cmd instanceof CacheTopologyControlCommand) {
-            CacheTopologyControlCommand rcc = (CacheTopologyControlCommand) cmd;
-            log.debugf("Intercepted command: %s", cmd);
-            switch (rcc.getType()) {
-               case REBALANCE_START:
-                  try {
-                     txsReady.await(10, SECONDS);
-                  } catch (InterruptedException e) {
-                     Thread.currentThread().interrupt();
-                     reply.reply(new ExceptionResponse(e));
-                     return;
-                  }
-                  notifyRehashStarted = true;
-                  break;
-               case CH_UPDATE:
-                  // TODO Use another type instead, e.g. REBASE_END
-                  joinEnded.countDown();
-                  break;
+         if (cmd instanceof RebalanceStartCommand) {
+            try {
+               txsReady.await(10, SECONDS);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               reply.reply(new ExceptionResponse(e));
+               return;
             }
+            notifyRehashStarted = true;
+         } else if (cmd instanceof TopologyUpdateCommand) {
+            joinEnded.countDown();
          }
 
          delegate.handle(cmd, reply, order);

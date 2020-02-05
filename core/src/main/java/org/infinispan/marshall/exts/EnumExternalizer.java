@@ -8,6 +8,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.topology.RebalancingStatus;
 import org.infinispan.xsite.BackupSender;
 
 /**
@@ -23,6 +24,7 @@ public class EnumExternalizer implements AdvancedExternalizer<Enum<?>> {
    @Override
    public Set<Class<? extends Enum<?>>> getTypeClasses() {
       return Util.asSet(
+            RebalancingStatus.class,
             BackupSender.BringSiteOnlineResponse.class,
             BackupSender.TakeSiteOfflineResponse.class
       );

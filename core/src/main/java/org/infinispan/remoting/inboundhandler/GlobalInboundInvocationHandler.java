@@ -154,11 +154,11 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       @Override
       public void run() {
          try {
-            globalComponentRegistry.wireDependencies(command);
             CompletionStage<?> stage;
             if (command instanceof GlobalRpcCommand) {
                stage = ((GlobalRpcCommand) command).invokeAsync(globalComponentRegistry).whenComplete(this);
             } else {
+               globalComponentRegistry.wireDependencies(command);
                stage = command.invokeAsync().whenComplete(this);
             }
             if (preserveOrder) {
