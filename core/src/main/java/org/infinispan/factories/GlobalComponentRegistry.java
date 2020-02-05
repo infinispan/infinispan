@@ -24,6 +24,7 @@ import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
@@ -93,6 +94,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    protected final ClassLoader classLoader;
 
+   // Cached fields
+   ComponentRef<ClusterTopologyManager> clusterTopologyManager;
+   ComponentRef<LocalTopologyManager> localTopologyManager;
+
+
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
     *
@@ -143,8 +149,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          // Initialize components that do not have strong references from the cache manager
          basicComponentRegistry.getComponent(EventLogManager.class);
          basicComponentRegistry.getComponent(Transport.class);
-         basicComponentRegistry.getComponent(LocalTopologyManager.class);
-         basicComponentRegistry.getComponent(ClusterTopologyManager.class);
          basicComponentRegistry.getComponent(ClusterContainerStats.class);
          basicComponentRegistry.getComponent(EncoderRegistry.class);
          basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
@@ -152,9 +156,16 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(CacheManagerMetricsRegistration.class);
 
          basicComponentRegistry.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class);
+
+         cacheComponents();
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
+   }
+
+   private void cacheComponents() {
+      localTopologyManager = basicComponentRegistry.getComponent(LocalTopologyManager.class);
+      clusterTopologyManager = basicComponentRegistry.getComponent(ClusterTopologyManager.class);
    }
 
    @Override
@@ -233,6 +244,12 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public synchronized final void rewireNamedRegistries() {
       for (ComponentRegistry cr : namedComponents.values())
          cr.rewire();
+   }
+
+   @Override
+   public void rewire() {
+      super.rewire();
+      cacheComponents();
    }
 
    @Override
@@ -351,5 +368,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       void stop() {
          modulesManagerStopped();
       }
+   }
+
+   public ClusterTopologyManager getClusterTopologyManager() {
+      return clusterTopologyManager.running();
+   }
+
+   public LocalTopologyManager getLocalTopologyManager() {
+      return localTopologyManager.running();
    }
 }

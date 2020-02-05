@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,7 +33,6 @@ import org.infinispan.test.TopologyChangeListener;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.transport.DelayedViewJGroupsTransport;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.BlockingLocalTopologyManager.BlockedTopology;
 import org.infinispan.util.ControlledConsistentHashFactory;
@@ -92,23 +92,11 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       ControlledTransport transport0 = ControlledTransport.replace(cache(0));
       ControlledTransport transport1 = ControlledTransport.replace(cache(1));
       // Block sending REBALANCE_START until the CH_UPDATE is delivered to make the test deterministic
-      transport0.blockBefore(CacheTopologyControlCommand.class, command -> {
-         if (command.getCacheName().equals(cacheName) &&
-               command.getTopologyId() == stableTopologyId + 2 &&
-               command.getType() == CacheTopologyControlCommand.Type.REBALANCE_START) {
-            return true;
-         }
-         return false;
-      });
+      transport0.blockBefore(RebalanceStartCommand.class,
+            command -> command.getCacheName().equals(cacheName) && command.getTopologyId() == stableTopologyId + 2);
       // Also block rebalance initiated by the new coord until we test with topology + 3
-      transport1.blockBefore(CacheTopologyControlCommand.class, command -> {
-         if (command.getCacheName().equals(cacheName) &&
-               command.getTopologyId() == stableTopologyId + 4 &&
-               command.getType() == CacheTopologyControlCommand.Type.REBALANCE_START) {
-            return true;
-         }
-         return false;
-      });
+      transport1.blockBefore(RebalanceStartCommand.class,
+            command -> command.getCacheName().equals(cacheName) && command.getTopologyId() == stableTopologyId + 4);
 
       ControlledRpcManager rpcManager2 = ControlledRpcManager.replaceRpcManager(cache(2));
       // Ignore push transfer of segment 2

@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -28,7 +29,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -168,7 +168,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
       @Override
       public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof CacheTopologyControlCommand) {
+         if (command instanceof CacheJoinCommand) {
             try {
                checkPoint.trigger("blocked_" + index);
                checkPoint.awaitStrict("unblocked_" + index, 10, SECONDS);

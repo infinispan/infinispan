@@ -22,6 +22,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -40,7 +41,6 @@ import org.infinispan.stream.impl.TerminalOperation;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
@@ -104,7 +104,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
                                                            false, mock(TerminalOperation.class));
       int segment = TestingUtil.getSegmentForKey("key", cache);
       nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
-      blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
+      blockingNonCacheRpcCommand = new RebalanceStatusRequestCommand(cacheName.toString());
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
       nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
       VisitableCommand blockingVisitableCommand = mockCommand(VisitableCommand.class, true);

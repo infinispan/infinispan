@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
@@ -34,7 +35,7 @@ import org.infinispan.remoting.transport.Address;
  * very easy for the consistent hash history to differ, e.g. if 2 nodes join
  * you might see two separate topology change in one cache and a single
  * topology change in the other. The reason for that each node has to send a
- * {@link org.infinispan.topology.CacheTopologyControlCommand} for each cache
+ * {@link CacheJoinCommand} for each cache
  * it wants to join and Infinispan can and does batch cache topology changes.
  * For example, if a rebalance is in progress, joins are queued and send in
  * one go when the rebalance has finished.

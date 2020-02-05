@@ -942,7 +942,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (status == ComponentStatus.RUNNING) {
          status = ComponentStatus.STOPPING;
          clusterTopologyManager.setRebalancingEnabled(cacheName, false);
-         return clusterTopologyManager.broadcastShutdownCache(cacheName, this.getCurrentTopology())
+         return clusterTopologyManager.broadcastShutdownCache(cacheName)
                .thenRun(() -> status = ComponentStatus.TERMINATED);
       }
       return CompletableFutures.completedNull();

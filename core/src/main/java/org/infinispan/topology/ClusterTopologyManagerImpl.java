@@ -30,6 +30,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.topology.CacheShutdownCommand;
+import org.infinispan.commands.topology.CacheStatusRequestCommand;
+import org.infinispan.commands.topology.RebalanceStartCommand;
+import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
+import org.infinispan.commands.topology.TopologyUpdateStableCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -152,14 +158,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (transport.isCoordinator()) {
          return CompletableFutures.completedTrue();
       }
-      ReplicableCommand command =
-            new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS,
-                                            transport.getAddress(), -1);
+      ReplicableCommand command = new RebalanceStatusRequestCommand();
       Address coordinator = transport.getCoordinator();
       return helper.executeOnCoordinator(transport, command, getGlobalTimeout() / INITIAL_CONNECTION_ATTEMPTS)
-                   .handle((value, throwable) -> {
+                   .handle((rebalancingStatus, throwable) -> {
                       if (throwable == null)
-                         return CompletableFuture.completedFuture((Boolean) value);
+                         return CompletableFuture.completedFuture(rebalancingStatus != RebalancingStatus.SUSPENDED);
 
                       if (attempts == 1 || !(throwable instanceof TimeoutException)) {
                          log.errorReadingRebalancingStatus(coordinator, throwable);
@@ -526,10 +530,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology) {
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-                                                                  CacheTopologyControlCommand.Type.REBALANCE_START,
-                                                                  transport.getAddress(), cacheTopology, null,
-                                                                  viewId);
+      ReplicableCommand command = new RebalanceStartCommand(cacheName, transport.getAddress(), cacheTopology, viewId);
       helper.executeOnClusterAsync(transport, command);
    }
 
@@ -537,9 +538,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       int attemptCount = recoveryAttemptCount.getAndIncrement();
       if (trace)
          log.debugf("Recovering cluster status for view %d, attempt %d", newViewId, attemptCount);
-      ReplicableCommand command = new CacheTopologyControlCommand(null,
-                                                                  CacheTopologyControlCommand.Type.GET_STATUS,
-                                                                  transport.getAddress(), newViewId);
+      ReplicableCommand command = new CacheStatusRequestCommand(newViewId);
       CacheStatusResponseCollector responseCollector = new CacheStatusResponseCollector();
       int timeout = getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS;
       CompletionStage<CacheStatusResponseCollector> remoteStage =
@@ -629,18 +628,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode) {
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-                                                                  CacheTopologyControlCommand.Type.CH_UPDATE,
-                                                                  transport.getAddress(), cacheTopology,
-                                                                  availabilityMode, viewId);
+      ReplicableCommand command = new TopologyUpdateCommand(cacheName, transport.getAddress(), cacheTopology,
+            availabilityMode, viewId);
       helper.executeOnClusterAsync(transport, command);
    }
 
    void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology) {
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-                                                                  CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE,
-                                                                  transport.getAddress(), cacheTopology,
-                                                                  null, viewId);
+      ReplicableCommand command = new TopologyUpdateStableCommand(cacheName, transport.getAddress(), cacheTopology, viewId);
       helper.executeOnClusterAsync(transport, command);
    }
 
@@ -718,12 +712,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
-   public CompletionStage<Void> broadcastShutdownCache(String cacheName, CacheTopology cacheTopology) {
-      ReplicableCommand command =
-            new CacheTopologyControlCommand(cacheName, CacheTopologyControlCommand.Type.SHUTDOWN_PERFORM,
-                                            transport.getAddress(), cacheTopology, null, viewId);
+   public CompletionStage<Void> broadcastShutdownCache(String cacheName) {
+      ReplicableCommand command = new CacheShutdownCommand(cacheName);
       return helper.executeOnClusterSync(transport, command, getGlobalTimeout(),
-            VoidResponseCollector.validOnly());
+                                         VoidResponseCollector.validOnly());
    }
 
    @Override

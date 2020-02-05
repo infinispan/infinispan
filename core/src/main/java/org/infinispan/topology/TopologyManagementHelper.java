@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.topology.AbstractCacheControlCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -102,12 +103,11 @@ public class TopologyManagementHelper {
       });
    }
 
-   public void executeOnCoordinatorAsync(Transport transport, ReplicableCommand command) throws Exception {
+   public void executeOnCoordinatorAsync(Transport transport, AbstractCacheControlCommand command) throws Exception {
       if (transport.isCoordinator()) {
          if (trace)
             log.tracef("Attempting to execute command on self: %s", command);
          try {
-            bcr.wireDependencies(command, true);
             // ignore the result
             invokeAsync(command);
          } catch (Throwable t) {

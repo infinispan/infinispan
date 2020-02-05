@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
@@ -29,7 +30,6 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.testng.annotations.Test;
 
@@ -157,10 +157,9 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
 
       @Override
       public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof CacheTopologyControlCommand) {
-            CacheTopologyControlCommand cmd = (CacheTopologyControlCommand) command;
-            if (cmd.getType() == CacheTopologyControlCommand.Type.CH_UPDATE && cmd.getPhase() == READ_OLD_WRITE_ALL)
-               awaitLatch(latch);
+         if (command instanceof TopologyUpdateCommand &&
+               ((TopologyUpdateCommand) command).getPhase() == READ_OLD_WRITE_ALL) {
+            awaitLatch(latch);
          }
          delegate.handleFromCluster(origin, command, reply, order);
       }
