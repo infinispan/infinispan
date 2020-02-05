@@ -164,6 +164,10 @@ public class ServerEventLoggerTest {
       withCacheManager(TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder), cm -> {
          EventLogger eventLogger = EventLogManager.getEventLogger(cm);
          eventLogger.info(EventLogCategory.CLUSTER, "message #1");
+
+         // Wait for the event to be inserted in the even log cache
+         waitForEvents(1, eventLogger, EventLogCategory.CLUSTER, null);
+
          Cache<UUID, ServerEventImpl> cache = cm.getCache(ServerEventLogger.EVENT_LOG_CACHE);
          PassivationManager passivationManager = TestingUtil.extractComponent(cache, PassivationManager.class);
          CompletionStages.join(passivationManager.passivateAllAsync());
