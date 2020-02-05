@@ -51,7 +51,7 @@ import com.github.dockerjava.api.model.Network;
 public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
    private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
-   private static final int STARTUP_TIMEOUT_SECONDS = 45;
+   private static final int STARTUP_TIMEOUT_SECONDS = Integer.getInteger("org.infinispan.test.server.container.startupTimeSeconds", 45);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    private final List<GenericContainer> containers;
