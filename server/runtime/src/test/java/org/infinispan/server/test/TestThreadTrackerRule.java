@@ -1,5 +1,6 @@
 package org.infinispan.server.test;
 
+import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -15,13 +16,17 @@ public class TestThreadTrackerRule implements TestRule {
       return new Statement() {
          @Override
          public void evaluate() throws Throwable {
-            String methodName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
-            TestResourceTracker.testStarted(methodName);
+            String testName = description.getTestClass().getName();
+            if (description.getMethodName() != null) {
+               throw new IllegalArgumentException(String.format("Please use TestThreadTrackerRule with @ClassRule, %s is using @Rule", testName));
+            }
+            TestResourceTracker.testStarted(testName);
+            ThreadLeakChecker.testStarted(testName);
             try {
-               methodName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
                base.evaluate();
             } finally {
-               TestResourceTracker.testFinished(methodName);
+               TestResourceTracker.testFinished(testName);
+               ThreadLeakChecker.testFinished(testName);
             }
          }
       };
