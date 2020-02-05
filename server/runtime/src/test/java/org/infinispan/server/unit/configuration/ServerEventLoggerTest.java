@@ -39,7 +39,7 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -52,8 +52,8 @@ import org.junit.Test;
 public class ServerEventLoggerTest {
    private static final Log log = LogFactory.getLog(ServerEventLoggerTest.class);
 
-   @Rule
-   public TestThreadTrackerRule tracker = new TestThreadTrackerRule();
+   @ClassRule
+   public static final TestThreadTrackerRule tracker = new TestThreadTrackerRule();
 
    @Test
    public void testLocalServerEventLogging() {
