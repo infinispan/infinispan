@@ -27,6 +27,7 @@ import org.kohsuke.MetaInfServices;
             Site.CancelPushState.class,
             Site.CancelReceiveState.class,
             Site.PushSiteStatus.class,
+            Site.ClearPushStateStatus.class,
       }
 )
 public class Site extends CliCommand {
@@ -40,7 +41,7 @@ public class Site extends CliCommand {
    public static final String BRING_ONLINE = "bring-online";
    public static final String STATUS = "status";
    public static final String CMD = "site";
-   public static final String NAME = "site";
+   public static final String SITE_NAME = "site";
    public static final String OP = "op";
    public static final String CACHE = "cache";
 
@@ -59,7 +60,7 @@ public class Site extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, STATUS).arg(CACHE, cache).optionalArg(NAME, site);
+         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, STATUS).arg(CACHE, cache).optionalArg(SITE_NAME, site);
          return invocation.execute(Collections.singletonList(cmd));
       }
    }
@@ -74,7 +75,7 @@ public class Site extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, BRING_ONLINE).arg(CACHE, cache).arg(NAME, site);
+         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, BRING_ONLINE).arg(CACHE, cache).arg(SITE_NAME, site);
          return invocation.execute(cmd);
       }
    }
@@ -89,7 +90,7 @@ public class Site extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, TAKE_OFFLINE).arg(CACHE, cache).arg(NAME, site);
+         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, TAKE_OFFLINE).arg(CACHE, cache).arg(SITE_NAME, site);
          return invocation.execute(Collections.singletonList(cmd));
       }
    }
@@ -104,7 +105,7 @@ public class Site extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, PUSH_SITE_STATE).arg(CACHE, cache).arg(NAME, site);
+         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, PUSH_SITE_STATE).arg(CACHE, cache).arg(SITE_NAME, site);
          return invocation.execute(Collections.singletonList(cmd));
       }
    }
@@ -119,7 +120,7 @@ public class Site extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, CANCEL_PUSH_STATE).arg(CACHE, cache).arg(NAME, site);
+         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, CANCEL_PUSH_STATE).arg(CACHE, cache).arg(SITE_NAME, site);
          return invocation.execute(Collections.singletonList(cmd));
       }
    }
@@ -134,7 +135,7 @@ public class Site extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
-         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, CANCEL_RECEIVE_STATE).arg(CACHE, cache).arg(NAME, site);
+         CommandInputLine cmd = new CommandInputLine(CMD).arg(OP, CANCEL_RECEIVE_STATE).arg(CACHE, cache).arg(SITE_NAME, site);
          return invocation.execute(Collections.singletonList(cmd));
       }
    }
