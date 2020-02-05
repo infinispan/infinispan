@@ -105,11 +105,11 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{ null, "tx", "locking", "TO", "isolation", "bias", "triangle", null };
+      return new String[]{ null, "tx", "locking", "isolation", "bias", "triangle", null };
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle, partitionHandling};
+      return new Object[]{ cacheMode, transactional, lockingMode, isolationLevel, biasAcquisition, useTriangle, partitionHandling};
    }
 
    protected ConfigurationBuilder cacheConfiguration() {

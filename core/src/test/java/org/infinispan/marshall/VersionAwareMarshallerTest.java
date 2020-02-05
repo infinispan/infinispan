@@ -34,11 +34,6 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -69,7 +64,6 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -261,22 +255,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       RollbackCommand c13 = new RollbackCommand(cacheName, gtx);
       marshallAndAssertEquality(c13);
-
-      TotalOrderNonVersionedPrepareCommand c14 = new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, c5, c6, c8, c10);
-      marshallAndAssertEquality(c14);
-
-      TotalOrderVersionedPrepareCommand c15 = new TotalOrderVersionedPrepareCommand(cacheName, gtx, Arrays.asList(c5, c10), true);
-      c15.setVersionsSeen(new EntryVersionsMap());
-      marshallAndAssertEquality(c15);
-
-      TotalOrderRollbackCommand c16 = new TotalOrderRollbackCommand(cacheName, gtx);
-      marshallAndAssertEquality(c16);
-
-      TotalOrderCommitCommand c17 = new TotalOrderCommitCommand(cacheName, gtx);
-      marshallAndAssertEquality(c17);
-
-      TotalOrderVersionedCommitCommand c18 = new TotalOrderVersionedCommitCommand(cacheName, gtx);
-      marshallAndAssertEquality(c18);
    }
 
    public void testStateTransferControlCommand() throws Exception {

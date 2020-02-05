@@ -47,8 +47,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheJoinException;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -1215,17 +1213,17 @@ public interface Log extends BasicLogger {
    @Message(value = "completedTxTimeout must be >= 0, we got %d", id = 345)
    CacheConfigurationException invalidCompletedTxTimeout(long timeout);
 
-   @Message(value = "Total Order based protocol not available for transaction mode %s", id = 346)
-   CacheConfigurationException invalidTxModeForTotalOrder(TransactionMode transactionMode);
+//   @Message(value = "Total Order based protocol not available for transaction mode %s", id = 346)
+//   CacheConfigurationException invalidTxModeForTotalOrder(TransactionMode transactionMode);
 
-   @Message(value = "Cache mode %s is not supported by Total Order based protocol", id = 347)
-   CacheConfigurationException invalidCacheModeForTotalOrder(String friendlyCacheModeString);
+//   @Message(value = "Cache mode %s is not supported by Total Order based protocol", id = 347)
+//   CacheConfigurationException invalidCacheModeForTotalOrder(String friendlyCacheModeString);
 
-   @Message(value = "Total Order based protocol not available with recovery", id = 348)
-   CacheConfigurationException unavailableTotalOrderWithTxRecovery();
+//   @Message(value = "Total Order based protocol not available with recovery", id = 348)
+//   CacheConfigurationException unavailableTotalOrderWithTxRecovery();
 
-   @Message(value = "Total Order based protocol not available with %s", id = 349)
-   CacheConfigurationException invalidLockingModeForTotalOrder(LockingMode lockingMode);
+//   @Message(value = "Total Order based protocol not available with %s", id = 349)
+//   CacheConfigurationException invalidLockingModeForTotalOrder(LockingMode lockingMode);
 
    @Message(value = "Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to %s", id = 350)
    CacheConfigurationException l1OnlyForDistributedCache(String cacheMode);

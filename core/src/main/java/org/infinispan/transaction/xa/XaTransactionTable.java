@@ -9,7 +9,6 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -35,14 +34,10 @@ public class XaTransactionTable extends TransactionTable {
    @Inject protected String cacheName;
 
    protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
-   private boolean onePhaseTotalOrder;
 
    @Start(priority = 9) // Start before cache loader manager
    @SuppressWarnings("unused")
    public void startXidMapping() {
-      //in distributed mode with write skew check, we only allow 2 phases!!
-      this.onePhaseTotalOrder = Configurations.isOnePhaseTotalOrderCommit(configuration);
-
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       xid2LocalTx = new ConcurrentHashMap<>(concurrencyLevel, 0.75f, concurrencyLevel);
    }
@@ -115,17 +110,13 @@ public class XaTransactionTable extends TransactionTable {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
       boolean committedInOnePhase;
-      if (isOnePhase && onePhaseTotalOrder) {
-         committedInOnePhase = txCoordinator.commit(localTransaction, true);
-      } else if (isOnePhase) {
+      if (isOnePhase) {
          //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
          //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
          //inconsistent state.
          txCoordinator.prepare(localTransaction);
-         committedInOnePhase = txCoordinator.commit(localTransaction, false);
-      } else {
-         committedInOnePhase = txCoordinator.commit(localTransaction, false);
       }
+      committedInOnePhase = txCoordinator.commit(localTransaction, false);
       forgetSuccessfullyCompletedTransaction(recoveryManager, localTransaction.getXid(), localTransaction,
             committedInOnePhase);
    }

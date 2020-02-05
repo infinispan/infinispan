@@ -8,7 +8,6 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFI
 import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_PROTOCOL;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
@@ -31,7 +30,6 @@ import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
 /**
@@ -224,24 +222,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * @deprecated Since 10.0. Total Order will be removed.
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
-      attributes.attribute(TRANSACTION_PROTOCOL).set(transactionProtocol);
-      return this;
-   }
-
-   /**
-    * See {@link #transactionProtocol(TransactionProtocol)}.
-    *
-    * @return the current configured {@link TransactionProtocol}.
-    */
-   public TransactionProtocol transactionProtocol() {
-      return attributes.attribute(TRANSACTION_PROTOCOL).get();
-   }
-
-   /**
     * @return are transactional notifications (
     *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered} and
     *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}) triggered?
@@ -260,21 +240,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       if (completedTxTimeout.get() < 0)
          throw CONFIG.invalidCompletedTxTimeout(completedTxTimeout.get());
       CacheMode cacheMode = clustering().cacheMode();
-      if(attributes.attribute(TRANSACTION_PROTOCOL).get() == TransactionProtocol.TOTAL_ORDER) {
-         //total order only supports transactional caches
-         if(transactionMode() != TransactionMode.TRANSACTIONAL) {
-            throw CONFIG.invalidTxModeForTotalOrder(transactionMode());
-         }
-
-         //total order only supports replicated and distributed mode
-         if(!cacheMode.isReplicated() && !cacheMode.isDistributed()) {
-            throw CONFIG.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
-         }
-
-         if (lockingMode() != LockingMode.OPTIMISTIC) {
-            throw CONFIG.invalidLockingModeForTotalOrder(lockingMode());
-         }
-      }
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          CONFIG.transactionNotificationsDisabled();
       }

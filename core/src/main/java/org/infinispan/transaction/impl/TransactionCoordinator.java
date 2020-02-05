@@ -53,7 +53,6 @@ public class TransactionCoordinator {
    private CommandCreator commandCreator;
    private volatile boolean shuttingDown = false;
 
-   private boolean totalOrder;
    private boolean defaultOnePhaseCommit;
    private boolean use1PcForAutoCommitTransactions;
 
@@ -70,9 +69,7 @@ public class TransactionCoordinator {
    @Start
    public void start() {
       use1PcForAutoCommitTransactions = configuration.transaction().use1PcForAutoCommitTransactions();
-      totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-      defaultOnePhaseCommit = Configurations.isOnePhaseCommit(configuration) ||
-            Configurations.isOnePhaseTotalOrderCommit(configuration);
+      defaultOnePhaseCommit = Configurations.isOnePhaseCommit(configuration);
 
       if (Configurations.isTxVersioned(configuration)) {
          // We need to create versioned variants of PrepareCommand and CommitCommand
@@ -196,9 +193,7 @@ public class TransactionCoordinator {
       }
       try {
          boolean isRecoveryEnabled = recoveryManager.running() != null;
-         boolean isTotalOrder = onePhaseCommit && totalOrder;
-         if (!isRecoveryEnabled && !isTotalOrder) {
-            //we cannot send the rollback in Total Order because it will create a new remote transaction.
+         if (!isRecoveryEnabled) {
             //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
             //abort too.
             rollbackInternal(ctx);

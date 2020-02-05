@@ -33,8 +33,8 @@ import org.testng.annotations.Test;
 public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "test";
    private static final CacheJoinInfo JOIN_INFO =
-      new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, false,
-                        CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
+      new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000,
+            CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
    private static final Address A = new TestAddress(1, "A");
    private static final Address B = new TestAddress(2, "B");
    private static final Address C = new TestAddress(3, "C");
@@ -99,18 +99,16 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    }
 
    private void verifyRebalanceStart() {
-      verify(topologyManager).broadcastRebalanceStart(CACHE_NAME, status.getCurrentTopology(),
-                                                      JOIN_INFO.isTotalOrder());
+      verify(topologyManager).broadcastRebalanceStart(CACHE_NAME, status.getCurrentTopology());
    }
 
    private void verifyStableTopologyUpdate() {
-      verify(topologyManager).broadcastStableTopologyUpdate(CACHE_NAME, status.getStableTopology(),
-                                                            JOIN_INFO.isTotalOrder());
+      verify(topologyManager).broadcastStableTopologyUpdate(CACHE_NAME, status.getStableTopology());
    }
 
    private void verifyTopologyUpdate() {
       verify(topologyManager).broadcastTopologyUpdate(CACHE_NAME, status.getCurrentTopology(),
-                                                      AvailabilityMode.AVAILABLE, JOIN_INFO.isTotalOrder());
+                                                      AvailabilityMode.AVAILABLE);
    }
 
    private void completeRebalance(ClusterCacheStatus status) throws Exception {
@@ -139,7 +137,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private CacheJoinInfo makeJoinInfo(Address a) {
       PersistentUUID persistentUUID = new PersistentUUID(a.hashCode(), a.hashCode());
       return new CacheJoinInfo(JOIN_INFO.getConsistentHashFactory(), JOIN_INFO.getNumSegments(), JOIN_INFO.getNumOwners(),
-            JOIN_INFO.getTimeout(), JOIN_INFO.isTotalOrder(), JOIN_INFO.getCacheMode(), JOIN_INFO.getCapacityFactor(),
+            JOIN_INFO.getTimeout(), JOIN_INFO.getCacheMode(), JOIN_INFO.getCapacityFactor(),
             persistentUUID, Optional.empty());
    }
 }

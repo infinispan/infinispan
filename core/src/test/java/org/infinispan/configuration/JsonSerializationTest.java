@@ -69,7 +69,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -123,7 +122,7 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
             .partitionHandling().mergePolicy(MergePolicy.PREFERRED_ALWAYS).whenSplit(PartitionHandling.DENY_READ_WRITES)
             .statistics().enable()
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false).transactionProtocol(TransactionProtocol.DEFAULT)
+            .lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false)
             .autoCommit(true).cacheStopTimeout(1, TimeUnit.HOURS)
             .reaperWakeUpInterval(1)
             .completedTxTimeout(123)

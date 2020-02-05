@@ -12,7 +12,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadLockCleanupTest")
@@ -31,11 +30,9 @@ public class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest
          new PutForExternalReadLockCleanupTest("NonTx").transactional(false),
          new PutForExternalReadLockCleanupTest("Optimistic").transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new PutForExternalReadLockCleanupTest("Pessimistic").transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new PutForExternalReadLockCleanupTest("TotalOrder").transactional(true).totalOrder(true),
          new PutForExternalReadLockCleanupTest("NonTxL1", ENABLE_L1).transactional(false),
          new PutForExternalReadLockCleanupTest("OptimisticL1", ENABLE_L1).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new PutForExternalReadLockCleanupTest("PessimisticL1", ENABLE_L1).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new PutForExternalReadLockCleanupTest("TotalOrderL1", ENABLE_L1).transactional(true).totalOrder(true),
       };
    }
 
@@ -68,9 +65,6 @@ public class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
       c.clustering().hash().numSegments(10).numOwners(1);
       c.clustering().l1().disable();
-      if (totalOrder != null && totalOrder.booleanValue()) {
-         c.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
-      }
       amendConfiguration.accept(c);
       createClusteredCaches(2, TestDataSCI.INSTANCE, c);
    }
@@ -86,12 +80,7 @@ public class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest
          cache2.putForExternalRead(magicKey, VALUE);
       }
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache1.containsKey(magicKey) && cache2.containsKey(magicKey);
-         }
-      });
+      eventually(() -> cache1.containsKey(magicKey) && cache2.containsKey(magicKey));
       assertEquals(VALUE, cache1.get(magicKey));
       assertEquals(VALUE, cache2.get(magicKey));
       assertNotLocked(magicKey);

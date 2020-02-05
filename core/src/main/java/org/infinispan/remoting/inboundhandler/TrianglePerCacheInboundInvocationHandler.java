@@ -72,9 +72,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-      if (order == DeliverOrder.TOTAL) {
-         unexpectedDeliverMode(command, order);
-      }
       try {
          switch (command.getCommandId()) {
             case SingleRpcCommand.COMMAND_ID:

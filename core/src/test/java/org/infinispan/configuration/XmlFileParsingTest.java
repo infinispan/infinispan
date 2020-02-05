@@ -49,7 +49,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -442,12 +441,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(10000, c.transaction().cacheStopTimeout());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
       assertFalse(c.transaction().autoCommit());
-
-      c = getCacheConfiguration(holder, "transactional3");
-
-      if (!deprecated) {
-         assertEquals(TransactionProtocol.TOTAL_ORDER, c.transaction().transactionProtocol());
-      }
 
       c = getCacheConfiguration(holder, "syncInval");
 

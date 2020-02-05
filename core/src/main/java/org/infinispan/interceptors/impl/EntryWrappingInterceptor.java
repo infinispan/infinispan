@@ -113,7 +113,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private static final long EVICT_FLAGS_BITSET =
          FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL;
-   private boolean totalOrder;
 
    private void addVersionRead(InvocationContext rCtx, AbstractDataCommand dataCommand) {
       // The entry must be in the context
@@ -166,7 +165,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
             || cacheConfiguration.clustering().cacheMode().isScattered();
       isVersioned = Configurations.isTxVersioned(cacheConfiguration);
-      totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
@@ -187,7 +185,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private Object prepareHandler(InvocationContext ctx, PrepareCommand command, Object rv) {
-      if (shouldCommitDuringPrepare(command, (TxInvocationContext) ctx)) {
+      if (command.isOnePhaseCommit()) {
          return invokeNextThenApply(ctx, command, commitEntriesSuccessHandler);
       } else {
          return invokeNext(ctx, command);
@@ -892,19 +890,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(key), entry);
       }
       return CompletableFutures.completedNull();
-   }
-
-   /**
-    * total order condition: only commits when it is remote context and the prepare has the flag 1PC set
-    *
-    * @param command the prepare command
-    * @param ctx the invocation context
-    * @return true if the modification should be committed, false otherwise
-    */
-   protected boolean shouldCommitDuringPrepare(PrepareCommand command, TxInvocationContext ctx) {
-      return totalOrder ?
-             command.isOnePhaseCommit() && (!ctx.isOriginLocal() || !command.hasModifications()) :
-             command.isOnePhaseCommit();
    }
 
    protected final <P extends PrepareCommand> Object wrapEntriesForPrepareAndApply(TxInvocationContext ctx, P command, InvocationSuccessFunction<P> handler) throws Throwable {

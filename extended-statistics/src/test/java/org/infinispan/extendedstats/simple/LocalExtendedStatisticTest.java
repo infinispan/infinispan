@@ -211,27 +211,6 @@ public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
       Assert.assertFalse(statisticInterceptor.getCacheStatisticManager().hasPendingTransactions());
    }
 
-//   @Override
-//   protected void createCacheManagers() throws Throwable {
-//      for (int i = 0; i < 2; ++i) {
-//         ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
-//         builder.transaction().syncCommitPhase(sync2ndPhase).syncRollbackPhase(sync2ndPhase);
-//         if (totalOrder) {
-//            builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
-//         }
-//         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(writeSkew);
-//         builder.clustering().hash().numOwners(1);
-//         if (writeSkew) {
-//            builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
-//         }
-//         builder.transaction().recovery().disable();
-//         builder.customInterceptors().addInterceptor().interceptor(new ExtendedStatisticInterceptor())
-//               .position(InterceptorConfiguration.Position.FIRST);
-//         addClusterEnabledCacheManager(builder);
-//      }
-//      waitForClusterToForm();
-//   }
-
    protected void assertEmpty(Object... keys) {
       for (Object key : keys) {
          assertNull(cache.get(key));

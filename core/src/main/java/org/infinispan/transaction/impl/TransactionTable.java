@@ -125,7 +125,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private CompletedTransactionsInfo completedTransactionsInfo;
 
    private boolean isPessimisticLocking;
-   private boolean isTotalOrder;
 
    private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
    private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
@@ -138,7 +137,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    public void start() {
       this.clustered = configuration.clustering().cacheMode().isClustered();
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
-      this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
 
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       //use the IdentityEquivalence because some Transaction implementation does not have a stable hash code function
@@ -154,16 +152,15 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          notifier.addListener(this);
          cacheManagerNotifier.addListener(this);
 
-         if (!isTotalOrder) {
-            completedTransactionsInfo = new CompletedTransactionsInfo();
+         completedTransactionsInfo = new CompletedTransactionsInfo();
 
-            // Periodically run a task to cleanup the transaction table of completed transactions.
-            long interval = configuration.transaction().reaperWakeUpInterval();
-            timeoutExecutor.scheduleAtFixedRate(() -> completedTransactionsInfo.cleanupCompletedTransactions(),
-                                                interval, interval, TimeUnit.MILLISECONDS);
-            timeoutExecutor.scheduleAtFixedRate(this::cleanupTimedOutTransactions,
-                                                interval, interval, TimeUnit.MILLISECONDS);
-         }
+         // Periodically run a task to cleanup the transaction table of completed transactions.
+         long interval = configuration.transaction().reaperWakeUpInterval();
+         timeoutExecutor.scheduleAtFixedRate(() -> completedTransactionsInfo.cleanupCompletedTransactions(),
+               interval, interval, TimeUnit.MILLISECONDS);
+         timeoutExecutor.scheduleAtFixedRate(this::cleanupTimedOutTransactions,
+               interval, interval, TimeUnit.MILLISECONDS);
+
       }
 
       running = true;
@@ -315,7 +312,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     */
    public void remoteTransactionCommitted(GlobalTransaction gtx, boolean onePc) {
       boolean optimisticWih1Pc = onePc && (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC);
-      if (isTotalOrder || optimisticWih1Pc) {
+      if (optimisticWih1Pc) {
          removeRemoteTransaction(gtx);
       }
    }
@@ -952,8 +949,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    private boolean mayHaveRemoteLocks(LocalTransaction lt) {
-      return !isTotalOrder &&
-            (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
+      return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
                   !lt.getModifications().isEmpty() ||
                   isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId());
    }
@@ -964,7 +960,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    private boolean isOptimisticCache() {
       //a transactional cache that is neither total order nor pessimistic must be optimistic.
-      return !isPessimisticLocking && !isTotalOrder;
+      return !isPessimisticLocking;
    }
 
    private static class CompletedTransactionInfo {

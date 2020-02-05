@@ -71,7 +71,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
       // Split the invocation into multiple unicast requests
       CommandsRequest<T> action = new CommandsRequest<>(targets, collector);
       for (Address target : targets) {
-         if (rpcOptions.deliverOrder() != DeliverOrder.TOTAL && target.equals(realOne.getAddress()))
+         if (target.equals(realOne.getAddress()))
             continue;
 
          invokeCommand(target, commandGenerator.apply(target), SingletonMapResponseCollector.ignoreLeavers(),

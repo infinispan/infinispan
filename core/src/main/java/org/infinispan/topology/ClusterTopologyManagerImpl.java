@@ -395,10 +395,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return actionSequencer.orderOnKey(ClusterTopologyManagerImpl.class, action);
    }
 
-   private <T> CompletionStage<T> orderOnCache(String cacheName, Callable<CompletionStage<T>> action) {
-      return actionSequencer.orderOnKey(cacheName, action);
-   }
-
    private CompletionStage<Void> orderOnCache(String cacheName, Runnable action) {
       return actionSequencer.orderOnKey(cacheName, () -> {
          action.run();
@@ -427,9 +423,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          for (final Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
             CacheJoinInfo joinInfo = e.getValue().values().iterator().next().getCacheJoinInfo();
             ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey(), joinInfo.getCacheMode());
-            mergeStage.dependsOn(runAsync(() -> {
-               cacheStatus.doMergePartitions(e.getValue());
-            }, cs));
+            mergeStage.dependsOn(runAsync(() -> cacheStatus.doMergePartitions(e.getValue()), cs));
          }
          return mergeStage.freeze().thenRun(() -> {
             updateLock.lock();
@@ -531,12 +525,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return config.clustering().partitionHandling().resolveConflictsOnMerge();
    }
 
-   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder) {
+   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology) {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
                                                                   CacheTopologyControlCommand.Type.REBALANCE_START,
                                                                   transport.getAddress(), cacheTopology, null,
                                                                   viewId);
-      helper.executeOnClusterAsync(transport, command, totalOrder);
+      helper.executeOnClusterAsync(transport, command);
    }
 
    private CompletionStage<CacheStatusResponseCollector> fetchClusterStatus(int newViewId) {
@@ -549,7 +543,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       CacheStatusResponseCollector responseCollector = new CacheStatusResponseCollector();
       int timeout = getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS;
       CompletionStage<CacheStatusResponseCollector> remoteStage =
-            helper.executeOnClusterSync(transport, command, timeout, false, responseCollector);
+            helper.executeOnClusterSync(transport, command, timeout, responseCollector);
       return CompletionStages.handleAndCompose(remoteStage, (collector, throwable) -> {
          if (newViewId < transport.getViewId()) {
             if (trace)
@@ -634,21 +628,20 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return (int) globalConfiguration.transport().distributedSyncTimeout();
    }
 
-   void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
-                                boolean totalOrder) {
+   void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode) {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
                                                                   CacheTopologyControlCommand.Type.CH_UPDATE,
                                                                   transport.getAddress(), cacheTopology,
                                                                   availabilityMode, viewId);
-      helper.executeOnClusterAsync(transport, command, totalOrder);
+      helper.executeOnClusterAsync(transport, command);
    }
 
-   void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder) {
+   void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology) {
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
                                                                   CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE,
                                                                   transport.getAddress(), cacheTopology,
                                                                   null, viewId);
-      helper.executeOnClusterAsync(transport, command, totalOrder);
+      helper.executeOnClusterAsync(transport, command);
    }
 
    @Override
@@ -725,13 +718,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
-   public CompletionStage<Void> broadcastShutdownCache(String cacheName, CacheTopology cacheTopology,
-                                                       boolean totalOrder) {
+   public CompletionStage<Void> broadcastShutdownCache(String cacheName, CacheTopology cacheTopology) {
       ReplicableCommand command =
             new CacheTopologyControlCommand(cacheName, CacheTopologyControlCommand.Type.SHUTDOWN_PERFORM,
                                             transport.getAddress(), cacheTopology, null, viewId);
-      return helper.executeOnClusterSync(transport, command, getGlobalTimeout(), totalOrder,
-                                         VoidResponseCollector.validOnly());
+      return helper.executeOnClusterSync(transport, command, getGlobalTimeout(),
+            VoidResponseCollector.validOnly());
    }
 
    @Override

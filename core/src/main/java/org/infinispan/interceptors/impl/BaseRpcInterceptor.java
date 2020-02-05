@@ -1,13 +1,6 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -16,12 +9,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.transaction.impl.LocalTransaction;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -90,50 +79,6 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected static void transactionRemotelyPrepared(TxInvocationContext ctx) {
       if (ctx.isOriginLocal()) {
          ((LocalTransaction)ctx.getCacheTransaction()).markPrepareSent();
-      }
-   }
-
-   protected static void totalOrderTxCommit(TxInvocationContext ctx) {
-      if (ctx.isOriginLocal()) {
-         ((LocalTransaction)ctx.getCacheTransaction()).markCommitOrRollbackSent();
-      }
-   }
-
-   protected static void totalOrderTxRollback(TxInvocationContext ctx) {
-      if (ctx.isOriginLocal()) {
-         ((LocalTransaction)ctx.getCacheTransaction()).markCommitOrRollbackSent();
-      }
-   }
-
-   protected static boolean shouldTotalOrderRollbackBeInvokedRemotely(TxInvocationContext ctx) {
-      return ctx.isOriginLocal() && ((LocalTransaction)ctx.getCacheTransaction()).isPrepareSent()
-            && !((LocalTransaction)ctx.getCacheTransaction()).isCommitOrRollbackSent();
-   }
-
-   protected CompletionStage<Object> totalOrderPrepare(TxInvocationContext<?> ctx, PrepareCommand command,
-                                                       Collection<Address> recipients) {
-      try {
-         CompletionStage<Map<Address, Response>> remoteInvocation;
-         if (recipients != null) {
-            Set<Address> realRecipients = new HashSet<>(recipients);
-            realRecipients.add(rpcManager.getAddress());
-            remoteInvocation = rpcManager.invokeCommand(realRecipients, command,
-                                                        MapResponseCollector.ignoreLeavers(realRecipients.size()),
-                                                        rpcManager.getTotalSyncRpcOptions());
-         } else {
-            remoteInvocation = rpcManager.invokeCommandOnAll(command,
-                                                             MapResponseCollector.ignoreLeavers(),
-                                                             rpcManager.getTotalSyncRpcOptions());
-         }
-         return remoteInvocation.handle((responses, t) -> {
-            transactionRemotelyPrepared(ctx);
-            CompletableFutures.rethrowException(t);
-
-            return null;
-         });
-      } catch (Throwable t) {
-         transactionRemotelyPrepared(ctx);
-         throw t;
       }
    }
 

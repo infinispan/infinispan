@@ -64,7 +64,6 @@ import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
@@ -148,7 +147,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       StateTransferLock stateTransferLock = mock(StateTransferLock.class);
       AsyncInterceptorChain interceptorChain = mock(AsyncInterceptorChain.class);
       InvocationContextFactory icf = mock(InvocationContextFactory.class);
-      TotalOrderManager totalOrderManager = mock(TotalOrderManager.class);
       BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
       InternalConflictManager conflictManager = mock(InternalConflictManager.class);
       DistributionManager distributionManager = mock(DistributionManager.class);
@@ -200,7 +198,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       TestingUtil.inject(stateConsumer, cache, TestingUtil.named(ASYNC_TRANSPORT_EXECUTOR, pooledExecutorService),
                          localTopologyManager, interceptorChain, icf, configuration, rpcManager,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
-                         totalOrderManager, TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),
+                         TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),
                          new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0),
                          new HashFunctionPartitioner(), conflictManager, distributionManager, localPublisherManager);
       stateConsumer.start();

@@ -25,7 +25,6 @@ public class CacheJoinInfo {
    private final int numSegments;
    private final int numOwners;
    private final long timeout;
-   private final boolean totalOrder;
    private final CacheMode cacheMode;
 
    // Per-node configuration
@@ -35,13 +34,13 @@ public class CacheJoinInfo {
    private final PersistentUUID persistentUUID;
    private final Optional<Integer> persistentStateChecksum;
 
-   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, int numSegments, int numOwners, long timeout, boolean totalOrder, CacheMode cacheMode, float capacityFactor,
-                        PersistentUUID persistentUUID, Optional<Integer> persistentStateChecksum) {
+   public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, int numSegments, int numOwners, long timeout,
+         CacheMode cacheMode, float capacityFactor,
+         PersistentUUID persistentUUID, Optional<Integer> persistentStateChecksum) {
       this.consistentHashFactory = consistentHashFactory;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
       this.timeout = timeout;
-      this.totalOrder = totalOrder;
       this.cacheMode = cacheMode;
       this.capacityFactor = capacityFactor;
       this.persistentUUID = persistentUUID;
@@ -62,10 +61,6 @@ public class CacheJoinInfo {
 
    public long getTimeout() {
       return timeout;
-   }
-
-   public boolean isTotalOrder() {
-      return totalOrder;
    }
 
    public CacheMode getCacheMode() {
@@ -94,7 +89,6 @@ public class CacheJoinInfo {
       result = prime * result + numOwners;
       result = prime * result + numSegments;
       result = prime * result + (int) (timeout ^ (timeout >>> 32));
-      result = prime * result + (totalOrder ? 1231 : 1237);
       result = prime * result + ((persistentUUID == null) ? 0 : persistentUUID.hashCode());
       result = prime * result + ((persistentStateChecksum == null) ? 0 : persistentStateChecksum.hashCode());
       return result;
@@ -124,8 +118,6 @@ public class CacheJoinInfo {
          return false;
       if (timeout != other.timeout)
          return false;
-      if (totalOrder != other.totalOrder)
-         return false;
       if (persistentUUID == null) {
          if (other.persistentUUID != null)
             return false;
@@ -146,7 +138,6 @@ public class CacheJoinInfo {
             ", numSegments=" + numSegments +
             ", numOwners=" + numOwners +
             ", timeout=" + timeout +
-            ", totalOrder=" + totalOrder +
             ", cacheMode=" + cacheMode +
             ", persistentUUID=" + persistentUUID +
             ", persistentStateChecksum=" + persistentStateChecksum +
@@ -160,7 +151,6 @@ public class CacheJoinInfo {
          output.writeInt(cacheJoinInfo.numSegments);
          output.writeInt(cacheJoinInfo.numOwners);
          output.writeLong(cacheJoinInfo.timeout);
-         output.writeBoolean(cacheJoinInfo.totalOrder);
          MarshallUtil.marshallEnum(cacheJoinInfo.cacheMode, output);
          output.writeFloat(cacheJoinInfo.capacityFactor);
          output.writeObject(cacheJoinInfo.persistentUUID);
@@ -173,12 +163,11 @@ public class CacheJoinInfo {
          int numSegments = unmarshaller.readInt();
          int numOwners = unmarshaller.readInt();
          long timeout = unmarshaller.readLong();
-         boolean totalOrder = unmarshaller.readBoolean();
          CacheMode cacheMode = MarshallUtil.unmarshallEnum(unmarshaller, CacheMode::valueOf);
          float capacityFactor = unmarshaller.readFloat();
          PersistentUUID persistentUUID = (PersistentUUID) unmarshaller.readObject();
          Optional<Integer> persistentStateChecksum = (Optional<Integer>) unmarshaller.readObject();
-         return new CacheJoinInfo(consistentHashFactory, numSegments, numOwners, timeout, totalOrder, cacheMode,
+         return new CacheJoinInfo(consistentHashFactory, numSegments, numOwners, timeout, cacheMode,
                capacityFactor, persistentUUID, persistentStateChecksum);
       }
 
@@ -189,7 +178,7 @@ public class CacheJoinInfo {
 
       @Override
       public Set<Class<? extends CacheJoinInfo>> getTypeClasses() {
-         return Collections.<Class<? extends CacheJoinInfo>>singleton(CacheJoinInfo.class);
+         return Collections.singleton(CacheJoinInfo.class);
       }
    }
 }

@@ -87,7 +87,6 @@ import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.kohsuke.MetaInfServices;
@@ -1873,7 +1872,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case TRANSACTION_PROTOCOL: {
-               builder.transaction().transactionProtocol(TransactionProtocol.valueOf(value));
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  CONFIG.ignoredAttribute("transaction protocol", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               }
                break;
             }
             case AUTO_COMMIT: {

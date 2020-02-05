@@ -25,16 +25,6 @@ public enum DeliverOrder {
       public boolean preserveOrder() {
          return true;
       }
-   },
-   /**
-    * The message is delivered in the same order in all the destinations. If N1 sends M1 and N2 sends M2 to nodes N3 and
-    * N4, if N3 delivers first M1 and then M2, then N4 also delivers first M1 and then M2.
-    */
-   TOTAL {
-      @Override
-      public boolean preserveOrder() {
-         return true;
-      }
    };
 
    public abstract boolean preserveOrder();

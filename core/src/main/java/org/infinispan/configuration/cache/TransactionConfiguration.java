@@ -21,7 +21,6 @@ import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
@@ -62,14 +61,13 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
    public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("single-phase-auto-commit", false).build();
    public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaper-wake-up-interval", 30000L).immutable().xmlName("reaper-interval").build();
    public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("complete-timeout", 60000L).immutable().build();
-   public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transaction-protocol", TransactionProtocol.DEFAULT).immutable().xmlName("protocol").build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder("notifications", true).immutable().build();
    public static final ElementDefinition ELEMENT_DEFINTION = new DefaultElementDefinition(TRANSACTION.getLocalName());
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE,
             TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
-            REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, TRANSACTION_PROTOCOL, NOTIFICATIONS);
+            REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, NOTIFICATIONS);
    }
 
    private final List<ConfigurationInfo> subElements = new ArrayList<>();
@@ -85,7 +83,6 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
    private final Attribute<Boolean> use1PcForAutoCommitTransactions;
    private final Attribute<Long> reaperWakeUpInterval;
    private final Attribute<Long> completedTxTimeout;
-   private final Attribute<TransactionProtocol> transactionProtocol;
    private final Attribute<Boolean> notifications;
    private final AttributeSet attributes;
    private final RecoveryConfiguration recovery;
@@ -103,7 +100,6 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
       use1PcForAutoCommitTransactions = attributes.attribute(USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS);
       reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
-      transactionProtocol = attributes.attribute(TRANSACTION_PROTOCOL);
       notifications = attributes.attribute(NOTIFICATIONS);
       this.recovery = recovery;
       this.invocationBatching = invocationBatching;
@@ -230,15 +226,6 @@ public class TransactionConfiguration implements Matchable<TransactionConfigurat
     */
    public boolean use1PcForAutoCommitTransactions() {
       return use1PcForAutoCommitTransactions.get();
-   }
-
-   /**
-    * @return the transaction protocol in use (2PC or Total Order)
-    * @deprecated since 10.0. Total Order will be removed.
-    */
-   @Deprecated
-   public TransactionProtocol transactionProtocol() {
-      return transactionProtocol.get();
    }
 
    /**

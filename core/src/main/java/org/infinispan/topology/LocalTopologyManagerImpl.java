@@ -140,7 +140,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                               PartitionHandlingManager phm) {
       log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
 
-      LocalCacheStatus cacheStatus = new LocalCacheStatus(cacheName, joinInfo, stm, phm);
+      LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm);
       LocalCacheStatus previousStatus = runningCaches.put(cacheName, cacheStatus);
       if (previousStatus != null) {
          throw new IllegalStateException("A cache can only join once");
@@ -322,10 +322,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
 
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
-            .thenCompose(ignored -> orderOnCache(cacheName, () -> {
-               return doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender,
-                                             cacheStatus);
-            }))
+            .thenCompose(ignored -> orderOnCache(cacheName, () -> doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender,
+                                          cacheStatus)))
             .handle((ignored, throwable) -> {
                if (throwable != null && !(throwable instanceof IllegalLifecycleStateException)) {
                   log.topologyUpdateError(cacheName, throwable);
@@ -416,9 +414,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       });
 
       if (!updateAvailabilityModeFirst) {
-         stage = stage.thenCompose(ignored -> {
-            return cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-         });
+         stage = stage.thenCompose(ignored -> cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode));
       }
       return stage.thenApply(ignored -> true);
    }
@@ -507,9 +503,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                                            final Address sender, final int viewId) {
       final LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus != null) {
-         return orderOnCache(cacheName, () -> {
-            return doHandleStableTopologyUpdate(cacheName, newStableTopology, viewId, sender, cacheStatus);
-         });
+         return orderOnCache(cacheName, () -> doHandleStableTopologyUpdate(cacheName, newStableTopology, viewId, sender, cacheStatus));
       }
       return completedNull();
    }
@@ -547,11 +541,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
 
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
-            .thenCompose(ignored -> {
-               return orderOnCache(cacheName, () -> {
-                  return doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
-               });
-            })
+            .thenCompose(ignored -> orderOnCache(cacheName, () -> {
+               return doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
+            }))
             .exceptionally(throwable -> {
                Throwable t = CompletableFutures.extractException(throwable);
                // Ignore errors when the cache is shutting down
@@ -612,22 +604,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       return cacheStatus != null ? cacheStatus.getStableTopology() : null;
    }
 
-   @Override
-   public boolean isTotalOrderCache(String cacheName) {
-      if (!running) {
-         log.tracef("isTotalOrderCache(%s) returning false because the local cache manager is not running", cacheName);
-         return false;
-      }
-      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      if (cacheStatus == null) {
-         log.tracef("isTotalOrderCache(%s) returning false because the cache doesn't exist locally", cacheName);
-         return false;
-      }
-      boolean totalOrder = cacheStatus.getJoinInfo().isTotalOrder();
-      log.tracef("isTotalOrderCache(%s) returning %s", cacheName, totalOrder);
-      return totalOrder;
-   }
-
    private CompletionStage<Void> withView(int viewId, long timeout, TimeUnit timeUnit) {
       CompletableFuture<Void> viewFuture = transport.withView(viewId);
       ScheduledFuture<Boolean> cancelTask = timeoutExecutor.schedule(
@@ -685,8 +661,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                                       : CacheTopologyControlCommand.Type.POLICY_DISABLE;
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName, type, transport.getAddress(),
                                                                   transport.getViewId());
-      CompletionStages.join(helper.executeOnClusterSync(transport, command, getGlobalTimeout(), false,
-                                                        VoidResponseCollector.ignoreLeavers()));
+      CompletionStages.join(helper.executeOnClusterSync(transport, command, getGlobalTimeout(),
+            VoidResponseCollector.ignoreLeavers()));
    }
 
    @Override
@@ -782,16 +758,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private <T> CompletionStage<T> orderOnCache(String cacheName, Callable<CompletionStage<T>> action) {
       return actionSequencer.orderOnKey(cacheName, () -> {
          log.tracef("Acquired cache status %s", cacheName);
-         return action.call().whenComplete((v, t) -> {
-            log.tracef("Released cache status %s", cacheName);
-         });
-      });
-   }
-
-   private CompletionStage<Void> orderOnCache(String cacheName, Runnable action) {
-      return orderOnCache(cacheName, () -> {
-         action.run();
-         return CompletableFutures.completedNull();
+         return action.call().whenComplete((v, t) -> log.tracef("Released cache status %s", cacheName));
       });
    }
 }
@@ -803,8 +770,8 @@ class LocalCacheStatus {
    private volatile CacheTopology currentTopology;
    private volatile CacheTopology stableTopology;
 
-   LocalCacheStatus(String cacheName, CacheJoinInfo joinInfo, CacheTopologyHandler handler,
-                    PartitionHandlingManager phm) {
+   LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler,
+         PartitionHandlingManager phm) {
       this.joinInfo = joinInfo;
       this.handler = handler;
       this.partitionHandlingManager = phm;

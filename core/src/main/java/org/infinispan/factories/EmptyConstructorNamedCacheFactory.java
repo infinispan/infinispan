@@ -55,7 +55,6 @@ import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.transaction.impl.ClusteredTransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
-import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.util.concurrent.CommandAckCollector;
@@ -83,7 +82,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               PreloadManager.class, BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               L1Manager.class, TransactionFactory.class, BackupSender.class,
-                              TotalOrderManager.class, ByteBufferFactory.class, MarshallableEntryFactory.class,
+                              ByteBufferFactory.class, MarshallableEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
@@ -136,9 +135,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasEnabledBackups() ?
                 new BackupSenderImpl() :
                 NoOpBackupSender.getInstance();
-      } else if (componentName.equals(TotalOrderManager.class.getName())) {
-         return isTransactional && configuration.transaction().transactionProtocol().isTotalOrder() ?
-               new TotalOrderManager() : null;
       } else if (componentName.equals(ByteBufferFactory.class.getName())) {
          return new ByteBufferFactoryImpl();
       } else if (componentName.equals(MarshallableEntryFactory.class.getName())) {

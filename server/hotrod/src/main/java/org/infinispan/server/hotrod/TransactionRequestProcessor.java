@@ -21,7 +21,6 @@ import org.infinispan.server.hotrod.tx.operation.RollbackTransactionOperation;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
@@ -179,11 +178,10 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       }
 
       //TODO because of ISPN-7672, optimistic and total order transactions needs versions. however, versioning is currently broken
-      if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC ||
-            configuration.transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
+      if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
          //no Log. see comment above
          throw new IllegalStateException(
-               String.format("Cache '%s' cannot use Optimistic neither Total Order transactions.", cache.getName()));
+               String.format("Cache '%s' cannot use Optimistic transactions.", cache.getName()));
       }
    }
 
@@ -222,6 +220,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
             txCoordinator.rollbackRemoteTransaction(txState.getGlobalTransaction());
             return false;
          case PREPARED:
+         case COMMITTED:
             //2PC since 1PC never reaches this state
             writeResponse(header, createTransactionResponse(header, XAResource.XA_OK));
             return true;
@@ -233,9 +232,6 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
             return true;
          case MARK_COMMIT:
             writeResponse(header, createTransactionResponse(header, txCoordinator.onePhaseCommitRemoteTransaction(txState.getGlobalTransaction(), txState.getModifications())));
-            return true;
-         case COMMITTED:
-            writeResponse(header, createTransactionResponse(header, XAResource.XA_OK));
             return true;
          default:
             throw new IllegalStateException();

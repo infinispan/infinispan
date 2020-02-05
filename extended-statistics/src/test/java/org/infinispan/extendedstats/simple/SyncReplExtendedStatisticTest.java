@@ -3,7 +3,7 @@ package org.infinispan.extendedstats.simple;
 import java.lang.reflect.Method;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.extendedstats.BaseNonTotalOrderClusteredExtendedStatisticsTest;
+import org.infinispan.extendedstats.BaseClusteredExtendedStatisticTest;
 import org.testng.annotations.Test;
 
 /**
@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "extendedstats.simple.SyncReplExtendedStatisticTest")
-public class SyncReplExtendedStatisticTest extends BaseNonTotalOrderClusteredExtendedStatisticsTest {
+public class SyncReplExtendedStatisticTest extends BaseClusteredExtendedStatisticTest {
 
    public SyncReplExtendedStatisticTest() {
       super(CacheMode.REPL_SYNC);
