@@ -455,31 +455,31 @@ public class RestConnection implements Connection, Closeable {
                RestCacheClient cache = client.cache(command.arg(Site.CACHE));
                switch (command.arg(Site.OP)) {
                   case Site.STATUS: {
-                     if (command.hasArg(Site.NAME)) {
-                        response = cache.backupStatus(command.arg(Site.NAME));
+                     if (command.hasArg(Site.SITE_NAME)) {
+                        response = cache.backupStatus(command.arg(Site.SITE_NAME));
                      } else {
                         response = cache.xsiteBackups();
                      }
                      break;
                   }
                   case Site.BRING_ONLINE: {
-                     response = cache.bringSiteOnline(command.arg(Site.NAME));
+                     response = cache.bringSiteOnline(command.arg(Site.SITE_NAME));
                      break;
                   }
                   case Site.TAKE_OFFLINE: {
-                     response = cache.takeSiteOffline(command.arg(Site.NAME));
+                     response = cache.takeSiteOffline(command.arg(Site.SITE_NAME));
                      break;
                   }
                   case Site.PUSH_SITE_STATE: {
-                     response = cache.pushSiteState(command.arg(Site.NAME));
+                     response = cache.pushSiteState(command.arg(Site.SITE_NAME));
                      break;
                   }
                   case Site.CANCEL_PUSH_STATE: {
-                     response = cache.cancelPushState(command.arg(Site.NAME));
+                     response = cache.cancelPushState(command.arg(Site.SITE_NAME));
                      break;
                   }
                   case Site.CANCEL_RECEIVE_STATE: {
-                     response = cache.cancelReceiveState(command.arg(Site.NAME));
+                     response = cache.cancelReceiveState(command.arg(Site.SITE_NAME));
                      break;
                   }
                   case Site.PUSH_SITE_STATUS: {
