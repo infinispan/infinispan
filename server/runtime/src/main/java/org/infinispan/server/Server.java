@@ -406,6 +406,10 @@ public class Server implements ServerManagement, AutoCloseable {
       protocolServers.values().parallelStream().forEach(ProtocolServer::stop);
       cacheManagers.values().forEach(cm -> SecurityActions.stopCacheManager(cm));
       this.status = ComponentStatus.TERMINATED;
+      // Don't wait for the scheduler to finish
+      if (scheduler != null) {
+         scheduler.shutdown();
+      }
    }
 
 
