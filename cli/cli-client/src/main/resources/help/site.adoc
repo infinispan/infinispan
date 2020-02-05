@@ -27,32 +27,38 @@ SYNOPSIS
 
 OPTIONS
 -------
-*-c, --cache*='CACHE_NAME'::
-Specifies a cache. Defaults to the currently selected cache.
+*--cache*='CACHE_NAME'::
+Specifies a cache.
 
-*-s, --site*='SITE_NAME'::
+*--site*='SITE_NAME'::
 Specifies a site.
 
 
 EXAMPLES
 --------
-`site status -s SITE_A` +
-Returns the status for `SITE_A`.
+`site status --cache=mycache` +
+Returns the status of all backup locations for `mycache`.
 
-`site bring-online --cache=mycache --site=SITE_A` +
-Brings the `mycache` cache online at `SITE_A`.
+`site status --cache=mycache --site=NYC` +
+Returns the status of `NYC` for `mycache`.
 
-`site take-offline --cache=mycache --site=SITE_B` +
-Takes the `mycache` cache offline at `SITE_B`.
+`site bring-online --cache=mycache --site=NYC` +
+Brings site `NYC` online for `mycache`.
 
-`site push-site-state --site=SITE_B` +
-Push the state of all caches to the backup site `SITE_B`.
+`site take-offline --cache=mycache --site=NYC` +
+Takes the site `NYC` offline for `mycache`.
 
-`site push-site-status --site=SITE_B` +
-Displays the current status of the push to the backup site `SITE_B`.
+`site push-site-state --cache=mycache --site=NYC` +
+Backs up the `mycache` cache to `NYC`.
 
-`site cancel-push-state --site=SITE_B` +
-Cancels the operation to push state to the backup site `SITE_B`.
+`site push-site-status --cache=mycache` +
+Displays the status of the backup operation for the `mycache` cache to all backup locations.
 
-`site cancel-receive-state --site=SITE_A` +
-Cancels the operation to receive state from a remote site.
+`site cancel-push-state --cache=mycache --site=NYC` +
+Cancels the backup operation for the `mycache` cache to `NYC`.
+
+`site cancel-receive-state --cache=mycache --site=NYC` +
+Cancels the operation to receive state from a remote location.
+
+`site clear-push-state-status --cache=myCache` +
+Clears the push state status for `mycache`.
