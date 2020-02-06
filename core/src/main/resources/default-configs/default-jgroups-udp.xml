@@ -5,15 +5,15 @@
         bind_port="${jgroups.bind.port,jgroups.udp.port:0}"
         mcast_addr="${jgroups.mcast_addr:228.6.7.8}"
         mcast_port="${jgroups.mcast_port:46655}"
-        ucast_send_buf_size="1m"
-        mcast_send_buf_size="1m"
-        ucast_recv_buf_size="20m"
-        mcast_recv_buf_size="25m"
+        ucast_send_buf_size="212992"
+        mcast_send_buf_size="212992"
+        ucast_recv_buf_size="212992"
+        mcast_recv_buf_size="212992"
         ip_ttl="${jgroups.ip_ttl:2}"
         thread_naming_pattern="pl"
         enable_diagnostics="false"
         bundler_type="no-bundler"
-        max_bundle_size="8500"
+        max_bundle_size="64000"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
@@ -54,5 +54,5 @@
    <MFC_NB max_credits="3m"
         min_threshold="0.40"
    />
-   <FRAG3 frag_size="8000"/>
+   <FRAG3 frag_size="60000"/>
 </config>
