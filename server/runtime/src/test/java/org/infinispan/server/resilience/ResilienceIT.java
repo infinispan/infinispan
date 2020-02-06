@@ -37,21 +37,25 @@ public class ResilienceIT {
 
    @Test
    public void testUnresponsiveNode() {
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.socketTimeout(1000).connectionTimeout(1000).maxRetries(10).connectionPool().maxActive(1);
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.REPL_SYNC).create();
 
       cache.put("k1", "v1");
-      assertEquals("v1", cache.get("k1"));
+
+      Eventually.eventually("Cluster should have 2 nodes", () -> {
+         return cache.getCacheTopologyInfo().getSegmentsPerServer().size() == 2;
+      }, 30, 1, TimeUnit.SECONDS);
       SERVERS.getServerDriver().pause(0);
       Eventually.eventually("Cluster should have 1 node", () -> {
-         cache.get("k1");
          return cache.getCacheTopologyInfo().getSegmentsPerServer().size() == 1;
       }, 30, 1, TimeUnit.SECONDS);
       SERVERS.getServerDriver().resume(0);
       Eventually.eventually("Cluster should have 2 nodes", () -> {
-         cache.get("k1");
          return cache.getCacheTopologyInfo().getSegmentsPerServer().size() == 2;
       }, 30, 1, TimeUnit.SECONDS);
+
+      assertEquals("v1", cache.get("k1"));
    }
 }

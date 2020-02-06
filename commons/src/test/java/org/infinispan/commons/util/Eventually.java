@@ -34,7 +34,7 @@ public class Eventually {
 
          throw assertionErrorSupplier.get();
       } catch (Exception e) {
-         throw new RuntimeException("Unexpected!", e);
+         throw new RuntimeException(String.format("Unexpected! timeout=%d, pollInterval=%d, TimeUnit=%s", timeout, pollInterval, unit.toString()), e);
       }
    }
 
@@ -88,7 +88,7 @@ public class Eventually {
                   String.format("expected: %s<%s>, but was %s<%s>", expectedClass, expected, valueClass, value));
          }
       } catch (Exception e) {
-         throw new RuntimeException("Unexpected!", e);
+         throw new RuntimeException(String.format("Unexpected! timeout=%d, pollInterval=%d, TimeUnit=%s", timeout, pollInterval, unit.toString()), e);
       }
    }
 
