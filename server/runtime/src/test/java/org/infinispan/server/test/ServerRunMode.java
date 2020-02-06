@@ -20,7 +20,7 @@ public enum ServerRunMode {
    DEFAULT {
       @Override
       InfinispanServerDriver newDriver(InfinispanServerTestConfiguration configuration) {
-         String driverName = System.getProperty("org.infinispan.test.server.driver", EMBEDDED.name());
+         String driverName = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DRIVER, EMBEDDED.name());
          ServerRunMode driver = ServerRunMode.valueOf(driverName);
          return driver.newDriver(configuration);
       }
