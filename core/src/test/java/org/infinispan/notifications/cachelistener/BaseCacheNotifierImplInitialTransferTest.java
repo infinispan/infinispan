@@ -147,7 +147,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
                          new InternalEntryFactoryImpl(), cem, mock(KeyPartitioner.class),
                          TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
-                         TestingUtil.named(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR, new WithinThreadExecutor()));
+                         TestingUtil.named(KnownComponentNames.NON_BLOCKING_EXECUTOR, new WithinThreadExecutor()));
       n.start();
       ctx = new NonTxInvocationContext(null);
    }

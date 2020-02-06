@@ -232,7 +232,7 @@ public class CounterConfigurationManager {
    private void startCounterCache() {
       if (counterCacheStarted.compareAndSet(false, true)) {
          SecurityActions.getGlobalComponentRegistry(cacheManager)
-               .getComponent(Executor.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+               .getComponent(Executor.class, KnownComponentNames.BLOCKING_EXECUTOR)
                .execute(() -> {
                   String oldName = Thread.currentThread().getName();
                   try {

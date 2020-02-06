@@ -18,6 +18,7 @@ class BoundedThreadPoolConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<Integer> CORE_THREADS = AttributeDefinition.builder("coreThreads", null, Integer.class).build();
    static final AttributeDefinition<Long> KEEP_ALIVE_TIME = AttributeDefinition.builder("keepAliveTime", null, Long.class).build();
    static final AttributeDefinition<Integer> QUEUE_LENGTH = AttributeDefinition.builder("queue-length", null, Integer.class).build();
+   static final AttributeDefinition<Boolean> NON_BLOCKING = AttributeDefinition.builder("non-blocking", null, Boolean.class).build();
 
    private final AttributeSet attributes;
    private final Attribute<String> name;
@@ -26,9 +27,11 @@ class BoundedThreadPoolConfiguration implements ConfigurationInfo {
    private final Attribute<Integer> coreThreads;
    private final Attribute<Long> keepAliveTime;
    private final Attribute<Integer> queueLength;
+   private final Attribute<Boolean> nonBlocking;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(BoundedThreadPoolConfiguration.class, NAME, THREAD_FACTORY, MAX_THREADS, CORE_THREADS, KEEP_ALIVE_TIME, QUEUE_LENGTH);
+      return new AttributeSet(BoundedThreadPoolConfiguration.class, NAME, THREAD_FACTORY, MAX_THREADS, CORE_THREADS,
+            KEEP_ALIVE_TIME, QUEUE_LENGTH, NON_BLOCKING);
    }
 
    static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL.getLocalName());
@@ -41,6 +44,7 @@ class BoundedThreadPoolConfiguration implements ConfigurationInfo {
       this.coreThreads = attributes.attribute(CORE_THREADS);
       this.keepAliveTime = attributes.attribute(KEEP_ALIVE_TIME);
       this.queueLength = attributes.attribute(QUEUE_LENGTH);
+      this.nonBlocking = attributes.attribute(NON_BLOCKING);
    }
 
    @Override
@@ -74,6 +78,10 @@ class BoundedThreadPoolConfiguration implements ConfigurationInfo {
 
    public Integer getQueueLength() {
       return queueLength.get();
+   }
+
+   public Boolean isNonBlocking() {
+      return nonBlocking.get();
    }
 
    @Override

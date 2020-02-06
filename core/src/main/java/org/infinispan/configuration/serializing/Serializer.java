@@ -143,7 +143,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeStartElement(Element.THREADS);
       ConcurrentMap<String, DefaultThreadFactory> threadFactories = new ConcurrentHashMap<>();
       for (ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.expirationThreadPool(), globalConfiguration.listenerThreadPool(),
-            globalConfiguration.persistenceThreadPool(), globalConfiguration.stateTransferThreadPool(),
+            globalConfiguration.nonBlockingThreadPool(), globalConfiguration.blockingThreadPool(),
             globalConfiguration.transport().remoteCommandThreadPool(), globalConfiguration.transport().transportThreadPool())) {
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
          if (threadFactory instanceof DefaultThreadFactory) {
@@ -154,11 +154,10 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       for (DefaultThreadFactory threadFactory : threadFactories.values()) {
          writeThreadFactory(writer, threadFactory);
       }
-      writeThreadPool(writer, globalConfiguration.asyncThreadPoolName(), globalConfiguration.asyncThreadPool());
+      writeThreadPool(writer, globalConfiguration.nonBlockingThreadPoolName(), globalConfiguration.nonBlockingThreadPool());
       writeThreadPool(writer, globalConfiguration.expirationThreadPoolName(), globalConfiguration.expirationThreadPool());
       writeThreadPool(writer, globalConfiguration.listenerThreadPoolName(), globalConfiguration.listenerThreadPool());
-      writeThreadPool(writer, globalConfiguration.persistenceThreadPoolName(), globalConfiguration.persistenceThreadPool());
-      writeThreadPool(writer, globalConfiguration.stateTransferThreadPoolName(), globalConfiguration.stateTransferThreadPool());
+      writeThreadPool(writer, globalConfiguration.blockingThreadPoolName(), globalConfiguration.blockingThreadPool());
       writeThreadPool(writer, globalConfiguration.transport().remoteThreadPoolName(), globalConfiguration.transport().remoteCommandThreadPool());
       writeThreadPool(writer, globalConfiguration.transport().transportThreadPoolName(), globalConfiguration.transport().transportThreadPool());
       writer.writeEndElement();
@@ -176,7 +175,11 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeThreadPool(XMLExtendedStreamWriter writer, String name, ThreadPoolConfiguration threadPoolConfiguration) throws XMLStreamException {
       ThreadPoolExecutorFactory<?> threadPoolFactory = threadPoolConfiguration.threadPoolFactory();
       if (threadPoolFactory != null) {
-         writer.writeStartElement(THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName()));
+         Element element = THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName());
+         if (element == Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL && threadPoolFactory.createsNonBlockingThreads()) {
+            element = Element.NON_BLOCKING_BOUNDED_QUEUE_THREAD_POOL;
+         }
+         writer.writeStartElement(element);
          writer.writeAttribute(Attribute.NAME, name);
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
          if (threadFactory instanceof DefaultThreadFactory) {
@@ -204,8 +207,8 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          }
          writer.writeAttribute(Attribute.STATISTICS, String.valueOf(globalConfiguration.globalJmxStatistics().enabled()));
 
-         if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.ASYNC_EXECUTOR, globalConfiguration.asyncThreadPoolName());
+         if (globalConfiguration.nonBlockingThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.NON_BLOCKING_EXECUTOR, globalConfiguration.nonBlockingThreadPoolName());
          }
          if (globalConfiguration.expirationThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.EXPIRATION_EXECUTOR, globalConfiguration.expirationThreadPoolName());
@@ -213,11 +216,8 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          if (globalConfiguration.listenerThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.LISTENER_EXECUTOR, globalConfiguration.listenerThreadPoolName());
          }
-         if (globalConfiguration.persistenceThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.PERSISTENCE_EXECUTOR, globalConfiguration.persistenceThreadPoolName());
-         }
-         if (globalConfiguration.stateTransferThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, globalConfiguration.stateTransferThreadPoolName());
+         if (globalConfiguration.blockingThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.BLOCKING_EXECUTOR, globalConfiguration.blockingThreadPoolName());
          }
          writeTransport(writer, globalConfiguration);
          writeSecurity(writer, globalConfiguration);

@@ -115,6 +115,16 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return cacheContainerConfiguration.asyncThreadPool();
    }
 
+   @Override
+   public ThreadPoolConfigurationBuilder blockingThreadPool() {
+      return cacheContainerConfiguration.blockingThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder nonBlockingThreadPool() {
+      return cacheContainerConfiguration.nonBlockingThreadPool();
+   }
+
    public GlobalConfigurationBuilder asyncThreadPoolName(String name) {
       cacheContainer().asyncExecutor(name);
       return this;
@@ -141,6 +151,16 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Deprecated
    public GlobalConfigurationBuilder stateTransferThreadPoolName(String name) {
       cacheContainer().stateTransferExecutor(name);
+      return this;
+   }
+
+   public GlobalConfigurationBuilder nonBlockingThreadPoolName(String name) {
+      cacheContainer().nonBlockingExecutor(name);
+      return this;
+   }
+
+   public GlobalConfigurationBuilder blockingThreadPoolName(String name) {
+      cacheContainer().blockingExecutor(name);
       return this;
    }
 

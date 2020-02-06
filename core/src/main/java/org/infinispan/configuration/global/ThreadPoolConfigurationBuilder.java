@@ -10,6 +10,7 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
  */
 public class ThreadPoolConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ThreadPoolConfiguration> {
 
+   String name;
    ThreadFactory threadFactory;
    ThreadPoolExecutorFactory threadPoolFactory;
 
@@ -21,6 +22,11 @@ public class ThreadPoolConfigurationBuilder extends AbstractGlobalConfigurationB
    public void validate() {
       if (threadPoolFactory != null)
          threadPoolFactory.validate();
+   }
+
+   public ThreadPoolConfigurationBuilder name(String name) {
+      this.name = name;
+      return this;
    }
 
    public ThreadPoolConfigurationBuilder threadFactory(ThreadFactory threadFactory) {
@@ -35,7 +41,7 @@ public class ThreadPoolConfigurationBuilder extends AbstractGlobalConfigurationB
 
    @Override
    public ThreadPoolConfiguration create() {
-      return new ThreadPoolConfiguration(threadFactory, threadPoolFactory);
+      return new ThreadPoolConfiguration(name, threadFactory, threadPoolFactory);
    }
 
    @Override

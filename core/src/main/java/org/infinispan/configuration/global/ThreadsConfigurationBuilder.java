@@ -17,6 +17,8 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    private final ThreadPoolConfigurationBuilder remoteCommandThreadPool;
    private final ThreadPoolConfigurationBuilder stateTransferThreadPool;
    private final ThreadPoolConfigurationBuilder transportThreadPool;
+   private final ThreadPoolConfigurationBuilder nonBlockingThreadPool;
+   private final ThreadPoolConfigurationBuilder blockingThreadPool;
    private List<ThreadFactoryConfigurationBuilder> threadFactoryBuilders = new ArrayList<>();
    private List<BoundedThreadPoolConfigurationBuilder> boundedThreadPoolBuilders = new ArrayList<>();
    private List<ScheduledThreadPoolConfigurationBuilder> scheduledThreadPoolBuilders = new ArrayList<>();
@@ -34,6 +36,8 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.remoteCommandThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.transportThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+      this.nonBlockingThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+      this.blockingThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
    }
 
    public ThreadFactoryConfigurationBuilder addThreadFactory(String name) {
@@ -102,6 +106,16 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    @Override
+   public ThreadPoolConfigurationBuilder nonBlockingThreadPool() {
+      return nonBlockingThreadPool;
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder blockingThreadPool() {
+      return blockingThreadPool;
+   }
+
+   @Override
    public void validate() {
    }
 
@@ -114,6 +128,8 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       this.remoteCommandThreadPool.read(template.remoteThreadPool());
       this.stateTransferThreadPool.read(template.stateTransferThreadPool());
       this.transportThreadPool.read(template.transportThreadPool());
+      this.nonBlockingThreadPool.read(template.nonBlockingThreadPool());
+      this.blockingThreadPool.read(template.blockingThreadPool());
 
       template.threadFactories().forEach(s -> threadFactoryBuilders.add(new ThreadFactoryConfigurationBuilder(getGlobalConfig(), s.name().get()).read(s)));
       template.boundedThreadPools().forEach(s -> boundedThreadPoolBuilders.add(new BoundedThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s)));
@@ -144,7 +160,9 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
             persistenceThreadPool.create(),
             remoteCommandThreadPool.create(),
             stateTransferThreadPool.create(),
-            transportThreadPool.create());
+            transportThreadPool.create(),
+            nonBlockingThreadPool.create(),
+            blockingThreadPool.create());
    }
 
    public ThreadsConfigurationBuilder nodeName(String value) {

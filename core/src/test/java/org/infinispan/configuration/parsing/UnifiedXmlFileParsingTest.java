@@ -111,6 +111,33 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_110(11, 0) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder) {
+            DefaultThreadFactory threadFactory;
+            BlockingThreadPoolExecutorFactory threadPool;
+
+            threadFactory = getGlobalConfiguration(holder).nonBlockingThreadPool().threadFactory();
+            assertEquals("infinispan", threadFactory.threadGroup().getName());
+            assertEquals("%G %i", threadFactory.threadNamePattern());
+            assertEquals(5, threadFactory.initialPriority());
+            threadPool = getGlobalConfiguration(holder).nonBlockingThreadPool().threadPoolFactory();
+            assertEquals(12, threadPool.coreThreads());
+            assertEquals(15, threadPool.maxThreads());
+            assertEquals(132, threadPool.queueLength());
+            assertEquals(9851, threadPool.keepAlive());
+
+            threadFactory = getGlobalConfiguration(holder).blockingThreadPool().threadFactory();
+            assertEquals("infinispan", threadFactory.threadGroup().getName());
+            assertEquals("%G %i", threadFactory.threadNamePattern());
+            assertEquals(5, threadFactory.initialPriority());
+            threadPool = getGlobalConfiguration(holder).blockingThreadPool().threadPoolFactory();
+            assertEquals(3, threadPool.coreThreads());
+            assertEquals(8, threadPool.maxThreads());
+            assertEquals(121, threadPool.queueLength());
+            assertEquals(9859, threadPool.keepAlive());
+         }
+      },
       INFINISPAN_100(10, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder) {
@@ -298,14 +325,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             BlockingThreadPoolExecutorFactory threadPool;
 
             threadFactory = getGlobalConfiguration(holder).asyncThreadPool().threadFactory();
-            assertEquals("infinispan", threadFactory.threadGroup().getName());
-            assertEquals("%G %i", threadFactory.threadNamePattern());
-            assertEquals(5, threadFactory.initialPriority());
+            assertNull(threadFactory);
             threadPool = getGlobalConfiguration(holder).asyncThreadPool().threadPoolFactory();
-            assertEquals(5, threadPool.coreThreads());
-            assertEquals(5, threadPool.maxThreads());
-            assertEquals(0, threadPool.queueLength());
-            assertEquals(0, threadPool.keepAlive());
+            assertNull(threadPool);
 
             threadFactory = getGlobalConfiguration(holder).stateTransferThreadPool().threadFactory();
             assertNull(threadFactory);

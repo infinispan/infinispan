@@ -12,12 +12,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.xa.Xid;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
@@ -53,6 +53,8 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
+import net.jcip.annotations.GuardedBy;
+
 /**
  * It is a transaction log that registers all the transaction decisions before changing the cache.
  * <p>
@@ -86,8 +88,8 @@ public class GlobalTxTable implements Runnable, Lifecycle {
 
    @Inject TimeService timeService;
    @Inject
-   @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   ExecutorService asyncExecutor;
+   @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
+   ExecutorService blockingExecutor;
    @Inject
    @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    ScheduledExecutorService scheduledExecutor;
@@ -255,7 +257,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             //local transaction doesn't exists.
             onTransactionCompleted(cacheXid);
          } else {
-            asyncExecutor.execute(
+            blockingExecutor.execute(
                   () -> rollbackOldTransaction(cacheXid, state, () -> completeLocal(txTable, cacheXid, tx, false)));
          }
       }
@@ -298,7 +300,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             //transaction completed
             onTransactionCompleted(cacheXid);
          } else {
-            asyncExecutor.execute(() -> completeLocal(txTable, cacheXid, tx, commit));
+            blockingExecutor.execute(() -> completeLocal(txTable, cacheXid, tx, commit));
          }
       } else {
          if (commit) {

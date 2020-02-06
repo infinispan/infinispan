@@ -1,6 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -78,7 +78,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
+   @Inject @ComponentName(BLOCKING_EXECUTOR)
    ExecutorService persistenceExecutor;
 
    private long l1Lifespan;

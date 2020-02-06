@@ -271,22 +271,21 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals(7, threadFactories.size());
       Iterator<JsonNode> elements = threadFactories.elements();
       assertThreadFactory(elements.next(), "listener-factory", "infinispan", "AsyncListenerThread", "1");
-      assertThreadFactory(elements.next(), "persistence-factory", "infinispan", "PersistenceThread", "1");
+      assertThreadFactory(elements.next(), "blocking-factory", "infinispan", "BlockingThread", "1");
       assertThreadFactory(elements.next(), "transport-factory", "infinispan", "AsyncTransportThread", "1");
-      assertThreadFactory(elements.next(), "async-factory", "infinispan", "AsyncOperationsThread", "1");
+      assertThreadFactory(elements.next(), "non-blocking-factory", "infinispan", "NonBlockingThread", "1");
       assertThreadFactory(elements.next(), "remote-factory", "infinispan", "RemoteCommandThread", "1");
       assertThreadFactory(elements.next(), "expiration-factory", "infinispan", "ExpirationThread", "1");
       assertThreadFactory(elements.next(), "replication-queue-factory", "infinispan", "ReplicationQueueThread", "1");
 
       ArrayNode boundedThreadPools = (ArrayNode) threads.get("blocking-bounded-queue-thread-pool");
       elements = boundedThreadPools.elements();
-      assertEquals(6, boundedThreadPools.size());
+      assertEquals(5, boundedThreadPools.size());
       assertBoundedThreadPool(elements.next(), "listener", "listener-factory", "5", "0", "10000", "0");
-      assertBoundedThreadPool(elements.next(), "persistence", "persistence-factory", "6", "0", "10001", "0");
-      assertBoundedThreadPool(elements.next(), "state-transfer", "persistence-factory", "20", "0", "5", "60000");
+      assertBoundedThreadPool(elements.next(), "blocking", "blocking-factory", "6", "0", "10001", "0");
       assertBoundedThreadPool(elements.next(), "transport", "transport-factory", "25", "0", "10000", "0");
-      assertBoundedThreadPool(elements.next(), "async", "async-factory", "5", "5", "10000", "0");
       assertBoundedThreadPool(elements.next(), "remote", "transport-factory", "30", "2", "10000", "10000");
+      assertBoundedThreadPool(elements.next(), "non-blocking", "non-blocking-factory", "5", "5", "10000", "0");
 
       ArrayNode scheduledThreadPools = (ArrayNode) threads.get("scheduled-thread-pool");
       elements = scheduledThreadPools.elements();
@@ -299,9 +298,9 @@ public class JsonSerializationTest extends AbstractInfinispanTest {
       assertEquals("REGISTER", cacheContainer.get("shutdown-hook").asText());
       assertTrue(cacheContainer.get("statistics").asBoolean());
       assertEquals("listener", cacheContainer.get("listener-executor").asText());
-      assertEquals("persistence", cacheContainer.get("persistence-executor").asText());
-      assertNull(cacheContainer.get("state-transfer-executor"));
-      assertEquals("async", cacheContainer.get("async-executor").asText());
+      assertNull(cacheContainer.get("async-executor"));
+      assertEquals("non-blocking", cacheContainer.get("non-blocking-executor").asText());
+      assertEquals("blocking", cacheContainer.get("blocking-executor").asText());
 
       JsonNode authorization = globalSecurity.get("authorization");
       assertEquals("org.infinispan.security.audit.NullAuditLogger", authorization.get("audit-logger").asText());

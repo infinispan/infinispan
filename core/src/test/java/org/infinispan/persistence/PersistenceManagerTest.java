@@ -105,9 +105,9 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
    }
 
    public void testPublishWithInterrupt() throws InterruptedException {
-      ExecutorService original = TestingUtil.extractGlobalComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
+      ExecutorService original = TestingUtil.extractGlobalComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
       // Use within thread so we can interrupt ourselves
-      TestingUtil.replaceComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR, new WithinThreadExecutor(), true);
+      TestingUtil.replaceComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR, new WithinThreadExecutor(), true);
       try {
          PersistenceManager persistenceManager = extractComponent(cache, PersistenceManager.class);
          persistenceManager.stop();
@@ -129,7 +129,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
          Throwable t = errorCatcher.get();
          Exceptions.assertException(InterruptedException.class, t);
       } finally {
-         TestingUtil.replaceComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR, original, true);
+         TestingUtil.replaceComponent(cache.getCacheManager(), ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR, original, true);
       }
    }
 

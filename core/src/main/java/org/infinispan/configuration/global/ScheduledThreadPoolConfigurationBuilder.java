@@ -34,6 +34,10 @@ public class ScheduledThreadPoolConfigurationBuilder extends AbstractGlobalConfi
       return attributes.attribute(THREAD_FACTORY).get();
    }
 
+   public String name() {
+      return attributes.attribute(CachedThreadPoolConfiguration.NAME).get();
+   }
+
    @Override
    public void validate() {
    }
@@ -62,6 +66,7 @@ public class ScheduledThreadPoolConfigurationBuilder extends AbstractGlobalConfi
       builder.threadPoolFactory(ScheduledThreadPoolExecutorFactory.create());
       DefaultThreadFactory threadFactory = getGlobalConfig().threads().getThreadFactory(threadFactory()).create().getThreadFactory(false);
       builder.threadFactory(threadFactory);
+      builder.name(name());
       return builder.create();
    }
 }

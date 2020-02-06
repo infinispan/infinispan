@@ -1,7 +1,7 @@
 package org.infinispan.xsite.statetransfer;
 
 import static java.lang.String.format;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.NO_RETRY;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
@@ -72,7 +72,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Inject Configuration configuration;
    @Inject CommandsFactory commandsFactory;
    @Inject ResponseGenerator responseGenerator;
-   @Inject @ComponentName(value = PERSISTENCE_EXECUTOR)
+   @Inject @ComponentName(value = BLOCKING_EXECUTOR)
    ExecutorService blockingExecutor;
    @Inject StateTransferManager stateTransferManager;
    @Inject DistributionManager distributionManager;

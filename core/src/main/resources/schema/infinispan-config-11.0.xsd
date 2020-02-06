@@ -152,17 +152,51 @@
           <xs:annotation>
             <xs:documentation>
               <![CDATA[
-                A thread pool executor with a bounded queue.  Such a thread pool has a core size and a queue with an
-                upper bound.  When a task is submitted, if the number of running threads is less than the core size,
-                a new thread is created.  Otherwise, the task is placed in queue.  If too many tasks are allowed to be
-                submitted to this type of executor, an out of memory condition may occur.
+                A thread pool executor with a bounded queue which can run blocking operations.
+                Such a thread pool has a core size and a queue with an upper bound.
+                When a task is submitted, if the number of running threads is less than the core size, a new thread is created.
+                Otherwise, the task is placed in queue.
+                If too many tasks are allowed to be submitted to this type of executor, an out of memory condition may occur.
+                If the queue is too small it may cause a CacheBackpressureFullException to be thrown if a non-blocking thread cannot submit a task.
 
                 The "name" attribute is the bean name of the created executor.
 
                 The "max-threads" attribute must be used to specify the maximum thread pool size.
                 The "core-threads" attribute defines the number of threads to keep in the pool.
 
-                The nested "keepalive-time" element may used to specify the amount of time that pool threads should
+                The "keepalive-time" attribute may used to specify the amount of time that pool threads should
+                be kept running when idle; if not specified, threads will run until the executor is shut down.
+                The "thread-factory" element specifies the bean name of a specific thread factory to use to create worker
+                threads.
+                    ]]>
+            </xs:documentation>
+          </xs:annotation>
+          <xs:attribute name="name" use="required" type="xs:string"/>
+          <xs:attribute name="thread-factory" type="xs:string" use="optional"/>
+          <xs:attribute name="max-threads" type="xs:int"/>
+          <xs:attribute name="core-threads" type="xs:int"/>
+          <xs:attribute name="keepalive-time" type="xs:string" use="optional"/>
+          <xs:attribute name="queue-length" type="xs:string"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="non-blocking-bounded-queue-thread-pool" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:annotation>
+            <xs:documentation>
+              <![CDATA[
+                A thread pool executor with a bounded queue which should only run non blocking operations.
+                Such a thread pool has a core size and a queue with an upper bound.
+                When a task is submitted, if the number of running threads is less than the core size, a new thread is created.
+                Otherwise, the task is placed in queue.
+                If too many tasks are allowed to be submitted to this type of executor, an out of memory condition may occur.
+                If the queue is too small it may cause blocking thread pool tasks to build up waiting to submit.
+
+                The "name" attribute is the bean name of the created executor.
+
+                The "max-threads" attribute must be used to specify the maximum thread pool size.
+                The "core-threads" attribute defines the number of threads to keep in the pool.
+
+                The "keepalive-time" attribute may used to specify the amount of time that pool threads should
                 be kept running when idle; if not specified, threads will run until the executor is shut down.
                 The "thread-factory" element specifies the bean name of a specific thread factory to use to create worker
                 threads.
@@ -303,9 +337,6 @@
         <xs:documentation>Uniquely identifies this cache container.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="aliases" type="tns:aliases">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
     <xs:attribute name="jndi-name" type="xs:string">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
@@ -322,21 +353,10 @@
     <xs:attribute name="start">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
-    <xs:attribute name="async-executor" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>Defines the executor used for asynchronous cache operations.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="listener-executor" type="xs:string">
       <xs:annotation>
         <xs:documentation>Defines the executor used for asynchronous cache listener notifications.
         </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="eviction-executor" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>DEPRECATED Defines the scheduled executor used for evictions.  The expiration-executor type should be used instead.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="expiration-executor" type="xs:string">
@@ -344,15 +364,14 @@
         <xs:documentation>Defines the scheduled executor used for expirations.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="persistence-executor" type="xs:string">
+    <xs:attribute name="non-blocking-executor" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Configuration for the executor service used when interacting with the persistent store.</xs:documentation>
+        <xs:documentation>The name of the executor used for non-blocking operations. Must be non-blocking and must have a queue.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="state-transfer-executor" type="xs:string">
+    <xs:attribute name="blocking-executor" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Deprecated since 10.1, no longer used.
-          Configuration for the executor service used when applying state from other nodes during the state transfer.</xs:documentation>
+        <xs:documentation>The name of the executor used for blocking operations. Must be blocking and must have a queue.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="module" type="xs:string" default="org.jboss.as.clustering.infinispan">
@@ -893,15 +912,6 @@
       <xs:annotation>
         <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
       </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="start">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="jndi-name" type="xs:string">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="module" type="xs:string">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
     <xs:attribute name="statistics" type="xs:boolean" default="${JMXStatistics.enabled}">
       <xs:annotation>
@@ -2184,13 +2194,6 @@
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
-  </xs:simpleType>
-
-  <xs:simpleType name="aliases">
-    <xs:annotation>
-      <xs:documentation>A list of aliases.</xs:documentation>
-    </xs:annotation>
-    <xs:list itemType="xs:string"/>
   </xs:simpleType>
 
   <xs:simpleType name="backup-failure-policy">

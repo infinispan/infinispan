@@ -1,10 +1,10 @@
 package org.infinispan.factories;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
@@ -34,7 +34,7 @@ import org.infinispan.factories.threads.DefaultThreadFactory;
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(names = {ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, PERSISTENCE_EXECUTOR, ASYNC_OPERATIONS_EXECUTOR,
+@DefaultFactoryFor(names = {ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, BLOCKING_EXECUTOR, NON_BLOCKING_EXECUTOR,
                              EXPIRATION_SCHEDULED_EXECUTOR, REMOTE_COMMAND_EXECUTOR, STATE_TRANSFER_EXECUTOR, TIMEOUT_SCHEDULE_EXECUTOR})
 public class NamedExecutorsFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    @Override
@@ -47,10 +47,10 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                         globalConfiguration.listenerThreadPool(),
                         ASYNC_NOTIFICATION_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
-         } else if (componentName.equals(PERSISTENCE_EXECUTOR)) {
+         } else if (componentName.equals(BLOCKING_EXECUTOR)) {
             return createExecutorService(
                         globalConfiguration.persistenceThreadPool(),
-                        PERSISTENCE_EXECUTOR,
+                        BLOCKING_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
          } else if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
             return createExecutorService(
@@ -72,10 +72,10 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                         globalConfiguration.stateTransferThreadPool(),
                         STATE_TRANSFER_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
-         } else if (componentName.equals(ASYNC_OPERATIONS_EXECUTOR)) {
+         } else if (componentName.equals(NON_BLOCKING_EXECUTOR)) {
             return createExecutorService(
                         globalConfiguration.asyncThreadPool(),
-                        ASYNC_OPERATIONS_EXECUTOR, ExecutorServiceType.NON_BLOCKING);
+                        NON_BLOCKING_EXECUTOR, ExecutorServiceType.NON_BLOCKING);
          } else if (componentName.endsWith(TIMEOUT_SCHEDULE_EXECUTOR)) {
             return createExecutorService(null, TIMEOUT_SCHEDULE_EXECUTOR, ExecutorServiceType.SCHEDULED);
          } else {
@@ -102,7 +102,7 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          if (threadPoolFactory != null) {
             executorFactory = threadPoolConfiguration.threadPoolFactory();
             if (type == ExecutorServiceType.NON_BLOCKING && !executorFactory.createsNonBlockingThreads()) {
-               throw log.threadPoolFactoryIsBlocking(componentName);
+               throw log.threadPoolFactoryIsBlocking(threadPoolConfiguration.name(), componentName);
             }
          } else {
             executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);

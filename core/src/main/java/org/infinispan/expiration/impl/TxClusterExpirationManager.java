@@ -1,23 +1,16 @@
 package org.infinispan.expiration.impl;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.transaction.LockingMode;
 
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class TxClusterExpirationManager<K, V> extends ClusterExpirationManager<K, V> {
-
-   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
-   protected ExecutorService blockingExecutor;
 
    private boolean optimisticTransaction;
 

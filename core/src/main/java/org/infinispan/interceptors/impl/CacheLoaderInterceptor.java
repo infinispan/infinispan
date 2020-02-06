@@ -127,8 +127,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    @Inject GroupManager groupManager;
    @Inject ComponentRef<Cache<K, V>> cache;
    @Inject KeyPartitioner partitioner;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   protected ExecutorService cpuExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   protected ExecutorService nonBlockingExecutor;
 
    protected boolean activation;
 
@@ -370,7 +370,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          if (trace) {
             log.tracef("Piggybacking on concurrent cache loader for key %s", key);
          }
-         return otherCF.thenAcceptAsync(action, cpuExecutor);
+         return otherCF.thenAcceptAsync(action, nonBlockingExecutor);
       }
 
       int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);

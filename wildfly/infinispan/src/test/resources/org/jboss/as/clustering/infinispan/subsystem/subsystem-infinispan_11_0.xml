@@ -10,30 +10,26 @@
             <temporary-location path="path" relative-to="jboss.server.temp.dir"/>
             <volatile-configuration-storage />
         </global-state>
-        <async-operations-thread-pool min-threads="31"
-                                      queue-length="32"
-                                      max-threads="33"
-                                      keepalive-time="34"/>
         <expiration-thread-pool max-threads="13"
                                 keepalive-time="14"/>
         <listener-thread-pool min-threads="21"
                               queue-length="22"
                               max-threads="23"
                               keepalive-time="24"/>
-        <persistence-thread-pool max-threads="33"
-                                 keepalive-time="34"/>
         <remote-command-thread-pool min-threads="41"
                                queue-length="42"
                                max-threads="43"
                                keepalive-time="44"/>
-        <state-transfer-thread-pool min-threads="31"
-                                    queue-length="32"
-                                    max-threads="33"
-                                    keepalive-time="34"/>
         <transport-thread-pool min-threads="41"
                                queue-length="42"
                                max-threads="43"
                                keepalive-time="44"/>
+        <non-blocking-thread-pool min-threads="31"
+                                  queue-length="32"
+                                  max-threads="33"
+                                  keepalive-time="34"/>
+        <blocking-thread-pool max-threads="33"
+                              keepalive-time="34"/>
         <modules>
             <module name="module1"/>
             <module name="module2" slot="slot2"/>

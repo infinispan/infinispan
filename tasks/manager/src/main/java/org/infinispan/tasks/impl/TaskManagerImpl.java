@@ -49,8 +49,8 @@ public class TaskManagerImpl implements TaskManager {
 
    @Inject EmbeddedCacheManager cacheManager;
    @Inject TimeService timeService;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   ExecutorService asyncExecutor;
+   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
+   ExecutorService blockingExecutor;
    @Inject EventLogManager eventLogManager;
 
    private List<TaskEngine> engines;
@@ -91,7 +91,7 @@ public class TaskManagerImpl implements TaskManager {
             TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
             exec.setStart(timeService.instant());
             runningTasks.put(exec.getUUID(), exec);
-            CompletableFuture<T> task = engine.runTask(name, context, asyncExecutor);
+            CompletableFuture<T> task = engine.runTask(name, context, blockingExecutor);
             return task.whenComplete((r, e) -> {
                if (context.isLogEvent()) {
                   EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());

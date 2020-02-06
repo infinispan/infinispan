@@ -53,8 +53,8 @@ public class PublisherHandler {
    private final ConcurrentMap<Object, PublisherState> currentRequests = new ConcurrentHashMap<>();
 
    @Inject CacheManagerNotifier managerNotifier;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   ExecutorService cpuExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
    @Inject LocalPublisherManager localPublisherManager;
 
    @ViewChanged
@@ -401,7 +401,7 @@ public class PublisherHandler {
 
       /**
        * Retrieves the either already completed result or registers a new future to be completed. This also prestarts
-       * the next batch to be ready for the next request as it comes, which is submitted on the {@code cpuExecutor}.
+       * the next batch to be ready for the next request as it comes, which is submitted on the {@link #nonBlockingExecutor}.
        * @return future that will contain the publisher response with the data
        */
       CompletableFuture<PublisherResponse> results() {
@@ -410,7 +410,7 @@ public class PublisherHandler {
          synchronized (this) {
             if (futureResponse == null) {
                currentFuture = new CompletableFuture<>();
-               currentFuture.thenRunAsync(this, cpuExecutor);
+               currentFuture.thenRunAsync(this, nonBlockingExecutor);
                futureResponse = currentFuture;
             } else {
                currentFuture = futureResponse;
@@ -421,7 +421,7 @@ public class PublisherHandler {
          if (submitRequest) {
             // Handles closing publisher or requests next batch if not complete
             // Note this is not done in synchronized block in case if executor is within thread
-            cpuExecutor.execute(this);
+            nonBlockingExecutor.execute(this);
          }
          if (trace) {
             log.tracef("Retrieved future %d for request id %s", System.identityHashCode(currentFuture), requestId);

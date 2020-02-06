@@ -60,7 +60,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    private final HotRodServer server;
    private final Subject subject;
    final Collection<ByteString> cacheNames = new ConcurrentLinkedQueue<>();
-   final ExecutorService asyncExecutor;
+   final ExecutorService blockingExecutor;
    private final AtomicInteger expectedCaches = new AtomicInteger();
    volatile boolean hasErrors = false;
    volatile boolean hasCommits = false;
@@ -70,7 +70,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
          BiConsumer<HotRodHeader, Integer> reply) {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(server.getCacheManager());
       this.globalTxTable = gcr.getComponent(GlobalTxTable.class);
-      this.asyncExecutor = gcr.getComponent(ExecutorService.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR);
+      this.blockingExecutor = gcr.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
       this.header = header;
       this.server = server;
       this.subject = subject;

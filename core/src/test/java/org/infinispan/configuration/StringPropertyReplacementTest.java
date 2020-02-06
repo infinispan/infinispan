@@ -43,9 +43,9 @@ public class StringPropertyReplacementTest extends AbstractInfinispanTest {
             gc.listenerThreadPool().threadPoolFactory();
       assertEquals(2, listenerThreadPool.maxThreads());
 
-      BlockingThreadPoolExecutorFactory persistenceThreadPool =
-            gc.persistenceThreadPool().threadPoolFactory();
-      assertEquals(4, persistenceThreadPool.maxThreads());
+      BlockingThreadPoolExecutorFactory blockingThreadPool =
+            gc.blockingThreadPool().threadPoolFactory();
+      assertEquals(4, blockingThreadPool.maxThreads());
 
       FileJGroupsChannelConfigurator transportConfigurator = (FileJGroupsChannelConfigurator) gc.transport().properties().get(JGroupsTransport.CHANNEL_CONFIGURATOR);
       assertEquals("stacks/tcp.xml", transportConfigurator.getPath());

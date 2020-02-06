@@ -1,10 +1,10 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -280,7 +280,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case BLOCKING_BOUNDED_QUEUE_THREAD_POOL: {
-               parseBlockingBoundedQueueThreadPool(reader, holder);
+               parseBoundedQueueThreadPool(reader, holder, false);
+               break;
+            }
+            case NON_BLOCKING_BOUNDED_QUEUE_THREAD_POOL: {
+               parseBoundedQueueThreadPool(reader, holder, true);
                break;
             }
             default: {
@@ -291,7 +295,8 @@ public class Parser implements ConfigurationParser {
 
    }
 
-   private void parseBlockingBoundedQueueThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseBoundedQueueThreadPool(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder,
+         boolean isNonBlocking) throws XMLStreamException {
       ThreadsConfigurationBuilder threadsBuilder = holder.getGlobalConfigurationBuilder().threads();
 
       String name = null;
@@ -338,7 +343,7 @@ public class Parser implements ConfigurationParser {
       }
 
       threadsBuilder.addBoundedThreadPool(name).threadFactory(threadFactoryName).coreThreads(coreThreads)
-            .maxThreads(maxThreads).queueLength(queueLength).keepAliveTime(keepAlive);
+            .maxThreads(maxThreads).queueLength(queueLength).keepAliveTime(keepAlive).nonBlocking(isNonBlocking);
       ParseUtils.requireNoContent(reader);
    }
 
@@ -594,13 +599,13 @@ public class Parser implements ConfigurationParser {
             case ALIASES:
             case JNDI_NAME:
             case MODULE:
-            case START: {
-               ignoreAttribute(reader, attribute);
-               break;
-            }
+            case START:
             case ASYNC_EXECUTOR: {
-               builder.asyncThreadPoolName(value);
-               builder.asyncThreadPool().read(createThreadPoolConfiguration(value, ASYNC_OPERATIONS_EXECUTOR, holder));
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  ignoreAttribute(reader, attribute);
+               }
                break;
             }
             case LISTENER_EXECUTOR: {
@@ -609,7 +614,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case EVICTION_EXECUTOR:
-               CONFIG.evictionExecutorDeprecated();
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  CONFIG.evictionExecutorDeprecated();
+               }
                // fallthrough
             case EXPIRATION_EXECUTOR: {
                builder.expirationThreadPoolName(value);
@@ -625,12 +634,29 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case PERSISTENCE_EXECUTOR: {
-               builder.persistenceThreadPoolName(value);
-               builder.persistenceThreadPool().read(createThreadPoolConfiguration(value, PERSISTENCE_EXECUTOR, holder));
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  ignoreAttribute(reader, attribute);
+               }
                break;
             }
             case STATE_TRANSFER_EXECUTOR: {
-               ignoreAttribute(reader, Attribute.STATE_TRANSFER_EXECUTOR);
+               if (reader.getSchema().since(11, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  ignoreAttribute(reader, attribute);
+               }
+               break;
+            }
+            case NON_BLOCKING_EXECUTOR: {
+               builder.nonBlockingThreadPoolName(value);
+               builder.nonBlockingThreadPool().read(createThreadPoolConfiguration(value, NON_BLOCKING_EXECUTOR, holder));
+               break;
+            }
+            case BLOCKING_EXECUTOR: {
+               builder.blockingThreadPoolName(value);
+               builder.blockingThreadPool().read(createThreadPoolConfiguration(value, BLOCKING_EXECUTOR, holder));
                break;
             }
             case STATISTICS: {
@@ -1090,6 +1116,10 @@ public class Parser implements ConfigurationParser {
          throw CONFIG.undefinedThreadPoolName(threadPoolName);
 
       ThreadPoolConfiguration threadPoolConfiguration = threadPool.asThreadPoolConfigurationBuilder();
+      boolean isNonBlocking = threadPoolConfiguration.threadPoolFactory().createsNonBlockingThreads();
+      if (NON_BLOCKING_EXECUTOR.equals(componentName) && !isNonBlocking) {
+         throw CONFIG.threadPoolFactoryIsBlocking(threadPoolName, componentName);
+      }
       DefaultThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
       if (threadFactory != null) {
          threadFactory.setComponent(shortened(componentName));

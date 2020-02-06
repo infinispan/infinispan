@@ -92,10 +92,10 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private AuthorizationConfigurationBuilder authorization = null;
     private ValueDependency<TransportConfiguration> transport = null;
     private GlobalStateLocationConfigurationBuilder globalStateLocation = null;
-    private final InjectedValue<ThreadPoolConfiguration> asyncOperationsThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> nonBlockingThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> expirationThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> listenerThreadPool = new InjectedValue<>();
-    private final InjectedValue<ThreadPoolConfiguration> persistenceThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> blockingThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> remoteCommandThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> transportThreadPool = new InjectedValue<>();
     private final InjectedValue<PathManager> pathManager = new InjectedValue<>();
@@ -117,11 +117,11 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(Services.JBOSS_SERVER_CONTROLLER, ModelController.class, this.modelController)
                 .addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ModuleLoader.class, this.loader)
                 .addDependency(MBeanServerService.SERVICE_NAME, MBeanServer.class, this.server)
-                .addDependency(ThreadPoolResource.ASYNC_OPERATIONS.getServiceName(this.name), ThreadPoolConfiguration.class, this.asyncOperationsThreadPool)
+                .addDependency(ThreadPoolResource.NON_BLOCKING.getServiceName(this.name), ThreadPoolConfiguration.class, this.nonBlockingThreadPool)
+                .addDependency(ThreadPoolResource.BLOCKING.getServiceName(this.name), ThreadPoolConfiguration.class, this.blockingThreadPool)
                 .addDependency(ThreadPoolResource.LISTENER.getServiceName(this.name), ThreadPoolConfiguration.class, this.listenerThreadPool)
                 .addDependency(ThreadPoolResource.REMOTE_COMMAND.getServiceName(this.name), ThreadPoolConfiguration.class, this.remoteCommandThreadPool)
                 .addDependency(ThreadPoolResource.TRANSPORT.getServiceName(this.name), ThreadPoolConfiguration.class, this.transportThreadPool)
-                .addDependency(ThreadPoolResource.PERSISTENCE.getServiceName(this.name), ThreadPoolConfiguration.class, this.persistenceThreadPool)
                 .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
         ;
         if (module != null) {
@@ -251,10 +251,10 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                   .reliability(counterManager.getReliability());
         }
 
-        builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
+        builder.nonBlockingThreadPool().read(this.nonBlockingThreadPool.getValue());
         builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
         builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
-        builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
+        builder.blockingThreadPool().read(this.blockingThreadPool.getValue());
 
         builder.cacheManagerName(this.name)
                 .globalJmxStatistics()

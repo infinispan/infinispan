@@ -144,7 +144,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
    @Override
    CompletableFuture<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout) {
       CompletableFuture<Void> cf = new CompletableFuture<>();
-      asyncExecutor.submit(() -> {
+      blockingExecutor.submit(() -> {
          try {
             rollbackLocalTransaction(cache, xid, timeout);
          } catch (HeuristicMixedException e) {

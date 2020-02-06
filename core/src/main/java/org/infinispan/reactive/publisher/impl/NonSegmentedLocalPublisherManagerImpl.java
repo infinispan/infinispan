@@ -40,7 +40,7 @@ public class NonSegmentedLocalPublisherManagerImpl<K, V> extends LocalPublisherM
 
       return combineStages(flowable.buffer(PARALLEL_BATCH_SIZE)
             .parallel()
-            .runOn(asyncScheduler)
+            .runOn(nonBlockingScheduler)
             .map(buffer -> transformer.apply(Flowable.fromIterable(buffer)))
             .sequential(), true);
    }
