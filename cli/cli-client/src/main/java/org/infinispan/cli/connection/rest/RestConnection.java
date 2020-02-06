@@ -55,6 +55,7 @@ import org.infinispan.cli.commands.Stats;
 import org.infinispan.cli.commands.Task;
 import org.infinispan.cli.commands.Upgrade;
 import org.infinispan.cli.connection.Connection;
+import org.infinispan.cli.resources.CacheKeyResource;
 import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.CachesResource;
 import org.infinispan.cli.resources.ContainerResource;
@@ -259,7 +260,10 @@ public class RestConnection implements Connection, Closeable {
             }
             case Cd.CMD:
                String path = command.arg(CliCommand.PATH);
-               activeResource = pathToResource(path);
+               Resource rPath = pathToResource(path);
+               if (!(rPath instanceof CacheKeyResource)) {
+                  activeResource = rPath;
+               }
                break;
             case ClearCache.CMD: {
                if (command.hasArg(CliCommand.NAME)) {
@@ -524,7 +528,10 @@ public class RestConnection implements Connection, Closeable {
             RestResponse r = fetch(response);
             switch (responseMode) {
                case BODY:
-                  sb.append(parseBody(r, String.class));
+                  String body = parseBody(r, String.class);
+                  if (body != null) {
+                     sb.append(body);
+                  }
                   break;
                case QUIET:
                   break;
