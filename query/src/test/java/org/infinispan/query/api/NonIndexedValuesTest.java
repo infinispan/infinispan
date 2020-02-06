@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -20,7 +19,7 @@ public class NonIndexedValuesTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.indexing()
-         .index(Index.ALL)
+         .enable()
          .addIndexedEntity(TestEntity.class)
          .addIndexedEntity(AnotherTestEntity.class)
          .addProperty("default.directory_provider", "local-heap")

@@ -21,7 +21,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
@@ -56,7 +55,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "ram")

@@ -4,7 +4,9 @@ package org.infinispan.configuration.cache;
  * Used to configure indexing of entries in the cache for index-assisted searching.
  *
  * @author Paul Ferraro
+ * @deprecated The indexing mode is automatically detected and not configurable anymore.
  */
+@Deprecated
 public enum Index {
 
    /**
@@ -24,7 +26,9 @@ public enum Index {
 
    /**
     * Is indexing enabled?
+    * @deprecated Use {@link IndexingConfiguration#enabled()}} instead
     */
+   @Deprecated
    public boolean isEnabled() {
       return this != NONE;
    }

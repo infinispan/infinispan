@@ -5,7 +5,6 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.blackbox.ClusteredCacheTest;
 import org.infinispan.query.test.Person;
@@ -38,7 +37,7 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
         ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
         cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
         cacheCfg.indexing()
-                .index(Index.PRIMARY_OWNER)
+                .enable()
                 .addIndexedEntity(Person.class);
         ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
         List<Cache<Object, Person>> caches = createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);

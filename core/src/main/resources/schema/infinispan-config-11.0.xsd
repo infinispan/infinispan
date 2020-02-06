@@ -915,9 +915,9 @@
               </xs:annotation>
             </xs:element>
           </xs:sequence>
-          <xs:attribute name="index" type="tns:indexing" default="${Indexing.index}">
+          <xs:attribute name="enabled" type="xs:boolean" default="false">
             <xs:annotation>
-              <xs:documentation>The indexing mode of the cache. Defaults to NONE.</xs:documentation>
+              <xs:documentation>Specify whether indexing is enabled or not. Defaults to false.</xs:documentation>
             </xs:annotation>
           </xs:attribute>
           <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.autoConfig}" use="optional">

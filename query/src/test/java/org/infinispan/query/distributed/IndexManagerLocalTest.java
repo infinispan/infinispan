@@ -9,7 +9,6 @@ import javax.transaction.TransactionManager;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -36,7 +35,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .clustering()
             .cacheMode(CacheMode.LOCAL)
             .indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addProperty("lucene_version", "LUCENE_CURRENT")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

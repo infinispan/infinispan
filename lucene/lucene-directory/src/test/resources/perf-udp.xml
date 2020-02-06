@@ -19,17 +19,17 @@
 
       <replicated-cache name="index_metadata" mode="SYNC">
          <transaction mode="NONE" />
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </replicated-cache>
 
       <distributed-cache name="index_data" mode="SYNC">
          <transaction mode="NONE" />
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </distributed-cache>
 
       <replicated-cache name="index_locks" mode="SYNC">
          <transaction mode="NONE" />
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </replicated-cache>
 
    </cache-container>

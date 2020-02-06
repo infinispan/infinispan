@@ -1,5 +1,5 @@
 <replicated-cache name="default">
-    <indexing index="ALL">
+    <indexing enabled="true">
         <property name="default.indexmanager">near-real-time</property>
     </indexing>
 </replicated-cache>

@@ -8,7 +8,6 @@ import java.io.IOException;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.testng.annotations.Test;
 
@@ -24,7 +23,7 @@ public class JsonIndexingProtobufStoreTest extends BaseJsonTest {
    protected ConfigurationBuilder getIndexCacheConfiguration() {
       ConfigurationBuilder indexedCache = new ConfigurationBuilder();
 
-      indexedCache.indexing().index(Index.PRIMARY_OWNER)
+      indexedCache.indexing().enable()
             .addProperty("default.directory_provider", "ram");
 
       indexedCache.encoding().key().mediaType(APPLICATION_PROTOSTREAM_TYPE);

@@ -13,7 +13,6 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -35,8 +34,7 @@ public class AnalyzerTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-         .indexing()
-            .index(Index.ALL)
+         .indexing().enable()
             .addIndexedEntity(Team.class)
             .addProperty("hibernate.search.default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

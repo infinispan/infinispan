@@ -1,5 +1,5 @@
 <distributed-cache name="default">
-    <indexing index="PRIMARY_OWNER">
+    <indexing enabled="true">
         <property name="default.indexmanager">org.infinispan.query.affinity.InfinispanIndexManager</property>
         <property name="default.reader.strategy">async</property>
         <!-- refresh reader every 1s, default is 5s -->

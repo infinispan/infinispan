@@ -9,7 +9,6 @@ import java.util.concurrent.Future;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -52,7 +51,7 @@ public class PutAllTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
             .addProperty("default.directory_provider", "local-heap")

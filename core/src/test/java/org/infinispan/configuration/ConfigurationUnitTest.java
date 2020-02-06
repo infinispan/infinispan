@@ -28,7 +28,6 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -287,7 +286,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    public void testIndexingOnInvalidationCache() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
-      c.indexing().index(Index.ALL);
+      c.indexing().enable();
       c.validate();
    }
 
@@ -295,7 +294,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          "ISPN(\\d)*: Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.")
    public void testIndexingRequiresOptionalModule() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.indexing().index(Index.ALL);
+      c.indexing().enable();
       c.validate(GlobalConfigurationBuilder.defaultClusteredBuilder().build());
    }
 

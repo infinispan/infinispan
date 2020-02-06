@@ -5,7 +5,6 @@ import static org.mockito.Mockito.verify;
 
 import org.hibernate.search.backend.spi.WorkType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -40,7 +39,7 @@ public class CustomSearchWorkCreatorTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
-      cfg.indexing().index(Index.ALL)
+      cfg.indexing().enable()
               .addIndexedEntity(Person.class)
               .addProperty("default.directory_provider", "local-heap")
               .addProperty("lucene_version", "LUCENE_CURRENT");

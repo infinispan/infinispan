@@ -19,7 +19,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDo
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
@@ -53,7 +52,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, useTransactions()));
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

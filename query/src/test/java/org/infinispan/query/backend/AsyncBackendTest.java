@@ -13,7 +13,6 @@ import static org.testng.Assert.assertTrue;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.indexmanager.IndexUpdateCommand;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
@@ -95,8 +94,8 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
 
    private ConfigurationBuilder getBaseConfig() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.clustering().cacheMode(CacheMode.REPL_SYNC)
-         .indexing().index(Index.ALL)
+      cfg.clustering().cacheMode(CacheMode.DIST_SYNC)
+         .indexing().enable()
          .addIndexedEntity(Person.class)
          .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
          .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -147,9 +146,9 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
          public void call() throws Exception {
             EmbeddedCacheManager slave = isMaster(cms[0].getCache()) ? cms[1] : cms[0];
             Transport wireTappedTransport = spyOnTransport(slave.getCache());
-            slave.getCache().put(1, new Person("person1", "blurb1", 20));
-            slave.getCache().put(2, new Person("person2", "blurb2", 27));
-            slave.getCache().put(3, new Person("person3", "blurb3", 56));
+            for (int i = 0; i < 50; i++) {
+               slave.getCache().put(i, new Person("person", "blurb", 20));
+            }
             assertion.doAssertion(wireTappedTransport);
          }
       });

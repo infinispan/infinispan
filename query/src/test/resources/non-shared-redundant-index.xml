@@ -6,7 +6,7 @@
         </serialization>
         <transport cluster="Infinispan-Query-Cluster" />
         <distributed-cache name="default" mode="SYNC">
-            <indexing index="ALL">
+            <indexing enabled="true">
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
                 </indexed-entities>

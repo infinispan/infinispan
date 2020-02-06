@@ -27,6 +27,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
     public static final PathElement PATH = PathElement.pathElement(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
 
     // attributes
+   @Deprecated
     static final SimpleAttributeDefinition INDEXING =
           new SimpleAttributeDefinitionBuilder(ModelKeys.INDEXING, ModelType.STRING, true)
                 .setXmlName(Attribute.INDEX.getLocalName())
@@ -34,6 +35,14 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setValidator(new EnumValidator<>(Indexing.class, true, false))
                 .setDefaultValue(new ModelNode().set(Indexing.NONE.name()))
+                .build();
+
+    static final SimpleAttributeDefinition ENABLED =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
+                .setXmlName(Attribute.ENABLED.getLocalName())
+                .setAllowExpression(true)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setDefaultValue(new ModelNode().set(IndexingConfiguration.ENABLED.getDefaultValue()))
                 .build();
 
     static final SimpleAttributeDefinition INDEXING_AUTO_CONFIG =
@@ -91,7 +100,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
           .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();
 
-    private static final AttributeDefinition[] ATTRIBUTES = {INDEXING, INDEXING_AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, INDEXING_PROPERTIES};
+    private static final AttributeDefinition[] ATTRIBUTES = {ENABLED, INDEXING, INDEXING_AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, INDEXING_PROPERTIES};
 
     public IndexingConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.INDEXING, parent, ATTRIBUTES);

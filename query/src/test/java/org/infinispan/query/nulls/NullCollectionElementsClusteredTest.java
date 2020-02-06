@@ -22,7 +22,6 @@ import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -55,7 +54,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          cache2.remove("2");   // cache will now be out of sync with the index
 
          // Query a cache where key "2" is not present in the index
-         Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
+         Cache queryCache = getNonOwner("2");
 
          searchManager = Search.getSearchManager(queryCache);
 
@@ -173,10 +172,11 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      cfg.clustering().hash().numOwners(1);
       cfg
             .indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addIndexedEntity(Foo.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -208,6 +208,16 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       DistributionInfo distribution = cacheTopology.getDistribution(key);
       Address primary = distribution.primary();
       return primary.equals(cache1Address) ? cache1 : cache2;
+   }
+
+   private Cache<String, Foo> getNonOwner(String key) {
+      LocalizedCacheTopology cacheTopology = cache1.getAdvancedCache().getDistributionManager().getCacheTopology();
+      DistributionInfo distribution = cacheTopology.getDistribution(key);
+      List<Address> addresses = distribution.writeOwners();
+      List<Cache<String, Foo>> allCaches = caches();
+      return allCaches.stream()
+            .filter(c -> !addresses.contains(c.getAdvancedCache().getRpcManager().getAddress()))
+            .findFirst().get();
    }
 
    @Indexed(index = "FooIndex")

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -43,7 +42,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
-      cfgBuilder.indexing().index(Index.ALL)
+      cfgBuilder.indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

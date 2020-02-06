@@ -10,7 +10,6 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.TestSegmentReadLocker;
@@ -50,7 +49,7 @@ public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
       .statistics()
          .disable()
       .indexing()
-         .index(Index.ALL)
+         .enable()
             .addIndexedEntity(Person.class)
             .addProperty("hibernate.search.default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

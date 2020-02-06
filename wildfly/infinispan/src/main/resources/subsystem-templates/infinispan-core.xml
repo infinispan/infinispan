@@ -37,7 +37,7 @@
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="indexed">
-               <indexing index="PRIMARY_OWNER" auto-config="true"/>
+               <indexing enabled="true" auto-config="true"/>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="memory-bounded">
@@ -397,20 +397,20 @@
             <distributed-cache name="default"/>
             <!-- Indexes are local to each node, stored on the filesystem -->
             <replicated-cache name="OnDiskNonSharedIndex">
-               <indexing index="ALL">
+               <indexing enabled="true">
                   <property name="default.indexmanager">near-real-time</property>
                   <property name="default.indexBase">${java.io.tmpdir}/OnDiskNonSharedIndex</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored in memory -->
             <replicated-cache name="InMemoryNonSharedIndex">
-               <indexing index="ALL">
+               <indexing enabled="true">
                   <property name="default.directory_provider">local-heap</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored on infinispan itself on configured caches -->
             <replicated-cache name="InfinispanCustomNonSharedIndex">
-               <indexing index="ALL">
+               <indexing enabled="true">
                   <property name="default.directory_provider">infinispan</property>
                   <property name="default.metadata_cachename">indexMetadata</property>
                   <property name="default.data_cachename">indexData</property>
@@ -425,16 +425,16 @@
             </local-cache>
             <!-- Indexes are shared between all nodes, stored on infinispan itself -->
             <distributed-cache name="InfinispanSharedIndex">
-               <indexing index="PRIMARY_OWNER">
+               <indexing enabled="true">
                   <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                </indexing>
             </distributed-cache>
             <!-- Auto config based on cache type -->
             <distributed-cache name="sharedIndexInfinispanDirectory">
-               <indexing index="PRIMARY_OWNER" auto-config="true"/>
+               <indexing enabled="true" auto-config="true"/>
             </distributed-cache>
             <replicated-cache name="nearRealtimeFileSystemIndex">
-               <indexing index="ALL" auto-config="true"/>
+               <indexing enabled="true" auto-config="true"/>
             </replicated-cache>
          </cache-container>
       </replacement>

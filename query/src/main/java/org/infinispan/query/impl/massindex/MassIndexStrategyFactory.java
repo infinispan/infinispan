@@ -1,13 +1,10 @@
 package org.infinispan.query.impl.massindex;
 
-import java.util.Set;
+import static org.infinispan.query.impl.massindex.MassIndexStrategy.PER_NODE_ALL_DATA;
+import static org.infinispan.query.impl.massindex.MassIndexStrategy.SHARED_INDEX_STRATEGY;
 
-import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
-import org.hibernate.search.indexes.spi.IndexManager;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Index;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.infinispan.query.impl.IndexInspector;
 
 /**
  * @author gustavonalle
@@ -18,25 +15,8 @@ final class MassIndexStrategyFactory {
    private MassIndexStrategyFactory() {
    }
 
-   static MassIndexStrategy calculateStrategy(EntityIndexBinding indexBinding, Configuration cacheConfiguration) {
-      Set<IndexManager> indexManagers = indexBinding.getIndexManagerSelector().all();
-      Index index = cacheConfiguration.indexing().index();
-      IndexManager indexManager = indexManagers.iterator().next();
-
-      boolean sharded = indexManagers.size() > 1;
-      boolean replicated = cacheConfiguration.clustering().cacheMode().isReplicated();
-      boolean singleMaster = !sharded && indexManager instanceof InfinispanIndexManager;
-      boolean custom = !(indexManager instanceof DirectoryBasedIndexManager);
-
-      if (singleMaster || custom) {
-         return MassIndexStrategy.SHARED_INDEX_STRATEGY;
-      }
-
-      if (sharded || replicated || !index.isPrimaryOwner()) {
-         return MassIndexStrategy.PER_NODE_ALL_DATA;
-      }
-
-      return MassIndexStrategy.PER_NODE_PRIMARY;
-
+   static MassIndexStrategy calculateStrategy(IndexInspector indexInspector, IndexedTypeIdentifier typeIdentifier) {
+      boolean sharedIndex = indexInspector.hasSharedIndex(typeIdentifier.getPojoType());
+      return sharedIndex ? SHARED_INDEX_STRATEGY : PER_NODE_ALL_DATA;
    }
 }

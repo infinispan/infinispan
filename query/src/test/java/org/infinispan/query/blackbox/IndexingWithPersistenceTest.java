@@ -12,7 +12,6 @@ import java.util.function.Consumer;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -41,7 +40,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "ram")

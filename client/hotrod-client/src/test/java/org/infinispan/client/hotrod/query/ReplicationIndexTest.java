@@ -26,7 +26,6 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
@@ -58,7 +57,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
 
       // Add the test caches
       org.infinispan.configuration.cache.ConfigurationBuilder builder = getDefaultClusteredCacheConfig(REPL_SYNC, isTransactional());
-      builder.indexing().index(Index.ALL).addProperty("default.directory_provider", "local-heap");
+      builder.indexing().enable().addProperty("default.directory_provider", "local-heap");
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
 
       // Wait for state transfer on the test caches

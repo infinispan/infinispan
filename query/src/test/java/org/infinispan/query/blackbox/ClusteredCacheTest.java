@@ -33,7 +33,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.Ownership;
@@ -119,7 +118,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

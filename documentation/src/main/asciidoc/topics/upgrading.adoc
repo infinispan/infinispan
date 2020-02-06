@@ -6,7 +6,12 @@ Total Order transaction protocol was deprecated in 10.0 and now it is removed.
 
 == Query
 
-The AffinityIndexManager is removed. Indexes should be configured with the ```near-real-time``` index manager instead.
+* The AffinityIndexManager is removed. Indexes should be configured with the ```near-real-time``` index manager instead.
+
+* The ```index()``` (index mode) configuration is deprecated. Infinispan will automatically figure out how to index the entries. The following substitutions should be made in the configuration:
+    ** `.indexing().index(Index.PRIMARY_OWNER)` => `index.enabled(true)`
+    ** `.indexing().index(Index.ALL)` => `index.enabled(true)`
+    ** `.indexing().index(Index.NONE)` => `index.enabled(false)`
 
 = Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 

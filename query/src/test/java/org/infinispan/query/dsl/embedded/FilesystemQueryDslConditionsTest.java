@@ -6,7 +6,6 @@ import java.io.File;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -31,7 +30,7 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
       assertTrue(created);
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      cfg.indexing().index(Index.ALL)
+      cfg.indexing().enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())

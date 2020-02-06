@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.query;
 
-import static org.infinispan.configuration.cache.Index.ALL;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
 import static org.testng.Assert.assertEquals;
@@ -64,7 +63,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
 
    public ConfigurationBuilder buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(new ConfigurationBuilder());
-      builder.memory().storageType(storageType).indexing().index(ALL)
+      builder.memory().storageType(storageType).indexing().enable()
             .addProperty("default.directory_provider", "local-heap");
       return builder;
    }

@@ -10,7 +10,6 @@ import javax.security.auth.Subject;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -43,7 +42,7 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder
          .indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addIndexedEntity(TestEntity.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT")

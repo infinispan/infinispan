@@ -112,7 +112,7 @@ public class LifecycleManager implements ModuleLifecycle {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          SearchIntegrator searchFactory = null;
-         boolean isIndexed = cfg.indexing().index().isEnabled();
+         boolean isIndexed = cfg.indexing().enabled();
          if (isIndexed) {
             setBooleanQueryMaxClauseCount(cfg.indexing().properties());
 
@@ -120,6 +120,9 @@ public class LifecycleManager implements ModuleLifecycle {
 
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
+
+            IndexInspector indexInspector = new IndexInspector(cfg, searchFactory);
+            cr.registerComponent(indexInspector, IndexInspector.class);
 
             createQueryInterceptorIfNeeded(cr, cfg, cache, searchFactory, keyTransformationHandler);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
@@ -197,7 +200,7 @@ public class LifecycleManager implements ModuleLifecycle {
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
       IndexingConfiguration indexingConfiguration = configuration.indexing();
-      if (!indexingConfiguration.index().isEnabled()) {
+      if (!indexingConfiguration.enabled()) {
          if (verifyChainContainsQueryInterceptor(cr)) {
             throw new IllegalStateException("It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found");
          }

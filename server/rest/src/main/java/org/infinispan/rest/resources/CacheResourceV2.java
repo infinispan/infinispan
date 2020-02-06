@@ -253,7 +253,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          fullDetail.indexingInProgress = indexingInProgress;
          fullDetail.persistent = configuration.persistence().usingStores();
          fullDetail.bounded = configuration.memory().evictionStrategy().isEnabled();
-         fullDetail.indexed = configuration.indexing().index().isEnabled();
+         fullDetail.indexed = configuration.indexing().enabled();
          fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
          fullDetail.secured = configuration.security().authorization().enabled();
          fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
@@ -270,7 +270,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private InfinispanQueryStatisticsInfo.IndexStatistics getIndexStatistics(Cache<?, ?> cache) {
-      if(!cache.getCacheConfiguration().indexing().index().isEnabled()) {
+      if(!cache.getCacheConfiguration().indexing().enabled()) {
          return null;
       }
 

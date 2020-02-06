@@ -36,10 +36,10 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <indexing index=\"NONE\" />\n" +
+            "      <indexing enabled=\"false\" />\n" +
             "   </local-cache>\n" +
             "   <local-cache name=\"indexingenabled\">\n" +
-            "      <indexing index=\"LOCAL\" >\n" +
+            "      <indexing enabled=\"true\" >\n" +
             "         <indexed-entities>\n" +
             "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
             "         </indexed-entities>\n" +

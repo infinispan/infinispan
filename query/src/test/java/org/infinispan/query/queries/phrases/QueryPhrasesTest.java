@@ -10,7 +10,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -51,7 +50,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addIndexedEntity(NumericType.class)
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)

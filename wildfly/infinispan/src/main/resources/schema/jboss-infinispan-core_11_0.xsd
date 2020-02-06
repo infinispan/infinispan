@@ -689,7 +689,12 @@
                     </xs:sequence>
                     <xs:attribute name="index" type="tns:indexing" default="${Server.Indexing.indexing}">
                         <xs:annotation>
-                            <xs:documentation>The indexing mode of the cache. Defaults to NONE.</xs:documentation>
+                            <xs:documentation>Indexing mode is deprecated. This configuration can be removed as the index mode is calculated automatically.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="enabled" type="xs:boolean" default="false">
+                        <xs:annotation>
+                            <xs:documentation>Specify whether indexing is enabled or not. Defaults to false.</xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
                     <xs:attribute name="auto-config" type="xs:boolean" default="${Server.Indexing.auto-config}">

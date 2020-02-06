@@ -14,7 +14,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -54,7 +53,7 @@ public class MergeTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, TX_ENABLED);
       cacheCfg.clustering().remoteTimeout(120000)
-            .indexing().index(Index.PRIMARY_OWNER)
+            .indexing().enable()
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

@@ -13,7 +13,7 @@
             <memory>
                 <off-heap/>
             </memory>
-            <indexing index="PRIMARY_OWNER">
+            <indexing enabled="true">
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                     <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
@@ -27,17 +27,17 @@
         </distributed-cache>
 
         <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
             <state-transfer enabled="true"/>
         </replicated-cache>
 
         <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
             <state-transfer enabled="true"/>
         </distributed-cache>
 
         <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
             <state-transfer enabled="true"/>
         </replicated-cache>
     </cache-container>

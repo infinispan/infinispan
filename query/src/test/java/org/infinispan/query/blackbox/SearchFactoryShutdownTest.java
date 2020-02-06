@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -33,7 +32,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
             .transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
-               .index(Index.ALL)
+               .enable()
                .addIndexedEntity(Person.class)
                .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT");

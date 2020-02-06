@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDo
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -33,7 +32,7 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest i
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cfg.indexing().index(Index.ALL).indexing().addProperty("default.directory_provider", "local-heap");
+      cfg.indexing().enable().addProperty("default.directory_provider", "local-heap");
       createHotRodServers(NUM_NODES, hotRodCacheConfiguration(cfg));
 
       waitForClusterToForm();

@@ -1,7 +1,7 @@
 <infinispan>
    <cache-container default-cache="default">
       <replicated-cache name="default">
-         <indexing index="ALL">
+         <indexing enabled="true">
             <property name="property.name">some value</property>
          </indexing>
       </replicated-cache>

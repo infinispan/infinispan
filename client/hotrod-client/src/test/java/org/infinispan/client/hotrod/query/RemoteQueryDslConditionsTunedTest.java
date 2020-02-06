@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
 import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
@@ -26,7 +25,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("default.indexBase", indexDirectory)
             .addProperty("default.exclusive_index_use", "true")

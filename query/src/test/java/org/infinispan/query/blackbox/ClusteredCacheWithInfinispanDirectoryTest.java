@@ -3,7 +3,6 @@ package org.infinispan.query.blackbox;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -25,7 +24,7 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
          cacheCfg.indexing()
-               .index(Index.PRIMARY_OWNER)
+               .enable()
                .addIndexedEntity(Person.class)
                .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
                .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

@@ -142,7 +142,7 @@ public final class LifecycleManager implements ModuleLifecycle {
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
 
-         if (cfg.indexing().index().isEnabled()) {
+         if (cfg.indexing().enabled()) {
             log.debugf("Wrapping the SearchWorkCreator for indexed cache %s", cacheName);
             QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
             queryInterceptor.setSearchWorkCreator(new ProtobufValueWrapperSearchWorkCreator(queryInterceptor.getSearchWorkCreator(), serCtx));

@@ -424,7 +424,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(info.anonymizedCache);
       PersistenceManager pm = cr.getComponent(PersistenceManager.class);
-      boolean hasIndexing = SecurityActions.getCacheConfiguration(info.anonymizedCache).indexing().index().isEnabled();
+      boolean hasIndexing = SecurityActions.getCacheConfiguration(info.anonymizedCache).indexing().enabled();
       info.update(pm.isEnabled(), hasIndexing);
    }
 

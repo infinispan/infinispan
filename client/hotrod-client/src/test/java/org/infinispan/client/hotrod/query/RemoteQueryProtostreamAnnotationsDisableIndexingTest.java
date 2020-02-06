@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -84,7 +83,7 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

@@ -8,7 +8,6 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
@@ -39,7 +38,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    }
 
    protected void configureCache(ConfigurationBuilder builder) {
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

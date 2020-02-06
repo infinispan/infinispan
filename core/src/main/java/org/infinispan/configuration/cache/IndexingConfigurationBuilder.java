@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONFIG;
+import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
@@ -32,8 +33,23 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes = IndexingConfiguration.attributeDefinitionSet();
    }
 
+   public IndexingConfigurationBuilder enabled(boolean enabled) {
+      attributes.attribute(ENABLED).set(enabled);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder enable() {
+      attributes.attribute(ENABLED).set(true);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder disable() {
+      attributes.attribute(ENABLED).set(false);
+      return this;
+   }
+
    public boolean enabled() {
-      return attributes.attribute(INDEX).get().isEnabled();
+      return attributes.attribute(ENABLED).get();
    }
 
    Index index() {
@@ -118,8 +134,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    /**
     * Indicates indexing mode
+    * @deprecated This configuration can be removed as the index mode is calculated automatically.
     */
+   @Deprecated
    public IndexingConfigurationBuilder index(Index index) {
+      enabled(index != null && index != Index.NONE);
       attributes.attribute(INDEX).set(index);
       return this;
    }
@@ -132,6 +151,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
+      if (autoConfig) enable();
       attributes.attribute(AUTO_CONFIG).set(autoConfig);
       return this;
    }
@@ -168,9 +188,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          if (indexedEntities().isEmpty() && !getBuilder().template()) {
             //TODO  [anistor] This does not take into account eventual programmatically defined entity mappings
             CONFIG.noIndexableClassesDefined();
-         }
-         if (attributes.attribute(INDEX).get() == Index.ALL && !clustering().cacheMode().isReplicated()) {
-            CONFIG.allIndexingInNonReplicatedCache();
          }
       } else {
          //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled

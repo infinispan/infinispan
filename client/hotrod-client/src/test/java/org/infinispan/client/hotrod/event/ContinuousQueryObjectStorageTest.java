@@ -29,7 +29,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
@@ -83,7 +82,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      cfgBuilder.indexing().index(Index.ALL)
+      cfgBuilder.indexing().enable()
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       cfgBuilder.expiration().disableReaper();

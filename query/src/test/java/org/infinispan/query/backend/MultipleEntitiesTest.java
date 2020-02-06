@@ -16,7 +16,6 @@ import org.hibernate.search.backend.impl.lucene.works.LuceneWorkExecutor;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -39,7 +38,7 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
-      cfg.indexing().index(Index.ALL)
+      cfg.indexing().enable()
             .addIndexedEntity(Bond.class)
             .addIndexedEntity(Debenture.class)
             .addProperty("default.directory_provider", "local-heap")

@@ -21,7 +21,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -59,7 +58,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.indexing()
-             .index(Index.ALL)
+            .enable()
              .addIndexedEntities(Person.class, AnotherGrassEater.class)
              .addProperty("default.directory_provider", "local-heap")
              .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
@@ -187,7 +186,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          configureJmx(globalConfig2, TEST_JMX_DOMAIN, mBeanServerLookup);
          ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
          defaultCacheConfig2
-               .indexing().index(Index.ALL)
+               .indexing().enable()
                .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT");
 

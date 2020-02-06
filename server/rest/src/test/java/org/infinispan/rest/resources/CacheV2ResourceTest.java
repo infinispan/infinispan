@@ -29,7 +29,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.ScopedState;
@@ -59,7 +58,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
    private ConfigurationBuilder getIndexedPersistedCache() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.indexing().index(Index.PRIMARY_OWNER).autoConfig(true)
+      builder.indexing().enable().autoConfig(true)
             .statistics().enable()
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("store");
       return builder;

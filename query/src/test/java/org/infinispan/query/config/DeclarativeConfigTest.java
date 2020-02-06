@@ -31,7 +31,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <indexing index=\"PRIMARY_OWNER\">\n" +
+            "      <indexing enabled=\"true\">\n" +
             "         <indexed-entities>\n" +
             "            <indexed-entity>org.infinispan.query.test.Person</indexed-entity>\n" +
             "         </indexed-entities>\n" +

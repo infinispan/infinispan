@@ -7,7 +7,6 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
@@ -27,7 +26,7 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
    ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
       return configurationBuilder;
    }

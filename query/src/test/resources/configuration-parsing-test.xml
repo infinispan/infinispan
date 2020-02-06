@@ -7,11 +7,11 @@
    <cache-container default-cache="default" statistics="false">
       <transport stack="tcp"/>
       <local-cache name="default">
-         <indexing index="NONE"/>
+         <indexing enabled="false"/>
       </local-cache>
       <local-cache name="simple" />
       <local-cache name="memory-searchable">
-         <indexing index="ALL">
+         <indexing enabled="true">
             <key-transformers>
                <key-transformer key="org.infinispan.query.test.CustomKey" transformer="org.infinispan.query.test.CustomTransformer"/>
             </key-transformers>
@@ -23,7 +23,7 @@
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable">
-         <indexing index="PRIMARY_OWNER">
+         <indexing enabled="true">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
@@ -33,10 +33,10 @@
          </indexing>
       </local-cache>
       <replicated-cache name="repl-with-default">
-         <indexing index="PRIMARY_OWNER" auto-config="true"/>
+         <indexing enabled="true" auto-config="true"/>
       </replicated-cache>
       <distributed-cache name="dist-with-default">
-          <indexing index="ALL" auto-config="true"/>
+          <indexing enabled="true" auto-config="true"/>
       </distributed-cache>
    </cache-container>
 

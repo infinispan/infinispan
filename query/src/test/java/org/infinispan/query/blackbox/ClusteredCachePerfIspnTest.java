@@ -2,7 +2,6 @@ package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
@@ -21,7 +20,7 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

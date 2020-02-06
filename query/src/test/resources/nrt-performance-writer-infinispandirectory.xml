@@ -10,7 +10,7 @@
             <object size="-1"/>
          </memory>
          <expiration max-idle="-1"/>
-         <indexing index="NONE"/>
+         <indexing enabled="false"/>
       </local-cache>
       <!-- *************************************** -->
       <!--  Tested Cache: indexing enabled         -->
@@ -20,7 +20,7 @@
          <memory>
             <object size="200"/>
          </memory>
-         <indexing index="ALL">
+         <indexing enabled="true">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>

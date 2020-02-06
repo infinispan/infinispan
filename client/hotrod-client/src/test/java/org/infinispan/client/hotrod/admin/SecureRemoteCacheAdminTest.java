@@ -8,7 +8,6 @@ import java.security.PrivilegedExceptionAction;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -29,7 +28,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().index(Index.ALL).autoConfig(true);
+      builder.indexing().autoConfig(true);
       createHotRodServers(2, builder);
    }
 

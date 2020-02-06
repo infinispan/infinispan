@@ -2,7 +2,6 @@ package org.infinispan.query.it;
 
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.api.AnotherTestEntity;
 import org.infinispan.query.api.NonIndexedValuesTest;
@@ -21,7 +20,7 @@ public class ElasticSearchNonIndexedValuesIT extends NonIndexedValuesTest {
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cacheCfg = getDefaultStandaloneCacheConfig(isTransactional());
       cacheCfg.indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class);
       ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());

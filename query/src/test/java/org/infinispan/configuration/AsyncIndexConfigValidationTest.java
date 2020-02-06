@@ -7,7 +7,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
@@ -70,7 +69,7 @@ public class AsyncIndexConfigValidationTest extends AbstractInfinispanTest {
 
    private Configuration createAsyncIndexConfig() {
       ConfigurationBuilder indexCfgBuilder = new ConfigurationBuilder();
-      indexCfgBuilder.indexing().index(Index.NONE);
+      indexCfgBuilder.indexing().enable();
       indexCfgBuilder.clustering().cacheMode(CacheMode.REPL_ASYNC);
       return indexCfgBuilder.build();
    }
@@ -78,7 +77,7 @@ public class AsyncIndexConfigValidationTest extends AbstractInfinispanTest {
    private Configuration createUserCacheConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
             .addProperty("error_handler", StaticTestingErrorHandler.class.getName());
       return builder.build();
@@ -87,7 +86,7 @@ public class AsyncIndexConfigValidationTest extends AbstractInfinispanTest {
    private Configuration createUserCacheConfigWithCustomIndexCaches() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
             .addProperty("default.locking_cachename", "lock")
             .addProperty("default.data_cachename", "data")

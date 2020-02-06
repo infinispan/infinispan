@@ -18,7 +18,6 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -222,7 +221,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       b.memory().evictionType(EvictionType.COUNT).size(maxEntries)
             .persistence().passivation(true)
             .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "filesystem")
@@ -233,7 +232,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
    protected EmbeddedCacheManager createVolatileCacheManager() {
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.indexing().index(Index.ALL)
+      b.indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "local-heap")

@@ -190,8 +190,7 @@ have a vastly superior performance. On the other hand, enabling indexing can imp
 
 ===== General format
 
-To enable indexing via XML, you need to add the `<indexing>` element plus the `index` (link:#query_index_mode[index mode])
-to your cache configuration, and optionally pass additional properties.
+To enable indexing via XML, you need to add the `<indexing enabled="true">` element to your cache configuration, and optionally pass additional properties.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -205,7 +204,7 @@ Programmatic:
 import org.infinispan.configuration.cache.*;
 
 ConfigurationBuilder cacheCfg = ...
-cacheCfg.indexing().index(Index.ALL)
+cacheCfg.indexing().enable()
       .addProperty("property name", "propery value")
 ----
 
@@ -221,7 +220,7 @@ include::config_examples/indexing_property.xml[]
 [source,java]
 ----
 cacheCfg.indexing()
-   .index(Index.ALL)
+   .enable()
       .addProperty("org.infinispan.sample.Car.directory_provider", "local-heap")
 
 ----
@@ -269,7 +268,7 @@ or programmatically:
 [source,java]
 ----
  cacheCfg.indexing()
-      .index(Index.ALL)
+      .enable()
        .addIndexedEntity(Car.class)
        .addIndexedEntity(Truck.class)
 
@@ -286,21 +285,6 @@ NOTE: Only for server, if you fail to follow the requirement of using 'extended'
 its resolution will fail due to missing class because the wrong ClassLoader is being used (the {brandname}'s internal
 class path is being used).
 
-[[query_index_mode]]
-==== Index mode
-
-An {brandname} node typically receives data from two sources: local and remote. Local translates to clients manipulating data using the map API in the same JVM;
-remote data comes from other {brandname} nodes during replication or rebalancing.
-
-The index mode configuration defines, from a node in the cluster point of view, which data gets indexed.
-
-Possible values:
-
-* ALL: all data is indexed, local and remote.
-* LOCAL: only local data is indexed.
-* PRIMARY_OWNER: Only entries containing keys that the node is primary owner will be indexed, regardless of local or remote origin.
-* NONE: no data is indexed. Equivalent to not configure indexing at all.
-
 [[query_index_manager]]
 ==== Index Managers
 
@@ -316,16 +300,11 @@ A shared index is a single, distributed, cluster-wide index for a certain cache.
 queries to all members and aggregate the results. The downside is that Lucene does not allow more than a single process writing to the index at the same time, and the coordination of lock acquisitions needs to be done by a proper shared index capable index manager.
 In any case, having a single write lock cluster-wise can lead to some degree of contention under heavy writing.
 
-{brandname} supports a shared index leveraging the {brandname} Directory Provider, which stores indexes in a separate set of caches, called InfinispanIndexManager.
-
-===== Effect of the index mode
-
-Shared indexes should not use the `ALL` index mode since it'd lead to redundant indexing: since there is a single index cluster wide, the entry would get indexed when inserted via Cache API, and another time
-when {brandname} replicates it to another node. The `ALL` mode is usually associates with link:#query_non_shared_index[non-shared indexes] in order to create full index replicas on each node.
+{brandname} supports a shared index leveraging the Infinispan Directory Provider, which stores indexes in a separate set of caches, called InfinispanIndexManager.
 
 ===== InfinispanIndexManager
 
-This index manager uses the {brandname} Directory Provider, and is suitable for creating shared indexes. Index mode should be set to `LOCAL` in this configuration.
+This index manager uses the {brandname} Directory Provider, and is suitable for creating shared indexes.
 
 Configuration:
 
@@ -363,18 +342,6 @@ taking advantage of a local index.
 
 {brandname} has two index managers suitable for non-shared indexes: `directory-based` and `near-real-time`. Storage wise, non-shared indexes can be located
 in ram, filesystem, or {brandname} local caches.
-
-===== Effect of the index mode
-
-The `directory-based` and `near-real-time` index managers can be associated with different link:#query_index_mode[index modes], resulting in different index distributions.
-
-REPL caches combined with the `ALL` index mode will result in a full copy of the cluster-wide index on each node. This mode allows queries to become effectively local without
-network latency. This is the recommended mode to index any REPL cache, and that's the choice picked by the link:#query_autoconfig[auto-config] when the a REPL cache is detected. The `ALL` mode should not be used with DIST caches.
-
-REPL or DIST caches combined with `LOCAL` index mode will cause each node to index only data inserted from the same JVM, causing an uneven distribution of the index. In order
-to obtain correct query results, it's necessary to use link:#query_clustered_query_api[broadcast] queries.
-
-REPL or DIST caches combined with `PRIMARY_OWNER` will also need broadcast queries. Differently from the `LOCAL` mode, each node's index will contain indexed entries which key is primarily owned by the node according to the consistent hash, leading to a more evenly distributed indexes among the nodes.
 
 [[query_directory_based]]
 ===== directory-based index manager
@@ -457,7 +424,6 @@ Configuration:
 include::config_examples/indexing_elasticsearch.xml[]
 ----
 
-The index mode should be set to `LOCAL`, since {brandname} considers Elasticsearch as a single shared index.
 More information about Elasticsearch integration, including the full description of the configuration properties can be found at the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#elasticsearch-integration[Hibernate Search manual].
 
 [[query_autoconfig]]
