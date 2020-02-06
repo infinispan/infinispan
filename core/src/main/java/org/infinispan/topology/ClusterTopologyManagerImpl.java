@@ -208,7 +208,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public CompletionStage<CacheStatusResponse> handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo,
                                                           int joinerViewId) {
       CompletionStage<Void> viewStage;
-      if (joinerViewId <= viewId && clusterManagerStatus != ClusterManagerStatus.RECOVERING_CLUSTER) {
+      if (canHandleJoin(joinerViewId)) {
          viewStage = CompletableFutures.completedNull();
       } else {
          if (log.isTraceEnabled()) {
@@ -221,14 +221,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       // After we have the right view, obtain the ClusterCacheStatus
-      return viewStage.thenApply(v -> {
+      return viewStage.thenCompose(v -> {
          ClusterCacheStatus cacheStatus = prepareJoin(cacheName, joiner, joinInfo, joinerViewId);
          if (cacheStatus == null) {
             // We have a newer view
             // Return null so that the joiner is forced to retry
             return null;
          }
-         return cacheStatus.doJoin(joiner, joinInfo);
+         return cacheStatus.nodeCanJoinFuture(joinInfo)
+                           .thenApply(ignored -> cacheStatus.doJoin(joiner, joinInfo));
       });
    }
 
