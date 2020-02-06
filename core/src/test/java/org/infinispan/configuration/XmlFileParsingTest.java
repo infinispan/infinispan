@@ -364,20 +364,28 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       BlockingThreadPoolExecutorFactory persistenceThreadPool =
          gc.persistenceThreadPool().threadPoolFactory();
-      assertEquals(6, persistenceThreadPool.maxThreads());
-      assertEquals(10001, persistenceThreadPool.queueLength());
+      assertNull(persistenceThreadPool);
+
+      BlockingThreadPoolExecutorFactory blockingThreadPool =
+            gc.blockingThreadPool().threadPoolFactory();
+      assertEquals(6, blockingThreadPool.maxThreads());
+      assertEquals(10001, blockingThreadPool.queueLength());
       DefaultThreadFactory persistenceThreadFactory =
-         gc.persistenceThreadPool().threadFactory();
-      assertEquals("PersistenceThread", persistenceThreadFactory.threadNamePattern());
+            gc.blockingThreadPool().threadFactory();
+      assertEquals("BlockingThread", persistenceThreadFactory.threadNamePattern());
 
       BlockingThreadPoolExecutorFactory asyncThreadPool =
          gc.asyncThreadPool().threadPoolFactory();
-      assertEquals(5, asyncThreadPool.coreThreads());
-      assertEquals(5, asyncThreadPool.maxThreads());
-      assertEquals(10000, asyncThreadPool.queueLength());
-      assertEquals(0, asyncThreadPool.keepAlive());
-      DefaultThreadFactory asyncThreadFactory = gc.asyncThreadPool().threadFactory();
-      assertEquals("AsyncOperationsThread", asyncThreadFactory.threadNamePattern());
+      assertNull(asyncThreadPool);
+
+      BlockingThreadPoolExecutorFactory nonBlockingThreadPool =
+            gc.nonBlockingThreadPool().threadPoolFactory();
+      assertEquals(5, nonBlockingThreadPool.coreThreads());
+      assertEquals(5, nonBlockingThreadPool.maxThreads());
+      assertEquals(10000, nonBlockingThreadPool.queueLength());
+      assertEquals(0, nonBlockingThreadPool.keepAlive());
+      DefaultThreadFactory asyncThreadFactory = gc.nonBlockingThreadPool().threadFactory();
+      assertEquals("NonBlockingThread", asyncThreadFactory.threadNamePattern());
 
       BlockingThreadPoolExecutorFactory transportThreadPool =
          gc.transport().transportThreadPool().threadPoolFactory();

@@ -1,6 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 
 import java.lang.invoke.MethodHandles;
 import java.util.PrimitiveIterator;
@@ -74,7 +74,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    protected AdvancedCache<K, V> remoteCache;
    // This cache should be used for iteration purposes or Cache#get that are local only
    protected AdvancedCache<K, V> cache;
-   protected Scheduler asyncScheduler;
+   protected Scheduler nonBlockingScheduler;
    protected int maxSegment;
    protected final int cpuCount = ProcessorInfo.availableProcessors();
 
@@ -92,8 +92,8 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
     * method and add @Inject to the variable.
     */
    @Inject
-   public void inject(@ComponentName(ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncOperationsExecutor) {
-      this.asyncScheduler = Schedulers.from(asyncOperationsExecutor);
+   public void inject(@ComponentName(NON_BLOCKING_EXECUTOR) ExecutorService nonBlockingExecutor) {
+      this.nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
    }
 
    @Start
@@ -490,7 +490,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          // the cost of queueing the results.
          FlowableProcessor<R> processor = UnicastProcessor.create();
          processors[i] = processor;
-         asyncScheduler.scheduleDirect(() ->
+         nonBlockingScheduler.scheduleDirect(() ->
                handleParallelSegment(segmentIter, initialSegment, set, keysToExclude, toKeyFunction, collator, processor,
                      concurrentSegments, listener));
       }
@@ -596,7 +596,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Flowable<R> stageFlowable = keyFlowable.window(16)
                .flatMapSingle(keys -> {
                   CompletionStage<R> stage = keyTransformer.apply(keys)
-                        .subscribeOn(asyncScheduler)
+                        .subscribeOn(nonBlockingScheduler)
                         .to(collator::apply);
                   return RxJavaInterop.completionStageToSingle(stage);
                });
@@ -614,7 +614,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       Flowable<? extends CompletionStage<R>> stageFlowable = Flowable.fromIterable(segments)
             .parallel()
-            .runOn(asyncScheduler)
+            .runOn(nonBlockingScheduler)
             .map(segment -> {
                Flowable<I> innerFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
                if (keysToExclude != null) {

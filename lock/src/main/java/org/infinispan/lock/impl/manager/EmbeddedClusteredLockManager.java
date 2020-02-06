@@ -62,7 +62,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
 
    @Inject
    public void injectDep(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService scheduledExecutorService,
-                         @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) Executor executor) {
+                         @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor executor) {
       this.scheduledExecutorService = scheduledExecutorService;
       this.executor = executor;
    }

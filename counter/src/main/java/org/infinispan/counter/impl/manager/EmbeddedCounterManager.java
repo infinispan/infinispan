@@ -62,8 +62,8 @@ public class EmbeddedCounterManager implements CounterManager {
    private volatile AdvancedCache<CounterKey, CounterValue> counterCache;
    private volatile boolean started = false;
 
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   Executor asyncExecutor;
+   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
+   Executor blockingExecutor;
 
    public EmbeddedCounterManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
@@ -85,7 +85,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (trace) {
          log.trace("Starting EmbeddedCounterManager");
       }
-      notificationManager.useExecutor(asyncExecutor);
+      notificationManager.useExecutor(blockingExecutor);
 
       configurationManager.start();
       started = true;

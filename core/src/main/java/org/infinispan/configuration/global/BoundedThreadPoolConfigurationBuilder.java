@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.CORE_THREADS;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.KEEP_ALIVE_TIME;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.MAX_THREADS;
+import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.NON_BLOCKING;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.QUEUE_LENGTH;
 import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.NAME;
 import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.THREAD_FACTORY;
@@ -70,6 +71,15 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
       return attributes.attribute(QUEUE_LENGTH).get();
    }
 
+   public BoundedThreadPoolConfigurationBuilder nonBlocking(Boolean nonBlocking) {
+      attributes.attribute(NON_BLOCKING).set(nonBlocking);
+      return this;
+   }
+
+   public Boolean isNonBlocking() {
+      return attributes.attribute(NON_BLOCKING).get();
+   }
+
    public String name() {
       return attributes.attribute(NAME).get();
    }
@@ -103,9 +113,10 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
    @Override
    public ThreadPoolConfiguration asThreadPoolConfigurationBuilder() {
       ThreadPoolConfigurationBuilder builder = new ThreadPoolConfigurationBuilder(getGlobalConfig());
-      boolean isNonBlocking = name().startsWith("async");
+      boolean isNonBlocking = isNonBlocking();
       builder.threadPoolFactory(new BlockingThreadPoolExecutorFactory(maxThreads(), coreThreads(), queueLength(),
             keepAliveTime(), isNonBlocking));
+      builder.name(name());
       if (threadFactory() != null) {
          DefaultThreadFactory threadFactory = getGlobalConfig().threads().getThreadFactory(threadFactory()).create().getThreadFactory(isNonBlocking);
          builder.threadFactory(threadFactory);

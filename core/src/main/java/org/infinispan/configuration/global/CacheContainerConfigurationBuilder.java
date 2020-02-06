@@ -1,10 +1,12 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.CacheContainerConfiguration.ASYNC_EXECUTOR;
+import static org.infinispan.configuration.global.CacheContainerConfiguration.BLOCKING_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.DEFAULT_CACHE;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.EXPIRATION_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.LISTENER_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.NAME;
+import static org.infinispan.configuration.global.CacheContainerConfiguration.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.PERSISTENCE_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.STATISTICS;
@@ -115,6 +117,16 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
+   public ThreadPoolConfigurationBuilder nonBlockingThreadPool() {
+      return threads.nonBlockingThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder blockingThreadPool() {
+      return threads.blockingThreadPool();
+   }
+
+   @Override
    public GlobalSecurityConfigurationBuilder security() {
       return security;
    }
@@ -183,6 +195,16 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    @Deprecated
    public CacheContainerConfigurationBuilder stateTransferExecutor(String name) {
       attributes.attribute(STATE_TRANSFER_EXECUTOR).set(name);
+      return this;
+   }
+
+   public CacheContainerConfigurationBuilder nonBlockingExecutor(String name) {
+      attributes.attribute(NON_BLOCKING_EXECUTOR).set(name);
+      return this;
+   }
+
+   public CacheContainerConfigurationBuilder blockingExecutor(String name) {
+      attributes.attribute(BLOCKING_EXECUTOR).set(name);
       return this;
    }
 

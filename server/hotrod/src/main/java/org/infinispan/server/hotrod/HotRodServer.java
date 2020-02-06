@@ -5,7 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.io.IOException;
@@ -226,7 +226,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       List<QueryFacade> queryFacades = loadQueryFacades();
       queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
       clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class),
-            gcr.getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR));
+            gcr.getComponent(ExecutorService.class, NON_BLOCKING_EXECUTOR));
       clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());

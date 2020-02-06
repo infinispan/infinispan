@@ -70,7 +70,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       this.indexUpdater = new IndexUpdater(searchIntegrator, keyTransformationHandler, timeService);
       this.executor = cache.getCacheManager().executor();
       this.localExecutor = cache.getCacheManager().getGlobalComponentRegistry()
-            .getComponent(ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
+            .getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
       this.lock = MassIndexerLockFactory.buildLock(cache);
    }
 

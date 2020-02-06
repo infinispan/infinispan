@@ -49,7 +49,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
 
    @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    protected ScheduledExecutorService executor;
-   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
+   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
    protected ExecutorService blockingExecutor;
    @Inject protected Configuration configuration;
    @Inject protected PersistenceManager persistenceManager;

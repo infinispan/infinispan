@@ -21,6 +21,8 @@ public class ThreadsConfiguration implements ConfigurationInfo {
    private final ThreadPoolConfiguration remoteThreadPool;
    private final ThreadPoolConfiguration stateTransferThreadPool;
    private final ThreadPoolConfiguration transportThreadPool;
+   private final ThreadPoolConfiguration nonBlockingThreadPool;
+   private final ThreadPoolConfiguration blockingThreadPool;
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.THREADS.getLocalName());
    private final List<ConfigurationInfo> children = new ArrayList<>();
@@ -35,7 +37,9 @@ public class ThreadsConfiguration implements ConfigurationInfo {
                         ThreadPoolConfiguration persistenceThreadPool,
                         ThreadPoolConfiguration remoteThreadPool,
                         ThreadPoolConfiguration stateTransferThreadPool,
-                        ThreadPoolConfiguration transportThreadPool) {
+                        ThreadPoolConfiguration transportThreadPool,
+                        ThreadPoolConfiguration nonBlockingThreadPool,
+                        ThreadPoolConfiguration blockingThreadPool) {
       this.asyncThreadPool = asyncThreadPool;
       this.expirationThreadPool = expirationThreadPool;
       this.listenerThreadPool = listenerThreadPool;
@@ -43,6 +47,8 @@ public class ThreadsConfiguration implements ConfigurationInfo {
       this.remoteThreadPool = remoteThreadPool;
       this.stateTransferThreadPool = stateTransferThreadPool;
       this.transportThreadPool = transportThreadPool;
+      this.nonBlockingThreadPool = nonBlockingThreadPool;
+      this.blockingThreadPool = blockingThreadPool;
       this.threadFactories.addAll(threadFactories);
       this.boundedThreadPools.addAll(boundedThreadPools);
       this.cachedThreadPools.addAll(cachedThreadPools);
@@ -94,6 +100,14 @@ public class ThreadsConfiguration implements ConfigurationInfo {
 
    public ThreadPoolConfiguration transportThreadPool() {
       return transportThreadPool;
+   }
+
+   public ThreadPoolConfiguration nonBlockingThreadPool() {
+      return nonBlockingThreadPool;
+   }
+
+   public ThreadPoolConfiguration blockingThreadPool() {
+      return blockingThreadPool;
    }
 
    public List<ThreadFactoryConfiguration> threadFactories() {

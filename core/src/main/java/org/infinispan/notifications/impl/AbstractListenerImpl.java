@@ -120,8 +120,8 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
    protected Executor asyncProcessor;
    // Make sure all listeners resume on this executor
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   ExecutorService cpuExecutor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
 
    /**
     * Removes all listeners from the notifier
@@ -134,7 +134,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    }
 
    protected CompletionStage<Void> resumeOnCPU(CompletionStage<Void> stage, Object traceId) {
-      return CompletionStages.continueOnExecutor(stage, cpuExecutor, traceId);
+      return CompletionStages.continueOnExecutor(stage, nonBlockingExecutor, traceId);
    }
 
    protected abstract Log getLog();

@@ -312,8 +312,12 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case ASYNC_OPERATIONS_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
                     if (namespace.since(8, 0)) {
-                        this.parseThreadPool(ThreadPoolResource.ASYNC_OPERATIONS, reader, containerAddress, operations);
+                        ROOT_LOGGER.deprecatedExecutor(ModelKeys.EXECUTOR, ModelKeys.ASYNC_OPERATIONS_THREAD_POOL);
+                        ParseUtils.nextElement(reader);
                         break;
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -336,8 +340,12 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case PERSISTENCE_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
                     if (namespace.since(8, 0)) {
-                        this.parseThreadPool(ThreadPoolResource.PERSISTENCE, reader, containerAddress, operations);
+                        ROOT_LOGGER.deprecatedExecutor(ModelKeys.EXECUTOR, ModelKeys.PERSISTENCE_THREAD_POOL);
+                        ParseUtils.nextElement(reader);
                         break;
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -352,6 +360,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case REPLICATION_QUEUE_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
                     if (namespace.since(10, 0)) {
                         throw ParseUtils.unexpectedElement(reader);
                     } else if (namespace.since(8, 0)) {
@@ -360,9 +371,12 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case STATE_TRANSFER_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
                     if (namespace.since(8, 0)) {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.EXECUTOR, ModelKeys.STATE_TRANSFER_THREAD_POOL);
-                        this.parseThreadPool(ThreadPoolResource.STATE_TRANSFER, reader, containerAddress, operations);
+                        ParseUtils.nextElement(reader);
                         break;
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -371,6 +385,22 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 case TRANSPORT_THREAD_POOL: {
                     if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.TRANSPORT, reader, containerAddress, operations);
+                        break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                }
+                case NON_BLOCKING_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        this.parseThreadPool(ThreadPoolResource.NON_BLOCKING, reader, containerAddress, operations);
+                        break;
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                }
+                case BLOCKING_THREAD_POOL: {
+                    if (namespace.since(11, 0)) {
+                        this.parseThreadPool(ThreadPoolResource.BLOCKING, reader, containerAddress, operations);
                         break;
                     } else {
                         throw ParseUtils.unexpectedElement(reader);

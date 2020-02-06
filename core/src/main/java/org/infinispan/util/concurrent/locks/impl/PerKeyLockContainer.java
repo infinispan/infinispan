@@ -34,7 +34,7 @@ public class PerKeyLockContainer implements LockContainer {
    }
 
    @Inject
-   void inject(@ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) Executor executor, TimeService timeService) {
+   void inject(@ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor executor, TimeService timeService) {
       this.executor = executor;
       this.timeService = timeService;
       for (InfinispanLock lock : lockMap.values()) {

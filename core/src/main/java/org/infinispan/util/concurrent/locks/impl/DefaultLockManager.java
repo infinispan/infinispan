@@ -65,8 +65,8 @@ public class DefaultLockManager implements LockManager {
    @Inject Configuration configuration;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService scheduler;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   Executor executor;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   Executor nonBlockingExecutor;
 
    @Override
    public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
@@ -120,7 +120,7 @@ public class DefaultLockManager implements LockManager {
                unit);
       }
 
-      final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size(), executor);
+      final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size(), nonBlockingExecutor);
       //needed to avoid internal deadlock when 2 or more lock owner invokes this method with the same keys.
       //ordering will not solve the problem since acquire() is non-blocking and each lock owner can iterate faster/slower than the other.
       synchronized (this) {

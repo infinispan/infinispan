@@ -19,6 +19,7 @@ public enum Attribute {
     AFTER,
     ALIASES,
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
+    @Deprecated
     ASYNC_EXECUTOR("async-executor"),
     @Deprecated
     ASYNC_MARSHALLING,
@@ -29,6 +30,7 @@ public enum Attribute {
     AWAIT_INITIAL_TRANSFER,
     BACKUP_FAILURE_POLICY("failure-policy"),
     BEFORE,
+    BLOCKING_EXECUTOR,
     CAPACITY_FACTOR("capacity"),
     CHUNK_SIZE,
     CLASS,
@@ -96,12 +98,14 @@ public enum Attribute {
     MODULE,
     NAME,
     NAMES,
+    NON_BLOCKING_EXECUTOR,
     NOTIFICATIONS,
     ON_REHASH("onRehash"),
     OWNERS,
     PATH,
     PASSIVATION,
     PERMISSIONS,
+    @Deprecated
     PERSISTENCE_EXECUTOR,
     POSITION,
     PRELOAD,
@@ -140,6 +144,7 @@ public enum Attribute {
     STATISTICS,
     STATISTICS_AVAILABLE,
     START,
+    @Deprecated
     STATE_TRANSFER_EXECUTOR,
     STORE_KEYS_AS_BINARY("keys"),
     STORE_VALUES_AS_BINARY("values"),

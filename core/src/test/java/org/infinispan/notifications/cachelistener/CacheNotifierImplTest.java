@@ -80,7 +80,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
                          mock(InternalEntryFactory.class), cem, mock(KeyPartitioner.class),
                          TestingUtil.named(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR, new WithinThreadExecutor()),
-                         TestingUtil.named(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR, new WithinThreadExecutor()));
+                         TestingUtil.named(KnownComponentNames.NON_BLOCKING_EXECUTOR, new WithinThreadExecutor()));
       cl = new CacheListener();
       n.start();
       addListener();

@@ -64,6 +64,16 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
+   public ThreadPoolConfigurationBuilder blockingThreadPool() {
+      return globalConfig.blockingThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder nonBlockingThreadPool() {
+      return globalConfig.nonBlockingThreadPool();
+   }
+
+   @Override
    public GlobalSecurityConfigurationBuilder security() {
       return globalConfig.security();
    }

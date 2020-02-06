@@ -28,9 +28,13 @@ class CacheContainerConfiguration implements ConfigurationInfo {
    static final AttributeDefinition<String> EXPIRATION_EXECUTOR = AttributeDefinition.builder("expirationExecutor", "expiration-pool", String.class).immutable().build();
    static final AttributeDefinition<String> PERSISTENCE_EXECUTOR = AttributeDefinition.builder("persistenceExecutor", "persistence-pool", String.class).immutable().build();
    static final AttributeDefinition<String> STATE_TRANSFER_EXECUTOR = AttributeDefinition.builder("stateTransferExecutor", "state-transfer-pool", String.class).immutable().build();
+   static final AttributeDefinition<String> NON_BLOCKING_EXECUTOR = AttributeDefinition.builder("nonBlockingExecutor", "non-blocking-pool", String.class).immutable().build();
+   static final AttributeDefinition<String> BLOCKING_EXECUTOR = AttributeDefinition.builder("blockingExecutor", "blocking-pool", String.class).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(CacheContainerConfiguration.class, NAME, STATISTICS, ZERO_CAPACITY_NODE, DEFAULT_CACHE, ASYNC_EXECUTOR, LISTENER_EXECUTOR, EXPIRATION_EXECUTOR, PERSISTENCE_EXECUTOR, STATE_TRANSFER_EXECUTOR);
+      return new AttributeSet(CacheContainerConfiguration.class, NAME, STATISTICS, ZERO_CAPACITY_NODE, DEFAULT_CACHE,
+            ASYNC_EXECUTOR, LISTENER_EXECUTOR, EXPIRATION_EXECUTOR, PERSISTENCE_EXECUTOR, STATE_TRANSFER_EXECUTOR,
+            NON_BLOCKING_EXECUTOR, BLOCKING_EXECUTOR);
    }
 
    private static ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(Element.CACHE_CONTAINER.getLocalName());
@@ -126,6 +130,7 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return shutdown;
    }
 
+   @Deprecated
    public String asyncExecutor() {
       return attributes.attribute(ASYNC_EXECUTOR).get();
    }
@@ -148,6 +153,14 @@ class CacheContainerConfiguration implements ConfigurationInfo {
    @Deprecated
    public String stateTransferExecutor() {
       return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
+   }
+
+   public String nonBlockingExecutor() {
+      return attributes.attribute(NON_BLOCKING_EXECUTOR).get();
+   }
+
+   public String blockingExecutor() {
+      return attributes.attribute(BLOCKING_EXECUTOR).get();
    }
 
    public GlobalStateConfiguration globalState() {
@@ -183,8 +196,17 @@ class CacheContainerConfiguration implements ConfigurationInfo {
       return threads.stateTransferThreadPool();
    }
 
+   @Deprecated
    public ThreadPoolConfiguration asyncThreadPool() {
       return threads.asyncThreadPool();
+   }
+
+   public ThreadPoolConfiguration nonBlockingThreadPool() {
+      return threads.nonBlockingThreadPool();
+   }
+
+   public ThreadPoolConfiguration blockingThreadPool() {
+      return threads.blockingThreadPool();
    }
 
    @Override

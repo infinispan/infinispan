@@ -181,7 +181,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                } catch (InterruptedException | TimeoutException e) {
                   throw new RuntimeException(e);
                }
-            }, TestingUtil.extractGlobalComponent(cm1, ExecutorService.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR));
+            }, TestingUtil.extractGlobalComponent(cm1, ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR));
             Throwable t = exchanger.exchange(null, 10, TimeUnit.SECONDS);
             assertNotNull(t);
             assertEquals(TestException.class, t.getClass());
@@ -463,7 +463,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                } catch (InterruptedException | TimeoutException e) {
                   throw new RuntimeException(e);
                }
-            }, TestingUtil.extractGlobalComponent(cm1, ExecutorService.class, KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR));
+            }, TestingUtil.extractGlobalComponent(cm1, ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR));
             Throwable t = exchanger.exchange(null, 10, TimeUnit.SECONDS);
             assertNotNull(t);
             assertEquals(NullPointerException.class, t.getClass());

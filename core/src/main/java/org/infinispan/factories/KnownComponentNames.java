@@ -19,8 +19,9 @@ public class KnownComponentNames {
    public static final String ASYNC_TRANSPORT_EXECUTOR = "org.infinispan.executors.transport";
    public static final String REMOTE_COMMAND_EXECUTOR = "org.infinispan.executors.remote";
    public static final String ASYNC_NOTIFICATION_EXECUTOR = "org.infinispan.executors.notification";
-   public static final String PERSISTENCE_EXECUTOR = "org.infinispan.executors.persistence";
    public static final String EXPIRATION_SCHEDULED_EXECUTOR = "org.infinispan.executors.expiration";
+   public static final String NON_BLOCKING_EXECUTOR = "org.infinispan.executors.non-blocking";
+   public static final String BLOCKING_EXECUTOR = "org.infinispan.executors.blocking";
    /**
     * @deprecated Since 9.0, no longer used.
     */
@@ -34,7 +35,6 @@ public class KnownComponentNames {
    @Deprecated
    public static final String STATE_TRANSFER_EXECUTOR = "org.infinispan.executors.stateTransferExecutor";
    public static final String TRANSACTION_VERSION_GENERATOR = "org.infinispan.transaction.versionGenerator";
-   public static final String ASYNC_OPERATIONS_EXECUTOR = "org.infinispan.executors.async";
    public static final String TIMEOUT_SCHEDULE_EXECUTOR = "org.infinispan.executors.timeout";
    public static final String CACHE_DEPENDENCY_GRAPH = "org.infinispan.CacheDependencyGraph";
 
@@ -49,28 +49,27 @@ public class KnownComponentNames {
       DEFAULT_THREAD_COUNT.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
       DEFAULT_THREAD_COUNT.put(ASYNC_TRANSPORT_EXECUTOR, 10);
       DEFAULT_THREAD_COUNT.put(EXPIRATION_SCHEDULED_EXECUTOR, 1);
-      // Persistence Executor default to # of CPUs
-      DEFAULT_THREAD_COUNT.put(PERSISTENCE_EXECUTOR, ProcessorInfo.availableProcessors() * 4);
       DEFAULT_THREAD_COUNT.put(REMOTE_COMMAND_EXECUTOR, 200);
       DEFAULT_THREAD_COUNT.put(STATE_TRANSFER_EXECUTOR, 60);
-      DEFAULT_THREAD_COUNT.put(ASYNC_OPERATIONS_EXECUTOR, 25);
+      DEFAULT_THREAD_COUNT.put(NON_BLOCKING_EXECUTOR, ProcessorInfo.availableProcessors() * 2);
+      DEFAULT_THREAD_COUNT.put(BLOCKING_EXECUTOR, 150);
 
       DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 1_000);
       DEFAULT_QUEUE_SIZE.put(ASYNC_TRANSPORT_EXECUTOR, 1_000);
       DEFAULT_QUEUE_SIZE.put(EXPIRATION_SCHEDULED_EXECUTOR, 0);
-      DEFAULT_QUEUE_SIZE.put(PERSISTENCE_EXECUTOR, 5_000);
       DEFAULT_QUEUE_SIZE.put(REMOTE_COMMAND_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(STATE_TRANSFER_EXECUTOR, 0);
-      DEFAULT_QUEUE_SIZE.put(ASYNC_OPERATIONS_EXECUTOR, 1_000);
+      DEFAULT_QUEUE_SIZE.put(NON_BLOCKING_EXECUTOR, 1_000);
+      DEFAULT_QUEUE_SIZE.put(BLOCKING_EXECUTOR, 5_000);
 
       DEFAULT_THREAD_PRIORITY.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(ASYNC_TRANSPORT_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(EXPIRATION_SCHEDULED_EXECUTOR, Thread.NORM_PRIORITY);
-      DEFAULT_THREAD_PRIORITY.put(PERSISTENCE_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(REMOTE_COMMAND_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(STATE_TRANSFER_EXECUTOR, Thread.NORM_PRIORITY);
-      DEFAULT_THREAD_PRIORITY.put(ASYNC_OPERATIONS_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(TIMEOUT_SCHEDULE_EXECUTOR, Thread.NORM_PRIORITY);
+      DEFAULT_THREAD_PRIORITY.put(NON_BLOCKING_EXECUTOR, Thread.NORM_PRIORITY);
+      DEFAULT_THREAD_PRIORITY.put(BLOCKING_EXECUTOR, Thread.NORM_PRIORITY);
    }
 
    public static int getDefaultThreads(String componentName) {

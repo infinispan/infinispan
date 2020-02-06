@@ -97,6 +97,11 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.listenerThreadPool();
    }
 
+   /**
+    * @return An empty {@code ThreadPoolConfiguration}.
+    * @deprecated Since 11.0, no longer used.
+    */
+   @Deprecated
    public ThreadPoolConfiguration persistenceThreadPool() {
       return cacheContainerConfiguration.persistenceThreadPool();
    }
@@ -110,8 +115,21 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.stateTransferThreadPool();
    }
 
+   /**
+    * @return An empty {@code ThreadPoolConfiguration}.
+    * @deprecated Since 11.0, no longer used.
+    */
+   @Deprecated
    public ThreadPoolConfiguration asyncThreadPool() {
       return cacheContainerConfiguration.asyncThreadPool();
+   }
+
+   public ThreadPoolConfiguration nonBlockingThreadPool() {
+      return cacheContainerConfiguration.nonBlockingThreadPool();
+   }
+
+   public ThreadPoolConfiguration blockingThreadPool() {
+      return cacheContainerConfiguration.blockingThreadPool();
    }
 
    public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
@@ -142,8 +160,16 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainerConfiguration.globalState();
    }
 
+   /**
+    * @deprecated Since 11.0, no longer used.
+    */
+   @Deprecated
    public String asyncThreadPoolName() {
       return cacheContainer().asyncExecutor();
+   }
+
+   public String nonBlockingThreadPoolName() {
+      return cacheContainer().nonBlockingExecutor();
    }
 
    public String listenerThreadPoolName() {
@@ -154,8 +180,16 @@ public class GlobalConfiguration implements ConfigurationInfo {
       return cacheContainer().expirationExecutor();
    }
 
+   /**
+    * @deprecated Since 11.0, no longer used.
+    */
+   @Deprecated
    public String persistenceThreadPoolName() {
       return cacheContainer().persistenceExecutor();
+   }
+
+   public String blockingThreadPoolName() {
+      return cacheContainer().blockingExecutor();
    }
 
    /**

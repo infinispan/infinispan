@@ -151,7 +151,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
    @Override
    CompletableFuture<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout) {
       CompletableFuture<Void> cf = new CompletableFuture<>();
-      asyncExecutor.submit(() -> {
+      blockingExecutor.submit(() -> {
          try {
             commitLocalTransaction(cache, xid, timeout);
          } catch (HeuristicMixedException e) {

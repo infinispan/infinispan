@@ -9,7 +9,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,8 +26,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
@@ -76,10 +73,6 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
    @Inject protected RpcManager rpcManager;
    @Inject protected DistributionManager distributionManager;
-   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
-   protected ExecutorService blockingExecutor;
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   protected ExecutorService cpuExecutor;
 
    protected AdvancedCache<K, V> cache;
    private Address localAddress;

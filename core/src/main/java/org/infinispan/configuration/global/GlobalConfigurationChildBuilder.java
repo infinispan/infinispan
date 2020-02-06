@@ -47,6 +47,16 @@ public interface GlobalConfigurationChildBuilder {
    ThreadPoolConfigurationBuilder asyncThreadPool();
 
    /**
+    * Configuration for the non blocking thread pool
+    */
+   ThreadPoolConfigurationBuilder nonBlockingThreadPool();
+
+   /**
+    * Configuration for the blocking thread pool
+    */
+   ThreadPoolConfigurationBuilder blockingThreadPool();
+
+   /**
     * Security-related configuration
     */
    GlobalSecurityConfigurationBuilder security();

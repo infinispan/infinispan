@@ -115,7 +115,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       this.localAddress = rpcManager.getAddress();
       this.currentBackend = new LazyInitializingBackend(this);
       this.async = !BackendFactory.isConfiguredAsSync(props);
-      this.blockingExecutor = componentsRegistry.getComponent(ExecutorService.class, KnownComponentNames.PERSISTENCE_EXECUTOR);
+      this.blockingExecutor = componentsRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
    }
 
    @ViewChanged

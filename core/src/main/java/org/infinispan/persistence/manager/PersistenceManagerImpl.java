@@ -8,9 +8,9 @@ import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.context.Flag.SKIP_LOCKING;
 import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.ArrayList;
@@ -128,8 +128,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    PersistenceMarshaller m;
    @Inject TransactionManager transactionManager;
    @Inject TimeService timeService;
-   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-   ExecutorService persistenceExecutor;
+   @Inject @ComponentName(BLOCKING_EXECUTOR)
+   ExecutorService blockingExecutor;
    @Inject @ComponentName(EXPIRATION_SCHEDULED_EXECUTOR)
    ScheduledExecutorService scheduledExecutor;
    @Inject ByteBufferFactory byteBufferFactory;
@@ -139,8 +139,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject CacheNotifier cacheNotifier;
    @Inject KeyPartitioner keyPartitioner;
    @Inject Transport transport;
-   @Inject @ComponentName(ASYNC_OPERATIONS_EXECUTOR)
-   ExecutorService cpuExecutor;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
+   ExecutorService nonBlockingExecutor;
 
    @GuardedBy("storesMutex")
    private final List<CacheLoader> loaders = new ArrayList<>();
@@ -158,8 +158,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return publisherSemaphore;
    };
 
-   private Scheduler persistenceScheduler;
-   private Scheduler cpuScheduler;
+   private Scheduler blockingScheduler;
+   private Scheduler nonBlockingScheduler;
 
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
@@ -177,8 +177,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       advancedListener = new AdvancedPurgeListener<>(expirationManager.wired());
       preloaded = false;
       enabled = configuration.persistence().usingStores();
-      persistenceScheduler = Schedulers.from(persistenceExecutor);
-      cpuScheduler = Schedulers.from(cpuExecutor);
+      blockingScheduler = Schedulers.from(blockingExecutor);
+      nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
       if (!enabled)
          return;
       try {
@@ -376,10 +376,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
       return Flowable.fromPublisher(preloadCl.entryPublisher(null, true, true))
             .take(maxEntries)
-            .observeOn(cpuScheduler)
+            .observeOn(nonBlockingScheduler)
             .doOnNext(me -> preloadKey(flaggedCache, me))
             .count()
-            .subscribeOn(persistenceScheduler)
+            .subscribeOn(blockingScheduler)
             .to(RxJavaInterop.singleToCompletionStage())
             .thenAccept(insertAmount -> {
                this.preloaded = insertAmount < maxEntries;
@@ -519,10 +519,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
                if (writer instanceof AdvancedCacheExpirationWriter) {
                   //noinspection unchecked
-                  ((AdvancedCacheExpirationWriter)writer).purge(persistenceExecutor, advancedListener);
+                  ((AdvancedCacheExpirationWriter)writer).purge(blockingExecutor, advancedListener);
                } else if (writer instanceof AdvancedCacheWriter) {
                   //noinspection unchecked
-                  ((AdvancedCacheWriter)writer).purge(persistenceExecutor, advancedListener);
+                  ((AdvancedCacheWriter)writer).purge(blockingExecutor, advancedListener);
                }
             };
             nonTxWriters.forEach(purgeWriter);
@@ -551,17 +551,17 @@ public class PersistenceManagerImpl implements PersistenceManager {
     */
    private <V> CompletionStage<V> continueOnCPUExecutor(CompletionStage<V> delay,
          int traceId) {
-      return CompletionStages.continueOnExecutor(delay, cpuExecutor, traceId);
+      return CompletionStages.continueOnExecutor(delay, nonBlockingExecutor, traceId);
    }
 
    private <V> CompletionStage<V> supplyOnPersistenceExAndContinue(IntFunction<V> function, String traceMessage) {
       int traceId = getNextTraceNumber(traceMessage);
-      return continueOnCPUExecutor(CompletableFuture.supplyAsync(() -> function.apply(traceId), persistenceExecutor), traceId);
+      return continueOnCPUExecutor(CompletableFuture.supplyAsync(() -> function.apply(traceId), blockingExecutor), traceId);
    }
 
    private CompletionStage<Void> runOnPersistenceExAndContinue(IntConsumer consumer, String traceMessage) {
       int traceId = getNextTraceNumber(traceMessage);
-      return continueOnCPUExecutor(CompletableFuture.runAsync(() -> consumer.accept(traceId), persistenceExecutor), traceId);
+      return continueOnCPUExecutor(CompletableFuture.runAsync(() -> consumer.accept(traceId), blockingExecutor), traceId);
    }
 
    private static int getNextTraceNumber(String message) {
@@ -687,8 +687,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .using(publisherSemaphoreCallable,
                      semaphore -> advancedCacheLoader.entryPublisher(filter, fetchValue, fetchMetadata),
                      Semaphore::release)
-               .subscribeOn(persistenceScheduler)
-               .observeOn(cpuScheduler);
+               .subscribeOn(blockingScheduler)
+               .observeOn(nonBlockingScheduler);
       }
       return Flowable.empty();
    }
@@ -703,8 +703,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .using(publisherSemaphoreCallable,
                      semaphore -> segmentedStore.entryPublisher(segments, filter, fetchValue, fetchMetadata),
                      Semaphore::release)
-               .subscribeOn(persistenceScheduler)
-               .observeOn(cpuScheduler);
+               .subscribeOn(blockingScheduler)
+               .observeOn(nonBlockingScheduler);
       }
       return publishEntries(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), fetchValue, fetchMetadata, predicate);
    }
@@ -721,8 +721,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .using(publisherSemaphoreCallable,
                      semaphore -> advancedCacheLoader.publishKeys(filter),
                      Semaphore::release)
-               .subscribeOn(persistenceScheduler)
-               .observeOn(cpuScheduler);
+               .subscribeOn(blockingScheduler)
+               .observeOn(nonBlockingScheduler);
       }
       return Flowable.empty();
    }
@@ -740,8 +740,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                .using(publisherSemaphoreCallable,
                      semaphore -> segmentedStore.publishKeys(segments, filter),
                      Semaphore::release)
-               .subscribeOn(persistenceScheduler)
-               .observeOn(cpuScheduler);
+               .subscribeOn(blockingScheduler)
+               .observeOn(nonBlockingScheduler);
       }
 
       return publishKeys(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), predicate);
@@ -935,7 +935,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      flowable = flowable.doOnSubscribe(s -> log.tracef("Continuing write batch for id %d", id));
                   }
                   // Subscribing on the persistence scheduler here forces this invocation to be async
-                  return writer.bulkUpdate(flowable.subscribeOn(persistenceScheduler));
+                  return writer.bulkUpdate(flowable.subscribeOn(blockingScheduler));
                })
                .forEach(aggregateCompletionStage::dependsOn);
       } catch (Throwable t) {
@@ -1066,8 +1066,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      }
                      return (int) longValue;
                   })
-                  .subscribeOn(persistenceScheduler)
-                  .observeOn(cpuScheduler)
+                  .subscribeOn(blockingScheduler)
+                  .observeOn(nonBlockingScheduler)
                   .to(RxJavaInterop.singleToCompletionStage());
 
          } finally {
@@ -1186,7 +1186,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          InitializationContextImpl ctx =
                new InitializationContextImpl(processedConfiguration, cache.wired(), keyPartitioner, m, timeService,
-                     byteBufferFactory, marshallableEntryFactory, persistenceExecutor, globalConfiguration);
+                     byteBufferFactory, marshallableEntryFactory, blockingExecutor, globalConfiguration);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);

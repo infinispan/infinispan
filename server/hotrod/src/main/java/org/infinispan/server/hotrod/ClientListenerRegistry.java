@@ -60,11 +60,11 @@ import io.netty.channel.EventLoop;
  */
 class ClientListenerRegistry {
    private final EncoderRegistry encoderRegistry;
-   private final Executor cpuExecutor;
+   private final Executor nonBlockingExecutor;
 
-   ClientListenerRegistry(EncoderRegistry encoderRegistry, Executor cpuExecutor) {
+   ClientListenerRegistry(EncoderRegistry encoderRegistry, Executor nonBlockingExecutor) {
       this.encoderRegistry = encoderRegistry;
-      this.cpuExecutor = cpuExecutor;
+      this.nonBlockingExecutor = nonBlockingExecutor;
    }
 
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
@@ -336,7 +336,7 @@ class ClientListenerRegistry {
             CompletableFuture<Void> cf = event.eventFuture;
             // We can just check instance equality as this is used to symbolize the event was not blocked below
             if (cf != CompletableFutures.<Void>completedNull()) {
-               cpuExecutor.execute(() -> event.eventFuture.complete(null));
+               nonBlockingExecutor.execute(() -> event.eventFuture.complete(null));
             }
             ByteBuf buf = ch.alloc().ioBuffer();
             encoder.writeEvent(event, buf);
