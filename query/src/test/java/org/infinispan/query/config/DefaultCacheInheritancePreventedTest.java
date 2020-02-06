@@ -7,7 +7,6 @@ import java.io.IOException;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -32,11 +31,11 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
             TestCacheManagerFactory.fromXml("configuration-parsing-test-enbledInDefault.xml")) {
          @Override
          public void call() {
-            assertIndexingEnabled(cm.getCache(), true, IndexModificationStrategy.ALL);
-            assertIndexingEnabled(cm.getCache("simple"), true, IndexModificationStrategy.ALL);
-            assertIndexingEnabled(cm.getCache("not-searchable"), false, null);
-            assertIndexingEnabled(cm.getCache("memory-searchable"), true, IndexModificationStrategy.ALL);
-            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.PRIMARY_OWNER);
+            assertIndexingEnabled(cm.getCache(), true);
+            assertIndexingEnabled(cm.getCache("simple"), true);
+            assertIndexingEnabled(cm.getCache("not-searchable"), false);
+            assertIndexingEnabled(cm.getCache("memory-searchable"), true);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true);
          }
       });
    }
@@ -47,10 +46,10 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
             TestCacheManagerFactory.fromXml("configuration-parsing-test.xml")) {
          @Override
          public void call() {
-            assertIndexingEnabled(cm.getCache(), false, null);
-            assertIndexingEnabled(cm.getCache("simple"), false, null);
-            assertIndexingEnabled(cm.getCache("memory-searchable"), true, IndexModificationStrategy.ALL);
-            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.PRIMARY_OWNER);
+            assertIndexingEnabled(cm.getCache(), false);
+            assertIndexingEnabled(cm.getCache("simple"), false);
+            assertIndexingEnabled(cm.getCache("memory-searchable"), true);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true);
          }
       });
    }
@@ -60,12 +59,11 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
     * @param expected true if you expect indexing to be enabled
     * @param cache the cache to extract indexing from
     */
-   private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected, IndexModificationStrategy expectedModificationMode) {
+   private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected) {
       SearchManager searchManager = null;
       try {
          searchManager = Search.getSearchManager(cache);
-      }
-      catch (IllegalStateException e) {
+      } catch (IllegalStateException e) {
          // ignored here, we deal with it later
       }
       if (expected && searchManager == null) {
@@ -78,8 +76,7 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
       QueryInterceptor queryInterceptor = null;
       try {
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      }
-      catch (IllegalStateException e) {
+      } catch (IllegalStateException e) {
          // ignored here, we deal with it later
       }
       if (expected && queryInterceptor == null) {
@@ -87,9 +84,6 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
       }
       if (!expected && queryInterceptor != null) {
          Assert.fail("QueryInterceptor not expected but found for cache " + cache.getName());
-      }
-      if (expected) {
-         Assert.assertEquals(queryInterceptor.getIndexModificationMode(), expectedModificationMode);
       }
    }
 }

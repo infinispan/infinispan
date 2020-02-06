@@ -1,7 +1,6 @@
 package org.infinispan.query.backend;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -13,6 +12,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.IndexingMode;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
@@ -36,6 +36,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -50,6 +51,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -84,6 +86,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
    ExecutorService asyncExecutor;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject IndexInspector indexInspector;
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
@@ -94,9 +97,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final DataConversion valueDataConversion;
    private final DataConversion keyDataConversion;
    private final boolean isPersistenceEnabled;
-   private final Map<String, Class<?>> indexedEntities;
 
    private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
+   private final boolean isManualIndexing;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
                            IndexModificationStrategy indexingMode,
@@ -105,23 +108,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.searchFactory = searchFactory;
       this.keyTransformationHandler = keyTransformationHandler;
       this.indexingMode = indexingMode;
+      this.isManualIndexing = searchFactory.unwrap(SearchIntegrator.class).getIndexingMode() == IndexingMode.MANUAL;
       this.txOldValues = txOldValues;
       this.valueDataConversion = cache.getValueDataConversion();
       this.keyDataConversion = cache.getKeyDataConversion();
       Configuration cfg = cache.getCacheConfiguration();
       this.isPersistenceEnabled = cfg.persistence().usingStores();
-
-      Map<String, Class<?>> indexedEntities = new HashMap<>();
-      for (Class<?> c : cfg.indexing().indexedEntities()) {
-         // include classes declared in indexing config
-         indexedEntities.put(c.getName(), c);
-      }
-      for (IndexedTypeIdentifier typeIdentifier : searchFactory.getIndexBindings().keySet()) {
-         // include possible programmatically declared classes via SearchMapping
-         Class<?> c = typeIdentifier.getPojoType();
-         indexedEntities.put(c.getName(), c);
-      }
-      this.indexedEntities = Collections.unmodifiableMap(indexedEntities);
    }
 
    @Start
@@ -133,8 +125,24 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       stopping.set(true);
    }
 
-   private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key) {
-      return indexingMode.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
+   private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key, Object value) {
+      if(indexingMode != null) {
+         return indexingMode.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
+      }
+
+      if (isManualIndexing) return false;
+
+      IndexModificationStrategy strategy;
+      CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
+      boolean clustered = cacheMode.isClustered();
+
+      if (!clustered) return true;
+
+      if (value == null) return cacheMode.isReplicated() || ctx.isOriginLocal();
+
+      strategy = indexInspector.hasSharedIndex(value.getClass()) ? IndexModificationStrategy.PRIMARY_OWNER : IndexModificationStrategy.ALL;
+
+      return strategy.shouldModifyIndexes(command, ctx, distributionManager, rpcManager, key);
    }
 
    /**
@@ -359,22 +367,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * The indexed classes.
     */
    public Map<String, Class<?>> indexedEntities() {
-      return indexedEntities;
-   }
-
-   private boolean isIndexedType(Object value) {
-      if (value == null) {
-         return false;
-      }
-      Class<?> c = value.getClass();
-      if (indexedEntities.containsValue(c)) {
-         return true;
-      }
-      if (searchFactory.getIndexBindings().containsKey(new PojoIndexedTypeIdentifier(c))) {
-         //todo [anistor] remove!
-         throw new IllegalStateException("Very odd case! : " + c.getName());
-      }
-      return false;
+      return indexInspector.getIndexedEntities();
    }
 
    private Object extractValue(Object storedValue) {
@@ -417,11 +410,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       boolean skipIndexCleanup = command != null && command.hasAnyFlag(FlagBitSets.SKIP_INDEX_CLEANUP);
       if (!skipIndexCleanup) {
          if (oldValue == UNKNOWN) {
-            if (shouldModifyIndexes(command, ctx, storedKey)) {
+            if (shouldModifyIndexes(command, ctx, storedKey, newValue)) {
                removeFromIndexes(transactionContext, key, segment);
             }
-         } else if (isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
-               && shouldModifyIndexes(command, ctx, storedKey)) {
+         } else if (indexInspector.isIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+               && shouldModifyIndexes(command, ctx, storedKey, oldValue)) {
             removeFromIndexes(oldValue, key, transactionContext, segment);
          } else if (trace) {
             log.tracef("Index cleanup not needed for %s -> %s", oldValue, newValue);
@@ -429,8 +422,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       } else if (trace) {
          log.tracef("Skipped index cleanup for command %s", command);
       }
-      if (isIndexedType(newValue)) {
-         if (shouldModifyIndexes(command, ctx, storedKey)) {
+      if (indexInspector.isIndexedType(newValue)) {
+         if (shouldModifyIndexes(command, ctx, storedKey, newValue)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             updateIndexes(skipIndexCleanup, newValue, key, transactionContext, segment);
          } else {
@@ -448,7 +441,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private void processClearCommand(InvocationContext ctx, ClearCommand command, Object rv) {
-      if (shouldModifyIndexes(command, ctx, null)) {
+      if (shouldModifyIndexes(command, ctx, null, null)) {
          purgeAllIndexes(NoTransactionContext.INSTANCE);
       }
    }

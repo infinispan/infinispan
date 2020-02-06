@@ -14,7 +14,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -95,7 +94,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addIndexedEntity(Entity1.class)
             .addIndexedEntity(Entity2.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
@@ -109,7 +108,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private Configuration nonIndexed() {
-      return new ConfigurationBuilder().indexing().index(Index.NONE)
+      return new ConfigurationBuilder().indexing().enabled(false)
               .addProperty("lucene_version", "LUCENE_CURRENT").build();
    }
 

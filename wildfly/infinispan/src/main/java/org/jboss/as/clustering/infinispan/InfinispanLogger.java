@@ -222,5 +222,7 @@ public interface InfinispanLogger extends BasicLogger {
    @Message(id = 24, value = "Stopped %s cache container")
    void cacheContainerStopped(String containerName);
 
-
+   @LogMessage(level = WARN)
+   @Message(id = 25, value = "index() is deprecated and its value is automatically detected when indexing is enabled.")
+   void indexingModeDeprecated();
 }

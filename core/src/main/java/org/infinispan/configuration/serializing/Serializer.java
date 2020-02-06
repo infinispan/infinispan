@@ -636,8 +636,8 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       AttributeSet attributes = indexing.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.INDEXING);
-         attributes.write(writer, IndexingConfiguration.INDEX, Attribute.INDEX);
          attributes.write(writer, IndexingConfiguration.AUTO_CONFIG, Attribute.AUTO_CONFIG);
+         attributes.write(writer, IndexingConfiguration.ENABLED, Attribute.ENABLED);
          writeTypedProperties(writer, indexing.properties());
          writer.writeEndElement();
       }

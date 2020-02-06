@@ -2,7 +2,6 @@ package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -26,7 +25,7 @@ public class IspnDirQueryDslConditionsTest extends QueryDslConditionsTest {
       createClusteredCaches(1, defaultConfiguration);
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      cfg.indexing().index(Index.ALL)
+      cfg.indexing().enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())

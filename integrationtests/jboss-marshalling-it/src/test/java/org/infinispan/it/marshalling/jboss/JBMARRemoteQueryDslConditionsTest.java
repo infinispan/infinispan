@@ -21,7 +21,6 @@ import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -85,7 +84,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
              .addIndexedEntity(getModelFactory().getUserImplClass())
              .addIndexedEntity(getModelFactory().getAccountImplClass())
              .addIndexedEntity(getModelFactory().getTransactionImplClass())

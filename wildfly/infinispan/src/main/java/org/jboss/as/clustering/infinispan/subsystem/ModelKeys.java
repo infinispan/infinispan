@@ -129,6 +129,7 @@ public class ModelKeys {
     static final String IDENTITY_ROLE_MAPPER = "identity-role-mapper";
     static final String IMMUTABLE_CONFIGURATION_STORAGE = "immutable-configuration-storage";
     static final String IMPLEMENTATION = "implementation";
+    @Deprecated
     static final String INDEX = "index";
     static final String INDEX_NAME = "INDEX";
     static final String INDEXED_ENTITIES = "indexed-entities";

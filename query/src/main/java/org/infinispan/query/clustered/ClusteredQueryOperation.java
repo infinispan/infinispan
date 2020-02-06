@@ -34,6 +34,10 @@ public final class ClusteredQueryOperation {
       this.commandType = commandType;
    }
 
+   public QueryDefinition getQueryDefinition() {
+      return queryDefinition;
+   }
+
    static ClusteredQueryOperation createLazyIterator(QueryDefinition queryDefinition, UUID queryId) {
       ClusteredQueryOperation cmd = new ClusteredQueryOperation(CQCommandType.CREATE_LAZY_ITERATOR);
       cmd.queryDefinition = queryDefinition;

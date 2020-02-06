@@ -29,7 +29,7 @@ final class ProtobufRemoteQueryManager extends BaseRemoteQueryManager {
       cr.registerComponent(matcher, ProtobufMatcher.class);
 
       Configuration configuration = cache.getCacheConfiguration();
-      boolean isIndexed = configuration.indexing().index().isEnabled();
+      boolean isIndexed = configuration.indexing().enabled();
       boolean customStorage = configuration.encoding().valueDataType().isMediaTypeChanged();
       MediaType valueMediaType = getValueDataConversion().getStorageMediaType();
       boolean isProtoBuf = valueMediaType.match(APPLICATION_PROTOSTREAM);

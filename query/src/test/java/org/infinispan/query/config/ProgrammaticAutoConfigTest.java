@@ -6,7 +6,6 @@ import static org.testng.Assert.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.testng.annotations.Test;
 
@@ -20,7 +19,7 @@ public class ProgrammaticAutoConfigTest {
    @Test
    public void testWithoutAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
-              .indexing().index(Index.ALL).create();
+              .indexing().enable().create();
 
       assertTrue(cfg.properties().isEmpty());
    }
@@ -28,7 +27,7 @@ public class ProgrammaticAutoConfigTest {
    @Test
    public void testLocalWitAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
-              .indexing().index(Index.ALL).autoConfig(true)
+              .indexing().enable().autoConfig(true)
               .create();
 
       assertFalse(cfg.properties().isEmpty());
@@ -39,7 +38,7 @@ public class ProgrammaticAutoConfigTest {
    public void testDistWitAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
               .clustering().cacheMode(CacheMode.DIST_SYNC)
-              .indexing().index(Index.ALL).autoConfig(true)
+              .indexing().enable().autoConfig(true)
               .create();
 
       assertFalse(cfg.properties().isEmpty());
@@ -51,7 +50,7 @@ public class ProgrammaticAutoConfigTest {
       String override = "hibernate.search.default.exclusive_index_use";
       IndexingConfiguration cfg = new ConfigurationBuilder()
               .indexing()
-              .index(Index.ALL)
+              .enable()
               .autoConfig(true)
               .addProperty(override, "false").create();
 

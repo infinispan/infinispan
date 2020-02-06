@@ -25,7 +25,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -87,16 +86,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       // Leave it be
    }
 
-   protected Index getIndexMode() {
-      return Index.PRIMARY_OWNER;
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
       cacheCfg
-            .indexing()
-            .index(getIndexMode())
+            .indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
@@ -161,12 +155,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       final CacheQuery<Person> localQuery2 = searchManager2.getQuery(createLuceneQuery());
       List<Person> results2 = localQuery2.list();
 
-      if (getIndexMode() == Index.PRIMARY_OWNER) {
-         assertEquals(10, results1.size() + results2.size());
-      } else {
-         assertEquals(10, results1.size());
-         assertEquals(10, results2.size());
-      }
+      assertEquals(10, results1.size());
+      assertEquals(10, results2.size());
 
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
@@ -410,15 +400,9 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       int numDocsMachine1 = countLocalIndex(cacheAMachine1);
       int numDocsMachine2 = countLocalIndex(cacheAMachine2);
 
-      if (getIndexMode() == Index.PRIMARY_OWNER) {
-         assertEquals(NUM_ENTRIES, numDocsMachine1 + numDocsMachine2);
-         assertEquals(numDocsMachine1, machine1Results.list().size());
-         assertEquals(numDocsMachine2, machine2Results.list().size());
-      } else {
-         assertEquals(2 * NUM_ENTRIES, numDocsMachine1 + numDocsMachine2);
-         assertEquals(numDocsMachine1, machine1Results.list().size());
-         assertEquals(numDocsMachine2, machine2Results.list().size());
-      }
+      assertEquals(2 * NUM_ENTRIES, numDocsMachine1 + numDocsMachine2);
+      assertEquals(numDocsMachine1, machine1Results.list().size());
+      assertEquals(numDocsMachine2, machine2Results.list().size());
 
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }

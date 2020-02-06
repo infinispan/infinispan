@@ -13,7 +13,6 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -49,7 +48,7 @@ public class IndexedCacheRestartTest extends AbstractInfinispanTest {
 
    private void indexedCacheRestart(boolean localOnly) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().index(localOnly ? Index.PRIMARY_OWNER : Index.ALL)
+      builder.indexing().enable()
             .addIndexedEntity(Book.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

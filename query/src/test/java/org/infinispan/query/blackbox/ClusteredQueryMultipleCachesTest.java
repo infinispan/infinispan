@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TransportFlags;
@@ -25,7 +24,7 @@ public class ClusteredQueryMultipleCachesTest extends ClusteredQueryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
-      cacheCfg.indexing().index(Index.PRIMARY_OWNER)
+      cacheCfg.indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

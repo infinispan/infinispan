@@ -29,7 +29,6 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -95,8 +94,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      builder.indexing()
-             .index(Index.ALL)
+      builder.indexing().enable()
              .addIndexedEntities(UserHS.class, AccountHS.class, TransactionHS.class)
              .addProperty("default.directory_provider", "local-heap")
              .addProperty("lucene_version", "LUCENE_CURRENT");

@@ -10,14 +10,13 @@ import java.util.stream.Collectors;
 import org.assertj.core.util.Sets;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.Search;
+import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryParsingResult;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -38,7 +37,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addIndexedEntity(UserHS.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

@@ -10,7 +10,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.test.Person;
@@ -37,7 +36,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
 
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

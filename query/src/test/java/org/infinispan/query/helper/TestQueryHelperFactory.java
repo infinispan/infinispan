@@ -16,7 +16,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.factories.ComponentRegistry;
@@ -74,7 +73,7 @@ public class TestQueryHelperFactory {
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
 
-      builder.indexing().index(indexLocalOnly ? Index.PRIMARY_OWNER : Index.ALL);
+      builder.indexing().enable();
 
       if (isRamDirectoryProvider) {
          builder.indexing()

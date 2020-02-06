@@ -26,7 +26,7 @@
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false"/>
             <transaction mode="NONE"/>
             <expiration max-idle="-1"/>
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
             <state-transfer enabled="true" timeout="480000" await-initial-transfer="true"/>
         </replicated-cache>
 
@@ -37,7 +37,7 @@
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false"/>
             <transaction mode="NONE"/>
             <expiration max-idle="-1"/>
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
             <state-transfer enabled="true" timeout="480000" await-initial-transfer="true"/>
         </distributed-cache>
 
@@ -48,7 +48,7 @@
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" write-skew="false"/>
             <transaction mode="NONE"/>
             <expiration max-idle="-1"/>
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
             <state-transfer enabled="true" timeout="480000" await-initial-transfer="true"/>
         </replicated-cache>
     </cache-container>

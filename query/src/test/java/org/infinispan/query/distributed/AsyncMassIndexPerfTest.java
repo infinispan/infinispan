@@ -13,7 +13,6 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.Flag;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
@@ -66,7 +65,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CACHE_MODE, TX_ENABLED);
       cacheCfg.clustering().remoteTimeout(120000)
-            .indexing().index(Index.PRIMARY_OWNER)
+            .indexing().enable()
             .addIndexedEntity(Transaction.class)
             .addProperty("default.directory_provider", DIRECTORY_PROVIDER.toString())
             .addProperty("default.indexmanager", INDEX_MANAGER.toString())

@@ -11,6 +11,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -20,17 +21,26 @@ import org.infinispan.remoting.transport.Address;
  */
 final class QueryPartitioner {
    private final Cache<?, ?> cache;
+   private final IndexInspector indexInspector;
    private final int numSegments;
    private final Index indexMode;
 
-   public QueryPartitioner(Cache<?, ?> cache) {
+   public QueryPartitioner(Cache<?, ?> cache, IndexInspector indexInspector) {
       this.cache = cache;
       ClusteringConfiguration clustering = cache.getCacheConfiguration().clustering();
       this.numSegments = clustering.hash().numSegments();
+      this.indexInspector = indexInspector;
       this.indexMode = cache.getCacheConfiguration().indexing().index();
    }
 
-   public Map<Address, BitSet> split() {
+   private boolean hasSharedIndex(Class<?> entity) {
+      if(indexMode != null) {
+         return Index.PRIMARY_OWNER.equals(indexMode);
+      }
+      return indexInspector.hasSharedIndex(entity);
+   }
+
+   public Map<Address, BitSet> split(Class<?> targetEntity) {
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
       List<Address> members = advancedCache.getRpcManager().getMembers();
       Address localAddress = advancedCache.getRpcManager().getAddress();
@@ -38,7 +48,7 @@ final class QueryPartitioner {
       BitSet bitSet = new BitSet();
       Map<Address, BitSet> segmentsPerMember = new LinkedHashMap<>(members.size());
 
-      if (Index.ALL.equals(indexMode)) {
+      if (!hasSharedIndex(targetEntity)) {
          IntSet localSegments = cacheTopology.getLocalReadSegments();
          localSegments.stream().forEach(bitSet::set);
          segmentsPerMember.put(localAddress, bitSet);

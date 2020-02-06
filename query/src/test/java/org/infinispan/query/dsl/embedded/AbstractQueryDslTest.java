@@ -9,7 +9,6 @@ import java.util.TimeZone;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
@@ -72,7 +71,7 @@ public abstract class AbstractQueryDslTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())

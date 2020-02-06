@@ -1,5 +1,5 @@
 <replicated-cache name="default">
-    <indexing index="ALL">
+    <indexing enabled="true">
         <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
         <property name="default.data_cachename">LuceneIndexesData_custom</property>
         <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
@@ -7,13 +7,13 @@
 </replicated-cache>
 
 <local-cache name="LuceneIndexesLocking_custom">
-    <indexing index="NONE" />
+    <indexing enabled="false" />
 </local-cache>
 
 <local-cache name="LuceneIndexesMetadata_custom">
-    <indexing index="NONE" />
+    <indexing enabled="false" />
 </local-cache>
 
 <local-cache name="LuceneIndexesData_custom">
-    <indexing index="NONE" />
+    <indexing enabled="false" />
 </local-cache>

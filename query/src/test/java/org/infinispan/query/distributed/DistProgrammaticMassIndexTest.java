@@ -9,7 +9,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -35,7 +34,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
          cacheCfg.indexing()
-               .index(Index.PRIMARY_OWNER)
+               .enable()
                .addIndexedEntity(Car.class)
                .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
                .addProperty("error_handler", StaticTestingErrorHandler.class.getName())

@@ -18,7 +18,6 @@ import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -92,7 +91,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
              .fetchPersistentState(true)
              .purgeOnStartup(false)
           .indexing()
-             .index(Index.PRIMARY_OWNER)
+             .enable()
              .addIndexedEntity(SEntity.class)
              .addProperty("default.directory_provider", "filesystem")
              .addProperty("lucene_version", "LUCENE_CURRENT")

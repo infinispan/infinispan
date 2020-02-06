@@ -26,7 +26,7 @@
                     <jdbc:data-source jndi-url="java:jboss/datasources/ExampleDS"/>
                 </jdbc:string-keyed-jdbc-store>
             </persistence>
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
         </replicated-cache>
 
         <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
@@ -41,11 +41,11 @@
                     <jdbc:data-source jndi-url="java:jboss/datasources/ExampleDS"/>
                 </jdbc:string-keyed-jdbc-store>
             </persistence>
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
         </distributed-cache>
 
         <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
-            <indexing index="NONE"/>
+            <indexing enabled="false"/>
         </replicated-cache>
     </cache-container>
 

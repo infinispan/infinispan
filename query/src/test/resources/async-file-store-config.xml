@@ -11,7 +11,7 @@
       <transport cluster="MyCluster"/>
       <local-cache name="queryCache_lucenestore_async_filestore">
          <transaction mode="NON_XA"/>
-         <indexing index="ALL">
+         <indexing enabled="true">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
@@ -36,7 +36,7 @@
                <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
-         <indexing index="NONE"/>
+         <indexing enabled="false"/>
       </local-cache>
       <!-- **************************** -->
       <!--  Cache to store Lucene data  -->
@@ -48,7 +48,7 @@
                <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </local-cache>
       <!-- ***************************** -->
       <!--  Cache to store Lucene locks  -->
@@ -60,7 +60,7 @@
                <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </local-cache>
    </cache-container>
 

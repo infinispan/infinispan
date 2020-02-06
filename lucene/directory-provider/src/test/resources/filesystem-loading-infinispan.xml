@@ -11,7 +11,7 @@
          <!-- *************************************** -->
          <local-cache name="LuceneIndexesMetadata">
             <transaction mode="NONE"/>
-            <indexing index="NONE" />
+            <indexing enabled="false" />
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" />
             <memory>
                <object size="-1"/>
@@ -27,7 +27,7 @@
          <!-- **************************** -->
          <local-cache name="LuceneIndexesData">
             <transaction mode="NONE"/>
-            <indexing index="NONE" />
+            <indexing enabled="false" />
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" />
             <memory>
                <object size="-1"/>
@@ -43,7 +43,7 @@
          <!-- ***************************** -->
         <local-cache name="LuceneIndexesLocking">
             <transaction mode="NONE"/>
-            <indexing index="NONE" />
+            <indexing enabled="false" />
             <locking striping="false" acquire-timeout="10000" concurrency-level="500" />
             <memory>
               <object size="-1"/>

@@ -13,7 +13,6 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -96,7 +95,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
 
    public Configuration buildIndexedConfig(String storeName) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().index(Index.PRIMARY_OWNER)
+      builder.indexing().enable()
             .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
             .addProperty("default.worker.execution", "async")
             .addProperty("default.index_flush_interval", "500")

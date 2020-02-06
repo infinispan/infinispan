@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.query.queries.faceting.Car;
@@ -23,7 +22,7 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
    protected void createCacheManagers() {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg.indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addIndexedEntity(Car.class);
       ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
       List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);

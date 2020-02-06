@@ -13,7 +13,6 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
@@ -61,7 +60,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       IndexingConfigurationBuilder indexingConfigurationBuilder = cfg.clustering()
             .stateTransfer().fetchInMemoryState(true)
             .indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass());

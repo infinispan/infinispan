@@ -12,7 +12,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
@@ -44,7 +43,7 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    protected ConfigurationBuilder cacheConfiguration() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.indexing()
-                          .index(Index.PRIMARY_OWNER)
+                          .enable()
                           .addIndexedEntity(Person.class)
                           .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
       return configurationBuilder;
@@ -60,12 +59,12 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
       Configuration replConfig = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.REPL_SYNC).partitionHandling()
             .whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .indexing().index(Index.NONE).build();
+            .indexing().enabled(false).build();
 
       Configuration distConfig = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.DIST_SYNC).partitionHandling()
             .whenSplit(PartitionHandling.DENY_READ_WRITES)
-            .indexing().index(Index.NONE).build();
+            .indexing().enabled(false).build();
 
       cm.defineConfiguration(DEFAULT_LOCKING_CACHENAME, replConfig);
       cm.defineConfiguration(DEFAULT_INDEXESDATA_CACHENAME, distConfig);

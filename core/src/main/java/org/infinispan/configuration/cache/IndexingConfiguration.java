@@ -22,7 +22,8 @@ import org.infinispan.commons.util.TypedProperties;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration>, ConfigurationInfo {
-   public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", Index.NONE).immutable().build();
+   public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", null, Index.class).immutable().build();
+   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder("key-transformers", null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(CollectionAttributeCopier.INSTANCE)
@@ -32,7 +33,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
          .initializer(HashSet::new).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED);
    }
 
    static final ElementDefinition ELEMENT_DEFINITION = new DefaultElementDefinition(INDEXING.getLocalName());
@@ -51,6 +52,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private final Attribute<Boolean> autoConfig;
    private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
    private final Attribute<Set<Class<?>>> indexedEntities;
+   private final Attribute<Boolean> enabled;
 
    IndexingConfiguration(AttributeSet attributes) {
       super(attributes);
@@ -58,6 +60,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       autoConfig = attributes.attribute(AUTO_CONFIG);
       keyTransformers = attributes.attribute(KEY_TRANSFORMERS);
       indexedEntities = attributes.attribute(INDEXED_ENTITIES);
+      enabled = attributes.attribute(ENABLED);
    }
 
    @Override
@@ -84,9 +87,15 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    /**
     * Returns the indexing mode of this cache.
+    * @deprecated This configuration can be removed as the index mode is calculated automatically.
     */
+   @Deprecated
    public Index index() {
       return index.get();
+   }
+
+   public boolean enabled() {
+      return enabled.get();
    }
 
    /**

@@ -18,7 +18,6 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.dsl.Query;
@@ -46,7 +45,7 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    public Configuration buildIndexedConfig(String lockCache, String dataCache, String metadataCache) {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      builder.indexing().index(Index.PRIMARY_OWNER)
+      builder.indexing().enable()
             .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
             .addProperty("default.metadata_cachename", metadataCache)
             .addProperty("default.data_cachename", dataCache)

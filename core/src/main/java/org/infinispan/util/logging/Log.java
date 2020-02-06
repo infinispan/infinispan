@@ -1939,4 +1939,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "RELAY2 not found in ProtocolStack. Unable to do cross-site requests.", id = 571)
    CacheConfigurationException crossSiteUnavailable();
+
+   @LogMessage(level = WARN)
+   @Message(value = "index() is deprecated and its value is automatically detected when indexing is enabled.", id = 572)
+   void indexModeDeprecated();
 }

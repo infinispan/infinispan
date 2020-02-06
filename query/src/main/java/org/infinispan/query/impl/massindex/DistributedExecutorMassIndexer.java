@@ -15,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
-import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
@@ -25,11 +24,15 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.CleanExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
@@ -46,6 +49,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "MassIndexer",
       description = "Component that rebuilds the Lucene index from the cached data")
+@Scope(Scopes.NAMED_CACHE)
 public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private static final Log LOG = LogFactory.getLog(DistributedExecutorMassIndexer.class, Log.class);
@@ -56,6 +60,9 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private final ClusterExecutor executor;
    private final ExecutorService localExecutor;
    private final MassIndexLock lock;
+
+   @Inject
+   IndexInspector indexInspector;
 
    private static final TriConsumer<Address, Void, Throwable> TRI_CONSUMER = (a, v, t) -> {
       if (t != null) {
@@ -98,8 +105,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       for (Object key : keys) {
          if (cache.containsKey(key)) {
             Class<?> indexedType = cache.get(key).getClass();
-            EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(new PojoIndexedTypeIdentifier(indexedType));
-            MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
+            MassIndexStrategy strategy = calculateStrategy(indexInspector, new PojoIndexedTypeIdentifier(indexedType));
             IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
             switch (indexingStrategy) {
                case ALL:
@@ -190,8 +196,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          CompletableFuture<Void> compositeFuture;
          try {
             for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
-               EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
-               MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
+               MassIndexStrategy strategy = calculateStrategy(indexInspector, indexedType);
                boolean workerClean = true, workerFlush = true;
                if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
                   indexUpdater.purge(indexedType);
@@ -202,9 +207,9 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
                   workerFlush = false;
                }
 
-            IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
-            IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
-                  skipIndex, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
+               IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
+               IndexWorker indexWork = new IndexWorker(cache.getName(), indexedType, workerFlush, workerClean,
+                     skipIndex, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
 
                futures.add(executor.submitConsumer(indexWork, TRI_CONSUMER));
             }

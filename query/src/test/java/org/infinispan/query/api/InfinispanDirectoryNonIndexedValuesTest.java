@@ -1,7 +1,6 @@
 package org.infinispan.query.api;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -18,7 +17,7 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(isTransactional());
       c.indexing()
-            .index(Index.PRIMARY_OWNER)
+            .enable()
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")

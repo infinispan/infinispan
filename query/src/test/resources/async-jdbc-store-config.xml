@@ -12,7 +12,7 @@
       <transport cluster="MyCluster"/>
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />
-         <indexing index="ALL">
+         <indexing enabled="true">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
@@ -44,7 +44,7 @@
                <write-behind modification-queue-size="1024" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </replicated-cache>
       <!-- **************************** -->
       <!--  Cache to store Lucene data  -->
@@ -66,7 +66,7 @@
                </string-keyed-table>
             </string-keyed-jdbc-store>
          </persistence>
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </replicated-cache>
       <!-- ***************************** -->
       <!--  Cache to store Lucene locks  -->
@@ -89,7 +89,7 @@
                <write-behind modification-queue-size="1024" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
-         <indexing index="NONE" />
+         <indexing enabled="false" />
       </replicated-cache>
    </cache-container>
 

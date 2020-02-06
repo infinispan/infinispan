@@ -6,7 +6,6 @@ import java.io.File;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -29,7 +28,7 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "infinispan")

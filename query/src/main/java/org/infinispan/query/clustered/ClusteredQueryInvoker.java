@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.impl.IndexInspector;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -48,8 +50,8 @@ final class ClusteredQueryInvoker {
       this.rpcManager = cache.getRpcManager();
       this.myAddress = rpcManager.getAddress();
       this.rpcOptions = new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS);
-      this.partitioner = new QueryPartitioner(cache);
-   }
+      IndexInspector indexInspector = ComponentRegistryUtils.getIndexInspector(cache);
+      this.partitioner = new QueryPartitioner(cache, indexInspector);   }
 
    /**
     * Send this ClusteredQueryCommand to a node.
@@ -85,7 +87,8 @@ final class ClusteredQueryInvoker {
     * @return the responses
     */
    List<QueryResponse> broadcast(ClusteredQueryOperation operation) {
-      Map<Address, BitSet> split = partitioner.split();
+      Class<?> targetEntity = operation.getQueryDefinition().getIndexedType();
+      Map<Address, BitSet> split = partitioner.split(targetEntity);
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
       // invoke on own node
       Future<QueryResponse> localResponse = localInvoke(localCommand);

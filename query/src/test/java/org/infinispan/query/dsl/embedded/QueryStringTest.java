@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -36,7 +35,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())

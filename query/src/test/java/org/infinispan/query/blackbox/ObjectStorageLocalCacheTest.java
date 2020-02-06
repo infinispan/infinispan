@@ -3,7 +3,6 @@ package org.infinispan.query.blackbox;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -25,7 +24,7 @@ public class ObjectStorageLocalCacheTest extends LocalCacheTest {
       cfg.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
             .encoding().value().mediaType(APPLICATION_OBJECT_TYPE)
             .indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "local-heap")

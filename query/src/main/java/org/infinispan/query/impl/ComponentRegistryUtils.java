@@ -35,7 +35,7 @@ public final class ComponentRegistryUtils {
 
    private static void ensureIndexed(Cache<?, ?> cache) {
       Configuration cfg = SecurityActions.getCacheConfiguration(cache);
-      if (!cfg.indexing().index().isEnabled()) {
+      if (!cfg.indexing().enabled()) {
          throw new IllegalStateException("Indexing was not enabled on cache " + cache.getName());
       }
    }
@@ -43,6 +43,11 @@ public final class ComponentRegistryUtils {
    public static SearchIntegrator getSearchIntegrator(Cache<?, ?> cache) {
       ensureIndexed(cache);
       return getRequiredComponent(cache, SearchIntegrator.class);
+   }
+
+   public static IndexInspector getIndexInspector(Cache<?, ?> cache) {
+      ensureIndexed(cache);
+      return getRequiredComponent(cache, IndexInspector.class);
    }
 
    public static KeyPartitioner getKeyPartitioner(Cache<?, ?> cache) {

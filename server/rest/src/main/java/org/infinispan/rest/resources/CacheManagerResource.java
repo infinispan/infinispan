@@ -215,7 +215,7 @@ public class CacheManagerResource implements ResourceHandler {
                cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
                      cacheConfiguration.expiration().lifespan() != -1;
                cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
-               cacheInfo.indexed = cacheConfiguration.indexing().index().isEnabled();
+               cacheInfo.indexed = cacheConfiguration.indexing().enabled();
                cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
                cacheInfo.health = cachesHeath.get(cache.getName());
                return cacheInfo;

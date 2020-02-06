@@ -13,7 +13,6 @@ import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.Flag;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -38,7 +37,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg
             .indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(Car.class)
             .addIndexedEntity(Person.class)
             .addProperty("hibernate.search.person.directory_provider", "local-heap")

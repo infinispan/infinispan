@@ -2,7 +2,6 @@ package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -21,7 +20,7 @@ public class ObjectStorageQueryDslConditionsTest extends QueryDslConditionsTest 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfg.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      cfg.indexing().index(Index.ALL)
+      cfg.indexing().enable()
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass())

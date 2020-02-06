@@ -12,7 +12,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -192,7 +191,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    private ConfigurationBuilder getIndexedConfig() {
       ConfigurationBuilder cfg = getBaseConfig();
       cfg.indexing()
-         .index(Index.ALL)
+         .enable()
          .addIndexedEntity(Person.class)
          .addIndexedEntity(AnotherGrassEater.class)
          .addProperty("default.directory_provider", "infinispan")

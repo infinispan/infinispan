@@ -7,7 +7,6 @@ import static org.testng.Assert.assertEquals;
 import org.apache.lucene.index.IndexReader;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -26,7 +25,7 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.memory().storageType(StorageType.OFF_HEAP).size(10);
-      cfg.indexing().index(Index.ALL)
+      cfg.indexing().enable()
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap");
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);

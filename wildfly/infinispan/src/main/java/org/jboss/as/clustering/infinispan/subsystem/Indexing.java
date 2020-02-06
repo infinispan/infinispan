@@ -27,6 +27,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
  *
  * @author Paul Ferraro
  */
+@Deprecated
 public enum Indexing {
 
    /**

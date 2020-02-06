@@ -2,7 +2,6 @@ package org.infinispan.rest.search;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.testng.annotations.Test;
 
 /**
@@ -15,7 +14,7 @@ public class SingleNodeLocalIndexTest extends BaseRestSearchTest {
    ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder.clustering().cacheMode(CacheMode.LOCAL);
-      configurationBuilder.indexing().index(Index.ALL)
+      configurationBuilder.indexing().enable()
             .addProperty("default.directory_provider", "local-heap");
       return configurationBuilder;
    }

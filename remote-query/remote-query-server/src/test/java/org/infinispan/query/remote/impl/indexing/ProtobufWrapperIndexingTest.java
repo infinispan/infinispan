@@ -11,7 +11,6 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -37,7 +36,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

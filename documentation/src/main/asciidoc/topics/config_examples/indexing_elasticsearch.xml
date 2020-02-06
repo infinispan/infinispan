@@ -1,4 +1,4 @@
-<indexing index="PRIMARY_OWNER">
+<indexing enabled="true">
     <property name="default.indexmanager">elasticsearch</property>
     <property name="default.elasticsearch.host">link:http://elasticHost:9200</property>
     <!-- other elasticsearch configurations -->

@@ -15,7 +15,6 @@ import java.util.TimeZone;
 
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -66,7 +65,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().index(Index.ALL)
+            .indexing().enable()
             .addIndexedEntity(UserHS.class)
             .addIndexedEntity(AccountHS.class)
             .addIndexedEntity(TransactionHS.class)

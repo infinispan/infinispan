@@ -1,5 +1,5 @@
 <distributed-cache name="default" >
-    <indexing index="PRIMARY_OWNER">
+    <indexing enabled="true">
         <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
         <!-- Optional: tailor each cache used internally by the InfinispanIndexManager -->
         <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
@@ -10,18 +10,18 @@
 
 <!-- Optional -->
 <replicated-cache name="LuceneIndexesLocking_custom">
-    <indexing index="NONE" />
+    <indexing enabled="false" />
     <!-- extra configuration -->
 </replicated-cache>
 
 <!-- Optional -->
 <replicated-cache name="LuceneIndexesMetadata_custom">
-    <indexing index="NONE" />
+<indexing enabled="false" />
     <!-- extra configuration -->
 </replicated-cache>
 
 <!-- Optional -->
 <distributed-cache name="LuceneIndexesData_custom">
-    <indexing index="NONE" />
+<indexing enabled="false" />
     <!-- extra configuration -->
 </distributed-cache>

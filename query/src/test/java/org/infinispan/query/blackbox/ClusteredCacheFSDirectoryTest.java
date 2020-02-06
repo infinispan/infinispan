@@ -7,7 +7,6 @@ import java.io.File;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.TestingUtil;
@@ -41,7 +40,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
    private ConfigurationBuilder buildCacheConfig(String indexName) {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cb.indexing()
-            .index(Index.ALL) //index also changes originated on other nodes, the index is not shared
+            .enable() //index also changes originated on other nodes, the index is not shared
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

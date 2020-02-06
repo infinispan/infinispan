@@ -12,7 +12,6 @@ import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -52,7 +51,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
             clustering()
             .cacheMode(getCacheMode())
             .indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(ClassWithLongIndexName.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

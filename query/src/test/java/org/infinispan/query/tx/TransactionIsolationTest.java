@@ -19,7 +19,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -52,7 +51,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder.transaction().lockingMode(lockingMode);
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("hibernate.search.default.directory_provider", "local-heap")

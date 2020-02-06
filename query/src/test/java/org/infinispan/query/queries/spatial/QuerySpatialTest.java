@@ -13,7 +13,6 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.query.dsl.Unit;
 import org.hibernate.search.spatial.Coordinates;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -39,7 +38,7 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing()
-            .index(Index.ALL)
+            .enable()
             .addIndexedEntity(CitySpatial.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

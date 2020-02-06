@@ -18,7 +18,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
@@ -57,7 +56,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
-      builder.indexing().index(Index.ALL)
+      builder.indexing().enable()
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, TestDomainSCI.INSTANCE, builder);
