@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -94,5 +95,19 @@ public class ConditionFutureTest extends AbstractInfinispanTest {
       conditionFuture.stop();
 
       expectCompletionException(IllegalLifecycleStateException.class, stage);
+   }
+
+   public void testDuplicatePredicate() {
+      ConditionFuture<Integer> conditionFuture = new ConditionFuture<>(timeoutExecutor);
+
+      Predicate<Integer> test = i -> i > 0;
+      CompletionStage<Void> stage1 = conditionFuture.newConditionStage(test, 10, SECONDS);
+      CompletionStage<Void> stage2 = conditionFuture.newConditionStage(test, 10, SECONDS);
+      assertFalse(stage1.toCompletableFuture().isDone());
+      assertFalse(stage2.toCompletableFuture().isDone());
+
+      conditionFuture.update(1);
+      assertTrue(stage1.toCompletableFuture().isDone());
+      assertTrue(stage2.toCompletableFuture().isDone());
    }
 }

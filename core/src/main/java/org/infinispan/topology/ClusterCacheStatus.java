@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
@@ -38,6 +39,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -93,6 +95,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    private RebalanceConfirmationCollector rebalanceConfirmationCollector;
    private ComponentStatus status;
+   private final ConditionFuture<ClusterCacheStatus> hasInitialTopologyFuture;
 
    public ClusterCacheStatus(EmbeddedCacheManager cacheManager, String cacheName,
                              AvailabilityStrategy availabilityStrategy,
@@ -121,11 +124,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          availabilityMode = AvailabilityMode.DEGRADED_MODE;
       });
       status = ComponentStatus.INSTANTIATED;
+      hasInitialTopologyFuture = new ConditionFuture<>(clusterTopologyManager.timeoutScheduledExecutor);
       if (log.isTraceEnabled()) {
          log.tracef("Cache %s initialized. Persisted state? %s", cacheName, persistentState.isPresent());
       }
    }
 
+   @Override
    public CacheJoinInfo getJoinInfo() {
       return joinInfo;
    }
@@ -137,7 +142,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @Override
    public synchronized void queueRebalance(List<Address> newMembers) {
-      if (newMembers != null && !newMembers.isEmpty()) {
+      if (newMembers != null && !newMembers.isEmpty() && totalCapacityFactors() != 0f) {
          log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
          queuedRebalanceMembers = newMembers;
 
@@ -145,6 +150,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
+   @Override
    public Map<Address, Float> getCapacityFactors() {
       return capacityFactors;
    }
@@ -510,10 +516,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          setStableTopology(null);
          rebalanceConfirmationCollector = null;
          status = ComponentStatus.INSTANTIATED;
-
          return;
       }
 
+      if (totalCapacityFactors() == 0f) {
+         CLUSTER.debugf("All members have capacity factor 0, delaying topology update");
+         return;
+      }
 
       List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
       ConsistentHash newCurrentCH, newPendingCH = null;
@@ -556,6 +565,15 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
          actualMembers, newTopology.getTopologyId()));
       clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode);
+   }
+
+   @GuardedBy("this")
+   private float totalCapacityFactors() {
+      float totalCapacityFactors = 0f;
+      for (Float factor : capacityFactors.values()) {
+         totalCapacityFactors += factor;
+      }
+      return totalCapacityFactors;
    }
 
    private boolean setAvailabilityMode(AvailabilityMode newAvailabilityMode) {
@@ -681,7 +699,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) {
       boolean isFirstMember = getCurrentTopology() == null;
       boolean memberJoined = addMember(joiner, joinInfo);
-      if (!isFirstMember && !memberJoined) {
+      if (!memberJoined) {
          if (log.isTraceEnabled()) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
          return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
@@ -712,6 +730,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                // Don't need to broadcast the initial CH update, just return the cache topology to the joiner
                // But we do need to broadcast the initial topology as the stable topology
                clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, initialTopology);
+
+               // Allow nodes with zero capacity that were waiting to join,
+               // but do it on another thread to avoid reentrancy
+               hasInitialTopologyFuture.updateAsync(this, clusterTopologyManager.nonBlockingExecutor);
             }
          }
       }
@@ -722,6 +744,15 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          availabilityStrategy.onJoin(this, joiner);
 
       return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode);
+   }
+
+   CompletionStage<Void> nodeCanJoinFuture(CacheJoinInfo joinInfo) {
+      if (joinInfo.getCapacityFactor() != 0f)
+         return CompletableFutures.completedNull();
+
+      // Creating the initial topology requires at least one node with a non-zero capacity factor
+      return hasInitialTopologyFuture.newConditionStage(ccs -> ccs.getCurrentTopology() != null,
+                                                        joinInfo.getTimeout(), TimeUnit.MILLISECONDS);
    }
 
    @GuardedBy("this")

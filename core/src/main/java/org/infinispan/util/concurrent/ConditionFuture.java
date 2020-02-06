@@ -24,7 +24,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
  * @author Dan Berindei
  */
 public class ConditionFuture<T> {
-   private final Map<Predicate<T>, Data> futures = Collections.synchronizedMap(new IdentityHashMap<>());
+   private final Map<Data, Predicate<T>> futures = Collections.synchronizedMap(new IdentityHashMap<>());
    private final ScheduledExecutorService timeoutExecutor;
    private volatile T lastValue;
    private volatile boolean running = true;
@@ -54,11 +54,10 @@ public class ConditionFuture<T> {
          return null;
       }, timeout, timeUnit);
 
-      CompletableFuture<Void> previous = futures.putIfAbsent(test, data);
+      Predicate<?> previous = futures.putIfAbsent(data, test);
       if (previous != null) {
          data.cancelFuture.cancel(false);
-         futures.remove(test);
-         throw new IllegalStateException();
+         throw new IllegalStateException("Inserting the same Data instance");
       }
 
       if (!running) {
@@ -107,7 +106,8 @@ public class ConditionFuture<T> {
    private void completeAllExceptionally(Throwable t) {
       List<Data> completed;
       synchronized (futures) {
-         completed = new ArrayList<>(futures.values());
+         completed = new ArrayList<>(futures.keySet());
+         futures.clear();
       }
       for (Data data : completed) {
          data.cancelFuture.cancel(false);
@@ -119,10 +119,10 @@ public class ConditionFuture<T> {
       List<Data> completed;
       synchronized (futures) {
          completed = new ArrayList<>(futures.size());
-         for (Iterator<Map.Entry<Predicate<T>, Data>> iterator = futures.entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry<Predicate<T>, Data> e = iterator.next();
-            if (e.getKey().test(value)) {
-               Data data = e.getValue();
+         for (Iterator<Map.Entry<Data, Predicate<T>>> iterator = futures.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<Data, Predicate<T>> e = iterator.next();
+            if (e.getValue().test(value)) {
+               Data data = e.getKey();
                completed.add(data);
                iterator.remove();
             }

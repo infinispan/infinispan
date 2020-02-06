@@ -508,7 +508,8 @@ public class StateConsumerImpl implements StateConsumer {
          return CompletableFutures.completedNull();
       }
 
-      return getClusterListeners(cacheTopology.getTopologyId(), cacheTopology.getMembers()).thenAccept(callables -> {
+      return getClusterListeners(cacheTopology.getTopologyId(), cacheTopology.getReadConsistentHash().getMembers())
+            .thenAccept(callables -> {
          Cache<Object, Object> cache = this.cache.wired();
          for (ClusterListenerReplicateCallable<Object, Object> callable : callables) {
             try {

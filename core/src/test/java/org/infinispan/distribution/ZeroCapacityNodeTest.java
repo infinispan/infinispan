@@ -1,10 +1,15 @@
 package org.infinispan.distribution;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
@@ -23,9 +28,11 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.op.TestFunctionalWriteOperation;
 import org.infinispan.test.op.TestOperation;
 import org.infinispan.test.op.TestWriteOperation;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -147,6 +154,54 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       zeroCapacityNode.createCache(cacheName, cb.build());
 
       waitForClusterToForm(cacheName);
+   }
+
+   public void testZeroCapacityFactorNodeStartsFirst() throws Exception {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cb.clustering().hash().numSegments(NUM_SEGMENTS);
+      cb.clustering().remoteTimeout(100);
+
+      ConfigurationBuilder cbZero = new ConfigurationBuilder();
+      cbZero.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cbZero.clustering().hash().numSegments(NUM_SEGMENTS);
+      cbZero.clustering().hash().capacityFactor(0f);
+      cbZero.clustering().remoteTimeout(100);
+
+      String cacheName = "testCache";
+      Future<Cache<Object, Object>> zeroCapacityNodeFuture =
+            fork(() -> zeroCapacityNode.createCache(cacheName, cb.build()));
+      Future<Cache<Object, Object>> node1Future =
+            fork(() -> node1.createCache(cacheName, cbZero.build()));
+
+      TestingUtil.sleepThread(10);
+      assertFalse(zeroCapacityNodeFuture.isDone());
+      assertFalse(node1Future.isDone());
+
+      // Node2 is the only one that can create the initial topology
+      node2.createCache(cacheName, cb.build());
+
+      node1Future.get(10, SECONDS);
+      zeroCapacityNodeFuture.get(10, SECONDS);
+
+      waitForClusterToForm(cacheName);
+      ConsistentHash ch3 = consistentHash(0, cacheName);
+      assertEquals(0f, capacityFactor(ch3, zeroCapacityNode), 0.0);
+      assertEquals(0f, capacityFactor(ch3, node1), 0.0);
+      assertEquals(1f, capacityFactor(ch3, node2), 0.0);
+
+      cache(0, cacheName).put("key", "value");
+      assertEquals("value", cache(0, cacheName).get("key"));
+
+      // Stop the only non-zero-capacity node
+      node2.stop();
+
+      // There is no new cache topology, so any operation will time out
+      expectException(TimeoutException.class, () -> cache(0, cacheName).get("key"));
+   }
+
+   private ConsistentHash consistentHash(int managerIndex, String cacheName) {
+      return cache(managerIndex, cacheName).getAdvancedCache().getDistributionManager().getCacheTopology().getReadConsistentHash();
    }
 
    private Float capacityFactor(ConsistentHash ch, EmbeddedCacheManager node) {
