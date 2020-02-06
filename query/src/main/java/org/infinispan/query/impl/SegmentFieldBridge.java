@@ -5,13 +5,14 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.LuceneOptions;
+import org.hibernate.search.bridge.StringBridge;
 
 /**
  * FieldBridge to index the segment id of the key for each entry.
  *
  * @since 10.1
  */
-public class SegmentFieldBridge implements FieldBridge {
+public class SegmentFieldBridge implements FieldBridge, StringBridge {
 
    public static final String ID_FIELD = "providedId";
    public static final String SEGMENT_FIELD = "__segmentId";
@@ -24,5 +25,10 @@ public class SegmentFieldBridge implements FieldBridge {
       String providedId = document.get(ID_FIELD);
       String segment = providedId.substring(providedId.lastIndexOf(":") + 1);
       document.add(new StringField(SEGMENT_FIELD, segment, Field.Store.NO));
+   }
+
+   @Override
+   public String objectToString(Object object) {
+      return object.toString();
    }
 }

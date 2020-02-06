@@ -1,5 +1,7 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.impl.SegmentFieldBridge.SEGMENT_FIELD;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hibernate.search.backend.TransactionContext;
+import org.hibernate.search.backend.spi.DeleteByQueryWork;
+import org.hibernate.search.backend.spi.DeletionQuery;
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
@@ -36,6 +41,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -99,6 +105,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
    private final boolean isManualIndexing;
+   private final AdvancedCache<?, ?> cache;
+   private SegmentListener segmentListener;
 
    public QueryInterceptor(SearchIntegrator searchFactory, KeyTransformationHandler keyTransformationHandler,
                            IndexModificationStrategy indexingMode,
@@ -112,14 +120,21 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.valueDataConversion = cache.getValueDataConversion();
       this.keyDataConversion = cache.getKeyDataConversion();
       this.isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
+      this.cache = cache;
    }
 
    @Start
    protected void start() {
       stopping.set(false);
+      boolean isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
+      if (indexInspector.hasLocalIndexes() && isClustered) {
+         segmentListener = new SegmentListener(cache, this::purgeIndex);
+         this.cache.addListener(segmentListener);
+      }
    }
 
    public void prepareForStopping() {
+      if (segmentListener != null) cache.removeListener(segmentListener);
       stopping.set(true);
    }
 
@@ -312,6 +327,22 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    public void purgeIndex(Class<?> entityType) {
       purgeIndex(NoTransactionContext.INSTANCE, entityType);
+   }
+
+   /**
+    * Removes from the index the entries corresponding to the supplied segments, if the index is local.
+    */
+   void purgeIndex(IntSet segments) {
+      if (segments == null) return;
+      for (int segment : segments) {
+         DeletionQuery deletionQuery = new SingularTermDeletionQuery(SEGMENT_FIELD, String.valueOf(segment));
+         for (IndexedTypeIdentifier type : searchFactory.getIndexBindings().keySet()) {
+            if (!indexInspector.hasSharedIndex(type.getPojoType())) {
+               Work deleteWork = new DeleteByQueryWork(type, deletionQuery);
+               performSearchWork(deleteWork, NoTransactionContext.INSTANCE);
+            }
+         }
+      }
    }
 
    /**

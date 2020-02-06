@@ -221,7 +221,7 @@ public class LifecycleManager implements ModuleLifecycle {
          mutableSearchFactory.getFilterDefinitions().remove(SEGMENT_FILTER_NAME);
          Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
          for(Class<?> clazz : indexedEntities) {
-            mutableSearchFactory.getProgrammaticMapping().entity(clazz).classBridge(SegmentFieldBridge.class);
+            mutableSearchFactory.getProgrammaticMapping().entity(clazz).classBridge(SegmentFieldBridge.class).name(SegmentFieldBridge.SEGMENT_FIELD);
          }
          searchFactory.addClasses(indexedEntities);
       }
@@ -293,7 +293,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       programmaticSearchMappingProviders.add((cache, mapping) -> {
          for (Class<?> indexedEntity : indexingConfiguration.indexedEntities()) {
-            mapping.entity(indexedEntity).classBridge(SegmentFieldBridge.class);
+            mapping.entity(indexedEntity).classBridge(SegmentFieldBridge.class).name(SegmentFieldBridge.SEGMENT_FIELD);
          }
       });
 
