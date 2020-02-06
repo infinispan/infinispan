@@ -41,6 +41,7 @@ import org.testcontainers.utility.MountableFile;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Network;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 /**
  * WARNING: Work in progress. Does not work yet.
@@ -55,12 +56,11 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    private final List<GenericContainer> containers;
-   private static final String EXTRA_LIBS = "org.infinispan.test.server.extension.libs";
+   private final boolean preferContainerExposedPorts;
    private String name;
    CountdownLatchLoggingConsumer latch;
    ImageFromDockerfile image;
    private File rootDir;
-   private final boolean preferContainerExposedPorts = Boolean.getBoolean("org.infinispan.test.server.container.preferContainerExposedPorts");
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
@@ -68,6 +68,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
             getDockerBridgeAddress()
       );
       this.containers = new ArrayList<>(configuration.numServers());
+      this.preferContainerExposedPorts = Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_PREFER_CONTAINER_EXPOSED_PORTS);
    }
 
    static InetAddress getDockerBridgeAddress() {
@@ -83,7 +84,8 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       this.rootDir = rootDir;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
-      String baseImageName = System.getProperty("org.infinispan.test.server.baseImageName", "jboss/base-jdk:11");
+      String baseImageName = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, "jboss/base-jdk:11");
+      boolean usePrebuiltServerFromImage = Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PREBUILT);
       Path serverOutputDir = Paths.get(System.getProperty("server.output.dir"));
 
       List<String> args = new ArrayList<>();
@@ -105,39 +107,46 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
       properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
       configuration.properties().forEach((k, v) -> args.add("-D" + k + "=" + StringPropertyReplacer.replaceProperties((String) v, properties)));
-
-      image = new ImageFromDockerfile("testcontainers/" + Base58.randomString(16).toLowerCase(), false)
-            .withFileFromPath("build", serverOutputDir)
+      boolean preserveImageAfterTest = Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_PRESERVE_IMAGE);
+      image = new ImageFromDockerfile("testcontainers/" + Base58.randomString(16).toLowerCase(), !preserveImageAfterTest)
             .withFileFromPath("test", rootDir.toPath())
             .withFileFromPath("target", serverOutputDir.getParent())
-            .withFileFromPath("src", serverOutputDir.getParent().getParent().resolve("src"))
-            .withDockerfileFromBuilder(builder ->
-                  builder
-                        .from(baseImageName)
-                        .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
-                        .env("INFINISPAN_VERSION", Version.getVersion())
-                        .label("name", "Infinispan Server")
-                        .label("version", Version.getVersion())
-                        .label("release", Version.getVersion())
-                        .label("architecture", "x86_64")
-                        .user("root")
-                        .copy("build", INFINISPAN_SERVER_HOME)
-                        .copy("test", INFINISPAN_SERVER_HOME + "/server")
-                        .copy("src/test/resources/bin", INFINISPAN_SERVER_HOME + "/bin")
-                        .run("chown", "-R", "jboss:jboss", INFINISPAN_SERVER_HOME)
-                        .workDir(INFINISPAN_SERVER_HOME)
-                        .user("jboss")
-                        .cmd(
-                              args.toArray(new String[]{})
-                        )
-                        .expose(
-                              11222, // Protocol endpoint
-                              11221, // Memcached endpoint
-                              7800,  // JGroups TCP
-                              43366, // JGroups MPING
-                              9999   // JMX Remoting
-                        )
-                        .build());
+            .withFileFromPath("src", serverOutputDir.getParent().getParent().resolve("src"));
+      if (!usePrebuiltServerFromImage) {
+         image.withFileFromPath("build", serverOutputDir);
+      }
+
+      image.withDockerfileFromBuilder(builder -> {
+         builder
+               .from(baseImageName)
+               .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
+               .env("INFINISPAN_VERSION", Version.getVersion())
+               .label("name", "Infinispan Server")
+               .label("version", Version.getVersion())
+               .label("release", Version.getVersion())
+               .label("architecture", "x86_64")
+               .user("root");
+         if (!usePrebuiltServerFromImage) {
+            builder
+                  .copy("build", INFINISPAN_SERVER_HOME)
+                  .run("chown", "-R", "jboss:jboss", INFINISPAN_SERVER_HOME)
+                  .user("jboss");
+         }
+         builder.copy("test", INFINISPAN_SERVER_HOME + "/server")
+               .copy("src/test/resources/bin", INFINISPAN_SERVER_HOME + "/bin")
+               .workDir(INFINISPAN_SERVER_HOME)
+               .cmd(
+                     args.toArray(new String[]{})
+               )
+               .expose(
+                     11222, // Protocol endpoint
+                     11221, // Memcached endpoint
+                     7800,  // JGroups TCP
+                     43366, // JGroups MPING
+                     9999   // JMX Remoting
+               )
+               .build();
+      });
       latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
       for (int i = 0; i < configuration.numServers(); i++) {
          GenericContainer container = createContainer(i, rootDir);
@@ -170,7 +179,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
 
    private void copyArtifactsToUserLibDir(File libDir) {
       // Maven artifacts
-      String propertyArtifacts = System.getProperty(EXTRA_LIBS);
+      String propertyArtifacts = System.getProperty(TestSystemPropertyNames.EXTRA_LIBS);
       String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.mavenArtifacts();
       if (artifacts != null && artifacts.length > 0) {
          MavenResolvedArtifact[] archives = Maven.resolver().resolve(artifacts).withoutTransitivity().asResolvedArtifact();
