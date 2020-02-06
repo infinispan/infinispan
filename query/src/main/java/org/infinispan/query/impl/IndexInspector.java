@@ -22,10 +22,11 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
  */
 @Scope(Scopes.NAMED_CACHE)
 public final class IndexInspector {
-
+   private static final String ELASTICSEARCH_INDEX_MANAGER = "org.hibernate.search.elasticsearch.impl.ElasticsearchIndexManager";
    private final Map<Class<?>, IndexManager> indexManagerPerClass = new HashMap<>(2);
    private final Map<String, Class<?>> indexedEntities;
    private final SearchIntegrator searchFactory;
+   private boolean hasLocalIndexes;
 
    public IndexInspector(Configuration cfg, SearchIntegrator searchFactory) {
       Map<String, Class<?>> entities = new HashMap<>(2);
@@ -37,6 +38,8 @@ public final class IndexInspector {
          // include possible programmatically declared classes via SearchMapping
          Class<?> c = typeIdentifier.getPojoType();
          entities.put(c.getName(), c);
+         hasLocalIndexes |= searchFactory.getIndexBinding(typeIdentifier).getIndexManagerSelector().all()
+               .stream().anyMatch(i -> !isShared(i));
       }
       indexedEntities = Collections.unmodifiableMap(entities);
       this.searchFactory = searchFactory;
@@ -62,7 +65,15 @@ public final class IndexInspector {
       IndexManager indexManager = getIndexManagerPerClass().get(entity);
       if (indexManager == null) return false;
       return indexManager instanceof InfinispanIndexManager ||
-            indexManager.getClass().getName().equals("org.hibernate.search.elasticsearch.impl.ElasticsearchIndexManager");
+            indexManager.getClass().getName().equals(ELASTICSEARCH_INDEX_MANAGER);
+   }
+
+   private boolean isShared(IndexManager indexManager) {
+      return indexManager instanceof InfinispanIndexManager || indexManager.getClass().getName().equals(ELASTICSEARCH_INDEX_MANAGER);
+   }
+
+   public boolean hasLocalIndexes() {
+      return hasLocalIndexes;
    }
 
    public Map<String, Class<?>> getIndexedEntities() {
