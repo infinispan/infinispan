@@ -83,6 +83,9 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       store.stop();
       marshaller.stop();
       executorService.shutdown();
+      // ISPN-11301 Remove tmpDirectory, as calls to PersistenceMockUtil::createContext leaves a dangling mock-cache whom's
+      // resources are not cleared
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    public void test() throws ExecutionException, InterruptedException {

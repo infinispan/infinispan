@@ -29,7 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -67,6 +66,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
@@ -905,11 +905,19 @@ public class TestingUtil {
       running.addAll(cacheContainer.getCacheNames());
       extractGlobalConfiguration(cacheContainer).defaultCacheName().ifPresent(running::add);
 
-      return running.stream()
-              .map(s -> cacheContainer.getCache(s, false))
-              .filter(Objects::nonNull)
-              .filter(c -> c.getStatus().allowInvocations())
-              .collect(Collectors.toCollection(LinkedHashSet::new));
+      HashSet<Cache<?, ?>> runningCaches = new LinkedHashSet<>();
+      for (String cacheName : running) {
+         Cache<?, ?> cache;
+         try {
+            cache = cacheContainer.getCache(cacheName, false);
+         } catch (CacheException ignoreCache) {
+            // Ignore caches that have not started correctly
+            continue;
+         }
+         if (cache != null && cache.getStatus().allowInvocations())
+            runningCaches.add(cache);
+      }
+      return runningCaches;
    }
 
    public static GlobalConfiguration extractGlobalConfiguration(EmbeddedCacheManager cacheContainer) {
