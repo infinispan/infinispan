@@ -30,4 +30,9 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_DRIVER = "org.infinispan.test.server.driver";
 
+   /**
+    * Specifies wheter the server will run external (outside the project)
+    */
+   public static final String INFINISPAN_TEST_SERVER_EXTERNAL = "org.infinispan.test.server.external";
+
 }

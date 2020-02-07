@@ -132,7 +132,6 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                   .user("jboss");
          }
          builder.copy("test", INFINISPAN_SERVER_HOME + "/server")
-               .copy("src/test/resources/bin", INFINISPAN_SERVER_HOME + "/bin")
                .workDir(INFINISPAN_SERVER_HOME)
                .cmd(
                      args.toArray(new String[]{})
@@ -143,8 +142,11 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                      7800,  // JGroups TCP
                      43366, // JGroups MPING
                      9999   // JMX Remoting
-               )
-               .build();
+               );
+         if(! Boolean.parseBoolean(System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_EXTERNAL, "false"))) {
+            builder.copy("src/test/resources/bin", INFINISPAN_SERVER_HOME + "/bin");
+         }
+         builder.build();
       });
       latch = new CountdownLatchLoggingConsumer(configuration.numServers(), STARTUP_MESSAGE_REGEX);
       for (int i = 0; i < configuration.numServers(); i++) {
