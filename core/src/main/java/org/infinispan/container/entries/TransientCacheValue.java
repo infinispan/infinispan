@@ -3,25 +3,30 @@ package org.infinispan.container.entries;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 
 /**
- * A transient cache value, to correspond with {@link org.infinispan.container.entries.TransientCacheEntry}
+ * A transient cache value, to correspond with {@link TransientCacheEntry}
  *
  * @author Manik Surtani
  * @since 4.0
  */
 public class TransientCacheValue extends ImmortalCacheValue {
-   protected long maxIdle = -1;
+   protected long maxIdle;
    protected long lastUsed;
 
    public TransientCacheValue(Object value, long maxIdle, long lastUsed) {
-      super(value);
+      this(value, null, maxIdle, lastUsed);
+   }
+
+   protected TransientCacheValue(Object value, MetaParamsInternalMetadata internalMetadata, long maxIdle, long lastUsed) {
+      super(value, internalMetadata);
       this.maxIdle = maxIdle;
       this.lastUsed = lastUsed;
    }
@@ -60,8 +65,8 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
-   public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new TransientCacheEntry(key, value, maxIdle, lastUsed);
+   public InternalCacheEntry<?, ?> toInternalCacheEntry(Object key) {
+      return new TransientCacheEntry(key, value, internalMetadata, maxIdle, lastUsed);
    }
 
    @Override
@@ -71,16 +76,19 @@ public class TransientCacheValue extends ImmortalCacheValue {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof TransientCacheValue)) return false;
-      if (!super.equals(o)) return false;
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof TransientCacheValue)) {
+         return false;
+      }
+      if (!super.equals(o)) {
+         return false;
+      }
 
       TransientCacheValue that = (TransientCacheValue) o;
 
-      if (lastUsed != that.lastUsed) return false;
-      if (maxIdle != that.maxIdle) return false;
-
-      return true;
+      return lastUsed == that.lastUsed && maxIdle == that.maxIdle;
    }
 
    @Override
@@ -92,32 +100,33 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
-   public String toString() {
-      return "TransientCacheValue{" +
-            "maxIdle=" + maxIdle +
-            ", lastUsed=" + lastUsed +
-            "} " + super.toString();
+   public TransientCacheValue clone() {
+      return (TransientCacheValue) super.clone();
    }
 
    @Override
-   public TransientCacheValue clone() {
-      return (TransientCacheValue) super.clone();
+   protected void appendFieldsToString(StringBuilder builder) {
+      super.appendFieldsToString(builder);
+      builder.append(", maxIdle=").append(maxIdle);
+      builder.append(", lastUsed=").append(lastUsed);
    }
 
    public static class Externalizer extends AbstractExternalizer<TransientCacheValue> {
       @Override
       public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
          output.writeObject(tcv.value);
+         output.writeObject(tcv.internalMetadata);
          UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
          output.writeLong(tcv.maxIdle); // could be negative so should not use unsigned longs
       }
 
       @Override
       public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object v = input.readObject();
+         Object value = input.readObject();
+         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         Long maxIdle = input.readLong();
-         return new TransientCacheValue(v, maxIdle, lastUsed);
+         long maxIdle = input.readLong();
+         return new TransientCacheValue(value, internalMetadata, maxIdle, lastUsed);
       }
 
       @Override
@@ -127,7 +136,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
 
       @Override
       public Set<Class<? extends TransientCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends TransientCacheValue>>asSet(TransientCacheValue.class);
+         return Collections.singleton(TransientCacheValue.class);
       }
    }
 }

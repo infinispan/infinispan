@@ -14,6 +14,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -35,6 +36,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    protected long created = -1, lastUsed = -1;
    protected short flags = 0;
    protected Metadata metadata;
+   protected MetaParamsInternalMetadata internalMetadata;
 
    public ReadCommittedEntry(Object key, Object value, Metadata metadata) {
       this.key = key;
@@ -145,7 +147,7 @@ public class ReadCommittedEntry implements MVCCEntry {
          } else if (isRemoved()) {
             container.remove(segment, key);
          } else if (value != null) {
-            container.put(segment, key, value, metadata, created, lastUsed);
+            container.put(segment, key, value, metadata, internalMetadata, created, lastUsed);
          }
       }
       return CompletableFutures.completedNull();
@@ -303,6 +305,16 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public void setLastUsed(long lastUsed) {
       this.lastUsed = lastUsed;
+   }
+
+   @Override
+   public MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(MetaParamsInternalMetadata metadata) {
+      this.internalMetadata = metadata;
    }
 
    @Override

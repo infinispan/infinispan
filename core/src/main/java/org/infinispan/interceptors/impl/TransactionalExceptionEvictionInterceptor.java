@@ -118,7 +118,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    private void entriesRemoved(Iterable<InternalCacheEntry> entries) {
       long changeAmount = 0;
       for (InternalCacheEntry entry : entries) {
-         changeAmount -= calculator.calculateSize(entry.getKey(), entry.getValue(), entry.getMetadata());
+         changeAmount -= calculator.calculateSize(entry.getKey(), entry.getValue(), entry.getMetadata(), entry.getInternalMetadata());
       }
       if (changeAmount != 0) {
          increaseSize(changeAmount);
@@ -133,6 +133,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          if (isTrace) {
             log.tracef("Key %s found to have expired", key);
          }
+         //TODO!? internal metadata isn't exposed to public!
          increaseSize(- calculator.calculateSize(key, event.getValue(), event.getMetadata()));
       }
    }
@@ -164,7 +165,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       for (Object key : keys) {
          InternalCacheEntry entry = container.peek(key);
          if (entry != null) {
-            changeAmount -= calculator.calculateSize(key, entry.getValue(), entry.getMetadata());
+            changeAmount -= calculator.calculateSize(key, entry.getValue(), entry.getMetadata(), entry.getInternalMetadata());
          }
       }
       if (changeAmount != 0) {
@@ -204,7 +205,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
                   if (isTrace) {
                      log.tracef("Key %s was removed", key);
                   }
-                  changeAmount -= calculator.calculateSize(key, value, entry.getMetadata());
+                  changeAmount -= calculator.calculateSize(key, value, entry.getMetadata(), entry.getInternalMetadata());
                }
             } else {
                // We check the container directly - this is to handle entries that are expired as the command
@@ -214,10 +215,10 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
                   log.tracef("Key %s was put into cache, replacing existing %s", key, containerEntry != null);
                }
                // Create and replace both add for the new value
-               changeAmount += calculator.calculateSize(key, entry.getValue(), entry.getMetadata());
+               changeAmount += calculator.calculateSize(key, entry.getValue(), entry.getMetadata(), entry.getInternalMetadata());
                // Need to subtract old value here
                if (containerEntry != null) {
-                  changeAmount -= calculator.calculateSize(key, containerEntry.getValue(), containerEntry.getMetadata());
+                  changeAmount -= calculator.calculateSize(key, containerEntry.getValue(), containerEntry.getMetadata(), containerEntry.getInternalMetadata());
                }
             }
          }

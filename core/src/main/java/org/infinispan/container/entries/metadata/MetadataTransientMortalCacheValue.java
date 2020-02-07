@@ -5,18 +5,21 @@ import static java.lang.Math.min;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.entries.versioned.Versioned;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
 /**
- * A form of {@link org.infinispan.container.entries.TransientMortalCacheValue} that is {@link org.infinispan.container.entries.versioned.Versioned}
+ * A form of {@link TransientMortalCacheValue} that is {@link Versioned}
  *
  * @author Manik Surtani
  * @since 5.1
@@ -25,14 +28,19 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
    long lastUsed;
 
-   public MetadataTransientMortalCacheValue(Object v, Metadata metadata, long created, long lastUsed) {
-      super(v, metadata, created);
+   public MetadataTransientMortalCacheValue(Object value, Metadata metadata, long created, long lastUsed) {
+      this(value, null, metadata, created, lastUsed);
+   }
+
+   protected MetadataTransientMortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata,
+         Metadata metadata, long created, long lastUsed) {
+      super(value, internalMetadata, metadata, created);
       this.lastUsed = lastUsed;
    }
 
    @Override
-   public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new MetadataTransientMortalCacheEntry(key, value, metadata, lastUsed, created);
+   public InternalCacheEntry<?, ?> toInternalCacheEntry(Object key) {
+      return new MetadataTransientMortalCacheEntry(key, value, internalMetadata, metadata, lastUsed, created);
    }
 
    @Override
@@ -47,8 +55,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
    @Override
    public boolean isExpired(long now) {
-      return ExpiryHelper.isExpiredTransientMortal(
-            metadata.maxIdle(), lastUsed, metadata.lifespan(), created, now);
+      return ExpiryHelper.isExpiredTransientMortal(metadata.maxIdle(), lastUsed, metadata.lifespan(), created, now);
    }
 
    @Override
@@ -67,22 +74,31 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
       return min(lset, muet);
    }
 
+   @Override
+   protected void appendFieldsToString(StringBuilder builder) {
+      super.appendFieldsToString(builder);
+      builder.append(", lastUsed=").append(lastUsed);
+   }
+
    public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheValue> {
       @Override
       public void writeObject(ObjectOutput output, MetadataTransientMortalCacheValue value) throws IOException {
          output.writeObject(value.value);
+         output.writeObject(value.internalMetadata);
          output.writeObject(value.metadata);
          UnsignedNumeric.writeUnsignedLong(output, value.created);
          UnsignedNumeric.writeUnsignedLong(output, value.lastUsed);
       }
 
       @Override
-      public MetadataTransientMortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object v = input.readObject();
+      public MetadataTransientMortalCacheValue readObject(ObjectInput input)
+            throws IOException, ClassNotFoundException {
+         Object value = input.readObject();
+         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         return new MetadataTransientMortalCacheValue(v, metadata, created, lastUsed);
+         return new MetadataTransientMortalCacheValue(value, internalMetadata, metadata, created, lastUsed);
       }
 
       @Override
@@ -92,7 +108,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
 
       @Override
       public Set<Class<? extends MetadataTransientMortalCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends MetadataTransientMortalCacheValue>>asSet(MetadataTransientMortalCacheValue.class);
+         return Collections.singleton(MetadataTransientMortalCacheValue.class);
       }
    }
 

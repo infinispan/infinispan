@@ -223,17 +223,18 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
                      metadata = new EmbeddedMetadata.Builder()
                            .lifespan(entry.getLifespan()).maxIdle(entry.getMaxIdle())
                            .version(version).build();
-                     return create(entry.getKey(), entry.getValue(), metadata)
-                           .toInternalCacheValue();
                   } else {
                      metadata = metadata.builder().version(version).build();
-                     return create(entry.getKey(), entry.getValue(), metadata)
-                           .toInternalCacheValue();
                   }
+                  InternalCacheValue cv = create(entry.getKey(), entry.getValue(), metadata).toInternalCacheValue();
+                  cv.setInternalMetadata(entry.getInternalMetadata());
+                  return cv;
                }
             }
          }
-         return create(entry).toInternalCacheValue();
+         InternalCacheValue cv = create(entry).toInternalCacheValue();
+         cv.setInternalMetadata(entry.getInternalMetadata());
+         return cv;
       } else {
          return null;
       }

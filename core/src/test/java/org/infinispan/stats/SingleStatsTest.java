@@ -1,5 +1,7 @@
 package org.infinispan.stats;
 
+import static org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator.estimateSizeOverhead;
+import static org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator.offHeapEntrySize;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -9,7 +11,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
-import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -19,6 +20,10 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "stats.SingleStatsTest")
 public class SingleStatsTest extends MultipleCacheManagersTest {
+
+   private static final int OFF_HEAP_KEY_SIZE = 8;    //keyx.length + 4
+   private static final int OFF_HEAP_VALUE_SIZE = 10; //valuex.length + 4
+   private static final long OFF_HEAP_SIZE = estimateSizeOverhead(offHeapEntrySize(true, false /*immortal entries*/, OFF_HEAP_KEY_SIZE, OFF_HEAP_VALUE_SIZE));
 
    protected final int EVICTION_MAX_ENTRIES = 3;
    protected final int TOTAL_ENTRIES = 5;
@@ -64,10 +69,10 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
             // Binary key/value size is 128 bytes
             size *= 128;
          } else {
-            // Off heap key/value size is 64 bytes
-            size = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(size * 64);
+            // Off heap key/value size is 80 bytes
+            size = estimateSizeOverhead(size * OFF_HEAP_SIZE);
             // Have to also include address count overhead
-            size += UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3);
+            size += estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3);
          }
       }
 

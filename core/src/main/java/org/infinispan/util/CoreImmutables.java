@@ -6,6 +6,7 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -25,7 +26,7 @@ public class CoreImmutables extends Immutables {
     * @return an immutable {@link InternalCacheEntry}} wrapper that delegates to the original entry.
     */
    public static <K, V> InternalCacheEntry<K, V> immutableInternalCacheEntry(InternalCacheEntry<K, V> entry) {
-      return new ImmutableInternalCacheEntry<K, V>(entry);
+      return new ImmutableInternalCacheEntry<>(entry);
    }
 
    /**
@@ -107,7 +108,7 @@ public class CoreImmutables extends Immutables {
 
       @Override
       public InternalCacheValue<V> toInternalCacheValue() {
-         return new CoreImmutables.ImmutableInternalCacheValue(this);
+         return new CoreImmutables.ImmutableInternalCacheValue<>(this);
       }
 
       @Override
@@ -201,8 +202,18 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public InternalCacheEntry clone() {
-         return new ImmutableInternalCacheEntry(entry.clone());
+      public InternalCacheEntry<K, V> clone() {
+         return new ImmutableInternalCacheEntry<>(entry.clone());
+      }
+
+      @Override
+      public final MetaParamsInternalMetadata getInternalMetadata() {
+         return entry.getInternalMetadata();
+      }
+
+      @Override
+      public void setInternalMetadata(MetaParamsInternalMetadata metadata) {
+         throw new UnsupportedOperationException();
       }
    }
 
@@ -261,6 +272,16 @@ public class CoreImmutables extends Immutables {
       @Override
       public Metadata getMetadata() {
          return entry.getMetadata();
+      }
+
+      @Override
+      public MetaParamsInternalMetadata getInternalMetadata() {
+         return entry.getInternalMetadata();
+      }
+
+      @Override
+      public void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+         throw new UnsupportedOperationException();
       }
    }
 }

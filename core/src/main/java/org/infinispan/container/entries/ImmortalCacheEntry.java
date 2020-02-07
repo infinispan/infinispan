@@ -1,14 +1,13 @@
 package org.infinispan.container.entries;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -21,11 +20,12 @@ import org.infinispan.metadata.Metadata;
  */
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
 
-   public Object value;
-
    public ImmortalCacheEntry(Object key, Object value) {
-      super(key);
-      this.value = value;
+      this(key, value, null);
+   }
+
+   protected ImmortalCacheEntry(Object key, Object value, MetaParamsInternalMetadata internalMetadata) {
+      super(key, value, internalMetadata);
    }
 
    @Override
@@ -74,18 +74,8 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
-      return new ImmortalCacheValue(value);
-   }
-
-   @Override
-   public Object getValue() {
-      return value;
-   }
-
-   @Override
-   public Object setValue(Object value) {
-      return this.value = value;
+   public InternalCacheValue<?> toInternalCacheValue() {
+      return new ImmortalCacheValue(value, internalMetadata);
    }
 
    @Override
@@ -109,13 +99,15 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
          output.writeObject(ice.value);
+         output.writeObject(ice.internalMetadata);
       }
 
       @Override
       public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object k = input.readObject();
-         Object v = input.readObject();
-         return new ImmortalCacheEntry(k, v);
+         Object key = input.readObject();
+         Object value = input.readObject();
+         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         return new ImmortalCacheEntry(key, value, internalMetadata);
       }
 
       @Override
@@ -125,16 +117,8 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
 
       @Override
       public Set<Class<? extends ImmortalCacheEntry>> getTypeClasses() {
-         return Util.asSet(ImmortalCacheEntry.class);
+         return Collections.singleton(ImmortalCacheEntry.class);
       }
-   }
-
-   @Override
-   public String toString() {
-      return "ImmortalCacheEntry{" +
-            "key=" + toStr(key) +
-            ", value=" + toStr(value) +
-            "}";
    }
 
 }

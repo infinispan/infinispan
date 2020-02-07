@@ -3,10 +3,13 @@ package org.infinispan.container.entries;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -20,14 +23,20 @@ import org.infinispan.metadata.Metadata;
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    public Object value;
+   protected MetaParamsInternalMetadata internalMetadata;
 
    public ImmortalCacheValue(Object value) {
+      this(value, null);
+   }
+
+   protected ImmortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata) {
       this.value = value;
+      this.internalMetadata = internalMetadata;
    }
 
    @Override
-   public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new ImmortalCacheEntry(key, value);
+   public InternalCacheEntry<?,?> toInternalCacheEntry(Object key) {
+      return new ImmortalCacheEntry(key, value, internalMetadata);
    }
 
    public final Object setValue(Object value) {
@@ -82,27 +91,39 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    }
 
    @Override
+   public final MetaParamsInternalMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public final void setInternalMetadata(MetaParamsInternalMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ImmortalCacheValue)) return false;
 
       ImmortalCacheValue that = (ImmortalCacheValue) o;
 
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-
-      return true;
+      return Objects.equals(value, that.value) &&
+             Objects.equals(internalMetadata, that.internalMetadata);
    }
 
    @Override
    public int hashCode() {
-      return value != null ? value.hashCode() : 0;
+      int result = Objects.hashCode(value);
+      result = 31 * result + Objects.hashCode(internalMetadata);
+      return result;
    }
 
    @Override
-   public String toString() {
-      return getClass().getSimpleName() + " {" +
-            "value=" + value +
-            '}';
+   public final String toString() {
+      StringBuilder builder = new StringBuilder(getClass().getSimpleName());
+      builder.append('{');
+      appendFieldsToString(builder);
+      return builder.append('}').toString();
    }
 
    @Override
@@ -114,16 +135,23 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       }
    }
 
+   protected void appendFieldsToString(StringBuilder builder) {
+      builder.append("value=").append(Util.toStr(value));
+      builder.append(", internalMetadata=").append(internalMetadata);
+   }
+
    public static class Externalizer extends AbstractExternalizer<ImmortalCacheValue> {
       @Override
       public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
+         output.writeObject(icv.internalMetadata);
       }
 
       @Override
       public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object v = input.readObject();
-         return new ImmortalCacheValue(v);
+         Object value = input.readObject();
+         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
+         return new ImmortalCacheValue(value, internalMetadata);
       }
 
       @Override
@@ -133,7 +161,7 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
       @Override
       public Set<Class<? extends ImmortalCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends ImmortalCacheValue>>asSet(ImmortalCacheValue.class);
+         return Collections.singleton(ImmortalCacheValue.class);
       }
    }
 }

@@ -1,8 +1,9 @@
 package org.infinispan.container.offheap;
 
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -20,7 +21,22 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
     * @return the address of where the entry was created
     */
    default long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
-      return create(key, key.hashCode(), value, metadata);
+      //TODO! can it ^ be removed?
+      return create(key, key.hashCode(), value, metadata, null);
+   }
+
+   /**
+    * Creates an off heap entry using the provided key value and metadata
+    *
+    * @param key              the key to use
+    * @param value            the value to use
+    * @param metadata         the metadata to use
+    * @param internalMetadata the internal metadata to use
+    * @return the address of where the entry was created
+    */
+   default long create(WrappedBytes key, WrappedBytes value, Metadata metadata,
+         MetaParamsInternalMetadata internalMetadata) {
+      return create(key, key.hashCode(), value, metadata, internalMetadata);
    }
 
    /**
@@ -31,7 +47,23 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
     * @param metadata the metadata to use
     * @return the address of where the entry was created
     */
-   long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata);
+   default long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata) {
+      //TODO! can it ^ be removed?
+      return create(key, hashCode, value, metadata, null);
+   }
+
+   /**
+    * Creates an off heap entry using the provided key value and metadata(s)
+    *
+    * @param key              the key to use
+    * @param hashCode         the hashCode of the key
+    * @param value            the value to use
+    * @param metadata         the metadata to use
+    * @param internalMetadata the internal metadata to use
+    * @return the address of where the entry was created
+    */
+   long create(WrappedBytes key, int hashCode, WrappedBytes value, Metadata metadata,
+         MetaParamsInternalMetadata internalMetadata);
 
    /**
     * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}.
@@ -112,7 +144,21 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
     * @param metadata The metadata for this entry to be used in size calculation
     * @return The size approximately in memory the key, value and metadata use.
     */
-   long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata);
+   default long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata) {
+      return calculateSize(key, value, metadata, null);
+   }
+
+   /**
+    * Method used to calculate how much memory in size the key, value, metadata and internal metadata use.
+    *
+    * @param key      The key for this entry to be used in size calculation
+    * @param value    The value for this entry to be used in size calculation
+    * @param metadata The metadata for this entry to be used in size calculation
+    * @param metadata The internal metadata for this entry to be used in size calculation
+    * @return The size approximately in memory the key, value and metadata use.
+    */
+   long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata,
+         MetaParamsInternalMetadata internalMetadata);
 
    /**
     * Update max idle time for an entry. This method will try to do an in place update of the access time, however if

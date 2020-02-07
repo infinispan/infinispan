@@ -1,5 +1,6 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -65,7 +66,11 @@ public interface InternalCacheValue<V> {
     */
    long getMaxIdle();
 
-   public long getExpiryTime();
+   long getExpiryTime();
 
    Metadata getMetadata();
+
+   MetaParamsInternalMetadata getInternalMetadata();
+
+   void setInternalMetadata(MetaParamsInternalMetadata internalMetadata);
 }
