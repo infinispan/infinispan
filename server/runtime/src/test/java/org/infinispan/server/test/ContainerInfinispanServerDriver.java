@@ -41,7 +41,6 @@ import org.testcontainers.utility.MountableFile;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Network;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 /**
  * WARNING: Work in progress. Does not work yet.
