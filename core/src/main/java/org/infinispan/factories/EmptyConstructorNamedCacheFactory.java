@@ -70,6 +70,9 @@ import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStateProviderImpl;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
+import org.infinispan.xsite.status.DefaultTakeOfflineManager;
+import org.infinispan.xsite.status.NoOpTakeOfflineManager;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
@@ -89,7 +92,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
-                              InvocationHelper.class
+                              InvocationHelper.class, TakeOfflineManager.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -202,6 +205,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return new PublisherHandler();
       } else if (componentName.equals(InvocationHelper.class.getName())) {
          return new InvocationHelper();
+      } else if (componentName.equals(TakeOfflineManager.class.getName())) {
+         return configuration.sites().hasEnabledBackups() ?
+               new DefaultTakeOfflineManager(componentRegistry.getCacheName()) :
+               NoOpTakeOfflineManager.getInstance();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

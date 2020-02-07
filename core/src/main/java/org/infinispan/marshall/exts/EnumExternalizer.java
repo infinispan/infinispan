@@ -9,7 +9,9 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.RebalancingStatus;
-import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.status.BringSiteOnlineResponse;
+import org.infinispan.xsite.status.SiteState;
+import org.infinispan.xsite.status.TakeSiteOfflineResponse;
 
 /**
  * An externalizer for internal enum types.
@@ -25,8 +27,9 @@ public class EnumExternalizer implements AdvancedExternalizer<Enum<?>> {
    public Set<Class<? extends Enum<?>>> getTypeClasses() {
       return Util.asSet(
             RebalancingStatus.class,
-            BackupSender.BringSiteOnlineResponse.class,
-            BackupSender.TakeSiteOfflineResponse.class
+            BringSiteOnlineResponse.class,
+            TakeSiteOfflineResponse.class,
+            SiteState.class
       );
    }
 

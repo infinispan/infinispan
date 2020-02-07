@@ -10,6 +10,8 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.status.SiteState;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * Get the offline status of a {@link BackupSender}.
@@ -39,8 +41,8 @@ public class XSiteOfflineStatusCommand extends BaseRpcCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
-      BackupSender backupSender = registry.getBackupSender().running();
-      return CompletableFuture.completedFuture(backupSender.getOfflineStatus(siteName).isOffline());
+      TakeOfflineManager takeOfflineManager = registry.getTakeOfflineManager().running();
+      return CompletableFuture.completedFuture(takeOfflineManager.getSiteState(siteName) != SiteState.ONLINE);
    }
 
    @Override

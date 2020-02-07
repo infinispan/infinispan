@@ -52,6 +52,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * Named cache specific components
@@ -101,6 +102,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<StateTransferLock> stateTransferLock;
    private ComponentRef<StateTransferManager> stateTransferManager;
    private ComponentRef<StreamingMarshaller> internalMarshaller;
+   private ComponentRef<TakeOfflineManager> takeOfflineManager;
    private ComponentRef<TransactionTable> transactionTable;
    private ComponentRef<VersionGenerator> versionGenerator;
    private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
@@ -351,6 +353,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       asyncInterceptorChain = basicComponentRegistry.getComponent(AsyncInterceptorChain.class);
       biasManager = basicComponentRegistry.getComponent(BiasManager.class);
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
+      takeOfflineManager = basicComponentRegistry.getComponent(TakeOfflineManager.class);
       cache = basicComponentRegistry.getComponent(AdvancedCache.class);
       cacheNotifier = basicComponentRegistry.getComponent(CacheNotifier.class);
       conflictManager = basicComponentRegistry.getComponent(InternalConflictManager.class);
@@ -409,6 +412,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<BackupSender> getBackupSender() {
       return backupSender;
+   }
+
+   public ComponentRef<TakeOfflineManager> getTakeOfflineManager() {
+      return takeOfflineManager;
    }
 
    public ComponentRef<BiasManager> getBiasManager() {

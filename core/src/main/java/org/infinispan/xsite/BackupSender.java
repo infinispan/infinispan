@@ -1,7 +1,5 @@
 package org.infinispan.xsite;
 
-import java.util.Map;
-
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.VisitableCommand;
@@ -34,30 +32,4 @@ public interface BackupSender {
 
    InvocationStage backupWrite(WriteCommand command, VisitableCommand originalCommand) throws Exception;
 
-   OfflineStatus getOfflineStatus(String siteName);
-
-   /**
-    * Returns a Map having as entries the site names and as value Boolean.TRUE if the site is online and Boolean.FALSE
-    * if it is offline.
-    */
-   Map<String, Boolean> status();
-
-   enum BringSiteOnlineResponse {
-      NO_SUCH_SITE,
-      ALREADY_ONLINE,
-      BROUGHT_ONLINE
-   }
-
-   /**
-    * Brings a site with the given name back online.
-    */
-   BringSiteOnlineResponse bringSiteOnline(String siteName);
-
-   enum TakeSiteOfflineResponse {
-      NO_SUCH_SITE,
-      ALREADY_OFFLINE,
-      TAKEN_OFFLINE
-   }
-
-   TakeSiteOfflineResponse takeSiteOffline(String siteName);
 }

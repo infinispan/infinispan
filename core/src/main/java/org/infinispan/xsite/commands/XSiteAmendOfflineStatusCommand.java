@@ -9,7 +9,7 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.xsite.BackupSender;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 /**
  * Amend a sites offline status.
@@ -43,8 +43,8 @@ public class XSiteAmendOfflineStatusCommand extends BaseRpcCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
-      BackupSender backupSender = registry.getBackupSender().running();
-      backupSender.getOfflineStatus(siteName).amend(afterFailures, minTimeToWait);
+      TakeOfflineManager takeOfflineManager = registry.getTakeOfflineManager().running();
+      takeOfflineManager.amendConfiguration(siteName, afterFailures, minTimeToWait);
       return CompletableFutures.completedNull();
    }
 
