@@ -15,9 +15,16 @@ public class MatchCountMatcher implements CommandMatcher {
    private final CommandMatcher matcher;
    private final int matchCount;
 
-   private final AtomicInteger actualMatchCount = new AtomicInteger(0);
+   private final AtomicInteger parentMatchCount = new AtomicInteger(0);
 
+   /**
+    * @param matcher Parent matcher
+    * @param matchCount Index of invocation to match, e.g. {@code matchCount = 0} matches the first invocation.
+    */
    MatchCountMatcher(CommandMatcher matcher, int matchCount) {
+      if (matchCount < 0)
+         throw new IllegalArgumentException("matchCount must be positive");
+
       this.matcher = matcher;
       this.matchCount = matchCount;
    }
@@ -28,10 +35,6 @@ public class MatchCountMatcher implements CommandMatcher {
          return false;
 
       // Only increment the counter if all the other conditions are met.
-      if (matchCount >= 0 && actualMatchCount.getAndIncrement() != matchCount) {
-         return false;
-      }
-
-      return true;
+      return parentMatchCount.getAndIncrement() == matchCount;
    }
 }
