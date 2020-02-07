@@ -90,13 +90,13 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
    }
 
    private void assertOnline(String cacheName, int index, String targetSiteName) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(targetSiteName);
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(targetSiteName);
       assertTrue(status.isEnabled());
       assertFalse("Site " + targetSiteName + " is offline. status=" + status, status.isOffline());
    }
 
    private void assertEventuallyOffline(String cacheName, int index) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
       eventually(status::minTimeHasElapsed);
       cache(LON, cacheName, index).put("_key_", "_value_");
@@ -104,7 +104,7 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {
-      OfflineStatus status = backupSender(cacheName, index).getOfflineStatus(SFO);
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue("Unable to bring " + SFO + " online. status=" + status, status.bringOnline());
    }
 

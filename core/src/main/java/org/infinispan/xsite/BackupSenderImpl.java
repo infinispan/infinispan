@@ -1,7 +1,5 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.util.logging.events.Messages.MESSAGES;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,11 +11,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.transaction.Transaction;
@@ -65,21 +58,17 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.SyncInvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
-import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
-import org.infinispan.util.logging.events.EventLogger;
-import org.infinispan.xsite.notification.SiteStatusListener;
-import org.jgroups.UnreachableException;
+import org.infinispan.xsite.status.SiteState;
+import org.infinispan.xsite.status.TakeOfflineManager;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -103,23 +92,11 @@ public class BackupSenderImpl implements BackupSender {
    @Inject EventLogManager eventLogManager;
    @Inject GlobalConfiguration globalConfig;
    @Inject KeyPartitioner keyPartitioner;
+   @Inject TakeOfflineManager takeOfflineManager;
 
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
-   private final ConcurrentMap<String, OfflineStatus> offlineStatus = new ConcurrentHashMap<>();
    private String localSiteName;
    private String cacheName;
-
-   private static boolean isCommunicationError(Throwable throwable) {
-      Throwable error = throwable;
-      if (throwable instanceof ExecutionException) {
-         error = throwable.getCause();
-      }
-      return error instanceof TimeoutException ||
-            error instanceof org.infinispan.util.concurrent.TimeoutException ||
-            error instanceof UnreachableException ||
-            error instanceof CacheUnreachableException ||
-            error instanceof SuspectException;
-   }
 
    private enum BackupFilter {KEEP_1PC_ONLY, KEEP_2PC_ONLY, KEEP_ALL}
 
@@ -132,7 +109,6 @@ public class BackupSenderImpl implements BackupSender {
       this.cacheName = cache.wired().getName();
       this.localSiteName = transport.localSiteName();
       for (BackupConfiguration bc : config.sites().enabledBackups()) {
-         final String siteName = bc.site();
          if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
             String backupPolicy = bc.failurePolicyClass();
             if (backupPolicy == null) {
@@ -142,19 +118,6 @@ public class BackupSenderImpl implements BackupSender {
             instance.init(cache.wired());
             siteFailurePolicy.put(bc.site(), instance);
          }
-         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService,
-                                                   new SiteStatusListener() {
-                                                      @Override
-                                                      public void siteOnline() {
-                                                         BackupSenderImpl.this.siteOnline(siteName);
-                                                      }
-
-                                                      @Override
-                                                      public void siteOffline() {
-                                                         BackupSenderImpl.this.siteOffline(siteName);
-                                                      }
-                                                   });
-         offlineStatus.put(siteName, offline);
       }
    }
 
@@ -196,40 +159,6 @@ public class BackupSenderImpl implements BackupSender {
       return backupCommand(command, command, xSiteBackups, transaction);
    }
 
-
-   @Override
-   public BringSiteOnlineResponse bringSiteOnline(String siteName) {
-      if (!config.sites().hasInUseBackup(siteName)) {
-         log.tryingToBringOnlineNonexistentSite(siteName);
-         return BringSiteOnlineResponse.NO_SUCH_SITE;
-      } else {
-         OfflineStatus offline = offlineStatus.get(siteName);
-         boolean broughtOnline = offline.bringOnline();
-         return broughtOnline ? BringSiteOnlineResponse.BROUGHT_ONLINE : BringSiteOnlineResponse.ALREADY_ONLINE;
-      }
-   }
-
-   @Override
-   public TakeSiteOfflineResponse takeSiteOffline(String siteName) {
-      if (!config.sites().hasInUseBackup(siteName)) {
-         return TakeSiteOfflineResponse.NO_SUCH_SITE;
-      } else {
-         OfflineStatus offline = offlineStatus.get(siteName);
-         return offline.forceOffline() ? TakeSiteOfflineResponse.TAKEN_OFFLINE : TakeSiteOfflineResponse.ALREADY_OFFLINE;
-      }
-   }
-
-   private void updateOfflineSites(String siteName, long sendTimeMillis, Throwable throwable) {
-      OfflineStatus status = offlineStatus.get(siteName);
-      if (status != null && status.isEnabled()) {
-         if (isCommunicationError(throwable)) {
-            status.updateOnCommunicationFailure(sendTimeMillis);
-         } else if (!status.isOffline()) {
-            status.reset();
-         }
-      }
-   }
-
    private InvocationStage backupCommand(VisitableCommand command, VisitableCommand originalCommand,
          List<XSiteBackup> xSiteBackups, Transaction transaction) {
       XSiteReplicateCommand xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
@@ -244,20 +173,17 @@ public class BackupSenderImpl implements BackupSender {
       if (rpcManager == null) {
          for (XSiteBackup backup : xSiteBackups) {
             XSiteResponse cs = transport.backupRemotely(backup, command);
+            takeOfflineManager.registerRequest(cs);
             aggregator.addResponse(backup, cs);
          }
       } else {
          for (XSiteBackup backup : xSiteBackups) {
             XSiteResponse cs = rpcManager.invokeXSite(backup, command);
+            takeOfflineManager.registerRequest(cs);
             aggregator.addResponse(backup, cs);
          }
       }
    }
-
-   private long sendTimeMillis() {
-      return TimeUnit.NANOSECONDS.toMillis(timeService.time());
-   }
-
 
    private void sendTo1PCBackups(CommitCommand command, ResponseAggregator aggregator) {
       final LocalTransaction localTx = txTable.getLocalTransaction(command.getGlobalTransaction());
@@ -303,7 +229,7 @@ public class BackupSenderImpl implements BackupSender {
                continue;
          }
 
-         if (isOffline(bc.site())) {
+         if (takeOfflineManager.getSiteState(bc.site()) == SiteState.OFFLINE) {
             log.tracef("The site '%s' is offline, not backing up information to it", bc.site());
             continue;
          }
@@ -311,11 +237,6 @@ public class BackupSenderImpl implements BackupSender {
          backupInfo.add(bi);
       }
       return backupInfo;
-   }
-
-   private boolean isOffline(String site) {
-      OfflineStatus offline = offlineStatus.get(site);
-      return offline != null && offline.isOffline();
    }
 
    private List<WriteCommand> filterModifications(WriteCommand[] modifications, Map<Object, CacheEntry> lookedUpEntries) {
@@ -367,18 +288,6 @@ public class BackupSenderImpl implements BackupSender {
       return filtered;
    }
 
-   private void siteOnline(String siteName) {
-      getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOnline(siteName));
-   }
-
-   private void siteOffline(String siteName) {
-      getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOffline(siteName));
-   }
-
-   private EventLogger getEventLogger() {
-      return eventLogManager.getEventLogger().context(cacheName).scope(rpcManager.getAddress());
-   }
-
    private class ResponseAggregator extends CompletableFuture<Void> implements XSiteResponse.XSiteResponseCompleted {
 
       private final VisitableCommand command;
@@ -400,8 +309,6 @@ public class BackupSenderImpl implements BackupSender {
             log.tracef("Backup response from site %s completed for command %s. throwable=%s", command, backup,
                   throwable);
          }
-
-         updateOfflineSites(backup.getSiteName(), TimeUnit.NANOSECONDS.toMillis(sendTimeNanos), throwable);
 
          if (backup.isSync()) {
             if (throwable != null) {
@@ -594,16 +501,4 @@ public class BackupSenderImpl implements BackupSender {
       }
    }
 
-   public OfflineStatus getOfflineStatus(String site) {
-      return offlineStatus.get(site);
-   }
-
-   @Override
-   public Map<String, Boolean> status() {
-      Map<String, Boolean> result = new HashMap<>(offlineStatus.size());
-      for (Map.Entry<String, OfflineStatus> os : offlineStatus.entrySet()) {
-         result.put(os.getKey(), !os.getValue().isOffline());
-      }
-      return result;
-   }
 }
