@@ -318,11 +318,13 @@ public class DummyInMemoryStore extends AbstractSegmentedAdvancedLoadWriteStore 
 
    @Override
    public void stop() {
-      record("stop");
-      running = false;
-      available = false;
+      if (running) {
+         record("stop");
+         running = false;
+         available = false;
 
-      store = null;
+         store = null;
+      }
    }
 
    @Override

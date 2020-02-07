@@ -33,6 +33,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    }
 
    protected void teardown() {
+      TestingUtil.clearContent(cacheManager);
       TestingUtil.killCacheManagers(cacheManager);
       cache = null;
       cacheManager = null;

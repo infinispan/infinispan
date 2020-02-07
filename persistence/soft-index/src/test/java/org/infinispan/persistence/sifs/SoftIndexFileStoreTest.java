@@ -18,7 +18,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +35,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
    boolean startIndex = true;
    boolean keepIndex = false;
 
-   @BeforeClass
+   @BeforeMethod
    protected void setUpTempDir() {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    }
@@ -47,7 +47,6 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
 
    @Override
    protected AdvancedLoadWriteStore createStore() {
-      clearTempDir();
       store = new SoftIndexFileStore() {
          boolean firstTime = true;
 

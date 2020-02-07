@@ -1,14 +1,12 @@
 package org.infinispan.persistence.sifs;
 
-import java.io.File;
-
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -18,7 +16,7 @@ import org.testng.annotations.Test;
 public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    private String tmpDirectory;
 
-   @BeforeClass
+   @BeforeMethod
    protected void setUpTempDir() {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    }
@@ -26,7 +24,6 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    @AfterClass
    protected void clearTempDir() {
       Util.recursiveFileRemove(tmpDirectory);
-      new File(tmpDirectory).mkdirs();
    }
 
 
