@@ -30,6 +30,8 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.META_PARAMS_INTERNAL_METADATA)
 public final class MetaParamsInternalMetadata implements InternalMetadata, MetaParam.Lookup {
 
+   private static final MetaParamsInternalMetadata EMPTY = new MetaParamsInternalMetadata(MetaParams.empty());
+
    final MetaParams params;
 
    public static Metadata from(MetaParams params) {
@@ -138,9 +140,23 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return params.find(type);
    }
 
+   public boolean isEmpty() {
+      return params.isEmpty();
+   }
+
    @Override
    public String toString() {
       return "MetaParamsInternalMetadata{params=" + params + '}';
+   }
+
+   public static MetaParamsInternalMetadata.Builder getBuilder(MetaParamsInternalMetadata metadata) {
+      return metadata == null ?
+             new MetaParamsInternalMetadata.Builder() :
+             metadata.builder();
+   }
+
+   public static MetaParamsInternalMetadata empty() {
+      return EMPTY;
    }
 
    public static class Builder implements Metadata.Builder {
@@ -187,6 +203,11 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       @Override
       public MetaParamsInternalMetadata build() {
          return new MetaParamsInternalMetadata(params);
+      }
+
+      public Builder add(MetaParam<?> metaParam) {
+         params.add(metaParam);
+         return this;
       }
 
       @Override

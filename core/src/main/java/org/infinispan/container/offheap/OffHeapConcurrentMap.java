@@ -581,7 +581,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
          if (prev == result) {
             // noop
          } else if (result != null) {
-            long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata());
+            long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata(), result.getInternalMetadata());
             // TODO: Technically actualAddress could be a 0 and bucketAddress != 0, which means we will loop through
             // entire bucket for no reason as it will never match (doing key equality checks)
             performPut(bucketAddress, actualAddress, newAddress, key, memoryOffset, false, false);
@@ -696,7 +696,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
 
          int memoryOffset = getMemoryOffset(hashCode);
          long address = memoryLookup.getMemoryAddressOffset(memoryOffset);
-         long newAddress = offHeapEntryFactory.create(key, hashCode, value.getValue(), value.getMetadata());
+         long newAddress = offHeapEntryFactory.create(key, hashCode, value.getValue(), value.getMetadata(), value.getInternalMetadata());
          returnedValue = performPut(address, 0, newAddress, key, memoryOffset, true, false);
       } finally {
          stampedLock.unlockWrite(writeStamp);
@@ -1048,7 +1048,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
                ice = offHeapEntryFactory.fromMemory(address);
             }
 
-            long newAddress = offHeapEntryFactory.create(key, hashCode, newValue.getValue(), newValue.getMetadata());
+            long newAddress = offHeapEntryFactory.create(key, hashCode, newValue.getValue(), newValue.getMetadata(), newValue.getInternalMetadata());
 
             entryReplaced(newAddress, address);
             if (prevAddress != 0) {

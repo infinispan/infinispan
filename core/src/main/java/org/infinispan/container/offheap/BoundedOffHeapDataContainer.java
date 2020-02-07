@@ -15,6 +15,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -69,7 +70,7 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
 
    @Override
    public void put(WrappedBytes key, WrappedBytes value, Metadata metadata) {
-      super.put(0, key, value, metadata, -1, -1);
+      super.put(0, key, value, metadata, null, -1, -1);
    }
 
    @Override
@@ -104,9 +105,10 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    }
 
    @Override
-   public void put(int segment, WrappedBytes key, WrappedBytes value, Metadata metadata, long createdTimestamp,
-                   long lastUseTimestamp) {
-      super.put(0, key, value, metadata, createdTimestamp, lastUseTimestamp);
+   public void put(int segment, WrappedBytes key, WrappedBytes value, Metadata metadata,
+         MetaParamsInternalMetadata internalMetadata, long createdTimestamp,
+         long lastUseTimestamp) {
+      super.put(0, key, value, metadata, internalMetadata, createdTimestamp, lastUseTimestamp);
    }
 
    @Override

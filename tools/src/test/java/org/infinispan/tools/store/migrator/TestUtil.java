@@ -71,7 +71,7 @@ public class TestUtil {
       TEST_MAP_UNSUPPORTED.put("ImmortalCacheValue", new ImmortalCacheValue("Value"));
       TEST_MAP_UNSUPPORTED.put("MortalCacheValue", new MortalCacheValue("Value", 1, 1));
       TEST_MAP_UNSUPPORTED.put("TransientCacheValue", new TransientCacheValue("Value", 1, 1));
-      TEST_MAP_UNSUPPORTED.put("TransientMortalCacheValue", new TransientMortalCacheValue("Value", 1, 1, 1));
+      TEST_MAP_UNSUPPORTED.put("TransientMortalCacheValue", new TransientMortalCacheValue("Value", 1, 1, 1, 1));
 
       TEST_MAP_UNSUPPORTED.put("MetadataImmortalCacheEntry", new MetadataImmortalCacheEntry("Key", "Value", metadata));
       TEST_MAP_UNSUPPORTED.put("MetadataMortalCacheEntry", new MetadataMortalCacheEntry("Key", "Value", metadata, 1));

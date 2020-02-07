@@ -38,7 +38,7 @@ public class SizeCalculatorFactory extends AbstractNamedCacheComponentFactory im
                throw new UnsupportedOperationException();
          }
       } else {
-         return (KeyValueMetadataSizeCalculator) (k, v, m) -> 1;
+         return (KeyValueMetadataSizeCalculator) (k, v, m, im) -> 1;
       }
    }
 

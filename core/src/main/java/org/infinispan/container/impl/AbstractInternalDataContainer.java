@@ -34,6 +34,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -125,7 +126,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    @Override
-   public void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
+   public void put(int segment, K k, V v, Metadata metadata, MetaParamsInternalMetadata internalMetadata, long createdTimestamp, long lastUseTimestamp) {
       PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
          boolean l1Entry = false;
@@ -157,6 +158,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          if (trace)
             log.tracef("Store %s=%s in container", k, copy);
 
+         copy.setInternalMetadata(internalMetadata);
          entries.put(k, copy);
       } else {
          log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
@@ -165,7 +167,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public void put(K k, V v, Metadata metadata) {
-      put(getSegmentForKey(k), k, v, metadata, -1, -1);
+      put(getSegmentForKey(k), k, v, metadata, null, -1, -1);
    }
 
    @Override

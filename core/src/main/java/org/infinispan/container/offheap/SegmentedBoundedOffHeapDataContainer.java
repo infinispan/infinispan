@@ -23,6 +23,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.Log;
@@ -99,8 +100,10 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
    }
 
    @Override
-   public void put(int segment, WrappedBytes key, WrappedBytes value, Metadata metadata, long createdTimestamp, long lastUseTimestamp) {
-      super.put(segment, key, value, metadata, createdTimestamp, lastUseTimestamp);
+   public void put(int segment, WrappedBytes key, WrappedBytes value, Metadata metadata,
+         MetaParamsInternalMetadata internalMetadata, long createdTimestamp,
+         long lastUseTimestamp) {
+      super.put(segment, key, value, metadata, internalMetadata, createdTimestamp, lastUseTimestamp);
       // The following is called outside of the write lock specifically - since we may not have to evict and even
       // if we did it would quite possibly need a different lock
       ensureSize();

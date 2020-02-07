@@ -5,31 +5,33 @@ import static java.lang.Math.min;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
 
 /**
- * A transient, mortal cache value to correspond with {@link org.infinispan.container.entries.TransientMortalCacheEntry}
+ * A transient, mortal cache value to correspond with {@link TransientMortalCacheEntry}
  *
  * @author Manik Surtani
  * @since 4.0
  */
 public class TransientMortalCacheValue extends MortalCacheValue {
-   protected long maxIdle = -1;
+   protected long maxIdle;
    protected long lastUsed;
 
    public TransientMortalCacheValue(Object value, long created, long lifespan, long maxIdle, long lastUsed) {
-      this(value, created, lifespan, maxIdle);
-      this.lastUsed = lastUsed;
+      this(value, null, created, lifespan, maxIdle, lastUsed);
    }
 
-   public TransientMortalCacheValue(Object value, long created, long lifespan, long maxIdle) {
-      super(value, created, lifespan);
+   protected TransientMortalCacheValue(Object value, MetaParamsInternalMetadata internalMetadata, long created,
+         long lifespan, long maxIdle, long lastUsed) {
+      super(value, internalMetadata, created, lifespan);
       this.maxIdle = maxIdle;
+      this.lastUsed = lastUsed;
    }
 
    @Override
@@ -61,16 +63,20 @@ public class TransientMortalCacheValue extends MortalCacheValue {
    }
 
    @Override
-   public InternalCacheEntry toInternalCacheEntry(Object key) {
-      return new TransientMortalCacheEntry(key, value, maxIdle, lifespan, lastUsed, created);
+   public InternalCacheEntry<?, ?> toInternalCacheEntry(Object key) {
+      return new TransientMortalCacheEntry(key, value, internalMetadata, maxIdle, lifespan, lastUsed, created);
    }
 
    @Override
    public long getExpiryTime() {
       long lset = lifespan > -1 ? created + lifespan : -1;
       long muet = maxIdle > -1 ? lastUsed + maxIdle : -1;
-      if (lset == -1) return muet;
-      if (muet == -1) return lset;
+      if (lset == -1) {
+         return muet;
+      }
+      if (muet == -1) {
+         return lset;
+      }
       return min(lset, muet);
    }
 
@@ -82,10 +88,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
 
       TransientMortalCacheValue that = (TransientMortalCacheValue) o;
 
-      if (lastUsed != that.lastUsed) return false;
-      if (maxIdle != that.maxIdle) return false;
-
-      return true;
+      return lastUsed == that.lastUsed && maxIdle == that.maxIdle;
    }
 
    @Override
@@ -97,22 +100,22 @@ public class TransientMortalCacheValue extends MortalCacheValue {
    }
 
    @Override
-   public String toString() {
-      return "TransientMortalCacheValue{" +
-            "maxIdle=" + maxIdle +
-            ", lastUsed=" + lastUsed +
-            "} " + super.toString();
+   public TransientMortalCacheValue clone() {
+      return (TransientMortalCacheValue) super.clone();
    }
 
    @Override
-   public TransientMortalCacheValue clone() {
-      return (TransientMortalCacheValue) super.clone();
+   protected void appendFieldsToString(StringBuilder builder) {
+      super.appendFieldsToString(builder);
+      builder.append(", maxIdle=").append(maxIdle);
+      builder.append(", lastUsed=").append(lastUsed);
    }
 
    public static class Externalizer extends AbstractExternalizer<TransientMortalCacheValue> {
       @Override
       public void writeObject(ObjectOutput output, TransientMortalCacheValue value) throws IOException {
          output.writeObject(value.value);
+         output.writeObject(value.internalMetadata);
          UnsignedNumeric.writeUnsignedLong(output, value.created);
          output.writeLong(value.lifespan); // could be negative so should not use unsigned longs
          UnsignedNumeric.writeUnsignedLong(output, value.lastUsed);
@@ -121,12 +124,13 @@ public class TransientMortalCacheValue extends MortalCacheValue {
 
       @Override
       public TransientMortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object v = input.readObject();
+         Object value = input.readObject();
+         MetaParamsInternalMetadata internalMetadata = (MetaParamsInternalMetadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
-         Long lifespan = input.readLong();
+         long lifespan = input.readLong();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         Long maxIdle = input.readLong();
-         return new TransientMortalCacheValue(v, created, lifespan, maxIdle, lastUsed);
+         long maxIdle = input.readLong();
+         return new TransientMortalCacheValue(value, internalMetadata, created, lifespan, maxIdle, lastUsed);
       }
 
       @Override
@@ -136,7 +140,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
 
       @Override
       public Set<Class<? extends TransientMortalCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends TransientMortalCacheValue>>asSet(TransientMortalCacheValue.class);
+         return Collections.singleton(TransientMortalCacheValue.class);
       }
    }
 }

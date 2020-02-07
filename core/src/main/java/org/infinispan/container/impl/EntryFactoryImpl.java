@@ -22,6 +22,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -292,9 +293,11 @@ public class EntryFactoryImpl implements EntryFactory {
    protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry) {
       Object value = null;
       Metadata metadata = null;
+      MetaParamsInternalMetadata internalMetadata = null;
       if (cacheEntry != null) {
          value = cacheEntry.getValue();
          metadata = cacheEntry.getMetadata();
+         internalMetadata = cacheEntry.getInternalMetadata();
       }
 
       if (trace) log.tracef("Creating new entry for key %s", toStr(key));
@@ -311,6 +314,7 @@ public class EntryFactoryImpl implements EntryFactory {
       } else {
          mvccEntry = new ReadCommittedEntry(key, value, metadata);
       }
+      mvccEntry.setInternalMetadata(internalMetadata);
       if (cacheEntry != null) {
          mvccEntry.setCreated(cacheEntry.getCreated());
          mvccEntry.setLastUsed(cacheEntry.getLastUsed());

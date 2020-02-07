@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.metadata.MetadataAware;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 
 /**
  * An entry that is stored in the data container
@@ -122,5 +123,13 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    default void setCreated(long created) {}
 
    default void setLastUsed(long lastUsed) {}
+
+   default MetaParamsInternalMetadata getInternalMetadata() {
+      return null;
+   }
+
+   default void setInternalMetadata(MetaParamsInternalMetadata metadata) {
+      //no-op
+   }
 
 }

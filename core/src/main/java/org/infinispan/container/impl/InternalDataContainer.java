@@ -9,6 +9,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.reactivestreams.Publisher;
 
@@ -80,12 +81,15 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @param k key under which to store entry
     * @param v value to store
     * @param metadata metadata of the entry
+    * @param internalMetadata
     * @param createdTimestamp creation timestamp, or {@code -1} to use the current time
     * @param lastUseTimestamp last use timestamp, or {@code -1} to use the current time
     *
     * @since 10.0
     */
-   void put(int segment, K k, V v, Metadata metadata, long createdTimestamp, long lastUseTimestamp);
+   void put(int segment, K k, V v, Metadata metadata,
+         MetaParamsInternalMetadata internalMetadata, long createdTimestamp,
+         long lastUseTimestamp);
 
    /**
     * Same as {@link DataContainer#containsKey(Object)}  except that the segment of the key can provided to

@@ -1,5 +1,6 @@
 package org.infinispan.container.impl;
 
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -17,5 +18,18 @@ public interface KeyValueMetadataSizeCalculator<K, V> {
     * @param metadata The metadata for this entry to be used in size calculation
     * @return The size approximately in memory the key, value and metadata use.
     */
-   long calculateSize(K key, V value, Metadata metadata);
+   default long calculateSize(K key, V value, Metadata metadata) {
+      return calculateSize(key, value, metadata, null);
+   }
+
+   /**
+    * Method used to calculate how much memory in size the key, value and metadata use.
+    *
+    * @param key              The key for this entry to be used in size calculation
+    * @param value            The value for this entry to be used in size calculation
+    * @param metadata         The metadata for this entry to be used in size calculation
+    * @param internalMetadata The internal metadata for this entry to be used in size calculation
+    * @return The size approximately in memory the key, value and metadata use.
+    */
+   long calculateSize(K key, V value, Metadata metadata, MetaParamsInternalMetadata internalMetadata);
 }

@@ -8,6 +8,7 @@ import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 
@@ -67,12 +68,12 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
       } else {
          metadata = null;
       }
-      long keyValueMetadataSize = calculateSize(key, ice.getValue(), metadata);
+      long keyValueMetadataSize = calculateSize(key, ice.getValue(), metadata, ice.getInternalMetadata());
       return keyValueMetadataSize + noMetadataSize;
    }
 
    @Override
-   public long calculateSize(K key, V value, Metadata metadata) {
+   public long calculateSize(K key, V value, Metadata metadata, MetaParamsInternalMetadata internalMetadata) {
       long objSize = calculator.calculateSize(key, value);
 
       // This is for the surrounding ICE
@@ -105,6 +106,7 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
             metadataSize = roundUpToNearest8(metadataSize);
          }
       }
+      //TODO!??? compute internal metadata size?
       return objSize + roundUpToNearest8(iceSize) + metadataSize;
    }
 }
