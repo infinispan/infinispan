@@ -36,11 +36,11 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.Base58;
-import org.testcontainers.utility.MountableFile;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Network;
+import com.sun.security.auth.module.UnixSystem;
 
 /**
  * WARNING: Work in progress. Does not work yet.
@@ -51,7 +51,7 @@ import com.github.dockerjava.api.model.Network;
 public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
    private static final Log log = org.infinispan.commons.logging.LogFactory.getLog(ContainerInfinispanServerDriver.class);
    private static final String STARTUP_MESSAGE_REGEX = ".*ISPN080001.*";
-   private static final int STARTUP_TIMEOUT_SECONDS = Integer.getInteger("org.infinispan.test.server.container.startupTimeSeconds", 45);
+   private static final int TIMEOUT_SECONDS = Integer.getInteger("org.infinispan.test.server.container.timeoutSeconds", 45);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
    private final List<GenericContainer> containers;
@@ -125,6 +125,10 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                .label("release", Version.getVersion())
                .label("architecture", "x86_64")
                .user("root");
+         // We need to remap the UID/GID of the jboss user inside the container to the ones of the user outside so that files created on volume mounts have the correct ownership/permissions
+         UnixSystem unixSystem = new UnixSystem();
+         builder.run("usermod", "-u", Long.toString(unixSystem.getUid()), "jboss");
+         builder.run("groupmod", "-g", Long.toString(unixSystem.getGid()), "jboss");
          if (!usePrebuiltServerFromImage) {
             builder
                   .copy("build", INFINISPAN_SERVER_HOME)
@@ -153,7 +157,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          log.infof("Starting container %s-%d", name, i);
          container.start();
       }
-      Exceptions.unchecked(() -> latch.awaitStrict(STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    private GenericContainer createContainer(int i, File rootDir) {
@@ -165,8 +169,9 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                if ("lib".equals(dir)) {
                   copyArtifactsToUserLibDir(hostDir);
                }
-               container.withCopyFileToContainer(MountableFile.forHostPath(hostDir.getAbsolutePath()), containerDir);
-               hostDir.setWritable(true, false);
+               //container.withCopyFileToContainer(MountableFile.forHostPath(hostDir.getAbsolutePath()), containerDir);
+               container.withFileSystemBind(hostDir.getAbsolutePath(), containerDir);
+               //hostDir.setWritable(true, false);
             });
       // Process any enhancers
       container
@@ -259,7 +264,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       containers.set(server, container);
       log.infof("Restarting container %s-%d", name, server);
       container.start();
-      Exceptions.unchecked(() -> latch.awaitStrict(STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
@@ -271,7 +276,7 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          log.infof("Restarting container %s-%d", name, i);
          container.start();
       }
-      Exceptions.unchecked(() -> latch.awaitStrict(STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    @Override
@@ -298,5 +303,10 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
       } else {
          return new RemoteCacheManager(builder.build());
       }
+   }
+
+   @Override
+   public int getTimeout() {
+      return TIMEOUT_SECONDS;
    }
 }
