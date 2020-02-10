@@ -27,6 +27,7 @@ import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -54,7 +55,7 @@ public abstract class AbstractRestResourceTest extends MultipleCacheManagersTest
    protected void createCacheManagers() throws Exception {
       for (int i = 0; i < NUM_SERVERS; i++) {
          GlobalConfigurationBuilder configForNode = getGlobalConfigForNode(i);
-         addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder());
+         addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder(), TransportFlags.minimalXsiteFlags());
       }
       cacheManagers.forEach(this::defineCaches);
       for (EmbeddedCacheManager cm : cacheManagers) {
