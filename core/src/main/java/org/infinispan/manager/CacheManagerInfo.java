@@ -107,6 +107,11 @@ public class CacheManagerInfo {
       return configurationManager.getGlobalConfiguration().transport().clusterName();
    }
 
+   public String getLocalSite() {
+      if (cacheManager.getTransport() == null) return null;
+      return cacheManager.getTransport().localSiteName();
+   }
+
    private String getLogicalAddressString() {
       return cacheManager.getAddress() == null ? "local" : cacheManager.getAddress().toString();
    }
