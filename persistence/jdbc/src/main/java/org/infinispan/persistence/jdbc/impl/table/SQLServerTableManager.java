@@ -43,6 +43,12 @@ class SQLServerTableManager extends AbstractTableManager {
    }
 
    @Override
+   protected String initSelectOnlyExpiredRowsSql() {
+      String loadAll = String.format("%s WITH (UPDLOCK)", getLoadAllRowsSql());
+      return String.format("%1$s WHERE %2$s < ? AND %2$s > 0", loadAll, config.timestampColumnName());
+   }
+
+   @Override
    public boolean isStringEncodingRequired() {
       return metaData.getMajorVersion() <= 13;
    }
