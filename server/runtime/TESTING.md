@@ -125,6 +125,8 @@ The following is a list of properties which affect the build:
 * `org.infinispan.test.server.container.baseImageName` the base image to use for the server. Defaults to `jboss/base-jdk:11`.
 * `org.infinispan.test.server.container.usePrebuiltServer` whether to use a prebuilt server from the supplied image above.
 * `org.infinispan.test.server.container.preserveImage` whether to preserve the created image after the test has run.
+* `org.infinispan.test.server.container.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `CONTAINER` driver.
+* `org.infinispan.test.server.embedded.timeoutSeconds` the amount of time in seconds to wait for a server start/stop operation when using the `EMBEDDED` driver.
 * `org.infinispan.test.server.driver`  the driver to use, `EMBEDDED` or `CONTAINER`. Defaults to the `EMBEDDED` driver.
 * `org.infinispan.test.server.extension.libs` locates artifact defined by G:A:V, you can pass a list of libraries (comma separeted) to be copied to the server. Only needed for container mode.
 * `org.infinispan.test.server.jdbc.databases` database name to be used during persistence tests.

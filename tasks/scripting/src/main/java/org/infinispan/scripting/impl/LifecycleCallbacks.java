@@ -49,6 +49,12 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    }
 
    @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      ScriptingManagerImpl scriptingManager = (ScriptingManagerImpl) gcr.getComponent(ScriptingManager.class);
+      scriptingManager.getScriptCache();
+   }
+
+   @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
       if (SCRIPT_CACHE.equals(cacheName)) {
          BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);

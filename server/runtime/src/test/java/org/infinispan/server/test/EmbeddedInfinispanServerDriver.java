@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.management.MBeanServerConnection;
@@ -28,6 +29,7 @@ import org.infinispan.test.TestingUtil;
  **/
 public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    public static final int OFFSET_FACTOR = 100;
+   private static final int TIMEOUT_SECONDS = Integer.getInteger("org.infinispan.test.server.embedded.timeoutSeconds", 30);
    List<Server> servers;
    List<CompletableFuture<ExitStatus>> serverFutures;
 
@@ -55,7 +57,7 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
       }
       // Ensure that the cluster has formed
       List<DefaultCacheManager> cacheManagers = servers.stream().map(server -> server.getCacheManagers().values().iterator().next()).collect(Collectors.toList());
-      TestingUtil.blockUntilViewsReceived(30_000, cacheManagers.toArray(new CacheContainer[]{}));
+      TestingUtil.blockUntilViewsReceived(TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS), cacheManagers.toArray(new CacheContainer[]{}));
    }
 
    @Override
@@ -134,5 +136,10 @@ public class EmbeddedInfinispanServerDriver extends InfinispanServerDriver {
    @Override
    public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
       return new RemoteCacheManager(builder.build());
+   }
+
+   @Override
+   public int getTimeout() {
+      return TIMEOUT_SECONDS;
    }
 }

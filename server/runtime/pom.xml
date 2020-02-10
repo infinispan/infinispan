@@ -217,6 +217,22 @@
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default-testCompile</id>
+                  <!-- The JDK 11 symbol file erroneously doesn't include com.sun.security.auth.module.UnixSystem for JDK 8 -->
+                  <configuration combine.self="override">
+                     <encoding>UTF-8</encoding>
+                     <source>1.8</source>
+                     <target>1.8</target>
+                     <parameters>true</parameters>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
                <execution>
