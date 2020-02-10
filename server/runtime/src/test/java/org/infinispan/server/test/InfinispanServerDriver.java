@@ -135,8 +135,10 @@ public abstract class InfinispanServerDriver {
             Server.DEFAULT_SERVER_LIB)
       ) {
          File d = new File(rootDir, dir);
-         if (!d.mkdirs()) {
-            throw new IllegalStateException("Unable to create directory " + d);
+         if (!d.exists()) {
+            if (!d.mkdirs()) {
+               throw new IllegalStateException("Unable to create directory " + d);
+            }
          }
          if (consumer != null) {
             consumer.accept(d, dir);
@@ -377,4 +379,12 @@ public abstract class InfinispanServerDriver {
     * @return a String snapshot of a container's entire log output
     */
    public abstract String getLog(int server);
+
+   /**
+    * Returns the amount of time in seconds that we should wait for a server start/stop operation.
+    * This may vary depending on the type of driver (embedded, container)
+    *
+    * @return the number of seconds after which a server start/stop is considered to timeout
+    */
+   public abstract int getTimeout();
 }
