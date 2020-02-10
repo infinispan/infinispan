@@ -37,7 +37,7 @@ public class GracefulShutdownRestartIT {
    @Test
    public void testGracefulShutdownRestart() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
       RemoteCache<Object, Object> hotRod = SERVER_TEST.hotrod().withServerConfiguration(builder).create();
 
       for (int i = 0; i < 100; i++) {
@@ -50,7 +50,7 @@ public class GracefulShutdownRestartIT {
       Eventually.eventually(
             "Cluster did not shutdown within timeout",
             () -> (!serverDriver.isRunning(0) && !serverDriver.isRunning(1)),
-            10, 1, TimeUnit.SECONDS);
+            serverDriver.getTimeout(), 1, TimeUnit.SECONDS);
 
       serverDriver.restartCluster();
 
