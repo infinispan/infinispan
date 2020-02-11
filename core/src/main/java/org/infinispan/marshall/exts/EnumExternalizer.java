@@ -9,7 +9,6 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.xsite.BackupSender;
-import org.infinispan.xsite.XSiteAdminCommand;
 
 /**
  * An externalizer for internal enum types.
@@ -25,9 +24,7 @@ public class EnumExternalizer implements AdvancedExternalizer<Enum<?>> {
    public Set<Class<? extends Enum<?>>> getTypeClasses() {
       return Util.asSet(
             BackupSender.BringSiteOnlineResponse.class,
-            BackupSender.TakeSiteOfflineResponse.class,
-            XSiteAdminCommand.AdminOperation.class,
-            XSiteAdminCommand.Status.class
+            BackupSender.TakeSiteOfflineResponse.class
       );
    }
 

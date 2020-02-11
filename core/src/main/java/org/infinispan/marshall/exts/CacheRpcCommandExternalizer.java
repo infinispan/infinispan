@@ -53,7 +53,11 @@ import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
-import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStatusCommand;
+import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
@@ -77,28 +81,30 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(LockControlCommand.class,
-               StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
-               SingleRpcCommand.class, CommitCommand.class,
-               PrepareCommand.class, RollbackCommand.class,
-               TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
-               GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
-               VersionedPrepareCommand.class, CreateCacheCommand.class,
-               VersionedCommitCommand.class, XSiteAdminCommand.class, TotalOrderNonVersionedPrepareCommand.class,
-               TotalOrderVersionedPrepareCommand.class, TotalOrderCommitCommand.class,
-               TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
-               XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
-               ClusteredGetAllCommand.class, TouchCommand.class,
-               StreamRequestCommand.class, StreamResponseCommand.class,
-               SingleKeyBackupWriteCommand.class,
-               SingleKeyFunctionalBackupWriteCommand.class,
-               PutMapBackupWriteCommand.class,
-               MultiEntriesFunctionalBackupWriteCommand.class,
-               MultiKeyFunctionalBackupWriteCommand.class,
-               InvalidateVersionsCommand.class, StreamIteratorRequestCommand.class,
-               StreamIteratorNextCommand.class, StreamIteratorCloseCommand.class,
-               RevokeBiasCommand.class, RenewBiasCommand.class, ReductionPublisherRequestCommand.class,
-               MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
-            CancelPublisherCommand.class, CheckTransactionRpcCommand.class);
+            StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
+            SingleRpcCommand.class, CommitCommand.class,
+            PrepareCommand.class, RollbackCommand.class,
+            TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
+            GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
+            VersionedPrepareCommand.class, CreateCacheCommand.class,
+            VersionedCommitCommand.class, TotalOrderNonVersionedPrepareCommand.class,
+            TotalOrderVersionedPrepareCommand.class, TotalOrderCommitCommand.class,
+            TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
+            XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
+            ClusteredGetAllCommand.class, TouchCommand.class,
+            StreamRequestCommand.class, StreamResponseCommand.class,
+            SingleKeyBackupWriteCommand.class,
+            SingleKeyFunctionalBackupWriteCommand.class,
+            PutMapBackupWriteCommand.class,
+            MultiEntriesFunctionalBackupWriteCommand.class,
+            MultiKeyFunctionalBackupWriteCommand.class,
+            InvalidateVersionsCommand.class, StreamIteratorRequestCommand.class,
+            StreamIteratorNextCommand.class, StreamIteratorCloseCommand.class,
+            RevokeBiasCommand.class, RenewBiasCommand.class, ReductionPublisherRequestCommand.class,
+            MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
+            CancelPublisherCommand.class, CheckTransactionRpcCommand.class,
+            XSiteAmendOfflineStatusCommand.class, XSiteBringOnlineCommand.class, XSiteOfflineStatusCommand.class,
+            XSiteStatusCommand.class, XSiteTakeOfflineCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

@@ -1,6 +1,5 @@
 package org.infinispan.commands;
 
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 import java.util.Collection;
@@ -104,7 +103,11 @@ import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
-import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStatusCommand;
+import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
@@ -487,12 +490,15 @@ public interface CommandsFactory {
     */
    XSiteStateTransferControlCommand buildXSiteStateTransferControlCommand(StateTransferControl control, String siteName);
 
-   /**
-    * Builds XSiteAdminCommand used to perform system administrator operations.
-    *
-    * @return the XSiteAdminCommand created
-    */
-   XSiteAdminCommand buildXSiteAdminCommand(String siteName, AdminOperation op, Integer afterFailures, Long minTimeToWait);
+   XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait);
+
+   XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName);
+
+   XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName);
+
+   XSiteStatusCommand buildXSiteStatusCommand();
+
+   XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName);
 
    /**
     * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.

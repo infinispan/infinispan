@@ -1,6 +1,5 @@
 package org.infinispan.util.mocks;
 
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 import java.util.ArrayList;
@@ -111,7 +110,11 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
-import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStatusCommand;
+import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
@@ -383,9 +386,28 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteAdminCommand buildXSiteAdminCommand(String siteName, AdminOperation op, Integer afterFailures,
-                                                   Long minTimeToWait) {
-      return actual.buildXSiteAdminCommand(siteName, op, afterFailures, minTimeToWait);
+   public XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait) {
+      return actual.buildXSiteAmendOfflineStatusCommand(siteName, afterFailures, minTimeToWait);
+   }
+
+   @Override
+   public XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName) {
+      return actual.buildXSiteBringOnlineCommand(siteName);
+   }
+
+   @Override
+   public XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName) {
+      return actual.buildXSiteOfflineStatusCommand(siteName);
+   }
+
+   @Override
+   public XSiteStatusCommand buildXSiteStatusCommand() {
+      return actual.buildXSiteStatusCommand();
+   }
+
+   @Override
+   public XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName) {
+      return actual.buildXSiteTakeOfflineCommand(siteName);
    }
 
    @Override
