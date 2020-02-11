@@ -24,6 +24,9 @@ import org.jgroups.util.StackType;
  * @since 10.0
  **/
 public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigurator {
+
+   private static final String PROTOCOL_PREFIX = "org.jgroups.protocols.";
+
    private final String name;
    final List<ProtocolConfiguration> stack;
    final Map<String, JGroupsChannelConfigurator> remoteSites;
@@ -63,7 +66,7 @@ public class EmbeddedJGroupsChannelConfigurator implements JGroupsChannelConfigu
       for(ProtocolConfiguration c : stack) {
          Protocol protocol;
          try {
-            String className = ProtocolConfiguration.protocol_prefix + "." + c.getProtocolName();
+            String className = PROTOCOL_PREFIX + c.getProtocolName();
             protocol = Util.getInstanceStrict(className, this.getClass().getClassLoader());
          } catch (ClassNotFoundException e) {
             protocol = Util.getInstanceStrict(c.getProtocolName(), this.getClass().getClassLoader());
