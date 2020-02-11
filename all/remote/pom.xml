@@ -303,6 +303,7 @@
                            !org.eclipse.jetty.*,
                            !sun.security.*,
                            !com.oracle.svm.core.annotate.*,
+                           !reactor.blockhound.*,
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
