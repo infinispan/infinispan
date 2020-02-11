@@ -58,7 +58,7 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    @Override
    public boolean touchKey(Object key, long currentTimeMillis) {
       // OFF HEAP does not support max idle in this version - just say it wasn't touched
-      return false;
+      return true;
    }
 
    /**

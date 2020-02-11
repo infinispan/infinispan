@@ -2,22 +2,21 @@ package org.infinispan.configuration;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
-import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.PeekableTouchableContainerMap;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -27,8 +26,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "config.DataContainerTest", groups = "functional")
 public class DataContainerTest extends AbstractInfinispanTest {
@@ -144,7 +141,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
 
    @Test
    public void testInternalDataContainer() {
-      DefaultSegmentedDataContainer container = new DefaultSegmentedDataContainer((Supplier<ConcurrentMap>) ConcurrentHashMap::new, 1);
+      DefaultSegmentedDataContainer<Object, Object> container = new DefaultSegmentedDataContainer<>(PeekableTouchableContainerMap::new, 1);
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.dataContainer().dataContainer(container);
 

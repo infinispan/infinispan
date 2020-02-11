@@ -2,9 +2,7 @@ package org.infinispan.container.offheap;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -84,9 +82,9 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
       byte[] value3 = randomBytes(VALUE_SIZE);
       assertNull(map.put(key, value));
       byte[] prev = map.put(key, value2);
-      assertTrue(Arrays.equals(prev, value));
-      assertTrue(Arrays.equals(value2, map.put(key, value3)));
-      assertTrue(Arrays.equals(value3, map.get(key)));
+      assertEquals(prev, value);
+      assertEquals(value2, map.put(key, value3));
+      assertEquals(value3, map.get(key));
    }
 
    public void testClear() {

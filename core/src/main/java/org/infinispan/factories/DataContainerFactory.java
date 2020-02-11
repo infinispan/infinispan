@@ -1,19 +1,22 @@
 package org.infinispan.factories;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.BoundedSegmentedDataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.container.impl.L1SegmentedDataContainer;
+import org.infinispan.container.impl.PeekableTouchableContainerMap;
+import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.OffHeapDataContainer;
@@ -65,7 +68,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                int addressCount = memoryConfiguration.addressCount();
                if (shouldSegment) {
                   int segments = clusteringConfiguration.hash().numSegments();
-                  Supplier mapSupplier = () -> createAndStartOffHeapConcurrentMap(addressCount, segments);
+                  Supplier<PeekableTouchableMap<WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>>>
+                        mapSupplier = () -> createAndStartOffHeapConcurrentMap(addressCount, segments);
                   if (clusteringConfiguration.l1().enabled()) {
                      return new L1SegmentedDataContainer<>(mapSupplier, segments);
                   }
@@ -74,7 +78,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                   return new OffHeapDataContainer(addressCount);
                }
             } else if (shouldSegment) {
-               Supplier mapSupplier = ConcurrentHashMap::new;
+               Supplier<PeekableTouchableMap<Object, InternalCacheEntry<Object, Object>>> mapSupplier =
+                     PeekableTouchableContainerMap::new;
                int segments = clusteringConfiguration.hash().numSegments();
                if (clusteringConfiguration.l1().enabled()) {
                   return new L1SegmentedDataContainer<>(mapSupplier, segments);
