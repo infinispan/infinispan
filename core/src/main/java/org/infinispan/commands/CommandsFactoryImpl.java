@@ -1,6 +1,5 @@
 package org.infinispan.commands;
 
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 import java.util.Collection;
@@ -129,7 +128,11 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
-import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStatusCommand;
+import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
@@ -392,9 +395,28 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public XSiteAdminCommand buildXSiteAdminCommand(String siteName, AdminOperation op, Integer afterFailures,
-                                                   Long minTimeToWait) {
-      return new XSiteAdminCommand(cacheName, siteName, op, afterFailures, minTimeToWait);
+   public XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait) {
+      return new XSiteAmendOfflineStatusCommand(cacheName, siteName, afterFailures, minTimeToWait);
+   }
+
+   @Override
+   public XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName) {
+      return new XSiteBringOnlineCommand(cacheName, siteName);
+   }
+
+   @Override
+   public XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName) {
+      return new XSiteOfflineStatusCommand(cacheName, siteName);
+   }
+
+   @Override
+   public XSiteStatusCommand buildXSiteStatusCommand() {
+      return new XSiteStatusCommand(cacheName);
+   }
+
+   @Override
+   public XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName) {
+      return new XSiteTakeOfflineCommand(cacheName, siteName);
    }
 
    @Override

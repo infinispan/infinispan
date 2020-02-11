@@ -1,11 +1,5 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.AMEND_TAKE_OFFLINE;
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.BRING_ONLINE;
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.SITE_STATUS;
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.STATUS;
-import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation.TAKE_OFFLINE;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,6 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -77,7 +72,7 @@ public class XSiteAdminOperations {
 
    public Map<String, SiteStatus> clusterStatus() {
       Map<String, Boolean> localNodeStatus = backupSender.status();
-      XSiteAdminCommand command = newStatusCommand();
+      CacheRpcCommand command = commandsFactory.buildXSiteStatusCommand();
       XSiteResponse<Map<String, Boolean>> response = invokeOnAll(command,
             new PerSiteBooleanResponseCollector(clusterSize()));
       if (response.hasErrors()) {
@@ -144,29 +139,13 @@ public class XSiteAdminOperations {
          throw new IllegalArgumentException("Incorrect site name: " + site);
       }
 
-      XSiteAdminCommand command = newAdminCommand(SITE_STATUS, site);
-      XSiteResponse<XSiteAdminCommand.Status> response = invokeOnAll(command,
-            new XSiteStatusResponseCollector(clusterSize()));
+      CacheRpcCommand command = commandsFactory.buildXSiteOfflineStatusCommand(site);
+      XSiteResponse<Boolean> response = invokeOnAll(command, new XSiteStatusResponseCollector(clusterSize()));
       Map<Address, String> statusMap = new HashMap<>();
 
       response.forEachError(address -> statusMap.put(address, FAILED));
-      response.forEach((address, status) -> {
-         switch (status) {
-            case OFFLINE:
-               statusMap.put(address, OFFLINE);
-               break;
-            case ONLINE:
-               statusMap.put(address, ONLINE);
-               break;
-         }
-      });
-
-      if (offlineStatus.isOffline()) {
-         statusMap.put(rpcManager.getAddress(), OFFLINE);
-      } else {
-         statusMap.put(rpcManager.getAddress(), ONLINE);
-      }
-
+      response.forEach((address, offline) -> statusMap.put(address, offline ? OFFLINE : ONLINE));
+      statusMap.put(rpcManager.getAddress(), offlineStatus.isOffline() ? OFFLINE : ONLINE);
       return statusMap;
    }
 
@@ -186,7 +165,7 @@ public class XSiteAdminOperations {
       backupSender.takeSiteOffline(site);
       log.tracef("Is site offline in node %s? %s", rpcManager.getAddress(), offlineStatus.isOffline());
 
-      XSiteAdminCommand command = newAdminCommand(TAKE_OFFLINE, site);
+      CacheRpcCommand command = commandsFactory.buildXSiteTakeOfflineCommand(site);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       String prefix = "Could not take the site offline on nodes:";
@@ -245,7 +224,7 @@ public class XSiteAdminOperations {
          return "Incorrect site name: " + site;
       backupSender.bringSiteOnline(site);
 
-      XSiteAdminCommand command = newAdminCommand(BRING_ONLINE, site);
+      CacheRpcCommand command = commandsFactory.buildXSiteBringOnlineCommand(site);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       return returnFailureOrSuccess(response.getErrors(), "Could not take the site online on nodes:");
@@ -338,7 +317,7 @@ public class XSiteAdminOperations {
       if (offlineStatus == null)
          return incorrectSiteName(site);
 
-      XSiteAdminCommand command = newAmendTakeOfflineCommand(site, afterFailures, minTimeToWait);
+      CacheRpcCommand command = commandsFactory.buildXSiteAmendOfflineStatusCommand(site, afterFailures, minTimeToWait);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       //also amend locally
@@ -362,7 +341,7 @@ public class XSiteAdminOperations {
       return "Incorrect site name: " + site;
    }
 
-   private <T> XSiteResponse<T> invokeOnAll(XSiteAdminCommand command, BaseResponseCollector<T> responseCollector) {
+   private <T> XSiteResponse<T> invokeOnAll(CacheRpcCommand command, BaseResponseCollector<T> responseCollector) {
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
       CompletionStage<XSiteResponse<T>> rsp = rpcManager.invokeCommandOnAll(command, responseCollector, rpcOptions);
       return rpcManager.blocking(rsp);
@@ -370,18 +349,6 @@ public class XSiteAdminOperations {
 
    private int clusterSize() {
       return rpcManager.getTransport().getMembers().size();
-   }
-
-   private XSiteAdminCommand newStatusCommand() {
-      return commandsFactory.buildXSiteAdminCommand(null, STATUS, null, null);
-   }
-
-   private XSiteAdminCommand newAdminCommand(XSiteAdminCommand.AdminOperation operation, String siteName) {
-      return commandsFactory.buildXSiteAdminCommand(siteName, operation, null, null);
-   }
-
-   private XSiteAdminCommand newAmendTakeOfflineCommand(String siteName, Integer afterFailures, Long minTimeToWait) {
-      return commandsFactory.buildXSiteAdminCommand(siteName, AMEND_TAKE_OFFLINE, afterFailures, minTimeToWait);
    }
 
    private interface Operation {
@@ -462,7 +429,7 @@ public class XSiteAdminOperations {
       }
    }
 
-   private static class XSiteStatusResponseCollector extends BaseResponseCollector<XSiteAdminCommand.Status> {
+   private static class XSiteStatusResponseCollector extends BaseResponseCollector<Boolean> {
 
       private XSiteStatusResponseCollector(int expectedSize) {
          super(expectedSize);
@@ -471,8 +438,8 @@ public class XSiteAdminOperations {
       @Override
       void storeResponse(Address sender, ValidResponse response) {
          Object value = response.getResponseValue();
-         assert value instanceof XSiteAdminCommand.Status;
-         okResponses.put(sender, (XSiteAdminCommand.Status) value);
+         assert value instanceof Boolean;
+         okResponses.put(sender, (Boolean) value);
       }
    }
 

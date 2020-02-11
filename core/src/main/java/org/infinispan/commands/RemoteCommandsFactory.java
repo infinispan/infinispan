@@ -83,7 +83,11 @@ import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
-import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStatusCommand;
+import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
@@ -287,8 +291,20 @@ public class RemoteCommandsFactory {
             case CreateCacheCommand.COMMAND_ID:
                command = new CreateCacheCommand(cacheName);
                break;
-            case XSiteAdminCommand.COMMAND_ID:
-               command = new XSiteAdminCommand(cacheName);
+            case XSiteAmendOfflineStatusCommand.COMMAND_ID:
+               command = new XSiteAmendOfflineStatusCommand(cacheName);
+               break;
+            case XSiteBringOnlineCommand.COMMAND_ID:
+               command = new XSiteBringOnlineCommand(cacheName);
+               break;
+            case XSiteOfflineStatusCommand.COMMAND_ID:
+               command = new XSiteOfflineStatusCommand(cacheName);
+               break;
+            case XSiteStatusCommand.COMMAND_ID:
+               command = new XSiteStatusCommand(cacheName);
+               break;
+            case XSiteTakeOfflineCommand.COMMAND_ID:
+               command = new XSiteTakeOfflineCommand(cacheName);
                break;
             case XSiteStateTransferControlCommand.COMMAND_ID:
                command = new XSiteStateTransferControlCommand(cacheName);
