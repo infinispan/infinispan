@@ -37,6 +37,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -116,6 +117,11 @@ public class Server implements ServerManagement, AutoCloseable {
     * <i>log</i> directory under the server root.
     */
    public static final String INFINISPAN_SERVER_LOG_PATH = "infinispan.server.log.path";
+   /**
+    * Property name indicating the path to the schemas directory of a server instance. If unspecified, defaults to the
+    * <i>schema</i> directory under the server root.
+    */
+   public static final String INFINISPAN_SERVER_SCHEMAS_PATH = "infinispan.server.schemas.path";
 
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
@@ -125,6 +131,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String DEFAULT_SERVER_LIB = "lib";
    public static final String DEFAULT_SERVER_LOG = "log";
    public static final String DEFAULT_SERVER_ROOT_DIR = "server";
+   public static final String DEFAULT_SERVER_SCHEMAS = "schemas";
    public static final String DEFAULT_SERVER_STATIC_DIR = "static";
    public static final String DEFAULT_CONFIGURATION_FILE = "infinispan.xml";
    public static final String DEFAULT_LOGGING_FILE = "log4j2.xml";
@@ -192,6 +199,7 @@ public class Server implements ServerManagement, AutoCloseable {
       properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_DATA_PATH, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
+      properties.putIfAbsent(INFINISPAN_SERVER_SCHEMAS_PATH, new File(serverRoot, DEFAULT_SERVER_SCHEMAS).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_BIND_PORT, DEFAULT_BIND_PORT);
       properties.putIfAbsent(INFINISPAN_CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
       properties.putIfAbsent(INFINISPAN_CLUSTER_STACK, DEFAULT_CLUSTER_STACK);
@@ -282,6 +290,9 @@ public class Server implements ServerManagement, AutoCloseable {
          cacheManagers.put(cm.getName(), cm);
          SecurityActions.startCacheManager(cm);
          cacheIgnoreManager = new CacheIgnoreManager(cm);
+
+         // Load the schema
+         extensions.loadSchemas(properties.getProperty(INFINISPAN_SERVER_SCHEMAS_PATH), SecurityActions.getGlobalComponentRegistry(cm).getComponent(ProtobufMetadataManager.class));
 
          // Register the task manager
          TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cm).getComponent(TaskManager.class);

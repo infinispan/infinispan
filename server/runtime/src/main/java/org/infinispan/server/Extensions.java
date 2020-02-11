@@ -1,8 +1,14 @@
 package org.infinispan.server;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Driver;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptEngineFactory;
 
@@ -13,6 +19,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.tasks.ServerTaskEngine;
 import org.infinispan.server.tasks.ServerTaskWrapper;
@@ -85,5 +92,17 @@ public class Extensions {
 
    public TaskEngine getServerTaskEngine(EmbeddedCacheManager cm) {
       return new ServerTaskEngine(cm, serverTasks);
+   }
+
+   public void loadSchemas(String path, ProtobufMetadataManager protobufMetadataManager) throws Exception {
+      Path schemaPath = Paths.get(path);
+      if (schemaPath.toFile().exists()) {
+         List<Path> schemas = Files.walk(schemaPath)
+               .filter(f -> f.toString().endsWith(".proto"))
+               .collect(Collectors.toList());
+         for (Path schema : schemas) {
+            protobufMetadataManager.registerProtofile(schema.toString(), new String(Files.readAllBytes(schema)));
+         }
+      }
    }
 }
