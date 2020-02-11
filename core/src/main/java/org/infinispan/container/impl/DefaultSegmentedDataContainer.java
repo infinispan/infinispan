@@ -234,11 +234,11 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    private void startNewMap(int segment) {
       if (maps.get(segment) == null) {
-         PeekableTouchableContainerMap<K, V> newMap = new PeekableTouchableContainerMap<>(mapSupplier.get());
+         PeekableTouchableMap<K, InternalCacheEntry<K, V>> newMap = mapSupplier.get();
          // Just in case of concurrent starts - this shouldn't be possible
-         if (!maps.compareAndSet(segment, null, newMap) && newMap.delegate() instanceof AutoCloseable) {
+         if (!maps.compareAndSet(segment, null, newMap) && newMap instanceof AutoCloseable) {
             try {
-               ((AutoCloseable) newMap.delegate()).close();
+               ((AutoCloseable) newMap).close();
             } catch (Exception e) {
                throw new CacheException(e);
             }
