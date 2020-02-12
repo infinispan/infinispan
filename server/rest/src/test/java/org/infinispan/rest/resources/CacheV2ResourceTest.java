@@ -16,6 +16,8 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -104,6 +106,39 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
       response = client.newRequest(urlWithoutCM + "/key").method(HttpMethod.GET).send();
       ResponseAssertion.assertThat(response).isNotFound();
+   }
+
+   @Test
+   public void testCreateCacheEncodedName() throws Exception {
+      testCreateAndUseCache("a/");
+      testCreateAndUseCache("a/b/c");
+      testCreateAndUseCache("a-b-c");
+      testCreateAndUseCache("áb\\ćé/+-$");
+      testCreateAndUseCache("org.infinispan.cache");
+   }
+
+   private void testCreateAndUseCache(String name) throws Exception {
+      String baseURL = String.format("http://localhost:%d/rest/v2/caches/", restServer().getPort());
+      String cacheName = URLEncoder.encode(name, "UTF-8");
+      String url = baseURL + cacheName;
+      String cacheConfig = "{\"distributed-cache\":{\"mode\":\"SYNC\"}}";
+
+      ContentResponse response = client.newRequest(url)
+            .method(HttpMethod.POST)
+            .header("Content-type", APPLICATION_JSON_TYPE)
+            .content(new StringContentProvider(cacheConfig))
+            .send();
+
+      ResponseAssertion.assertThat(response).isOk();
+
+      ContentResponse sizeResponse = client.newRequest(url + "?action=size").send();
+      ResponseAssertion.assertThat(sizeResponse).isOk();
+      ResponseAssertion.assertThat(sizeResponse).containsReturnedText("0");
+
+      ContentResponse namesResponse = client.newRequest(baseURL).send();
+      ResponseAssertion.assertThat(namesResponse).isOk();
+      List<String> names = Arrays.asList(new ObjectMapper().readValue(namesResponse.getContentAsString(), String[].class));
+      assertTrue(names.contains(name));
    }
 
    @Test
@@ -318,7 +353,7 @@ public class CacheV2ResourceTest extends AbstractRestResourceTest {
       assertEquals(200, checkCache("indexedCache"));
    }
 
-   private int checkCache(String name)  throws Exception {
+   private int checkCache(String name) throws Exception {
       String url = String.format("http://localhost:%d/rest/v2/caches/%s", restServer().getPort(), name);
       ContentResponse response = client.newRequest(url).method(HEAD).send();
       return response.getStatus();
