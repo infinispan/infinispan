@@ -32,6 +32,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.management.ObjectName;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -54,6 +56,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
+import org.infinispan.jmx.ObjectNameKeys;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -540,8 +543,8 @@ public class JGroupsTransport implements Transport {
          // when first cache starts, so it's safer to do it here.
          globalStatsEnabled = configuration.statistics();
          if (globalStatsEnabled) {
-            // TODO Use the overloaded variant when available: https://issues.jboss.org/browse/JGRP-2394
-            JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName, true);
+            ObjectName namePrefix = new ObjectName(jmxRegistration.getDomain() + ":" + ObjectNameKeys.MANAGER + "=" + ObjectName.quote(configuration.cacheManagerName()));
+            JmxConfigurator.registerChannel(channel, jmxRegistration.getMBeanServer(), namePrefix, clusterName, true);
          }
       } catch (Exception e) {
          throw new CacheException("Channel connected, but unable to register MBeans", e);
@@ -812,7 +815,8 @@ public class JGroupsTransport implements Transport {
    // This needs to stay as a separate method to allow for substitution for Substrate
    private void unregisterMBeansIfNeeded(String clusterName) throws Exception {
       if (globalStatsEnabled && channel != null) {
-         JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), jmxRegistration.getDomain(), clusterName);
+         ObjectName namePrefix = new ObjectName(jmxRegistration.getDomain() + ":" + ObjectNameKeys.MANAGER + "=" + ObjectName.quote(configuration.cacheManagerName()));
+         JmxConfigurator.unregisterChannel(channel, jmxRegistration.getMBeanServer(), namePrefix, clusterName);
       }
    }
 
