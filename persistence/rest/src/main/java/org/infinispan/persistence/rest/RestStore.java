@@ -9,8 +9,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import org.apache.commons.codec.EncoderException;
-import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
@@ -67,7 +65,6 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private InternalEntryFactory iceFactory;
    private MarshallingTwoWayKey2StringMapper key2StringMapper;
    private MetadataHelper metadataHelper;
-   private final URLCodec urlCodec = new URLCodec();
    private InitializationContext ctx;
    private Marshaller marshaller;
    private MarshallableEntryFactory<K, V> entryFactory;
@@ -133,14 +130,10 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    private String encodeKey(Object key) {
-      try {
-         return urlCodec.encode(key2StringMapper.getStringMapping(key));
-      } catch (EncoderException e) {
-         throw new PersistenceException(e);
-      }
+      return key2StringMapper.getStringMapping(key);
    }
 
-   private byte[] marshall(String contentType, MarshallableEntry entry) {
+   private byte[] marshall(String contentType, MarshallableEntry<?, ?> entry) {
       if (configuration.rawValues()) {
          return (byte[]) entry.getValue();
       } else {
@@ -168,7 +161,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void write(MarshallableEntry entry) {
+   public void write(MarshallableEntry<? extends K, ? extends V> entry) {
       try {
          String contentType = metadataHelper.getContentType(entry);
          String key = encodeKey(entry.getKey());
@@ -226,10 +219,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    private MarshallableEntry<K, V> load(Object key, boolean fetchValue, boolean fetchMetadata) {
-      RestResponse response = null;
-      try {
-         response = CompletionStages.join(cacheClient.get(encodeKey(key)));
-
+      try (RestResponse response = CompletionStages.join(cacheClient.get(encodeKey(key)))) {
          if (isSuccessful(response.getStatus())) {
             String contentType = getHeader("Content-Type", response);
             Metadata metadata;
@@ -264,12 +254,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          throw log.httpError(e);
       } catch (Exception e) {
          throw new PersistenceException(e);
-      } finally {
-         if(response != null) {
-            response.close();
-         }
       }
-
    }
 
    private long timeoutToSeconds(long timeout) {
@@ -312,7 +297,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void purge(Executor executor, PurgeListener purgeListener) {
+   public void purge(Executor executor, PurgeListener<? super K> purgeListener) {
       // This should be handled by the remote server
    }
 

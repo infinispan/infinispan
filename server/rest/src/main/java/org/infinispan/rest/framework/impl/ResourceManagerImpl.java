@@ -14,6 +14,8 @@ import org.infinispan.rest.framework.ResourceManager;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.netty.handler.codec.http.QueryStringDecoder;
+
 /**
  * @since 10.0
  */
@@ -51,7 +53,7 @@ public class ResourceManagerImpl implements ResourceManager {
    @Override
    public LookupResult lookupResource(Method method, String path, String action) {
       List<PathItem> pathItems = Arrays.stream(path.replaceAll("//+", "/").split("/"))
-            .map(s -> s.isEmpty() ? "/" : s).map(PathItem::fromString).collect(Collectors.toList());
+            .map(s -> s.isEmpty() ? "/" : s).map(QueryStringDecoder::decodeComponent).map(PathItem::fromString).collect(Collectors.toList());
       return resourceTree.find(method, pathItems, action);
    }
 
