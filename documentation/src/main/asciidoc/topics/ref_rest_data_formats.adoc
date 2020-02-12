@@ -64,6 +64,14 @@ will cause {brandname} to try first to return content in JSON format (higher pri
 to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
 suitable for displaying automatically based on the cache configuration.
 
+[id='rest_encoded_names']
+== Names with special chars
+
+The creation of any REST resource requires a name that is part of the URL,
+and in case this name contains any special characters as defined in
+link:https://tools.ietf.org/html/rfc3986#section-2.2[Section 2.2 of the RFC 3986 spec],
+it is necessary to encode it with the link:https://en.wikipedia.org/wiki/Percent-encoding[Percent encoding] mechanism.
+
 [id='rest_key_content_type']
 == Key-Content-Type Headers
 

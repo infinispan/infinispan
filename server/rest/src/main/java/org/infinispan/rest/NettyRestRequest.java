@@ -1,9 +1,5 @@
 package org.infinispan.rest;
 
-import static java.net.URLDecoder.decode;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -53,13 +49,27 @@ public class NettyRestRequest implements RestRequest {
    private Subject subject;
    private Map<String, String> variables;
 
-   NettyRestRequest(FullHttpRequest request) throws UnsupportedEncodingException, IllegalArgumentException {
+   private String getPath(String uri) {
+      int lastSeparatorIdx = -1;
+      int paramsSeparatorIdx = -1;
+      for (int i = 0; i < uri.length(); i++) {
+         char c = uri.charAt(i);
+         if (c == '/') lastSeparatorIdx = i;
+         if (c == '?') paramsSeparatorIdx = i;
+      }
+      String baseURI = uri.substring(0, lastSeparatorIdx);
+      String resourceName = uri.substring(lastSeparatorIdx + 1, paramsSeparatorIdx != -1 ? paramsSeparatorIdx : uri.length());
+      String decodedPath = QueryStringDecoder.decodeComponent(baseURI);
+      return decodedPath + "/" + resourceName;
+   }
+
+   NettyRestRequest(FullHttpRequest request) throws IllegalArgumentException {
       this.request = request;
-      String uri = decode(request.uri(), StandardCharsets.UTF_8.name());
+      String uri = request.uri();
       QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
       this.parameters = queryStringDecoder.parameters();
-      this.path = queryStringDecoder.path();
-      this.context = getContext(path);
+      this.path = getPath(uri);
+      this.context = getContext(this.path);
       List<String> action = queryStringDecoder.parameters().get("action");
       if (action != null) {
          this.action = action.iterator().next();
