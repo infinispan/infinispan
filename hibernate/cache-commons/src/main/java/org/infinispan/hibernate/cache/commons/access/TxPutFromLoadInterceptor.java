@@ -23,14 +23,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -55,16 +52,9 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	@Inject InternalDataContainer dataContainer;
 	@Inject DistributionManager distributionManager;
 
-	private RpcOptions asyncUnordered;
-
 	public TxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;
 		this.cacheName = cacheName;
-	}
-
-	@Start
-	public void start() {
-		asyncUnordered = rpcManager.getRpcOptionsBuilder(ResponseMode.ASYNCHRONOUS, DeliverOrder.NONE).build();
 	}
 
 	private void beginInvalidating(InvocationContext ctx, Object key) {
@@ -159,7 +149,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 					GlobalTransaction globalTransaction = ctx.getGlobalTransaction();
 					EndInvalidationCommand commitCommand = new EndInvalidationCommand(cacheName, keys, globalTransaction);
 					List<Address> members = distributionManager.getCacheTopology().getMembers();
-					rpcManager.invokeRemotely(members, commitCommand, asyncUnordered);
+					rpcManager.sendToMany(members, commitCommand, DeliverOrder.NONE);
 
 					// If the transaction is not successful, *RegionAccessStrategy would not be called, therefore
 					// we have to end invalidation from here manually (in successful case as well)

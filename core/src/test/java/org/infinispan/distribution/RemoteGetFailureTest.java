@@ -34,10 +34,10 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -192,10 +192,11 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       ClusteredGetCommand clusteredGet = new ClusteredGetCommand(key, ByteString.fromString(cache(0).getName()),
             TestingUtil.getSegmentForKey(key, cache(1)), 0);
       final int timeout = 15;
-      RpcOptions rpcOptions = new RpcOptions(timeout, TimeUnit.SECONDS, null, ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
+      RpcOptions rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.SECONDS);
 
       RpcManager rpcManager = cache(0).getAdvancedCache().getRpcManager();
-      CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(owners, clusteredGet, rpcOptions);
+      clusteredGet.setTopologyId(rpcManager.getTopologyId());
+      CompletableFuture<Map<Address, Response>> future = rpcManager.invokeCommand(owners, clusteredGet, MapResponseCollector.ignoreLeavers(), rpcOptions).toCompletableFuture();
 
       assertTrue(arrival.await(10, TimeUnit.SECONDS));
 

@@ -4,8 +4,9 @@ import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
@@ -17,19 +18,16 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -71,7 +69,16 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       ClusteredGetCommand clusteredGetCommand = commandsFactory.buildClusteredGetCommand(key,
             keyPartitioner.getSegment(key), EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK));
 
-      Collection<Response> responses = doRemoteCall(clusteredGetCommand);
+      Collection<Response> responses;
+      try {
+         clusteredGetCommand.setTopologyId(rpcManager.getTopologyId());
+         CompletionStage<Map<Address, Response>> getAll = rpcManager.invokeCommandOnAll(clusteredGetCommand,
+               MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+         responses = rpcManager.blocking(getAll).values();
+      } catch (Exception e) {
+         PERSISTENCE.errorDoingRemoteCall(e);
+         throw new PersistenceException(e);
+      }
       if (responses.isEmpty()) return null;
 
       Response response;
@@ -111,20 +118,6 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    @Override
    public void stop() {
       //nothing to do here
-   }
-
-   private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws PersistenceException {
-      Set<Address> members = new HashSet<>(rpcManager.getTransport().getMembers());
-      Address self = rpcManager.getTransport().getAddress();
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
-      try {
-         RpcOptions options = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE)
-               .timeout(configuration.remoteCallTimeout(), TimeUnit.MILLISECONDS).responseFilter(filter).build();
-         return rpcManager.invokeRemotely(null, clusteredGetCommand, options).values();
-      } catch (Exception e) {
-         PERSISTENCE.errorDoingRemoteCall(e);
-         throw new PersistenceException(e);
-      }
    }
 
    /**

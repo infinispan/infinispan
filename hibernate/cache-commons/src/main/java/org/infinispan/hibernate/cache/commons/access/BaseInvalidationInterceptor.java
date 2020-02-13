@@ -24,8 +24,6 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -46,7 +44,7 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
    void start() {
 		this.cacheName = ByteString.fromString(cache.getName());
 		this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
-		syncRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
+		syncRpcOptions = rpcManager.getSyncRpcOptions();
 	}
 
 	@ManagedOperation(

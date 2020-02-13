@@ -4,11 +4,11 @@ import static org.infinispan.util.concurrent.CompletableFutures.sequence;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -17,12 +17,13 @@ import java.util.stream.Collectors;
 
 import org.hibernate.search.exception.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 
 /**
@@ -46,7 +47,7 @@ final class ClusteredQueryInvoker {
       this.asyncExecutor = asyncExecutor;
       this.rpcManager = cache.getRpcManager();
       this.myAddress = rpcManager.getAddress();
-      this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(10000, TimeUnit.MILLISECONDS).build();
+      this.rpcOptions = new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS);
       this.partitioner = new QueryPartitioner(cache);
    }
 
@@ -68,7 +69,8 @@ final class ClusteredQueryInvoker {
             throw new SearchException("Exception while searching locally", e);
          }
       } else {
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singletonList(address), cmd, rpcOptions);
+         CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommand(address, cmd, MapResponseCollector.ignoreLeavers(), rpcOptions);
+         Map<Address, Response> responses = rpcManager.blocking(completionStage);
          List<QueryResponse> queryResponses = cast(responses);
          return queryResponses.get(0);
       }

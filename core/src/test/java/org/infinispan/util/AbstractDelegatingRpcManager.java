@@ -6,27 +6,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
-import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -93,52 +86,9 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
       return realOne.blocking(request);
    }
 
-   @Deprecated
-   @Override
-   public final CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                              ReplicableCommand command,
-                                                                              RpcOptions rpcOptions) {
-      Collection<Address> targets = recipients != null ? recipients : getTransport().getMembers();
-      setTopologyId(command);
-
-      MapResponseCollector collector =
-         MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(rpcOptions), targets.size());
-
-      if (rpcOptions.responseMode().isSynchronous()) {
-         return invokeCommand(targets, command, collector, rpcOptions).toCompletableFuture();
-      } else {
-         sendToMany(recipients, command, rpcOptions.deliverOrder());
-         return CompletableFutures.completedEmptyMap();
-      }
-   }
-
-   @Deprecated
-   @Override
-   public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand command,
-                                                      RpcOptions rpcOptions) {
-      return realOne.blocking(invokeRemotelyAsync(recipients, command, rpcOptions));
-   }
-
    private void setTopologyId(ReplicableCommand command) {
       if (command instanceof TopologyAffectedCommand && ((TopologyAffectedCommand) command).getTopologyId() < 0) {
          ((TopologyAffectedCommand) command).setTopologyId(getTopologyId());
-      }
-   }
-
-   @Deprecated
-   private boolean shouldIgnoreLeavers(RpcOptions rpcOptions) {
-      return rpcOptions.responseMode() != ResponseMode.SYNCHRONOUS;
-   }
-
-   @Override
-   public final Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
-      try {
-         rpcs.forEach((address, command) -> setTopologyId(command));
-         return CompletableFutures.await(
-            invokeCommands(rpcs.keySet(), rpcs::get, MapResponseCollector.validOnly(rpcs.size()), options)
-               .toCompletableFuture());
-      } catch (ExecutionException | InterruptedException e) {
-         throw Util.rewrapAsCacheException(e);
       }
    }
 
@@ -171,11 +121,6 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
                      realOne.sendToAll(command, deliverOrder);
                      return null;
                   });
-   }
-
-   @Override
-   public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
-      return realOne.invokeXSite(sites, command);
    }
 
    @Override
@@ -213,30 +158,6 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
       return realOne.getTotalSyncRpcOptions();
    }
 
-   @Deprecated
-   @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
-      return realOne.getRpcOptionsBuilder(responseMode);
-   }
-
-   @Deprecated
-   @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
-      return realOne.getRpcOptionsBuilder(responseMode, deliverOrder);
-   }
-
-   @Deprecated
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync) {
-      return realOne.getDefaultRpcOptions(sync);
-   }
-
-   @Deprecated
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
-      return realOne.getDefaultRpcOptions(sync, deliverOrder);
-   }
-
    /**
     * Wrap the remote invocation.
     */
@@ -257,13 +178,11 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    }
 
    private static class CommandsRequest<T> implements BiConsumer<Map<Address, Response>, Throwable> {
-      private final Collection<Address> targets;
       private final ResponseCollector<T> collector;
       CompletableFuture<T> resultFuture;
       int missingResponses;
 
       public CommandsRequest(Collection<Address> targets, ResponseCollector<T> collector) {
-         this.targets = targets;
          this.collector = collector;
          resultFuture = new CompletableFuture<>();
          missingResponses = targets.size();
