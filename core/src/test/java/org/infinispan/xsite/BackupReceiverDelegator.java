@@ -4,8 +4,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 /**
  * {@link org.infinispan.xsite.BackupReceiver} delegator. Mean to be overridden. For test purpose only!
@@ -35,8 +36,13 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStateTransferControl(XSiteStateTransferControlCommand command) {
-      return delegate.handleStateTransferControl(command);
+   public CompletionStage<Void> handleStartReceivingStateTransfer(XSiteStateTransferStartReceiveCommand command) {
+      return delegate.handleStartReceivingStateTransfer(command);
+   }
+
+   @Override
+   public CompletionStage<Void> handleEndReceivingStateTransfer(XSiteStateTransferFinishReceiveCommand command) {
+      return delegate.handleEndReceivingStateTransfer(command);
    }
 
    @Override

@@ -17,20 +17,20 @@ import org.infinispan.util.ByteString;
  */
 public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
 
-   public static final int COMMAND_ID = 40;
+   public static final byte COMMAND_ID = 40;
    private VisitableCommand command;
 
    public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
-      super(cacheName);
+      super(COMMAND_ID, cacheName);
       this.command = command;
    }
 
    public SingleXSiteRpcCommand(ByteString cacheName) {
-      super(cacheName);
+      this(cacheName, null);
    }
 
    public SingleXSiteRpcCommand() {
-      super(null);
+      this(null);
    }
 
    @Override
@@ -41,11 +41,6 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

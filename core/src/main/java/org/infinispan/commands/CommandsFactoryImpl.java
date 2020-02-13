@@ -1,7 +1,5 @@
 package org.infinispan.commands;
 
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -131,11 +129,18 @@ import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 import org.reactivestreams.Publisher;
 
 /**
@@ -389,9 +394,43 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public XSiteStateTransferControlCommand buildXSiteStateTransferControlCommand(StateTransferControl control,
-                                                                                 String siteName) {
-      return new XSiteStateTransferControlCommand(cacheName, control, siteName);
+   public XSiteStateTransferCancelSendCommand buildXSiteStateTransferCancelSendCommand(String siteName) {
+      return new XSiteStateTransferCancelSendCommand(cacheName, siteName);
+   }
+
+   @Override
+   public XSiteStateTransferClearStatusCommand buildXSiteStateTransferClearStatusCommand() {
+      return new XSiteStateTransferClearStatusCommand(cacheName);
+   }
+
+   @Override
+   public XSiteStateTransferFinishReceiveCommand buildXSiteStateTransferFinishReceiveCommand(String siteName) {
+      return new XSiteStateTransferFinishReceiveCommand(cacheName, siteName);
+   }
+
+   @Override
+   public XSiteStateTransferFinishSendCommand buildXSiteStateTransferFinishSendCommand(String siteName, boolean statusOk) {
+      return new XSiteStateTransferFinishSendCommand(cacheName, siteName, statusOk);
+   }
+
+   @Override
+   public XSiteStateTransferRestartSendingCommand buildXSiteStateTransferRestartSendingCommand(String siteName, int topologyId) {
+      return new XSiteStateTransferRestartSendingCommand(cacheName, siteName, topologyId);
+   }
+
+   @Override
+   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName) {
+      return new XSiteStateTransferStartReceiveCommand(cacheName, siteName);
+   }
+
+   @Override
+   public XSiteStateTransferStartSendCommand buildXSiteStateTransferStartSendCommand(String siteName, int topologyId) {
+      return new XSiteStateTransferStartSendCommand(cacheName, siteName, topologyId);
+   }
+
+   @Override
+   public XSiteStateTransferStatusRequestCommand buildXSiteStateTransferStatusRequestCommand() {
+      return new XSiteStateTransferStatusRequestCommand(cacheName);
    }
 
    @Override

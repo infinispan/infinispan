@@ -56,10 +56,17 @@ import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 /**
  * Externalizer in charge of marshalling cache specific commands. At read time,
@@ -90,7 +97,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             VersionedCommitCommand.class, TotalOrderNonVersionedPrepareCommand.class,
             TotalOrderVersionedPrepareCommand.class, TotalOrderCommitCommand.class,
             TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
-            XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
+            XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
             ClusteredGetAllCommand.class, TouchCommand.class,
             StreamRequestCommand.class, StreamResponseCommand.class,
             SingleKeyBackupWriteCommand.class,
@@ -104,7 +111,11 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
             CancelPublisherCommand.class, CheckTransactionRpcCommand.class,
             XSiteAmendOfflineStatusCommand.class, XSiteBringOnlineCommand.class, XSiteOfflineStatusCommand.class,
-            XSiteStatusCommand.class, XSiteTakeOfflineCommand.class);
+            XSiteStatusCommand.class, XSiteTakeOfflineCommand.class, XSiteStateTransferCancelSendCommand.class,
+            XSiteStateTransferClearStatusCommand.class, XSiteStateTransferFinishReceiveCommand.class,
+            XSiteStateTransferFinishSendCommand.class, XSiteStateTransferRestartSendingCommand.class,
+            XSiteStateTransferStartReceiveCommand.class, XSiteStateTransferStartSendCommand.class,
+            XSiteStateTransferStatusRequestCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

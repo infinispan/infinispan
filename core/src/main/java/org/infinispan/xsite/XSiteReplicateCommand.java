@@ -13,19 +13,32 @@ import org.infinispan.util.ByteString;
  */
 public abstract class XSiteReplicateCommand extends BaseRpcCommand {
 
-   private String originSite;
+   private final byte commandId;
+   protected String originSite;
 
-   protected XSiteReplicateCommand(ByteString cacheName) {
+   protected XSiteReplicateCommand(byte commandId, ByteString cacheName) {
       super(cacheName);
+      this.commandId = commandId;
    }
 
    public abstract CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder);
 
-   public String getOriginSite() {
-      return originSite;
-   }
-
    public void setOriginSite(String originSite) {
       this.originSite = originSite;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
+   }
+
+   @Override
+   public byte getCommandId() {
+      return commandId;
+   }
+
+   @Override
+   public boolean canBlock() {
+      return false;
    }
 }

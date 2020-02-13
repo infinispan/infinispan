@@ -5,11 +5,6 @@ import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRetriesPolicy;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.NO_RETRY;
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.CANCEL_SEND;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.CLEAR_STATUS;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.FINISH_RECEIVE;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.STATUS_REQUEST;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SitesConfiguration;
@@ -54,6 +50,8 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 
 /**
  * {@link org.infinispan.xsite.statetransfer.XSiteStateTransferManager} implementation.
@@ -110,8 +108,10 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       if (collector.confirmStateTransfer(node, statusOk)) {
          siteCollector.remove(siteName);
          status.put(siteName, collector.isStatusOk() ? STATUS_OK : STATUS_ERROR);
-         controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND, siteName); //to force the nodes to cleanup
-         controlStateTransferOnRemoteSite(xSiteBackup, StateTransferControl.FINISH_RECEIVE, backupRpcConfiguration(siteName));
+         CacheRpcCommand command = commandsFactory.buildXSiteStateTransferCancelSendCommand(siteName);
+         controlStateTransferOnLocalSite(command); //to force the nodes to cleanup
+         XSiteReplicateCommand remoteSiteCommand = commandsFactory.buildXSiteStateTransferFinishReceiveCommand(null);
+         controlStateTransferOnRemoteSite(xSiteBackup, remoteSiteCommand, backupRpcConfiguration(siteName));
       }
    }
 
@@ -134,10 +134,12 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       status.remove(siteName);
 
       try {
-         controlStateTransferOnRemoteSite(xSiteBackup, StateTransferControl.START_RECEIVE, null);
+         XSiteReplicateCommand remoteSiteCommand = commandsFactory.buildXSiteStateTransferStartReceiveCommand(null);
+         controlStateTransferOnRemoteSite(xSiteBackup, remoteSiteCommand, null);
          if (!stateTransferManager.isStateTransferInProgress()) {
             //only if we are in balanced cluster, we start to send the data!
-            controlStateTransferOnLocalSite(StateTransferControl.START_SEND, siteName);
+            CacheRpcCommand command = commandsFactory.buildXSiteStateTransferStartSendCommand(siteName, currentTopologyId());
+            controlStateTransferOnLocalSite(command);
          } else {
             if (debug) {
                log.debugf("Not start sending keys to site '%s' while rebalance in progress. Wait until it is finished!",
@@ -177,15 +179,17 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       if (xSiteBackup == null) {
          throw new IllegalArgumentException("Site " + siteName + " not found!");
       }
-      controlStateTransferOnLocalSite(CANCEL_SEND, siteName);
-      controlStateTransferOnRemoteSite(xSiteBackup, FINISH_RECEIVE, null);
+      CacheRpcCommand command = commandsFactory.buildXSiteStateTransferCancelSendCommand(siteName);
+      controlStateTransferOnLocalSite(command);
+      XSiteReplicateCommand remoteSiteCommand = commandsFactory.buildXSiteStateTransferFinishReceiveCommand(null);
+      controlStateTransferOnRemoteSite(xSiteBackup, remoteSiteCommand, null);
       siteCollector.remove(siteName);
       status.put(siteName, STATUS_CANCELED);
    }
 
    @Override
    public Map<String, String> getClusterStatus() {
-      XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(STATUS_REQUEST, null);
+      XSiteStateTransferStatusRequestCommand command = commandsFactory.buildXSiteStateTransferStatusRequestCommand();
       Map<String, String> result = new HashMap<>();
 
       for (Response response : invokeRemotelyInLocalSite(command).values()) {
@@ -199,7 +203,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public void clearClusterStatus() throws Exception {
-      controlStateTransferOnLocalSite(CLEAR_STATUS, null);
+      CacheRpcCommand command = commandsFactory.buildXSiteStateTransferClearStatusCommand();
+      controlStateTransferOnLocalSite(command);
    }
 
    @Override
@@ -209,7 +214,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public void cancelReceive(String siteName) throws Exception {
-      controlStateTransferOnLocalSite(FINISH_RECEIVE, siteName);
+      CacheRpcCommand command = commandsFactory.buildXSiteStateTransferFinishReceiveCommand(siteName);
+      controlStateTransferOnLocalSite(command);
    }
 
    @Override
@@ -219,7 +225,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          //cancel all the x-site state transfer until the local site is rebalanced
          try {
             log.debugf("Canceling x-site state transfer for site %s", siteName);
-            controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND, siteName);
+            CacheRpcCommand command = commandsFactory.buildXSiteStateTransferCancelSendCommand(siteName);
+            controlStateTransferOnLocalSite(command);
          } catch (Exception e) {
             //not serious... we are going to restart it anyway
             log.debugf(e, "Unable to cancel x-site state transfer for site %s", siteName);
@@ -228,7 +235,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          //it is balanced
          log.debugf("Restarting x-site state transfer for site %s", siteName);
          try {
-            controlStateTransferOnLocalSite(StateTransferControl.RESTART_SEND, siteName);
+            CacheRpcCommand command = commandsFactory.buildXSiteStateTransferRestartSendingCommand(null, currentTopologyId());
+            controlStateTransferOnLocalSite(command);
          } catch (Exception e) {
             log.failedToRestartXSiteStateTransfer(siteName, e);
          }
@@ -272,7 +280,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
             for (String siteName : siteCollector.keySet()) {
                try {
                   log.debugf("Topology change detected! Canceling x-site state transfer for site %s", siteName);
-                  controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND, siteName);
+                  CacheRpcCommand command = commandsFactory.buildXSiteStateTransferCancelSendCommand(siteName);
+                  controlStateTransferOnLocalSite(command);
                } catch (Exception e) {
                   //not serious... we are going to restart it anyway
                   log.debugf(e, "Unable to cancel x-site state transfer for site %s", siteName);
@@ -286,7 +295,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
                entry.setValue(new XSiteStateTransferCollector(newMembers));
                log.debugf("Topology change detected! Restarting x-site state transfer for site %s", entry.getKey());
                try {
-                  controlStateTransferOnLocalSite(StateTransferControl.RESTART_SEND, entry.getKey());
+                  CacheRpcCommand command = commandsFactory.buildXSiteStateTransferRestartSendingCommand(null, currentTopologyId());
+                  controlStateTransferOnLocalSite(command);
                } catch (Exception e) {
                   log.failedToRestartXSiteStateTransfer(entry.getKey(), e);
                }
@@ -319,14 +329,16 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       }
       siteCollector.remove(xSiteBackup.getSiteName());
       try {
-         controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND, xSiteBackup.getSiteName());
+         CacheRpcCommand command = commandsFactory.buildXSiteStateTransferCancelSendCommand(xSiteBackup.getSiteName());
+         controlStateTransferOnLocalSite(command);
       } catch (Exception e) {
          if (debug) {
             log.debugf(e, "Exception while cancel sending to remote site %s", xSiteBackup.getSiteName());
          }
       }
       try {
-         controlStateTransferOnRemoteSite(xSiteBackup, StateTransferControl.FINISH_RECEIVE, null);
+         XSiteReplicateCommand command = commandsFactory.buildXSiteStateTransferFinishReceiveCommand(null);
+         controlStateTransferOnRemoteSite(xSiteBackup, command, null);
       } catch (Throwable throwable) {
          if (debug) {
             log.debugf(throwable, "Exception while cancel receiving in remote site %s", xSiteBackup.getSiteName());
@@ -334,9 +346,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       }
    }
 
-   private void controlStateTransferOnRemoteSite(XSiteBackup xSiteBackup, StateTransferControl control,
+   private void controlStateTransferOnRemoteSite(XSiteBackup xSiteBackup, XSiteReplicateCommand command,
                                                  BackupRpcConfiguration backupRpcConfiguration) throws Throwable {
-      XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(control, null);
       RetryPolicy retryPolicy = backupRpcConfiguration == null ? NO_RETRY :
             new MaxRetriesPolicy(backupRpcConfiguration.maxRetries);
       long waitTime = backupRpcConfiguration == null ? 1 : backupRpcConfiguration.waitTime;
@@ -344,9 +355,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       remoteSite.execute(rpcManager, waitTime, TimeUnit.MILLISECONDS);
    }
 
-   private void controlStateTransferOnLocalSite(StateTransferControl control, String siteName) throws Exception {
-      XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(control, siteName);
-      command.setTopologyId(currentTopologyId());
+   private void controlStateTransferOnLocalSite(CacheRpcCommand command) throws Exception {
       for (Map.Entry<Address, Response> entry : invokeRemotelyInLocalSite(command).entrySet()) {
          if (entry.getValue() instanceof ExceptionResponse) {
             throw ((ExceptionResponse) entry.getValue()).getException();
@@ -379,7 +388,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       return null;
    }
 
-   private Map<Address, Response> invokeRemotelyInLocalSite(XSiteStateTransferControlCommand command) {
+   private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) {
       CompletionStage<Map<Address, Response>> remoteFuture = rpcManager.invokeCommandOnAll(
             command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       Response localResponse;

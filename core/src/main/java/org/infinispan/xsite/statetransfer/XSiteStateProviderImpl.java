@@ -5,7 +5,6 @@ import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.MaxRe
 import static org.infinispan.remoting.transport.RetryOnFailureXSiteCommand.RetryPolicy;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 import static org.infinispan.util.logging.Log.XSITE;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl.FINISH_SEND;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +33,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
@@ -45,6 +44,7 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -150,8 +150,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             return null;
          });
       } else {
-         XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(FINISH_SEND, siteName);
-         command.setStatusOk(!error);
+         XSiteStateTransferFinishSendCommand command = commandsFactory.buildXSiteStateTransferFinishSendCommand(siteName, !error);
          rpcManager.sendTo(origin, command, DeliverOrder.NONE);
       }
    }

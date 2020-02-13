@@ -1,7 +1,5 @@
 package org.infinispan.commands;
 
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -106,11 +104,18 @@ import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 import org.reactivestreams.Publisher;
 
 /**
@@ -481,14 +486,21 @@ public interface CommandsFactory {
     */
    CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, int size);
 
-   /**
-    * Builds XSiteStateTransferControlCommand used to control the-cross site state transfer.
-    *
-    * @param control  the control operation
-    * @param siteName the site name, needed for some control operations.
-    * @return the XSiteStateTransferControlCommand created
-    */
-   XSiteStateTransferControlCommand buildXSiteStateTransferControlCommand(StateTransferControl control, String siteName);
+   XSiteStateTransferCancelSendCommand buildXSiteStateTransferCancelSendCommand(String siteName);
+
+   XSiteStateTransferClearStatusCommand buildXSiteStateTransferClearStatusCommand();
+
+   XSiteStateTransferFinishReceiveCommand buildXSiteStateTransferFinishReceiveCommand(String siteName);
+
+   XSiteStateTransferFinishSendCommand buildXSiteStateTransferFinishSendCommand(String siteName, boolean statusOk);
+
+   XSiteStateTransferRestartSendingCommand buildXSiteStateTransferRestartSendingCommand(String siteName, int topologyId);
+
+   XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName);
+
+   XSiteStateTransferStartSendCommand buildXSiteStateTransferStartSendCommand(String siteName, int topologyId);
+
+   XSiteStateTransferStatusRequestCommand buildXSiteStateTransferStatusRequestCommand();
 
    XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait);
 
