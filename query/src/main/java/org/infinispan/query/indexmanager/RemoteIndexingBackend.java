@@ -1,9 +1,9 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.IndexingMonitor;
@@ -13,8 +13,10 @@ import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.logging.Log;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
@@ -36,7 +38,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    private final String cacheName;
    private final String indexName;
-   private final Collection<Address> recipients;
+   private final Address recipient;
    private final RpcManager rpcManager;
    private final Address masterAddress;
    private final boolean async;
@@ -48,7 +50,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
       this.rpcManager = rpcManager;
       this.indexName = indexName;
       this.masterAddress = masterAddress;
-      this.recipients = Collections.singleton(masterAddress);
+      this.recipient = masterAddress;
       this.async = async;
    }
 
@@ -132,7 +134,13 @@ final class RemoteIndexingBackend implements IndexingBackend {
    }
 
    private void sendCommand(ReplicableCommand command, List<LuceneWork> workList, boolean sync) {
-      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
+      if (sync) {
+         CompletionStage<Void> completionStage = rpcManager.invokeCommand(recipient, command, VoidResponseCollector.ignoreLeavers(),
+               rpcManager.getSyncRpcOptions());
+         rpcManager.blocking(completionStage);
+      } else {
+         rpcManager.sendTo(recipient, command, DeliverOrder.PER_SENDER);
+      }
       log.workListRemotedTo(workList, masterAddress);
    }
 

@@ -4,7 +4,6 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Set;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -12,6 +11,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Request implementation that waits for a response from a single target node.

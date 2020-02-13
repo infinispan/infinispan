@@ -25,8 +25,9 @@ import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.ByteString;
 
 /**
@@ -223,10 +224,13 @@ public class Caches {
 	 */
 	public static void broadcastEvictAll(AdvancedCache cache) {
 		final RpcManager rpcManager = cache.getRpcManager();
-		if ( rpcManager != null ) {
+		if (rpcManager != null) {
 			final EvictAllCommand cmd = new EvictAllCommand(ByteString.fromString(cache.getName()));
-			final RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronousCache(cache));
-			rpcManager.invokeRemotely(null, cmd, options);
+			if (isSynchronousCache(cache)) {
+				rpcManager.blocking(rpcManager.invokeCommandOnAll(cmd, VoidResponseCollector.validOnly(), rpcManager.getSyncRpcOptions()));
+			} else {
+				rpcManager.sendToAll(cmd, DeliverOrder.PER_SENDER);
+			}
 		}
 	}
 

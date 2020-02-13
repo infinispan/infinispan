@@ -41,9 +41,8 @@ import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
@@ -150,10 +149,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
                return results;
             });
 
-      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(invocation -> {
-         Object[] args = invocation.getArguments();
-         return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], DeliverOrder.PER_SENDER);
-      });
+      when(rpcManager.getSyncRpcOptions()).thenAnswer(invocation -> new RpcOptions(DeliverOrder.PER_SENDER, 10000, TimeUnit.MILLISECONDS));
 
       StateReceiverImpl<Object, Object> stateReceiver = new StateReceiverImpl<>();
       TestingUtil.inject(stateReceiver, cacheNotifier, commandsFactory, dataContainer, rpcManager, stateTransferExecutor);

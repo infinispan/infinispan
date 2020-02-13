@@ -48,11 +48,9 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
-import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -291,7 +289,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       }
    }
 
-   @SuppressWarnings("deprecation")
    @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpc,
@@ -305,8 +302,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       try {
          // Using Transport.invokeCommand* would require us to duplicate the JGroupsTransport.invokeRemotelyAsync logic
          invocation = t.invokeRemotelyAsync(recipients, cacheRpc,
-               options.responseMode(), options.timeUnit().toMillis(options.timeout()),
-               options.responseFilter(), options.deliverOrder(),
+               ResponseMode.SYNCHRONOUS, options.timeUnit().toMillis(options.timeout()),
+               null, options.deliverOrder(),
                configuration.clustering().cacheMode().isDistributed());
       } catch (Exception e) {
          CLUSTER.unexpectedErrorReplicating(e);
@@ -331,39 +328,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       } else {
          CLUSTER.unexpectedErrorReplicating(throwable);
          throw new CacheException(throwable);
-      }
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      return blocking(invokeRemotelyAsync(recipients, rpc, options));
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
-      // don't use replication queue as we don't want to send the command to all other nodes
-      if (!configuration.clustering().cacheMode().isClustered())
-         throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
-
-      if (options.responseMode().isAsynchronous()) {
-         rpcs.forEach((address, command) -> sendTo(address, command, options.deliverOrder()));
-      }
-
-      try {
-         Function<Address, ReplicableCommand> commandGenerator = address -> {
-            ReplicableCommand rpc = rpcs.get(address);
-            // Set the topology id of the command, in case we don't have it yet
-            setTopologyId(rpc);
-            return toCacheRpcCommand(rpc);
-         };
-         boolean ignoreLeavers = options.responseMode() == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
-         MapResponseCollector collector = MapResponseCollector.ignoreLeavers(ignoreLeavers, rpcs.size());
-         return blocking(invokeCommands(rpcs.keySet(), commandGenerator, collector, options));
-      } catch (CacheException e) {
-         log.trace("replication exception: ", e);
-         throw e;
-      } catch (Throwable th) {
-         return errorReplicating(th);
       }
    }
 
@@ -411,26 +375,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       } catch (Exception e) {
          errorReplicating(e);
       }
-   }
-
-   @Override
-   public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
-      if (!statisticsEnabled) {
-         return t.backupRemotely(sites, command);
-      }
-      BackupResponse response = t.backupRemotely(sites, command);
-      response.notifyFinish(this::registerXsiteReplicationTime);
-      response.notifyAsyncAck(this::registerAsyncXSiteReplicationTime);
-      int asyncCount = 0;
-      for (XSiteBackup b : sites) {
-         if (!b.isSync()) {
-            asyncCount++;
-         }
-      }
-      if (asyncCount > 0) {
-         asyncXSiteCounter.add(asyncCount);
-      }
-      return response;
    }
 
    @Override
@@ -655,27 +599,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @Override
    public RpcOptions getTotalSyncRpcOptions() {
       return totalSyncRpcOptions;
-   }
-
-   @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
-      return getRpcOptionsBuilder(responseMode, responseMode.isSynchronous() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
-   }
-
-   @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
-      return new RpcOptionsBuilder(configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS, responseMode, deliverOrder);
-   }
-
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync) {
-      return getDefaultRpcOptions(sync, sync ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
-   }
-
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
-      return getRpcOptionsBuilder(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS,
-                                  deliverOrder).build();
    }
 
    @Override

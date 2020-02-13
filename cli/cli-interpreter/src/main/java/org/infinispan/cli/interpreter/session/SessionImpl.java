@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.logging.LogFactory;
 
 public class SessionImpl implements Session {
@@ -117,7 +118,7 @@ public class SessionImpl implements Session {
 
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
          try {
-            rpc.invokeRemotely(null, ccc, rpc.getSyncRpcOptions());
+            rpc.blocking(rpc.invokeCommandOnAll(ccc, VoidResponseCollector.ignoreLeavers(), rpc.getSyncRpcOptions()));
             ccc.invokeAsync(componentRegistry);
          } catch (Throwable e) {
             throw log.cannotCreateClusteredCaches(e, cacheName);

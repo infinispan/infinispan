@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -26,12 +25,9 @@ import org.infinispan.extendedstats.container.ExtendedStatistic;
 import org.infinispan.extendedstats.logging.Log;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
@@ -135,30 +131,9 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       long start = timeService.time();
       CompletableFuture<Map<Address, Response>> future = actual.invokeRemotelyAsync(recipients, rpc, options);
       return future.thenApply(responseMap -> {
-         updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS),
-                     recipients);
+         updateStats(rpc, true, timeService.timeDuration(start, NANOSECONDS), recipients);
          return responseMap;
       });
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      long start = timeService.time();
-      Map<Address, Response> responseMap = actual.invokeRemotely(recipients, rpc, options);
-      updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
-      return responseMap;
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
-      long start = timeService.time();
-      Map<Address, Response> responseMap = actual.invokeRemotely(rpcs, options);
-      for (Entry<Address, ReplicableCommand> entry : rpcs.entrySet()) {
-         // TODO: This is giving a time for all rpcs combined...
-         updateStats(entry.getValue(), options.responseMode().isSynchronous(),
-                     timeService.timeDuration(start, NANOSECONDS), Collections.singleton(entry.getKey()));
-      }
-      return responseMap;
    }
 
    @Override
@@ -183,33 +158,8 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
-   public BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception {
-      return actual.invokeXSite(sites, command);
-   }
-
-   @Override
    public XSiteResponse invokeXSite(XSiteBackup backup, XSiteReplicateCommand command) {
       return actual.invokeXSite(backup, command);
-   }
-
-   @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
-      return actual.getRpcOptionsBuilder(responseMode);
-   }
-
-   @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
-      return actual.getRpcOptionsBuilder(responseMode, deliverOrder);
-   }
-
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync) {
-      return actual.getDefaultRpcOptions(sync);
-   }
-
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
-      return actual.getDefaultRpcOptions(sync, deliverOrder);
    }
 
    @Override

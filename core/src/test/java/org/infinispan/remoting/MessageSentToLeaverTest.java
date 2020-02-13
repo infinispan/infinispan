@@ -11,10 +11,11 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -56,14 +57,16 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
          PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2", 0,
                new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET);
 
-         Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
+         RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+         cmd.setTopologyId(rpcManager.getTopologyId());
+         Map<Address,Response> responseMap = rpcManager.blocking(rpcManager.invokeCommand(addresses, cmd, MapResponseCollector.validOnly(), rpcOptions));
          assert responseMap.size() == 2;
 
          TestingUtil.killCacheManagers(cm2);
          TestingUtil.blockUntilViewsReceived(30000, false, c1, c3);
 
          try {
-            rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
+            rpcManager.blocking(rpcManager.invokeCommand(addresses, cmd, MapResponseCollector.validOnly(), rpcOptions));
             assert false: "invokeRemotely should have thrown an exception";
          } catch (SuspectException e) {
             // expected

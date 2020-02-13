@@ -2,14 +2,15 @@ package org.infinispan.transaction.xa.recovery;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
+
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
@@ -28,6 +29,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -131,7 +134,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null && !fromCluster) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
-         rpcManager.invokeRemotely(lockOwners, ftc, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
+         sendTxCompletionNotification(lockOwners, ftc, sync);
       }
       removeRecoveryInformation(xid);
    }
@@ -140,9 +143,23 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(internalId);
-         rpcManager.invokeRemotely(where, ftc, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
+         sendTxCompletionNotification(where, ftc, sync);
       }
       removeRecoveryInformation(internalId);
+   }
+
+   private void sendTxCompletionNotification(Collection<Address> where, TxCompletionNotificationCommand ftc, boolean sync) {
+      if (sync) {
+         ftc.setTopologyId(rpcManager.getTopologyId());
+         CompletionStage<Void> completionStage;
+         if (where == null)
+            completionStage = rpcManager.invokeCommandOnAll(ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+         else
+            completionStage = rpcManager.invokeCommand(where, ftc, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+         rpcManager.blocking(completionStage);
+      } else {
+         rpcManager.sendToMany(where, ftc, DeliverOrder.NONE);
+      }
    }
 
    @Override
@@ -210,11 +227,12 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    @Override
    public Set<InDoubtTxInfo> getInDoubtTransactionInfoFromCluster() {
-      Map<Xid, InDoubtTxInfoImpl> result = new HashMap<Xid, InDoubtTxInfoImpl>();
+      Map<Xid, InDoubtTxInfoImpl> result = new HashMap<>();
       if (rpcManager != null) {
          GetInDoubtTxInfoCommand inDoubtTxInfoCommand = commandFactory.buildGetInDoubtTxInfoCommand();
-         Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, inDoubtTxInfoCommand,
-                                                                               rpcManager.getDefaultRpcOptions(true));
+         CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommandOnAll(inDoubtTxInfoCommand, MapResponseCollector.ignoreLeavers(),
+               rpcManager.getSyncRpcOptions());
+         Map<Address, Response> addressResponseMap = rpcManager.blocking(completionStage);
          for (Map.Entry<Address, Response> re : addressResponseMap.entrySet()) {
             Response r = re.getValue();
             if (!isSuccessful(r)) {
@@ -312,7 +330,8 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public String forceTransactionCompletionFromCluster(Xid xid, Address where, boolean commit) {
       CompleteTransactionCommand ctc = commandFactory.buildCompleteTransactionCommand(xid, commit);
-      Map<Address, Response> responseMap = rpcManager.invokeRemotely(Collections.singleton(where), ctc, rpcManager.getDefaultRpcOptions(true));
+      CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommand(where, ctc, MapResponseCollector.validOnly(), rpcManager.getSyncRpcOptions());
+      Map<Address, Response> responseMap = rpcManager.blocking(completionStage);
       if (responseMap.size() != 1 || responseMap.get(where) == null) {
          log.expectedJustOneResponse(responseMap);
          throw new CacheException("Expected response size is 1, received " + responseMap);
@@ -345,7 +364,8 @@ public class RecoveryManagerImpl implements RecoveryManager {
 
    private Map<Address, Response> getAllPreparedTxFromCluster() {
       GetInDoubtTransactionsCommand command = commandFactory.buildGetInDoubtTransactionsCommand();
-      Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
+      CompletionStage<Map<Address, Response>> completionStage = rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+      Map<Address, Response> addressResponseMap = rpcManager.blocking(completionStage);
       if (trace) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
       return addressResponseMap;
    }

@@ -3,8 +3,6 @@ package org.infinispan.query.backend;
 import static org.infinispan.test.TestingUtil.replaceField;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -21,10 +19,12 @@ import org.infinispan.query.indexmanager.IndexUpdateCommand;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
-import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -122,9 +122,12 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
 
    private void assertIndexCall(Transport transport, String indexName, boolean sync) throws Exception {
       ArgumentCaptor<IndexUpdateCommand> argument = ArgumentCaptor.forClass(IndexUpdateCommand.class);
-      verify(transport, atLeastOnce()).invokeRemotelyAsync(anyCollection(), argument.capture(),
-                                                           eq(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS),
-                                                           anyLong(), any(), any(), anyBoolean());
+      if (sync) {
+         verify(transport, atLeastOnce()).invokeCommand(any(Address.class), argument.capture(), any(VoidResponseCollector.class),
+               eq(DeliverOrder.NONE), anyLong(), any());
+      } else {
+         verify(transport, atLeastOnce()).sendTo(any(Address.class), argument.capture(), eq(DeliverOrder.PER_SENDER));
+      }
       boolean indexCalled = false;
       for (IndexUpdateCommand updateCommand : argument.getAllValues()) {
          indexCalled |= updateCommand.getIndexName().equals(indexName);

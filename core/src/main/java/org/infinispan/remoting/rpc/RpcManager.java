@@ -8,14 +8,13 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.Experimental;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -36,7 +35,6 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                         ResponseCollector<T> collector, RpcOptions rpcOptions);
 
@@ -48,7 +46,6 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
                                         ResponseCollector<T> collector, RpcOptions rpcOptions);
 
@@ -60,7 +57,6 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                              RpcOptions rpcOptions);
 
@@ -77,7 +73,6 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                  ResponseCollector<T> collector, RpcOptions rpcOptions);
 
@@ -89,7 +84,6 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                          Function<Address, ReplicableCommand> commandGenerator,
                                          ResponseCollector<T> collector, RpcOptions rpcOptions);
@@ -99,7 +93,6 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    <T> T blocking(CompletionStage<T> request);
 
    /**
@@ -109,30 +102,17 @@ public interface RpcManager {
     * @param rpc The command to invoke
     * @param options The invocation options
     * @return A future that, when completed, returns the responses from the remote nodes.
-    */
-   CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                 ReplicableCommand rpc, RpcOptions options);
-
-   /**
-    * Invokes an RPC call on other caches in the cluster.
-    *
-    * @param recipients a list of Addresses to invoke the call on.  If this is {@code null}, the call is broadcast to the
-    *                   entire cluster.
-    * @param rpc        command to execute remotely.
-    * @param options    it configures the invocation. The same instance can be re-used since {@link RpcManager} does
-    *                   not change it. Any change in {@link RpcOptions} during a remote invocation can lead to
-    *                   unpredictable behavior.
-    * @return  a map of responses from each member contacted.
-    * @deprecated Since 9.2, please use {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, RpcOptions)} instead.
+    * @deprecated since 11.0, use {@link #sendToMany(Collection, ReplicableCommand, DeliverOrder)} or
+    * {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, RpcOptions)} instead.
     */
    @Deprecated
-   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options);
-
-   /**
-    * @deprecated Since 9.2, please use {@link #invokeCommands(Collection, Function, ResponseCollector, RpcOptions)} instead.
-    */
-   @Deprecated
-   Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
+   default CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                 ReplicableCommand rpc, RpcOptions options) {
+      // Always perform with ResponseMode.SYNCHRONOUS as RpcOptions no longer allows ResponseMode to be passed
+      Collection<Address> targets = recipients != null ? recipients : getTransport().getMembers();
+      MapResponseCollector collector = MapResponseCollector.ignoreLeavers(false, targets.size());
+      return invokeCommand(recipients, rpc, collector, options).toCompletableFuture();
+   }
 
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the destination using the specified {@link DeliverOrder}.
@@ -159,19 +139,7 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   @Experimental
    void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder);
-
-   /**
-    * Invokes the {@link XSiteReplicateCommand} to one or more remote sites.
-    *
-    * @param sites   The sites to where the command is sent.
-    * @param command The {@link XSiteReplicateCommand} to send.
-    * @return The {@link BackupResponse} with the responses.
-    * @deprecated since 10.0. Use {@link #invokeXSite(XSiteBackup, XSiteReplicateCommand)}
-    */
-   @Deprecated
-   BackupResponse invokeXSite(Collection<XSiteBackup> sites, XSiteReplicateCommand command) throws Exception;
 
    /**
     * Sends the {@link XSiteReplicateCommand} to a remote site.
@@ -220,57 +188,4 @@ public interface RpcManager {
     * @return The default options for total order remote invocations.
     */
    RpcOptions getTotalSyncRpcOptions();
-
-   /**
-    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
-    * <p/>
-    * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with the {@link org.infinispan.remoting.rpc.ResponseMode} and with
-    * {@link org.infinispan.remoting.inboundhandler.DeliverOrder#NONE} if the {@link
-    * org.infinispan.remoting.rpc.ResponseMode} is synchronous otherwise, with {@link
-    * org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER} if asynchronous.
-    *
-    * @param responseMode the {@link org.infinispan.remoting.rpc.ResponseMode}.
-    * @return a new {@link RpcOptionsBuilder} with the default options. The response and deliver mode are set as
-    * described.
-    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} instead.
-    */
-   @Deprecated
-   RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode);
-
-   /**
-    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
-    *
-    * @param responseMode the {@link org.infinispan.remoting.rpc.ResponseMode}.
-    * @param deliverOrder  the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
-    * @return a new {@link RpcOptionsBuilder} with the default options and the response mode and deliver mode set by the
-    * parameters.
-    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} instead.
-    */
-   @Deprecated
-   RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder);
-
-   /**
-    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
-    * <p/>
-    * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with {@link
-    * org.infinispan.remoting.inboundhandler.DeliverOrder#NONE} if the {@param sync} is {@code true} otherwise, with
-    * {@link org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER}.
-    *
-    * @param sync {@code true} for Synchronous RpcOptions
-    * @return the default Synchronous/Asynchronous RpcOptions
-    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} instead.
-    */
-   @Deprecated
-   RpcOptions getDefaultRpcOptions(boolean sync);
-
-   /**
-    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
-    *
-    * @param sync        {@code true} for Synchronous RpcOptions
-    * @param deliverOrder the {@link org.infinispan.remoting.inboundhandler.DeliverOrder} to use.
-    * @return the default Synchronous/Asynchronous RpcOptions with the deliver order set by the parameter.
-    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} or {@link #getTotalSyncRpcOptions()} instead.
-    */
-   @Deprecated
-   RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder);
 }

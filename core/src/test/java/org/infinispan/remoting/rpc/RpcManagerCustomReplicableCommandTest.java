@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -15,6 +14,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -46,8 +46,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
    public void testInvokeRemotely() {
       RpcManager rpcManager = cache(0, "testCache").getAdvancedCache().getRpcManager();
       ReplicableCommand command = createReplicableCommandForTest(EXPECTED_RETURN_VALUE);
-
-      Map<Address, Response> remoteResponses = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
+      Map<Address, Response> remoteResponses = invoke(rpcManager, command);
       log.tracef("Responses were: %s", remoteResponses);
 
       assertEquals(1, remoteResponses.size());
@@ -68,7 +67,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       ReplicableCommand command = createReplicableCommandForTest(new IllegalArgumentException("exception!"));
 
       try {
-         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
+         invoke(rpcManager, command);
          fail("Expected RemoteException not thrown");
       } catch (RemoteException e) {
          assertTrue(e.getCause() instanceof IllegalArgumentException);
@@ -85,9 +84,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       RpcManager rpcManager = cache(0, "testCache").getAdvancedCache().getRpcManager();
       ReplicableCommand command = createReplicableCommandForTest(EXPECTED_RETURN_VALUE);
 
-      RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
-            .timeout(5000, TimeUnit.MILLISECONDS).build();
-      Map<Address, Response> remoteResponses = rpcManager.invokeRemotely(null, command, rpcOptions);
+      Map<Address, Response> remoteResponses = invoke(rpcManager, command);
       log.tracef("Responses were: %s", remoteResponses);
 
       assertEquals(1, remoteResponses.size());
@@ -108,9 +105,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       ReplicableCommand command = createReplicableCommandForTest(new IllegalArgumentException("exception!"));
 
       try {
-         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
-               .timeout(5000, TimeUnit.MILLISECONDS).build();
-         rpcManager.invokeRemotely(null, command, rpcOptions);
+         invoke(rpcManager, command);
          fail("Expected RemoteException not thrown");
       } catch (RemoteException e) {
          assertTrue(e.getCause() instanceof IllegalArgumentException);
@@ -118,5 +113,11 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       } catch (Exception ex) {
          fail("Expected exception not thrown but instead we got : " + ex);
       }
+   }
+
+   private Map<Address, Response> invoke(RpcManager rpcManager, ReplicableCommand command) {
+      return rpcManager.blocking(
+            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions())
+      );
    }
 }
