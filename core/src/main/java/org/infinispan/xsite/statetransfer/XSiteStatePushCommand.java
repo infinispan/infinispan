@@ -25,13 +25,13 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
    private long timeoutMillis;
 
    public XSiteStatePushCommand(ByteString cacheName, XSiteState[] chunk, long timeoutMillis) {
-      super(cacheName);
+      super(COMMAND_ID, cacheName);
       this.chunk = chunk;
       this.timeoutMillis = timeoutMillis;
    }
 
    public XSiteStatePushCommand(ByteString cacheName) {
-      super(cacheName);
+      super(COMMAND_ID, cacheName);
    }
 
    @Override
@@ -41,7 +41,7 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
    }
 
    public XSiteStatePushCommand() {
-      super(null);
+      this(null);
    }
 
    public XSiteState[] getChunk() {

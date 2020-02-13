@@ -4,8 +4,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 /**
  * Component present on a backup site that manages the backup information and logic.
@@ -21,10 +22,16 @@ public interface BackupReceiver {
    CompletionStage<Void> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
 
    /**
-    * It handles the state transfer control from a remote site. The control command must be broadcast to the entire
-    * cluster in which the cache exists.
+    * It handles starting the state transfer from a remote site. The command must be broadcast to the entire cluster in
+    * which the cache exists.
     */
-   CompletionStage<Void> handleStateTransferControl(XSiteStateTransferControlCommand command);
+   CompletionStage<Void> handleStartReceivingStateTransfer(XSiteStateTransferStartReceiveCommand command);
+
+   /**
+    * It handles finishing the state transfer from a remote site. The command must be broadcast to the entire cluster in
+    * which the cache exists.
+    */
+   CompletionStage<Void> handleEndReceivingStateTransfer(XSiteStateTransferFinishReceiveCommand command);
 
    /**
     * It handles the state transfer state from a remote site. It is possible to have a single node applying the state or

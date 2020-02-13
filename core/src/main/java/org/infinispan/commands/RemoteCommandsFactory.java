@@ -86,10 +86,17 @@ import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 /**
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
@@ -306,8 +313,29 @@ public class RemoteCommandsFactory {
             case XSiteTakeOfflineCommand.COMMAND_ID:
                command = new XSiteTakeOfflineCommand(cacheName);
                break;
-            case XSiteStateTransferControlCommand.COMMAND_ID:
-               command = new XSiteStateTransferControlCommand(cacheName);
+            case XSiteStateTransferCancelSendCommand.COMMAND_ID:
+               command = new XSiteStateTransferCancelSendCommand(cacheName);
+               break;
+            case XSiteStateTransferClearStatusCommand.COMMAND_ID:
+               command = new XSiteStateTransferClearStatusCommand(cacheName);
+               break;
+            case XSiteStateTransferFinishReceiveCommand.COMMAND_ID:
+               command = new XSiteStateTransferFinishReceiveCommand(cacheName);
+               break;
+            case XSiteStateTransferFinishSendCommand.COMMAND_ID:
+               command = new XSiteStateTransferFinishSendCommand(cacheName);
+               break;
+            case XSiteStateTransferRestartSendingCommand.COMMAND_ID:
+               command = new XSiteStateTransferRestartSendingCommand(cacheName);
+               break;
+            case XSiteStateTransferStartReceiveCommand.COMMAND_ID:
+               command = new XSiteStateTransferStartReceiveCommand(cacheName);
+               break;
+            case XSiteStateTransferStartSendCommand.COMMAND_ID:
+               command = new XSiteStateTransferStartSendCommand(cacheName);
+               break;
+            case XSiteStateTransferStatusRequestCommand.COMMAND_ID:
+               command = new XSiteStateTransferStatusRequestCommand(cacheName);
                break;
             case XSiteStatePushCommand.COMMAND_ID:
                command = new XSiteStatePushCommand(cacheName);

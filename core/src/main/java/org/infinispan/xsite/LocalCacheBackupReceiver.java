@@ -10,9 +10,10 @@ import org.infinispan.remoting.LocalInvocation;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 /**
  * {@link org.infinispan.xsite.BackupReceiver} implementation for local caches.
@@ -30,14 +31,15 @@ public class LocalCacheBackupReceiver extends BaseBackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStateTransferControl(XSiteStateTransferControlCommand command) {
-      XSiteStateTransferControlCommand invokeCommand = command;
-      if (!command.getCacheName().equals(cacheName)) {
-         //copy if the cache name is different
-         invokeCommand = command.copyForCache(cacheName);
-      }
-      invokeCommand.setSiteName(command.getOriginSite());
-      return CompletionStages.ignoreValue(LocalInvocation.newInstanceFromCache(cache, invokeCommand).callAsync());
+   public CompletionStage<Void> handleStartReceivingStateTransfer(XSiteStateTransferStartReceiveCommand command) {
+      command = XSiteStateTransferStartReceiveCommand.copyForCache(command, cacheName);
+      return CompletionStages.ignoreValue(LocalInvocation.newInstanceFromCache(cache, command).callAsync());
+   }
+
+   @Override
+   public CompletionStage<Void> handleEndReceivingStateTransfer(XSiteStateTransferFinishReceiveCommand command) {
+      command = XSiteStateTransferFinishReceiveCommand.copyForCache(command, cacheName);
+      return CompletionStages.ignoreValue(LocalInvocation.newInstanceFromCache(cache, command).callAsync());
    }
 
    @Override
