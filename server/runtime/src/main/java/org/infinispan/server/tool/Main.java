@@ -37,7 +37,7 @@ public abstract class Main {
       serverRoot = new File(properties.getProperty(Server.INFINISPAN_SERVER_ROOT_PATH, new File(serverHome, Server.DEFAULT_SERVER_ROOT_DIR).getAbsolutePath()));
    }
 
-   public final void run(String[] args) {
+   public final void run(String... args) {
       Iterator<String> iterator = Arrays.stream(args).iterator();
       while (iterator.hasNext()) {
          String command = iterator.next();
