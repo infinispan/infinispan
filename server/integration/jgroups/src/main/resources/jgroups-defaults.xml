@@ -47,7 +47,7 @@
       max_interval="30000"/>
    <FD_SOCK/>
    <FD timeout="6000" max_tries="5" msg_counts_as_heartbeat="false"/>
-   <FD_ALL2 timeout="10000" interval="2000"/>
+   <FD_ALL2 timeout="60000" interval="10000" msg_counts_as_heartbeat="true"/>
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
    <FD_ALL
       timeout="10000"
