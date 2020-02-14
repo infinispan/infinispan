@@ -1,0 +1,15 @@
+[id='configuring_clusters']
+= Defining {brandname} Clusters in Client Configuration
+Provide the locations of {brandname} clusters in Hot Rod client configuration.
+
+.Procedure
+
+* Provide at least one {brandname} cluster hostname and port with the `ClusterConfigurationBuilder` class.
+
+[source,java]
+----
+include::code_examples/HotRodAddCluster.java[]
+----
+
+<1> sets the connection details for a node in a {brandname} cluster.
+<2> defines the default {brandname} server for Hot Rod client requests.

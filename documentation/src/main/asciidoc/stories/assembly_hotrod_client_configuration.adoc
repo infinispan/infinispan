@@ -1,0 +1,25 @@
+[id='configuring_hotrod']
+:context: client
+= Configuring Hot Rod Java Clients
+
+include::{topics}/proc_creating_hotrod_java_client_instances.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_java_client_properties.adoc[leveloffset=+1]
+include::{topics}/con_client_intelligence.adoc[leveloffset=+1]
+include::{topics}/con_hotrod_request_balancing.adoc[leveloffset=+2]
+include::{topics}/con_hotrod_failover.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_hotrod_authentication.adoc[leveloffset=+1]
+include::{topics}/ref_endpoints_hotrod_authentication.adoc[leveloffset=+2]
+include::{topics}/proc_creating_hotrod_client_logincontexts.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_hotrod_encryption.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_jmx.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_clusters.adoc[leveloffset=+1]
+include::{topics}/proc_switching_hotrod_clusters.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_hotrod_connection_pools.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_marshalling.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_protostream.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_data_formats.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_hotrod_nearcaching.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

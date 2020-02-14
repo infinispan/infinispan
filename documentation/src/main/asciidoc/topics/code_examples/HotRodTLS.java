@@ -5,7 +5,12 @@ clientBuilder
       .port(11222)
    .security()
       .ssl()
-         // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
-         .trustStoreFileName("/path/to/truststore")
-         .trustStorePassword("truststorepassword".toCharArray());
+         // Server SNI hostname.
+         .sniHostName("myservername") <1>
+         // Server certificate keystore.
+         .trustStoreFileName("/path/to/truststore") <2>
+         .trustStorePassword("truststorepassword".toCharArray())
+         // Client certificate keystore.
+         .keyStoreFileName("/path/to/client/keystore") <3>
+         .keyStorePassword("keystorepassword".toCharArray());
 RemoteCache<String, String> cache=remoteCacheManager.getCache("secured");

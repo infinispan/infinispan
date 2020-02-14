@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Using the {brandname} Hot Rod Server
+= Hot Rod Java Client Guide
 
 //User stories
 include::stories.adoc[]

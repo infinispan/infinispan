@@ -1,0 +1,15 @@
+[id='switching_clusters']
+= Manually Switching {brandname} Clusters
+Manually switch Hot Rod Java client connections between {brandname} clusters.
+
+.Procedure
+
+* Call one of the following methods in the `RemoteCacheManager` class:
++
+`switchToCluster(clusterName)` switches to a specific cluster defined in the client configuration.
++
+`switchToDefaultCluster()` switches to the default cluster defined in the client configuration.
+
+.Reference
+
+link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]

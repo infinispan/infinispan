@@ -1,0 +1,16 @@
+[id='hotrod_transactions']
+= Hot Rod Transactions
+You can configure and use Hot Rod clients in JTA {tx}s.
+
+To participate in a transaction, the Hot Rod client requires the {tm} with which it interacts and whether it participates in the transaction through the {sync} or {xa} interface.
+
+[IMPORTANT]
+====
+Transactions are optimistic in that clients acquire write locks on entries during the prepare phase. To avoid data inconsistency, be sure to read about link:#hr_transactions_force_return_value[Detecting Conflicts with Transactions].
+====
+
+include::{topics}/server_protocols_hotrod_transaction.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
