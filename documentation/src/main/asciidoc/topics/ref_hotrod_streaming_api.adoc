@@ -1,0 +1,47 @@
+= Streaming API
+
+When sending / receiving large objects, it might make sense to stream them between the client and the server. The
+Streaming API implements methods similar to the link:#hr_basic_api[Hot Rod Basic API] and link:#hr_versioned_api[Hot Rod Versioned API] described above but, instead of taking the value as a parameter,
+they return instances of InputStream and OutputStream. The following example shows how one would write a potentially large
+object:
+
+[source,java]
+----
+RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+OutputStream os = streamingCache.put("a_large_object");
+os.write(...);
+os.close();
+----
+
+Reading such an object through streaming:
+
+[source,java]
+----
+RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+InputStream is = streamingCache.get("a_large_object");
+for(int b = is.read(); b >= 0; b = is.read()) {
+   ...
+}
+is.close();
+----
+
+NOTE: The streaming API does *not* apply marshalling/unmarshalling to the values. For this reason you cannot access
+the same entries using both the streaming and non-streaming API at the same time, unless you provide your own
+marshaller to detect this situation.
+
+The InputStream returned by the `RemoteStreamingCache.get(K key)` method implements the `VersionedMetadata` interface, so
+you can retrieve version and expiration information:
+
+[source,java]
+----
+RemoteStreamingCache<String> streamingCache = remoteCache.streaming();
+InputStream is = streamingCache.get("a_large_object");
+int version = ((VersionedMetadata) is).getVersion();
+for(int b = is.read(); b >= 0; b = is.read()) {
+   ...
+}
+is.close();
+----
+
+NOTE: Conditional write methods (`putIfAbsent`, `replace`) only perform the actual condition check once the value has
+been completely sent to the server (i.e. when the `close()` method has been invoked on the `OutputStream`.

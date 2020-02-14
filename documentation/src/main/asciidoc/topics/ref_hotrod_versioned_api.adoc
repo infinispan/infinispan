@@ -1,0 +1,34 @@
+[[hr_versioned_api]]
+= Versioned API
+A RemoteCacheManager provides instances of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] interface that represents a handle to the named or default cache on the remote cluster.
+API wise, it extends the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface to which it also adds some new methods, including the so called versioned API.
+Please find below some examples of this API link:#server_hotrod_failover[but to understand the motivation behind it, make sure you read this section.
+
+The code snippet bellow depicts the usage of these versioned methods:
+
+[source,java]
+----
+// To use the versioned API, remote classes are specifically needed
+RemoteCacheManager remoteCacheManager = new RemoteCacheManager();
+RemoteCache<String, String> cache = remoteCacheManager.getCache();
+
+remoteCache.put("car", "ferrari");
+RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("car");
+
+// removal only takes place only if the version has not been changed
+// in between. (a new version is associated with 'car' key on each change)
+assert remoteCache.remove("car", valueBinary.getVersion());
+assert !cache.containsKey("car");
+
+----
+
+In a similar way, for replace:
+
+[source,java]
+----
+remoteCache.put("car", "ferrari");
+RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("car");
+assert remoteCache.replace("car", "lamborghini", valueBinary.getVersion());
+----
+
+For more details on versioned operations refer to link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] 's javadoc.

@@ -14,7 +14,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Using the {brandname} Memcached Server
+= {brandname} Memcached Client Guide
 
 //User stories
 include::stories.adoc[]

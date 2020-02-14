@@ -1,0 +1,62 @@
+[id='hotrod_data_formats']
+= Configuring Hot Rod Client Data Formats
+By default, Hot Rod client operations use the configured marshaller when
+reading and writing from {brandname} servers for both keys and values.
+
+However, the `DataFormat` API lets you decorate remote caches so that all
+operations can happen with custom data formats.
+
+.Using different marshallers for key and values
+
+Marshallers for keys and values can be overridden at run time. For example, to
+bypass all serialization in the Hot Rod client and read the `byte[]` as they
+are stored in the server:
+
+[source,java]
+----
+// Existing Remote cache instance
+RemoteCache<String, Pojo> remoteCache = ...
+
+// IdentityMarshaller is a no-op marshaller
+DataFormat rawKeyAndValues = DataFormat.builder().keyMarshaller(IdentityMarshaller.INSTANCE).valueMarshaller(IdentityMarshaller.INSTANCE).build();
+
+// Will create a new instance of RemoteCache with the supplied DataFormat
+RemoteCache<byte[], byte[]> rawResultsCache = remoteCache.withDataFormat(rawKeyAndValues);
+----
+
+[IMPORTANT]
+====
+Using different marshallers and formats for keys, with `keyMarshaller()` and
+`keyType()` methods might interfere with the client intelligence routing
+mechanism and cause extra hops within the {brandname} cluster to perform the
+operation. If performance is critical, you should use keys in the format stored
+by the server.
+====
+
+.Reading data in different formats
+
+Request and send data in different formats specified by a `org.infinispan.commons.dataconversion.MediaType` as follows:
+
+[source,java]
+----
+// Existing remote cache using ProtostreamMarshaller
+RemoteCache<String, Pojo> protobufCache = ...
+
+// Request values returned as JSON, using the UTF8StringMarshaller that converts between UTF-8 to String:
+DataFormat jsonString = DataFormat.builder().valueType(MediaType.APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller().build();
+
+RemoteCache<String, String> jsonStrCache = remoteCache.withDataFormat(jsonString);
+
+// Alternatively, request JSON values but marshalled/unmarshalled with a custom value marshaller that returns `org.codehaus.jackson.JsonNode` objects:
+DataFormat jsonNode = DataFormat.builder().valueType(MediaType.APPLICATION_JSON).valueMarshaller(new CustomJacksonMarshaller().build();
+
+RemoteCache<String, JsonNode> jsonNodeCache = remoteCache.withDataFormat(jsonNode);
+----
+
+In the preceding example, data conversion happens in the {brandname) server.
+{brandname} returns an error if it does not support conversion to and from a
+storage format.
+
+.Reference
+
+link:{javadocroot}/org/infinispan/client/hotrod/DataFormat.html[DataFormat]

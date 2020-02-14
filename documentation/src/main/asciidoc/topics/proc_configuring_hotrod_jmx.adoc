@@ -1,0 +1,20 @@
+[id='hotrod_monitoring']
+= Monitoring Hot Rod Clients via JMX
+Enable Hot Rod client statistics via JMX to register an MBean for the
+`RemoteCacheManager` and each `RemoteCache`.
+
+Hot Rod client statistics include remote and near-cache hits and misses as well
+as connection pool usage.
+
+.Procedure
+
+* Use the `StatisticsConfigurationBuilder` class to enable and configure Hot
+Rod client statistics.
+
+[source,java]
+----
+include::code_examples/HotRodJmx.java[]
+----
+
+<1> enables client statistics.
+<2> sets the JMX domain name to which MBeans are exposed.
