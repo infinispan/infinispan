@@ -1,0 +1,7 @@
+[id='hotrod']
+= Hot Rod Protocol
+Hot Rod is a binary TCP protocol that {brandname} offers high-performance client-server interactions with the following capabilities:
+
+* Load balancing. Hot Rod clients can send requests across {brandname} clusters using different strategies to increase reliability.
+* Failover. Hot Rod clients can monitor {brandname} cluster topology changes and automatically switch to available nodes to ensure requests never go to offline nodes.
+* Efficient data location. Hot Rod clients can find key owners and make requests directly to those nodes, which reduces latency.

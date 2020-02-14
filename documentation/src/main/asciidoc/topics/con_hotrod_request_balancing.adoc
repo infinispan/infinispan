@@ -1,0 +1,21 @@
+[id='request_balancing']
+= Request Balancing
+Clients that use topology-aware intelligence use request balancing for all
+requests. The default balancing strategy is round-robin, so topology-aware
+clients always send requests to servers in round-robin order.
+
+For example, `s1`, `s2`, `s3` are servers in a {brandname} cluster. Clients
+perform request balancing as follows:
+
+[source,java]
+----
+include::code_examples/RequestBalancing.java[]
+----
+
+Clients that use distribution-aware intelligence use request balancing only
+for failed requests. When requests fail, distribution-aware clients retry the
+request on the next available server.
+
+.Custom balancing policies
+You can implement link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy] and specify your class in your
+`hotrod-client.properties` configuration.

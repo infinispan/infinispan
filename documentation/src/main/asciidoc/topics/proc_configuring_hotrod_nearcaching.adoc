@@ -1,0 +1,108 @@
+[id='hotrod_near_cache']
+= Configuring Near Caching
+Hot Rod Java clients can keep local caches that store recently used data, which
+significantly increases performance of `get()` and `getVersioned()` operations
+because the data is local to the client.
+
+When you enable near caching with Hot Rod Java clients, calls to `get()` or
+`getVersioned()` calls populate the near cache when entries are retrieved from
+servers. When entries are updated or removed on the server-side, entries in the
+near cache are invalidated. If keys are requested after they are invalidated,
+clients must fetch the keys from the server again.
+
+You can also configure the size of near caches by specifying the maximum number
+of entries that can reside in the near cache. When the maximum is reached,
+near-cached entries are evicted.
+
+.Near cache considerations
+
+* near caches are cleared when clients failover to different servers when using clustered cache modes.
+
+* Do not use maximum idle expiration with near caches because near-cache reads
+do not propagate the last access time for entries.
+
+* You should always configure the maximum number of entries that can reside in
+the near cache. Unbounded near caches require you to keep the size of the near
+cache within the boundaries of the client JVM.
+
+* Near cache invalidation messages can degrade performance of write operations
+
+.Procedure
+
+. Set the near cache mode to `INVALIDATED` in the client configuration.
+. Define the size of the near cache by specifying the maximum number of entries.
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
+...
+
+// Bounded invalidated near cache
+ConfigurationBuilder bounded = new ConfigurationBuilder();
+bounded.nearCache()
+  .mode(NearCacheMode.INVALIDATED)
+  .maxEntries(100);
+
+// Unbounded invalidated near cache
+ConfigurationBuilder unbounded = new ConfigurationBuilder();
+unbounded.nearCache()
+  .mode(NearCacheMode.INVALIDATED)
+  .maxEntries(-1);
+----
+
+[TIP]
+====
+Use `cacheNamePattern()` to define a regular expression to match caches for
+which you want to enable near caching. Because the configuration is shared for
+all caches from the `RemoteCacheManager`, this lets you enable near-caching for
+only the caches that match the regular expression.
+====
+
+[source,java]
+----
+// Bounded invalidated near cache with pattern matching
+ConfigurationBuilder bounded = new ConfigurationBuilder();
+bounded.nearCache()
+  .mode(NearCacheMode.INVALIDATED)
+  .maxEntries(100)
+  // Enable near-cache only for caches whose name starts with 'near'
+  .cacheNamePattern("near.*");
+----
+
+.Unsupported methods
+
+Some of the link:{javadocroot}/org/infinispan/Cache.html[Cache] methods are not being supported by the link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] . Calling one of these methods results in an link:{jdkdocroot}/java/lang/UnsupportedOperationException.html[UnsupportedOperationException] being thrown. Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue). Another set of unsupported operations are some of the atomic operations inherited from link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] :
+
+[source,java]
+----
+boolean remove(Object key, Object value);
+boolean replace(Object key, Object value);
+boolean replace(Object key, Object oldValue, Object value);
+
+----
+
+link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] offers alternative versioned methods for these atomic operations, that are also network friendly, by not sending the whole value object over the network, but a version identifier.
+
+.Return values
+There is a set of methods that alter a cached entry and return the previous existing value, e.g.:
+
+[source,java]
+----
+V remove(Object key);
+V put(K key, V value);
+----
+
+By default on RemoteCache, these operations return null even if such a previous value exists. This approach reduces the amount of data sent over the network. However, if these return values are needed they can be enforced on a per invocation basis using flags:
+
+[source,java]
+----
+cache.put("aKey", "initialValue");
+assert null == cache.put("aKey", "aValue");
+assert "aValue".equals(cache.withFlags(Flag.FORCE_RETURN_VALUE).put("aKey",
+   "newValue"));
+
+----
+
+This default behavior can can be changed through force-return-value=true
+configuration parameter.

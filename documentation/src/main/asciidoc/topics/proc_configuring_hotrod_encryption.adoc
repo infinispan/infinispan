@@ -1,0 +1,34 @@
+[id='hotrod_encryption']
+= Configuring Hot Rod Client Encryption
+{brandname} servers that use SSL/TLS encryption present Hot Rod clients with
+certificates so they can establish trust and negotiate secure connections.
+
+To verify server-issued certificates, Hot Rod clients require part of the TLS
+certificate chain. For example, the following image shows a certificate
+authority (CA), named "CA", that has issued a certificate for a server named
+"HotRodServer":
+
+image::cert_chain.png[align="center", title="Certificate chain"]
+
+.Procedure
+
+. Create a Java keystore with part of the server certificate chain. In most cases you should use the public certificate for the CA.
+. Specify the keystore as a _TrustStore_ in the client configuration with the `SslConfigurationBuilder` class.
+
+[source,java]
+----
+include::code_examples/HotRodTLS.java[]
+----
+
+<1> specifies the {brandname} servers Server Name Indication (SNI). This configuration is required if {brandname} servers present multiple identities, which are typically bound to separate cache containers.
+<2> specifies the keystore that contains the server certificate.
++
+[TIP]
+====
+Specify a path that contains certificates in PEM format and Hot Rod clients
+automatically generate trust stores.
+
+Use `.trustStorePath("/path/to/certificate")`.
+====
++
+<3> specifies the keystore that contains the client certificate. This configuration is required if Hot Rod client must present certificates to {brandname} servers.

@@ -6,51 +6,51 @@ Get answers and find help in the {brandname} {infinispanversion} titles.
 
 Getting Started::
 
-link:titles/overview/overview.html[Technical Overview] +
-link:titles/getting_started/getting_started.html[Getting Started Guide]
-
-Configuring Infinispan::
-
-link:titles/configuring/configuring.html[Configuration Guide] +
-link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
-
-Infinispan Embedded Library::
-
-link:titles/embedding/embedding.html[Embedding Infinispan]
-
-Infinispan Server::
-
-link:titles/server/server.html[Infinispan Server Guide] +
-link:titles/cli/cli.html[Using the Command Line Interface]
+* link:titles/overview/overview.html[Technical Overview]
+* link:titles/getting_started/getting_started.html[Getting Started Guide]
 
 Operator for Kubernetes and OpenShift::
 
-link:https://infinispan.org/infinispan-operator/master/operator.html[Infinispan Operator Guide]
+* link:https://infinispan.org/infinispan-operator/master/operator.html[Infinispan Operator Guide]
+
+Configuring Infinispan::
+
+* link:titles/configuring/configuring.html[Configuration Guide]
+* link:titles/xsite/xsite.html[Setting Up Cross Site Replication]
+
+Infinispan Embedded Library::
+
+* link:titles/embedding/embedding.html[Embedding Infinispan]
+
+Infinispan Server::
+
+* link:titles/server/server.html[Infinispan Server Guide]
+* link:titles/cli/cli.html[Using the Command Line Interface]
 
 Hot Rod, REST, and Memcached::
 
-link:titles/hotrod_java/hotrod_java.html[Setting Up and Running Hot Rod Servers] +
-link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference] +
-link:titles/rest/rest.html[Setting Up REST Servers and REST API Reference] +
-link:titles/memcached/memcached.html[Using Memcached Servers]
+* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
+* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
+* link:titles/rest/rest.html[Infinispan REST API]
+* link:titles/memcached/memcached.html[Memcached Client Guide]
 
-APIs, Marshalling, Locks, Counters, Indexing, Querying, and more::
+APIs, Marshalling, Locks, Counters, Indexing and Querying, and more::
 
-link:titles/developing/developing.html[Developer Guide]
+* link:titles/developing/developing.html[Developer Guide]
 
 Hibernate and Spring Framework Integration::
 
-link:titles/integrating/integrating.html[Integration Guide] +
-link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
+* link:titles/integrating/integrating.html[Integration Guide]
+* link:https://infinispan.org/infinispan-spring-boot/master/spring_boot_starter.html[Spring Boot Starter]
 
 Security and Performance Tuning::
 
-link:titles/security/security.html[Security Guide] +
-link:titles/tuning/tuning.html[Tuning Infinispan Performance]
+* link:titles/security/security.html[Security Guide]
+* link:titles/tuning/tuning.html[Tuning Infinispan Performance]
 
 Upgrading Between Versions and Rolling Upgrades on Kubernetes::
 
-link:titles/upgrading/upgrading.html[Upgrading Infinispan]
+* link:titles/upgrading/upgrading.html[Upgrading Infinispan]
 
 See link:http://www.infinispan.org/documentation[Infinispan Documentation] home for other versions.
 

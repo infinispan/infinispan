@@ -1,0 +1,22 @@
+[id='hotrod_connections']
+= Configuring Connection Pools
+Hot Rod Java clients keep pools of persistent connections to {brandname}
+servers to reuse TCP connections instead of creating them on each request.
+
+Clients use asynchronous threads that check the validity of connections by
+iterating over the connection pool and sending pings to {brandname} servers.
+This improves performance by finding broken connections while they are idle in
+the pool, rather than on application requests.
+
+.Procedure
+
+* Configure Hot Rod client connection pool settings  with the `ConnectionPoolConfigurationBuilder` class.
+
+[source,java]
+----
+include::code_examples/HotRodConnectionPools.java[]
+----
+
+<1> configures client connection pools.
+<2> sets the maximum number of active connections per server.
+<3> sets the minimum number of idle connections that must be available per server.
