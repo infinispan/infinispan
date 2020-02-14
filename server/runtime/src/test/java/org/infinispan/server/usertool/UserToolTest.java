@@ -31,7 +31,7 @@ public class UserToolTest {
    @Test
    public void testUserToolPlain() throws IOException {
       UserTool userTool = new UserTool();
-      userTool.run(new String[]{"-b", "-u", "user", "-p", "password", "-s", tmpDirectory, "-g", "admin"});
+      userTool.run("-b", "-u", "user", "-p", "password", "-s", tmpDirectory, "-g", "admin");
       Properties users = new Properties();
       users.load(new FileReader(new File(confDirectory, "users.properties")));
       assertEquals(1, users.size());
@@ -45,7 +45,7 @@ public class UserToolTest {
    @Test
    public void testUserToolDigest() throws IOException {
       UserTool userTool = new UserTool();
-      userTool.run(new String[]{"-b", "-d", "-u", "user", "-p", "password", "-s", tmpDirectory, "-g", "admin"});
+      userTool.run("-b", "-d", "-u", "user", "-p", "password", "-s", tmpDirectory, "-g", "admin");
       Properties users = new Properties();
       users.load(new FileReader(new File(confDirectory, "users.properties")));
       assertEquals(1, users.size());

@@ -2,21 +2,16 @@ package org.infinispan.server.test;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
@@ -35,6 +30,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
+import org.infinispan.server.security.UserTool;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
@@ -100,7 +96,7 @@ public abstract class InfinispanServerDriver {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-      createUserFile("default", true);
+      createUserFile("default");
       createKeyStores();
    }
 
@@ -147,31 +143,11 @@ public abstract class InfinispanServerDriver {
       return rootDir;
    }
 
-   protected void createUserFile(String realm, boolean plain) {
-      File userFile = new File(confDir, "users.properties");
-      File groupsFile = new File(confDir, "groups.properties");
-      try (PrintWriter uw = new PrintWriter(userFile); PrintWriter gw = new PrintWriter(groupsFile)) {
-         uw.printf("#$REALM_NAME=%s$\n", realm);
-         for (AuthorizationPermission permission : AuthorizationPermission.values()) {
-            String name = permission.name().toLowerCase();
-            String password;
-            if (plain) {
-               password = name;
-            } else {
-               try {
-                  MessageDigest md = MessageDigest.getInstance("MD5");
-                  password = Util.toHexString(md.digest(String.format("%s:%s:%s", name, realm, name).getBytes(StandardCharsets.UTF_8)));
-               } catch (NoSuchAlgorithmException e) {
-                  // will not happen, but acquiesce the compiler
-                  throw new RuntimeException(e);
-               }
-            }
-
-            uw.printf("%s_user=%s\n", name, password);
-            gw.printf("%s_user=%s\n", name, name);
-         }
-      } catch (IOException e) {
-         throw new RuntimeException(e);
+   protected void createUserFile(String realm) {
+      for (AuthorizationPermission permission : AuthorizationPermission.values()) {
+         String name = permission.name().toLowerCase();
+         UserTool userTool = new UserTool();
+         userTool.run("-b", "-s", rootDir.getAbsolutePath(), "-r", realm, "-u", name + "_user", "-p", name, "-g", name);
       }
    }
 
@@ -381,8 +357,8 @@ public abstract class InfinispanServerDriver {
    public abstract String getLog(int server);
 
    /**
-    * Returns the amount of time in seconds that we should wait for a server start/stop operation.
-    * This may vary depending on the type of driver (embedded, container)
+    * Returns the amount of time in seconds that we should wait for a server start/stop operation. This may vary
+    * depending on the type of driver (embedded, container)
     *
     * @return the number of seconds after which a server start/stop is considered to timeout
     */
