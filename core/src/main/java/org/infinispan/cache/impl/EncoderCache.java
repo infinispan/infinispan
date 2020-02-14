@@ -643,14 +643,68 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return valueFromStorage(returned);
+   }
+
+   @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
    @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return valueFromStorage(returned);
+   }
+
+   @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction));
+      return valueFromStorage(ret);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), metadata);
+      return valueFromStorage(ret);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit);
+      return valueFromStorage(ret);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(ret);
    }
 
@@ -692,6 +746,24 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction));
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(returned);
    }
 
