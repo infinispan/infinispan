@@ -339,8 +339,8 @@
       <versionx.mysql.mysql-connector-java>5.1.19</versionx.mysql.mysql-connector-java>
       <versionx.net.bytebuddy.byte-buddy>${version.net.bytebuddy}</versionx.net.bytebuddy.byte-buddy>
       <versionx.net.bytebuddy.byte-buddy-agent>${version.net.bytebuddy}</versionx.net.bytebuddy.byte-buddy-agent>
-      <versionx.net.java.dev.jna.jna>4.2.2</versionx.net.java.dev.jna.jna>
-      <versionx.net.java.dev.jna.jna-platform>4.5.1</versionx.net.java.dev.jna.jna-platform>
+      <versionx.net.java.dev.jna.jna>5.5.0</versionx.net.java.dev.jna.jna>
+      <versionx.net.java.dev.jna.jna-platform>5.5.0</versionx.net.java.dev.jna.jna-platform>
       <versionx.net.minidev.accessors-smart>1.1</versionx.net.minidev.accessors-smart>
       <versionx.net.minidev.json-smart>2.2.1</versionx.net.minidev.json-smart>
       <versionx.net.sf.jopt-simple.jopt-simple>5.0.2</versionx.net.sf.jopt-simple.jopt-simple>
