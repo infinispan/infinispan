@@ -100,17 +100,18 @@ public class ConditionFuture<T> {
       try {
          executor.execute(() -> checkConditions(value));
       } catch (Throwable t) {
-         List<CompletableFuture<?>> completed;
-         synchronized (futures) {
-            completed = new ArrayList<>(futures.size());
-            for (Data data : futures.values()) {
-               data.cancelFuture.cancel(false);
-               completed.add(data);
-            }
-         }
-         for (CompletableFuture<?> future : completed) {
-            future.completeExceptionally(t);
-         }
+         completeAllExceptionally(t);
+      }
+   }
+
+   private void completeAllExceptionally(Throwable t) {
+      List<Data> completed;
+      synchronized (futures) {
+         completed = new ArrayList<>(futures.values());
+      }
+      for (Data data : completed) {
+         data.cancelFuture.cancel(false);
+         data.completeExceptionally(t);
       }
    }
 
@@ -122,13 +123,13 @@ public class ConditionFuture<T> {
             Map.Entry<Predicate<T>, Data> e = iterator.next();
             if (e.getKey().test(value)) {
                Data data = e.getValue();
-               data.cancelFuture.cancel(false);
                completed.add(data);
                iterator.remove();
             }
          }
       }
       for (Data data : completed) {
+         data.cancelFuture.cancel(false);
          data.complete(null);
       }
    }
@@ -137,20 +138,8 @@ public class ConditionFuture<T> {
       running = false;
       lastValue = null;
 
-      List<CompletableFuture<?>> completed;
-      synchronized (futures) {
-         completed = new ArrayList<>(futures.size());
-         for (Data data : futures.values()) {
-            data.cancelFuture.cancel(false);
-            completed.add(data);
-         }
-         futures.clear();
-      }
-
       IllegalLifecycleStateException exception = new IllegalLifecycleStateException();
-      for (CompletableFuture<?> future : completed) {
-         future.completeExceptionally(exception);
-      }
+      completeAllExceptionally(exception);
    }
 
    private static class Data extends CompletableFuture<Void> {
