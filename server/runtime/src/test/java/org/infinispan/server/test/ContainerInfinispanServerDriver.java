@@ -41,7 +41,6 @@ import org.testcontainers.utility.Base58;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Network;
-import com.sun.security.auth.module.UnixSystem;
 
 /**
  * WARNING: Work in progress. Does not work yet.
@@ -127,9 +126,9 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                .label("architecture", "x86_64")
                .user("root");
          // We need to remap the UID/GID of the jboss user inside the container to the ones of the user outside so that files created on volume mounts have the correct ownership/permissions
-         UnixSystem unixSystem = new UnixSystem();
-         builder.run("usermod", "-u", Long.toString(unixSystem.getUid()), "jboss");
-         builder.run("groupmod", "-g", Long.toString(unixSystem.getGid()), "jboss");
+         //UnixSystem unixSystem = new UnixSystem();
+         //builder.run("usermod", "-u", Long.toString(unixSystem.getUid()), "jboss");
+         //builder.run("groupmod", "-g", Long.toString(unixSystem.getGid()), "jboss");
          if (!usePrebuiltServerFromImage) {
             builder
                   .copy("build", INFINISPAN_SERVER_HOME)

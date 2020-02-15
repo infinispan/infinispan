@@ -135,12 +135,10 @@
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-depchain</artifactId>
          <type>pom</type>
-         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap.descriptors</groupId>
          <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
-         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.wildfly.arquillian</groupId>

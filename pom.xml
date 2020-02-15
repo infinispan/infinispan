@@ -114,6 +114,7 @@
       <module>server/core</module>
       <module>server/memcached</module>
       <module>server/hotrod</module>
+      <module>server/integration</module>
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>
@@ -2930,7 +2931,6 @@
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
             <artifactId>shrinkwrap-descriptors-api-javaee</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-api-javaee}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
@@ -2942,7 +2942,6 @@
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
             <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
@@ -2953,56 +2952,47 @@
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-api</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-api-maven</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-api-maven-archive</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven-archive}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-depchain</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain}</version>
             <type>pom</type>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-spi</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-spi}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-spi-maven</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-spi-maven}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-spi-maven-archive</artifactId>
             <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-spi-maven-archive}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec</groupId>

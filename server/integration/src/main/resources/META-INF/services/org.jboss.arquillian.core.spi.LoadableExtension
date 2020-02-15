@@ -1,0 +1,2 @@
+org.infinispan.server.integration.LifecycleExtension
+org.infinispan.server.integration.WildflyResoucesProcessorExtension
