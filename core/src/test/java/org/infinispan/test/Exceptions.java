@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -175,6 +176,65 @@ public class Exceptions {
          Class<? extends Throwable> wrapperExceptionClass, Class<? extends Throwable> exceptionClass,
          Future<?> future) {
       Throwable t = extractException(() -> future.get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(wrapperExceptionClass2, t.getCause());
+      assertException(wrapperExceptionClass, exceptionClass, t.getCause().getCause());
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> exceptionClass, String messageRegex,
+                                               CompletionStage<?> stage) {
+      expectCompletionException(exceptionClass, messageRegex, stage, 10, TimeUnit.SECONDS);
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> exceptionClass, String messageRegex,
+                                                CompletionStage<?> stage, long timeout, TimeUnit unit) {
+      // Need to use get() for the timeout, but that converts the exception to an ExecutionException
+      Throwable t = extractException(() -> stage.toCompletableFuture().get(timeout, unit));
+      assertException(ExecutionException.class, t);
+      assertException(exceptionClass, messageRegex, t.getCause());
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> wrapperExceptionClass,
+                                               Class<? extends Throwable> exceptionClass, String messageRegex,
+                                                CompletionStage<?> stage) {
+      // Need to use get() for the timeout, but that converts the exception to an ExecutionException
+      Throwable t = extractException(() -> stage.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(wrapperExceptionClass, t.getCause());
+      assertException(exceptionClass, messageRegex, t.getCause().getCause());
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> wrapperExceptionClass2,
+                                               Class<? extends Throwable> wrapperExceptionClass, Class<? extends Throwable> exceptionClass,
+                                               String messageRegex, CompletionStage<?> stage) {
+      // Need to use get() for the timeout, but that converts the exception to an ExecutionException
+      Throwable t = extractException(() -> stage.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(wrapperExceptionClass2, t.getCause());
+      assertException(wrapperExceptionClass, exceptionClass, messageRegex, t.getCause().getCause());
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> exceptionClass, CompletionStage<?> stage) {
+      // Need to use get() for the timeout, but that converts the exception to an ExecutionException
+      Throwable t = extractException(() -> stage.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(exceptionClass, t.getCause());
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> wrapperExceptionClass,
+                                               Class<? extends Throwable> exceptionClass, CompletionStage<?> stage) {
+      // Need to use get() for the timeout, but that converts the exception to an ExecutionException
+      Throwable t = extractException(() -> stage.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(wrapperExceptionClass, t.getCause());
+      assertException(exceptionClass, t.getCause().getCause());
+   }
+
+   public static void expectCompletionException(Class<? extends Throwable> wrapperExceptionClass2,
+                                               Class<? extends Throwable> wrapperExceptionClass, Class<? extends Throwable> exceptionClass,
+                                               CompletionStage<?> stage) {
+      // Need to use get() for the timeout, but that converts the exception to an ExecutionException
+      Throwable t = extractException(() -> stage.toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertException(ExecutionException.class, t);
       assertException(wrapperExceptionClass2, t.getCause());
       assertException(wrapperExceptionClass, exceptionClass, t.getCause().getCause());
