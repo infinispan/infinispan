@@ -538,7 +538,7 @@ public class TestingUtil {
       List<View> incompleteViews = new ArrayList<>(length);
       for (CacheContainer cacheContainer : cacheContainers) {
          EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainer;
-         if (cm.getMembers().size() != cacheContainers.length) {
+         if (cacheContainers.length != (cm.getMembers() != null ? cm.getMembers().size() : -1)) {
             incompleteViews.add(extractJChannel(cm).getView());
             log.warnf("Manager %s has an incomplete view: %s", cm.getAddress(), cm.getMembers());
          }

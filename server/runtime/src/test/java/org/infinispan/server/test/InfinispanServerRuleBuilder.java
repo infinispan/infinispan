@@ -65,10 +65,14 @@ public class InfinispanServerRuleBuilder {
       return this;
    }
 
-   public InfinispanServerRule build() {
+   public InfinispanServerTestConfiguration newConfiguration() {
       InfinispanServerTestConfiguration configuration =
             new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, properties, mavenArtifacts,
-                                                  archives, jmx);
-      return new InfinispanServerRule(configuration);
+                  archives, jmx);
+      return configuration;
+   }
+
+   public InfinispanServerRule build() {
+      return new InfinispanServerRule(newConfiguration());
    }
 }

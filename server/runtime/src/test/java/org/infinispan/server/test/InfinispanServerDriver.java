@@ -97,7 +97,7 @@ public abstract class InfinispanServerDriver {
          throw new RuntimeException(e);
       }
       createUserFile("default");
-      createKeyStores();
+      //createKeyStores();
    }
 
    public void start(String name) {

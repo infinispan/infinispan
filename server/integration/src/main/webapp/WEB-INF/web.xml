@@ -1,0 +1,14 @@
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+
+    <display-name>hotrod-tomcat-example</display-name>
+    <servlet>
+        <servlet-name>HotRodServlet</servlet-name>
+        <servlet-class>foo.bar.HotRodServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>HotRodServlet</servlet-name>
+        <url-pattern>/Hello</url-pattern>
+    </servlet-mapping>
+</web-app>
