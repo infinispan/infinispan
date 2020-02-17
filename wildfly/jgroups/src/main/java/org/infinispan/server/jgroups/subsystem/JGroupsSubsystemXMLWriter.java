@@ -170,6 +170,7 @@ public class JGroupsSubsystemXMLWriter implements XMLElementWriter<SubsystemMars
                 writer.writeEndElement();
             }
         }
+        writeElement(writer, relay, ProtocolResourceDefinition.PROPERTIES);
         writer.writeEndElement();
     }
 

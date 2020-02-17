@@ -44,6 +44,8 @@
             <relay site="LONDON">
                 <remote-site name="SFO" channel="bridge"/>
                 <remote-site name="NYC" channel="bridge"/>
+                <property name="can_become_site_master">true</property>
+                <property name="max_site_masters">2</property>
             </relay>
             <sasl mech="PLAIN" security-realm="AppRealm" cluster-role="cluster" />
         </stack>
