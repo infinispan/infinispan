@@ -250,7 +250,6 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             default:
                break;
          }
-         writeExtraConfiguration(writer, config.modules());
       }
    }
 
@@ -353,6 +352,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeStartElement(Element.REPLICATED_CACHE);
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
+      writeExtraConfiguration(writer, configuration.modules());
       writer.writeEndElement();
    }
 
@@ -373,6 +373,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          }
          writer.writeEndElement();
       }
+      writeExtraConfiguration(writer, configuration.modules());
       writer.writeEndElement();
    }
 
@@ -380,6 +381,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeStartElement(Element.INVALIDATION_CACHE);
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
+      writeExtraConfiguration(writer, configuration.modules());
       writer.writeEndElement();
    }
 
@@ -389,6 +391,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          configuration.attributes().write(writer, Configuration.SIMPLE_CACHE, Attribute.SIMPLE_CACHE);
       }
       writeCommonCacheAttributesElements(writer, name, configuration);
+      writeExtraConfiguration(writer, configuration.modules());
       writer.writeEndElement();
    }
 

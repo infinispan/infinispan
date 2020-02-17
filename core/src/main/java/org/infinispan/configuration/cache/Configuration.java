@@ -99,6 +99,11 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
       this.subElements.addAll(Arrays.asList(clusteringConfiguration, sitesConfiguration, encodingConfiguration, sitesConfiguration.backupFor(), transactionConfiguration, expirationConfiguration, memoryConfiguration, persistenceConfiguration, lockingConfiguration, indexingConfiguration, securityConfiguration, customInterceptorsConfiguration, statisticsConfiguration, unsafeConfiguration, invocationBatchingConfiguration));
+      for (Object module : modules) {
+         if (module instanceof ConfigurationInfo) {
+            this.subElements.add((ConfigurationInfo) module);
+         }
+      }
    }
 
    public AttributeSet attributes() {
