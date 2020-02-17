@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+           targetNamespace="urn:infinispan:config:anchored:11.0"
+           xmlns:tns="urn:infinispan:config:anchored:11.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="anchored-keys" type="tns:anchored-keys"/>
+
+    <xs:complexType name="anchored-keys">
+        <xs:attribute name="enabled" type="xs:boolean" default="2">
+            <xs:annotation>
+                <xs:documentation>
+                    Enables anchored keys for the cache.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+</xs:schema>

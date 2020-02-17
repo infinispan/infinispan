@@ -151,6 +151,7 @@
       <module>client/marshaller</module>
       <module>hibernate</module>
       <module>api</module>
+      <module>anchored-keys</module>
    </modules>
    <properties>
       <!-- Semantic versioning defaults. -->
