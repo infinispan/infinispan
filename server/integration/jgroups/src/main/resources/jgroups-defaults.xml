@@ -24,6 +24,7 @@
 <!-- This file supplies the internal defaults per protocol -->
 <config xmlns="urn:org:jgroups">
    <UDP
+      tos="0"
       ucast_send_buf_size="1m"
       mcast_send_buf_size="1m"
       ucast_recv_buf_size="20m"

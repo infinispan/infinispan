@@ -4,7 +4,7 @@
    <UDP
          mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}"
          mcast_port="${jgroups.udp.mcast_port:46655}"
-         tos="8"
+         tos="0"
          ucast_recv_buf_size="20m"
          ucast_send_buf_size="640k"
          mcast_recv_buf_size="25m"

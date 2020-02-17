@@ -3,6 +3,7 @@
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.0.xsd">
    <UDP mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}"
         mcast_port="${jgroups.udp.mcast_port:46655}"
+        tos="0"
         ucast_send_buf_size="1m"
         mcast_send_buf_size="1m"
         ucast_recv_buf_size="20m"
