@@ -255,6 +255,11 @@
                     <xs:documentation>Defines a remote site to which to bridge.</xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>Defines a property override for a protocol.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="site" type="xs:string" use="required">
             <xs:annotation>
