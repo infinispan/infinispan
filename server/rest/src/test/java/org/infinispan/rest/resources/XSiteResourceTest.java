@@ -30,7 +30,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.testng.annotations.AfterClass;

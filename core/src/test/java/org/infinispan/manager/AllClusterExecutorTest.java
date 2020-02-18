@@ -23,7 +23,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;

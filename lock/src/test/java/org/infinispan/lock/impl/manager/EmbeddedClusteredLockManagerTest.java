@@ -1,7 +1,7 @@
 package org.infinispan.lock.impl.manager;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

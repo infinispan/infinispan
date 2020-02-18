@@ -12,7 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -25,7 +25,7 @@ public abstract class StressTest extends MultipleCacheManagersTest {
 
    protected Future<Void> forkRestartingThread(int cacheCount) {
       return fork(() -> {
-         TestResourceTracker.testThreadStarted(StressTest.this);
+         TestResourceTracker.testThreadStarted(StressTest.this.getTestName());
          try {
             Cache<?, ?> cacheToKill = cache(cacheCount - 1);
             while (!complete.get()) {

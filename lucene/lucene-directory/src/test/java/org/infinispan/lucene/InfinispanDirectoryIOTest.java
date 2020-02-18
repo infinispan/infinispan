@@ -20,6 +20,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.DirectoryBuilderImpl;
@@ -50,7 +51,7 @@ public class InfinispanDirectoryIOTest extends AbstractInfinispanTest {
    private static final String INDEXNAME = "index";
 
    private CacheContainer cacheManager;
-   private File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), INDEXNAME);
+   private File indexDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()), INDEXNAME);
 
    @BeforeClass(alwaysRun = true)
    public void prepareCacheManager() {

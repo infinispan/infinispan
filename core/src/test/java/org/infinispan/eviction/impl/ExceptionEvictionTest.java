@@ -34,7 +34,7 @@ import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.interceptors.impl.TransactionalExceptionEvictionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;

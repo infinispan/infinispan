@@ -1,7 +1,7 @@
 package org.infinispan.test;
 
 import static java.util.Arrays.asList;
-import static org.infinispan.test.fwk.TestResourceTracker.getCurrentTestShortName;
+import static org.infinispan.commons.test.TestResourceTracker.getCurrentTestShortName;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.annotation.Annotation;
@@ -47,7 +47,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestFrameworkFailure;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;

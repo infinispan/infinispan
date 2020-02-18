@@ -40,7 +40,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
-import org.infinispan.test.ExceptionRunnable;
+import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;

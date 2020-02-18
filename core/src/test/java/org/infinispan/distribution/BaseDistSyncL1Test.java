@@ -28,7 +28,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;

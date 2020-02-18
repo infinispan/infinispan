@@ -3,6 +3,7 @@ package org.infinispan.query.remote.impl;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -26,7 +27,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
    }
 
    public void testStatePreserved() throws Exception {
-      String persistentStateLocation = TestingUtil.tmpDirectory(this.getClass());
+      String persistentStateLocation = CommonsTestingUtil.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(persistentStateLocation);
 
       final String persistentStateLocation1 = persistentStateLocation + "/1";

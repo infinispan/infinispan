@@ -48,7 +48,7 @@ import org.infinispan.extendedstats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.extendedstats.wrappers.ExtendedStatisticRpcManager;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;

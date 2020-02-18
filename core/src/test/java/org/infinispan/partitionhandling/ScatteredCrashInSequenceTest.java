@@ -1,6 +1,6 @@
 package org.infinispan.partitionhandling;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.topology.CacheTopologyControlCommand.Type.CH_UPDATE;
 import static org.infinispan.topology.CacheTopologyControlCommand.Type.REBALANCE_PHASE_CONFIRM;
 import static org.infinispan.topology.CacheTopologyControlCommand.Type.REBALANCE_START;

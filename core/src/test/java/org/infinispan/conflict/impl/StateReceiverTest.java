@@ -49,7 +49,7 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;

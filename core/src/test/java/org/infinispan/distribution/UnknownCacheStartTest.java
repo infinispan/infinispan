@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.TestException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -37,7 +37,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
 
    @Test (expectedExceptions = {CacheException.class, TestException.class}, timeOut = 60000)
    public void testStartingUnknownCaches() throws Throwable {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
 
       cm1 = createCacheManager(configuration);
 

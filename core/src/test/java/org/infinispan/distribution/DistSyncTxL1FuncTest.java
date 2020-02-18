@@ -31,7 +31,7 @@ import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;

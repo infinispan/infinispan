@@ -12,7 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**

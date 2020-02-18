@@ -14,7 +14,7 @@ import org.infinispan.server.router.routes.rest.RestRouteSource;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.utils.RestClient;
 import org.infinispan.server.router.utils.RestTestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

@@ -16,7 +16,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
 import org.testng.annotations.Test;

@@ -17,6 +17,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -78,7 +79,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       return TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder());
    }
@@ -188,7 +189,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testRemoveCache() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence(), true);
@@ -209,7 +210,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testRemoveCacheWithPassivation() {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence().passivation(true), true);

@@ -21,7 +21,7 @@ import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;

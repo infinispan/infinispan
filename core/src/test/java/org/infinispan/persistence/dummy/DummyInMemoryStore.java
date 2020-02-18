@@ -40,7 +40,7 @@ import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.AbstractSegmentedAdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.rxjava.FlowableFromIntSetFunction;

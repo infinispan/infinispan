@@ -1,6 +1,6 @@
 package org.infinispan.test.concurrent;
 
-import static org.infinispan.test.Exceptions.unchecked;
+import static org.infinispan.commons.test.Exceptions.unchecked;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

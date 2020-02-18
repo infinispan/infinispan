@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.counter;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -12,7 +14,6 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.counter.CounterManagerTestStrategy;
 import org.infinispan.server.hotrod.counter.impl.CounterManagerImplTestStrategy;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -27,7 +28,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.counter.RemoteCounterManagerTest")
 public class RemoteCounterManagerTest extends AbstractCounterTest implements CounterManagerTestStrategy {
 
-   private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory("RemoteCounterManagerTest");
+   private static final String PERSISTENT_LOCATION = tmpDirectory("RemoteCounterManagerTest");
    private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
    private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
    private final CounterManagerTestStrategy strategy;

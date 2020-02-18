@@ -16,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -56,7 +57,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(tmpDirectory);
       marshaller = new TestObjectStreamMarshaller();
       factory = new InternalEntryFactoryImpl();

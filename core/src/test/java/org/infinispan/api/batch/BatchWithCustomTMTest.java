@@ -1,6 +1,6 @@
 package org.infinispan.api.batch;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.getTransactionManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;

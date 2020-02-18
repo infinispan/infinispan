@@ -17,7 +17,7 @@ import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.testng.annotations.Test;

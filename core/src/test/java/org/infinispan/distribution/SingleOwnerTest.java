@@ -12,7 +12,7 @@ import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.data.BrokenMarshallingPojo;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;

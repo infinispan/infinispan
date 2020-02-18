@@ -24,7 +24,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**

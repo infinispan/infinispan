@@ -1,6 +1,6 @@
 package org.infinispan.jmx;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.existsDomain;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;

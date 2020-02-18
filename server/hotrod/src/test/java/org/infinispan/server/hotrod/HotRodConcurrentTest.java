@@ -8,7 +8,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 
 import org.infinispan.server.hotrod.test.HotRodClient;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -65,7 +65,7 @@ public class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
       @Override
       public Void call() throws Exception {
-         TestResourceTracker.testThreadStarted(HotRodConcurrentTest.this);
+         TestResourceTracker.testThreadStarted(HotRodConcurrentTest.this.getTestName());
          log.debug("Wait for all executions paths to be ready to perform calls");
          barrier.await();
          try {

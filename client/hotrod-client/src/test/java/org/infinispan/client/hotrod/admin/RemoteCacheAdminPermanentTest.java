@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.admin;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -19,7 +20,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.admin.RemoteCacheAdminPermanentTest")
@@ -47,13 +47,13 @@ public class RemoteCacheAdminPermanentTest extends MultiHotRodServersTest {
    protected HotRodServer addStatefulHotRodServer(ConfigurationBuilder builder, char id) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       gcb.globalState().enable().persistentLocation(stateDirectory).
          configurationStorage(ConfigurationStorage.OVERLAY);
       if (isShared()) {
-         String sharedDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+         String sharedDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
          gcb.globalState().sharedPersistentLocation(sharedDirectory);
       } else {
          gcb.globalState().sharedPersistentLocation(stateDirectory);

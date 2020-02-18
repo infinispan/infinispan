@@ -1,6 +1,6 @@
 package org.infinispan.api;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.assertNoLocks;
 import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.testng.Assert.assertFalse;
@@ -40,7 +40,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;

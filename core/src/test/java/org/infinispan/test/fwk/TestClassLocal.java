@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.AbstractInfinispanTest;
 
 /**
@@ -39,7 +40,7 @@ public class TestClassLocal<T> implements Serializable {
       synchronized (this) {
          if (value == null) {
             value = supplier.get();
-            TestResourceTracker.addResource(test, new TestResourceTracker.Cleaner<TestClassLocal<T>>(this) {
+            TestResourceTracker.addResource(test.getTestName(), new TestResourceTracker.Cleaner<TestClassLocal<T>>(this) {
                @Override
                public void close() {
                   ref.destroyer.accept(ref.get());

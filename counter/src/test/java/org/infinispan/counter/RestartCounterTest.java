@@ -1,5 +1,6 @@
 package org.infinispan.counter;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -18,7 +19,6 @@ import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class RestartCounterTest extends BaseCounterTest {
 
-   private static final String PERSISTENT_FOLDER = TestingUtil.tmpDirectory(RestartCounterTest.class.getSimpleName());
+   private static final String PERSISTENT_FOLDER = tmpDirectory(RestartCounterTest.class.getSimpleName());
    private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
    private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
    private static final int CLUSTER_SIZE = 4;

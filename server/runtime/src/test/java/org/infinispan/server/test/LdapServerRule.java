@@ -38,7 +38,11 @@ import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
 import org.apache.directory.shared.kerberos.components.EncryptionKey;
 import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Util;
+<<<<<<< HEAD
 import org.infinispan.test.Exceptions;
+=======
+import org.infinispan.commons.test.Exceptions;
+>>>>>>> 5c57a45f38... Moves
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;

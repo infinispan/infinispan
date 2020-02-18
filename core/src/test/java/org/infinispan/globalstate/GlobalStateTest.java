@@ -1,6 +1,7 @@
 package org.infinispan.globalstate;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.commons.test.Exceptions.expectException;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -26,7 +27,7 @@ import org.testng.annotations.Test;
 public class GlobalStateTest extends AbstractInfinispanTest {
 
    public void testLockPersistentLocation() {
-      String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
 
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(stateDirectory, true);
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(stateDirectory, true);
@@ -42,9 +43,9 @@ public class GlobalStateTest extends AbstractInfinispanTest {
    }
 
    public void testCorruptGlobalState(Method m) throws Exception {
-      String state1 = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "1");
+      String state1 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "1");
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
-      String state2 = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
+      String state2 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
@@ -66,9 +67,9 @@ public class GlobalStateTest extends AbstractInfinispanTest {
    }
 
    public void testIncompatibleGlobalState(Method m) throws Exception {
-      String state1 = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "1");
+      String state1 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "1");
       GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
-      String state2 = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
+      String state2 = tmpDirectory(this.getClass().getSimpleName() + File.separator + m.getName() + "2");
       GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());

@@ -1,5 +1,7 @@
 package org.infinispan.scripting.utils;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +13,6 @@ import org.infinispan.commons.api.BasicCache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.Security;
-import org.infinispan.test.TestingUtil;
 
 /**
  * Utility class containing general methods for use.
@@ -40,7 +41,7 @@ public class ScriptingUtils {
             fileName = "/" + fileName;
         }
         try (InputStream is = ScriptingUtils.class.getResourceAsStream(fileName)) {
-            String script = TestingUtil.loadFileAsString(is);
+            String script = loadFileAsString(is);
             scriptingManager.addScript(fileName.replaceAll("\\/", ""), script);
         }
     }
