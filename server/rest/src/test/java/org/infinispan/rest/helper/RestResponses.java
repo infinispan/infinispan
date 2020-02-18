@@ -4,7 +4,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

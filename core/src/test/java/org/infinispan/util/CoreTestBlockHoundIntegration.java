@@ -7,6 +7,7 @@ import java.io.StringWriter;
 
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
 import org.infinispan.commons.test.PolarionJUnitXMLWriter;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
@@ -14,7 +15,6 @@ import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;

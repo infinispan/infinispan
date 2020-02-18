@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod.counter;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
@@ -18,7 +19,6 @@ import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.counter.impl.CounterManagerImplTestStrategy;
 import org.infinispan.server.hotrod.counter.impl.TestCounterManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.counter.CounterManagerOperationTest")
 public class CounterManagerOperationTest extends HotRodMultiNodeTest implements CounterManagerTestStrategy {
 
-   private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory("CounterManagerOperationTest");
+   private static final String PERSISTENT_LOCATION = tmpDirectory("CounterManagerOperationTest");
    private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
    private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
    private final CounterManagerTestStrategy strategy;
