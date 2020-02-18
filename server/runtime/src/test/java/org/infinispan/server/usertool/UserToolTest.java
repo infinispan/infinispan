@@ -1,5 +1,6 @@
 package org.infinispan.server.usertool;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -9,7 +10,6 @@ import java.util.Properties;
 
 import org.infinispan.server.Server;
 import org.infinispan.server.security.UserTool;
-import org.infinispan.test.TestingUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class UserToolTest {
 
    @BeforeClass
    public static void createTestDirectory() {
-      tmpDirectory = TestingUtil.tmpDirectory(UserToolTest.class);
+      tmpDirectory = tmpDirectory(UserToolTest.class);
       confDirectory = new File(tmpDirectory, Server.DEFAULT_SERVER_CONFIG);
       confDirectory.mkdirs();
    }

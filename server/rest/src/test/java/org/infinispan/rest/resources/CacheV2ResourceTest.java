@@ -7,6 +7,7 @@ import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.VOLATILE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
@@ -36,7 +37,6 @@ import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -46,7 +46,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Test(groups = "functional", testName = "rest.CacheV2ResourceTest")
 public class CacheV2ResourceTest extends AbstractRestResourceTest {
 
-   private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory(CacheV2ResourceTest.class.getName());
+   private static final String PERSISTENT_LOCATION = tmpDirectory(CacheV2ResourceTest.class.getName());
    private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
    private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
 
