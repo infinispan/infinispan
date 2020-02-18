@@ -51,7 +51,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    private final long flags;
    private final Object lockOwner;
    private final CacheImpl<K, V> cacheImplementation;
-   private final CacheImpl.ContextBuilder contextBuilder = this::writeContext;
+   private final ContextBuilder contextBuilder = this::writeContext;
 
    public DecoratedCache(CacheImpl<K, V> delegate, long flagsBitSet) {
       this(delegate, null, flagsBitSet);
@@ -734,7 +734,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    protected InvocationContext writeContext(int size) {
-      InvocationContext ctx = cacheImplementation.getInvocationContextWithImplicitTransaction(size);
+      InvocationContext ctx = cacheImplementation.invocationHelper.defaultContextBuilderForWrite().create(size);
       if (lockOwner != null) {
          ctx.setLockOwner(lockOwner);
       }
