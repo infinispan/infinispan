@@ -117,7 +117,8 @@
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>
-      <module>server/testdriver</module>
+      <module>server/testdriver/core</module>
+      <module>server/testdriver/junit4</module>
       <module>server/tests</module>
       <module>client/rest-client</module>
       <module>client/hotrod-client</module>
@@ -2473,7 +2474,12 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-testdriver</artifactId>
+            <artifactId>infinispan-server-testdriver-core</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-testdriver-junit4</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
@@ -4698,10 +4704,6 @@
                      <Implementation-Codename>${infinispan.codename}</Implementation-Codename>
                   </manifestEntries>
                </archive>
-               <excludes>
-                  <exclude>**/*.bat</exclude>
-                  <exclude>**/*.sh</exclude>
-               </excludes>
             </configuration>
          </plugin>
          <plugin>
