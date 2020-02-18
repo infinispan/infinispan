@@ -19,6 +19,7 @@ import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -27,7 +28,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -51,7 +52,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      location = TestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
+      location = CommonsTestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addSingleFileStore().location(this.location).purgeOnStartup(true).segmented(false);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
@@ -335,7 +336,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
-         TestResourceTracker.testThreadStarted(SingleFileStoreStressTest.this);
+         TestResourceTracker.testThreadStarted(SingleFileStoreStressTest.this.getTestName());
          Random random = new Random();
          int i = 0;
          while (stopLatch.getCount() != 0) {

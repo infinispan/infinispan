@@ -27,7 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "client.hotrod.event.ClientEventStressTest", timeOut = 15*60*1000)
@@ -62,7 +62,7 @@ public class ClientEventStressTest extends SingleCacheManagerTest {
    }
 
    public void testStressEvents() {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       CyclicBarrier barrier = new CyclicBarrier((NUM_CLIENTS * NUM_THREADS_PER_CLIENT) + 1);
       List<Future<Void>> futures = new ArrayList<>(NUM_CLIENTS * NUM_THREADS_PER_CLIENT);
       List<ClientEntryListener> listeners = new ArrayList<>(NUM_CLIENTS);

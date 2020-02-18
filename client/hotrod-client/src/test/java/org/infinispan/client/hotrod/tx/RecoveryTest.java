@@ -28,7 +28,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
-import org.infinispan.test.ExceptionRunnable;
+import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledTimeService;

@@ -4,12 +4,12 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.LocalCachePerfProgrammaticConfTest")
 public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
+   private final String indexDirectory = CommonsTestingUtil.tmpDirectory(getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

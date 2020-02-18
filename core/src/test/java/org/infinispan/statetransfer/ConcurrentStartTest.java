@@ -27,7 +27,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -54,7 +54,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
    @Test(timeOut = 60000)
    public void testConcurrentStart() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       final CheckPoint checkPoint = new CheckPoint();
 
       EmbeddedCacheManager cm1 = createCacheManager(0);

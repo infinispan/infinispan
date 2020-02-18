@@ -22,7 +22,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 
 /**
  * Long running test for the async MassIndexer, specially regarding cancellation. Supposed to be run as a main class.
@@ -120,7 +120,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    public static void main(String[] args) throws Throwable {
       AsyncMassIndexPerfTest test = new AsyncMassIndexPerfTest();
-      TestResourceTracker.testThreadStarted(test);
+      TestResourceTracker.testThreadStarted(test.getTestName());
       test.createBeforeClass();
       test.createBeforeMethod();
       test.populate();

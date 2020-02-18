@@ -1,10 +1,12 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.InputStream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -29,7 +31,7 @@ public class ScriptCachePreserveStateAcrossRestarts extends AbstractInfinispanTe
    }
 
    public void testStatePreserved() throws Exception {
-      String persistentStateLocation = TestingUtil.tmpDirectory(this.getClass());
+      String persistentStateLocation = CommonsTestingUtil.tmpDirectory(this.getClass());
       Util.recursiveFileRemove(persistentStateLocation);
 
       TestingUtil.withCacheManager(new CacheManagerCallable(createCacheManager(persistentStateLocation)) {
@@ -37,7 +39,7 @@ public class ScriptCachePreserveStateAcrossRestarts extends AbstractInfinispanTe
          public void call() throws Exception {
             Cache<String, String> scriptCache = cm.getCache(ScriptingManagerImpl.SCRIPT_CACHE);
             try (InputStream is = this.getClass().getResourceAsStream("/test.js")) {
-               String script = TestingUtil.loadFileAsString(is);
+               String script = loadFileAsString(is);
                scriptCache.put("test.js", script);
             }
          }

@@ -17,7 +17,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory.ClusterS
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 

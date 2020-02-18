@@ -7,7 +7,7 @@ import javax.inject.Named;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
-import org.infinispan.test.fwk.TestResourceTrackingListener;
+import org.infinispan.commons.test.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;

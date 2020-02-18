@@ -18,7 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -50,7 +50,7 @@ public class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
       try {
          List<Future<HotRodServer>> futures = new ArrayList<>();
          futures.add(fork(() -> {
-            TestResourceTracker.testThreadStarted(this);
+            TestResourceTracker.testThreadStarted(this.getTestName());
             HotRodServer server = startHotRodServerWithDelay(getCacheManagers().get(0), initialPort, 2000);
             servers.add(server);
             return server;
@@ -58,7 +58,7 @@ public class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
          for (int i = 1; i < numberOfServers; i++) {
             int finalI = i;
             futures.add(fork(() -> {
-               TestResourceTracker.testThreadStarted(this);
+               TestResourceTracker.testThreadStarted(this.getTestName());
                HotRodServer server = startHotRodServer(getCacheManagers().get(finalI), initialPort + (finalI * 10));
                servers.add(server);
                return server;

@@ -14,7 +14,7 @@ import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Custom;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheRemoveAllService;
-import org.infinispan.test.fwk.TestResourceTrackingListener;
+import org.infinispan.commons.test.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;

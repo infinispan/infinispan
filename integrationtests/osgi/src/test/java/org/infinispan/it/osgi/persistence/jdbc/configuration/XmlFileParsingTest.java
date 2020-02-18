@@ -5,7 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -34,7 +34,7 @@ public class XmlFileParsingTest extends org.infinispan.persistence.jdbc.configur
 
    @Test
    public void testStringKeyedJdbcStore() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       super.testStringKeyedJdbcStore();
    }
 }

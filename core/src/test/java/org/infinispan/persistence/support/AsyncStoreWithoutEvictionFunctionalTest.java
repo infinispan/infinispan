@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.File;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -67,7 +68,7 @@ public class AsyncStoreWithoutEvictionFunctionalTest extends AbstractInfinispanT
 
    private DefaultCacheManager configureCacheManager(boolean async) throws Exception {
 
-      tmpDirectory = new File(TestingUtil.tmpDirectory(this.getClass()));
+      tmpDirectory = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
       Util.recursiveFileRemove(tmpDirectory);
 
       GlobalConfiguration glob = new GlobalConfigurationBuilder().defaultCacheName("cache").nonClusteredDefault().build();

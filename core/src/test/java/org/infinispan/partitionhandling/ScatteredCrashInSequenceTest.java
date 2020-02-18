@@ -1,6 +1,6 @@
 package org.infinispan.partitionhandling;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
-import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStartCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;

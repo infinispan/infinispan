@@ -3,6 +3,7 @@ package org.infinispan.test.fwk;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.TestingUtil;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.relay.RELAY2;

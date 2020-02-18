@@ -1,4 +1,4 @@
-package org.infinispan.test;
+package org.infinispan.commons.test;
 
 /**
  * Runnable that can throw any exception.

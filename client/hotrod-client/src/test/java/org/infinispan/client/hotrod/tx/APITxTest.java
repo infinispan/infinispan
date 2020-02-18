@@ -7,7 +7,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNo
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.BYTE_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.GENERIC_ARRAY_GENERATOR;
 import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.STRING_GENERATOR;
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;

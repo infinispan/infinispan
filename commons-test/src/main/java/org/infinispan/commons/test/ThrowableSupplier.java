@@ -1,4 +1,4 @@
-package org.infinispan.test;
+package org.infinispan.commons.test;
 
 /**
  * Supplier that can throw any exception.

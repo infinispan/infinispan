@@ -1,13 +1,12 @@
-package org.infinispan.test.fwk;
+package org.infinispan.commons.test;
 
-import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 /**
  * TestNG listener to call {@link TestResourceTracker#testStarted(String)} and
- * {@link TestResourceTracker#testFinished(String)} when a test can't extend {@link AbstractInfinispanTest}.
+ * {@link TestResourceTracker#testFinished(String)}.
  *
  * @author Dan Berindei
  * @since 9.0

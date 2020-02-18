@@ -16,13 +16,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -47,7 +48,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    }
 
    @AfterClass
@@ -68,7 +69,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
             new Callable<Map<String, Map<ThreadLocal<?>, Object>>>() {
          @Override
          public Map<String, Map<ThreadLocal<?>, Object>> call() throws Exception {
-            TestResourceTracker.testThreadStarted(ThreadLocalLeakTest.this);
+            TestResourceTracker.testThreadStarted(ThreadLocalLeakTest.this.getTestName());
             Thread forkedThread = doStuffWithCache(builder);
 
             beforeGC();

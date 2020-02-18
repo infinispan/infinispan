@@ -4,9 +4,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.RemoteQueryDslConditionsFilesystemTest", groups = "functional")
 public class RemoteQueryDslConditionsFilesystemTest extends RemoteQueryDslConditionsTest {
 
-   protected final String indexDirectory = TestingUtil.tmpDirectory(getClass());
+   protected final String indexDirectory = CommonsTestingUtil.tmpDirectory(getClass());
 
    @Override
    protected void createCacheManagers() throws Throwable {

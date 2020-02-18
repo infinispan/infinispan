@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 
@@ -36,7 +36,7 @@ public class IllegalMonitorTest extends BaseDistFunctionalTest<Object, String> {
     */
    @Test(threadPoolSize = 7, invocationCount = 21)
    public void testScenario() throws InterruptedException {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       int myId = sequencer.incrementAndGet();
       AdvancedCache cache = this.caches.get(myId % this.INIT_CLUSTER_SIZE).getAdvancedCache();
       for (int i = 0; i < 100; i++) {

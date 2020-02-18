@@ -40,7 +40,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;

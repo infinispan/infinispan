@@ -53,7 +53,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
