@@ -10,6 +10,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -118,5 +120,12 @@ public class Configurations {
          }
       }
       return builders;
+   }
+
+   public static Metadata newDefaultMetadata(Configuration configuration) {
+      return new EmbeddedMetadata.Builder()
+            .lifespan(configuration.expiration().lifespan())
+            .maxIdle(configuration.expiration().maxIdle())
+            .build();
    }
 }

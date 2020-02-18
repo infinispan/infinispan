@@ -345,9 +345,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       try {
          switch (transactionManager.getStatus()) {
-            case Status.STATUS_ACTIVE:
             case Status.STATUS_NO_TRANSACTION:
                return null;
+            case Status.STATUS_ACTIVE:
             case Status.STATUS_MARKED_ROLLBACK:
             case Status.STATUS_PREPARED:
             case Status.STATUS_COMMITTED:

@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
+import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.io.ByteBufferFactory;
@@ -87,7 +88,9 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
-                              BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class})
+                              BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
+                              InvocationHelper.class
+})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -197,6 +200,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return ComponentAlias.of(L1Manager.class);
       } else if (componentName.equals(PublisherHandler.class.getName())) {
          return new PublisherHandler();
+      } else if (componentName.equals(InvocationHelper.class.getName())) {
+         return new InvocationHelper();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
