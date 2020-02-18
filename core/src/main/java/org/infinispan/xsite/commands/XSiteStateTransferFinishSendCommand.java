@@ -59,11 +59,13 @@ public class XSiteStateTransferFinishSendCommand extends BaseRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeUTF(siteName);
+      output.writeBoolean(statusOk);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       siteName = input.readUTF();
+      statusOk = input.readBoolean();
    }
 
    @Override

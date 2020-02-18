@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
@@ -195,6 +196,14 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
    protected void adaptLONConfiguration(BackupConfigurationBuilder builder) {
       super.adaptLONConfiguration(builder);
       builder.stateTransfer().maxRetries(2).waitTime(1000);
+      builder.clustering().hash().numSegments(8); //we only use 1 key; no need for 256 segments
+   }
+
+   @Override
+   protected ConfigurationBuilder getNycActiveConfig() {
+      ConfigurationBuilder builder = super.getNycActiveConfig();
+      builder.clustering().hash().numSegments(8); //we only use 1 key; no need for 256 segments
+      return builder;
    }
 
    private static class CounterBackupReceiverRepository extends BackupReceiverRepositoryDelegator {
@@ -364,6 +373,4 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
          return true;
       }
    }
-
-
 }
