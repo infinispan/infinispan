@@ -5,12 +5,14 @@ import static org.infinispan.server.test.ContainerUtil.getIpAddressFromContainer
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
@@ -22,6 +24,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.test.ThreadLeakChecker;
+import org.infinispan.commons.test.skip.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
@@ -41,7 +44,6 @@ import org.testcontainers.utility.Base58;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Network;
-import com.sun.security.auth.module.UnixSystem;
 
 /**
  * WARNING: Work in progress. Does not work yet.
@@ -126,10 +128,15 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
                .label("release", Version.getVersion())
                .label("architecture", "x86_64")
                .user("root");
-         // We need to remap the UID/GID of the jboss user inside the container to the ones of the user outside so that files created on volume mounts have the correct ownership/permissions
-         UnixSystem unixSystem = new UnixSystem();
-         builder.run("usermod", "-u", Long.toString(unixSystem.getUid()), "jboss");
-         builder.run("groupmod", "-g", Long.toString(unixSystem.getGid()), "jboss");
+
+         if (OS.getCurrentOs() != OS.WINDOWS) {
+            // We need to remap the UID/GID of the jboss user inside the container to the ones of the user outside so that files created on volume mounts have the correct ownership/permissions
+            String uid = runProcess("id", "-u");
+            String gid = runProcess("id", "-g");
+
+            builder.run("usermod", "-u", uid, "jboss");
+            builder.run("groupmod", "-g", gid, "jboss");
+         }
          if (!usePrebuiltServerFromImage) {
             builder
                   .copy("build", INFINISPAN_SERVER_HOME)
@@ -159,6 +166,16 @@ public class ContainerInfinispanServerDriver extends InfinispanServerDriver {
          container.start();
       }
       Exceptions.unchecked(() -> latch.awaitStrict(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+   }
+
+   private String runProcess(String... commands) {
+      ProcessBuilder pb = new ProcessBuilder(commands).redirectErrorStream(true);
+      Process p = Exceptions.unchecked(() -> pb.start());
+      try (Scanner scanner = new Scanner(p.getInputStream(), StandardCharsets.UTF_8.name())) {
+         return scanner.useDelimiter("\\n").next();
+      } finally {
+         Exceptions.unchecked(() -> p.waitFor());
+      }
    }
 
    private GenericContainer createContainer(int i, File rootDir) {
