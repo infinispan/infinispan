@@ -3,9 +3,18 @@ package org.infinispan.commons.test;
 import static java.io.File.separator;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.CopyOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.function.Consumer;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -46,5 +55,44 @@ public class CommonsTestingUtil {
          sb.append("\n");
       }
       return sb.toString();
+   }
+
+   public static class CopyFileVisitor extends SimpleFileVisitor<Path> {
+      private final Path targetPath;
+      private Path sourcePath = null;
+      private final CopyOption[] copyOptions;
+      private final Consumer<File> manipulator;
+
+      public CopyFileVisitor(Path targetPath, boolean overwrite) {
+         this(targetPath, overwrite, null);
+      }
+
+      public CopyFileVisitor(Path targetPath, boolean overwrite, Consumer<File> manipulator) {
+         this.targetPath = targetPath;
+         this.manipulator = manipulator;
+         this.copyOptions = overwrite ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES} : new CopyOption[0];
+      }
+
+      @Override
+      public FileVisitResult preVisitDirectory(final Path dir,
+                                               final BasicFileAttributes attrs) throws IOException {
+         if (sourcePath == null) {
+            sourcePath = dir;
+         } else {
+            Files.createDirectories(targetPath.resolve(sourcePath.relativize(dir).toString()));
+         }
+         return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(final Path file,
+                                       final BasicFileAttributes attrs) throws IOException {
+         Path target = targetPath.resolve(sourcePath.relativize(file).toString());
+         Files.copy(file, target, copyOptions);
+         if (manipulator != null) {
+            manipulator.accept(target.toFile());
+         }
+         return FileVisitResult.CONTINUE;
+      }
    }
 }

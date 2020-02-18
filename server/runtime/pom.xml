@@ -16,8 +16,8 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
-      <defaultTestGroup />
-      <defaultExcludedTestGroup />
+      <defaultTestGroup/>
+      <defaultExcludedTestGroup/>
       <server.output.dir>${project.build.directory}/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
       <server.test.lib.dir>${project.build.directory}/testlibs</server.test.lib.dir>
    </properties>
@@ -162,55 +162,6 @@
          <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
-      <dependency>
-         <groupId>net.spy</groupId>
-         <artifactId>spymemcached</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-rest</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.testcontainers</groupId>
-         <artifactId>testcontainers</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.directory.server</groupId>
-         <artifactId>apacheds-all</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>sample-domain-definition</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>sample-domain-implementation</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.antlr</groupId>
-         <artifactId>antlr-runtime</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.shrinkwrap.resolver</groupId>
-         <artifactId>shrinkwrap-resolver-depchain</artifactId>
-         <scope>test</scope>
-         <type>pom</type>
-      </dependency>
-
-      <!-- Database test dependencies -->
-      <dependency>
-         <groupId>com.h2database</groupId>
-         <artifactId>h2</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
@@ -329,10 +280,10 @@
                         <property name="dollar" value="$"/>
 
                         <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
-                           <filter token="infinispan.brand.name" value="${infinispan.brand.name}" />
-                           <filter token="infinispan.brand.version" value="${infinispan.brand.version}" />
-                           <filter token="infinispan.brand.short-name" value="${infinispan.brand.short-name}" />
-                           <filter token="current.year" value="${current.year}" />
+                           <filter token="infinispan.brand.name" value="${infinispan.brand.name}"/>
+                           <filter token="infinispan.brand.version" value="${infinispan.brand.version}"/>
+                           <filter token="infinispan.brand.short-name" value="${infinispan.brand.short-name}"/>
+                           <filter token="current.year" value="${current.year}"/>
                         </filterset>
 
                         <dependencyfilesets scopes="compile"/>
@@ -358,6 +309,7 @@
                   <configuration>
                      <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
                      <licensesOutputFile>${server.output.dir}/docs/licenses/licenses.xml</licensesOutputFile>
+                     <excludedArtifacts>.*jcip.*</excludedArtifacts>
                   </configuration>
                </execution>
             </executions>
@@ -405,78 +357,7 @@
                </execution>
             </executions>
          </plugin>
-         <plugin>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <configuration>
-               <groups combine.self="override"/>
-               <excludedGroups combine.self="override"/>
-               <parallel>none</parallel>
-               <threadCount>${infinispan.test.parallel.threads}</threadCount>
-               <forkCount>1</forkCount>
-               <reuseForks>true</reuseForks>
-               <disableXmlReport>false</disableXmlReport>
-               <useFile>false</useFile>
-               <systemPropertyVariables>
-                  <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
-                  <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
-                  <jgroups.join_timeout>2000</jgroups.join_timeout>
-                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                  <build.directory>${project.build.directory}</build.directory>
-                  <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
-
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
-                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
-                  <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
-                  <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
-                  <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
-                  <ansi.strip>${ansi.strip}</ansi.strip>
-               </systemPropertyVariables>
-               <trimStackTrace>false</trimStackTrace>
-               <testNGArtifactName>none:none</testNGArtifactName>
-               <properties>
-                  <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
-               </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dserver.output.dir=${server.output.dir} -Djdk.attach.allowAttachSelf=true</argLine>
-            </configuration>
-            <executions>
-               <execution>
-                  <goals>
-                     <goal>integration-test</goal>
-                     <goal>verify</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
       </plugins>
    </build>
-
-   <profiles>
-      <profile>
-         <id>container</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <container.argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Dserver.output.dir=${server.output.dir} -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER</container.argLine>
-         </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-failsafe-plugin</artifactId>
-                  <configuration>
-                     <argLine>${container.argLine}</argLine>
-                  </configuration>
-               </plugin>
-               <plugin>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <argLine>${container.argLine}</argLine>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 </project>
 
