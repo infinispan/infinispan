@@ -2,7 +2,7 @@ package org.infinispan.counter.jmx;
 
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 

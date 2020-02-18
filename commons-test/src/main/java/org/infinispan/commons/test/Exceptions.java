@@ -1,4 +1,4 @@
-package org.infinispan.test;
+package org.infinispan.commons.test;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;

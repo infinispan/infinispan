@@ -13,7 +13,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.LockedStream;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;

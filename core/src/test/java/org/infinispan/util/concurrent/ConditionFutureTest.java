@@ -1,7 +1,7 @@
 package org.infinispan.util.concurrent;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.Exceptions.expectCompletionException;
+import static org.infinispan.commons.test.Exceptions.expectCompletionException;
 import static org.infinispan.util.concurrent.CompletionStages.isCompletedSuccessfully;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;

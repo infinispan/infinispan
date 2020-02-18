@@ -8,7 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -37,7 +37,7 @@ public class JoinInNewThreadTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       Future<Void> future = fork(() -> {
-         TestResourceTracker.testThreadStarted(this);
+         TestResourceTracker.testThreadStarted(this.getTestName());
          addClusterEnabledCacheManager(replCfg);
          waitForClusterToForm();
       });

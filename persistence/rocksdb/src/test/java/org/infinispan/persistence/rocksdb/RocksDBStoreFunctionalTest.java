@@ -5,21 +5,21 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.io.File;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
-import org.infinispan.test.Exceptions;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.rocksdb.RocksDBException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreFunctionalTest")
 public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
-   protected String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+   protected String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {

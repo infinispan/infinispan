@@ -14,7 +14,7 @@ import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLoca
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.junit.Test;

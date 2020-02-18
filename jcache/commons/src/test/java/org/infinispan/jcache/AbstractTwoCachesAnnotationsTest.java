@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 
 import javax.cache.Cache;
 
-import org.infinispan.test.fwk.TestResourceTrackingListener;
+import org.infinispan.commons.test.TestResourceTrackingListener;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;

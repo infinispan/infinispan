@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -28,7 +29,6 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.PersistenceMockUtil;
@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreTest")
 public class RocksDBStoreTest extends BaseStoreTest {
 
-   private String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+   private String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    private Configuration configuration;
    private KeyPartitioner keyPartitioner;
    private boolean segmented;

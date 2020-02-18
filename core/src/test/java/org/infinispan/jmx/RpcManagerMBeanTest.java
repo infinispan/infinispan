@@ -33,7 +33,7 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.xsite.XSiteBackup;

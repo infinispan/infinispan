@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -52,7 +53,7 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
 
    private GlobalConfigurationBuilder globalConfig() {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      global.globalState().persistentLocation(TestingUtil.tmpDirectory(this.getClass()));
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       return global;
    }
 

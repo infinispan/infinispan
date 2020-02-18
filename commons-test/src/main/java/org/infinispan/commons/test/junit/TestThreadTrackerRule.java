@@ -1,7 +1,7 @@
-package org.infinispan.server.test;
+package org.infinispan.commons.test.junit;
 
 import org.infinispan.commons.test.ThreadLeakChecker;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;

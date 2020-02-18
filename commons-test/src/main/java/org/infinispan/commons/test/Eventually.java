@@ -1,4 +1,4 @@
-package org.infinispan.commons.util;
+package org.infinispan.commons.test;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;

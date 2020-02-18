@@ -117,6 +117,8 @@
       <module>server/rest</module>
       <module>server/router</module>
       <module>server/runtime</module>
+      <module>server/testdriver</module>
+      <module>server/tests</module>
       <module>client/rest-client</module>
       <module>client/hotrod-client</module>
       <module>client/infinispan-key-value-store-hotrod</module>
@@ -2471,6 +2473,11 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-testdriver</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring5-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -3687,7 +3694,6 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
             <version>${versionx.org.testcontainers.testcontainers}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.testng</groupId>

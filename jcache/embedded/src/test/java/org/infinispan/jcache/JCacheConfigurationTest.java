@@ -23,11 +23,11 @@ import java.util.jar.Manifest;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -76,7 +76,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
       try {
          // given - creating sample jar file
-         String tmpDir = TestingUtil.tmpDirectory(JCacheConfigurationTest.class);
+         String tmpDir = CommonsTestingUtil.tmpDirectory(JCacheConfigurationTest.class);
          File tmpDirFile = new File(tmpDir);
          if (!tmpDirFile.exists()) {
             tmpDirFile.mkdirs();

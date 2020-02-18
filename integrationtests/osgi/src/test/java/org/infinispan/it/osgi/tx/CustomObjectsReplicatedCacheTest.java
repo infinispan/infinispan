@@ -12,7 +12,7 @@ import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.it.osgi.util.PaxExamUtils;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +50,7 @@ public class CustomObjectsReplicatedCacheTest extends MultipleCacheManagersTest 
 
    @Before
    public void setUp() {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       createCluster(c, 2);
    }

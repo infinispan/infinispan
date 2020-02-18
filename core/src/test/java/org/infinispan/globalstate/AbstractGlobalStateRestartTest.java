@@ -1,5 +1,6 @@
 package org.infinispan.globalstate;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -41,7 +42,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName()));
+      Util.recursiveFileRemove(tmpDirectory(this.getClass().getSimpleName()));
       createStatefulCacheManagers(true, -1, false);
    }
 
@@ -61,7 +62,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    }
 
    private void createStatefulCacheManager(String id, boolean clear) {
-      String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();

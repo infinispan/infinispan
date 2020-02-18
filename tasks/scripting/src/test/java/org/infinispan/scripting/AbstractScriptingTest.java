@@ -1,10 +1,11 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+
 import java.io.InputStream;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
@@ -27,7 +28,7 @@ public abstract class AbstractScriptingTest extends SingleCacheManagerTest {
         scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
         for (String scriptName : getScripts()) {
             try (InputStream is = this.getClass().getResourceAsStream("/" + scriptName)) {
-                String script = TestingUtil.loadFileAsString(is);
+                String script = loadFileAsString(is);
                 scriptingManager.addScript(scriptName, script);
             }
         }

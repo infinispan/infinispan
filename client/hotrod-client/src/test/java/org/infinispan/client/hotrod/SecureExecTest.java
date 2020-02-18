@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -149,7 +150,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
       String scriptName = null;
       try (InputStream is = this.getClass().getResourceAsStream(scriptPath)) {
-         String script = TestingUtil.loadFileAsString(is);
+         String script = loadFileAsString(is);
 
          scriptName = scriptPath.substring(1);
          uploadScript(scriptName, script);

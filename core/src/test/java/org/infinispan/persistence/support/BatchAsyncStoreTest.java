@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -95,7 +95,7 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
 
    @BeforeClass
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
       new File(tmpDirectory).mkdirs();
    }
 

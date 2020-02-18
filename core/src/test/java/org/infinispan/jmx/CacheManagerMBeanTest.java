@@ -22,12 +22,12 @@ import javax.management.ServiceNotFoundException;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -159,7 +159,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assertEquals(1, server.getAttribute(name, "ClusterSize"));
    }
 
-   @Test(dependsOnMethods="testJmxOperations")
+   @Test(dependsOnMethods = "testJmxOperations")
    public void testCacheMBeanUnregisterOnRemove() {
       cacheManager.defineConfiguration("test", new ConfigurationBuilder().build());
       assertNotNull(cacheManager.getCache("test"));
@@ -171,9 +171,10 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testExecutorMBeans() throws Exception {
       LazyInitializingScheduledExecutorService timeoutExecutor =
-         extractGlobalComponent(cacheManager, LazyInitializingScheduledExecutorService.class,
-                                TIMEOUT_SCHEDULE_EXECUTOR);
-      timeoutExecutor.submit(() -> {});
+            extractGlobalComponent(cacheManager, LazyInitializingScheduledExecutorService.class,
+                  TIMEOUT_SCHEDULE_EXECUTOR);
+      timeoutExecutor.submit(() -> {
+      });
 
       ObjectName objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
       assertTrue(server.isRegistered(objectName));

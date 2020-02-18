@@ -6,11 +6,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.commons.util.Util;
@@ -29,7 +32,10 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.security.Security;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -39,6 +45,7 @@ import org.infinispan.transaction.TransactionMode;
  * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
+   private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
    public static final int NAMED_EXECUTORS_THREADS_NO_QUEUE = 6;
    // Check *TxPartitionAndMerge*Test with taskset -c 1 before reducing the following 2
    private static final int NAMED_EXECUTORS_THREADS_WITH_QUEUE = 6;
@@ -68,7 +75,7 @@ public class TestCacheManagerFactory {
       GlobalConfiguration globalConfiguration = gcb.build();
       checkJmx(globalConfiguration);
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c == null ? null : c.build(globalConfiguration), start);
-      TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
+      TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
    }
 
@@ -79,7 +86,7 @@ public class TestCacheManagerFactory {
       InfinispanMetricRegistryTestHelper.replace(gcb);
       checkJmx(gcb.build());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
-      TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
+      TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
    }
 
@@ -439,5 +446,28 @@ public class TestCacheManagerFactory {
    private static void checkJmx(GlobalConfiguration gc) {
       assert !(gc.jmx().enabled() && gc.jmx().mbeanServerLookup() instanceof PlatformMBeanServerLookup)
             : "Tests must configure a MBeanServerLookup other than the default PlatformMBeanServerLookup or not enable JMX";
+   }
+
+   public static class CacheManagerCleaner extends TestResourceTracker.Cleaner<EmbeddedCacheManager> {
+
+      protected CacheManagerCleaner(EmbeddedCacheManager ref) {
+         super(ref);
+      }
+
+      @Override
+      public void close() {
+         PrivilegedAction<Object> action = () -> {
+            if (!ref.getStatus().isTerminated()) {
+               TestCacheManagerFactory.log.debugf("Stopping cache manager %s", ref);
+               ref.stop();
+            }
+            return null;
+         };
+         if (System.getSecurityManager() != null) {
+            AccessController.doPrivileged(action);
+         } else {
+            Security.doPrivileged(action);
+         }
+      }
    }
 }

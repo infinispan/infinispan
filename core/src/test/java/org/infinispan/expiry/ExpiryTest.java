@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -216,7 +217,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testEntrySetAfterExpiryWithStore(Method m) throws Exception {
-      String location = TestingUtil.tmpDirectory(ExpiryTest.class);
+      String location = CommonsTestingUtil.tmpDirectory(ExpiryTest.class);
       CacheContainer cc = createCacheContainerWithStore(location);
       try {
          doTestEntrySetAfterExpiryInPut(m, cc);

@@ -4,7 +4,7 @@ import javax.transaction.RollbackException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
