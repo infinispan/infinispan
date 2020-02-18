@@ -11,6 +11,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,7 +25,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -165,7 +165,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     @BeforeClass
     protected void setUpTempDir() {
-       TMP_DIR = TestingUtil.tmpDirectory(this.getClass());
+       TMP_DIR = CommonsTestingUtil.tmpDirectory(this.getClass());
        new File(TMP_DIR).mkdirs();
     }
 

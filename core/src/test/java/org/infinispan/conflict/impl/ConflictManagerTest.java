@@ -44,7 +44,7 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.test.Exceptions;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

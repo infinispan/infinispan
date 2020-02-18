@@ -1,4 +1,4 @@
-package org.infinispan.commons.util;
+package org.infinispan.commons.test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 

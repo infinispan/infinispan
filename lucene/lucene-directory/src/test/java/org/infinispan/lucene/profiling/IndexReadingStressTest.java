@@ -21,13 +21,13 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -68,7 +68,7 @@ public class IndexReadingStressTest {
 
    @Test
    public void profileTestFSDirectory() throws InterruptedException, IOException {
-      File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), indexName);
+      File indexDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()), indexName);
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir.toPath());

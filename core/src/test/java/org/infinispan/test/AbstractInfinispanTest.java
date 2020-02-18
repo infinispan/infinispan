@@ -35,6 +35,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.commons.test.TestNGLongTestsHook;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -43,7 +44,7 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
 import org.infinispan.test.fwk.FakeTestClass;
 import org.infinispan.test.fwk.NamedTestMethod;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.util.EmbeddedTimeService;
 import org.infinispan.commons.time.TimeService;
@@ -300,7 +301,7 @@ public abstract class AbstractInfinispanTest {
          public Thread newThread(Runnable r) {
             String threadName = prefix + "-" + counter.incrementAndGet() + "," + className;
             Thread thread = new Thread(r, threadName);
-            TestResourceTracker.addResource(AbstractInfinispanTest.this, new ThreadCleaner(thread));
+            TestResourceTracker.addResource(AbstractInfinispanTest.this.getTestName(), new ThreadCleaner(thread));
             return thread;
          }
       };

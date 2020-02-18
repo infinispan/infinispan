@@ -14,7 +14,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -41,7 +41,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       /*
 
       Sequence 1:
@@ -61,7 +61,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence2() throws ExecutionException, InterruptedException {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       /*
 
       Sequence 2:
@@ -80,7 +80,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       /*
 
       Sequence 3:
@@ -98,7 +98,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence4() throws ExecutionException, InterruptedException {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       /*
 
       Sequence 4:

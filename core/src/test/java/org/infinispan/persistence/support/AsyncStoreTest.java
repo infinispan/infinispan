@@ -48,7 +48,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -128,7 +128,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testPutRemove() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
 
       final int number = 1000;
@@ -140,7 +140,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testRepeatedPutRemove() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
 
       final int number = 10;
@@ -162,7 +162,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testPutClearPut() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
 
       final int number = 1000;
@@ -177,7 +177,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testRepeatedPutClearPut() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
 
       final int number = 10;
@@ -201,7 +201,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testMultiplePutsOnSameKey() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
 
       final int number = 1000;
@@ -213,7 +213,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore();
 
       writer.delete("blah");
@@ -274,7 +274,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testConcurrentWriteAndStop() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore(true);
 
       final int lastValue[] = { 0 };
@@ -307,7 +307,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testConcurrentClearAndStop() throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       createStore(true);
 
       // start a thread that keeps clearing the store until its stopped

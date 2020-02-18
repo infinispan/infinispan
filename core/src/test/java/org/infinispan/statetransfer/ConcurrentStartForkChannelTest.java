@@ -18,7 +18,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -55,7 +55,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
 
    @Test(timeOut = 30000, dataProvider = "startOrder")
    public void testConcurrentStart(int eagerManager, int lazyManager) throws Exception {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
 
       ConfigurationBuilder replCfg = new ConfigurationBuilder();
       replCfg.clustering().cacheMode(CacheMode.REPL_SYNC).stateTransfer().timeout(30, TimeUnit.SECONDS);

@@ -4,9 +4,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.dsl.embedded.FilesystemQueryDslConditionsTest")
 public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
+   private final String indexDirectory = CommonsTestingUtil.tmpDirectory(getClass());
 
    @Override
    protected void createCacheManagers() throws Throwable {

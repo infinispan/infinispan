@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.server.hotrod.HotRodSingleNodeTest;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**

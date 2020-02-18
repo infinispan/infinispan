@@ -4,12 +4,12 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredCacheFSDirectoryTest")
 public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
 
-   private final String TMP_DIR = TestingUtil.tmpDirectory(getClass());
+   private final String TMP_DIR = CommonsTestingUtil.tmpDirectory(getClass());
 
    @Override
    protected void createCacheManagers() {

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
@@ -32,7 +33,7 @@ import org.testng.annotations.Test;
 public class IndexCacheLoaderTest extends AbstractInfinispanTest {
 
    private static final int SCALE = 600;
-   protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());
+   protected final String parentDir = CommonsTestingUtil.tmpDirectory(this.getClass());
    protected File rootDir = null;
 
    @BeforeMethod

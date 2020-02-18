@@ -19,6 +19,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.directory.BuildContext;
@@ -28,7 +29,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -87,7 +88,7 @@ public class PerformanceCompareStressTest extends AbstractInfinispanTest {
 
    @Test
    public void profileTestFSDirectory() throws InterruptedException, IOException {
-      File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), indexName);
+      File indexDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()), indexName);
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir.toPath());
@@ -276,7 +277,7 @@ public class PerformanceCompareStressTest extends AbstractInfinispanTest {
       String[] testMethods = System.getProperty("lucene.profiling.tests",
             "profileTestRAMDirectory,profileTestFSDirectory,profileInfinispanLocalDirectory,profileTestInfinispanDirectoryWithNetworkDelayZero").split(",");
       PerformanceCompareStressTest test = new PerformanceCompareStressTest();
-      TestResourceTracker.testThreadStarted(test);
+      TestResourceTracker.testThreadStarted(test.getTestName());
       test.durationMs = new Long(System.getProperty("lucene.profiling.duration", String.valueOf(DEFAULT_DURATION_MS)));
       String outputFile = System.getProperty("lucene.profiling.output");
       test.results = outputFile == null ? null : new Properties();

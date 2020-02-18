@@ -1,6 +1,6 @@
 package org.infinispan.stream;
 
-import static org.infinispan.test.Exceptions.unchecked;
+import static org.infinispan.commons.test.Exceptions.unchecked;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyBoolean;

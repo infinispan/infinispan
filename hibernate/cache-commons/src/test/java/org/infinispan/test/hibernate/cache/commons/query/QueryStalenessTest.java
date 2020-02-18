@@ -17,7 +17,7 @@ import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;

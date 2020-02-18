@@ -13,7 +13,7 @@ import org.infinispan.server.memcached.MemcachedDecoder;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.memcached.logging.Log;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 
 import io.netty.channel.ChannelInboundHandler;
 import net.spy.memcached.DefaultConnectionFactory;

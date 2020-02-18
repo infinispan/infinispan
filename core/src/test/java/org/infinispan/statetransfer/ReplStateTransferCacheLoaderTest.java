@@ -4,12 +4,12 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.File;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -39,7 +39,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() {
-      tmpDir = new File(TestingUtil.tmpDirectory(this.getClass()));
+      tmpDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
       Util.recursiveFileRemove(tmpDir);
 
       // reproduce the MODE-1754 config as closely as possible

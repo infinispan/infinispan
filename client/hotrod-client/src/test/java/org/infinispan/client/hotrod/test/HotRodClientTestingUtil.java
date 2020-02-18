@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.test;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX;
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 
@@ -29,6 +30,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -39,7 +41,6 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
 
@@ -337,7 +338,7 @@ public class HotRodClientTestingUtil {
 
    public static String loadScript(String scriptName, ScriptingManager scriptingManager, String fileName) {
       try (InputStream is = HotRodClientTestingUtil.class.getResourceAsStream(fileName)) {
-         String script = TestingUtil.loadFileAsString(is);
+         String script = loadFileAsString(is);
          scriptingManager.addScript(scriptName, script);
          return scriptName;
       } catch (IOException e) {
@@ -358,7 +359,7 @@ public class HotRodClientTestingUtil {
 
    public static String loadScript(String scriptName, BasicCache<String, String> scriptCache, String fileName) {
       try (InputStream is = HotRodClientTestingUtil.class.getResourceAsStream(fileName)) {
-         String script = TestingUtil.loadFileAsString(is);
+         String script = loadFileAsString(is);
          scriptCache.put(scriptName, script);
          return scriptName;
       } catch (IOException e) {

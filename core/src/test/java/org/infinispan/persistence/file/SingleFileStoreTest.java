@@ -1,12 +1,12 @@
 package org.infinispan.persistence.file;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -46,7 +46,7 @@ public class SingleFileStoreTest extends BaseStoreTest {
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
    }
 
    @AfterClass(alwaysRun = true)

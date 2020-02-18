@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.InputStream;
@@ -77,7 +78,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
                 taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
                 Cache<String, String> scriptCache = cacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
                 try (InputStream is = this.getClass().getResourceAsStream("/testRole.js")) {
-                    String script = TestingUtil.loadFileAsString(is);
+                    String script = loadFileAsString(is);
                     scriptCache.put(SCRIPT_NAME, script);
                 }
                 cacheManager.defineConfiguration(SecureScriptingTest.SECURE_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());

@@ -20,7 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -149,7 +149,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
     */
    @Test(groups = "stress", timeOut = 15*60*1000)
    public void testNonTransactionalStress() throws Throwable {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       stressTest(false);
    }
 
@@ -158,7 +158,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
     */
    @Test(groups = "stress", timeOut = 15*60*1000)
    public void testTransactionalStress() throws Throwable {
-      TestResourceTracker.testThreadStarted(this);
+      TestResourceTracker.testThreadStarted(this.getTestName());
       stressTest(true);
    }
 

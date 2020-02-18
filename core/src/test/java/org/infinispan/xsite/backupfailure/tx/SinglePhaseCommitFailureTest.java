@@ -1,6 +1,6 @@
 package org.infinispan.xsite.backupfailure.tx;
 
-import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.commons.test.Exceptions.expectException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupFailurePolicy;

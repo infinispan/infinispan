@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -39,7 +40,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
    private static final String indexName = "index-A";
    private static final int segmentId = 7;
    private static final int elementCount = 10;
-   protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());
+   protected final String parentDir = CommonsTestingUtil.tmpDirectory(this.getClass());
    private File rootDir;
 
    public CacheLoaderAPITest() {

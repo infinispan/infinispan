@@ -1,7 +1,5 @@
-package org.infinispan.test.fwk;
+package org.infinispan.commons.test;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,11 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.security.Security;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.Logger;
 
 /**
  * Keeps track of resources created by tests and cleans them up at the end of the test.
@@ -22,15 +16,10 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public class TestResourceTracker {
-   private static final Log log = LogFactory.getLog(TestResourceTracker.class);
+   private static final Logger log = Logger.getLogger(TestResourceTracker.class);
    private static final ConcurrentMap<String, TestResources> testResources = new ConcurrentHashMap<>();
    // Inheritable to allow for tests that spawn a thread to keep the test thread name of the original
    private static final ThreadLocal<String> threadTestName = new InheritableThreadLocal<>();
-
-   public static void addResource(AbstractInfinispanTest testInstance, final Cleaner<?> cleaner) {
-      TestResources resources = getTestResources(testInstance.getTestName());
-      resources.addResource(cleaner);
-   }
 
    public static void addResource(String testName, final Cleaner<?> cleaner) {
       TestResources resources = getTestResources(testName);
@@ -78,9 +67,9 @@ public class TestResourceTracker {
             throw new IllegalStateException("Test name is not set! Please extend AbstractInfinispanTest!");
          } else if (threadName.startsWith("TestNGInvoker-")) {
             // This is a timeout test, so force the user to call our marking method
-            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this) in your test method!");
+            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this.getTestName()) in your test method!");
          } else {
-            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this) in thread " + threadName + " !");
+            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this.getTestName()) in thread " + threadName + " !");
          }
       }
       return testName;
@@ -113,9 +102,10 @@ public class TestResourceTracker {
    /**
     * Should be called by the user on any "background" test thread that creates resources, e.g. at the beginning of a
     * test with a {@code @Test(timeout=n)} annotation.
+    * @param testName
     */
-   public static void testThreadStarted(AbstractInfinispanTest testInstance) {
-      setThreadTestName(testInstance.getTestName());
+   public static void testThreadStarted(String testName) {
+      setThreadTestName(testName);
       Thread.currentThread().setName(getNextTestThreadName());
    }
 
@@ -206,26 +196,4 @@ public class TestResourceTracker {
       public abstract void close();
    }
 
-   public static class CacheManagerCleaner extends Cleaner<EmbeddedCacheManager> {
-
-      protected CacheManagerCleaner(EmbeddedCacheManager ref) {
-         super(ref);
-      }
-
-      @Override
-      public void close() {
-         PrivilegedAction<Object> action = () -> {
-            if (!ref.getStatus().isTerminated()) {
-               log.debugf("Stopping cache manager %s", ref);
-               ref.stop();
-            }
-            return null;
-         };
-         if (System.getSecurityManager() != null) {
-            AccessController.doPrivileged(action);
-         } else {
-            Security.doPrivileged(action);
-         }
-      }
-   }
 }

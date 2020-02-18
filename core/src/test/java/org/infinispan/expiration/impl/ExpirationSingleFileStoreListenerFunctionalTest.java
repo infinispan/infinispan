@@ -1,9 +1,9 @@
 package org.infinispan.expiration.impl;
 
+import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -30,11 +30,11 @@ public class ExpirationSingleFileStoreListenerFunctionalTest extends ExpirationS
       config
          // Prevent the reaper from running, reaperEnabled(false) doesn't work when a store is present
          .expiration().wakeUpInterval(Long.MAX_VALUE)
-         .persistence().addSingleFileStore().location(TestingUtil.tmpDirectory(this.getClass()));
+         .persistence().addSingleFileStore().location(CommonsTestingUtil.tmpDirectory(this.getClass()));
    }
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass()));
+      Util.recursiveFileRemove(CommonsTestingUtil.tmpDirectory(this.getClass()));
    }
 }

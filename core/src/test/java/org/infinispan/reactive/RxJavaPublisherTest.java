@@ -2,9 +2,9 @@ package org.infinispan.reactive;
 
 import static org.testng.AssertJUnit.fail;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CacheBackpressureFullException;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.Exceptions;
 import org.testng.annotations.Test;
 
 import io.reactivex.Flowable;
