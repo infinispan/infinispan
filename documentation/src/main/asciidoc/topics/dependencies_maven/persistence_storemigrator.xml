@@ -12,12 +12,10 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-tools</artifactId>
-            <!-- Replace ${version.infinispan} with the
-            version of {brandname} that you're using. -->
             <version>${version.infinispan}</version>
         </dependency>
 
-        <!-- ADD YOUR REQUIRED DEPENDENCIES HERE -->
+        <!-- Add required dependencies here. -->
     </dependencies>
 
     <build>
@@ -36,7 +34,7 @@
                 <configuration>
                     <mainClass>StoreMigrator</mainClass>
                     <arguments>
-                        <argument><!-- PATH TO YOUR MIGRATOR.PROPERTIES FILE --></argument>
+                        <argument><!--path/to/migrator.properties--></argument>
                     </arguments>
                 </configuration>
             </plugin>
