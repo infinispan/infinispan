@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.Flowable;
@@ -29,7 +30,11 @@ public class PeekOperation<S> implements IntermediateOperation<S, Stream<S>, S, 
 
    @Override
    public void handleInjection(ComponentRegistry registry) {
-      registry.wireDependencies(consumer);
+      if (consumer instanceof CacheAware) {
+         ((CacheAware) consumer).injectCache(registry.getCache().running());
+      } else {
+         registry.wireDependencies(consumer);
+      }
    }
 
    @Override

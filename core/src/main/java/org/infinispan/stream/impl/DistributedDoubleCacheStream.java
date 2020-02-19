@@ -23,7 +23,6 @@ import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.DoubleStream;
-import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
@@ -43,10 +42,6 @@ import org.infinispan.stream.impl.intops.primitive.d.MapToIntDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.MapToLongDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.MapToObjDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.PeekDoubleOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachDoubleOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapDoubleOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjDoubleOperation;
-import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -206,11 +201,9 @@ public class DistributedDoubleCacheStream<Original> extends AbstractCacheStream<
 
    @Override
    public void forEach(DoubleConsumer action) {
-      if (!rehashAware) {
-         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
-      } else {
-         performRehashKeyTrackingOperation(s -> getForEach(action, s));
-      }
+      peek(action)
+         .iterator()
+            .forEachRemaining((double ignore) -> { });
    }
 
    @Override
@@ -220,38 +213,14 @@ public class DistributedDoubleCacheStream<Original> extends AbstractCacheStream<
 
    @Override
    public <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action) {
-      if (!rehashAware) {
-         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
-      } else {
-         performRehashKeyTrackingOperation(s -> getForEach(action, s));
-      }
+      peek(CacheBiConsumers.doubleConsumer(action))
+            .iterator()
+            .forEachRemaining((double ignore) -> { });
    }
 
    @Override
    public <K, V> void forEach(SerializableObjDoubleConsumer<Cache<K, V>> action) {
       forEach((ObjDoubleConsumer<Cache<K, V>>) action);
-   }
-
-   KeyTrackingTerminalOperation<Original, Object, Double> getForEach(DoubleConsumer consumer,
-           Supplier<Stream<Original>> supplier) {
-      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
-         return new ForEachFlatMapDoubleOperation<>(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      } else {
-         return new ForEachDoubleOperation<>(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      }
-   }
-
-   <K, V> KeyTrackingTerminalOperation<Original, Object, Double> getForEach(ObjDoubleConsumer<Cache<K, V>> consumer,
-           Supplier<Stream<Original>> supplier) {
-      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
-         return new ForEachFlatMapObjDoubleOperation(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      } else {
-         return new ForEachObjDoubleOperation(intermediateOperations, supplier, nonNullKeyFunction(),
-               distributedBatchSize, consumer);
-      }
    }
 
    @Override
