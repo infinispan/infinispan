@@ -60,6 +60,11 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       return replace(key, oldValue, newValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
@@ -72,6 +77,11 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    @Override
    public final V replace(K key, V value, long lifespan, TimeUnit unit) {
       return replace(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -129,6 +139,10 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
       return put(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
+   @Override
+   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      throw new UnsupportedOperationException();
+   }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
@@ -138,6 +152,11 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit) {
       return putIfAbsentAsync(key, value, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -151,13 +170,18 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       throw new UnsupportedOperationException();
    }
 
    @Override
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return replaceAsync(key, oldValue, newValue, defaultLifespan, MILLISECONDS);
+   }
+
+   @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      throw new UnsupportedOperationException();
+      return replaceAsync(key, oldValue, newValue, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -168,6 +192,11 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       return replace(key, oldValue, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -188,23 +217,38 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return compute(key, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
    public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      throw new UnsupportedOperationException();
+      return computeAsync(key, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsent(key, mappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
    public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
-      throw new UnsupportedOperationException();
+      return computeIfAbsentAsync(key, mappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeIfPresent(key, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
    public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      throw new UnsupportedOperationException();
+      return computeIfPresentAsync(key, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return compute(key, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -214,7 +258,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return computeIfPresent(key, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -224,7 +268,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return computeIfAbsent(key, mappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -234,7 +278,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return computeAsync(key, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -244,7 +288,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return computeIfAbsentAsync(key, mappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -254,7 +298,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return computeIfPresentAsync(key, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -264,16 +308,21 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-      throw new UnsupportedOperationException();
+      return mergeAsync(key, value, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
    public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
    public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
       throw new UnsupportedOperationException();
    }
 }
