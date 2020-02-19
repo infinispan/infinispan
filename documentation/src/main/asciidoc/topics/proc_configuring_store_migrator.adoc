@@ -1,0 +1,25 @@
+[id='configure_store_migrator-{context}']
+= Configuring the Store Migrator
+Set properties for source and target cache stores in a `migrator.properties`
+file.
+
+.Procedure
+
+. Create a `migrator.properties` file.
+. Configure the source cache store in `migrator.properties`.
+.. Prepend all configuration properties with `source.` as in the following example:
++
+----
+source.type=SOFT_INDEX_FILE_STORE
+source.cache_name=myCache
+source.location=/path/to/source/sifs
+----
++
+. Configure the target cache store in `migrator.properties`.
+.. Prepend all configuration properties with `target.` as in the following example:
++
+----
+target.type=SINGLE_FILE_STORE
+target.cache_name=myCache
+target.location=/path/to/target/sfs.dat
+----

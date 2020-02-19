@@ -1,0 +1,19 @@
+[id='get_store_migrator-{context}']
+= Getting the Store Migrator
+`StoreMigrator` is available as part of the {brandname} tools library,
+`infinispan-tools-{infinispanversion}.jar`. You can either build
+`infinispan-tools-{infinispanversion}.jar` from source or pull it from the
+Maven repository.
+
+.Procedure
+
+Do one of the following:
+
+* Build `infinispan-tools-{infinispanversion}.jar` from source.
+
+* Configure your `pom.xml` for `StoreMigrator` as follows:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/persistence_storemigrator.xml[]
+----

@@ -1,0 +1,247 @@
+[id='store_migrator_properties-{context}']
+= Store Migrator Properties
+Configure source and target cache stores in a `StoreMigrator` properties.
+
+.Cache Store Type Property
+
+[%header,cols=3*]
+|===
+|Property |Description |Required/Optional
+|`type`
+|Specifies the type of cache store type for a source or target.
+
+`.type=JDBC_STRING`
+
+`.type=JDBC_BINARY`
+
+`.type=JDBC_MIXED`
+
+`.type=LEVELDB`
+
+`.type=ROCKSDB`
+
+`.type=SINGLE_FILE_STORE`
+
+`.type=SOFT_INDEX_FILE_STORE`
+
+`.type=JDBC_MIXED`
+| Required
+|===
+
+.Common Properties
+
+[%header,cols=4*]
+|===
+|Property |Description |Example Value |Required/Optional
+|`cache_name`
+|Names the cache that the store backs.
+|`.cache_name=myCache`
+|Required
+
+|`segment_count`
+|Specifies the number of segments for target cache stores that can use
+segmentation.
+
+The number of segments must match `clustering.hash.numSegments` in the
+{brandname} configuration.
+
+In other words, the number of segments for a cache store must match the number
+of segments for the corresponding cache. If the number of segments is not the
+same, {brandname} cannot read data from the cache store.
+|`.segment_count=256`
+|Optional
+|===
+
+.JDBC Properties
+
+[%header,cols=3*]
+|===
+|Property |Description |Required/Optional
+|`dialect`
+|Specifies the dialect of the underlying database.
+|Required
+
+|`version`
+|Specifies the marshaller version for source cache stores. Set one of the following values:
+
+ifndef::productized[]
+* `8` for {brandname} 8.x
+endif::productized[]
+
+ifdef::productized[]
+* `8` for {brandname} 7.2.x
+endif::productized[]
+
+ifndef::productized[]
+* `9` for {brandname} 9.x
+endif::productized[]
+
+ifdef::productized[]
+* `9` for {brandname} 7.3.x
+endif::productized[]
+
+ifndef::productized[]
+* `10` {brandname} 10.x
+endif::productized[]
+
+ifdef::productized[]
+* `10` {brandname} 8.x
+endif::productized[]
+
+|Required for source stores only.
+
+For example: `source.version=9`
+
+|`marshaller.class`
+|Specifies a custom marshaller class.
+|Required if using custom marshallers.
+
+|`marshaller.externalizers`
+|Specifies a comma-separated list of custom `AdvancedExternalizer` implementations to load in this format: `[id]:<Externalizer class>`
+|Optional
+
+|`connection_pool.connection_url`
+|Specifies the JDBC connection URL.
+|Required
+
+|`connection_pool.driver_class`
+|Specifies the class of the JDBC driver.
+|Required
+
+|`connection_pool.username`
+|Specifies a database username.
+|Required
+
+|`connection_pool.password`
+|Specifies a password for the database username.
+|Required
+
+|`db.major_version`
+|Sets the database major version.
+|Optional
+
+|`db.minor_version`
+|Sets the database minor version.
+|Optional
+
+|`db.disable_upsert`
+|Disables database upsert.
+|Optional
+
+|`db.disable_indexing`
+|Specifies if table indexes are created.
+|Optional
+
+|`table.string.table_name_prefix`
+|Specifies additional prefixes for the table name.
+|Optional
+
+|`table.string.<id\|data\|timestamp>.name`
+|Specifies the column name.
+|Required
+
+|`table.string.<id\|data\|timestamp>.type`
+|Specifies the column type.
+|Required
+
+|`key_to_string_mapper`
+|Specifies the `TwoWayKey2StringMapper` class.
+|Optional
+|===
+
+[NOTE]
+====
+To migrate from Binary cache stores in older {brandname} versions, change
+`table.string.\*` to `table.binary.\*` in the following properties:
+
+* `source.table.binary.table_name_prefix`
+* `source.table.binary.<id\|data\|timestamp>.name`
+* `source.table.binary.<id\|data\|timestamp>.type`
+====
+
+----
+# Example configuration for migrating to a JDBC String-Based cache store
+target.type=STRING
+target.cache_name=myCache
+target.dialect=POSTGRES
+target.marshaller.class=org.example.CustomMarshaller
+target.marshaller.externalizers=25:Externalizer1,org.example.Externalizer2
+target.connection_pool.connection_url=jdbc:postgresql:postgres
+target.connection_pool.driver_class=org.postrgesql.Driver
+target.connection_pool.username=postgres
+target.connection_pool.password=redhat
+target.db.major_version=9
+target.db.minor_version=5
+target.db.disable_upsert=false
+target.db.disable_indexing=false
+target.table.string.table_name_prefix=tablePrefix
+target.table.string.id.name=id_column
+target.table.string.data.name=datum_column
+target.table.string.timestamp.name=timestamp_column
+target.table.string.id.type=VARCHAR
+target.table.string.data.type=bytea
+target.table.string.timestamp.type=BIGINT
+target.key_to_string_mapper=org.infinispan.persistence.keymappers. DefaultTwoWayKey2StringMapper
+----
+
+.RocksDB Properties
+
+[%header,cols=3*]
+|===
+|Property |Description |Required/Optional
+|`location`
+|Sets the database directory.
+|Required
+
+|`compression`
+|Specifies the compression type to use.
+|Optional
+|===
+
+----
+# Example configuration for migrating from a RocksDB cache store.
+source.type=ROCKSDB
+source.cache_name=myCache
+source.location=/path/to/rocksdb/database
+source.compression=SNAPPY
+----
+
+.SingleFileStore Properties
+
+[%header,cols=3*]
+|===
+|Property |Description |Required/Optional
+
+|`location`
+|Sets the directory that contains the cache store `.dat` file.
+|Required
+|===
+
+----
+# Example configuration for migrating to a Single File cache store.
+target.type=SINGLE_FILE_STORE
+target.cache_name=myCache
+target.location=/path/to/sfs.dat
+----
+
+.SoftIndexFileStore Properties
+
+[%header,cols=3*]
+|===
+|Property |Description |Value |Required/Optional
+|`location`
+|Sets the database directory.
+|Required
+
+|`index_location`
+|Sets the database index directory.
+|Required for target cache stores.
+|===
+
+----
+# Example configuration for migrating to a Soft-Index File cache store.
+target.type=SOFT_INDEX_FILE_STORE
+target.cache_name=myCache
+target.location=path/to/sifs/database
+target.location=path/to/sifs/index
+----
